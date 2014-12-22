@@ -40,6 +40,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -67,7 +68,6 @@ import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -617,38 +617,19 @@ public abstract class PluginManagerMain implements Disposable {
     return false;
   }
 
-
-  public static void notifyPluginsWereInstalled(@Nullable String pluginName, final Project project) {
-    notifyPluginsWereUpdated(pluginName != null
-                             ? "Plugin \'" + pluginName + "\' was successfully installed"
-                             : "Plugins were installed", project);
-  }
-
-  public static void notifyPluginsWereUpdated(final String title, @Nullable final Project project) {
+  public static void notifyPluginsUpdated(@Nullable Project project) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    final boolean restartCapable = app.isRestartCapable();
-    String message =
-      restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName())
-                     : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
-    message += "<br><a href=";
-    message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
-    message += "</a>";
-    PLUGIN_LIFECYCLE_NOTIFICATION_GROUP
-      .createNotification(title,
-                          XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
-                          new NotificationListener() {
-                            @Override
-                            public void hyperlinkUpdate(@NotNull Notification notification,
-                                                        @NotNull HyperlinkEvent event) {
-                              notification.expire();
-                              if (restartCapable) {
-                                app.restart(true);
-                              }
-                              else {
-                                app.exit(false, true);
-                              }
-                            }
-                          }).notify(project);
+    String title = IdeBundle.message("update.notifications.title");
+    String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
+    String message = IdeBundle.message("ide.restart.required.notification", action, ApplicationNamesInfo.getInstance().getFullProductName());
+    NotificationListener listener = new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        notification.expire();
+        app.restart(true);
+      }
+    };
+    UpdateChecker.NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener).notify(project);
   }
 
   public class MyPluginsFilter extends FilterComponent {

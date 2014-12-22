@@ -17,7 +17,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
@@ -87,6 +86,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   }
 
   @Override
+  @NotNull
   public String getHelpTopic() {
     return ID;
   }
@@ -137,11 +137,8 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     }
 
     if (myPluginManagerMain.isRequireShutdown()) {
-      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-
-      int response = app.isRestartCapable() ? showRestartIDEADialog() : showShutDownIDEADialog();
-      if (response == Messages.YES) {
-        app.restart(true);
+      if (showRestartDialog() == Messages.YES) {
+        ApplicationManagerEx.getApplicationEx().restart(true);
       }
       else {
         myPluginManagerMain.ignoreChanges();
@@ -157,31 +154,25 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   }
 
   @Messages.YesNoResult
-  public static int showShutDownIDEADialog() {
-    return showShutDownIDEADialog(IdeBundle.message("title.plugins.changed"));
+  public static int showRestartDialog() {
+    return showRestartDialog(IdeBundle.message("update.notifications.title"));
   }
 
   @Messages.YesNoResult
-  private static int showShutDownIDEADialog(final String title) {
-    String message = IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
-    return Messages.showYesNoDialog(message, title, "Shut Down", POSTPONE, Messages.getQuestionIcon());
+  public static int showRestartDialog(@NotNull String title) {
+    String action = IdeBundle.message(ApplicationManagerEx.getApplicationEx().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
+    String message = IdeBundle.message("ide.restart.required.message", action, ApplicationNamesInfo.getInstance().getFullProductName());
+    return Messages.showYesNoDialog(message, title, action, IdeBundle.message("ide.postpone.action"), Messages.getQuestionIcon());
   }
 
-  @Messages.YesNoResult
-  public static int showRestartIDEADialog() {
-    return showRestartIDEADialog(IdeBundle.message("title.plugins.changed"));
+  public static void shutdownOrRestartApp() {
+    shutdownOrRestartApp(IdeBundle.message("update.notifications.title"));
   }
 
-  @Messages.YesNoResult
-  private static int showRestartIDEADialog(final String title) {
-    String message = IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName());
-    return Messages.showYesNoDialog(message, title, "Restart", POSTPONE, Messages.getQuestionIcon());
-  }
-
-  public static void shutdownOrRestartApp(String title) {
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    int response = app.isRestartCapable() ? showRestartIDEADialog(title) : showShutDownIDEADialog(title);
-    if (response == Messages.YES) app.restart(true);
+  public static void shutdownOrRestartApp(@NotNull String title) {
+    if (showRestartDialog(title) == Messages.YES) {
+      ApplicationManagerEx.getApplicationEx().restart(true);
+    }
   }
 
   @Override
@@ -198,11 +189,12 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   @Override
   @Nullable
   public Runnable enableSearch(final String option) {
-    return new Runnable(){
+    return new Runnable() {
       @Override
       public void run() {
-        if (myPluginManagerMain == null) return;
-        myPluginManagerMain.filter(option);
+        if (myPluginManagerMain != null) {
+          myPluginManagerMain.filter(option);
+        }
       }
     };
   }
