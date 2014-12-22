@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated
 public class CompareDirectoriesAction extends DumbAwareAction {
 
   public static final String LAST_USED_KEY = "dir.diff.last.used.directory";
