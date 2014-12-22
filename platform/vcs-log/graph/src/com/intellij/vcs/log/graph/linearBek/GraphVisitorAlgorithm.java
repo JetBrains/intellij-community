@@ -50,21 +50,21 @@ public class GraphVisitorAlgorithm {
 
       visited.set(head, true);
       stack.push(head);
-      visitor.enterSubtree(head, visited);
+      visitor.enterSubtree(head, head, visited);
 
       while (!stack.empty()) {
         int nextNode = nextNode(graph, layout, stack.peek(), visited);
         if (nextNode != NODE_NOT_FOUND) {
           visited.set(nextNode, true);
           stack.push(nextNode);
-          visitor.enterSubtree(nextNode, visited);
+          visitor.enterSubtree(nextNode, head, visited);
         }
         else {
-          visitor.leaveSubtree(stack.pop(), visited);
+          visitor.leaveSubtree(stack.pop(), head, visited);
         }
       }
 
-      visitor.leaveSubtree(head, visited);
+      visitor.leaveSubtree(head, head, visited);
     }
 
     if (Boolean.getBoolean("idea.is.internal")) { // do not want to depend on Application here
@@ -76,6 +76,7 @@ public class GraphVisitorAlgorithm {
     }
   }
 
+  // TODO we wont be needing this
   public void visitSubgraph(@NotNull LinearGraph graph, @NotNull GraphVisitor visitor, int start, int depth) {
     final BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
 
@@ -83,21 +84,21 @@ public class GraphVisitorAlgorithm {
 
     visited.set(start, true);
     stack.push(start);
-    visitor.enterSubtree(start, visited);
+    visitor.enterSubtree(start, start, visited);
 
     while (!stack.empty()) {
       int nextNode = simpleNextNode(graph, stack.peek(), visited);
       if (nextNode != NODE_NOT_FOUND && stack.size() < depth) {
         visited.set(nextNode, true);
         stack.push(nextNode);
-        visitor.enterSubtree(nextNode, visited);
+        visitor.enterSubtree(nextNode, start, visited);
       }
       else {
-        visitor.leaveSubtree(stack.pop(), visited);
+        visitor.leaveSubtree(stack.pop(), start, visited);
       }
     }
 
-    visitor.leaveSubtree(start, visited);
+    visitor.leaveSubtree(start, start, visited);
   }
 
   private int simpleNextNode(@NotNull LinearGraph graph, int currentNode, @NotNull BitSetFlags visited) {
@@ -138,21 +139,21 @@ public class GraphVisitorAlgorithm {
   }
 
   public interface GraphVisitor {
-    void enterSubtree(int nodeIndex, BitSetFlags visited);
+    void enterSubtree(int nodeIndex, int currentHead, BitSetFlags visited);
 
-    void leaveSubtree(int nodeIndex, BitSetFlags visited);
+    void leaveSubtree(int nodeIndex, int currentHead, BitSetFlags visited); // TODO make it better
   }
 
   public abstract static class SimpleVisitor implements GraphVisitor {
     public abstract void visitNode(int nodeIndex);
 
     @Override
-    public void enterSubtree(int nodeIndex, BitSetFlags visited) {
+    public void enterSubtree(int nodeIndex, int currentHead, BitSetFlags visited) {
       visitNode(nodeIndex);
     }
 
     @Override
-    public void leaveSubtree(int nodeIndex, BitSetFlags visited) {
+    public void leaveSubtree(int nodeIndex, int currentHead, BitSetFlags visited) {
     }
   }
 }
