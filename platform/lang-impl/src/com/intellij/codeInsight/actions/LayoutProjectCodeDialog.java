@@ -177,7 +177,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   }
 
   @Override
-  public boolean isRearrangeEntries() {
+  public boolean isRearrangeCode() {
     return myCbRearrangeEntries.isSelected();
   }
 
@@ -190,7 +190,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   protected void doOKAction() {
     super.doOKAction();
     PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(isOptimizeImports()));
-    LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeEntries());
+    LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeCode());
     if (myEnableOnlyVCSChangedTextCb) {
       PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, Boolean.toString(myCbOnlyVcsChangedRegions.isSelected()));
     }
@@ -198,10 +198,6 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
 
   public boolean isOptimizeImports() {
     return myCbOptimizeImports.isSelected();
-  }
-
-  public boolean isProcessOnlyChangedText() {
-    return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected();
   }
 
   @Nullable
@@ -232,4 +228,10 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
     return false;
   }
 
+  @Override
+  public TextRangeType getTextRangeType() {
+    return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected()
+           ? TextRangeType.VCS_CHANGED_TEXT
+           : TextRangeType.WHOLE_FILE;
+  }
 }

@@ -930,5 +930,7 @@
       <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
     </group>
 
+    <action id="ReformatFile" class="com.intellij.codeInsight.actions.ReformatFileAction"/>
+
   </actions>
 </component>

@@ -17,11 +17,11 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -72,13 +72,16 @@ public class OptimizeImportsAction extends AnAction {
 
       if (projectContext != null || moduleContext != null) {
         final String text;
+        final boolean hasChanges;
         if (moduleContext != null) {
           text = CodeInsightBundle.message("process.scope.module", moduleContext.getName());
+          hasChanges = FormatChangedTextUtil.hasChanges(moduleContext);
         }
         else {
           text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
+          hasChanges = FormatChangedTextUtil.hasChanges(projectContext);
         }
-        DialogWrapper dialog = new OptimizeOnModuleDialog(project, text);
+        DialogWrapper dialog = new OptimizeImportsDialog(project, text, hasChanges);
         if (!dialog.showAndGet()) {
           return;
         }
@@ -106,29 +109,21 @@ public class OptimizeImportsAction extends AnAction {
       }
     }
 
-    boolean processDirectory;
-    boolean includeSubdirectories;
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      includeSubdirectories = processDirectory = false;
-    }
-    else if (!EditorSettingsExternalizable.getInstance().getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG && file != null) {
-      includeSubdirectories = processDirectory = false;
-    }
-    else {
-      final LayoutCodeDialog dialog =
-        new LayoutCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), file, dir, null, HELP_ID);
-      if (!dialog.showAndGet()) {
+    boolean processDirectory = false;
+    boolean processOnlyVcsChangedFiles = false;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && file == null && dir != null) {
+      String message = CodeInsightBundle.message("process.scope.directory", dir.getName());
+      OptimizeImportsDialog dialog = new OptimizeImportsDialog(project, message, FormatChangedTextUtil.hasChanges(dir));
+      dialog.show();
+      if (!dialog.isOK()) {
         return;
       }
-      EditorSettingsExternalizable.getInstance().getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG = !dialog.isDoNotAskMe();
-      ReformatCodeAction.updateShowDialogSetting(dialog, "\"Optimize Imports\" dialog disabled");
-      processDirectory = dialog.isProcessDirectory();
-      includeSubdirectories = dialog.isIncludeSubdirectories();
+      processDirectory = true;
+      processOnlyVcsChangedFiles = dialog.isProcessOnlyVcsChangedFiles();
     }
 
     if (processDirectory){
-      new OptimizeImportsProcessor(project, dir, includeSubdirectories).run();
+      new OptimizeImportsProcessor(project, dir, true, processOnlyVcsChangedFiles).run();
     }
     else{
       new OptimizeImportsProcessor(project, file).run();
@@ -204,21 +199,41 @@ public class OptimizeImportsAction extends AnAction {
     return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
   }
 
-  private static class OptimizeOnModuleDialog extends DialogWrapper {
+  private static class OptimizeImportsDialog extends DialogWrapper {
     private final String myText;
+    private final boolean myContextHasChanges;
+    private JCheckBox myOnlyVcsCheckBox;
 
-    OptimizeOnModuleDialog(Project project, String text) {
+    OptimizeImportsDialog(Project project, String text, boolean hasChanges) {
       super(project, false);
       myText = text;
+      myContextHasChanges = hasChanges;
       setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
       setTitle(CodeInsightBundle.message("process.optimize.imports"));
       init();
     }
 
+    public boolean isProcessOnlyVcsChangedFiles() {
+      return myOnlyVcsCheckBox.isSelected();
+    }
+
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      return new JLabel(myText);
+      JPanel panel = new JPanel();
+      BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+      panel.setLayout(layout);
+
+      panel.add(new JLabel(myText));
+      myOnlyVcsCheckBox = new JCheckBox("only VCS changed files");
+
+      boolean lastRunVcsChangedTextEnabled = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false);
+
+      myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
+      myOnlyVcsCheckBox.setSelected(myContextHasChanges && lastRunVcsChangedTextEnabled);
+
+      panel.add(myOnlyVcsCheckBox);
+      return panel;
     }
   }
 }

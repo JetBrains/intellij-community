@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInsight.actions.TextRangeType.*;
+
 public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesOptions {
   @NotNull private Project myProject;
   private JPanel myPanel;
@@ -60,12 +62,14 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
   }
 
   @Override
-  public boolean isProcessOnlyChangedText() {
-    return myOnlyChangedText.isEnabled() && myOnlyChangedText.isSelected();
+  public TextRangeType getTextRangeType() {
+    return myOnlyChangedText.isEnabled() && myOnlyChangedText.isSelected()
+           ? VCS_CHANGED_TEXT
+           : WHOLE_FILE;
   }
 
   @Override
-  public boolean isRearrangeEntries() {
+  public boolean isRearrangeCode() {
     return myRearrangeEntriesCb.isSelected();
   }
 
@@ -74,7 +78,7 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
     super.doOKAction();
     PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(myOptimizeImports.isSelected()));
     PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, Boolean.toString(myOnlyChangedText.isSelected()));
-    LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeEntries());
+    LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeCode());
   }
 
   static boolean isOptmizeImportsOptionOn() {

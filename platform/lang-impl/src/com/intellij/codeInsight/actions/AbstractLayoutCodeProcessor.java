@@ -67,7 +67,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private final String myProgressText;
   private final String myCommandName;
-  private final Runnable myPostRunnable;
+  private Runnable myPostRunnable;
   private boolean myProcessChangedTextOnly;
 
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
@@ -167,6 +167,10 @@ public abstract class AbstractLayoutCodeProcessor {
       }
     }
     return list;
+  }
+
+  public void setPostRunnable(Runnable postRunnable) {
+    myPostRunnable = postRunnable;
   }
 
   @Nullable

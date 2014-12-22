@@ -48,6 +48,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, false);
   }
 
+  public OptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs, boolean processOnlyVcsChangedFiles) {
+    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, processOnlyVcsChangedFiles);
+  }
+
   public OptimizeImportsProcessor(Project project, PsiFile file) {
     super(project, file, PROGRESS_TEXT, COMMAND_NAME, false);
   }

@@ -317,7 +317,7 @@ class AdditionalEventInfo {
   }
 }
 
-class MockReformatFileSettings implements LayoutCodeOptions {
+class MockReformatFileSettings implements ReformatFilesOptions {
   private boolean myProcessWholeFile;
   private boolean myProcessDirectories;
   private boolean myRearrange;
@@ -325,6 +325,7 @@ class MockReformatFileSettings implements LayoutCodeOptions {
   private boolean myOptimizeImports;
   private boolean myProcessOnlyChangedText;
   private boolean myIsOK = true;
+  private TextRangeType myTextRangeType;
 
   @Nullable
   @Override
@@ -338,19 +339,9 @@ class MockReformatFileSettings implements LayoutCodeOptions {
     return null;
   }
 
-  @Override
-  public boolean isProcessWholeFile() {
-    return myProcessWholeFile;
-  }
-
   MockReformatFileSettings setProcessWholeFile(boolean processWholeFile) {
     myProcessWholeFile = processWholeFile;
     return this;
-  }
-
-  @Override
-  public boolean isProcessDirectory() {
-    return myProcessDirectories;
   }
 
   MockReformatFileSettings setProcessDirectory(boolean processDirectories) {
@@ -359,13 +350,17 @@ class MockReformatFileSettings implements LayoutCodeOptions {
   }
 
   @Override
-  public boolean isRearrangeEntries() {
-    return myRearrange;
+  public TextRangeType getTextRangeType() {
+    return null;
+  }
+
+  public void setTextRangeType(TextRangeType textRangeType) {
+    myTextRangeType = textRangeType;
   }
 
   @Override
-  public boolean isIncludeSubdirectories() {
-    return myIncludeSubdirs;
+  public boolean isRearrangeCode() {
+    return myRearrange;
   }
 
   @Override
@@ -376,17 +371,6 @@ class MockReformatFileSettings implements LayoutCodeOptions {
   @NotNull
   MockReformatFileSettings setOptimizeImports(boolean optimizeImports) {
     myOptimizeImports = optimizeImports;
-    return this;
-  }
-
-  @Override
-  public boolean isProcessOnlyChangedText() {
-    return myProcessOnlyChangedText;
-  }
-
-  @NotNull
-  MockReformatFileSettings setProcessOnlyChangedText(boolean processOnlyChangedText) {
-    myProcessOnlyChangedText = processOnlyChangedText;
     return this;
   }
 

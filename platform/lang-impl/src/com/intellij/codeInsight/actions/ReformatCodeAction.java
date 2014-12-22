@@ -16,24 +16,22 @@
 
 package com.intellij.codeInsight.actions;
 
-import com.intellij.application.options.editor.EditorOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -41,13 +39,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.LightweightHint;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -96,14 +93,14 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         if (selectedFlags == null)
           return;
 
-        final boolean processOnlyChangedText = selectedFlags.isProcessOnlyChangedText();
+        final boolean processOnlyChangedText = selectedFlags.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
         final boolean shouldOptimizeImports = selectedFlags.isOptimizeImports() && !DumbService.getInstance(project).isDumb();
 
         AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(project, convertToPsiFiles(files, project), null, processOnlyChangedText);
         if (shouldOptimizeImports) {
           processor = new OptimizeImportsProcessor(processor);
         }
-        if (selectedFlags.isRearrangeEntries()) {
+        if (selectedFlags.isRearrangeCode()) {
           processor = new RearrangeCodeProcessor(processor);
         }
 
@@ -138,9 +135,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
     }
 
-    boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
+    final boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
     boolean processChangedTextOnly = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false);
-    boolean rearrangeEntries = getLastSavedRearrangeCbState(project, file);
+    final boolean rearrangeEntries = getLastSavedRearrangeCbState(project, file);
 
     if (file == null && dir != null) {
       DirectoryFormattingOptions options = getDirectoryFormattingOptions(project, dir);
@@ -153,13 +150,23 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     if (file == null || editor == null) return;
 
     TextRange range = null;
+    TextRangeType textRangeType;
     if (hasSelection) {
       processChangedTextOnly = false;
+      textRangeType = TextRangeType.SELECTED_TEXT;
       SelectionModel model = editor.getSelectionModel();
       range = TextRange.create(model.getSelectionStart(), model.getSelectionEnd());
     }
-    else if (processChangedTextOnly && isChangeNotTrackedForFile(project, file)) {
-      processChangedTextOnly = false;
+    else if (processChangedTextOnly) {
+      textRangeType = TextRangeType.VCS_CHANGED_TEXT;
+
+      if (isChangeNotTrackedForFile(project, file)) {
+        textRangeType = TextRangeType.WHOLE_FILE;
+        processChangedTextOnly = false;
+      }
+    }
+    else {
+      textRangeType = TextRangeType.WHOLE_FILE;
     }
 
     AbstractLayoutCodeProcessor processor;
@@ -175,8 +182,97 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processor = new RearrangeCodeProcessor(processor);
     }
 
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    final CharSequence charSeqBefore = document != null ? document.getImmutableCharSequence() : null;
+
+    final PsiFile finalFile = file;
+    final TextRangeType finalTextRangeType = textRangeType;
+
+    //todo show it if available options =)
+
+    processor.setPostRunnable(new Runnable() {
+      @Override
+      public void run() {
+        if (document != null) {
+          int totalLinesProcessed = getProcessedLinesNumber(finalFile, charSeqBefore);
+          String info = prepareMessage(totalLinesProcessed, optimizeImports, rearrangeEntries, finalTextRangeType);
+          showHint(editor, info);
+        }
+      }
+    });
+
     processor.run();
   }
+
+
+  private void showHint(@NotNull Editor editor, @NotNull String info) {
+    JComponent component = HintUtil.createInformationLabel(info);
+    LightweightHint hint = new LightweightHint(component);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
+                                                     HintManager.HIDE_BY_ANY_KEY|
+                                                     HintManager.HIDE_BY_TEXT_CHANGE|
+                                                     HintManager.HIDE_BY_SCROLLING,
+                                                     0, false);
+  }
+
+  @NotNull
+  private String prepareMessage(int totalLinesProcessed, boolean optimizeImports, boolean rearrangeCode, @NotNull TextRangeType textRangeType) {
+    String linesInfo = "";
+    if (totalLinesProcessed == 0) {
+      linesInfo = "No changes needed";
+    }
+    else if (totalLinesProcessed > 0) {
+      linesInfo = "Changed " + totalLinesProcessed + " lines";
+    }
+
+    String scopeInfo = textRangeType == TextRangeType.VCS_CHANGED_TEXT ? ", processed only changed lines since last revision" : null;
+    String actionsInfo = "Performed: formatting";
+    if (optimizeImports) {
+      actionsInfo += ", import optimization";
+    }
+    if (rearrangeCode) {
+      actionsInfo += " and code rearrangement";
+    }
+
+    String shortcutInfo = "Show reformat dialog: " + KeymapUtil.getFirstKeyboardShortcutText(
+      ActionManager.getInstance().getAction("ReformatFile"));
+
+    String info = linesInfo;
+    if (scopeInfo != null) {
+      info += scopeInfo;
+    }
+    info += "\n";
+    info += actionsInfo + "\n";
+    info += shortcutInfo;
+
+    return info;
+  }
+
+
+  private int getProcessedLinesNumber(final PsiFile file, final CharSequence before) {
+    Project project = file.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) {
+      return 0;
+    }
+
+    int totalLinesProcessed = 0;
+    try {
+      List<TextRange> ranges = FormatChangedTextUtil.calculateChangedTextRanges(project, file, before);
+      for (TextRange range : ranges) {
+        int lineStartNumber = document.getLineNumber(range.getStartOffset());
+        int lineEndNumber = document.getLineNumber(range.getEndOffset());
+
+        int linesCoveredByRange = lineEndNumber - lineStartNumber + 1;
+        totalLinesProcessed += linesCoveredByRange;
+      }
+    }
+    catch (FilesTooBigForDiffException e) {
+      e.printStackTrace();
+    }
+    return totalLinesProcessed;
+  }
+
 
   private static boolean isChangeNotTrackedForFile(@NotNull Project project, @NotNull PsiFile file) {
     boolean isUnderVcs = VcsUtil.isFileUnderVcs(project, VcsUtil.getFilePath(file.getVirtualFile()));
@@ -215,10 +311,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
                                         @NotNull DirectoryFormattingOptions options)
   {
     AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(
-      project,
-      dir,
-      options.isIncludeSubdirectories(),
-      options.isProcessOnlyChangedText()
+      project, dir, options.isIncludeSubdirectories(), options.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT
     );
 
     registerScopeFilter(processor, options.getSearchScope());
@@ -227,7 +320,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     if (options.isOptimizeImports()) {
       processor = new OptimizeImportsProcessor(processor);
     }
-    if (options.isRearrangeEntries()) {
+    if (options.isRearrangeCode()) {
       processor = new RearrangeCodeProcessor(processor);
     }
 
@@ -239,7 +332,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
                                      @NotNull ReformatFilesOptions selectedFlags)
   {
     boolean shouldOptimizeImports = selectedFlags.isOptimizeImports() && !DumbService.getInstance(project).isDumb();
-    boolean processOnlyChangedText = selectedFlags.isProcessOnlyChangedText();
+    boolean processOnlyChangedText = selectedFlags.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
 
     AbstractLayoutCodeProcessor processor;
     if (moduleContext != null)
@@ -254,7 +347,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processor = new OptimizeImportsProcessor(processor);
     }
 
-    if (selectedFlags.isRearrangeEntries()) {
+    if (selectedFlags.isRearrangeCode()) {
       processor = new RearrangeCodeProcessor(processor);
     }
 
@@ -303,23 +396,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     } catch (PatternSyntaxException e) {
       LOG.info("Error while processing file mask: ", e);
       return null;
-    }
-  }
-
-  public static void updateShowDialogSetting(LayoutCodeDialog dialog, String title) {
-    if (dialog.isDoNotAskMe()) {
-      Notifications.Bus.notify(new Notification("Reformat Code", title,
-                                                "<html>You can re-enable the dialog on the <a href=''>IDE Settings -> Editor</a> pane</html>",
-                                                NotificationType.INFORMATION, new NotificationListener() {
-          @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-              IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-              util.editConfigurable((JFrame)ideFrame, new EditorOptions());
-            }
-          }
-        }));
     }
   }
 
@@ -431,24 +507,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     if (!dialog.showAndGet()) {
       return null;
     }
-    return dialog;
-  }
-
-  @Nullable
-  private static LayoutCodeOptions getLayoutCodeOptions(@NotNull Project project,
-                                                 @Nullable PsiFile file,
-                                                 @Nullable PsiDirectory dir,
-                                                 boolean hasSelection) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return (LayoutCodeOptions)myTestOptions;
-    }
-    LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"),
-                                                   file, dir, hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
-    if (!dialog.showAndGet()) {
-      return null;
-    }
-    EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = !dialog.isDoNotAskMe();
-    updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
     return dialog;
   }
 

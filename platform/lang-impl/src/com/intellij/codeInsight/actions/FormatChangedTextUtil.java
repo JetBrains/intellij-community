@@ -297,9 +297,9 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  private static List<TextRange> calculateChangedTextRanges(@NotNull Project project, 
-                                                            @NotNull PsiFile file, 
-                                                            @NotNull String contentFromVcs) throws FilesTooBigForDiffException 
+  protected static List<TextRange> calculateChangedTextRanges(@NotNull Project project,
+                                                              @NotNull PsiFile file,
+                                                              @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
   {
     Document documentFromVcs = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(contentFromVcs, true, false);
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
