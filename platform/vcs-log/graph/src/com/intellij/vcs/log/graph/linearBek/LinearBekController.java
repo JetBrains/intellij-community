@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class LinearBekController extends CascadeLinearGraphController {
+  private final static int MAX_BLOCK_SIZE = 200; // specially tailored for 17740ba5899bc13de622808e0e0f4fbf6285e8b5
   @NotNull private final LinearGraph myCompiledGraph;
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
@@ -77,6 +78,7 @@ public class LinearBekController extends CascadeLinearGraphController {
         boolean foundFirstChild = false;
         PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
         queue.addAll(workingGraph.getDownNodes(currentNodeIndex));
+        boolean blockTooBig = false;
         while (!queue.isEmpty()) {
           Integer next = queue.poll();
           if (next == firstChildIndex) {
@@ -90,8 +92,14 @@ public class LinearBekController extends CascadeLinearGraphController {
             continue;
           }
           k++;
+          if (k >= MAX_BLOCK_SIZE) {
+            blockTooBig = true;
+            break;
+          }
           queue.addAll(workingGraph.getDownNodes(next));
         }
+
+        if (blockTooBig) return;
 
         int headNumber = heads.indexOf(currentHead);
         int nextHeadIndex = headNumber == heads.size()-1 ? Integer.MAX_VALUE : graphLayout.getLayoutIndex(heads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
