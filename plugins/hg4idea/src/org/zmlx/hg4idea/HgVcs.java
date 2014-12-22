@@ -476,13 +476,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
         String message = HgVcsMessages.message("hg4idea.unable.to.run.hg", executable);
         vcsNotifier.notifyError(message,
-                                  String.format(
-                                    reason +
-                                    "<br/> Please check your hg executable path in <a href='" +
-                                    SETTINGS_LINK +
-                                    "'> settings </a>"
-                                  ),
-                                  linkAdapter
+                                reason +
+                                "<br/> Please check your hg executable path in <a href='" +
+                                SETTINGS_LINK +
+                                "'> settings </a>",
+                                linkAdapter
         );
       }
     }
