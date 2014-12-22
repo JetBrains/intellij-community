@@ -45,6 +45,11 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
     super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
   }
+
+  public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
+    super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
+    mySelectionModel = selectionModel;
+  }
   
   public RearrangeCodeProcessor(@NotNull Project project,
                                 @NotNull PsiFile file,
