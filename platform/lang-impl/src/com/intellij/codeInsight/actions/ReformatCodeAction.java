@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
           processor = new OptimizeImportsProcessor(processor);
         }
         if (selectedFlags.isRearrangeEntries()) {
-          processor = new RearrangeCodeProcessor(processor, null);
+          processor = new RearrangeCodeProcessor(processor);
         }
 
         processor.run();
@@ -192,8 +192,13 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processor = new ReformatCodeProcessor(project, file, range, !processSelectedText && processChangedTextOnly);
     }
 
-    if (rearrangeEntries && editor != null) {
-      processor = new RearrangeCodeProcessor(processor, null);
+    if (rearrangeEntries) {
+      if (processSelectedText && editor != null) {
+        processor = new RearrangeCodeProcessor(processor, editor.getSelectionModel());
+      }
+      else {
+        processor = new RearrangeCodeProcessor(processor);
+      }
     }
 
     processor.run();
@@ -250,7 +255,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processor = new OptimizeImportsProcessor(processor);
     }
     if (options.isRearrangeEntries()) {
-      processor = new RearrangeCodeProcessor(processor, null);
+      processor = new RearrangeCodeProcessor(processor);
     }
 
     processor.run();
@@ -277,7 +282,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     if (selectedFlags.isRearrangeEntries()) {
-      processor = new RearrangeCodeProcessor(processor, null);
+      processor = new RearrangeCodeProcessor(processor);
     }
 
     processor.run();

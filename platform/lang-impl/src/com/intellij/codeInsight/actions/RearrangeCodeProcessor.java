@@ -44,13 +44,15 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   public static final String COMMAND_NAME = "Rearrange code";
   public static final String PROGRESS_TEXT = "Rearranging code...";
 
-  @Nullable private Condition<PsiFile> myAcceptCondition;
-  @Nullable private SelectionModel mySelectionModel;
+  private SelectionModel mySelectionModel;
 
-  public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor,
-                                @Nullable Condition<PsiFile> acceptCondition) {
+  public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
     super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
-    myAcceptCondition = acceptCondition;
+  }
+
+  public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
+    super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
+    mySelectionModel = selectionModel;
   }
   
   public RearrangeCodeProcessor(@NotNull Project project,
@@ -67,18 +69,12 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, PROGRESS_TEXT, commandName, postRunnable, false);
   }
 
-  public boolean shouldRearrangeFile(@NotNull PsiFile file) {
-    return myAcceptCondition == null || myAcceptCondition.value(file);
-  }
-
   @NotNull
   @Override
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
     return new FutureTask<Boolean>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        if (!shouldRearrangeFile(file)) return true;
-
         try {
           Collection<TextRange> ranges = processChangedTextOnly ? FormatChangedTextUtil.getChangedTextRanges(myProject, file)
                                                                 : getRangesToFormat(file);
