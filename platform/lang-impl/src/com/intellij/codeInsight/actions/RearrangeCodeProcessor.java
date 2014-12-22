@@ -69,13 +69,15 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
 
   @NotNull
   @Override
-  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, boolean processChangedTextOnly) {
+  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
     return new FutureTask<Boolean>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         if (!shouldRearrangeFile(file)) return true;
 
-        Collection<TextRange> ranges = getRangesToFormat(file);
+        Collection<TextRange> ranges = processChangedTextOnly ? FormatChangedTextUtil.getChangedTextRanges(myProject, file)
+                                                              : getRangesToFormat(file);
+
         RearrangeCommand rearranger = new RearrangeCommand(myProject, file, COMMAND_NAME, ranges);
         if (rearranger.couldRearrange()) {
           rearranger.run();
