@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.external.BinaryDiffTool;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.diff.impl.external.FrameDiffTool;
+import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
@@ -39,8 +40,8 @@ public class MigrateDiffTool implements DiffTool {
   @Override
   public void show(DiffRequest request) {
     DiffRequestChain newChain = MigrateToNewDiffUtil.convertRequestChain(request);
-    boolean isDialog = FrameDiffTool.shouldOpenDialog(request.getHints());
-    DiffManager.getInstance().showDiff(request.getProject(), newChain, new DiffDialogHints(isDialog));
+    WindowWrapper.Mode mode = FrameDiffTool.shouldOpenDialog(request.getHints()) ? WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
+    DiffManager.getInstance().showDiff(request.getProject(), newChain, new DiffDialogHints(mode));
   }
 
   @Override

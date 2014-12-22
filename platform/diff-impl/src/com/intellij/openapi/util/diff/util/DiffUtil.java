@@ -671,9 +671,10 @@ public class DiffUtil {
 
   @NotNull
   public static WindowWrapper.Mode getWindowMode(@NotNull DiffDialogHints hints) {
-    Boolean frame = hints.getFrame();
-    if (frame == null) frame = !(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog);
-    return frame ? WindowWrapper.Mode.FRAME : WindowWrapper.Mode.MODAL;
+    WindowWrapper.Mode mode = hints.getMode();
+    if (mode == null) mode = (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog) ?
+                             WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
+    return mode;
   }
 
   public static void closeWindow(@Nullable Window window, boolean modalOnly, boolean recursive) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.diff;
 
+import com.intellij.openapi.ui.WindowWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,22 +23,23 @@ import java.awt.*;
 
 public class DiffDialogHints {
   @NotNull public static final DiffDialogHints DEFAULT = new DiffDialogHints(null);
-  @NotNull public static final DiffDialogHints FRAME = new DiffDialogHints(true);
-  @NotNull public static final DiffDialogHints MODAL = new DiffDialogHints(false);
+  @NotNull public static final DiffDialogHints FRAME = new DiffDialogHints(WindowWrapper.Mode.FRAME);
+  @NotNull public static final DiffDialogHints MODAL = new DiffDialogHints(WindowWrapper.Mode.MODAL);
+  @NotNull public static final DiffDialogHints NON_MODAL = new DiffDialogHints(WindowWrapper.Mode.NON_MODAL);
 
   //
   // Impl
   //
 
-  @Nullable private final Boolean myFrame;
+  @Nullable private final WindowWrapper.Mode myMode;
   @Nullable private final Component myParent;
 
-  public DiffDialogHints(@Nullable Boolean frame) {
-    this(frame, null);
+  public DiffDialogHints(@Nullable WindowWrapper.Mode mode) {
+    this(mode, null);
   }
 
-  public DiffDialogHints(@Nullable Boolean frame, @Nullable Component parent) {
-    myFrame = frame;
+  public DiffDialogHints(@Nullable WindowWrapper.Mode mode, @Nullable Component parent) {
+    myMode = mode;
     myParent = parent;
   }
 
@@ -46,8 +48,8 @@ public class DiffDialogHints {
   //
 
   @Nullable
-  public Boolean getFrame() {
-    return myFrame;
+  public WindowWrapper.Mode getMode() {
+    return myMode;
   }
 
   @Nullable
