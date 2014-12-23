@@ -16,6 +16,7 @@
 
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1243,6 +1244,27 @@ public class XmlSerializerTest extends TestCase {
     checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" module=\"1\" ab=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" ab=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" ab=\"32\" module=\"\" />");
+  }
+
+  @SuppressWarnings("deprecation")
+  @Tag("b")
+  static class Bean3 {
+    public JDOMExternalizableStringList list = new JDOMExternalizableStringList();
+  }
+
+  @SuppressWarnings("deprecation")
+  public void testJDOMExternalizableStringList() throws IOException, JDOMException {
+    Bean3 bean = new Bean3();
+    bean.list.add("one");
+    bean.list.add("two");
+    bean.list.add("three");
+    doSerializerTest("<b>\n" +
+                     "  <list>\n" +
+                     "    <item value=\"one\" />\n" +
+                     "    <item value=\"two\" />\n" +
+                     "    <item value=\"three\" />\n" +
+                     "  </list>\n" +
+                     "</b>", bean, new SkipDefaultValuesSerializationFilters());
   }
 
   private static void checkSmartSerialization(@NotNull Bean2 bean, @NotNull String serialized) throws IOException, JDOMException {
