@@ -20,9 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -156,9 +158,9 @@ public class SvnBranchConfigurationNew {
   }
 
   @Nullable
-  public SVNURL getWorkingBranch(final SVNURL someUrl) throws SVNException {
+  public SVNURL getWorkingBranch(@NotNull SVNURL someUrl) throws SvnBindException {
     String baseUrl = getBaseUrl(someUrl.toString());
-    return baseUrl == null ? null : SVNURL.parseURIEncoded(baseUrl);
+    return baseUrl == null ? null : SvnUtil.createUrl(baseUrl);
   }
 
   // todo not checked

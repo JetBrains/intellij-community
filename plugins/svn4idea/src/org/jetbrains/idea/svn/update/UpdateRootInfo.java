@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
@@ -35,6 +36,7 @@ public class UpdateRootInfo {
     myUrl = info != null && info.getURL() != null ? info.getURL().toString() : "";
   }
 
+  @Nullable
   public SVNURL getUrl() {
     try {
       return SVNURL.parseURIEncoded(myUrl);
@@ -42,10 +44,6 @@ public class UpdateRootInfo {
     catch (SVNException e) {
       return null;
     }
-  }
-
-  public String getUrlAsString() {
-    return myUrl;
   }
 
   public SVNRevision getRevision() {

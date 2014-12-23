@@ -470,15 +470,32 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getBranchForUrl(final SvnVcs vcs, final VirtualFile vcsRoot, final String urlPath) {
+  public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull String urlValue) {
+    SVNURL url = null;
+
     try {
-      final SVNURL url = SVNURL.parseURIEncoded(urlPath);
-      SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
-      return configuration.getWorkingBranch(url);
+      url = createUrl(urlValue);
     }
-    catch (SVNException e) {
-      return null;
+    catch (SvnBindException e) {
+      LOG.debug(e);
     }
+
+    return url != null ? getBranchForUrl(vcs, vcsRoot, url) : null;
+  }
+
+  @Nullable
+  public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull SVNURL url) {
+    SVNURL result = null;
+    SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
+
+    try {
+      result = configuration.getWorkingBranch(url);
+    }
+    catch (SvnBindException e) {
+      LOG.debug(e);
+    }
+
+    return result;
   }
 
   public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull String url) {
