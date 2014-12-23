@@ -135,12 +135,9 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   }
 
   public void apply() throws ConfigurationException {
-    boolean modified = false;
     try {
-      modified = isModified();
       for (Configurable configurable : myConfigurables) {
         if (configurable.isModified()) {
-          modified = true;
           configurable.apply();
         }
       }
@@ -153,9 +150,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
       myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
     }
     finally {
-      if (modified) {
-        BuildManager.getInstance().clearState(myProject);
-      }
+      BuildManager.getInstance().clearState(myProject);
     }
   }
 
