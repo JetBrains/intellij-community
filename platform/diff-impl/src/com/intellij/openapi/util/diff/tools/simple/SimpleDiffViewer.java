@@ -390,14 +390,6 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   // Getters
   //
 
-  int getCurrentStartLine(@NotNull SimpleDiffChange change) {
-    return change.getStartLine(getCurrentSide());
-  }
-
-  int getCurrentEndLine(@NotNull SimpleDiffChange change) {
-    return change.getEndLine(getCurrentSide());
-  }
-
   @NotNull
   List<SimpleDiffChange> getDiffChanges() {
     return myDiffChanges;
@@ -448,7 +440,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
       if (line == editor.getDocument().getLineCount() - 1) return false;
 
       SimpleDiffChange lastChange = myDiffChanges.get(myDiffChanges.size() - 1);
-      if (getCurrentStartLine(lastChange) <= line) return false;
+      if (lastChange.getStartLine(getCurrentSide()) <= line) return false;
 
       return true;
     }
@@ -462,7 +454,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
       SimpleDiffChange next = null;
       for (int i = 0; i < myDiffChanges.size(); i++) {
         SimpleDiffChange change = myDiffChanges.get(i);
-        if (getCurrentStartLine(change) <= line) continue;
+        if (change.getStartLine(getCurrentSide()) <= line) continue;
 
         next = change;
         break;
@@ -470,7 +462,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       assert next != null;
 
-      DiffUtil.scrollToLineAnimated(editor, getCurrentStartLine(next));
+      DiffUtil.scrollToLineAnimated(editor, next.getStartLine(getCurrentSide()));
     }
 
     @Override
@@ -482,8 +474,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
       if (line == 0) return false;
 
       SimpleDiffChange firstChange = myDiffChanges.get(0);
-      if (getCurrentEndLine(firstChange) > line) return false;
-      if (getCurrentStartLine(firstChange) >= line) return false;
+      if (firstChange.getEndLine(getCurrentSide()) > line) return false;
+      if (firstChange.getStartLine(getCurrentSide()) >= line) return false;
 
       return true;
     }
@@ -499,7 +491,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         SimpleDiffChange change = myDiffChanges.get(i);
 
         SimpleDiffChange next = i < myDiffChanges.size() - 1 ? myDiffChanges.get(i + 1) : null;
-        if (next == null || getCurrentEndLine(next) > line || getCurrentStartLine(next) >= line) {
+        if (next == null || next.getEndLine(getCurrentSide()) > line || next.getStartLine(getCurrentSide()) >= line) {
           prev = change;
           break;
         }
@@ -507,7 +499,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       assert prev != null;
 
-      DiffUtil.scrollToLineAnimated(editor, getCurrentStartLine(prev));
+      DiffUtil.scrollToLineAnimated(editor, prev.getStartLine(getCurrentSide()));
     }
   }
 

@@ -39,11 +39,12 @@ import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.fragmented.FragmentedDiffSettingsHolder.FragmentedDiffSettings;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
-import com.intellij.openapi.util.diff.util.*;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
+import com.intellij.openapi.util.diff.tools.util.twoside.TwosideTextDiffViewer;
+import com.intellij.openapi.util.diff.util.*;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.DiffUtil.DocumentData;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -538,23 +539,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    if (!(request instanceof ContentDiffRequest)) return false;
-
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    if (contents.length != 2) return false;
-
-    if (!canShowContent(contents[0])) return false;
-    if (!canShowContent(contents[1])) return false;
-
-    if (contents[0] instanceof EmptyContent && contents[1] instanceof EmptyContent) return false;
-
-    return true;
-  }
-
-  public static boolean canShowContent(@NotNull DiffContent content) {
-    if (content instanceof EmptyContent) return true;
-    if (content instanceof DocumentContent) return true;
-    return false;
+    return TwosideTextDiffViewer.canShowRequest(context, request);
   }
 
   //
@@ -824,8 +809,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     }
 
     public void update() {
-      int changes = 0;
-      changes += myChangedBlockData == null ? 0 : myChangedBlockData.getDiffChanges().size();
+      int changes = myChangedBlockData == null ? 0 : myChangedBlockData.getDiffChanges().size();
       myTextLabel.setText(DiffBundle.message("diff.count.differences.status.text", changes));
     }
   }
