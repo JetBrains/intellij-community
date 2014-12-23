@@ -22,3 +22,4 @@ zielu.gittoolbox 13.1.0
 com.jetbrains.chronon 134.1221 134.1414 134.1618 135.1291 135.476 135.666
 ArgoUML.Integration 0.1.1 0.1.2
 IdeaServerPlugin 1.0 1.0.2 1.0.3 1.0.4 1.0.7 1.0.8
+copy.on.steroids 3.1
