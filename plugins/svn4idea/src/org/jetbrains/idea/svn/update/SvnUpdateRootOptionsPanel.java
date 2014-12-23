@@ -157,7 +157,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         }
         else {
           try {
-            myURLText.setText(SVNURL.parseURIEncoded(url).appendPath(branchRelativeUrl, true).toString());
+            myURLText.setText(SVNURL.parseURIEncoded(url).appendPath(branchRelativeUrl, true).toDecodedString());
           }
           catch (SVNException e) {
             LOG.error(e);
@@ -171,7 +171,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private void chooseUrl() {
     SVNURL selected = SelectLocationDialog.selectLocation(myVcs.getProject(), myURLText.getText());
     if (selected != null) {
-      myURLText.setText(selected.toString());
+      myURLText.setText(selected.toDecodedString());
     }
   }
 
@@ -199,10 +199,10 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     mySourceUrl = rootInfo.getUrl();
     SVNURL branchUrl = getBranchForUrl(mySourceUrl);
     if (branchUrl != null) {
-      myBranchField.setText(SVNPathUtil.tail(branchUrl.toString()));
+      myBranchField.setText(SVNPathUtil.tail(branchUrl.toDecodedString()));
     }
 
-    myURLText.setText(mySourceUrl != null ? mySourceUrl.toString() : "");
+    myURLText.setText(mySourceUrl != null ? mySourceUrl.toDecodedString() : "");
     myRevisionBox.setSelected(rootInfo.isUpdateToRevision());
     myRevisionText.setText(rootInfo.getRevision().toString());
     myUpdateToSpecificUrl.setSelected(false);
@@ -215,7 +215,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
     if (myUpdateToSpecificUrl.isSelected()) {
       try {
-        rootInfo.setUrl(SvnUtil.createUrl(myURLText.getText()));
+        rootInfo.setUrl(SvnUtil.createUrl(myURLText.getText(), false));
       }
       catch (SvnBindException e) {
         throw new ConfigurationException("Invalid url: " + myURLText.getText());

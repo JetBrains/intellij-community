@@ -718,8 +718,13 @@ public class SvnUtil {
 
   @NotNull
   public static SVNURL createUrl(@NotNull String url) throws SvnBindException {
+    return createUrl(url, true);
+  }
+
+  @NotNull
+  public static SVNURL createUrl(@NotNull String url, boolean encoded) throws SvnBindException {
     try {
-      SVNURL result = SVNURL.parseURIEncoded(url);
+      SVNURL result = encoded ? SVNURL.parseURIEncoded(url) : SVNURL.parseURIDecoded(url);
 
       // explicitly check if port corresponds to default port and recreate url specifying default port indicator
       if (result.hasPort() && hasDefaultPort(result)) {
