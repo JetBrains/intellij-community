@@ -1331,6 +1331,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s81_5,s82_9),
       1
     );
+    assertEquals(
+      "no exception on searching for diamond operator",
+      findMatchesCount(s81_5, "new 'Type<>('_Param)"),
+      0
+    );
+
     String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; }";
     String target1 = "java.util.Comparator 'a;";
     assertEquals(
