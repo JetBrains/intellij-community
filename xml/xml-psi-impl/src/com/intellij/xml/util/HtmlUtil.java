@@ -57,10 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -140,7 +137,7 @@ public class HtmlUtil {
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
-      final String tagName = control.name.toLowerCase();
+      final String tagName = control.name.toLowerCase(Locale.US);
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
       AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<String>(control.autoClosedBy));
     }
@@ -153,7 +150,7 @@ public class HtmlUtil {
   }
 
   public static boolean isSingleHtmlTag(String tagName) {
-    return EMPTY_TAGS_MAP.contains(tagName.toLowerCase());
+    return EMPTY_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isSingleHtmlTagL(String tagName) {
@@ -161,7 +158,7 @@ public class HtmlUtil {
   }
 
   public static boolean isOptionalEndForHtmlTag(String tagName) {
-    return OPTIONAL_END_TAGS_MAP.contains(tagName.toLowerCase());
+    return OPTIONAL_END_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isOptionalEndForHtmlTagL(String tagName) {
@@ -174,11 +171,11 @@ public class HtmlUtil {
   }
 
   public static boolean isSingleHtmlAttribute(String attrName) {
-    return EMPTY_ATTRS_MAP.contains(attrName.toLowerCase());
+    return EMPTY_ATTRS_MAP.contains(attrName.toLowerCase(Locale.US));
   }
 
   public static boolean isHtmlBlockTag(String tagName) {
-    return BLOCK_TAGS_MAP.contains(tagName.toLowerCase());
+    return BLOCK_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isPossiblyInlineTag(String tagName) {
@@ -190,7 +187,7 @@ public class HtmlUtil {
   }
 
   public static boolean isInlineTagContainer(String tagName) {
-    return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName.toLowerCase());
+    return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isInlineTagContainerL(String tagName) {
@@ -241,6 +238,21 @@ public class HtmlUtil {
     return HtmlDescriptorsTable.getHtmlTagNames();
   }
 
+  public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor) {
+    final String[] values = descriptor.getEnumeratedValues();
+    if (values == null) {
+      return false;
+    }
+    if (values.length == 2) {
+      return values[0].isEmpty() && values[1].equals(descriptor.getName())
+             || values[1].isEmpty() && values[0].equals(descriptor.getName());
+    }
+    else if (values.length == 1) {
+      return descriptor.getName().equals(values[0]);
+    }
+    return false;
+  }
+  
   public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.ATTRIBUTE_SHORT_NAME);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
