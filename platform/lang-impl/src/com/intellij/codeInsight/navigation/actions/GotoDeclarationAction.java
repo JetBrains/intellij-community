@@ -76,6 +76,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     try {
       int offset = editor.getCaretModel().getOffset();
       PsiElement[] elements = findAllTargetElements(project, editor, offset);
@@ -104,6 +105,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
+    }
+    finally {
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 

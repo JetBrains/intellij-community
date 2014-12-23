@@ -33,7 +33,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
@@ -125,19 +124,10 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   @Override
   public String calcValueName() {
-    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-    StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(getName());
-      if (classRenderer.SHOW_DECLARED_TYPE) {
-        buf.append(": ");
-        buf.append(classRenderer.renderTypeName(myField.typeName()));
-      }
-      return buf.toString();
+    if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_DECLARED_TYPE) {
+      return addDeclaredType(myField.typeName());
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    return super.calcValueName();
   }
 
   @Override

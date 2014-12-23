@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -71,6 +72,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private final MoveCallback myMoveCallback;
   protected @NotNull final MoveDestination myMoveDestination;
   protected NonCodeUsageInfo[] myNonCodeUsages;
+  private boolean myOpenInEditor;
 
   public MoveClassesOrPackagesProcessor(Project project,
                                         PsiElement[] elements,
@@ -201,6 +203,10 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   public PackageWrapper getTargetPackage() {
     return myMoveDestination.getTargetPackage();
+  }
+
+  public void setOpenInEditor(boolean openInEditor) {
+    myOpenInEditor = openInEditor;
   }
 
   protected static class ConflictsUsageInfo extends UsageInfo {
@@ -540,6 +546,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
 
       myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
+
+      if (myOpenInEditor) {
+        for (PsiElement element : myElementsToMove) {
+          if (element.getContainingFile() != null) {
+            EditorHelper.openInEditor(element);
+            break;
+          }
+        }
+      }
     }
     catch (IncorrectOperationException e) {
       myNonCodeUsages = new NonCodeUsageInfo[0];

@@ -9,6 +9,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -176,15 +177,30 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   public abstract String runningTargetName();
 
 
-  public void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
+  public void openSessionInDirectory(final @NotNull TerminalWidget terminalWidget, final @Nullable String directory) {
     // Create Server process
-    try {
-      final T process = createProcess(directory);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final T process = createProcess(directory);
 
-      createAndStartSession(terminalWidget, createTtyConnector(process));
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog(e.getMessage(), "Can't Open " + runningTargetName());
-    }
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              createAndStartSession(terminalWidget, createTtyConnector(process));
+            }
+          });
+        }
+        catch (final Exception e) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog(e.getMessage(), "Can't Open " + runningTargetName());
+            }
+          });
+        }
+      }
+    });
   }
 }

@@ -23,9 +23,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +42,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -61,12 +66,18 @@ public abstract class HttpRequests {
     @NotNull
     InputStream getInputStream() throws IOException;
 
+    @NotNull
+    BufferedReader getReader() throws IOException;
+
+    @NotNull
+    BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
+
     boolean isSuccessful() throws IOException;
 
     @NotNull
     File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
 
-    byte[] toBytes(@Nullable ProgressIndicator indicator) throws IOException;
+    byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
   public interface RequestProcessor<T> {
@@ -74,6 +85,17 @@ public abstract class HttpRequests {
   }
 
   protected HttpRequests() {
+  }
+
+  @NotNull
+  public static String createErrorMessage(@NotNull IOException e, @NotNull Request request) throws IOException {
+    URLConnection connection = request.getConnection();
+    String errorMessage = "Cannot download '" + connection.getURL().toExternalForm() + "': " + e.getMessage() + "\n, headers: " + connection.getHeaderFields();
+    if (connection instanceof HttpURLConnection) {
+      HttpURLConnection httpConnection = (HttpURLConnection)connection;
+      errorMessage += "\n, response: " + httpConnection.getResponseCode() + ' ' + httpConnection.getResponseMessage();
+    }
+    return errorMessage;
   }
 
   public abstract static class RequestBuilder {
@@ -86,6 +108,8 @@ public abstract class HttpRequests {
     private HostnameVerifier myHostnameVerifier;
     private String myUserAgent;
     private String myAccept;
+
+    private HTTPMethod myMethod;
 
     protected RequestBuilder(@NotNull String url) {
       myUrl = url;
@@ -175,11 +199,24 @@ public abstract class HttpRequests {
     }
 
     @NotNull
-    public byte[] toBytes(@Nullable final ProgressIndicator indicator) throws IOException {
+    public byte[] readBytes(@Nullable final ProgressIndicator indicator) throws IOException {
       return connect(new HttpRequests.RequestProcessor<byte[]>() {
         @Override
         public byte[] process(@NotNull HttpRequests.Request request) throws IOException {
-          return request.toBytes(indicator);
+          return request.readBytes(indicator);
+        }
+      });
+    }
+
+    @NotNull
+    public String readString(@Nullable final ProgressIndicator indicator) throws IOException {
+      return connect(new HttpRequests.RequestProcessor<String>() {
+        @Override
+        public String process(@NotNull HttpRequests.Request request) throws IOException {
+          int contentLength = request.getConnection().getContentLength();
+          BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 16 * 1024);
+          NetUtils.copyStreamContent(indicator, request.getInputStream(), out, contentLength);
+          return new String(out.getInternalBuffer(), 0, out.size(), getCharset(request));
         }
       });
     }
@@ -187,7 +224,22 @@ public abstract class HttpRequests {
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
+    if (ApplicationManager.getApplication() == null) {
+      try {
+        return ((HttpRequests)ReflectionUtil.newInstance(Class.forName("com.intellij.util.io.HttpRequestsImpl"))).createRequestBuilder(url);
+      }
+      catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+    }
     return ServiceManager.getService(HttpRequests.class).createRequestBuilder(url);
+  }
+
+  @NotNull
+  public static RequestBuilder head(@NotNull String url) {
+    RequestBuilder builder = request(url);
+    builder.myMethod = HTTPMethod.HEAD;
+    return builder;
   }
 
   protected abstract RequestBuilder createRequestBuilder(@NotNull String url);
@@ -204,10 +256,24 @@ public abstract class HttpRequests {
     }
   }
 
+  @NotNull
+  private static Charset getCharset(@NotNull Request request) throws IOException {
+    String contentEncoding = request.getConnection().getContentEncoding();
+    if (contentEncoding != null) {
+      try {
+        return Charset.forName(contentEncoding);
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return CharsetToolkit.UTF8_CHARSET;
+  }
+
   private static <T> T process(final RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
     class RequestImpl implements Request {
       private URLConnection myConnection;
       private InputStream myInputStream;
+      private BufferedReader myReader;
 
       @NotNull
       @Override
@@ -231,23 +297,45 @@ public abstract class HttpRequests {
         return myInputStream;
       }
 
+      @NotNull
+      @Override
+      public BufferedReader getReader() throws IOException {
+        return getReader(null);
+      }
+
+      @NotNull
+      @Override
+      public BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException {
+        if (myReader == null) {
+          InputStream inputStream = getInputStream();
+          if (indicator != null) {
+            int contentLength = getConnection().getContentLength();
+            if (contentLength > 0) {
+              //noinspection IOResourceOpenedButNotSafelyClosed
+              inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
+            }
+          }
+          myReader = new BufferedReader(new InputStreamReader(inputStream, getCharset(this)));
+        }
+        return myReader;
+      }
+
       @Override
       public boolean isSuccessful() throws IOException {
         URLConnection connection = getConnection();
         return !(connection instanceof HttpURLConnection) || ((HttpURLConnection)connection).getResponseCode() == 200;
       }
 
-      private void cleanup() throws IOException {
-        if (myInputStream != null) {
-          myInputStream.close();
-        }
+      private void cleanup() {
+        StreamUtil.closeStream(myInputStream);
+        StreamUtil.closeStream(myReader);
         if (myConnection instanceof HttpURLConnection) {
           ((HttpURLConnection)myConnection).disconnect();
         }
       }
 
       @NotNull
-      public byte[] toBytes(@Nullable ProgressIndicator indicator) throws IOException {
+      public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
         int contentLength = getConnection().getContentLength();
         BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 32 * 1024);
         NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
@@ -269,14 +357,7 @@ public abstract class HttpRequests {
           deleteFile = false;
         }
         catch (IOException e) {
-          URLConnection connection = getConnection();
-          String errorMessage = "Cannot download '" + builder.myUrl + ", headers: " + connection.getHeaderFields();
-          if (connection instanceof HttpURLConnection) {
-            HttpURLConnection httpConnection = (HttpURLConnection)connection;
-            errorMessage += "', response code: " + httpConnection.getResponseCode()
-                            + ", response message: " + httpConnection.getResponseMessage();
-          }
-          throw new IOException(errorMessage, e);
+          throw new IOException(createErrorMessage(e, this), e);
         }
         finally {
           try {
@@ -328,6 +409,10 @@ public abstract class HttpRequests {
 
       if (builder.myHostnameVerifier != null && connection instanceof HttpsURLConnection) {
         ((HttpsURLConnection)connection).setHostnameVerifier(builder.myHostnameVerifier);
+      }
+
+      if (builder.myMethod != null) {
+        ((HttpURLConnection)connection).setRequestMethod(builder.myMethod.name());
       }
 
       if (builder.myGzip) {

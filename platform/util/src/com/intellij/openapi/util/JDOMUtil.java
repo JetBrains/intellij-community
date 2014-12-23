@@ -271,7 +271,6 @@ public class JDOMUtil {
     }
 
     return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2);
-
   }
 
   private static boolean attListsEqual(@NotNull List a1, @NotNull List a2) {
@@ -303,7 +302,6 @@ public class JDOMUtil {
     }
 
     return w1.size() == w2.size() && w1.toString().equals(w2.toString());
-
   }
 
   @NotNull
@@ -313,14 +311,7 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(byte[] bytes) throws IOException, JDOMException {
-    final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-    try {
-      return loadDocument(inputStream);
-    }
-    finally {
-      inputStream.close();
-    }
-
+    return loadDocument(new ByteArrayInputStream(bytes));
   }
 
   private static SAXBuilder getSaxBuilder() {
@@ -342,18 +333,22 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(@NotNull CharSequence seq) throws IOException, JDOMException {
-    return getSaxBuilder().build(new CharSequenceReader(seq));
+    return loadDocument(new CharSequenceReader(seq));
+  }
+
+  @NotNull
+  public static Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
+    try {
+      return getSaxBuilder().build(reader);
+    }
+    finally {
+      reader.close();
+    }
   }
 
   @NotNull
   public static Document loadDocument(File file) throws JDOMException, IOException {
-    final BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-    try {
-      return loadDocument(inputStream);
-    }
-    finally {
-      inputStream.close();
-    }
+    return loadDocument(new BufferedInputStream(new FileInputStream(file)));
   }
 
   @NotNull
@@ -363,27 +358,17 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
-    InputStreamReader reader = new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET);
-    try {
-      return getSaxBuilder().build(reader);
-    }
-    finally {
-      reader.close();
-    }
+    return loadDocument(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
+  }
+
+  @Contract("null -> null; !null -> !null")
+  public static Element load(Reader reader) throws JDOMException, IOException {
+    return reader == null ? null : loadDocument(reader).detachRootElement();
   }
 
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
-    if (stream == null) {
-      return null;
-    }
-
-    try {
-      return loadDocument(stream).detachRootElement();
-    }
-    finally {
-      stream.close();
-    }
+    return stream == null ? null : loadDocument(stream).detachRootElement();
   }
 
   @NotNull

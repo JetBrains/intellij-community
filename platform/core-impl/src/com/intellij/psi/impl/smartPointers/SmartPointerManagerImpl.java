@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.MarkersHolderFileViewProvider;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.UnsafeWeakList;
 import org.jetbrains.annotations.NotNull;
@@ -143,6 +144,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
     if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
+      PsiUtilCore.ensureValid(element);
       LOG.error("Invalid element:" + element);
     }
     SmartPointerEx<E> pointer = getCachedPointer(element);

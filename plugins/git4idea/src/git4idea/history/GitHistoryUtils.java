@@ -40,9 +40,15 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.StopWatch;
-import git4idea.*;
+import git4idea.GitBranch;
+import git4idea.GitCommit;
+import git4idea.GitFileRevision;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
@@ -376,7 +382,15 @@ public class GitHistoryUtils {
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
-    h.endOptions();
+    GitVcs vcs = GitVcs.getInstance(project);
+    if (vcs != null && !GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(vcs.getVersion())) {
+      h.addParameters("--follow");
+      h.endOptions();
+      h.addRelativePaths(filePath);
+    }
+    else {
+      h.endOptions();
+    }
     final String output = h.run();
     final List<GitLogRecord> records = parser.parse(output);
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -23,6 +24,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -43,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
@@ -64,6 +68,7 @@ import java.util.Map;
     )}
 )
 public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element>, DumbAware {
+  private static final Logger LOG = Logger.getInstance(StudyTaskManager.class.getName());
   public static final String COURSE_ELEMENT = "courseElement";
   private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private static Map<String, String> myDeletedShortcuts = new HashMap<String, String>();
@@ -109,6 +114,10 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectOpened() {
+    if (myCourse != null && !myCourse.isUpToDate()) {
+      myCourse.setUpToDate(true);
+      updateCourse();
+    }
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
@@ -152,8 +161,9 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               }
               catch (Exception e) {
                 final ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
-                if (toolWindow == null)
+                if (toolWindow == null) {
                   toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.RIGHT, myProject, true);
+                }
               }
 
               final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(toolWindowId);
@@ -232,6 +242,51 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     });
   }
 
+  private void updateCourse() {
+    if (myCourse == null) {
+      return;
+    }
+    File resourceFile = new File(myCourse.getResourcePath());
+    if (!resourceFile.exists()) {
+      return;
+    }
+    final File courseDir = resourceFile.getParentFile();
+    if (!courseDir.exists()) {
+      return;
+    }
+    final File[] files = courseDir.listFiles();
+    if (files == null) return;
+    for (File file : files) {
+      if (file.getName().equals(StudyNames.TEST_HELPER)) {
+        copyFile(file, new File(myProject.getBasePath(), StudyNames.TEST_HELPER));
+      }
+      if (file.getName().startsWith(StudyNames.LESSON)) {
+        final File[] tasks = file.listFiles();
+        if (tasks == null) continue;
+        for (File task : tasks) {
+          final File taskDescr = new File(task, StudyNames.TASK_HTML);
+          final File taskTests = new File(task, StudyNames.TASK_TESTS);
+          copyFile(taskDescr, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), StudyNames.TASK_HTML));
+          copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), StudyNames.TASK_TESTS));
+        }
+      }
+    }
+
+    final Notification notification =
+      new Notification("Update.course", "Course update", "Current course is synchronized", NotificationType.INFORMATION);
+    notification.notify(myProject);
+  }
+
+  private static void copyFile(@NotNull final File from, @NotNull final File to) {
+    if (from.exists()) {
+      try {
+        FileUtil.copy(from, to);
+      }
+      catch (IOException e) {
+        LOG.warn("Failed to copy " + from.getName());
+      }
+    }
+  }
 
   private static void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString, boolean isAdditional) {
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();

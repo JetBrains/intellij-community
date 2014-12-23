@@ -429,6 +429,11 @@ public class FileTypesTest extends PlatformTestCase {
       public String getName() {
         return "Foo files";
       }
+
+      @Override
+      public boolean isReadOnly() {
+        return true; // prevents from serialization
+      }
     };
     FileTypeFactory factory = new FileTypeFactory() {
       @Override

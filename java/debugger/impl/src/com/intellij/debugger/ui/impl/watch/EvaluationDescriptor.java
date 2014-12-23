@@ -145,10 +145,6 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     }
   }
 
-  public String calcValueName() {
-    return getName();
-  }
-
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElement evaluationCode = getEvaluationCode(context);
     if(evaluationCode instanceof PsiExpressionCodeFragment) {

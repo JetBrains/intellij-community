@@ -45,6 +45,8 @@ class FTManager {
   private final String myName;
   private final boolean myInternal;
   private final String myTemplatesDir;
+  @Nullable
+  private final FTManager myOriginal;
   private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
   private final Map<String, FileTemplateBase> myTemplates = new HashMap<String, FileTemplateBase>();
   private volatile List<FileTemplateBase> mySortedTemplates;
@@ -58,9 +60,11 @@ class FTManager {
     myName = name;
     myInternal = internal;
     myTemplatesDir = defaultTemplatesDirName;
+    myOriginal = null;
   }
 
   FTManager(FTManager original) {
+    myOriginal = original;
     myName = original.getName();
     myTemplatesDir = original.myTemplatesDir;
     myInternal = original.myInternal;
@@ -265,6 +269,12 @@ class FTManager {
   }
 
   public void saveTemplates() {
+    if (myOriginal != null) {
+      myOriginal.myDefaultTemplates.clear();
+      myOriginal.myDefaultTemplates.addAll(myDefaultTemplates);
+      myOriginal.myTemplates.clear();
+      myOriginal.myTemplates.putAll(myTemplates);
+    }
     final File configRoot = getConfigRoot(true);
 
     final File[] files = configRoot.listFiles();

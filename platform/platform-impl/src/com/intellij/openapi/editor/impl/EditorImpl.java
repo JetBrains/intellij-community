@@ -54,8 +54,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -131,10 +130,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NonNls public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   public static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
+  public static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
-  public static final JBColor CURSOR_FOREGROUND = new JBColor(Gray._255, Gray._0);
+  public static final Color CURSOR_FOREGROUND_LIGHT = Gray._255;
+  public static final Color CURSOR_FOREGROUND_DARK = Gray._0;
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -250,6 +251,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myEmbeddedIntoDialogWrapper;
   @Nullable private CachedFontContent myLastCache;
   private int myDragOnGutterSelectionStartLine = -1;
+  private RangeMarker myDraggedRange;
 
   private boolean mySoftWrapsChanged;
 
@@ -288,9 +290,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final EditorSizeAdjustmentStrategy mySizeAdjustmentStrategy = new EditorSizeAdjustmentStrategy();
   private final Disposable myDisposable = Disposer.newDisposable();
 
+  private List<CaretState> myCaretStateBeforeLastPress;
   private LogicalPosition myLastMousePressedLocation;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
+  private boolean myRectangularSelectionInProgress;
   private boolean myLastPressCreatedCaret;
   // Set when the selection (normal or block one) initiated by mouse drag becomes noticeable (at least one character is selected).
   // Reset on mouse press event.
@@ -322,6 +326,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
+    boolean forceSoftWraps = !mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced(myDocument);
+    if (forceSoftWraps) {
+      mySettings.setUseSoftWrapsQuiet();
+      putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
+    }
 
     mySelectionModel = new SelectionModelImpl(this);
     myMarkupModel = new EditorMarkupModelImpl(this);
@@ -432,13 +441,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myPrimaryCaret != null) {
           myPrimaryCaret.updateVisualPosition(); // repainting old primary caret's row background
         }
-        updateCaretVisualPosition(e);
+        repaintCaretRegion(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret();
       }
 
       @Override
       public void caretRemoved(CaretEvent e) {
-        updateCaretVisualPosition(e);
+        repaintCaretRegion(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row background
         myPrimaryCaret.updateVisualPosition();
       }
@@ -547,6 +556,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private static boolean shouldSoftWrapsBeForced(Document document) {
+    int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
+    for (int i = 0; i < document.getLineCount(); i++) {
+      if (document.getLineEndOffset(i) - document.getLineStartOffset(i) > lineWidthLimit) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @NotNull
   static Color adjustThumbColor(@NotNull Color base, boolean dark) {
     return dark ? ColorUtil.withAlpha(ColorUtil.shift(base, 1.35), 0.5) 
@@ -557,10 +576,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return ColorUtil.isDark(getBackgroundColor());
   }
 
-  private static void updateCaretVisualPosition(CaretEvent e) {
+  private void repaintCaretRegion(CaretEvent e) {
     CaretImpl caretImpl = (CaretImpl)e.getCaret();
     if (caretImpl != null) {
-      caretImpl.updateVisualPosition(); // repainting caret region
+      caretImpl.updateVisualPosition();
+      if (caretImpl.hasSelection()) {
+        repaint(caretImpl.getSelectionStart(), caretImpl.getSelectionEnd());
+      }
     }
   }
 
@@ -4177,6 +4199,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragOnGutterSelectionStartLine = - 1;
     }
 
+    boolean columnSelectionDragEvent = isColumnSelectionDragEvent(e);
+    boolean toggleCaretEvent = isToggleCaretEvent(e);
+    boolean addRectangularSelectionEvent = isAddRectangularSelectionEvent(e);
+    boolean columnSelectionDrag = isColumnMode() && !myLastPressCreatedCaret || columnSelectionDragEvent;
+    if (!columnSelectionDragEvent && toggleCaretEvent && !myLastPressCreatedCaret) {
+      return; // ignoring drag after removing a caret
+    }
+
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
 
     int x = e.getX();
@@ -4214,10 +4244,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       VisualPosition oldVisLeadSelectionStart = leadCaret.getLeadSelectionPosition();
       int oldCaretOffset = getCaretModel().getOffset();
       LogicalPosition oldLogicalCaret = getCaretModel().getLogicalPosition();
-      boolean multiCaretSelection = myCaretModel.supportsMultipleCarets() && (isColumnMode() || e.isAltDown());
+      boolean multiCaretSelection = myCaretModel.supportsMultipleCarets() && (columnSelectionDrag || toggleCaretEvent);
       LogicalPosition newLogicalCaret = getLogicalPositionForScreenPos(x, y, !multiCaretSelection);
       if (multiCaretSelection) {
         myMultiSelectionInProgress = true;
+        myRectangularSelectionInProgress = columnSelectionDrag || addRectangularSelectionEvent;
         myTargetMultiSelectionPosition = xyToVisualPosition(new Point(Math.max(x, 0), Math.max(y, 0)));
         getScrollingModel().scrollTo(newLogicalCaret, ScrollType.RELATIVE);
       }
@@ -4235,15 +4266,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         selectionModel.setSelection(oldSelectionStart, newCaretOffset);
       }
       else {
-        if (isColumnMode() || e.isAltDown()) {
+        if (columnSelectionDrag || toggleCaretEvent) {
           if (myCaretModel.supportsMultipleCarets()) {
             if (myLastMousePressedLocation != null && (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation))) {
-              setBlockSelectionAndBlockActions(e, myLastMousePressedLocation, newLogicalCaret);
+              createSelectionTill(newLogicalCaret);
+              blockActionsIfNeeded(e, myLastMousePressedLocation, newLogicalCaret);
             }
           } else {
             final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
             if (blockStart != null) {
-              setBlockSelectionAndBlockActions(e, blockStart, getCaretModel().getLogicalPosition());
+              LogicalPosition endPosition = getCaretModel().getLogicalPosition();
+              mySelectionModel.setBlockSelection(blockStart, endPosition);
+              blockActionsIfNeeded(e, blockStart, endPosition);
             }
           }
         }
@@ -4312,10 +4346,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (caretShift != 0) {
               if (myMousePressedEvent != null) {
                 if (mySettings.isDndEnabled()) {
-                  boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
-                  mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
-                  getContentComponent().getTransferHandler()
-                    .exportAsDrag(getContentComponent(), e, isCopy ? TransferHandler.COPY : TransferHandler.MOVE);
+                  if (myDraggedRange == null) {
+                    boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
+                    mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
+                    getContentComponent().getTransferHandler()
+                      .exportAsDrag(getContentComponent(), e, isCopy ? TransferHandler.COPY : TransferHandler.MOVE);
+                  }
                 }
                 else {
                   selectionModel.removeSelection();
@@ -4332,6 +4368,46 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private void clearDraggedRange() {
+    if (myDraggedRange != null) {
+      myDraggedRange.dispose();
+      myDraggedRange = null;
+    }
+  }
+
+  private void createSelectionTill(@NotNull LogicalPosition targetPosition) {
+    List<CaretState> caretStates = new ArrayList<CaretState>(myCaretStateBeforeLastPress);
+    if (myRectangularSelectionInProgress) {
+      caretStates.addAll(EditorModificationUtil.calcBlockSelectionState(this, myLastMousePressedLocation, targetPosition));
+    }
+    else {
+      LogicalPosition selectionStart = myLastMousePressedLocation;
+      LogicalPosition selectionEnd = targetPosition;
+      if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+        int newCaretOffset = logicalPositionToOffset(targetPosition);
+        if (newCaretOffset < mySavedSelectionStart) {
+          selectionStart = offsetToLogicalPosition(mySavedSelectionEnd);
+          if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+            targetPosition = selectionEnd = visualToLogicalPosition(new VisualPosition(offsetToVisualLine(newCaretOffset), 0));
+          }
+        }
+        else {
+          selectionStart = offsetToLogicalPosition(mySavedSelectionStart);
+          int selectionEndOffset = Math.max(newCaretOffset, mySavedSelectionEnd);
+          if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+            targetPosition = selectionEnd = offsetToLogicalPosition(selectionEndOffset);
+          }
+          else if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+            targetPosition = selectionEnd = visualToLogicalPosition(new VisualPosition(offsetToVisualLine(selectionEndOffset) + 1, 0));
+          }
+        }
+        cancelAutoResetForMouseSelectionState();
+      }
+      caretStates.add(new CaretState(targetPosition, selectionStart, selectionEnd));
+    }
+    myCaretModel.setCaretsAndSelections(caretStates);
+  }
+  
   private Caret getLeadCaret() {
     List<Caret> allCarets = myCaretModel.getAllCarets();
     Caret firstCaret = allCarets.get(0);
@@ -4357,8 +4433,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void setBlockSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, @NotNull LogicalPosition startPosition, @NotNull LogicalPosition endPosition) {
-    mySelectionModel.setBlockSelection(startPosition, endPosition);
+  private void blockActionsIfNeeded(@NotNull MouseEvent mouseDragEvent, @NotNull LogicalPosition startPosition, @NotNull LogicalPosition endPosition) {
     if (myCurrentDragIsSubstantial || !startPosition.equals(endPosition)) {
       onSubstantialDrag(mouseDragEvent);
     }
@@ -4673,7 +4748,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           //todo[kb]
           //in case of italic style we paint out of the cursor block. Painting the symbol to a dedicated buffered image
           //solves the problem, but still looks weird because it leaves colored pixels at right.
-          g.setColor(CURSOR_FOREGROUND);
+          g.setColor(ColorUtil.isDark(caretColor) ? CURSOR_FOREGROUND_LIGHT : CURSOR_FOREGROUND_DARK);
           g.drawChars(new char[]{ch}, 0, 1, x, y + getAscent());
         }
       }
@@ -4801,7 +4876,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 myTargetMultiSelectionPosition = pos;
                 LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
                 getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
-                mySelectionModel.setBlockSelection(myLastMousePressedLocation, newLogicalPosition);
+                createSelectionTill(newLogicalPosition);
               }
               else if (mySelectionModel.hasBlockSelection()) {
                 mySelectionModel.setBlockSelection(mySelectionModel.getBlockStart(), getCaretModel().getLogicalPosition());
@@ -5521,7 +5596,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private void runMousePressedCommand(@NotNull final MouseEvent e) {
       myLastMousePressedLocation = xyToLogicalPosition(e.getPoint());
+      myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.<CaretState>emptyList();
       myCurrentDragIsSubstantial = false;
+      clearDraggedRange();
 
       final int clickOffset = logicalPositionToOffset(myLastMousePressedLocation);
       putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, clickOffset);
@@ -5831,33 +5908,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private static boolean isColumnSelectionDragEvent(@NotNull MouseEvent e) {
+    return e.isAltDown() && !e.isShiftDown() && !e.isControlDown() && !e.isMetaDown();
+  }
+
   private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET);
+    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
+  }
+
+  private static boolean isAddRectangularSelectionEvent(@NotNull MouseEvent e) {
+    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
   private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
-  }
-
-  private static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {
-    KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager == null) {
-      return false;
-    }
-    Keymap keymap = keymapManager.getActiveKeymap();
-    if (keymap == null) {
-      return false;
-    }
-    String[] actionIds = keymap.getActionIds(new MouseShortcut(e.getButton(), e.getModifiersEx(), 1));
-    if (actionIds == null) {
-      return false;
-    }
-    for (String id : actionIds) {
-      if (actionId.equals(id)) {
-        return true;
-      }
-    }
-    return false;
+    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
   }
 
   private void selectWordAtCaret(boolean honorCamelCase) {
@@ -6188,16 +6252,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static class MyTransferHandler extends TransferHandler {
-    private RangeMarker myDraggedRange = null;
-
-    private static Editor getEditor(@NotNull JComponent comp) {
+    private static EditorImpl getEditor(@NotNull JComponent comp) {
       EditorComponentImpl editorComponent = (EditorComponentImpl)comp;
       return editorComponent.getEditor();
     }
 
     @Override
     public boolean importData(@NotNull final JComponent comp, @NotNull final Transferable t) {
-      final EditorImpl editor = (EditorImpl)getEditor(comp);
+      final EditorImpl editor = getEditor(comp);
 
       final EditorDropHandler dropHandler = editor.getDropHandler();
       if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
@@ -6206,11 +6268,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (myDraggedRange != null && myDraggedRange.getStartOffset() <= caretOffset && caretOffset < myDraggedRange.getEndOffset()) {
+      if (editor.myDraggedRange != null
+          && editor.myDraggedRange.getStartOffset() <= caretOffset && caretOffset < editor.myDraggedRange.getEndOffset()) {
         return false;
       }
 
-      if (myDraggedRange != null) {
+      if (editor.myDraggedRange != null) {
         editor.getCaretModel().moveToOffset(editor.mySavedCaretOffsetForDNDUndoHack);
       }
 
@@ -6224,7 +6287,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 editor.getSelectionModel().removeSelection();
 
                 final int offset;
-                if (myDraggedRange != null) {
+                if (editor.myDraggedRange != null) {
                   editor.getCaretModel().moveToOffset(caretOffset);
                   offset = caretOffset;
                 }
@@ -6285,12 +6348,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     @Nullable
     protected Transferable createTransferable(JComponent c) {
-      Editor editor = getEditor(c);
+      EditorImpl editor = getEditor(c);
       String s = editor.getSelectionModel().getSelectedText();
       if (s == null) return null;
       int selectionStart = editor.getSelectionModel().getSelectionStart();
       int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-      myDraggedRange = editor.getDocument().createRangeMarker(selectionStart, selectionEnd);
+      editor.myDraggedRange = editor.getDocument().createRangeMarker(selectionStart, selectionEnd);
 
       return new StringSelection(s);
     }
@@ -6308,8 +6371,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       if (last != null && !(last instanceof EditorComponentImpl)) return;
 
-      final Editor editor = getEditor(source);
-      if (action == MOVE && !editor.isViewer() && myDraggedRange != null) {
+      final EditorImpl editor = getEditor(source);
+      if (action == MOVE && !editor.isViewer() && editor.myDraggedRange != null) {
         if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
           return;
         }
@@ -6322,7 +6385,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 Document doc = editor.getDocument();
                 doc.startGuardedBlockChecking();
                 try {
-                  doc.deleteString(myDraggedRange.getStartOffset(), myDraggedRange.getEndOffset());
+                  doc.deleteString(editor.myDraggedRange.getStartOffset(), editor.myDraggedRange.getEndOffset());
                 }
                 catch (ReadOnlyFragmentModificationException e) {
                   EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
@@ -6336,7 +6399,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }, EditorBundle.message("move.selection.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
       }
 
-      myDraggedRange = null;
+      editor.clearDraggedRange();
     }
   }
 

@@ -14,7 +14,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogFileFilter;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -157,7 +156,7 @@ public class BranchesPanel extends JPanel {
   }
 
   public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
-    myRoots = VcsLogFileFilter.getAllVisibleRoots(myDataHolder.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
+    myRoots = VcsLogUtil.getAllVisibleRoots(myDataHolder.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
     getParent().repaint();
   }
 

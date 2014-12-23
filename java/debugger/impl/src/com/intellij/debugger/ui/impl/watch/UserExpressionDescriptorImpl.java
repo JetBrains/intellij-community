@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,9 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 
@@ -53,22 +51,15 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     return myName;
   }
 
+  @Override
   public String calcValueName() {
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      buffer.append(getName());
-      buffer.append(": ");
-      final Value value = getValue();
-      if(value != null) {
-        final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-        buffer.append(classRenderer.renderTypeName(value.type().name()));
+    if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_DECLARED_TYPE) {
+      Value value = getValue();
+      if (value != null) {
+        return addDeclaredType(value.type().name());
       }
-
-      return buffer.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    return super.calcValueName();
   }
 
   protected PsiCodeFragment getEvaluationCode(final StackFrameContext context) throws EvaluateException {

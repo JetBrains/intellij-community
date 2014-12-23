@@ -141,6 +141,8 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(CodeStyleSettings settings) {
+    myMatchingRulesPanel.hideEditor();
+
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
     commonSettings.setArrangementSettings(createSettings());
     if (myForceArrangementPanel != null) {

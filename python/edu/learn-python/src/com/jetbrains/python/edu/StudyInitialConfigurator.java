@@ -19,11 +19,9 @@ import java.io.IOException;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
 public class StudyInitialConfigurator {
-  private static final Logger LOG = Logger.getInstance(StudyInitialConfigurator.class.getName()
-  );
+  private static final Logger LOG = Logger.getInstance(StudyInitialConfigurator.class.getName());
   @NonNls private static final String CONFIGURED_V1 = "StudyPyCharm.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V11 = "StudyPyCharm.InitialConfiguration1.1";
-
 
   /**
    * @noinspection UnusedParameters

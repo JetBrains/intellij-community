@@ -581,6 +581,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testMethod2Interface() throws Exception {
     doTest();
   }
+  
+  public void testMethod2InterfaceFromStatic() throws Exception {
+    doTest();
+  }
+
+  public void testMethod2InterfaceFromConstant() throws Exception {
+    doTest();
+  }
 
   public void testParamDetection() throws Exception {
     doTest();

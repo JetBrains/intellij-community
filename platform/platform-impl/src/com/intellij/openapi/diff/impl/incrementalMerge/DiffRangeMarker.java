@@ -15,48 +15,31 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
 
 class DiffRangeMarker implements RangeMarker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.DiffRangeMarker");
   private final RangeMarker myRangeMarker;
-  private RangeInvalidListener myListener;
 
   DiffRangeMarker(@NotNull Document document, @NotNull TextRange range, RangeInvalidListener listener) {
     myRangeMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset());
-    myListener = listener;
     if (listener != null) {
-      final InvalidRangeDispatcher notifier = InvalidRangeDispatcher.addClient(document);
-      document.addDocumentListener(new DocumentAdapter() {
-        @Override
-        public void beforeDocumentChange(DocumentEvent e) {
-          if (myListener != null) {
-            notifier.notify(new RangeInvalidListener() {
-              @Override
-              public void onRangeInvalidated() {
-                if (!isValid() && myListener != null) myListener.onRangeInvalidated();
-              }
-            });
-          }
-        }
-      });
+      InvalidRangeDispatcher.addClient(document, this, listener);
     }
   }
 
-  public void removeListener(RangeInvalidListener listener) {
-    LOG.assertTrue(myListener == listener || myListener == null);
-    myListener = null;
-    InvalidRangeDispatcher.removeClient(getDocument());
+  public void removeListener(@NotNull RangeInvalidListener listener) {
+    InvalidRangeDispatcher.removeClient(getDocument(), this, listener);
   }
 
   interface RangeInvalidListener {
@@ -65,43 +48,45 @@ class DiffRangeMarker implements RangeMarker {
 
   private static class InvalidRangeDispatcher extends DocumentAdapter {
     private static final Key<InvalidRangeDispatcher> KEY = Key.create("deferedNotifier");
-    private final ArrayList<RangeInvalidListener> myDeferedNotifications = new ArrayList<RangeInvalidListener>();
-    private int myClientCount = 0;
+    private final Map<DiffRangeMarker, RangeInvalidListener> myDiffRangeMarkers = ContainerUtil.newConcurrentMap();
 
     @Override
     public void documentChanged(DocumentEvent e) {
-      if (myDeferedNotifications.isEmpty()) return;
-      RangeInvalidListener[] notifications = myDeferedNotifications.toArray(new RangeInvalidListener[myDeferedNotifications.size()]);
-      myDeferedNotifications.clear();
-      for (RangeInvalidListener notification : notifications) {
-        notification.onRangeInvalidated();
+      for (Iterator<Map.Entry<DiffRangeMarker, RangeInvalidListener>> iterator = myDiffRangeMarkers.entrySet().iterator();
+           iterator.hasNext(); ) {
+        Map.Entry<DiffRangeMarker, RangeInvalidListener> entry = iterator.next();
+        DiffRangeMarker diffRangeMarker = entry.getKey();
+        RangeInvalidListener listener = entry.getValue();
+        if (!diffRangeMarker.isValid() && listener != null) {
+          listener.onRangeInvalidated();
+          iterator.remove();
+        }
       }
     }
 
-    public void notify(@NotNull RangeInvalidListener listener) {
-      myDeferedNotifications.add(listener);
-    }
-
-    private static InvalidRangeDispatcher addClient(@NotNull Document document) {
+    private static void addClient(@NotNull Document document,
+                                  @NotNull DiffRangeMarker marker,
+                                  @NotNull RangeInvalidListener listener) {
       InvalidRangeDispatcher notifier = document.getUserData(KEY);
       if (notifier == null) {
         notifier = new InvalidRangeDispatcher();
         document.putUserData(KEY, notifier);
         document.addDocumentListener(notifier);
       }
-      notifier.myClientCount++;
-      return notifier;
+      assert !notifier.myDiffRangeMarkers.containsKey(marker);
+      notifier.myDiffRangeMarkers.put(marker, listener);
     }
 
-    private static void removeClient(Document document) {
+    private static void removeClient(@NotNull Document document,
+                                     @NotNull DiffRangeMarker marker,
+                                     @NotNull RangeInvalidListener listener) {
       InvalidRangeDispatcher notifier = document.getUserData(KEY);
-      notifier.onClientRemoved(document);
+      assert notifier != null;
+      notifier.onClientRemoved(document, marker, listener);
     }
 
-    private void onClientRemoved(Document document) {
-      myClientCount--;
-      LOG.assertTrue(myClientCount >= 0);
-      if (myClientCount == 0) {
+    private void onClientRemoved(@NotNull Document document, @NotNull DiffRangeMarker marker, @NotNull RangeInvalidListener listener) {
+      if (myDiffRangeMarkers.remove(marker) == listener && myDiffRangeMarkers.isEmpty()) {
         document.putUserData(KEY, null);
         document.removeDocumentListener(this);
       }

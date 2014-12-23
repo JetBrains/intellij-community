@@ -40,6 +40,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.PlusMinus;
 import com.intellij.util.TreeNodeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.ui.UIUtil;
@@ -71,8 +72,8 @@ public class VcsStructureChooser extends DialogWrapper {
 
   @NotNull private final Project myProject;
   @NotNull private final List<VirtualFile> myInitialRoots;
-  @NotNull private final Map<VirtualFile, String> myModulesSet = new HashMap<VirtualFile, String>();
-  @NotNull private final Set<VirtualFile> mySelectedFiles = new HashSet<VirtualFile>();
+  @NotNull private final Map<VirtualFile, String> myModulesSet = ContainerUtil.newHashMap();
+  @NotNull private final Set<VirtualFile> mySelectedFiles = ContainerUtil.newHashSet();
 
   @NotNull private final SelectionManager mySelectionManager;
 

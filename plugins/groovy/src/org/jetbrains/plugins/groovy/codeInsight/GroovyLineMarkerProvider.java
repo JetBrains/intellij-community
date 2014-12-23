@@ -29,9 +29,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -72,7 +69,7 @@ import java.util.Set;
  * @author ilyas
  * Same logic as for Java LMP
  */
-public class GroovyLineMarkerProvider implements LineMarkerProvider, DumbAware {
+public class GroovyLineMarkerProvider implements LineMarkerProvider {
   protected final DaemonCodeAnalyzerSettings myDaemonSettings;
   protected final EditorColorsManager myColorsManager;
 
@@ -87,13 +84,7 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider, DumbAware {
     if (parent instanceof PsiNameIdentifierOwner) {
       if (parent instanceof GrField && element == ((GrField)parent).getNameIdentifierGroovy()) {
         for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)parent)) {
-          MethodSignatureBackedByPsiMethod superSignature = null;
-          try {
-            superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
-          }
-          catch (IndexNotReadyException e) {
-            //some searchers (EJB) require indices. What shall we do?
-          }
+          MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
           if (superSignature != null) {
             PsiMethod superMethod = superSignature.getMethod();
             boolean overrides = method.hasModifierProperty(PsiModifier.ABSTRACT) == superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ||
@@ -201,10 +192,6 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider, DumbAware {
 
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
-    if (elements.isEmpty() || DumbService.getInstance(elements.get(0).getProject()).isDumb()) {
-      return;
-    }
-
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
@@ -240,24 +227,20 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider, DumbAware {
     }
 
     for (final PsiClass aClass : classes) {
-      try {
-        AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
-          @Override
-          public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-            ProgressManager.checkCanceled();
+      AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
+        @Override
+        public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
+          ProgressManager.checkCanceled();
 
-            final PsiMethod superMethod = pair.getFirst();
-            if (isCorrectTarget(superMethod) && isCorrectTarget(pair.getSecond())) {
-              if (methods.remove(superMethod)) {
-                overridden.add(PsiImplUtil.handleMirror(superMethod));
-              }
+          final PsiMethod superMethod = pair.getFirst();
+          if (isCorrectTarget(superMethod) && isCorrectTarget(pair.getSecond())) {
+            if (methods.remove(superMethod)) {
+              overridden.add(PsiImplUtil.handleMirror(superMethod));
             }
-            return !methods.isEmpty();
           }
-        });
-      }
-      catch (IndexNotReadyException ignored) {
-      }
+          return !methods.isEmpty();
+        }
+      });
     }
 
     for (PsiElement element : overridden) {

@@ -53,6 +53,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     super(project, COMMAND_NAME, PROGRESS_TEXT, processChangedTextOnly);
   }
 
+  public ReformatCodeProcessor(AbstractLayoutCodeProcessor processor, boolean processChangedTextOnly) {
+    super(processor, COMMAND_NAME, PROGRESS_TEXT);
+    setProcessChangedTextOnly(processChangedTextOnly);
+  }
+
   public ReformatCodeProcessor(Project project, Module module, boolean processChangedTextOnly) {
     super(project, module, COMMAND_NAME, PROGRESS_TEXT, processChangedTextOnly);
   }

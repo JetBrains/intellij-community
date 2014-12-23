@@ -30,6 +30,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +139,7 @@ class VisiblePackBuilder {
       filteredByBranch = getMatchingHeads(refs, branchFilter);
     }
 
-    Set<Integer> filteredByFile = getMatchingHeads(refs, VcsLogFileFilter
+    Set<Integer> filteredByFile = getMatchingHeads(refs, VcsLogUtil
       .getAllVisibleRoots(roots, rootFilter, structureFilter));
 
     if (filteredByBranch == null) return filteredByFile;
@@ -231,7 +232,7 @@ class VisiblePackBuilder {
                                                          @NotNull VcsLogFilterCollection filterCollection,
                                                          int maxCount) throws VcsException {
     Set<VirtualFile> visibleRoots =
-      VcsLogFileFilter.getAllVisibleRoots(providers.keySet(), filterCollection.getRootFilter(), filterCollection.getStructureFilter());
+      VcsLogUtil.getAllVisibleRoots(providers.keySet(), filterCollection.getRootFilter(), filterCollection.getStructureFilter());
 
     Collection<List<TimedVcsCommit>> logs = ContainerUtil.newArrayList();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
@@ -245,7 +246,7 @@ class VisiblePackBuilder {
 
       VcsLogFilterCollection rootSpecificCollection = filterCollection;
       if (rootSpecificCollection.getStructureFilter() != null) {
-        rootSpecificCollection = replaceStructureFilter(filterCollection, new HashSet<VirtualFile>(VcsLogFileFilter.getFilteredFilesForRoot(root, filterCollection)));
+        rootSpecificCollection = replaceStructureFilter(filterCollection, ContainerUtil.newHashSet(VcsLogUtil.getFilteredFilesForRoot(root, filterCollection)));
       }
 
       List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);

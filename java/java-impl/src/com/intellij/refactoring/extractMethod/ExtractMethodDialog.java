@@ -22,7 +22,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -216,7 +215,9 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
 
     myVisibilityPanel = createVisibilityPanel();
     final JPanel visibilityAndReturnType = new JPanel(new BorderLayout(2, 0));
-    visibilityAndReturnType.add(myVisibilityPanel, BorderLayout.WEST);
+    if (!myTargetClass.isInterface()) {
+      visibilityAndReturnType.add(myVisibilityPanel, BorderLayout.WEST);
+    }
     final JPanel returnTypePanel = createReturnTypePanel();
     if (returnTypePanel != null) {
       visibilityAndReturnType.add(returnTypePanel, BorderLayout.EAST);
@@ -430,7 +431,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   }
 
   public String getVisibility() {
-    return myVisibilityPanel.getVisibility();
+    return myTargetClass.isInterface() ? PsiModifier.PUBLIC : myVisibilityPanel.getVisibility();
   }
 
 
@@ -525,7 +526,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       buffer.append(StringUtil.getShortName(myNullness == Nullness.NULLABLE ? nullManager.getDefaultNullable() : nullManager.getDefaultNotNull()));
       buffer.append("\n");
     }
-    final String visibilityString = VisibilityUtil.getVisibilityString(myVisibilityPanel.getVisibility());
+    final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
     buffer.append(visibilityString);
     if (buffer.length() > 0) {
       buffer.append(" ");

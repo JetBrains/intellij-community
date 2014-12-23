@@ -79,6 +79,9 @@ public abstract class FileTemplateManager{
 
   public abstract FileTemplate[] getTemplates(String category);
 
+  /**
+   *  Returns all templates from "Default" category.
+   */
   @NotNull
   public abstract FileTemplate[] getAllTemplates();
 
@@ -96,7 +99,7 @@ public abstract class FileTemplateManager{
   }
 
   /**
-   * Creates a new template with specified name.
+   * Creates a new template with specified name, and adds it to the list of default templates.
    * @return created template
    */
   @NotNull 

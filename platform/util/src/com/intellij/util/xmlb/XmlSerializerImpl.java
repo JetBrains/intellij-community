@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.*;
@@ -163,6 +164,10 @@ class XmlSerializerImpl {
       }
       if (Element.class.isAssignableFrom(aClass)) {
         return new JDOMElementBinding(accessor);
+      }
+      //noinspection deprecation
+      if (JDOMExternalizableStringList.class == aClass) {
+        return new JDOMExternalizableStringListBinding(accessor);
       }
     }
     if (Date.class.isAssignableFrom(aClass)) {

@@ -26,13 +26,11 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,19 +97,10 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Override
   public String calcValueName() {
-    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-    StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(getName());
-      if (classRenderer.SHOW_DECLARED_TYPE) {
-        buf.append(": ");
-        buf.append(classRenderer.renderTypeName(myTypeName));
-      }
-      return buf.toString();
+    if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_DECLARED_TYPE) {
+      return addDeclaredType(myTypeName);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    return super.calcValueName();
   }
 
   @Override

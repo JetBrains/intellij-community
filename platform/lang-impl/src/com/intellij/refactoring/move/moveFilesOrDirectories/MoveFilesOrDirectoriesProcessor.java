@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
@@ -189,6 +190,10 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       }
 
       retargetUsages(usages, oldToNewMap);
+
+      if (MoveFilesOrDirectoriesDialog.isOpenInEditor() && !movedFiles.isEmpty()) {
+        EditorHelper.openInEditor(movedFiles.get(0));
+      }
 
       // Perform CVS "add", "remove" commands on moved files.
 

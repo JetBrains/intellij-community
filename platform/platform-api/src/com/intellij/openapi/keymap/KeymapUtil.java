@@ -387,4 +387,39 @@ public class KeymapUtil {
     }
     return false;
   }
+
+  /**
+   * Checks whether mouse event's button and modifiers match a shortcut configured in active keymap for given action id.
+   * Only shortcuts having click count of 1 can be matched, mouse event's click count is ignored.
+   */
+  public static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager == null) {
+      return false;
+    }
+    Keymap keymap = keymapManager.getActiveKeymap();
+    if (keymap == null) {
+      return false;
+    }
+    int button = e.getButton();
+    int modifiers = e.getModifiersEx();
+    if (button == MouseEvent.NOBUTTON && e.getID() == MouseEvent.MOUSE_DRAGGED) {
+      // mouse drag events don't have button field set due to some reason
+      if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
+        button = MouseEvent.BUTTON1;
+      } else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0) {
+        button = MouseEvent.BUTTON2;
+      }
+    }
+    String[] actionIds = keymap.getActionIds(new MouseShortcut(button, modifiers, 1));
+    if (actionIds == null) {
+      return false;
+    }
+    for (String id : actionIds) {
+      if (actionId.equals(id)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

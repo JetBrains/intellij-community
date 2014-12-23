@@ -521,7 +521,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         @Override
         public FetchResult process(@NotNull HttpRequests.Request request) throws IOException {
           FetchResult result = new FetchResult();
-          result.bytes = request.toBytes(indicator);
+          result.bytes = request.readBytes(indicator);
           result.contentType = request.getConnection().getContentType();
           return result;
         }
