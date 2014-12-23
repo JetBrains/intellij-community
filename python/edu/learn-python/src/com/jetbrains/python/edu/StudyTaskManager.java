@@ -256,15 +256,18 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     }
     final File[] files = courseDir.listFiles();
     if (files == null) return;
-    for (File lesson : files) {
-      if (lesson.getName().startsWith(StudyNames.LESSON)) {
-        final File[] tasks = lesson.listFiles();
+    for (File file : files) {
+      if (file.getName().equals(StudyNames.TEST_HELPER)) {
+        copyFile(file, new File(myProject.getBasePath(), StudyNames.TEST_HELPER));
+      }
+      if (file.getName().startsWith(StudyNames.LESSON)) {
+        final File[] tasks = file.listFiles();
         if (tasks == null) continue;
         for (File task : tasks) {
           final File taskDescr = new File(task, StudyNames.TASK_HTML);
           final File taskTests = new File(task, StudyNames.TASK_TESTS);
-          copyFile(lesson, task, taskDescr, StudyNames.TASK_HTML);
-          copyFile(lesson, task, taskTests, StudyNames.TASK_TESTS);
+          copyFile(taskDescr, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), StudyNames.TASK_HTML));
+          copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), StudyNames.TASK_TESTS));
         }
       }
     }
@@ -274,14 +277,13 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     notification.notify(myProject);
   }
 
-  private void copyFile(@NotNull final File lesson, @NotNull final File task, @NotNull final File taskDescr,
-                        @NotNull final String fileName) {
-    if (taskDescr.exists()) {
+  private static void copyFile(@NotNull final File from, @NotNull final File to) {
+    if (from.exists()) {
       try {
-        FileUtil.copy(taskDescr, new File(new File(new File(myProject.getBasePath(), lesson.getName()), task.getName()), fileName));
+        FileUtil.copy(from, to);
       }
       catch (IOException e) {
-        LOG.warn("Failed to copy " + lesson.getName() + " " + task.getName());
+        LOG.warn("Failed to copy " + from.getName());
       }
     }
   }
