@@ -135,13 +135,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           @Override
           public void labelChanged() {
             Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor);
-            final String[] strings = splitValue(myValueDescriptor.getValueLabel());
-            final String value = StringUtil.notNullize(strings[1]);
-            String type = strings[0];
+            final String value = getValueString();
             XValuePresentation presentation;
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             EvaluateException exception = myValueDescriptor.getEvaluateException();
-            presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null, myValueDescriptor);
+            presentation = new JavaValuePresentation(value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
 
             if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
               node.setFullValueEvaluator(((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer()).getFullValueEvaluator(myEvaluationContext, myValueDescriptor));
@@ -158,11 +156,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
                     @Override
                     public void contextAction() throws Exception {
-                      final String valueAsString = myValueDescriptor.getValueText();
-                      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+                      final ValueDescriptorImpl fullValueDescriptor = myValueDescriptor.getFullValueDescriptor();
+                      fullValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
                         @Override
-                        public void run() {
-                          callback.evaluated(valueAsString);
+                        public void labelChanged() {
+                          callback.evaluated(fullValueDescriptor.getValueText());
                         }
                       });
                     }
@@ -197,7 +195,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @Nullable
     @Override
     public String getType() {
-      return myType;
+      return StringUtil.nullize(myType);
     }
 
     @Override
@@ -276,18 +274,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     }
   }
 
+  @NotNull
   String getValueString() {
-    return splitValue(myValueDescriptor.getValueLabel())[1];
-  }
-
-  private static String[] splitValue(String value) {
-    if (StringUtil.startsWithChar(value, '{')) {
-      int end = value.indexOf('}');
-      if (end > 0) {
-        return new String[]{value.substring(1, end), value.substring(end+1)};
-      }
-    }
-    return new String[]{null, value};
+    return myValueDescriptor.getValueText();
   }
 
   private int currentStart = 0;

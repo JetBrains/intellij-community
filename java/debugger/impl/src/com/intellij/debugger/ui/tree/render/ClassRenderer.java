@@ -37,7 +37,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -112,42 +111,31 @@ public class ClassRenderer extends NodeRendererImpl{
     final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
     final Value value = valueDescriptor.getValue();
     if (value instanceof ObjectReference) {
-      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-      try {
-        if (value instanceof StringReference) {
-          // no need to add quotes and escape characters here, XValueTextRendererImpl handles the presentation
-          //buf.append('\"');
-          //buf.append(DebuggerUtils.convertToPresentationString(((StringReference)value).value()));
-          //buf.append('\"');
-          buf.append(((StringReference)value).value());
-        }
-        else if (value instanceof ClassObjectReference) {
-          ReferenceType type = ((ClassObjectReference)value).reflectedType();
-          buf.append((type != null)?type.name():"{...}");
-        }
-        else {
-          final ObjectReference objRef = (ObjectReference)value;
-          final Type type = objRef.type();
-          if (type instanceof ClassType && ((ClassType)type).isEnum()) {
-            final String name = getEnumConstantName(objRef, (ClassType)type);
-            if (name != null) {
-              buf.append(name);
-            }
-            else {
-              buf.append(type.name());
-            }
+      if (value instanceof StringReference) {
+        return ((StringReference)value).value();
+      }
+      else if (value instanceof ClassObjectReference) {
+        ReferenceType type = ((ClassObjectReference)value).reflectedType();
+        return (type != null) ? type.name() : "{...}";
+      }
+      else {
+        final ObjectReference objRef = (ObjectReference)value;
+        final Type type = objRef.type();
+        if (type instanceof ClassType && ((ClassType)type).isEnum()) {
+          final String name = getEnumConstantName(objRef, (ClassType)type);
+          if (name != null) {
+            return name;
           }
           else {
-            buf.append(ValueDescriptorImpl.getIdLabel(objRef));
+            return type.name();
           }
         }
-        return buf.toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(buf);
+        else {
+          return "";
+        }
       }
     }
-    else if(value == null) {
+    else if (value == null) {
       //noinspection HardCodedStringLiteral
       return "null";
     }
