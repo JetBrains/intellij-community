@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -107,6 +108,8 @@ public abstract class HttpRequests {
     private HostnameVerifier myHostnameVerifier;
     private String myUserAgent;
     private String myAccept;
+
+    private HTTPMethod myMethod;
 
     protected RequestBuilder(@NotNull String url) {
       myUrl = url;
@@ -230,6 +233,13 @@ public abstract class HttpRequests {
       }
     }
     return ServiceManager.getService(HttpRequests.class).createRequestBuilder(url);
+  }
+
+  @NotNull
+  public static RequestBuilder head(@NotNull String url) {
+    RequestBuilder builder = request(url);
+    builder.myMethod = HTTPMethod.HEAD;
+    return builder;
   }
 
   protected abstract RequestBuilder createRequestBuilder(@NotNull String url);
@@ -399,6 +409,10 @@ public abstract class HttpRequests {
 
       if (builder.myHostnameVerifier != null && connection instanceof HttpsURLConnection) {
         ((HttpsURLConnection)connection).setHostnameVerifier(builder.myHostnameVerifier);
+      }
+
+      if (builder.myMethod != null) {
+        ((HttpURLConnection)connection).setRequestMethod(builder.myMethod.name());
       }
 
       if (builder.myGzip) {
