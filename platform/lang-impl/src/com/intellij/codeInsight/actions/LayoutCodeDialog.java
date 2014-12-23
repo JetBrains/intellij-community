@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.codeInsight.actions.ReformatCodeAction.getLastSavedRearrangeCbState;
-
 public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions {
   @NotNull  private final Project myProject;
   @NotNull private final PsiFile myFile;
@@ -40,10 +38,7 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
   private final boolean myTextSelected;
 
   private final String myHelpId;
-
-  private boolean myLastRunOptimizeImportsWasEnabled;
-  private boolean myLastRunOnlyVcsChangedTextEnabled;
-  private boolean myLastRunRearrangeWasEnabled;
+  private final LastRunReformatCodeOptionsProvider myLastRunOptions;
 
   private JPanel myButtonsPanel;
 
@@ -67,9 +62,7 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
     myTextSelected = textSelected;
     myHelpId = helpId;
 
-    myLastRunOptimizeImportsWasEnabled = ReformatFilesDialog.isOptmizeImportsOptionOn();
-    myLastRunRearrangeWasEnabled = getLastSavedRearrangeCbState(project, file);
-    myLastRunOnlyVcsChangedTextEnabled = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false);
+    myLastRunOptions = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
 
     setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
     setTitle("Reformat File: " + file.getName());
@@ -118,11 +111,14 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
     if (myTextSelected) {
       mySelectedTextRadioButton.setSelected(true);
     }
-    else if (myLastRunOnlyVcsChangedTextEnabled && fileHasChanges) {
-      myOnlyVCSChangedTextRb.setSelected(true);
-    }
     else {
-      myWholeFileRadioButton.setSelected(true);
+      boolean lastRunProcessedChangedText = myLastRunOptions.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
+      if (lastRunProcessedChangedText && fileHasChanges) {
+        myOnlyVCSChangedTextRb.setSelected(true);
+      }
+      else {
+        myWholeFileRadioButton.setSelected(true);
+      }
     }
   }
 
@@ -130,13 +126,13 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
     boolean canOptimizeImports = !LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty();
     myOptimizeImportsCb.setVisible(canOptimizeImports);
     if (canOptimizeImports) {
-      myOptimizeImportsCb.setSelected(myLastRunOptimizeImportsWasEnabled);
+      myOptimizeImportsCb.setSelected(myLastRunOptions.isOptimizeImports());
     }
 
     boolean canRearrangeCode = Rearranger.EXTENSION.forLanguage(myFile.getLanguage()) != null;
     myRearrangeCodeCb.setVisible(canRearrangeCode);
     if (canRearrangeCode) {
-      myRearrangeCodeCb.setSelected(myLastRunRearrangeWasEnabled);
+      myRearrangeCodeCb.setSelected(myLastRunOptions.isRearrangeCode(myFile.getLanguage()));
     }
   }
 
@@ -153,16 +149,14 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
 
   private void saveCurrentConfiguration() {
     if (myOptimizeImportsCb.isEnabled()) {
-      String optimizeImports = Boolean.toString(isOptimizeImports());
-      PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, optimizeImports);
+      myLastRunOptions.saveOptimizeImportsState(isOptimizeImports());
     }
     if (myRearrangeCodeCb.isEnabled()) {
-      LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, myFile.getLanguage(), isRearrangeCode());
+      myLastRunOptions.saveRearrangeState(myFile.getLanguage(), isRearrangeCode());
     }
 
     if (!mySelectedTextRadioButton.isSelected()) {
-      String formatVcsChangedRegions = Boolean.toString(myOnlyVCSChangedTextRb.isSelected());
-      PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, formatVcsChangedRegions);
+      myLastRunOptions.saveProcessVcsChangedTextState(myOnlyVCSChangedTextRb.isSelected());
     }
   }
 

@@ -318,14 +318,8 @@ class AdditionalEventInfo {
 }
 
 class MockReformatFileSettings implements ReformatFilesOptions {
-  private boolean myProcessWholeFile;
-  private boolean myProcessDirectories;
-  private boolean myRearrange;
-  private boolean myIncludeSubdirs;
   private boolean myOptimizeImports;
-  private boolean myProcessOnlyChangedText;
-  private boolean myIsOK = true;
-  private TextRangeType myTextRangeType;
+  private boolean myIncludeSubdirs;
 
   @Nullable
   @Override
@@ -339,28 +333,14 @@ class MockReformatFileSettings implements ReformatFilesOptions {
     return null;
   }
 
-  MockReformatFileSettings setProcessWholeFile(boolean processWholeFile) {
-    myProcessWholeFile = processWholeFile;
-    return this;
-  }
-
-  MockReformatFileSettings setProcessDirectory(boolean processDirectories) {
-    myProcessDirectories = processDirectories;
-    return this;
-  }
-
   @Override
   public TextRangeType getTextRangeType() {
-    return null;
-  }
-
-  public void setTextRangeType(TextRangeType textRangeType) {
-    myTextRangeType = textRangeType;
+    return TextRangeType.WHOLE_FILE;
   }
 
   @Override
   public boolean isRearrangeCode() {
-    return myRearrange;
+    return false;
   }
 
   @Override
@@ -371,12 +351,6 @@ class MockReformatFileSettings implements ReformatFilesOptions {
   @NotNull
   MockReformatFileSettings setOptimizeImports(boolean optimizeImports) {
     myOptimizeImports = optimizeImports;
-    return this;
-  }
-
-  @NotNull
-  MockReformatFileSettings setRearrange(boolean rearrange) {
-    myRearrange = rearrange;
     return this;
   }
 

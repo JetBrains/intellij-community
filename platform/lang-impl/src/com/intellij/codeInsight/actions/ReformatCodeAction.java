@@ -135,9 +135,17 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
     }
 
-    final boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
-    boolean processChangedTextOnly = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false);
-    final boolean rearrangeEntries = getLastSavedRearrangeCbState(project, file);
+    LayoutCodeOptions lastRunOptions = getLastRunReformatCodeOptions();
+    TextRangeType processingType = lastRunOptions.getTextRangeType();
+    final boolean optimizeImports = lastRunOptions.isOptimizeImports();
+    final boolean rearrangeEntries;
+    if (file != null && lastRunOptions instanceof LastRunReformatCodeOptionsProvider) {
+      LastRunReformatCodeOptionsProvider options = (LastRunReformatCodeOptionsProvider)lastRunOptions;
+      rearrangeEntries = options.isRearrangeCode(file.getLanguage());
+    }
+    else {
+      rearrangeEntries = lastRunOptions.isRearrangeCode();
+    }
 
     if (file == null && dir != null) {
       DirectoryFormattingOptions options = getDirectoryFormattingOptions(project, dir);
@@ -147,27 +155,25 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       return;
     }
 
+    //todo let when editor == null proceed and perform
     if (file == null || editor == null) return;
 
     TextRange range = null;
-    TextRangeType textRangeType;
     if (hasSelection) {
-      processChangedTextOnly = false;
-      textRangeType = TextRangeType.SELECTED_TEXT;
+      processingType = TextRangeType.SELECTED_TEXT;
       SelectionModel model = editor.getSelectionModel();
       range = TextRange.create(model.getSelectionStart(), model.getSelectionEnd());
     }
-    else if (processChangedTextOnly) {
-      textRangeType = TextRangeType.VCS_CHANGED_TEXT;
-
+    else if (processingType == TextRangeType.VCS_CHANGED_TEXT) {
       if (isChangeNotTrackedForFile(project, file)) {
-        textRangeType = TextRangeType.WHOLE_FILE;
-        processChangedTextOnly = false;
+        processingType = TextRangeType.WHOLE_FILE;
       }
     }
     else {
-      textRangeType = TextRangeType.WHOLE_FILE;
+      processingType = TextRangeType.WHOLE_FILE;
     }
+
+    boolean processChangedTextOnly = processingType == TextRangeType.VCS_CHANGED_TEXT;
 
     AbstractLayoutCodeProcessor processor;
     if (optimizeImports && range == null) {
@@ -186,7 +192,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     final CharSequence charSeqBefore = document != null ? document.getImmutableCharSequence() : null;
 
     final PsiFile finalFile = file;
-    final TextRangeType finalTextRangeType = textRangeType;
+    final TextRangeType finalTextRangeType = processingType;
 
     //todo show it if available options =)
 
@@ -510,13 +516,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return dialog;
   }
 
-  public static boolean getLastSavedRearrangeCbState(@NotNull Project project, @Nullable PsiFile file) {
-    if (file != null) {
-      return LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(project, file.getLanguage());
-    }
-    return LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(project);
-  }
-
   @TestOnly
   protected static void setTestOptions(ReformatFilesOptions options) {
     myTestOptions = options;
@@ -529,6 +528,13 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       if (virtualFile.isDirectory()) return false;
     }
     return true;
+  }
+
+  public LayoutCodeOptions getLastRunReformatCodeOptions() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myTestOptions;
+    }
+    return new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
   }
 }
 

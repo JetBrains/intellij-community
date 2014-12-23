@@ -200,14 +200,17 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   private static class OptimizeImportsDialog extends DialogWrapper {
-    private final String myText;
     private final boolean myContextHasChanges;
+
+    private final String myText;
     private JCheckBox myOnlyVcsCheckBox;
+    private final LastRunReformatCodeOptionsProvider myLastRunOptions;
 
     OptimizeImportsDialog(Project project, String text, boolean hasChanges) {
       super(project, false);
       myText = text;
       myContextHasChanges = hasChanges;
+      myLastRunOptions = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
       setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
       setTitle(CodeInsightBundle.message("process.optimize.imports"));
       init();
@@ -227,7 +230,7 @@ public class OptimizeImportsAction extends AnAction {
       panel.add(new JLabel(myText));
       myOnlyVcsCheckBox = new JCheckBox("only VCS changed files");
 
-      boolean lastRunVcsChangedTextEnabled = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false);
+      boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
 
       myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
       myOnlyVcsCheckBox.setSelected(myContextHasChanges && lastRunVcsChangedTextEnabled);

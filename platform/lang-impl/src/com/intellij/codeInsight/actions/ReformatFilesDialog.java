@@ -30,24 +30,24 @@ import javax.swing.*;
 import static com.intellij.codeInsight.actions.TextRangeType.*;
 
 public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesOptions {
-  @NotNull private Project myProject;
   private JPanel myPanel;
   private JCheckBox myOptimizeImports;
   private JCheckBox myOnlyChangedText;
   private JCheckBox myRearrangeEntriesCb;
 
+  private final LastRunReformatCodeOptionsProvider myLastRunSettings;
+
   public ReformatFilesDialog(@NotNull Project project, @NotNull VirtualFile[] files) {
     super(project, true);
-    myProject = project;
-    setTitle(CodeInsightBundle.message("dialog.reformat.files.title"));
-    myOptimizeImports.setSelected(isOptmizeImportsOptionOn());
+    myLastRunSettings = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
+
     boolean canTargetVcsChanges = FormatChangedTextUtil.hasChanges(files, project);
     myOnlyChangedText.setEnabled(canTargetVcsChanges);
-    myOnlyChangedText.setSelected(
-      canTargetVcsChanges && PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false)
-    ); 
-    myOptimizeImports.setSelected(isOptmizeImportsOptionOn());
-    myRearrangeEntriesCb.setSelected(LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(myProject));
+    myOnlyChangedText.setSelected(canTargetVcsChanges && myLastRunSettings.getTextRangeType() == VCS_CHANGED_TEXT);
+    myOptimizeImports.setSelected(myLastRunSettings.isOptimizeImports());
+    myRearrangeEntriesCb.setSelected(myLastRunSettings.isRearrangeCode());
+
+    setTitle(CodeInsightBundle.message("dialog.reformat.files.title"));
     init();
   }
 
@@ -76,13 +76,11 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(myOptimizeImports.isSelected()));
-    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, Boolean.toString(myOnlyChangedText.isSelected()));
-    LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeCode());
-  }
-
-  static boolean isOptmizeImportsOptionOn() {
-    return PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false);
+    myLastRunSettings.saveOptimizeImportsState(isOptimizeImports());
+    myLastRunSettings.saveRearrangeCodeState(isRearrangeCode());
+    if (myOnlyChangedText.isEnabled()) {
+      myLastRunSettings.saveProcessVcsChangedTextState(getTextRangeType() == VCS_CHANGED_TEXT);
+    }
   }
 
   @Nullable
