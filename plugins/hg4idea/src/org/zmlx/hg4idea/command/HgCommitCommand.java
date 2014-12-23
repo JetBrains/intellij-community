@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,6 +29,7 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -51,16 +53,22 @@ public class HgCommitCommand {
   private final String myMessage;
   @NotNull private final Charset myCharset;
   private final boolean myAmend;
+  private final boolean myCloseBranch;
 
   private Set<HgFile> myFiles = Collections.emptySet();
   @NotNull private List<String> mySubrepos = Collections.emptyList();
 
-  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message, boolean amend) {
+  public HgCommitCommand(@NotNull Project project, @NotNull VirtualFile root, String message, boolean amend, boolean closeBranch) {
     myProject = project;
     myRoot = root;
     myMessage = message;
     myCharset = HgEncodingUtil.getDefaultCharset(myProject);
     myAmend = amend;
+    myCloseBranch = closeBranch;
+  }
+
+  public HgCommitCommand(@NotNull Project project, @NotNull VirtualFile root, String message, boolean amend) {
+    this(project, root, message, amend, false);
   }
 
   public HgCommitCommand(Project project, @NotNull VirtualFile root, String message) {
@@ -80,9 +88,9 @@ public class HgCommitCommand {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }
     //if it's merge commit, so myFiles is Empty. Need to commit all files in changeList.
-    // see HgCheckinEnviroment->commit() method
+    // see HgCheckinEnvironment->commit() method
     if (myFiles.isEmpty()) {
-      commitChunkFiles(Collections.<String>emptyList(), myAmend);
+      commitChunkFiles(Collections.<String>emptyList(), myAmend, myCloseBranch);
     }
     else {
       List<String> relativePaths = ContainerUtil.map2List(myFiles, new Function<HgFile, String>() {
@@ -94,12 +102,12 @@ public class HgCommitCommand {
       List<List<String>> chunkedCommits = VcsFileUtil.chunkRelativePaths(relativePaths);
       int size = chunkedCommits.size();
       // commit with subrepo should be first, because it's not possible to amend with --subrepos argument;
-      commitChunkFiles(chunkedCommits.get(0), myAmend, !mySubrepos.isEmpty());
+      commitChunkFiles(chunkedCommits.get(0), myAmend, !mySubrepos.isEmpty(), myCloseBranch && size == 1);
       HgVcs vcs = HgVcs.getInstance(myProject);
       boolean amendCommit = vcs != null && vcs.getVersion().isAmendSupported();
       for (int i = 1; i < size; i++) {
         List<String> chunk = chunkedCommits.get(i);
-        commitChunkFiles(chunk, amendCommit);
+        commitChunkFiles(chunk, amendCommit, false, myCloseBranch && i == size - 1);
       }
     }
     if (!myProject.isDisposed()) {
@@ -111,11 +119,14 @@ public class HgCommitCommand {
     messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
   }
 
-  private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit) throws VcsException {
-    commitChunkFiles(chunk, amendCommit, false);
+  private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit, boolean closeBranch) throws VcsException {
+    commitChunkFiles(chunk, amendCommit, false, closeBranch);
   }
 
-  private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit, boolean withSubrepos) throws VcsException {
+  private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit, boolean withSubrepos, boolean closeBranch)
+    throws VcsException {
+    HgRepository repository = HgUtil.getRepositoryForFile(myProject, myRoot);
+    assert repository != null;
     List<String> parameters = new LinkedList<String>();
     parameters.add("--logfile");
     parameters.add(saveCommitMessage().getAbsolutePath());
@@ -126,6 +137,14 @@ public class HgCommitCommand {
     }
     else if (amendCommit) {
       parameters.add("--amend");
+    }
+    if (closeBranch) {
+      if (chunk.isEmpty() && repository.getState() != Repository.State.MERGING) {
+        //if there are changed files but nothing selected -> need to exclude all; if merge commit then nothing excluded
+        parameters.add("-X");
+        parameters.add("\"**\"");
+      }
+      parameters.add("--close-branch");
     }
     parameters.addAll(chunk);
     HgCommandExecutor executor = new HgCommandExecutor(myProject);

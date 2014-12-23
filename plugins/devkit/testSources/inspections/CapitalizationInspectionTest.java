@@ -33,6 +33,10 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
     doTest();
   }
 
+  public void testMultipleReturns() throws Exception {
+    doTest();
+  }
+
   public void doTest() {
     myFixture.testHighlighting(getTestName(false) + ".java");
     final IntentionAction action = myFixture.filterAvailableIntentions("Properly capitalize").get(0);
@@ -51,7 +55,6 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
     myFixture.addClass("package com.intellij.codeInspection; public class CommonProblemDescriptor {}");
     myFixture.addClass("package com.intellij.codeInspection; public class QuickFix {}");
     myFixture.enableInspections(TitleCapitalizationInspection.class);
-
   }
 
 

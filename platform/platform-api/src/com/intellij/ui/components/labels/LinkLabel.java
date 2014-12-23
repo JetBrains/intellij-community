@@ -350,7 +350,8 @@ public class LinkLabel<T> extends JLabel {
     try {
       Field field = BasicLabelUI.class.getDeclaredField("paintTextR");
       field.setAccessible(true);
-      return (Rectangle)field.get(getUI());
+      Rectangle labelBounds = (Rectangle)field.get(getUI());
+      return labelBounds.isEmpty() ? null : labelBounds;
     }
     catch (Exception ignored) {
       return null;

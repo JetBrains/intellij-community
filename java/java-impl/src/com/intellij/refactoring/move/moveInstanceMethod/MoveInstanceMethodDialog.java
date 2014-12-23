@@ -85,6 +85,8 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       mainPanel.add(parametersPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
     }
 
+    mainPanel.add(initOpenInEditorCb(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+
     separator.setLabelFor(myList);
     validateTextFields(myList.getSelectedIndex());
 
@@ -148,8 +150,10 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     final MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(myMethod.getProject(),
                                                                                   myMethod, targetVariable,
                                                                                   myVisibilityPanel.getVisibility(),
+                                                                                  isOpenInEditor(),
                                                                                   parameterNames);
     if (!verifyTargetClass(processor.getTargetClass())) return;
+    saveOpenInEditorOption();
     invokeRefactoring(processor);
   }
 
@@ -166,5 +170,15 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MOVE_INSTANCE_METHOD);
+  }
+
+  @Override
+  protected String getMovePropertySuffix() {
+    return "Instance";
+  }
+
+  @Override
+  protected String getCbTitle() {
+    return "Open moved method in editor";
   }
 }

@@ -97,9 +97,11 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
       protected TIntArrayList getParametersToRemove() {
         TIntArrayList parameters = new TIntArrayList();
-        for (int i = 0; i < myParametersToRemove.length; i++) {
-          if (myParametersToRemove[i] != null) {
-            parameters.add(i);
+        if (myCbReplaceAllOccurences == null || myCbReplaceAllOccurences.isSelected()) {
+          for (int i = 0; i < myParametersToRemove.length; i++) {
+            if (myParametersToRemove[i] != null) {
+              parameters.add(i);
+            }
           }
         }
         return parameters;

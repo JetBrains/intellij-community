@@ -1,7 +1,6 @@
 package com.intellij.jarFinder;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressStream;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jdom.Document;
@@ -10,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * @author Sergey Evdokimov
@@ -25,15 +23,15 @@ public abstract class SourceSearcher {
   @Nullable
   protected abstract String findSourceJar(@NotNull final ProgressIndicator indicator, @NotNull String artifactId, @NotNull String version) throws SourceSearchException;
 
+  @NotNull
   protected static Document readDocumentCancelable(final ProgressIndicator indicator, String url) throws IOException {
     return HttpRequests.request(url)
       .accept("application/xml")
       .connect(new HttpRequests.RequestProcessor<Document>() {
         @Override
         public Document process(@NotNull HttpRequests.Request request) throws IOException {
-          InputStream inputStream = request.getInputStream();
           try {
-            return JDOMUtil.loadDocument(new ProgressStream(0, request.getConnection().getContentLength(), inputStream, indicator));
+            return JDOMUtil.loadDocument(request.getReader(indicator));
           }
           catch (JDOMException e) {
             throw new IOException(e);

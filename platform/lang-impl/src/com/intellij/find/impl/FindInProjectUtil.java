@@ -448,7 +448,9 @@ public class FindInProjectUtil {
     VirtualFile directory = psiDir == null ? null : psiDir.getVirtualFile();
     Module module = findModel.getModuleName() == null ? null : ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName());
     return findModel.isCustomScope() && customScope != null ? customScope :
-           directory != null ? GlobalSearchScopesCore.directoryScope(project, directory, true) :
+           // we don't have to check for myProjectFileIndex.isExcluded(file) here like FindInProjectTask.collectFilesInScope() does
+           // because all found usages are guaranteed to be not in excluded dir
+           directory != null ? GlobalSearchScopesCore.directoryScope(project, directory, findModel.isWithSubdirectories()) :
            module != null ? GlobalSearchScope.moduleScope(module) :
            findModel.isProjectScope() ? GlobalSearchScope.projectScope(project) :
            GlobalSearchScope.allScope(project);

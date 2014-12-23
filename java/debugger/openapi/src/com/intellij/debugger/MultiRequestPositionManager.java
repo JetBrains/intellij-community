@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.mac;
+package com.intellij.debugger;
 
-/**
- * Created by denis on 28/01/14.
- */
-public class MacMessageException extends RuntimeException {
-  public MacMessageException(final String message) {
-    super(message);
-  }
+import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+public interface MultiRequestPositionManager extends PositionManager {
+
+  /**
+   * @see PositionManager#createPrepareRequest
+   */
+  @NotNull
+  List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position)
+    throws NoDataException;
 }

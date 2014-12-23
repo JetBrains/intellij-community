@@ -24,6 +24,7 @@ public class Course {
   public String author;
   public static final String COURSE_DIR = "course";
   public static final String HINTS_DIR = "hints";
+  public boolean myUpToDate = false;
 
 
   public List<Lesson> getLessons() {
@@ -102,5 +103,13 @@ public class Course {
 
   public String getDescription() {
     return description;
+  }
+
+  public boolean isUpToDate() {
+    return myUpToDate;
+  }
+
+  public void setUpToDate(boolean upToDate) {
+    myUpToDate = upToDate;
   }
 }

@@ -122,16 +122,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     @NotNull final UsageViewPresentation presentation,
                                     @NotNull final FindUsagesProcessPresentation processPresentation,
                                     @Nullable final UsageViewStateListener listener) {
-    final SearchScope searchScope = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
-    return doSearchAndShow(searchFor, searcherFactory, presentation, processPresentation, listener, searchScope);
-  }
-
-  private UsageView doSearchAndShow(@NotNull final UsageTarget[] searchFor,
-                                    @NotNull final Factory<UsageSearcher> searcherFactory,
-                                    @NotNull final UsageViewPresentation presentation,
-                                    @NotNull final FindUsagesProcessPresentation processPresentation,
-                                    @Nullable final UsageViewStateListener listener,
-                                    @NotNull final SearchScope searchScopeToWarnOfFallingOutOf) {
+    final SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<UsageViewImpl>();
 
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
@@ -159,7 +150,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @NotNull
-  private SearchScope getMaxSearchScopeToWarnOfFallingOutOf(@NotNull UsageTarget[] searchFor) {
+  SearchScope getMaxSearchScopeToWarnOfFallingOutOf(@NotNull UsageTarget[] searchFor) {
     UsageTarget target = searchFor[0];
     if (target instanceof TypeSafeDataProvider) {
       final SearchScope[] scope = new SearchScope[1];

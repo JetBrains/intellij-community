@@ -31,9 +31,8 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -236,9 +235,10 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Nullable
   private CherryPickData updateChangeListManager(@NotNull final VcsFullCommitDetails commit) {
-    final Collection<FilePath> paths = ChangesUtil.getPaths(commit.getChanges());
-    refreshChangedFiles(paths);
+    Collection<Change> changes = commit.getChanges();
+    RefreshVFsSynchronously.updateChanges(changes);
     final String commitMessage = createCommitMessage(commit);
+    final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
     LocalChangeList changeList = createChangeListAfterUpdate(commit, paths, commitMessage);
     return changeList == null ? null : new CherryPickData(changeList, commitMessage);
   }
@@ -429,17 +429,6 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull
   private static String commitDetails(@NotNull GitCommitWrapper commit) {
     return commit.getCommit().getId().toShortString() + " " + commit.getOriginalSubject();
-  }
-
-  private void refreshChangedFiles(@NotNull Collection<FilePath> filePaths) {
-    List<VirtualFile> virtualFiles = ContainerUtil.skipNulls(ContainerUtil.map(filePaths, new Function<FilePath, VirtualFile>() {
-      @Override
-      public VirtualFile fun(FilePath file) {
-        return myPlatformFacade.getLocalFileSystem().refreshAndFindFileByPath(file.getPath());
-      }
-    }));
-    VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(virtualFiles, VirtualFile.class));
-    VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(filePaths, null);
   }
 
   @Nullable

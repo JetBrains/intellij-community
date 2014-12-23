@@ -49,8 +49,10 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -291,7 +293,28 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (!dialog.showAndGet()) {
           return null;
         }
-        result.addAll(dialog.getSelected());
+        final ArrayList<UsageInfo> selected = dialog.getSelected();
+        final Set<UsageInfo> unselected = new HashSet<UsageInfo>(overridingMethods);
+        unselected.removeAll(selected);
+
+        if (!unselected.isEmpty()) {
+          final List<PsiMethod> unselectedMethods = ContainerUtil.map(unselected, new Function<UsageInfo, PsiMethod>() {
+            @Override
+            public PsiMethod fun(UsageInfo info) {
+              return ((SafeDeleteOverridingMethodUsageInfo)info).getOverridingMethod();
+            }
+          });
+
+          for (Iterator<UsageInfo> iterator = result.iterator(); iterator.hasNext(); ) {
+            final UsageInfo info = iterator.next();
+            if (info instanceof SafeDeleteOverrideAnnotation &&
+                !allSuperMethodsSelectedToDelete(unselectedMethods, ((SafeDeleteOverrideAnnotation)info).getMethod())) {
+              iterator.remove();
+            }
+          }
+        }
+
+        result.addAll(selected);
       }
     }
 
@@ -354,6 +377,12 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
 
     return result.toArray(new UsageInfo[result.size()]);
+  }
+
+  private static boolean allSuperMethodsSelectedToDelete(List<PsiMethod> unselectedMethods, PsiMethod method) {
+    final ArrayList<PsiMethod> superMethods = new ArrayList<PsiMethod>(Arrays.asList(method.findSuperMethods()));
+    superMethods.retainAll(unselectedMethods);
+    return superMethods.isEmpty();
   }
 
   public void prepareForDeletion(final PsiElement element) throws IncorrectOperationException {

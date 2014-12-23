@@ -103,7 +103,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
           processor = new OptimizeImportsProcessor(processor);
         }
         if (selectedFlags.isRearrangeEntries()) {
-          processor = new RearrangeCodeProcessor(processor, null);
+          processor = new RearrangeCodeProcessor(processor);
         }
 
         processor.run();
@@ -183,16 +183,20 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       range = null;
     }
 
+    AbstractLayoutCodeProcessor processor;
     if (optimizeImports && range == null) {
-      new OptimizeImportsProcessor(new ReformatCodeProcessor(project, file, null, processChangedTextOnly)).run();
+      processor = new OptimizeImportsProcessor(project, file);
+      processor = new ReformatCodeProcessor(processor, processChangedTextOnly);
     }
     else {
-      new ReformatCodeProcessor(project, file, range, !processSelectedText && processChangedTextOnly).run();
+      processor = new ReformatCodeProcessor(project, file, range, !processSelectedText && processChangedTextOnly);
     }
 
     if (rearrangeEntries && editor != null) {
-      new RearrangeCodeProcessor(project, file, editor.getSelectionModel()).run();
+      processor = new RearrangeCodeProcessor(processor);
     }
+
+    processor.run();
   }
 
   private static boolean isChangeNotTrackedForFile(@NotNull Project project, @NotNull PsiFile file) {
@@ -245,7 +249,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processor = new OptimizeImportsProcessor(processor);
     }
     if (options.isRearrangeEntries()) {
-      processor = new RearrangeCodeProcessor(processor, null);
+      processor = new RearrangeCodeProcessor(processor);
     }
 
     processor.run();
@@ -272,7 +276,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     if (selectedFlags.isRearrangeEntries()) {
-      processor = new RearrangeCodeProcessor(processor, null);
+      processor = new RearrangeCodeProcessor(processor);
     }
 
     processor.run();

@@ -342,6 +342,10 @@ class BeanBinding extends Binding {
       return new TextBinding(accessor);
     }
 
+    if (binding instanceof JDOMExternalizableStringListBinding) {
+      return new AccessorBindingWrapper(accessor, binding);
+    }
+
     boolean surroundWithTag = true;
     Property property = accessor.getAnnotation(Property.class);
     if (property != null) {

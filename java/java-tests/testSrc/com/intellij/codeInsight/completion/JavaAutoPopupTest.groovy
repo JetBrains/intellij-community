@@ -259,6 +259,19 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup
   }
 
+  public void "test popup in javadoc local reference"() {
+    myFixture.configureByText("a.java", """
+    /**
+    * {@link #<caret>}
+    */
+      class Foo {
+        void foo() {}
+      }
+    """)
+    type 'f'
+    assert lookup
+  }
+
   public void "test autopopup in javadoc tag name"() {
     myFixture.configureByText("a.java", """
     /**

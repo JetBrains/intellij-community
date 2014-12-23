@@ -27,6 +27,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -64,14 +66,23 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
-    if (symbolTypes == null || symbolTypes.length == 0) return;
-    if (symbolTypes.length == 1) {
-      navigate(project, symbolTypes[0]);
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+    try {
+      int offset = editor.getCaretModel().getOffset();
+      PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
+      if (symbolTypes == null || symbolTypes.length == 0) return;
+      if (symbolTypes.length == 1) {
+        navigate(project, symbolTypes[0]);
+      }
+      else {
+        NavigationUtil.getPsiElementPopup(symbolTypes, CodeInsightBundle.message("choose.type.popup.title")).showInBestPositionFor(editor);
+      }
     }
-    else {
-      NavigationUtil.getPsiElementPopup(symbolTypes, CodeInsightBundle.message("choose.type.popup.title")).showInBestPositionFor(editor);
+    catch (IndexNotReadyException e) {
+      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
+    }
+    finally {
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 

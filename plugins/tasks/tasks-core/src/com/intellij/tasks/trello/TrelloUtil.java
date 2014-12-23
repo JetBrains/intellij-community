@@ -41,10 +41,10 @@ public class TrelloUtil {
   public static final Pattern TRELLO_ID_PATTERN = Pattern.compile("[a-z0-9]{24}");
   public static final Gson GSON = buildGson();
   public static final String TRELLO_API_BASE_URL = "https://api.trello.com/1";
-  public static final Type LIST_OF_CARDS_TYPE = new TypeToken<List<TrelloCard>>() { /* empty */ }.getType();
-  public static final Type LIST_OF_BOARDS_TYPE = new TypeToken<List<TrelloBoard>>() { /* empty */ }.getType();
-  public static final Type LIST_OF_LISTS_TYPE = new TypeToken<List<TrelloList>>() { /* empty */ }.getType();
-  public static final Type LIST_OF_COMMENTS_TYPE = new TypeToken<List<TrelloCommentAction>>() { /* empty */ }.getType();
+  public static final TypeToken<List<TrelloCard>> LIST_OF_CARDS_TYPE = new TypeToken<List<TrelloCard>>() { /* empty */ };
+  public static final TypeToken<List<TrelloBoard>> LIST_OF_BOARDS_TYPE = new TypeToken<List<TrelloBoard>>() { /* empty */ };
+  public static final TypeToken<List<TrelloList>> LIST_OF_LISTS_TYPE = new TypeToken<List<TrelloList>>() { /* empty */ };
+  public static final TypeToken<List<TrelloCommentAction>> LIST_OF_COMMENTS_TYPE = new TypeToken<List<TrelloCommentAction>>() { /* empty */ };
 
   private static Gson buildGson() {
     GsonBuilder gson = new GsonBuilder();

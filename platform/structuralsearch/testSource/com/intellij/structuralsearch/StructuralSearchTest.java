@@ -1255,6 +1255,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
 
     assertEquals(
+      "parameterized symbol without variables matching",
+      findMatchesCount(s81, "S<T>"),
+      2
+    );
+
+    assertEquals(
       "parameterized definition match",
       findMatchesCount(s81,s82_4),
       3

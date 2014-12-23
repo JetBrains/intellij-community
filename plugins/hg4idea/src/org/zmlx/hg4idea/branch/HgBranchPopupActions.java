@@ -23,9 +23,15 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
@@ -35,15 +41,19 @@ import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.provider.commit.HgCloseBranchExecutor;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.ui.HgBookmarkDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
 
@@ -64,6 +74,7 @@ public class HgBranchPopupActions {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgNewBookmarkAction(Collections.singletonList(myRepository), myRepository));
+    popupGroup.addAction(new HgBranchPopupActions.HgCloseBranchAction(Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgShowUnnamedHeadsForCurrentBranchAction(myRepository));
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
@@ -126,6 +137,60 @@ public class HgBranchPopupActions {
           HgErrorUtil.handleException(myProject, "Can't create new branch: ", exception);
         }
       }
+    }
+  }
+
+  public static class HgCloseBranchAction extends DumbAwareAction {
+    @NotNull private final List<HgRepository> myRepositories;
+    @NotNull final HgRepository myPreselectedRepo;
+
+    HgCloseBranchAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
+      super("Close " + StringUtil.pluralize("branch", repositories.size()),
+            "Close current " + StringUtil.pluralize("branch", repositories.size()), AllIcons.Actions.Delete);
+      myRepositories = repositories;
+      myPreselectedRepo = preselectedRepo;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final Project project = myPreselectedRepo.getProject();
+      ApplicationManager.getApplication().saveAll();
+      ChangeListManager.getInstance(project).invokeAfterUpdate(new Runnable() {
+                                                                 @Override
+                                                                 public void run() {
+                                                                   commitAndCloseBranch(project);
+                                                                 }
+                                                               }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle
+                                                                 .message("waiting.changelists.update.for.show.commit.dialog.message"),
+                                                               ModalityState.current());
+    }
+
+    private void commitAndCloseBranch(@NotNull final Project project) {
+      final LocalChangeList activeChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
+      HgVcs vcs = HgVcs.getInstance(project);
+      assert vcs != null;
+      final HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+      List<Change> changesForRepositories = ContainerUtil.filter(activeChangeList.getChanges(), new Condition<Change>() {
+        @Override
+        public boolean value(Change change) {
+          return myRepositories.contains(repositoryManager.getRepositoryForFile(ChangesUtil.getFilePath(change)));
+        }
+      });
+      HgCloseBranchExecutor closeBranchExecutor = vcs.getCloseBranchExecutor();
+      closeBranchExecutor.setRepositories(myRepositories);
+      CommitChangeListDialog.commitChanges(project, changesForRepositories, activeChangeList,
+                                           Collections.<CommitExecutor>singletonList(closeBranchExecutor),
+                                           false, vcs, "Close Branch", null, false);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(ContainerUtil.and(myRepositories, new Condition<HgRepository>() {
+        @Override
+        public boolean value(HgRepository repository) {
+          return repository.getOpenedBranches().contains(repository.getCurrentBranch());
+        }
+      }));
     }
   }
 

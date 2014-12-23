@@ -88,7 +88,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
           final PluginDownloader selection = getValueAt(selectedRow);
           final IdeaPluginDescriptor descriptor = selection.getDescriptor();
           if (descriptor != null) {
-            PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel, myHeader , null);
+            PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel, myHeader);
           }
         }
       }

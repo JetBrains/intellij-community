@@ -37,6 +37,7 @@ public class StudyTestRunner {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.withWorkDirectory(myTaskDir.getPath());
     final Map<String, String> env = commandLine.getEnvironment();
+
     final VirtualFile courseDir = project.getBaseDir();
     if (courseDir != null) {
       env.put(PYTHONPATH, courseDir.getPath());

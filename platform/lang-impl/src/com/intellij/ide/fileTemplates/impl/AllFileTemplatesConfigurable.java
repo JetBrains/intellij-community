@@ -735,9 +735,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         }).toArray(FileTemplate.EMPTY_ARRAY));
         templates.put(INCLUDES_TEMPLATES_CATEGORY, myIncludesList.getTemplates());
         templates.put(CODE_TEMPLATES_CATEGORY, myCodeTemplatesList.getTemplates());
-        if (myOtherTemplatesList != null) {
-          templates.put(J2EE_TEMPLATES_CATEGORY, myOtherTemplatesList.getTemplates());
-        }
+        templates.put(J2EE_TEMPLATES_CATEGORY, myOtherTemplatesList == null ? FileTemplate.EMPTY_ARRAY : myOtherTemplatesList.getTemplates());
         myChangesCache.put(myScheme, templates);
       }
     }

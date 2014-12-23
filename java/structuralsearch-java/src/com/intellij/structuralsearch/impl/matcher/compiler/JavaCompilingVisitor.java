@@ -258,21 +258,16 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitDeclarationStatement(PsiDeclarationStatement psiDeclarationStatement) {
     super.visitDeclarationStatement(psiDeclarationStatement);
 
-    if (psiDeclarationStatement.getFirstChild() instanceof PsiTypeElement) {
+    final PsiElement firstChild = psiDeclarationStatement.getFirstChild();
+    if (firstChild instanceof PsiTypeElement) {
       // search for expression or symbol
-      final PsiJavaCodeReferenceElement reference =
-        ((PsiTypeElement)psiDeclarationStatement.getFirstChild()).getInnermostComponentReferenceElement();
+      final PsiJavaCodeReferenceElement reference = ((PsiTypeElement)firstChild).getInnermostComponentReferenceElement();
 
-      if (reference != null &&
-          (myCompilingVisitor.getContext().getPattern().isRealTypedVar(reference.getReferenceNameElement())) &&
-          reference.getParameterList().getTypeParameterElements().length > 0
-        ) {
+      if (reference != null && reference.getParameterList().getTypeParameterElements().length > 0) {
         myCompilingVisitor.setHandler(psiDeclarationStatement, new TypedSymbolHandler());
         final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiDeclarationStatement);
         // typed symbol
-        handler.setFilter(
-          TypedSymbolNodeFilter.getInstance()
-        );
+        handler.setFilter(TypedSymbolNodeFilter.getInstance());
 
         final PsiTypeElement[] params = reference.getParameterList().getTypeParameterElements();
         for (PsiTypeElement param : params) {

@@ -23,11 +23,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -64,12 +66,18 @@ public abstract class HttpRequests {
     @NotNull
     InputStream getInputStream() throws IOException;
 
+    @NotNull
+    BufferedReader getReader() throws IOException;
+
+    @NotNull
+    BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
+
     boolean isSuccessful() throws IOException;
 
     @NotNull
     File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
 
-    byte[] getBytes(@Nullable ProgressIndicator indicator) throws IOException;
+    byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
   public interface RequestProcessor<T> {
@@ -100,6 +108,8 @@ public abstract class HttpRequests {
     private HostnameVerifier myHostnameVerifier;
     private String myUserAgent;
     private String myAccept;
+
+    private HTTPMethod myMethod;
 
     protected RequestBuilder(@NotNull String url) {
       myUrl = url;
@@ -189,35 +199,24 @@ public abstract class HttpRequests {
     }
 
     @NotNull
-    public byte[] getBytes(@Nullable final ProgressIndicator indicator) throws IOException {
+    public byte[] readBytes(@Nullable final ProgressIndicator indicator) throws IOException {
       return connect(new HttpRequests.RequestProcessor<byte[]>() {
         @Override
         public byte[] process(@NotNull HttpRequests.Request request) throws IOException {
-          return request.getBytes(indicator);
+          return request.readBytes(indicator);
         }
       });
     }
 
     @NotNull
-    public String getString(@Nullable final ProgressIndicator indicator) throws IOException {
+    public String readString(@Nullable final ProgressIndicator indicator) throws IOException {
       return connect(new HttpRequests.RequestProcessor<String>() {
         @Override
         public String process(@NotNull HttpRequests.Request request) throws IOException {
           int contentLength = request.getConnection().getContentLength();
           BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 16 * 1024);
           NetUtils.copyStreamContent(indicator, request.getInputStream(), out, contentLength);
-
-          Charset charset = CharsetToolkit.UTF8_CHARSET;
-          String contentEncoding = request.getConnection().getContentEncoding();
-          if (contentEncoding != null) {
-            try {
-              charset = Charset.forName(contentEncoding);
-            }
-            catch (Exception ignored) {
-              charset = CharsetToolkit.UTF8_CHARSET;
-            }
-          }
-          return new String(out.getInternalBuffer(), 0, out.size(), charset);
+          return new String(out.getInternalBuffer(), 0, out.size(), getCharset(request));
         }
       });
     }
@@ -236,6 +235,13 @@ public abstract class HttpRequests {
     return ServiceManager.getService(HttpRequests.class).createRequestBuilder(url);
   }
 
+  @NotNull
+  public static RequestBuilder head(@NotNull String url) {
+    RequestBuilder builder = request(url);
+    builder.myMethod = HTTPMethod.HEAD;
+    return builder;
+  }
+
   protected abstract RequestBuilder createRequestBuilder(@NotNull String url);
 
   private static <T> T wrapAndProcess(RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
@@ -250,10 +256,24 @@ public abstract class HttpRequests {
     }
   }
 
+  @NotNull
+  private static Charset getCharset(@NotNull Request request) throws IOException {
+    String contentEncoding = request.getConnection().getContentEncoding();
+    if (contentEncoding != null) {
+      try {
+        return Charset.forName(contentEncoding);
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return CharsetToolkit.UTF8_CHARSET;
+  }
+
   private static <T> T process(final RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
     class RequestImpl implements Request {
       private URLConnection myConnection;
       private InputStream myInputStream;
+      private BufferedReader myReader;
 
       @NotNull
       @Override
@@ -277,23 +297,45 @@ public abstract class HttpRequests {
         return myInputStream;
       }
 
+      @NotNull
+      @Override
+      public BufferedReader getReader() throws IOException {
+        return getReader(null);
+      }
+
+      @NotNull
+      @Override
+      public BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException {
+        if (myReader == null) {
+          InputStream inputStream = getInputStream();
+          if (indicator != null) {
+            int contentLength = getConnection().getContentLength();
+            if (contentLength > 0) {
+              //noinspection IOResourceOpenedButNotSafelyClosed
+              inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
+            }
+          }
+          myReader = new BufferedReader(new InputStreamReader(inputStream, getCharset(this)));
+        }
+        return myReader;
+      }
+
       @Override
       public boolean isSuccessful() throws IOException {
         URLConnection connection = getConnection();
         return !(connection instanceof HttpURLConnection) || ((HttpURLConnection)connection).getResponseCode() == 200;
       }
 
-      private void cleanup() throws IOException {
-        if (myInputStream != null) {
-          myInputStream.close();
-        }
+      private void cleanup() {
+        StreamUtil.closeStream(myInputStream);
+        StreamUtil.closeStream(myReader);
         if (myConnection instanceof HttpURLConnection) {
           ((HttpURLConnection)myConnection).disconnect();
         }
       }
 
       @NotNull
-      public byte[] getBytes(@Nullable ProgressIndicator indicator) throws IOException {
+      public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
         int contentLength = getConnection().getContentLength();
         BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 32 * 1024);
         NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
@@ -302,33 +344,28 @@ public abstract class HttpRequests {
 
       @NotNull
       public File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
-        OutputStream out = null;
+        FileUtilRt.createParentDirs(file);
+
         boolean deleteFile = true;
         try {
-          if (indicator != null) {
-            indicator.checkCanceled();
-          }
-
-          FileUtilRt.createParentDirs(file);
-          out = new FileOutputStream(file);
-          NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
-          deleteFile = false;
-        }
-        catch (IOException e) {
-          throw new IOException(createErrorMessage(e, this), e);
-        }
-        finally {
+          OutputStream out = new FileOutputStream(file);
           try {
-            if (out != null) {
-              out.close();
-            }
+            NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+            deleteFile = false;
+          }
+          catch (IOException e) {
+            throw new IOException(createErrorMessage(e, this), e);
           }
           finally {
-            if (deleteFile) {
-              FileUtilRt.delete(file);
-            }
+            out.close();
           }
         }
+        finally {
+          if (deleteFile) {
+            FileUtilRt.delete(file);
+          }
+        }
+
         return file;
       }
     }
@@ -345,11 +382,11 @@ public abstract class HttpRequests {
   private static URLConnection openConnection(RequestBuilder builder) throws IOException {
     String url = builder.myUrl;
 
-    if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
-      url = "https:" + url.substring(5);
-    }
-
     for (int i = 0; i < builder.myRedirectLimit; i++) {
+      if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
+        url = "https:" + url.substring(5);
+      }
+
       URLConnection connection;
       if (ApplicationManager.getApplication() == null) {
         connection = new URL(url).openConnection();
@@ -369,12 +406,18 @@ public abstract class HttpRequests {
         ((HttpsURLConnection)connection).setHostnameVerifier(builder.myHostnameVerifier);
       }
 
+      if (builder.myMethod != null) {
+        ((HttpURLConnection)connection).setRequestMethod(builder.myMethod.name());
+      }
+
       if (builder.myGzip) {
         connection.setRequestProperty("Accept-Encoding", "gzip");
       }
+
       if (builder.myAccept != null) {
         connection.setRequestProperty("Accept", builder.myAccept);
       }
+
       connection.setUseCaches(false);
 
       if (connection instanceof HttpURLConnection) {

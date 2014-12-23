@@ -69,7 +69,9 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
           AppUIUtil.invokeOnEdt(new Runnable() {
             @Override
             public void run() {
-              editor.show(initialValue);
+              if (editor.getTree().isShowing()) {
+                editor.show(initialValue);
+              }
             }
           });
         }
