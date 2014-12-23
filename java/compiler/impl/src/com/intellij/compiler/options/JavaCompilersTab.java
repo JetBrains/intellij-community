@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,12 +137,14 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   public void apply() throws ConfigurationException {
     boolean modified = false;
     try {
+      modified = isModified();
       for (Configurable configurable : myConfigurables) {
         if (configurable.isModified()) {
           modified = true;
           configurable.apply();
         }
       }
+
       myCompilerConfiguration.setDefaultCompiler(mySelectedCompiler);
       myCompilerConfiguration.setProjectBytecodeTarget(myTargetLevelComponent.getProjectBytecodeTarget());
       myCompilerConfiguration.setModulesBytecodeTargetMap(myTargetLevelComponent.getModulesBytecodeTargetMap());
