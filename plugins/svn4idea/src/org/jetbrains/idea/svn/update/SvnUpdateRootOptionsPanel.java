@@ -25,6 +25,7 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -213,11 +214,17 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
     if (myUpdateToSpecificUrl.isSelected()) {
-      rootInfo.setUrl(myURLText.getText());
+      try {
+        rootInfo.setUrl(SvnUtil.createUrl(myURLText.getText()));
+      }
+      catch (SvnBindException e) {
+        throw new ConfigurationException("Invalid url: " + myURLText.getText());
+      }
     }
+
     rootInfo.setUpdateToRevision(myRevisionBox.isSelected());
     final SVNRevision revision = SVNRevision.parse(myRevisionText.getText());
-    if (!revision.isValid()) {
+     if (!revision.isValid()) {
       throw new ConfigurationException(SvnBundle.message("invalid.svn.revision.error.message", myRevisionText.getText()));
     }
     rootInfo.setRevision(revision);

@@ -15,17 +15,17 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 
 public class UpdateRootInfo {
-  private String myUrl;
+  @Nullable private SVNURL myUrl;
   private SVNRevision myRevision;
   private boolean myUpdateToSpecifiedRevision = false;
 
@@ -33,17 +33,12 @@ public class UpdateRootInfo {
     myRevision = SVNRevision.HEAD;
 
     Info info = vcs.getInfo(file);
-    myUrl = info != null && info.getURL() != null ? info.getURL().toString() : "";
+    myUrl = info != null ? info.getURL() : null;
   }
 
   @Nullable
   public SVNURL getUrl() {
-    try {
-      return SVNURL.parseURIEncoded(myUrl);
-    }
-    catch (SVNException e) {
-      return null;
-    }
+    return myUrl;
   }
 
   public SVNRevision getRevision() {
@@ -54,8 +49,8 @@ public class UpdateRootInfo {
     return myUpdateToSpecifiedRevision;
   }
 
-  public void setUrl(final String text) {
-    myUrl = text;
+  public void setUrl(@NotNull SVNURL url) {
+    myUrl = url;
   }
 
   public void setUpdateToRevision(final boolean value) {
