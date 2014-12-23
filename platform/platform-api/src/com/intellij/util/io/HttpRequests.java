@@ -344,33 +344,28 @@ public abstract class HttpRequests {
 
       @NotNull
       public File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
-        OutputStream out = null;
+        FileUtilRt.createParentDirs(file);
+
         boolean deleteFile = true;
         try {
-          if (indicator != null) {
-            indicator.checkCanceled();
-          }
-
-          FileUtilRt.createParentDirs(file);
-          out = new FileOutputStream(file);
-          NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
-          deleteFile = false;
-        }
-        catch (IOException e) {
-          throw new IOException(createErrorMessage(e, this), e);
-        }
-        finally {
+          OutputStream out = new FileOutputStream(file);
           try {
-            if (out != null) {
-              out.close();
-            }
+            NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+            deleteFile = false;
+          }
+          catch (IOException e) {
+            throw new IOException(createErrorMessage(e, this), e);
           }
           finally {
-            if (deleteFile) {
-              FileUtilRt.delete(file);
-            }
+            out.close();
           }
         }
+        finally {
+          if (deleteFile) {
+            FileUtilRt.delete(file);
+          }
+        }
+
         return file;
       }
     }
@@ -418,9 +413,11 @@ public abstract class HttpRequests {
       if (builder.myGzip) {
         connection.setRequestProperty("Accept-Encoding", "gzip");
       }
+
       if (builder.myAccept != null) {
         connection.setRequestProperty("Accept", builder.myAccept);
       }
+
       connection.setUseCaches(false);
 
       if (connection instanceof HttpURLConnection) {
