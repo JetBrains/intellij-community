@@ -212,6 +212,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       addWildcardResourcePattern("!?*.flex");
       addWildcardResourcePattern("!?*.kt");
       addWildcardResourcePattern("!?*.clj");
+      addWildcardResourcePattern("!?*.aj");
     }
     catch (MalformedPatternException e) {
       LOG.error(e);
