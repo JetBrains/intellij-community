@@ -63,6 +63,12 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
  * @author yole
  */
 public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyClass {
+  public static class MROException extends Exception {
+    public MROException(String s) {
+      super(s);
+    }
+  }
+
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
   private List<PyTargetExpression> myInstanceAttributes;
@@ -80,7 +86,28 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     @Nullable
     @Override
     public CachedValueProvider.Result<List<PyClassLikeType>> compute(@NotNull TypeEvalContext context) {
-      final List<PyClassLikeType> ancestorTypes = isNewStyleClass() ? getMROAncestorTypes(context) : getOldStyleAncestorTypes(context);
+      List<PyClassLikeType> ancestorTypes;
+      if (isNewStyleClass()) {
+        try {
+          ancestorTypes = getMROAncestorTypes(context);
+        }
+        catch (MROException e) {
+          ancestorTypes = getOldStyleAncestorTypes(context);
+          boolean hasUnresolvedAncestorTypes = false;
+          for (PyClassLikeType type : ancestorTypes) {
+            if (type == null) {
+              hasUnresolvedAncestorTypes = true;
+              break;
+            }
+          }
+          if (!hasUnresolvedAncestorTypes) {
+            ancestorTypes = Collections.singletonList(null);
+          }
+        }
+      }
+      else {
+        ancestorTypes = getOldStyleAncestorTypes(context);
+      }
       return CachedValueProvider.Result.create(ancestorTypes, PsiModificationTracker.MODIFICATION_COUNT);
     }
   }
@@ -321,7 +348,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @NotNull
-  private static List<PyClassLikeType> mroMerge(@NotNull List<List<PyClassLikeType>> sequences) {
+  private static List<PyClassLikeType> mroMerge(@NotNull List<List<PyClassLikeType>> sequences) throws MROException {
     List<PyClassLikeType> result = new LinkedList<PyClassLikeType>(); // need to insert to 0th position on linearize
     while (true) {
       // filter blank sequences
@@ -357,7 +384,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
       if (!found) {
         // Inconsistent hierarchy results in TypeError
-        throw new IllegalStateException("Inconsistent class hierarchy");
+        throw new MROException("Inconsistent class hierarchy");
       }
       // our head is clean;
       result.add(head);
@@ -374,9 +401,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @NotNull
   private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type, @NotNull Set<PyClassLikeType> seen, boolean addThisType,
-                                                    @NotNull TypeEvalContext context) {
+                                                    @NotNull TypeEvalContext context) throws MROException {
     if (seen.contains(type)) {
-      throw new IllegalStateException("Circular class inheritance");
+      throw new MROException("Circular class inheritance");
     }
     final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
     List<List<PyClassLikeType>> lines = new ArrayList<List<PyClassLikeType>>();
@@ -1284,16 +1311,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @NotNull
-  private List<PyClassLikeType> getMROAncestorTypes(@NotNull TypeEvalContext context) {
+  private List<PyClassLikeType> getMROAncestorTypes(@NotNull TypeEvalContext context) throws MROException {
     final PyType thisType = context.getType(this);
     if (thisType instanceof PyClassLikeType) {
-      try {
-        return mroLinearize((PyClassLikeType)thisType, new HashSet<PyClassLikeType>(), false, context);
-      }
-      catch (IllegalStateException ignored) {
-      }
+      return mroLinearize((PyClassLikeType)thisType, new HashSet<PyClassLikeType>(), false, context);
     }
-    return Collections.emptyList();
+    else {
+      return Collections.emptyList();
+    }
   }
 
   @NotNull
