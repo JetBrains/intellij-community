@@ -385,6 +385,13 @@ class Foo {
     checkResult();
   }
 
+  public void testIterParameterizedInnerInMethod() {
+    configure();
+    startTemplate("iter", "iterations")
+    stripTrailingSpaces();
+    checkResult();
+  }
+
   public void testAsListToar() {
     configure();
     startTemplate("toar", "other")
@@ -955,6 +962,4 @@ class Foo {
 }
 """)
   }
-
-
 }
