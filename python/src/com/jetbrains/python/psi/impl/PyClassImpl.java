@@ -1330,11 +1330,45 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private List<PyClassLikeType> getMROAncestorTypes(@NotNull TypeEvalContext context) throws MROException {
     final PyType thisType = context.getType(this);
     if (thisType instanceof PyClassLikeType) {
-      return mroLinearize((PyClassLikeType)thisType, new HashSet<PyClassLikeType>(), false, context);
+      final PyClassLikeType thisClassLikeType = (PyClassLikeType)thisType;
+      final List<PyClassLikeType> ancestorTypes = mroLinearize(thisClassLikeType, new HashSet<PyClassLikeType>(), false, context);
+      if (isOverriddenMRO(ancestorTypes, context)) {
+        ancestorTypes.add(null);
+      }
+      return ancestorTypes;
     }
     else {
       return Collections.emptyList();
     }
+  }
+
+  private boolean isOverriddenMRO(@NotNull List<PyClassLikeType> ancestorTypes, @NotNull TypeEvalContext context) {
+    final List<PyClass> classes = new ArrayList<PyClass>();
+    classes.add(this);
+    for (PyClassLikeType ancestorType : ancestorTypes) {
+      if (ancestorType instanceof PyClassType) {
+        final PyClassType classType = (PyClassType)ancestorType;
+        classes.add(classType.getPyClass());
+      }
+    }
+
+    final PyClass typeClass = PyBuiltinCache.getInstance(this).getClass("type");
+
+    for (PyClass cls : classes) {
+      final PyType metaClassType = cls.getMetaClassType(context);
+      if (metaClassType instanceof PyClassType) {
+        final PyClass metaClass = ((PyClassType)metaClassType).getPyClass();
+        final PyFunction mroMethod = metaClass.findMethodByName(PyNames.MRO, true);
+        if (mroMethod != null) {
+          final PyClass mroClass = mroMethod.getContainingClass();
+          if (mroClass != null && mroClass != typeClass) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   @NotNull
