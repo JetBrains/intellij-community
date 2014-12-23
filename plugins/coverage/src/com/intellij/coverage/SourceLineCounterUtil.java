@@ -33,7 +33,7 @@ public class SourceLineCounterUtil {
     if (!counter.isInterface()) {
       packageCoverageInfo.totalClassCount++;
     }
-    return true;
+    return !counter.isInterface();
   }
 
   public static void collectSrcLinesForUntouchedFiles(final List<Integer> uncoveredLines,

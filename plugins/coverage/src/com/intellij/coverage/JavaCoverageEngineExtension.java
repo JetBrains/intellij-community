@@ -89,6 +89,16 @@ public abstract class JavaCoverageEngineExtension {
   }
 
   /**
+   * Returns true if the specified .class file needs to be completely excluded from the coverage statistics.
+   *
+   * @param bundle the coverage suites bundle being indexed.
+   * @param classFile the class file.
+   */
+  public boolean ignoreCoverageForClass(CoverageSuitesBundle bundle, File classFile) {
+    return false;
+  }
+
+  /**
    * Returns true if the class coverage info for the specified .class file, for which it wasn't possible to find a corresponding
    * source file, needs to be preserved and made available as {@link JavaCoverageAnnotator#getClassCoverageInfo(String)}.
    * The qualified name under which the data will be available is calculated by replacing slashes with dots in the path of the
