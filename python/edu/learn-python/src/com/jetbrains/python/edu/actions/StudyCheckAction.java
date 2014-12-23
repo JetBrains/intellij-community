@@ -152,7 +152,7 @@ public class StudyCheckAction extends DumbAwareAction {
             final StudyTestRunner testRunner = new StudyTestRunner(task, taskDir);
             Process testProcess = null;
             try {
-              testProcess = testRunner.createCheckProcess(project, studyState.getVirtualFile().getPath(), -1);
+              testProcess = testRunner.createCheckProcess(project, studyState.getVirtualFile().getPath());
             }
             catch (ExecutionException e) {
               LOG.error(e);

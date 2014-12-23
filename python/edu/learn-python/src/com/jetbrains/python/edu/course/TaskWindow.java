@@ -224,7 +224,7 @@ public class TaskWindow implements Comparable, Stateful {
           }
         });
         VirtualFile fileWindows = StudyUtils.flushWindows(windowTaskFile, windowCopy);
-        Process smartTestProcess = testRunner.createCheckProcess(project, windowCopy.getPath(), myIndex);
+        Process smartTestProcess = testRunner.createCheckProcess(project, windowCopy.getPath());
         final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess);
         final ProcessOutput output = handler.runProcess();
         boolean res = testRunner.getTestsOutput(output).equals(StudyTestRunner.TEST_OK);
