@@ -1,4 +1,4 @@
-package com.intellij.openapi.util.diff.tools.oneside;
+package com.intellij.openapi.util.diff.tools.fragmented;
 
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;

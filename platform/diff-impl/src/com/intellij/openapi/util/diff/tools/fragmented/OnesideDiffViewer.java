@@ -1,4 +1,4 @@
-package com.intellij.openapi.util.diff.tools.oneside;
+package com.intellij.openapi.util.diff.tools.fragmented;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -37,7 +37,7 @@ import com.intellij.openapi.util.diff.contents.EmptyContent;
 import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.tools.oneside.OnesideDiffSettingsHolder.OnesideDiffSettings;
+import com.intellij.openapi.util.diff.tools.fragmented.FragmentedDiffSettingsHolder.FragmentedDiffSettings;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.util.*;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
@@ -70,7 +70,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   @Nullable private final DocumentContent myActualContent1;
   @Nullable private final DocumentContent myActualContent2;
 
-  @NotNull private final OnesideDiffSettings mySettings;
+  @NotNull private final FragmentedDiffSettings mySettings;
 
   @NotNull private final MySetEditorSettingsAction myEditorSettingsAction;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
@@ -439,11 +439,11 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   //
 
   @NotNull
-  private static OnesideDiffSettings initSettings(@NotNull DiffContext context) {
-    OnesideDiffSettings settings = context.getUserData(OnesideDiffSettings.KEY);
+  private static FragmentedDiffSettings initSettings(@NotNull DiffContext context) {
+    FragmentedDiffSettings settings = context.getUserData(FragmentedDiffSettings.KEY);
     if (settings == null) {
-      settings = OnesideDiffSettings.getSettings();
-      context.putUserData(OnesideDiffSettings.KEY, settings);
+      settings = FragmentedDiffSettings.getSettings();
+      context.putUserData(FragmentedDiffSettings.KEY, settings);
     }
     return settings;
   }
@@ -477,7 +477,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   @NotNull
-  OnesideDiffSettings getSettings() {
+  FragmentedDiffSettings getSettings() {
     return mySettings;
   }
 
@@ -643,8 +643,8 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final int[] modes = OnesideDiffSettings.CONTEXT_RANGE_MODES;
-      String[] modeLabels = OnesideDiffSettings.CONTEXT_RANGE_MODE_LABELS;
+      final int[] modes = FragmentedDiffSettings.CONTEXT_RANGE_MODES;
+      String[] modeLabels = FragmentedDiffSettings.CONTEXT_RANGE_MODE_LABELS;
 
       //noinspection UseOfObsoleteCollectionType
       Dictionary<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();

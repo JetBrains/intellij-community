@@ -1,4 +1,4 @@
-package com.intellij.openapi.util.diff.tools.oneside;
+package com.intellij.openapi.util.diff.tools.fragmented;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.diff.util.Side;

@@ -1,4 +1,4 @@
-package com.intellij.openapi.util.diff.tools.oneside;
+package com.intellij.openapi.util.diff.tools.fragmented;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;

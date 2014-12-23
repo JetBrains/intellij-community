@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util.diff.tools.oneside;
+package com.intellij.openapi.util.diff.tools.fragmented;
 
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;

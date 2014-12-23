@@ -25,13 +25,12 @@ import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.binary.BinaryDiffTool;
 import com.intellij.openapi.util.diff.tools.dir.DirDiffTool;
 import com.intellij.openapi.util.diff.tools.external.ExternalDiffTool;
-import com.intellij.openapi.util.diff.tools.oneside.OnesideDiffTool;
+import com.intellij.openapi.util.diff.tools.fragmented.OnesideDiffTool;
 import com.intellij.openapi.util.diff.tools.simple.SimpleDiffTool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class DiffManagerImpl extends DiffManagerEx {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util.diff.tools.oneside;
+package com.intellij.openapi.util.diff.tools.fragmented;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -24,28 +24,28 @@ import com.intellij.openapi.util.diff.util.DiffUtil;
 import org.jetbrains.annotations.NotNull;
 
 @State(
-  name = "OnesideDiffSettings",
+  name = "FragmentedDiffSettings",
   storages = {@Storage(
     file = DiffUtil.DIFF_CONFIG)})
-public class OnesideDiffSettingsHolder implements PersistentStateComponent<OnesideDiffSettingsHolder.OnesideDiffSettings> {
-  public static class OnesideDiffSettings {
-    public static final Key<OnesideDiffSettings> KEY = Key.create("OnesideDiffSettings");
+public class FragmentedDiffSettingsHolder implements PersistentStateComponent<FragmentedDiffSettingsHolder.FragmentedDiffSettings> {
+  public static class FragmentedDiffSettings {
+    public static final Key<FragmentedDiffSettings> KEY = Key.create("FragmentedDiffSettings");
 
     public static final int[] CONTEXT_RANGE_MODES = {1, 2, 4, 8, -1};
     public static final String[] CONTEXT_RANGE_MODE_LABELS = {"1", "2", "4", "8", "All"};
 
     private int CONTEXT_RANGE = 4;
 
-    public OnesideDiffSettings() {
+    public FragmentedDiffSettings() {
     }
 
-    public OnesideDiffSettings(int CONTEXT_RANGE) {
+    public FragmentedDiffSettings(int CONTEXT_RANGE) {
       this.CONTEXT_RANGE = CONTEXT_RANGE;
     }
 
     @NotNull
-    private OnesideDiffSettings copy() {
-      return new OnesideDiffSettings(CONTEXT_RANGE);
+    private FragmentedDiffSettings copy() {
+      return new FragmentedDiffSettings(CONTEXT_RANGE);
     }
 
     public int getContextRange() {
@@ -61,29 +61,29 @@ public class OnesideDiffSettingsHolder implements PersistentStateComponent<Onesi
     //
 
     @NotNull
-    public static OnesideDiffSettings getSettings() {
+    public static FragmentedDiffSettings getSettings() {
       return getInstance().getState().copy();
     }
 
     @NotNull
-    public static OnesideDiffSettings getSettingsDefaults() {
+    public static FragmentedDiffSettings getSettingsDefaults() {
       return getInstance().getState();
     }
   }
 
-  private OnesideDiffSettings myState = new OnesideDiffSettings();
+  private FragmentedDiffSettings myState = new FragmentedDiffSettings();
 
   @NotNull
-  public OnesideDiffSettings getState() {
+  public FragmentedDiffSettings getState() {
     return myState;
   }
 
-  public void loadState(OnesideDiffSettings state) {
+  public void loadState(FragmentedDiffSettings state) {
     myState = state;
   }
 
-  public static OnesideDiffSettingsHolder getInstance() {
-    return ServiceManager.getService(OnesideDiffSettingsHolder.class);
+  public static FragmentedDiffSettingsHolder getInstance() {
+    return ServiceManager.getService(FragmentedDiffSettingsHolder.class);
   }
 }
 
