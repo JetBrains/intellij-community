@@ -293,11 +293,8 @@ class CheckOutputThread(PyDBDaemonThread):
 
                 time.sleep(0.3)
 
-
-
-
     def doKillPydevThread(self):
-        pass
+        self.killReceived = True
 
 
 
