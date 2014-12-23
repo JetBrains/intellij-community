@@ -387,11 +387,11 @@ public abstract class HttpRequests {
   private static URLConnection openConnection(RequestBuilder builder) throws IOException {
     String url = builder.myUrl;
 
-    if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
-      url = "https:" + url.substring(5);
-    }
-
     for (int i = 0; i < builder.myRedirectLimit; i++) {
+      if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
+        url = "https:" + url.substring(5);
+      }
+
       URLConnection connection;
       if (ApplicationManager.getApplication() == null) {
         connection = new URL(url).openConnection();
