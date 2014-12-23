@@ -51,129 +51,7 @@ public class LinearBekController extends CascadeLinearGraphController {
     final WorkingGraph workingGraph = new WorkingGraph(graph);
     final List<Integer> heads = graphLayout.getHeadNodeIndex();
 
-    GraphVisitorAlgorithm graphVisitorAlgorithm = new GraphVisitorAlgorithm(true);
-    graphVisitorAlgorithm.visitGraph(graph, graphLayout, new GraphVisitorAlgorithm.GraphVisitor() {
-      @Override
-      public void enterSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
-      }
-
-      @Override
-      public void leaveSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
-        workingGraph.clear();
-
-        List<Integer> upNodes = workingGraph.getUpNodes(currentNodeIndex);
-        if (upNodes.size() != 1) return;
-        int parent = upNodes.get(0);
-        if (workingGraph.getDownNodes(parent).size() != 2) {
-          return;
-        }
-
-        int firstChildIndex = workingGraph.getDownNodes(parent).get(0);
-        boolean switched = false;
-        if (firstChildIndex == currentNodeIndex) {
-          if (firstChildIndex > workingGraph.getDownNodes(parent).get(1)) {
-            return;
-          }
-          switched = true;
-          firstChildIndex = workingGraph.getDownNodes(parent).get(1);
-        }
-
-        int x = graphLayout.getLayoutIndex(firstChildIndex);
-        int y = graphLayout.getLayoutIndex(currentNodeIndex);
-        if (switched && x != y) return;
-        int k = 1;
-
-        int headNumber = heads.indexOf(currentHead);
-        int nextHeadIndex = headNumber == heads.size() - 1
-                            ? Integer.MAX_VALUE
-                            : graphLayout
-                              .getLayoutIndex(heads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
-        int headIndex = graphLayout.getLayoutIndex(currentHead);
-
-        PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE/*todo?*/, new Comparator<GraphEdge>() {
-          @Override
-          public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
-            if (o1.getDownNodeIndex() == null) return -1;
-            if (o2.getDownNodeIndex() == null) return 1;
-            return o1.getDownNodeIndex().compareTo(o2.getDownNodeIndex());
-          }
-        });
-        addDownEdges(workingGraph, currentNodeIndex, queue);
-
-        Set<Integer> definitelyNotTails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
-        Set<Integer> tails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
-        while (!queue.isEmpty()) {
-          GraphEdge nextEdge = queue.poll();
-          Integer next = nextEdge.getDownNodeIndex();
-          if (next == null) return; // well, what do you do
-
-          if (next == firstChildIndex) {
-            // found first child
-          }
-          else if (next <= currentNodeIndex + k) {
-            // all is fine, continuing
-            k++;
-            addDownEdges(workingGraph, next, queue);
-            definitelyNotTails.add(nextEdge.getUpNodeIndex());
-          }
-          else if (next > currentNodeIndex + k && next < firstChildIndex) {
-            int li = graphLayout.getLayoutIndex(next);
-            if (li > y) {
-              return;
-            }
-            if (li <= x) {
-              if (!(li >= headIndex && li < nextHeadIndex)) {
-                return;
-              }
-            }
-            k++;
-            addDownEdges(workingGraph, next, queue);
-
-            // here we have to decide whether next is a part of the block or not
-            if (visited.get(next)) {
-              definitelyNotTails.add(nextEdge.getUpNodeIndex());
-            }
-          }
-          else if (next > firstChildIndex) {
-            int li = graphLayout.getLayoutIndex(next);
-            if (li > y) {
-              return;
-            }
-            if (li < x) {
-              if (!(li >= headIndex && li < nextHeadIndex)) {
-                return;
-              }
-            }
-            else {
-              if (!definitelyNotTails.contains(nextEdge.getUpNodeIndex())) {
-                tails.add(nextEdge.getUpNodeIndex());
-              }
-              workingGraph.removeEdge(nextEdge.getUpNodeIndex(), nextEdge.getDownNodeIndex());
-            }
-          }
-
-          if (k >= MAX_BLOCK_SIZE) {
-            return;
-          }
-        }
-
-        boolean mergeWithOldCommit = currentNodeIndex + k == firstChildIndex && visited.get(firstChildIndex);
-        if (switched && !mergeWithOldCommit) {
-          return;
-        }
-
-        for (Integer tail : tails) {
-          if (!workingGraph.getDownNodes(tail).contains(firstChildIndex)) {
-            workingGraph.addEdge(tail, firstChildIndex);
-          }
-        }
-
-        if (!tails.isEmpty() || mergeWithOldCommit) {
-          workingGraph.removeEdge(parent, firstChildIndex);
-        }
-        workingGraph.apply();
-      }
-    });
+    new GraphVisitorAlgorithm(true).visitGraph(graph, graphLayout, new MyGraphVisitor(workingGraph, graphLayout, heads));
 
     return workingGraph.createLinearBekGraph();
   }
@@ -289,6 +167,139 @@ public class LinearBekController extends CascadeLinearGraphController {
         bekIndexes.add(myBekIntMap.getBekIndex(head));
       }
       return bekIndexes;
+    }
+  }
+
+  private static class MyGraphVisitor implements GraphVisitorAlgorithm.GraphVisitor {
+    private final WorkingGraph myWorkingGraph;
+    private final GraphLayout myGraphLayout;
+    private final List<Integer> myHeads;
+
+    public MyGraphVisitor(WorkingGraph workingGraph, GraphLayout graphLayout, List<Integer> heads) {
+      myWorkingGraph = workingGraph;
+      myGraphLayout = graphLayout;
+      myHeads = heads;
+    }
+
+    @Override
+    public void enterSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
+    }
+
+    @Override
+    public void leaveSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
+      myWorkingGraph.clear();
+
+      List<Integer> upNodes = myWorkingGraph.getUpNodes(currentNodeIndex);
+      if (upNodes.size() != 1) return;
+      int parent = upNodes.get(0);
+      if (myWorkingGraph.getDownNodes(parent).size() != 2) {
+        return;
+      }
+
+      int firstChildIndex = myWorkingGraph.getDownNodes(parent).get(0);
+      boolean switched = false;
+      if (firstChildIndex == currentNodeIndex) {
+        if (firstChildIndex > myWorkingGraph.getDownNodes(parent).get(1)) {
+          return;
+        }
+        switched = true;
+        firstChildIndex = myWorkingGraph.getDownNodes(parent).get(1);
+      }
+
+      int x = myGraphLayout.getLayoutIndex(firstChildIndex);
+      int y = myGraphLayout.getLayoutIndex(currentNodeIndex);
+      if (switched && x != y) return;
+      int k = 1;
+
+      int headNumber = myHeads.indexOf(currentHead);
+      int nextHeadIndex = headNumber == myHeads.size() - 1
+                          ? Integer.MAX_VALUE
+                          : myGraphLayout
+                            .getLayoutIndex(myHeads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
+      int headIndex = myGraphLayout.getLayoutIndex(currentHead);
+
+      PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE/*todo?*/, new Comparator<GraphEdge>() {
+        @Override
+        public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
+          if (o1.getDownNodeIndex() == null) return -1;
+          if (o2.getDownNodeIndex() == null) return 1;
+          return o1.getDownNodeIndex().compareTo(o2.getDownNodeIndex());
+        }
+      });
+      addDownEdges(myWorkingGraph, currentNodeIndex, queue);
+
+      Set<Integer> definitelyNotTails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
+      Set<Integer> tails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
+      while (!queue.isEmpty()) {
+        GraphEdge nextEdge = queue.poll();
+        Integer next = nextEdge.getDownNodeIndex();
+        if (next == null) return; // well, what do you do
+
+        if (next == firstChildIndex) {
+          // found first child
+        }
+        else if (next <= currentNodeIndex + k) {
+          // all is fine, continuing
+          k++;
+          addDownEdges(myWorkingGraph, next, queue);
+          definitelyNotTails.add(nextEdge.getUpNodeIndex());
+        }
+        else if (next > currentNodeIndex + k && next < firstChildIndex) {
+          int li = myGraphLayout.getLayoutIndex(next);
+          if (li > y) {
+            return;
+          }
+          if (li <= x) {
+            if (!(li >= headIndex && li < nextHeadIndex)) {
+              return;
+            }
+          }
+          k++;
+          addDownEdges(myWorkingGraph, next, queue);
+
+          // here we have to decide whether next is a part of the block or not
+          if (visited.get(next)) {
+            definitelyNotTails.add(nextEdge.getUpNodeIndex());
+          }
+        }
+        else if (next > firstChildIndex) {
+          int li = myGraphLayout.getLayoutIndex(next);
+          if (li > y) {
+            return;
+          }
+          if (li < x) {
+            if (!(li >= headIndex && li < nextHeadIndex)) {
+              return;
+            }
+          }
+          else {
+            if (!definitelyNotTails.contains(nextEdge.getUpNodeIndex())) {
+              tails.add(nextEdge.getUpNodeIndex());
+            }
+            myWorkingGraph.removeEdge(nextEdge.getUpNodeIndex(), nextEdge.getDownNodeIndex());
+          }
+        }
+
+        if (k >= MAX_BLOCK_SIZE) {
+          return;
+        }
+      }
+
+      boolean mergeWithOldCommit = currentNodeIndex + k == firstChildIndex && visited.get(firstChildIndex);
+      if (switched && !mergeWithOldCommit) {
+        return;
+      }
+
+      for (Integer tail : tails) {
+        if (!myWorkingGraph.getDownNodes(tail).contains(firstChildIndex)) {
+          myWorkingGraph.addEdge(tail, firstChildIndex);
+        }
+      }
+
+      if (!tails.isEmpty() || mergeWithOldCommit) {
+        myWorkingGraph.removeEdge(parent, firstChildIndex);
+      }
+      myWorkingGraph.apply();
     }
   }
 }
