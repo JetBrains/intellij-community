@@ -39,8 +39,11 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
+    long start = System.currentTimeMillis();
     myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(),
                                    new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap()));
+    long end = System.currentTimeMillis();
+    System.err.println(((double)end - start)/1000);
   }
 
   static LinearGraph compileGraph(@NotNull final LinearGraph graph, @NotNull final GraphLayout graphLayout) {
