@@ -102,7 +102,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     super.onDisposeAwt();
   }
 
-  private void processContextHints() {
+  protected void processContextHints() {
     ThreeSide side = myContext.getUserData(DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE);
     if (side != null) myCurrentSide = side;
 
@@ -110,7 +110,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     myScrollToLineHelper.onInit();
   }
 
-  private void updateContextHints() {
+  protected void updateContextHints() {
     myContext.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE, myCurrentSide);
 
     myScrollToLineHelper.updateContext();
@@ -121,7 +121,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     List<EditorEx> editors = new ArrayList<EditorEx>(3);
 
     for (DocumentContent content : myActualContents) {
-      EditorEx editor = DiffUtil.createEditor(content.getDocument(), myProject, false);
+      EditorEx editor = DiffUtil.createEditor(content.getDocument(), myProject, false, true);
       DiffUtil.configureEditor(editor, content, myProject);
       editors.add(editor);
     }

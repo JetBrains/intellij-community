@@ -119,6 +119,11 @@ public class DiffUtil {
 
   @NotNull
   public static EditorEx createEditor(@NotNull Document document, @Nullable Project project, boolean isViewer) {
+    return createEditor(document, project, isViewer, false);
+  }
+
+  @NotNull
+  public static EditorEx createEditor(@NotNull Document document, @Nullable Project project, boolean isViewer, boolean enableFolding) {
     EditorFactory factory = EditorFactory.getInstance();
     EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
 
@@ -126,10 +131,17 @@ public class DiffUtil {
     editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.VCS_DIFF);
 
     editor.getSettings().setLineNumbersShown(true);
-    editor.getSettings().setFoldingOutlineShown(false);
-    editor.getFoldingModel().setFoldingEnabled(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
+
+    if (enableFolding) {
+      editor.getSettings().setFoldingOutlineShown(true);
+      editor.getSettings().setCodeFoldingEnabled(false);
+    }
+    else {
+      editor.getSettings().setFoldingOutlineShown(false);
+      editor.getFoldingModel().setFoldingEnabled(false);
+    }
 
     UIUtil.removeScrollBorder(editor.getComponent());
 
@@ -686,8 +698,10 @@ public class DiffUtil {
   @NotNull
   public static WindowWrapper.Mode getWindowMode(@NotNull DiffDialogHints hints) {
     WindowWrapper.Mode mode = hints.getMode();
-    if (mode == null) mode = (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog) ?
-             WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
+    if (mode == null) {
+      boolean isUnderDialog = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog;
+      mode = isUnderDialog ? WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
+    }
     return mode;
   }
 

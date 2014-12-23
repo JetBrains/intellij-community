@@ -27,6 +27,7 @@ import com.intellij.openapi.util.diff.fragments.MergeLineFragment;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.*;
+import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.SimpleThreesideFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideContentPanel.DiffDivider;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
@@ -61,6 +62,8 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @NotNull private final List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
 
+  @NotNull private final SimpleThreesideFoldingModel myFoldingModel;
+
   public SimpleThreesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
@@ -68,6 +71,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     mySyncScrollable2 = new MySyncScrollable(Side.RIGHT);
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
+    myFoldingModel = new SimpleThreesideFoldingModel(myEditors.toArray(new EditorEx[3]), this);
   }
 
   @Override
@@ -111,6 +115,12 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     group.add(new MyToggleAutoScrollAction());
 
     return group;
+  }
+
+  @Override
+  protected void updateContextHints() {
+    super.updateContextHints();
+    myFoldingModel.updateContext(myRequest);
   }
 
   //
@@ -215,11 +225,14 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         if (myEditors.get(1).getDocument().getModificationStamp() != stamps[1]) return;
         if (myEditors.get(2).getDocument().getModificationStamp() != stamps[2]) return;
 
+        myFoldingModel.updateContext(myRequest);
         clearDiffPresentation();
 
         for (MergeLineFragment fragment : fragments) {
           myDiffChanges.add(new SimpleThreesideDiffChange(fragment, myEditors, comparisonPolicy));
         }
+
+        myFoldingModel.install(fragments, myRequest, false, 4); // TODO: settings
 
         scrollOnRediff();
 
@@ -299,6 +312,12 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       myDiffChanges.removeAll(invalid);
       myInvalidDiffChanges.addAll(invalid);
     }
+  }
+
+  @Override
+  protected void onDocumentChange(@NotNull DocumentEvent e) {
+    super.onDocumentChange(e);
+    myFoldingModel.onDocumentChanged(e);
   }
 
   @CalledInAwt
@@ -530,9 +549,11 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       Editor editor1 = mySide.selectN(myEditors.get(0), myEditors.get(1));
       Editor editor2 = mySide.selectN(myEditors.get(1), myEditors.get(2));
 
-      int width = divider.getWidth();
       //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
       DividerPolygonUtil.paintPolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
+
+      myFoldingModel.paintOnDivider(gg, divider, mySide);
+
       gg.dispose();
     }
   }
@@ -547,6 +568,8 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
       int width = editor1.getScrollPane().getVerticalScrollBar().getWidth();
       DividerPolygonUtil.paintPolygonsOnScrollbar((Graphics2D)g, width, editor1, editor2, myPaintable);
+
+      myFoldingModel.paintOnScrollbar((Graphics2D)g, width);
     }
   }
 

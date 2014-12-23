@@ -29,6 +29,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DividerPolygonUtil {
+  public static void paintSeparators(@NotNull Graphics2D gg,
+                                     int width,
+                                     @NotNull Editor editor1,
+                                     @NotNull Editor editor2,
+                                     @NotNull DividerSeparatorPaintable paintable) {
+    List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable);
+
+    GraphicsUtil.setupAAPainting(gg);
+    for (DividerSeparator polygon : polygons) {
+      polygon.paint(gg, width);
+    }
+  }
+
+  public static void paintSeparatorsOnScrollbar(@NotNull Graphics2D gg,
+                                                int width,
+                                                @NotNull Editor editor1,
+                                                @NotNull Editor editor2,
+                                                @NotNull DividerSeparatorPaintable paintable) {
+    List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable);
+
+    GraphicsUtil.setupAAPainting(gg);
+    for (DividerSeparator polygon : polygons) {
+      polygon.paintOnScrollbar(gg, width);
+    }
+  }
+
   public static void paintPolygons(@NotNull Graphics2D gg,
                                    int width,
                                    @NotNull Editor editor1,
@@ -63,26 +89,7 @@ public class DividerPolygonUtil {
     List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
 
     for (DividerPolygon polygon : polygons) {
-      int startY = polygon.myStart1;
-      int endY = polygon.myEnd1;
-      int height = endY - startY;
-
-      int startX = 0;
-      int endX = startX + width - 1;
-
-      Color color = polygon.myColor;
-
-      g.setColor(color);
-      if (height > 2) {
-        g.fillRect(startX, startY, width, height);
-
-        Color framingColor = DiffDrawUtil.getFramingColor(color);
-        UIUtil.drawLine(g, startX, startY, endX, startY, null, framingColor);
-        UIUtil.drawLine(g, startX, endY, endX, endY, null, framingColor);
-      }
-      else {
-        DiffDrawUtil.drawDoubleShadowedLine(g, startX, endX, startY, color);
-      }
+      polygon.paintOnScrollbar(g, width);
     }
   }
 
@@ -111,6 +118,35 @@ public class DividerPolygonUtil {
     return polygons;
   }
 
+  @NotNull
+  public static List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
+                                                               @NotNull Editor editor2,
+                                                               @NotNull DividerSeparatorPaintable paintable) {
+    final List<DividerSeparator> separators = new ArrayList<DividerSeparator>();
+
+    final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
+
+    final Interval leftInterval = getVisibleInterval(editor1);
+    final Interval rightInterval = getVisibleInterval(editor2);
+
+    final int height1 = editor1.getLineHeight();
+    final int height2 = editor2.getLineHeight();
+
+    paintable.process(new DividerSeparatorPaintable.Handler() {
+      @Override
+      public boolean process(int line1, int line2) {
+        if (leftInterval.startLine > line1 + 1 && rightInterval.startLine > line2 + 1) return true;
+        if (leftInterval.endLine < line1 && rightInterval.endLine < line2) return false;
+
+        separators.add(createSeparator(transformations, line1, line2, height1, height2));
+        return true;
+      }
+    });
+
+    return separators;
+  }
+
+  @NotNull
   private static Transformation getTransformation(@NotNull final Editor editor) {
     return new Transformation() {
       @Override
@@ -126,6 +162,7 @@ public class DividerPolygonUtil {
     };
   }
 
+  @NotNull
   private static DividerPolygon createPolygon(@NotNull Transformation[] transformations,
                                               int startLine1, int endLine1,
                                               int startLine2, int endLine2,
@@ -135,6 +172,14 @@ public class DividerPolygonUtil {
     int start2 = transformations[1].transform(startLine2);
     int end2 = transformations[1].transform(endLine2);
     return new DividerPolygon(start1, start2, end1, end2, color);
+  }
+
+  @NotNull
+  private static DividerSeparator createSeparator(@NotNull Transformation[] transformations,
+                                                  int line1, int line2, int height1, int height2) {
+    int start1 = transformations[0].transform(line1);
+    int start2 = transformations[1].transform(line2);
+    return new DividerSeparator(start1, start2, start1 + height1, start2 + height2);
   }
 
   @NotNull
@@ -150,6 +195,14 @@ public class DividerPolygonUtil {
 
     interface Handler {
       boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color);
+    }
+  }
+
+  public interface DividerSeparatorPaintable {
+    void process(@NotNull Handler handler);
+
+    interface Handler {
+      boolean process(int line1, int line2);
     }
   }
 
@@ -180,8 +233,56 @@ public class DividerPolygonUtil {
       DiffDrawUtil.drawTrapezium(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myColor);
     }
 
+    private void paintOnScrollbar(Graphics2D g, int width) {
+      int startY = myStart1;
+      int endY = myEnd1;
+      int height = endY - startY;
+
+      int startX = 0;
+      int endX = startX + width - 1;
+
+      g.setColor(myColor);
+      if (height > 2) {
+        g.fillRect(startX, startY, width, height);
+
+        Color framingColor = DiffDrawUtil.getFramingColor(myColor);
+        UIUtil.drawLine(g, startX, startY, endX, startY, null, framingColor);
+        UIUtil.drawLine(g, startX, endY, endX, endY, null, framingColor);
+      }
+      else {
+        DiffDrawUtil.drawDoubleShadowedLine(g, startX, endX, startY, myColor);
+      }
+    }
+
     public String toString() {
       return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myColor;
+    }
+  }
+
+  public static class DividerSeparator {
+    // pixels from the top of editor
+    private final int myStart1;
+    private final int myStart2;
+    private final int myEnd1;
+    private final int myEnd2;
+
+    public DividerSeparator(int start1, int start2, int end1, int end2) {
+      myStart1 = start1;
+      myStart2 = start2;
+      myEnd1 = end1;
+      myEnd2 = end2;
+    }
+
+    private void paint(Graphics2D g, int width) {
+      DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart2, myEnd2);
+    }
+
+    private void paintOnScrollbar(Graphics2D g, int width) {
+      DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart1, myEnd1);
+    }
+
+    public String toString() {
+      return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> ";
     }
   }
 

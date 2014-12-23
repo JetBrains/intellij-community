@@ -3,6 +3,7 @@ package com.intellij.openapi.util.diff.tools.fragmented;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.diff.util.DiffDrawUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,7 +32,8 @@ class OnesideDiffSeparator {
   public void installHighlighter() {
     assert myHighlighters.isEmpty();
 
-    myHighlighters.add(DiffDrawUtil.createLineSeparatorHighlighter(myEditor, myLine));
+    int offset = DocumentUtil.getFirstNonSpaceCharOffset(myEditor.getDocument(), myLine);
+    myHighlighters.add(DiffDrawUtil.createLineSeparatorHighlighter(myEditor, offset));
   }
 
   public int getLine() {

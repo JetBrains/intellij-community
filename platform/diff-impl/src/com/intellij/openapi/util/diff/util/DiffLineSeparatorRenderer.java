@@ -31,10 +31,89 @@ import java.util.Random;
 public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSeparatorRenderer {
   @NotNull private final TornLine myTornLine;
   @NotNull private final Editor myEditor;
+  @NotNull private final BooleanGetter myCondition;
 
   public DiffLineSeparatorRenderer(@NotNull Editor editor) {
+    this(editor, BooleanGetter.TRUE);
+  }
+
+  public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull BooleanGetter condition) {
     myTornLine = new TornLine();
     myEditor = editor;
+    myCondition = condition;
+  }
+
+  /*
+   * Divider
+   */
+  public static void drawSimpleConnectorLine(@NotNull Graphics2D g,
+                                             int x1, int x2,
+                                             int start1, int end1,
+                                             int start2, int end2) {
+    int y1 = (start1 + end1) / 2;
+    int y2 = (start2 + end2) / 2;
+
+    if (Math.abs(x2 - x1) < Math.abs(y2 - y1)) {
+      int dx = TornLine.ourOuterRadius;
+      int dy = TornLine.ourInnerRadius;
+      if (y2 < y1) {
+        g.setColor(getOuterColor());
+        g.drawLine(x1 + dx, y1 - dy + TornLine.ourOuterRadius, x2, y2 + TornLine.ourOuterRadius);
+        g.drawLine(x1, y1 - TornLine.ourOuterRadius, x2 - dx, y2 + dy - TornLine.ourOuterRadius);
+
+        g.drawLine(x1, y1 + TornLine.ourOuterRadius, x1 + dx, y1 - dy + TornLine.ourOuterRadius);
+        g.drawLine(x2, y2 - TornLine.ourOuterRadius, x2 - dx, y2 + dy - TornLine.ourOuterRadius);
+
+        g.setColor(getInnerColor());
+        g.drawLine(x1 + dx, y1 - dy + TornLine.ourInnerRadius, x2, y2 + TornLine.ourInnerRadius);
+        g.drawLine(x1, y1 - TornLine.ourInnerRadius, x2 - dx, y2 + dy - TornLine.ourInnerRadius);
+
+        g.drawLine(x1, y1 + TornLine.ourInnerRadius, x1 + dx, y1 - dy + TornLine.ourInnerRadius);
+        g.drawLine(x2, y2 - TornLine.ourInnerRadius, x2 - dx, y2 + dy - TornLine.ourInnerRadius);
+      }
+      else {
+        g.setColor(getOuterColor());
+        g.drawLine(x1, y1 + TornLine.ourOuterRadius, x2 - dx, y2 - dy + TornLine.ourOuterRadius);
+        g.drawLine(x1 + dx, y1 + dy - TornLine.ourOuterRadius, x2, y2 - TornLine.ourOuterRadius);
+
+        g.drawLine(x2, y2 + TornLine.ourOuterRadius, x2 - dx, y2 - dy + TornLine.ourOuterRadius);
+        g.drawLine(x1, y1 - TornLine.ourOuterRadius, x1 + dx, y1 + dy - TornLine.ourOuterRadius);
+
+        g.setColor(getInnerColor());
+        g.drawLine(x1, y1 + TornLine.ourInnerRadius, x2 - dx, y2 - dy + TornLine.ourInnerRadius);
+        g.drawLine(x1 + dx, y1 + dy - TornLine.ourInnerRadius, x2, y2 - TornLine.ourInnerRadius);
+
+        g.drawLine(x2, y2 + TornLine.ourInnerRadius, x2 - dx, y2 - dy + TornLine.ourInnerRadius);
+        g.drawLine(x1, y1 - TornLine.ourInnerRadius, x1 + dx, y1 + dy - TornLine.ourInnerRadius);
+      }
+    }
+    else {
+      g.setColor(getOuterColor());
+      UIUtil.drawLine(g, x1, y1 - TornLine.ourOuterRadius, x2, y2 - TornLine.ourOuterRadius);
+      UIUtil.drawLine(g, x1, y1 + TornLine.ourOuterRadius, x2, y2 + TornLine.ourOuterRadius);
+
+      g.setColor(getInnerColor());
+      UIUtil.drawLine(g, x1, y1 - TornLine.ourInnerRadius, x2, y2 - TornLine.ourInnerRadius);
+      UIUtil.drawLine(g, x1, y1 + TornLine.ourInnerRadius, x2, y2 + TornLine.ourInnerRadius);
+    }
+  }
+
+  public static void drawConnectorLine(@NotNull Graphics2D g,
+                                       int x1, int x2,
+                                       int start1, int end1,
+                                       int start2, int end2) {
+    int y1 = (start1 + end1) / 2;
+    int y2 = (start2 + end2) / 2;
+
+    DiffDrawUtil.drawCurveTrapezium(g, x1, x2,
+                                    y1 - TornLine.ourOuterRadius, y1 + TornLine.ourOuterRadius,
+                                    y2 - TornLine.ourOuterRadius, y2 + TornLine.ourOuterRadius,
+                                    null, getOuterColor());
+
+    DiffDrawUtil.drawCurveTrapezium(g, x1, x2,
+                                    y1 - TornLine.ourInnerRadius, y1 + TornLine.ourInnerRadius,
+                                    y2 - TornLine.ourInnerRadius, y2 + TornLine.ourInnerRadius,
+                                    null, getInnerColor());
   }
 
   /*
@@ -42,6 +121,11 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
    */
   @Override
   public void paint(Editor editor, Graphics g, Rectangle r) {
+    if (!myCondition.get()) return;
+
+    // FIXME: painting of hundreds of AA lines lead to heavy UI slowdown. Each line is drew by ~(DISPLAY_WIDTH / 2) lines.
+    // TODO: We should paint somehow else, faster. Dotlines?
+
     GraphicsUtil.setupAAPainting(g);
 
     int y = r.y;
@@ -64,6 +148,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
    */
   @Override
   public void drawLine(Graphics g, int x1, int x2, int y) {
+    if (!myCondition.get()) return;
+
     GraphicsUtil.setupAAPainting(g);
 
     Rectangle clip = g.getClipBounds();

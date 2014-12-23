@@ -33,6 +33,7 @@ import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.*;
+import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.SimpleFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
@@ -63,12 +64,15 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<SimpleDiffChange>();
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<SimpleDiffChange>();
 
+  @Nullable private final SimpleFoldingModel myFoldingModel;
+
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
     mySyncScrollable = new MySyncScrollable();
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
+    myFoldingModel = createFoldingModel(myEditor1, myEditor2);
   }
 
   @Override
@@ -119,6 +123,19 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new MyApplySelectedChangesAction());
 
     return group;
+  }
+
+  @Nullable
+  private SimpleFoldingModel createFoldingModel(@Nullable EditorEx editor1, @Nullable EditorEx editor2) {
+    if (editor1 == null || editor2 == null) return null;
+
+    return new SimpleFoldingModel(editor1, editor2, this);
+  }
+
+  @Override
+  protected void updateContextHints() {
+    super.updateContextHints();
+    if (myFoldingModel != null) myFoldingModel.updateContext(myRequest);
   }
 
   //
@@ -243,6 +260,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (myEditor1 != null && myEditor1.getDocument().getModificationStamp() != data.getStamp1()) return;
         if (myEditor2 != null && myEditor2.getDocument().getModificationStamp() != data.getStamp2()) return;
 
+        if (myFoldingModel != null) myFoldingModel.updateContext(myRequest);
         clearDiffPresentation();
 
         if (data.isEqualContent()) myPanel.addContentsEqualNotification();
@@ -252,6 +270,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
             myDiffChanges.add(new SimpleDiffChange(fragment, myEditor1, myEditor2, getHighlightPolicy().isFineFragments()));
           }
         }
+
+        if (myFoldingModel != null) myFoldingModel.install(data.getFragments(), myRequest, true, 4); // TODO: settings
 
         scrollOnRediff();
 
@@ -291,6 +311,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
       change.destroyHighlighter();
     }
     myInvalidDiffChanges.clear();
+
+    if (myFoldingModel != null) myFoldingModel.destroy();
 
     myContentPanel.repaintDivider();
     myStatusPanel.update();
@@ -340,6 +362,12 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
       myDiffChanges.removeAll(invalid);
       myInvalidDiffChanges.addAll(invalid);
     }
+  }
+
+  @Override
+  protected void onDocumentChange(@NotNull DocumentEvent e) {
+    super.onDocumentChange(e);
+    if (myFoldingModel != null) myFoldingModel.onDocumentChanged(e);
   }
 
   @CalledInAwt
@@ -709,6 +737,9 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
       DividerPolygonUtil.paintPolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
+
+      if (myFoldingModel != null) myFoldingModel.paintOnDivider(gg, divider);
+
       gg.dispose();
     }
 

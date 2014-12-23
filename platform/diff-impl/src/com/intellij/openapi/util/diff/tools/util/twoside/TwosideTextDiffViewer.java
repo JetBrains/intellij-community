@@ -109,7 +109,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     super.onDisposeAwt();
   }
 
-  private void processContextHints() {
+  protected void processContextHints() {
     if (myEditor1 == null) {
       myCurrentSide = Side.RIGHT;
     }
@@ -125,7 +125,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     myScrollToLineHelper.onInit();
   }
 
-  private void updateContextHints() {
+  protected void updateContextHints() {
     if (myEditor1 != null && myEditor2 != null) {
       myContext.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, myCurrentSide);
     }
@@ -138,11 +138,11 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     EditorEx editor1 = null;
     EditorEx editor2 = null;
     if (myActualContent1 != null) {
-      editor1 = DiffUtil.createEditor(myActualContent1.getDocument(), myProject, false);
+      editor1 = DiffUtil.createEditor(myActualContent1.getDocument(), myProject, false, true);
       DiffUtil.configureEditor(editor1, myActualContent1, myProject);
     }
     if (myActualContent2 != null) {
-      editor2 = DiffUtil.createEditor(myActualContent2.getDocument(), myProject, false);
+      editor2 = DiffUtil.createEditor(myActualContent2.getDocument(), myProject, false, true);
       DiffUtil.configureEditor(editor2, myActualContent2, myProject);
     }
     if (editor1 != null && editor2 != null) {

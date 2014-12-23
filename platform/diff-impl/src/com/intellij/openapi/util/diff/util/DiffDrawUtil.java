@@ -30,6 +30,13 @@ public class DiffDrawUtil {
   private DiffDrawUtil() {
   }
 
+  public static void drawConnectorLineSeparator(@NotNull Graphics2D g,
+                                                int x1, int x2,
+                                                int start1, int end1,
+                                                int start2, int end2) {
+    DiffLineSeparatorRenderer.drawSimpleConnectorLine(g, x1, x2, start1, end1, start2, end2);
+  }
+
   public static void drawDoubleShadowedLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
     UIUtil.drawLine(g, x1, y, x2, y, null, getFramingColor(color));
     UIUtil.drawLine(g, x1, y + 1, x2, y + 1, null, color);
@@ -239,12 +246,16 @@ public class DiffDrawUtil {
   }
 
   @NotNull
-  public static RangeHighlighter createLineSeparatorHighlighter(@NotNull Editor editor, int line) {
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
+  public static RangeHighlighter createLineSeparatorHighlighter(@NotNull Editor editor, int offset) {
+    return createLineSeparatorHighlighter(editor, offset, BooleanGetter.TRUE);
+  }
+
+  @NotNull
+  public static RangeHighlighter createLineSeparatorHighlighter(@NotNull Editor editor, int offset, @NotNull BooleanGetter condition) {
     RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, null,
                                                                           HighlighterTargetArea.LINES_IN_RANGE);
 
-    DiffLineSeparatorRenderer renderer = new DiffLineSeparatorRenderer(editor);
+    DiffLineSeparatorRenderer renderer = new DiffLineSeparatorRenderer(editor, condition);
     marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
     marker.setLineSeparatorRenderer(renderer);
     marker.setLineMarkerRenderer(renderer);
