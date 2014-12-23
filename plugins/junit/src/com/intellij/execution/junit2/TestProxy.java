@@ -331,8 +331,10 @@ public class TestProxy extends AbstractTestProxy {
     }
 
     for (TestProxy proxy : getChildren()) {
-      if (proxy.myState instanceof AssertEqualsDiffViewerProvider) {
-        return (AssertEqualsDiffViewerProvider)proxy.myState;
+      if (!proxy.isDefect()) continue;
+      final AssertEqualsDiffViewerProvider provider = proxy.getDiffViewerProvider();
+      if (provider != null) {
+        return provider;
       }
     }
 
