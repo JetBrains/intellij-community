@@ -418,7 +418,7 @@ public class PackageAnnotator {
       boolean touchedClass = false;
       final Collection methodSigs = classData.getMethodSigs();
       for (final Object nameAndSig : methodSigs) {
-        if (isGeneratedDefaultConstructor(psiClass, (String) nameAndSig)) {
+        if (isGeneratedDefaultConstructor(psiClass, (String)nameAndSig)) {
           continue;
         }
         final int covered = classData.getStatus((String)nameAndSig);
@@ -438,15 +438,21 @@ public class PackageAnnotator {
         packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;
         packageCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
         packageCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
-      } else {
+      }
+      else {
+        LOG.debug("Did not find any method signatures in " + classFile.getName());
         return;
       }
-    } else {
-      if (!collectNonCoveredClassInfo(classFile, psiClass, toplevelClassCoverageInfo, packageCoverageInfo)) return;
+    }
+    else {
+      if (!collectNonCoveredClassInfo(classFile, psiClass, toplevelClassCoverageInfo, packageCoverageInfo)) {
+        LOG.debug("Did not collect non-covered class info for " + classFile.getName());
+        return;
+      }
     }
 
     ClassCoverageInfo classCoverageInfo = getOrCreateClassCoverageInfo(toplevelClassCoverage, toplevelClassSrcFQName);
-    LOG.info("Adding coverage of " + classFile.getName() + " to top-level class " + toplevelClassSrcFQName);
+    LOG.debug("Adding coverage of " + classFile.getName() + " to top-level class " + toplevelClassSrcFQName);
     classCoverageInfo.totalLineCount += toplevelClassCoverageInfo.totalLineCount;
     classCoverageInfo.fullyCoveredLineCount += toplevelClassCoverageInfo.fullyCoveredLineCount;
     classCoverageInfo.partiallyCoveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;
