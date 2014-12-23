@@ -2,7 +2,6 @@ package com.jetbrains.python.edu;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.RecentProjectsManagerBase;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.PathManager;
@@ -23,8 +22,6 @@ public class StudyInitialConfigurator {
   private static final Logger LOG = Logger.getInstance(StudyInitialConfigurator.class.getName());
   @NonNls private static final String CONFIGURED_V1 = "StudyPyCharm.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V11 = "StudyPyCharm.InitialConfiguration1.1";
-
-  public static boolean UPDATE_PROJECT = false;
 
   /**
    * @noinspection UnusedParameters
@@ -59,11 +56,6 @@ public class StudyInitialConfigurator {
         catch (IOException e) {
           LOG.warn("Couldn't copy bundled courses " + e);
         }
-      }
-      final File projectDir = new File(ProjectUtil.getBaseDir(), "PythonIntroduction");
-      if (projectDir.exists()) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        UPDATE_PROJECT = true;
       }
     }
   }
