@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -74,14 +76,15 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         PsiType type = method.getReturnType();
-        if (!(type instanceof PsiClassType) || !"String".equals(((PsiClassType)type).getClassName())) return;
-        PsiReturnStatement returnStatement = PsiTreeUtil.findChildOfType(method, PsiReturnStatement.class);
-        if (returnStatement == null) return;
-        PsiExpression expression = returnStatement.getReturnValue();
-        String value = getTitleValue(expression);
-        if (value == null) return;
-        Nls.Capitalization capitalization = getCapitalizationFromAnno(method);
-        checkCapitalization(expression, holder, capitalization);
+        if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_STRING)) return;
+        Collection<PsiReturnStatement> statements = PsiTreeUtil.findChildrenOfType(method, PsiReturnStatement.class);
+        for (PsiReturnStatement returnStatement : statements) {
+          PsiExpression expression = returnStatement.getReturnValue();
+          String value = getTitleValue(expression);
+          if (value == null) continue;
+          Nls.Capitalization capitalization = getCapitalizationFromAnno(method);
+          checkCapitalization(expression, holder, capitalization);
+        }
       }
 
       @Override
