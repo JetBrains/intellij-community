@@ -15,31 +15,8 @@
  */
 package com.intellij.vcs.log.graph.api.elements;
 
-import org.jetbrains.annotations.NotNull;
-
 public enum GraphNodeType {
-  USUAL(0),
-  NOT_LOAD_COMMIT(-1),
-  GRAY(1);
-
-  private final byte myType;
-
-  GraphNodeType(int type) {
-    myType = (byte)type;
-  }
-
-  public byte getType() {
-    return myType;
-  }
-
-  @NotNull
-  public static GraphNodeType getByType(byte type) {
-    switch (type) {
-      case 0: return USUAL;
-      case -1: return NOT_LOAD_COMMIT;
-      case 1: return GRAY;
-    }
-    throw new IllegalArgumentException("Unknown type: " + type);
-  }
-
+  USUAL,
+  NOT_LOAD_COMMIT,
+  GRAY;
 }
