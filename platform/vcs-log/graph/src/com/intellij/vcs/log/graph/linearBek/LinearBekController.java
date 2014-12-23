@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -43,7 +44,7 @@ public class LinearBekController extends CascadeLinearGraphController {
     myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(),
                                    new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap()));
     long end = System.currentTimeMillis();
-    System.err.println(((double)end - start)/1000);
+    System.err.println(((double)end - start) / 1000);
   }
 
   static LinearGraph compileGraph(@NotNull final LinearGraph graph, @NotNull final GraphLayout graphLayout) {
@@ -51,7 +52,6 @@ public class LinearBekController extends CascadeLinearGraphController {
     final List<Integer> heads = graphLayout.getHeadNodeIndex();
 
     GraphVisitorAlgorithm graphVisitorAlgorithm = new GraphVisitorAlgorithm(true);
-
     graphVisitorAlgorithm.visitGraph(graph, graphLayout, new GraphVisitorAlgorithm.GraphVisitor() {
       @Override
       public void enterSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
@@ -69,119 +69,121 @@ public class LinearBekController extends CascadeLinearGraphController {
         }
 
         int firstChildIndex = workingGraph.getDownNodes(parent).get(0);
-        boolean switchedOrder = false;
+        boolean switched = false;
         if (firstChildIndex == currentNodeIndex) {
-          switchedOrder = true;
+          if (firstChildIndex > workingGraph.getDownNodes(parent).get(1)) {
+            return;
+          }
+          switched = true;
           firstChildIndex = workingGraph.getDownNodes(parent).get(1);
         }
 
         int x = graphLayout.getLayoutIndex(firstChildIndex);
         int y = graphLayout.getLayoutIndex(currentNodeIndex);
+        if (switched && x != y) return;
         int k = 1;
-        boolean foundFirstChild = false;
-        PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
-        queue.addAll(workingGraph.getDownNodes(currentNodeIndex));
-        boolean blockTooBig = false;
-        while (!queue.isEmpty()) {
-          Integer next = queue.poll();
-          if (next == firstChildIndex) {
-            foundFirstChild = true;
-            break;
-          }
-          else if (next > currentNodeIndex + k || !visited.get(next)) {
-            break;
-          }
-          else if (next < currentNodeIndex + k) {
-            continue;
-          }
-          k++;
-          if (k >= MAX_BLOCK_SIZE) {
-            blockTooBig = true;
-            break;
-          }
-          queue.addAll(workingGraph.getDownNodes(next));
-        }
-
-        if (blockTooBig) return;
 
         int headNumber = heads.indexOf(currentHead);
-        int nextHeadIndex = headNumber == heads.size()-1 ? Integer.MAX_VALUE : graphLayout.getLayoutIndex(heads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
+        int nextHeadIndex = headNumber == heads.size() - 1
+                            ? Integer.MAX_VALUE
+                            : graphLayout
+                              .getLayoutIndex(heads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
         int headIndex = graphLayout.getLayoutIndex(currentHead);
 
-        if (foundFirstChild) {
-          // this is Katisha case (merge with old commit)
-          for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
-            boolean isTail = true;
-            for (int downNode : workingGraph.getDownNodes(i)) {
-              if (downNode > firstChildIndex) {
-                int li = graphLayout.getLayoutIndex(downNode);
-                if (li >= y) {
-                  return;
-                }
-                if (li < x) {
-                  if (!(li >= headIndex && li < nextHeadIndex)) {
-                    return;
-                  }
-                }
-                workingGraph.removeEdge(i, downNode);
-              }
-              else {
-                isTail = false;
+        PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE/*todo?*/, new Comparator<GraphEdge>() {
+          @Override
+          public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
+            if (o1.getDownNodeIndex() == null) return -1;
+            if (o2.getDownNodeIndex() == null) return 1;
+            return o1.getDownNodeIndex().compareTo(o2.getDownNodeIndex());
+          }
+        });
+        addDownEdges(workingGraph, currentNodeIndex, queue);
+
+        Set<Integer> definitelyNotTails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
+        Set<Integer> tails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
+        while (!queue.isEmpty()) {
+          GraphEdge nextEdge = queue.poll();
+          Integer next = nextEdge.getDownNodeIndex();
+          if (next == null) return; // well, what do you do
+
+          if (next == firstChildIndex) {
+            // found first child
+          }
+          else if (next <= currentNodeIndex + k) {
+            // all is fine, continuing
+            k++;
+            addDownEdges(workingGraph, next, queue);
+            definitelyNotTails.add(nextEdge.getUpNodeIndex());
+          }
+          else if (next > currentNodeIndex + k && next < firstChildIndex) {
+            int li = graphLayout.getLayoutIndex(next);
+            if (li > y) {
+              return;
+            }
+            if (li <= x) {
+              if (!(li >= headIndex && li < nextHeadIndex)) {
+                return;
               }
             }
+            k++;
+            addDownEdges(workingGraph, next, queue);
 
-            if (isTail) {
-              workingGraph.addEdge(i, firstChildIndex);
+            // here we have to decide whether next is a part of the block or not
+            if (visited.get(next)) {
+              definitelyNotTails.add(nextEdge.getUpNodeIndex());
+            }
+          }
+          else if (next > firstChildIndex) {
+            int li = graphLayout.getLayoutIndex(next);
+            if (li > y) {
+              return;
+            }
+            if (li < x) {
+              if (!(li >= headIndex && li < nextHeadIndex)) {
+                return;
+              }
+            }
+            else {
+              if (!definitelyNotTails.contains(nextEdge.getUpNodeIndex())) {
+                tails.add(nextEdge.getUpNodeIndex());
+              }
+              workingGraph.removeEdge(nextEdge.getUpNodeIndex(), nextEdge.getDownNodeIndex());
             }
           }
 
+          if (k >= MAX_BLOCK_SIZE) {
+            return;
+          }
+        }
+
+        boolean mergeWithOldCommit = currentNodeIndex + k == firstChildIndex && visited.get(firstChildIndex);
+        if (switched && !mergeWithOldCommit) {
+          return;
+        }
+
+        for (Integer tail : tails) {
+          if (!workingGraph.getDownNodes(tail).contains(firstChildIndex)) {
+            workingGraph.addEdge(tail, firstChildIndex);
+          }
+        }
+
+        if (!tails.isEmpty() || mergeWithOldCommit) {
           workingGraph.removeEdge(parent, firstChildIndex);
         }
-        else if (!switchedOrder) {
-          boolean hasTails = false;
-          for (int i = currentNodeIndex; i < currentNodeIndex + k; i++) {
-            List<Integer> downNodes = workingGraph.getDownNodes(i);
-            boolean isTail = !(downNodes.isEmpty());
-
-            for (int downNode : downNodes) {
-              if (!visited.get(downNode)) {
-                int li = graphLayout.getLayoutIndex(downNode);
-                if (li >= y) {
-                  return;
-                }
-                if (li < x) {
-                  // magic map will save us here
-                  if (!(li >= headIndex && li < nextHeadIndex && downNode > firstChildIndex)) {
-                    return;
-                  }
-                } else {
-                  workingGraph.removeEdge(i, downNode);
-                }
-              }
-              else if (downNode > currentNodeIndex + k) {
-                return; // settling case 2450 as "not collapsing at all"
-              }
-              else {
-                isTail = false;
-              }
-            }
-
-            if (isTail) {
-              hasTails = true;
-              workingGraph.addEdge(i, firstChildIndex);
-            }
-          }
-
-          if (hasTails) {
-            workingGraph.removeEdge(parent, firstChildIndex);
-          }
-        }
-
         workingGraph.apply();
       }
     });
 
     return workingGraph.createLinearBekGraph();
+  }
+
+  public static void addDownEdges(@NotNull LinearGraph graph, int node, @NotNull Collection<GraphEdge> collection) {
+    for (GraphEdge edge : graph.getAdjacentEdges(node)) {
+      if (LinearGraphUtils.isEdgeToDown(edge, node)) {
+        collection.add(edge);
+      }
+    }
   }
 
   private static class WorkingGraph extends LinearBekGraph {
