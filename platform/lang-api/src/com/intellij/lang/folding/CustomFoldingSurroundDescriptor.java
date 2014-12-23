@@ -31,6 +31,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -239,6 +241,9 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     @Override
     public boolean isApplicable(@NotNull PsiElement[] elements) {
       if (elements.length == 0) return false;
+      if (elements[0].getContainingFile() instanceof PsiCodeFragment) {
+        return false;
+      }
       for (FoldingBuilder each : LanguageFolding.INSTANCE.allForLanguage(elements[0].getLanguage())) {
         if (each instanceof CustomFoldingBuilder) return true;
       }

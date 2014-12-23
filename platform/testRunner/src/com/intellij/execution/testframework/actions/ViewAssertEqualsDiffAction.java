@@ -66,9 +66,11 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
       final AbstractTestProxy root = model.getRoot();
       final List<? extends AbstractTestProxy> allTests = root.getAllTests();
       for (AbstractTestProxy test : allTests) {
-        final AbstractTestProxy.AssertEqualsDiffViewerProvider provider = test.getDiffViewerProvider();
-        if (provider instanceof AbstractTestProxy.AssertEqualsMultiDiffViewProvider) {
-          providers.add((AbstractTestProxy.AssertEqualsMultiDiffViewProvider)provider);
+        if (test.isLeaf()) {
+          final AbstractTestProxy.AssertEqualsDiffViewerProvider provider = test.getDiffViewerProvider();
+          if (provider instanceof AbstractTestProxy.AssertEqualsMultiDiffViewProvider) {
+            providers.add((AbstractTestProxy.AssertEqualsMultiDiffViewProvider)provider);
+          }
         }
       }
     }

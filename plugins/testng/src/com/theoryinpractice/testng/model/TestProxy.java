@@ -293,8 +293,10 @@ public class TestProxy extends AbstractTestProxy {
   public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
     if (myHyperlink == null) {
       for (TestProxy proxy : getChildren()) {
-        if (proxy.myHyperlink != null) {
-          return new MyAssertEqualsMultiDiffViewProvider(proxy.myHyperlink);
+        if (!proxy.isDefect()) continue;
+        final AssertEqualsDiffViewerProvider provider = proxy.getDiffViewerProvider();
+        if (provider != null) {
+          return provider;
         }
       }
       return null;
