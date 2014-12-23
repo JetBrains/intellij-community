@@ -57,6 +57,8 @@ class IOBuf:
     def flush(self):
         pass
 
+    def empty(self):
+        return len(self.buflist) == 0
 
 class _RedirectionsHolder:
     _stack_stdout = []
