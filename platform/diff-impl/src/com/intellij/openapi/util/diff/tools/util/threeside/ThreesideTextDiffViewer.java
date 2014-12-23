@@ -346,9 +346,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       carets[2] = getPosition(myEditors.get(2));
 
       Point[] points = new Point[3];
-      points[0] = getPoint(myEditors.get(0));
-      points[1] = getPoint(myEditors.get(1));
-      points[2] = getPoint(myEditors.get(2));
+      points[0] = DiffUtil.getScrollingPoint(myEditors.get(0));
+      points[1] = DiffUtil.getScrollingPoint(myEditors.get(1));
+      points[2] = DiffUtil.getScrollingPoint(myEditors.get(2));
 
       EditorsPosition editorsPosition = new EditorsPosition(carets, points);
 
@@ -367,9 +367,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
         myEditors.get(2).getCaretModel().moveToLogicalPosition(myCaretPosition[2]);
 
         if (myEditorsPosition != null && myEditorsPosition.isSame(myCaretPosition)) {
-          scrollToPoint(myEditors.get(0), myEditorsPosition.myPoints[0]);
-          scrollToPoint(myEditors.get(1), myEditorsPosition.myPoints[1]);
-          scrollToPoint(myEditors.get(2), myEditorsPosition.myPoints[2]);
+          DiffUtil.scrollToPoint(myEditors.get(0), myEditorsPosition.myPoints[0]);
+          DiffUtil.scrollToPoint(myEditors.get(1), myEditorsPosition.myPoints[1]);
+          DiffUtil.scrollToPoint(myEditors.get(2), myEditorsPosition.myPoints[2]);
         }
         else {
           getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -391,21 +391,6 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     @NotNull
     private LogicalPosition getPosition(@Nullable Editor editor) {
       return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
-    }
-
-    @NotNull
-    private Point getPoint(@Nullable Editor editor) {
-      if (editor == null) return new Point(0, 0);
-      ScrollingModel model = editor.getScrollingModel();
-      return new Point(model.getHorizontalScrollOffset(), model.getVerticalScrollOffset());
-    }
-
-    private void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
-      if (editor == null) return;
-      editor.getScrollingModel().disableAnimation();
-      editor.getScrollingModel().scrollHorizontally(point.x);
-      editor.getScrollingModel().scrollVertically(point.y);
-      editor.getScrollingModel().enableAnimation();
     }
   }
 

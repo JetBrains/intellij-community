@@ -945,7 +945,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       carets[0] = getPosition(pair.first[0], position.column);
       carets[1] = getPosition(pair.first[1], position.column);
 
-      EditorPosition editorsPosition = new EditorPosition(carets, getPoint(myEditor));
+      EditorPosition editorsPosition = new EditorPosition(carets, DiffUtil.getScrollingPoint(myEditor));
 
       myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
       myRequest.putUserData(EditorPosition.KEY, editorsPosition);
@@ -968,7 +968,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         myEditor.getCaretModel().moveToLogicalPosition(position);
 
         if (myEditorPosition != null && myEditorPosition.isSame(myCaretPosition)) {
-          scrollToPoint(myEditor, myEditorPosition.myPoint);
+          DiffUtil.scrollToPoint(myEditor, myEditorPosition.myPoint);
         }
         else {
           myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -985,21 +985,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     private LogicalPosition getPosition(int line, int column) {
       if (line == -1) return new LogicalPosition(0, 0);
       return new LogicalPosition(line, column);
-    }
-
-    @NotNull
-    private Point getPoint(@Nullable Editor editor) {
-      if (editor == null) return new Point(0, 0);
-      ScrollingModel model = editor.getScrollingModel();
-      return new Point(model.getHorizontalScrollOffset(), model.getVerticalScrollOffset());
-    }
-
-    private void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
-      if (editor == null) return;
-      editor.getScrollingModel().disableAnimation();
-      editor.getScrollingModel().scrollHorizontally(point.x);
-      editor.getScrollingModel().scrollVertically(point.y);
-      editor.getScrollingModel().enableAnimation();
     }
 
     private boolean doScrollToLine(@NotNull Side side, @NotNull LogicalPosition position) {

@@ -35,7 +35,6 @@ import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.LineFragmentCache;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.IgnorePolicy;
@@ -167,6 +166,21 @@ public class DiffUtil {
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, 0));
     ScrollingModel scrollingModel = editor.getScrollingModel();
     scrollingModel.scrollToCaret(ScrollType.CENTER);
+  }
+
+  public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
+    if (editor == null) return;
+    editor.getScrollingModel().disableAnimation();
+    editor.getScrollingModel().scrollHorizontally(point.x);
+    editor.getScrollingModel().scrollVertically(point.y);
+    editor.getScrollingModel().enableAnimation();
+  }
+
+  @NotNull
+  public static Point getScrollingPoint(@Nullable Editor editor) {
+    if (editor == null) return new Point(0, 0);
+    ScrollingModel model = editor.getScrollingModel();
+    return new Point(model.getHorizontalScrollOffset(), model.getVerticalScrollOffset());
   }
 
   //
@@ -673,7 +687,7 @@ public class DiffUtil {
   public static WindowWrapper.Mode getWindowMode(@NotNull DiffDialogHints hints) {
     WindowWrapper.Mode mode = hints.getMode();
     if (mode == null) mode = (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog) ?
-                             WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
+             WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
     return mode;
   }
 

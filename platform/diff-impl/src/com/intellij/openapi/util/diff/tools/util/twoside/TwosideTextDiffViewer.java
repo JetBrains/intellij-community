@@ -413,7 +413,10 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       carets[0] = getPosition(myEditor1);
       carets[1] = getPosition(myEditor2);
 
-      EditorsPosition editorsPosition = new EditorsPosition(carets, getPoint(myEditor1), getPoint(myEditor2));
+      Point point1 = DiffUtil.getScrollingPoint(myEditor1);
+      Point point2 = DiffUtil.getScrollingPoint(myEditor2);
+
+      EditorsPosition editorsPosition = new EditorsPosition(carets, point1, point2);
 
       myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
       myRequest.putUserData(EditorsPosition.KEY, editorsPosition);
@@ -431,8 +434,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
         if (myEditor2 != null) myEditor2.getCaretModel().moveToLogicalPosition(myCaretPosition[1]);
 
         if (myEditorsPosition != null && myEditorsPosition.isSame(myCaretPosition)) {
-          scrollToPoint(myEditor1, myEditorsPosition.myPoint1);
-          scrollToPoint(myEditor2, myEditorsPosition.myPoint2);
+          DiffUtil.scrollToPoint(myEditor1, myEditorsPosition.myPoint1);
+          DiffUtil.scrollToPoint(myEditor2, myEditorsPosition.myPoint2);
         }
         else {
           getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -457,21 +460,6 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     @NotNull
     private LogicalPosition getPosition(@Nullable Editor editor) {
       return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
-    }
-
-    @NotNull
-    private Point getPoint(@Nullable Editor editor) {
-      if (editor == null) return new Point(0, 0);
-      ScrollingModel model = editor.getScrollingModel();
-      return new Point(model.getHorizontalScrollOffset(), model.getVerticalScrollOffset());
-    }
-
-    private void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
-      if (editor == null) return;
-      editor.getScrollingModel().disableAnimation();
-      editor.getScrollingModel().scrollHorizontally(point.x);
-      editor.getScrollingModel().scrollVertically(point.y);
-      editor.getScrollingModel().enableAnimation();
     }
   }
 
