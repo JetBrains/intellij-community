@@ -311,20 +311,27 @@ public class PackageAnnotator {
             }
           });
           PackageCoverageInfo coverageInfoForClass = null;
-          if (isInSource != null && isInSource.booleanValue()) {
+          String classCoverageKey = classFqVMName.replace('/', '.');
+          boolean ignoreClass = false;
+          for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+            if (extension.ignoreCoverageForClass(myCoverageManager.getCurrentSuitesBundle(), child)) {
+              ignoreClass = true;
+              break;
+            }
+            if (extension.keepCoverageInfoForClassWithoutSource(myCoverageManager.getCurrentSuitesBundle(), child)) {
+              coverageInfoForClass = classWithoutSourceCoverageInfo;
+              break;
+            }
+          }
+          if (ignoreClass) {
+            continue;
+          }
+
+          if (coverageInfoForClass == null && isInSource != null && isInSource.booleanValue()) {
             for (DirCoverageInfo dirCoverageInfo : dirs) {
               if (dirCoverageInfo.sourceRoot != null && VfsUtil.isAncestor(dirCoverageInfo.sourceRoot, containingFileRef.get(), false)) {
                 coverageInfoForClass = dirCoverageInfo;
-                break;
-              }
-            }
-          }
-          String classCoverageKey = toplevelClassSrcFQName;
-          if (coverageInfoForClass == null) {
-            for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-              if (extension.keepCoverageInfoForClassWithoutSource(myCoverageManager.getCurrentSuitesBundle(), child)) {
-                classCoverageKey = classFqVMName.replace('/', '.');
-                coverageInfoForClass = classWithoutSourceCoverageInfo;
+                classCoverageKey = toplevelClassSrcFQName;
                 break;
               }
             }
@@ -439,6 +446,7 @@ public class PackageAnnotator {
     }
 
     ClassCoverageInfo classCoverageInfo = getOrCreateClassCoverageInfo(toplevelClassCoverage, toplevelClassSrcFQName);
+    LOG.info("Adding coverage of " + classFile.getName() + " to top-level class " + toplevelClassSrcFQName);
     classCoverageInfo.totalLineCount += toplevelClassCoverageInfo.totalLineCount;
     classCoverageInfo.fullyCoveredLineCount += toplevelClassCoverageInfo.fullyCoveredLineCount;
     classCoverageInfo.partiallyCoveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;
