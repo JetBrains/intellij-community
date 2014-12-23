@@ -69,7 +69,7 @@ public abstract class HttpRequests {
     @NotNull
     File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
 
-    byte[] getBytes(@Nullable ProgressIndicator indicator) throws IOException;
+    byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
   public interface RequestProcessor<T> {
@@ -189,17 +189,17 @@ public abstract class HttpRequests {
     }
 
     @NotNull
-    public byte[] getBytes(@Nullable final ProgressIndicator indicator) throws IOException {
+    public byte[] readBytes(@Nullable final ProgressIndicator indicator) throws IOException {
       return connect(new HttpRequests.RequestProcessor<byte[]>() {
         @Override
         public byte[] process(@NotNull HttpRequests.Request request) throws IOException {
-          return request.getBytes(indicator);
+          return request.readBytes(indicator);
         }
       });
     }
 
     @NotNull
-    public String getString(@Nullable final ProgressIndicator indicator) throws IOException {
+    public String readString(@Nullable final ProgressIndicator indicator) throws IOException {
       return connect(new HttpRequests.RequestProcessor<String>() {
         @Override
         public String process(@NotNull HttpRequests.Request request) throws IOException {
@@ -293,7 +293,7 @@ public abstract class HttpRequests {
       }
 
       @NotNull
-      public byte[] getBytes(@Nullable ProgressIndicator indicator) throws IOException {
+      public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
         int contentLength = getConnection().getContentLength();
         BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 32 * 1024);
         NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
