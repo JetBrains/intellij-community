@@ -218,14 +218,7 @@ public class LinearBekController extends CascadeLinearGraphController {
                             .getLayoutIndex(myHeads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
       int headIndex = myGraphLayout.getLayoutIndex(currentHead);
 
-      PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE/*todo?*/, new Comparator<GraphEdge>() {
-        @Override
-        public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
-          if (o1.getDownNodeIndex() == null) return -1;
-          if (o2.getDownNodeIndex() == null) return 1;
-          return o1.getDownNodeIndex().compareTo(o2.getDownNodeIndex());
-        }
-      });
+      PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE/*todo?*/, new GraphEdgeComparator());
       addDownEdges(myWorkingGraph, currentNodeIndex, queue);
 
       Set<Integer> definitelyNotTails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
@@ -300,6 +293,15 @@ public class LinearBekController extends CascadeLinearGraphController {
         myWorkingGraph.removeEdge(parent, firstChildIndex);
       }
       myWorkingGraph.apply();
+    }
+
+    private static class GraphEdgeComparator implements Comparator<GraphEdge> {
+      @Override
+      public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
+        if (o1.getDownNodeIndex() == null) return -1;
+        if (o2.getDownNodeIndex() == null) return 1;
+        return o1.getDownNodeIndex().compareTo(o2.getDownNodeIndex());
+      }
     }
   }
 }
