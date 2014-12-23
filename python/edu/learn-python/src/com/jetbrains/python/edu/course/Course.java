@@ -24,7 +24,7 @@ public class Course {
   public String author;
   public static final String COURSE_DIR = "course";
   public static final String HINTS_DIR = "hints";
-  private boolean myUpToDate = false;
+  public boolean myUpToDate = false;
 
 
   public List<Lesson> getLessons() {
