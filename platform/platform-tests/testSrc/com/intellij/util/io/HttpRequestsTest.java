@@ -60,6 +60,6 @@ public class HttpRequestsTest  {
 
   @Test(timeout = 5000)
   public void testReadString() throws IOException {
-    assertThat(HttpRequests.request("http://openjdk.java.net").getString(null), containsString("Download"));
+    assertThat(HttpRequests.request("http://openjdk.java.net").readString(null), containsString("Download"));
   }
 }
