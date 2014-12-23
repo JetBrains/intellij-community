@@ -40,6 +40,7 @@ public final class Settings {
   private final HashMap<PsiField,String> myFieldToNameMapping;
   private final ArrayList<FieldParameter> myFieldToNameList;
   private final boolean myReplaceUsages;
+  private final boolean myDelegate;
 
 
   public static final class FieldParameter {
@@ -56,7 +57,15 @@ public final class Settings {
 
 
   public Settings(boolean replaceUsages, @Nullable String classParameterName, @Nullable VariableData[] variableDatum) {
+    this(replaceUsages, classParameterName, variableDatum, false);
+  }
+
+  public Settings(boolean replaceUsages,
+                  @Nullable String classParameterName,
+                  @Nullable VariableData[] variableDatum,
+                  boolean delegate) {
     myReplaceUsages = replaceUsages;
+    myDelegate = delegate;
     myMakeClassParameter = classParameterName != null;
     myClassParameterName = classParameterName;
     myMakeFieldParameters = variableDatum != null;
@@ -94,6 +103,7 @@ public final class Settings {
     else {
       myFieldToNameMapping = null;
     }
+    myDelegate = false;
   }
 
   public boolean isReplaceUsages() {
@@ -110,6 +120,10 @@ public final class Settings {
 
   public boolean isMakeFieldParameters() {
     return myMakeFieldParameters;
+  }
+
+  public boolean isDelegate() {
+    return myDelegate;
   }
 
   @Nullable

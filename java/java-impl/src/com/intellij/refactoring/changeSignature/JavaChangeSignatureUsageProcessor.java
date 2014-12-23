@@ -636,7 +636,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
            !((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.contains(method);
   }
 
-  private static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
+  public static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
     final PsiMethod delegate = (PsiMethod)changeInfo.getMethod().copy();
     final PsiClass targetClass = changeInfo.getMethod().getContainingClass();
     LOG.assertTrue(targetClass != null);
