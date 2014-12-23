@@ -25,20 +25,19 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
@@ -132,7 +131,7 @@ public class RepositoryHelper {
           }
         }
         else {
-          return parsePluginList(request.getInputStream());
+          return parsePluginList(request.getReader());
         }
       }
     }));
@@ -148,20 +147,14 @@ public class RepositoryHelper {
   }
 
   private static List<IdeaPluginDescriptor> loadPluginList(@NotNull File file) throws IOException {
-    InputStream stream = new FileInputStream(file);
-    try {
-      return parsePluginList(stream);
-    }
-    finally {
-      stream.close();
-    }
+    return parsePluginList(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8_CHARSET));
   }
 
-  private static List<IdeaPluginDescriptor> parsePluginList(@NotNull InputStream stream) throws IOException {
+  private static List<IdeaPluginDescriptor> parsePluginList(@NotNull Reader reader) throws IOException {
     try {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       RepositoryContentHandler handler = new RepositoryContentHandler();
-      parser.parse(stream, handler);
+      parser.parse(new InputSource(reader), handler);
       return handler.getPluginsList();
     }
     catch (ParserConfigurationException e) {
@@ -169,6 +162,9 @@ public class RepositoryHelper {
     }
     catch (SAXException e) {
       throw new IOException(e);
+    }
+    finally {
+      reader.close();
     }
   }
 

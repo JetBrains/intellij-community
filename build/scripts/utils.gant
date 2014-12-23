@@ -18,6 +18,7 @@
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 
 includeTool << JpsGantTool
@@ -140,6 +141,10 @@ binding.setVariable("loadProject", {
   projectBuilder.setupAdditionalLogging(new File("${p("teamcity.build.tempDir", p("java.io.tmpdir"))}/system/build-log/build.log"),
                                         p("jps.build.debug.logging.categories", ""))
   loadProjectFromPath(home)
+
+  def compilerOptions = JpsJavaExtensionService.instance.getOrCreateCompilerConfiguration(project).currentCompilerOptions
+  compilerOptions.GENERATE_NO_WARNINGS = true
+  compilerOptions.DEPRECATION = false
 })
 
 boolean hasSourceRoots(JpsModule module) {

@@ -26,8 +26,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -40,6 +42,7 @@ import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
 import java.util.*;
 
 /**
@@ -283,10 +286,7 @@ public class GitConflictResolver {
    * @return a set of unmerged files
    * @throws com.intellij.openapi.vcs.VcsException if the input format does not matches expected format
    */
-  private List<VirtualFile> unmergedFiles(VirtualFile root) throws VcsException {
-    HashSet<VirtualFile> unmerged = new HashSet<VirtualFile>();
-    String rootPath = root.getPath();
-
+  private List<VirtualFile> unmergedFiles(final VirtualFile root) throws VcsException {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
@@ -299,32 +299,28 @@ public class GitConflictResolver {
     }
 
     String output = StringUtil.join(result.getOutput(), "\n");
-
-    LocalFileSystem lfs = myPlatformFacade.getLocalFileSystem();
+    HashSet<String> unmergedPaths = ContainerUtil.newHashSet();
     for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
       if (s.isEol()) {
         s.nextLine();
         continue;
       }
       s.boundedToken('\t');
-      final String relative = s.line();
-      String path = rootPath + "/" + GitUtil.unescapePath(relative);
-      VirtualFile file = lfs.refreshAndFindFileByPath(path);
-      if (file != null) {
-      // the file name is in the delete- or rename- conflict, so it is shown in the list of unmerged files,
-      // but the file itself doesn't exist. In that case we just ignore the file.
-        file.refresh(false, false);
-        unmerged.add(file);
-      }
+      String relative = s.line();
+      unmergedPaths.add(GitUtil.unescapePath(relative));
     }
-    if (unmerged.size() == 0) {
+
+    if (unmergedPaths.size() == 0) {
       return Collections.emptyList();
     }
     else {
-      ArrayList<VirtualFile> rc = new ArrayList<VirtualFile>(unmerged.size());
-      rc.addAll(unmerged);
-      Collections.sort(rc, GitUtil.VIRTUAL_FILE_COMPARATOR);
-      return rc;
+      List<File> files = ContainerUtil.map(unmergedPaths, new Function<String, File>() {
+        @Override
+        public File fun(String path) {
+          return new File(root.getPath(), path);
+        }
+      });
+      return ContainerUtil.sorted(RefreshVFsSynchronously.refreshFiles(files), GitUtil.VIRTUAL_FILE_COMPARATOR);
     }
   }
 

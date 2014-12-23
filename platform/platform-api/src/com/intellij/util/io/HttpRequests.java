@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
@@ -63,6 +64,12 @@ public abstract class HttpRequests {
 
     @NotNull
     InputStream getInputStream() throws IOException;
+
+    @NotNull
+    BufferedReader getReader() throws IOException;
+
+    @NotNull
+    BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
 
     boolean isSuccessful() throws IOException;
 
@@ -206,18 +213,7 @@ public abstract class HttpRequests {
           int contentLength = request.getConnection().getContentLength();
           BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 16 * 1024);
           NetUtils.copyStreamContent(indicator, request.getInputStream(), out, contentLength);
-
-          Charset charset = CharsetToolkit.UTF8_CHARSET;
-          String contentEncoding = request.getConnection().getContentEncoding();
-          if (contentEncoding != null) {
-            try {
-              charset = Charset.forName(contentEncoding);
-            }
-            catch (Exception ignored) {
-              charset = CharsetToolkit.UTF8_CHARSET;
-            }
-          }
-          return new String(out.getInternalBuffer(), 0, out.size(), charset);
+          return new String(out.getInternalBuffer(), 0, out.size(), getCharset(request));
         }
       });
     }
@@ -250,10 +246,24 @@ public abstract class HttpRequests {
     }
   }
 
+  @NotNull
+  private static Charset getCharset(@NotNull Request request) throws IOException {
+    String contentEncoding = request.getConnection().getContentEncoding();
+    if (contentEncoding != null) {
+      try {
+        return Charset.forName(contentEncoding);
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return CharsetToolkit.UTF8_CHARSET;
+  }
+
   private static <T> T process(final RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
     class RequestImpl implements Request {
       private URLConnection myConnection;
       private InputStream myInputStream;
+      private BufferedReader myReader;
 
       @NotNull
       @Override
@@ -277,16 +287,38 @@ public abstract class HttpRequests {
         return myInputStream;
       }
 
+      @NotNull
+      @Override
+      public BufferedReader getReader() throws IOException {
+        return getReader(null);
+      }
+
+      @NotNull
+      @Override
+      public BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException {
+        if (myReader == null) {
+          InputStream inputStream = getInputStream();
+          if (indicator != null) {
+            int contentLength = getConnection().getContentLength();
+            if (contentLength > 0) {
+              //noinspection IOResourceOpenedButNotSafelyClosed
+              inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
+            }
+          }
+          myReader = new BufferedReader(new InputStreamReader(inputStream, getCharset(this)));
+        }
+        return myReader;
+      }
+
       @Override
       public boolean isSuccessful() throws IOException {
         URLConnection connection = getConnection();
         return !(connection instanceof HttpURLConnection) || ((HttpURLConnection)connection).getResponseCode() == 200;
       }
 
-      private void cleanup() throws IOException {
-        if (myInputStream != null) {
-          myInputStream.close();
-        }
+      private void cleanup() {
+        StreamUtil.closeStream(myInputStream);
+        StreamUtil.closeStream(myReader);
         if (myConnection instanceof HttpURLConnection) {
           ((HttpURLConnection)myConnection).disconnect();
         }
