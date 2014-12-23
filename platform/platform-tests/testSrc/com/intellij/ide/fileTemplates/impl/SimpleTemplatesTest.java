@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.fileTemplates;
+package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 
 import java.util.Properties;
 
@@ -28,7 +27,7 @@ public class SimpleTemplatesTest extends LightPlatformTestCase {
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public SimpleTemplatesTest() {
-    IdeaTestCase.initPlatformPrefix();
+    PlatformTestCase.initPlatformLangPrefix();
   }
 
   public void testConditional() throws Exception {
