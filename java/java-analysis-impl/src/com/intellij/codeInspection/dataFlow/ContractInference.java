@@ -17,17 +17,12 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,10 +42,10 @@ public class ContractInference {
 
   @NotNull
   public static List<MethodContract> inferContracts(@NotNull final PsiMethod method) {
-    if (isLibraryCode(method)) {
+    if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
       return Collections.emptyList();
     }
-
+    
     return CachedValuesManager.getCachedValue(method, new CachedValueProvider<List<MethodContract>>() {
       @Nullable
       @Override
@@ -65,12 +60,6 @@ public class ContractInference {
         return Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     });
-  }
-
-  static boolean isLibraryCode(@NotNull PsiMethod method) {
-    if (method instanceof PsiCompiledElement) return true;
-    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(method);
-    return virtualFile != null && FileIndexFacade.getInstance(method.getProject()).isInLibrarySource(virtualFile);
   }
 }
 

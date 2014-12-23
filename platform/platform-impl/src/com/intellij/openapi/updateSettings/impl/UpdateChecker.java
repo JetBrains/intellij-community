@@ -20,10 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.LogUtil;
@@ -44,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.apache.http.client.utils.URIBuilder;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Contract;
@@ -72,13 +70,8 @@ public final class UpdateChecker {
     SUCCESS, FAILED, CANCELED
   }
 
-  private static final NotNullLazyValue<NotificationGroup> GROUP = new NotNullLazyValue<NotificationGroup>() {
-    @NotNull
-    @Override
-    protected NotificationGroup compute() {
-      return new NotificationGroup(IdeBundle.message("update.available.group"), NotificationDisplayType.STICKY_BALLOON, true);
-    }
-  };
+  public static final NotificationGroup NOTIFICATIONS =
+    new NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true);
 
   @NonNls private static final String INSTALLATION_UID = "installation.uid";
   @NonNls private static final String DISABLED_UPDATE = "disabled_update.txt";
@@ -456,7 +449,7 @@ public final class UpdateChecker {
     }
   }
 
-  private static void showNotification(@Nullable Project project, String message, boolean error, final @Nullable Runnable runnable) {
+  private static void showNotification(@Nullable Project project, String message, boolean error, @Nullable final Runnable runnable) {
     NotificationListener listener = null;
     if (runnable != null) {
       listener = new NotificationListener() {
@@ -468,9 +461,9 @@ public final class UpdateChecker {
       };
     }
 
-    String title = IdeBundle.message("updates.info.dialog.title");
+    String title = IdeBundle.message("update.notifications.title");
     NotificationType type = error ? NotificationType.ERROR : NotificationType.INFORMATION;
-    Notifications.Bus.notify(GROUP.getValue().createNotification(title, message, type, listener), project);
+    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), type, listener).notify(project);
   }
 
   public static void addUpdateRequestParameter(@NotNull String name, @NotNull String value) {

@@ -153,6 +153,17 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getFacade().getClasses(this, scope);
   }
 
+  @NotNull
+  @Override
+  public PsiElement[] getChildren() {
+    return getChildren(allScope());
+  }
+
+  @Override
+  public PsiElement[] getChildren(@NotNull GlobalSearchScope scope) {
+    return getFacade().getPackageChildren(this, scope);
+  }
+
   @Override
   @Nullable
   public PsiModifierList getAnnotationList() {

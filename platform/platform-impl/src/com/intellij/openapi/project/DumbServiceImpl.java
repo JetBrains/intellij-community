@@ -63,6 +63,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
   private final Project myProject;
+  private ThreadLocal<Boolean> myAlternativeResolution = new ThreadLocal<Boolean>();
 
   public DumbServiceImpl(Project project) {
     myProject = project;
@@ -102,6 +103,17 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public boolean isAlternativeResolveEnabled() {
+    return Boolean.TRUE.equals(myAlternativeResolution.get());
+  }
+
+  @Override
+  public void setAlternativeResolveEnabled(boolean enabled) {
+    assert isAlternativeResolveEnabled() != enabled : "Nested alternative resolution mode is not supported";
+    myAlternativeResolution.set(enabled);
   }
 
   @Override

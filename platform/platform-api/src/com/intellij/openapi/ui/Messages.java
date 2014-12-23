@@ -33,6 +33,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.MessageException;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -484,6 +485,9 @@ public class Messages {
       if (canShowMacSheetPanel()) {
         return MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, null, doNotAskOption);
       }
+    }
+    catch (MessageException messageException) {
+      // just show a dialog instead
     }
     catch (Exception exception) {
       LOG.error(exception);

@@ -16,6 +16,8 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.dataFlow.ContractInference
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -446,6 +448,27 @@ public static boolean isBlank(String s) {
         return true;
     }    """)
     assert c == ['null -> true']
+  }
+
+  public void "test no inference for unused anonymous class methods where annotations won't be used anyway"() {
+    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+class Foo {{
+  new Object() {
+    Object foo() { return null;}
+  };
+}}"""), PsiAnonymousClass).methods[0]
+    assert ContractInference.inferContracts(method).collect { it as String } == []
+  }
+
+  public void "test inference for used anonymous class methods"() {
+    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+class Foo {{
+  new Object() {
+    Object foo() { return null;}
+    Object bar() { return foo();}
+  };
+}}"""), PsiAnonymousClass).methods[0]
+    assert ContractInference.inferContracts(method).collect { it as String } == [' -> null']
   }
 
   private String inferContract(String method) {

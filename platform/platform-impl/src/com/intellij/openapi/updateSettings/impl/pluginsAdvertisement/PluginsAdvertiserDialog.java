@@ -90,7 +90,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
     final Runnable notifyRunnable = new Runnable() {
       @Override
       public void run() {
-        PluginManagerMain.notifyPluginsWereInstalled(null, myProject);
+        PluginManagerMain.notifyPluginsUpdated(myProject);
       }
     };
     for (String pluginId : pluginsToEnable) {

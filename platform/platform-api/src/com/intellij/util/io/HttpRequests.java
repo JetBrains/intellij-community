@@ -24,7 +24,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
@@ -38,6 +40,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -194,10 +197,42 @@ public abstract class HttpRequests {
         }
       });
     }
+
+    @NotNull
+    public String getString(@Nullable final ProgressIndicator indicator) throws IOException {
+      return connect(new HttpRequests.RequestProcessor<String>() {
+        @Override
+        public String process(@NotNull HttpRequests.Request request) throws IOException {
+          int contentLength = request.getConnection().getContentLength();
+          BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : 16 * 1024);
+          NetUtils.copyStreamContent(indicator, request.getInputStream(), out, contentLength);
+
+          Charset charset = CharsetToolkit.UTF8_CHARSET;
+          String contentEncoding = request.getConnection().getContentEncoding();
+          if (contentEncoding != null) {
+            try {
+              charset = Charset.forName(contentEncoding);
+            }
+            catch (Exception ignored) {
+              charset = CharsetToolkit.UTF8_CHARSET;
+            }
+          }
+          return new String(out.getInternalBuffer(), 0, out.size(), charset);
+        }
+      });
+    }
   }
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
+    if (ApplicationManager.getApplication() == null) {
+      try {
+        return ((HttpRequests)ReflectionUtil.newInstance(Class.forName("com.intellij.util.io.HttpRequestsImpl"))).createRequestBuilder(url);
+      }
+      catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+    }
     return ServiceManager.getService(HttpRequests.class).createRequestBuilder(url);
   }
 

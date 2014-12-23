@@ -288,7 +288,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor.getValueText();
   }
 
-  private int currentStart = 0;
+  private int myCurrentChildrenStart = 0;
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
@@ -326,9 +326,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
           @Override
           public void initChildrenArrayRenderer(ArrayRenderer renderer) {
-            renderer.START_INDEX = currentStart;
-            renderer.END_INDEX = currentStart + XCompositeNode.MAX_CHILDREN_TO_SHOW - 1;
-            currentStart += XCompositeNode.MAX_CHILDREN_TO_SHOW;
+            renderer.START_INDEX = myCurrentChildrenStart;
+            renderer.END_INDEX = myCurrentChildrenStart + XCompositeNode.MAX_CHILDREN_TO_SHOW - 1;
+            myCurrentChildrenStart += XCompositeNode.MAX_CHILDREN_TO_SHOW;
           }
 
           @Override
@@ -456,14 +456,14 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public String getEvaluationExpression() {
     if (evaluationExpression == null) {
       // TODO: change API to allow to calculate it asynchronously
-      myEvaluationContext.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+      myEvaluationContext.getManagerThread().invokeAndWait(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public Priority getPriority() {
           return Priority.HIGH;
         }
 
         @Override
-        protected void action() throws Exception {
+        public void contextAction() throws Exception {
           evaluationExpression = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
             @Override
             public String compute() {
@@ -535,5 +535,18 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         });
       }
     };
+  }
+
+  public void setRenderer(NodeRenderer nodeRenderer, final XValueNodeImpl node) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    myValueDescriptor.setRenderer(nodeRenderer);
+    myCurrentChildrenStart = 0;
+    node.getTree().getLaterInvocator().offer(new Runnable() {
+      @Override
+      public void run() {
+        node.clearChildren();
+        computePresentation(node, XValuePlace.TREE);
+      }
+    });
   }
 }

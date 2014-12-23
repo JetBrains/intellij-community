@@ -16,7 +16,7 @@
 package com.intellij.webcore.packaging;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,19 +38,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 import java.util.List;
 
@@ -177,7 +172,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       }
     });
     myInstallButton.setEnabled(false);
-    myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
+    myDescriptionTextArea.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
     addInstallAction();
     myInstalledPackages = new HashSet<String>();
     updateInstalledPackages();
@@ -380,8 +375,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     myOptionsField.setText(optionsText);
   }
 
-  public class MyPackageFilter extends FilterComponent {
-
+  private class MyPackageFilter extends FilterComponent {
     public MyPackageFilter() {
       super("PACKAGE_FILTER", 5);
       getTextEditor().addKeyListener(new KeyAdapter() {
@@ -470,26 +464,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     return myFilter;
   }
 
-  public static class MyHyperlinkListener implements HyperlinkListener {
-    public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        JEditorPane pane = (JEditorPane)e.getSource();
-        if (e instanceof HTMLFrameHyperlinkEvent) {
-          HTMLFrameHyperlinkEvent evt = (HTMLFrameHyperlinkEvent)e;
-          HTMLDocument doc = (HTMLDocument)pane.getDocument();
-          doc.processHTMLFrameHyperlinkEvent(evt);
-        }
-        else {
-          URL url = e.getURL();
-          if (url != null) {
-            BrowserUtil.browse(url);
-          }
-        }
-      }
-    }
-  }
-
-  public class MyPackageSelectionListener implements ListSelectionListener {
+  private class MyPackageSelectionListener implements ListSelectionListener {
     @Override
     public void valueChanged(ListSelectionEvent event) {
       myOptionsCheckBox.setEnabled(myPackages.getSelectedIndex() >= 0);
