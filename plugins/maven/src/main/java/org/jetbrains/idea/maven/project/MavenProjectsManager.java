@@ -724,8 +724,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void scheduleImportAndResolve() {
-    scheduleImport();
-    scheduleResolve();
+    scheduleResolve(); // scheduleImport will be called after the scheduleResolve process has finished
     fireImportAndResolveScheduled();
   }
 
