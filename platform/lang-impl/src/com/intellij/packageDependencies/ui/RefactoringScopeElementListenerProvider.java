@@ -16,6 +16,10 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiQualifiedNamedElement;
@@ -36,10 +40,10 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
   @Override
   public RefactoringElementListener getListener(PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
-    if (!(element instanceof PsiQualifiedNamedElement)) return null;
-    final String oldName = ((PsiQualifiedNamedElement)element).getQualifiedName();
+    if (!(element instanceof PsiQualifiedNamedElement) && !(element instanceof PsiDirectory)) return null;
+    final String oldName = getQualifiedName(element);
     RefactoringElementListenerComposite composite = null;
-    for (final NamedScopesHolder holder : NamedScopeManager.getAllNamedScopeHolders(element.getProject())) {
+    for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(element.getProject())) {
       final NamedScope[] scopes = holder.getEditableScopes();
       for (int i = 0; i < scopes.length; i++) {
         final NamedScope scope = scopes[i];
@@ -52,12 +56,28 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
     return composite;
   }
 
+  private static String getQualifiedName(PsiElement element) {
+    if (element instanceof PsiQualifiedNamedElement) {
+      return ((PsiQualifiedNamedElement)element).getQualifiedName();
+    }
+    else {
+      final Project project = element.getProject();
+      final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
+      return FilePatternPackageSet.getRelativePath(virtualFile,
+                                                   ProjectRootManager.getInstance(project).getFileIndex(),
+                                                   true,
+                                                   project.getBaseDir());
+    }
+  }
+
   private static RefactoringElementListenerComposite traverse(OldScopeDescriptor scopeDescriptor,
                                                               RefactoringElementListenerComposite composite,
                                                               PackageSet packageSet) {
     if (packageSet instanceof PatternBasedPackageSet) {
-      composite = checkPatternPackageSet(scopeDescriptor, composite, ((PatternBasedPackageSet)packageSet),
-                                         scopeDescriptor.getScope().getValue().getText());
+      final PackageSet value = scopeDescriptor.getScope().getValue();
+      if (value != null) {
+        composite = checkPatternPackageSet(scopeDescriptor, composite, ((PatternBasedPackageSet)packageSet), value.getText());
+      }
     }
     else if (packageSet instanceof ComplementPackageSet) {
       composite = traverse(scopeDescriptor, composite, ((ComplementPackageSet)packageSet).getComplementarySet());
@@ -84,9 +104,9 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
       composite.addListener(new RefactoringElementAdapter() {
         @Override
         public void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-          LOG.assertTrue(newElement instanceof PsiQualifiedNamedElement);
+          LOG.assertTrue(newElement instanceof PsiQualifiedNamedElement || newElement instanceof PsiDirectory);
           try {
-            final String newPattern = text.replace(descriptor.getOldQName(), ((PsiQualifiedNamedElement)newElement).getQualifiedName());
+            final String newPattern = text.replace(descriptor.getOldQName(), getQualifiedName(newElement));
             final PackageSet newSet = PackageSetFactory.getInstance().compile(newPattern);
             NamedScope newScope = new NamedScope(descriptor.getScope().getName(), newSet);
             final NamedScope[] currentScopes = descriptor.getHolder().getEditableScopes();
@@ -99,11 +119,12 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
 
         @Override
         public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
-          LOG.assertTrue(newElement instanceof PsiQualifiedNamedElement);
+          LOG.assertTrue(newElement instanceof PsiQualifiedNamedElement || newElement instanceof PsiDirectory);
           try {
             final NamedScope[] currentScopes = descriptor.getHolder().getEditableScopes();
-            final String oldPattern = ((PatternBasedPackageSet)currentScopes[descriptor.getIdx()].getValue()).getPattern()
-              .replace(((PsiQualifiedNamedElement)newElement).getQualifiedName(), oldQualifiedName);
+            final PatternBasedPackageSet packageSet = (PatternBasedPackageSet)currentScopes[descriptor.getIdx()].getValue();
+            if (packageSet == null) return;
+            final String oldPattern = packageSet.getPattern().replace(getQualifiedName(newElement), oldQualifiedName);
             final PackageSet newSet = PackageSetFactory.getInstance().compile(oldPattern);
             NamedScope newScope = new NamedScope(descriptor.getScope().getName(), newSet);
             currentScopes[descriptor.getIdx()] = newScope;

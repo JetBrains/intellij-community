@@ -55,6 +55,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   private ParameterTablePanel myParameterPanel;
   private VariableData[] myVariableData;
   private final boolean myAnyNonFieldMembersUsed;
+  private JCheckBox myGenerateDelegateCb;
 
 
   public MakeParameterizedStaticDialog(Project project,
@@ -212,10 +213,19 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     myMakeFieldParameters.addActionListener(inputFieldValidator);
 
 
+    if (myMember instanceof PsiMethod) {
+      myGenerateDelegateCb = new JCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
+      panel.add(myGenerateDelegateCb, gbConstraints);
+    }
 
     updateControls();
 
     return panel;
+  }
+
+  @Override
+  protected boolean isGenerateDelegate() {
+    return myGenerateDelegateCb != null && myGenerateDelegateCb.isSelected();
   }
 
   protected boolean validateData() {

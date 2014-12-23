@@ -255,6 +255,7 @@ public class PluginDownloader {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
         request.saveToFile(file, indicator);
+
         if (myFileName == null) {
           myFileName = guessFileName(request.getConnection(), file);
         }

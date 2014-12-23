@@ -20,7 +20,6 @@ import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.html.HtmlCompatibleLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.DumbService;
@@ -39,7 +38,7 @@ import java.util.Collections;
 
 public class WebBrowserServiceImpl extends WebBrowserService {
   public static boolean isHtmlOrXmlFile(@NotNull Language language) {
-    return language instanceof HtmlCompatibleLanguage || language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE || language == XMLLanguage.INSTANCE;
+    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE || language == XMLLanguage.INSTANCE;
   }
 
   @NotNull
