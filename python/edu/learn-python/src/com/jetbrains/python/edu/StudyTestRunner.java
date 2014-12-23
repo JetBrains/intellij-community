@@ -31,15 +31,12 @@ public class StudyTestRunner {
     myTaskDir = taskDir;
   }
 
-  public Process createCheckProcess(Project project, String executablePath, int index) throws ExecutionException {
+  public Process createCheckProcess(Project project, String executablePath) throws ExecutionException {
     Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
     File testRunner = new File(myTaskDir.getPath(), myTask.getTestFile());
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.withWorkDirectory(myTaskDir.getPath());
     final Map<String, String> env = commandLine.getEnvironment();
-    if (index >= 0) {
-      env.put("PYCHARM_WINDOW_INDEX", String.valueOf(index));
-    }
 
     final VirtualFile courseDir = project.getBaseDir();
     if (courseDir != null) {
