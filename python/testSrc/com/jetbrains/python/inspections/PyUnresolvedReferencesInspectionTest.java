@@ -450,6 +450,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-11401
+  public void testOverriddenMRO() {
+    doTest();
+  }
+
+  // PY-11401
+  public void testOverriddenMROInAncestors() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
