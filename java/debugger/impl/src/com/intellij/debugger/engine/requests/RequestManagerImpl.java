@@ -38,10 +38,7 @@ import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author lex
@@ -307,15 +304,17 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void callbackOnPrepareClasses(final ClassPrepareRequestor requestor, final SourcePosition classPosition) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    ClassPrepareRequest prepareRequest = myDebugProcess.getPositionManager().createPrepareRequest(requestor, classPosition);
 
-    if(prepareRequest == null) {
+    List<ClassPrepareRequest> prepareRequests = myDebugProcess.getPositionManager().createPrepareRequests(requestor, classPosition);
+    if(prepareRequests.isEmpty()) {
       setInvalid(requestor, DebuggerBundle.message("status.invalid.breakpoint.out.of.class"));
       return;
     }
 
-    registerRequest(requestor, prepareRequest);
-    prepareRequest.enable();
+    for (ClassPrepareRequest prepareRequest : prepareRequests) {
+      registerRequest(requestor, prepareRequest);
+      prepareRequest.enable();
+    }
   }
 
   public void callbackOnPrepareClasses(ClassPrepareRequestor requestor, String classOrPatternToBeLoaded) {
