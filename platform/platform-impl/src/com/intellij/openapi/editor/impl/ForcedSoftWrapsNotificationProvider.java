@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationsConfiguration;
-import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.notification.impl.GotItStateKeeper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -32,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ForcedSoftWrapsNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("forced.soft.wraps.notification.panel");
-  private static final String NOTIFICATION_SETTINGS_KEY = "Forced soft wraps in editor";
+  private static final String GOT_IT_KEY = "Forced soft wraps in editor";
 
   @NotNull
   @Override
@@ -48,7 +46,7 @@ public class ForcedSoftWrapsNotificationProvider extends EditorNotifications.Pro
     final Project project = editor.getProject();
     if (project == null 
         || !Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS)) 
-        || NotificationsConfigurationImpl.getSettings(NOTIFICATION_SETTINGS_KEY).getDisplayType() == NotificationDisplayType.NONE) return null;
+        || GotItStateKeeper.getInstance().isNotificationDisabled(GOT_IT_KEY)) return null;
     
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(EditorBundle.message("forced.soft.wrap.message"));
@@ -62,7 +60,7 @@ public class ForcedSoftWrapsNotificationProvider extends EditorNotifications.Pro
     panel.createActionLabel(EditorBundle.message("forced.soft.wrap.dont.show.again.message"), new Runnable() {
       @Override
       public void run() {
-        NotificationsConfiguration.getNotificationsConfiguration().changeSettings(NOTIFICATION_SETTINGS_KEY, NotificationDisplayType.NONE, false, false);
+        GotItStateKeeper.getInstance().disableNotification(GOT_IT_KEY);
         EditorNotifications.getInstance(project).updateAllNotifications();
       }
     });
