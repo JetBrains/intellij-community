@@ -71,8 +71,8 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
       }
 
       @Override
-      public void doBuildFromStream(String url, Reader input, StringBuilder data, boolean search4Encoding) throws IOException {
-        super.doBuildFromStream(url, input, data, search4Encoding);
+      public void doBuildFromStream(String url, Reader input, StringBuilder data, boolean searchForEncoding) throws IOException {
+        super.doBuildFromStream(url, input, data, searchForEncoding);
       }
     }
     JavadocExternalTestFilter filter = new JavadocExternalTestFilter(getProject());

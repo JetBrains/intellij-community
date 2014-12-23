@@ -53,7 +53,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 
 public class PluginsAdvertiser implements StartupActivity {
@@ -81,26 +80,20 @@ public class PluginsAdvertiser implements StartupActivity {
     return HttpRequests.request(pluginRepositoryUrl).connect(new HttpRequests.RequestProcessor<List<Plugin>>() {
       @Override
       public List<Plugin> process(@NotNull HttpRequests.Request request) throws IOException {
-        final InputStreamReader streamReader = new InputStreamReader(request.getInputStream());
-        try {
-          final JsonReader jsonReader = new JsonReader(streamReader);
-          jsonReader.setLenient(true);
-          final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
-          final List<Plugin> result = new ArrayList<Plugin>();
-          for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
-            final JsonObject jsonObject = jsonElement.getAsJsonObject();
-            final JsonElement pluginId = jsonObject.get("pluginId");
-            final JsonElement pluginName = jsonObject.get("pluginName");
-            final JsonElement bundled = jsonObject.get("bundled");
-            result.add(new Plugin(PluginId.getId(StringUtil.unquoteString(pluginId.toString())),
-                                  pluginName != null ? StringUtil.unquoteString(pluginName.toString()) : null,
-                                  Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
-          }
-          return result;
+        final JsonReader jsonReader = new JsonReader(request.getReader());
+        jsonReader.setLenient(true);
+        final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
+        final List<Plugin> result = new ArrayList<Plugin>();
+        for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
+          final JsonObject jsonObject = jsonElement.getAsJsonObject();
+          final JsonElement pluginId = jsonObject.get("pluginId");
+          final JsonElement pluginName = jsonObject.get("pluginName");
+          final JsonElement bundled = jsonObject.get("bundled");
+          result.add(new Plugin(PluginId.getId(StringUtil.unquoteString(pluginId.toString())),
+                                pluginName != null ? StringUtil.unquoteString(pluginName.toString()) : null,
+                                Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
         }
-        finally {
-          streamReader.close();
-        }
+        return result;
       }
     }, null, LOG);
   }
@@ -114,47 +107,41 @@ public class PluginsAdvertiser implements StartupActivity {
     return HttpRequests.request(pluginRepositoryUrl).connect(new HttpRequests.RequestProcessor<Map<String, Set<Plugin>>>() {
       @Override
       public Map<String, Set<Plugin>> process(@NotNull HttpRequests.Request request) throws IOException {
-        final InputStreamReader streamReader = new InputStreamReader(request.getInputStream());
-        try {
-          final JsonReader jsonReader = new JsonReader(streamReader);
-          jsonReader.setLenient(true);
-          final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
-          final Map<String, Set<Plugin>> result = new HashMap<String, Set<Plugin>>();
-          for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
-            final JsonObject jsonObject = jsonElement.getAsJsonObject();
+        final JsonReader jsonReader = new JsonReader(request.getReader());
+        jsonReader.setLenient(true);
+        final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
+        final Map<String, Set<Plugin>> result = new HashMap<String, Set<Plugin>>();
+        for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
+          final JsonObject jsonObject = jsonElement.getAsJsonObject();
 
-            final String pluginId = StringUtil.unquoteString(jsonObject.get("pluginId").toString());
-            final JsonElement bundledExt = jsonObject.get("bundled");
-            boolean isBundled = Boolean.parseBoolean(bundledExt.toString());
-            final IdeaPluginDescriptor fromServerPluginDescription = availableIds.get(pluginId);
-            if (fromServerPluginDescription == null && !isBundled) continue;
+          final String pluginId = StringUtil.unquoteString(jsonObject.get("pluginId").toString());
+          final JsonElement bundledExt = jsonObject.get("bundled");
+          boolean isBundled = Boolean.parseBoolean(bundledExt.toString());
+          final IdeaPluginDescriptor fromServerPluginDescription = availableIds.get(pluginId);
+          if (fromServerPluginDescription == null && !isBundled) continue;
 
-            final IdeaPluginDescriptor loadedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
-            if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
+          final IdeaPluginDescriptor loadedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
+          if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
 
-            if (loadedPlugin != null && fromServerPluginDescription != null &&
-                StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) {
-              continue;
-            }
-
-            if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) continue;
-
-            final JsonElement ext = jsonObject.get("implementationName");
-            final String extension = StringUtil.unquoteString(ext.toString());
-            Set<Plugin> pluginIds = result.get(extension);
-            if (pluginIds == null) {
-              pluginIds = new HashSet<Plugin>();
-              result.put(extension, pluginIds);
-            }
-            final JsonElement pluginNameElement = jsonObject.get("pluginName");
-            pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null, isBundled));
+          if (loadedPlugin != null && fromServerPluginDescription != null &&
+              StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) {
+            continue;
           }
-          saveExtensions(result);
-          return result;
+
+          if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) continue;
+
+          final JsonElement ext = jsonObject.get("implementationName");
+          final String extension = StringUtil.unquoteString(ext.toString());
+          Set<Plugin> pluginIds = result.get(extension);
+          if (pluginIds == null) {
+            pluginIds = new HashSet<Plugin>();
+            result.put(extension, pluginIds);
+          }
+          final JsonElement pluginNameElement = jsonObject.get("pluginName");
+          pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null, isBundled));
         }
-        finally {
-          streamReader.close();
-        }
+        saveExtensions(result);
+        return result;
       }
     }, null, LOG);
   }
