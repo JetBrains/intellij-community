@@ -20,10 +20,13 @@ import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 
 /**
  * @author peter
@@ -33,8 +36,9 @@ public class JavadocCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset - 1, PsiDocTag.class, false) != null &&
-        PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset - 1, PsiJavaCodeReferenceElement.class, false) != null) {
+    if (psiElement().inside(PsiDocTag.class).inside(
+      or(psiElement(PsiJavaCodeReferenceElement.class), psiElement(PsiDocMethodOrFieldRef.class)))
+      .accepts(contextElement)) {
       return ThreeState.NO;
     }
     if (PlatformPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME).accepts(contextElement)) {

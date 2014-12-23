@@ -217,6 +217,10 @@ public abstract class DumbService {
    * of performing resolve are available, although much slower. It's impractical to always use these ways because it'll
    * lead to overloaded CPU (especially given there's also indexing in progress). But for some explicit user actions
    * (e.g. explicit Goto Declaration) turning these slower methods is beneficial.<p/>
+   *
+   * NOTE: even with alternative resolution enabled, methods like resolve(), findClass() etc may still throw
+   * {@link IndexNotReadyException}. So alternative resolve is not a panacea, it might help provide navigation in some cases
+   * but not in all.<p/>
    * 
    * A typical usage would involve try-finally, where the alternative resolution is first enabled, then an action is performed,
    * and then alternative resolution is turned off in the finally block.
