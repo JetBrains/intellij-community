@@ -17,7 +17,6 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.webcore.packaging.RepoPackage;
@@ -210,33 +209,28 @@ public class PyPIPackageUtil {
       @Override
       public List<String> process(@NotNull HttpRequests.Request request) throws IOException {
         final List<String> packages = new ArrayList<String>();
-        Reader reader = new InputStreamReader(request.getInputStream(), CharsetToolkit.UTF8_CHARSET);
-        try {
-          new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
-            boolean inTable = false;
+        Reader reader = request.getReader();
+        new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
+          boolean inTable = false;
 
-            @Override
-            public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
-              if ("table".equals(tag.toString())) {
-                inTable = !inTable;
-              }
-
-              if (inTable && "a".equals(tag.toString())) {
-                packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
-              }
+          @Override
+          public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
+            if ("table".equals(tag.toString())) {
+              inTable = !inTable;
             }
 
-            @Override
-            public void handleEndTag(HTML.Tag tag, int i) {
-              if ("table".equals(tag.toString())) {
-                inTable = !inTable;
-              }
+            if (inTable && "a".equals(tag.toString())) {
+              packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
             }
-          }, true);
-        }
-        finally {
-          reader.close();
-        }
+          }
+
+          @Override
+          public void handleEndTag(HTML.Tag tag, int i) {
+            if ("table".equals(tag.toString())) {
+              inTable = !inTable;
+            }
+          }
+        }, true);
         return packages;
       }
     }, Collections.<String>emptyList(), LOG);
@@ -266,11 +260,11 @@ public class PyPIPackageUtil {
     if (myPackageNames == null) {
       final Set<String> names = new HashSet<String>();
       for (String name : getPyPIPackages().keySet()) {
-        names.add(name.toLowerCase());
+        names.add(name.toLowerCase(Locale.ENGLISH));
       }
       myPackageNames = names;
     }
-    return myPackageNames != null && myPackageNames.contains(packageName.toLowerCase());
+    return myPackageNames != null && myPackageNames.contains(packageName.toLowerCase(Locale.ENGLISH));
   }
 
   private static class PyPIXmlRpcTransport extends DefaultXmlRpcTransport {

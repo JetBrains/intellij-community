@@ -77,7 +77,7 @@ public abstract class SettingsConnectionService {
 
           Map<String, String> settings = ContainerUtilRt.newLinkedHashMap();
           try {
-            Element root = JDOMUtil.loadDocument(request.getInputStream()).detachRootElement();
+            Element root = JDOMUtil.load(request.getReader());
             for (String s : attributes) {
               String attributeValue = root.getAttributeValue(s);
               if (StringUtil.isNotEmpty(attributeValue)) {
