@@ -237,8 +237,8 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
       String title = getRequestTitle(bRev, aRev);
 
       indicator.setIndeterminate(true);
-      DiffContent content1 = createContent(project, bRev, indicator);
-      DiffContent content2 = createContent(project, aRev, indicator);
+      DiffContent content1 = createContent(project, bRev, context, indicator);
+      DiffContent content2 = createContent(project, aRev, context, indicator);
 
       String beforeRevisionTitle = getRevisionTitle(bRev, "Base version");
       String afterRevisionTitle = getRevisionTitle(aRev, "Your version");
@@ -322,6 +322,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull
   public static DiffContent createContent(@NotNull Project project,
                                           @Nullable ContentRevision revision,
+                                          @NotNull UserDataHolder context,
                                           @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
     try {
       indicator.checkCanceled();
@@ -336,6 +337,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
       FilePath filePath = revision.getFile();
       if (revision instanceof BinaryContentRevision) {
+        if (FileTypes.UNKNOWN.equals(filePath.getFileType())) {
+          checkAssociate(project, filePath, context, indicator);
+        }
+
         byte[] content = ((BinaryContentRevision)revision).getBinaryContent();
         if (content == null) {
           throw new DiffRequestPresentableException("Can't get binary revision content");
@@ -368,13 +373,6 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
                                           @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
     if (rev.getFile().isDirectory()) {
       throw new DiffRequestPresentableException("Can't show diff for directory");
-    }
-
-    final FileType type = rev.getFile().getFileType();
-    if (!type.isBinary()) return;
-
-    if (FileTypes.UNKNOWN.equals(type)) {
-      checkAssociate(project, rev.getFile(), context, indicator);
     }
   }
 

@@ -3,6 +3,9 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.contents.DiffContent;
@@ -43,9 +46,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     VirtualFile localFile = LocalFileSystem.getInstance().findFileByPath(path.getPath());
     FileType fileType = localFile != null ? localFile.getFileType() : path.getFileType();
     Charset charset = localFile != null ? localFile.getCharset() : path.getCharset(project);
-    Pair<Document, LineSeparator> pair = DiffContentFactory.buildDocument(content);
-    pair.first.setReadOnly(true);
-    return new FileAwareDocumentContent(project, pair.first, fileType, localFile, pair.second, charset);
+    return create(project, content, fileType, localFile, charset);
   }
 
   @NotNull
@@ -54,8 +55,18 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
                                    @NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     Charset charset = file.getCharset();
+    return create(project, content, fileType, file, charset);
+  }
+
+  @NotNull
+  private static DiffContent create(@NotNull Project project,
+                                    @NotNull String content,
+                                    @Nullable FileType fileType,
+                                    @Nullable VirtualFile file,
+                                    @Nullable Charset charset) {
     Pair<Document, LineSeparator> pair = DiffContentFactory.buildDocument(content);
     pair.first.setReadOnly(true);
+    if (FileTypes.UNKNOWN.equals(fileType)) fileType = PlainTextFileType.INSTANCE;
     return new FileAwareDocumentContent(project, pair.first, fileType, file, pair.second, charset);
   }
 }
