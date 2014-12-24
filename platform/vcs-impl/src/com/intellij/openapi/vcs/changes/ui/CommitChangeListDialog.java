@@ -17,12 +17,13 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -32,7 +33,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.DiffExtendUIFactory;
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.impl.VcsGlobalMessageManager;
@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
@@ -1346,30 +1347,29 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
-    private CommitChangeListDialog myCommitDialog;
+    private boolean outDuringModification;
 
     public DiffCommitMessageEditor(final CommitChangeListDialog dialog) {
       super(dialog.getProject());
       getEditorField().setText(dialog.getCommitMessage());
-      myCommitDialog = dialog;
-      myCommitDialog.setMessageConsumer(new Consumer<String>() {
-        @Override
-        public void consume(String s) {
-          getEditorField().setText(s);
-        }
-      });
+
+      addListener(getEditorField(), dialog.myCommitMessageArea.getEditorField());
+      addListener(dialog.myCommitMessageArea.getEditorField(), getEditorField());
     }
 
-    @Override
-    public void dispose() { // TODO: fair Document synchronizer ?
-      if (myCommitDialog != null) {
-        myCommitDialog.setMessageConsumer(null);
-        final String text = getEditorField().getText();
-        if (! Comparing.equal(myCommitDialog.getCommitMessage(), text)) {
-          myCommitDialog.setCommitMessage(text);
+    private void addListener(@NotNull final EditorTextField field, @NotNull final EditorTextField dependentField) {
+      field.addDocumentListener(new DocumentAdapter() {
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          if (outDuringModification) return;
+          outDuringModification = true;
+          try {
+            dependentField.setText(field.getText());
+          } finally {
+            outDuringModification = false;
+          }
         }
-        myCommitDialog = null;
-      }
+      });
     }
 
     @Override
