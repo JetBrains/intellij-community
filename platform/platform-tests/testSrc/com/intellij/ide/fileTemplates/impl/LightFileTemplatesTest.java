@@ -117,6 +117,24 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     }
   }
 
+  public void testRemoveTemplate() throws Exception {
+    FileTemplate[] before = myTemplateManager.getAllTemplates();
+    try {
+      FileTemplate template = myTemplateManager.getTemplate(TEST_TEMPLATE_TXT);
+      myTemplateManager.removeTemplate(template);
+      assertNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
+      myTemplateManager.setCurrentScheme(myTemplateManager.getProjectScheme());
+      assertNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
+      myTemplateManager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
+      assertNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
+    }
+    finally {
+      myTemplateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(before));
+      myTemplateManager.setCurrentScheme(myTemplateManager.getProjectScheme());
+      myTemplateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(before));
+    }
+  }
+
   private FileTemplateManagerImpl myTemplateManager;
 
   @Override
