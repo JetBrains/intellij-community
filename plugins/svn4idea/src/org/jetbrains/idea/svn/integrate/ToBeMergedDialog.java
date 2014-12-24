@@ -124,7 +124,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
 
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getDisposable());
     if (! myAlreadyCalculatedState) {
-      refreshListStatus();
+      refreshListStatus(myLists);
     }
   }
 
@@ -158,16 +158,16 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     myMore100Action.setEnabled(true);
     myMore500Action.setEnabled(true);
     myMore500Action.setVisible(true);
-    refreshListStatus();
+    refreshListStatus(list);
   }
 
-  public void refreshListStatus() {
+  public void refreshListStatus(@NotNull final List<CommittedChangeList> changeLists) {
     if (myAlarm.isDisposed()) return;
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
         int cnt = 10;
-        for (CommittedChangeList list : myLists) {
+        for (CommittedChangeList list : changeLists) {
           final SvnMergeInfoCache.MergeCheckResult result = myMergeChecker.checkList((SvnChangeList)list);
           // at the moment we calculate only "merged" since we don;t have branch copy point
           if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result)) {
