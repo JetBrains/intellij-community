@@ -36,10 +36,14 @@ import com.intellij.openapi.vcs.changes.issueLinks.AbstractBaseTagMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Alarm;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -140,7 +144,10 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
 
   @Override
   public long getLastNumber() {
-    return myLists.get(myLists.size() - 1).getNumber();
+    // in current implementation we just have one page with all loaded change lists - myListsEngine.getCurrent()
+    CommittedChangeList lastLoadedList = ContainerUtil.getLastItem(myListsEngine.getCurrent());
+
+    return lastLoadedList != null ? lastLoadedList.getNumber() : 0;
   }
 
   @Override
