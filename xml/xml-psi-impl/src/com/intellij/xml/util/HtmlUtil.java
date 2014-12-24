@@ -39,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
+import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
@@ -125,11 +126,7 @@ public class HtmlUtil {
 
   @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<String>();
-
-  @NonNls private static final String[] EMPTY_ATTRS =
-    {"nowrap", "compact", "disabled", "readonly", "selected", "multiple", "nohref", "ismap", "declare", "noshade", "checked"};
-  private static final Set<String> EMPTY_ATTRS_MAP = new THashSet<String>();
-
+  
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<String>();
 
   @NonNls private static final String[] HTML5_TAGS = {
@@ -146,7 +143,6 @@ public class HtmlUtil {
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
       AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<String>(control.autoClosedBy));
     }
-    ContainerUtil.addAll(EMPTY_ATTRS_MAP, EMPTY_ATTRS);
     ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
     ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
     ContainerUtil.addAll(INLINE_ELEMENTS_CONTAINER_MAP, INLINE_ELEMENTS_CONTAINER);
@@ -173,10 +169,6 @@ public class HtmlUtil {
   public static boolean canTerminate(final String childTagName, final String tagName) {
     final Set<String> closingTags = AUTO_CLOSE_BY_MAP.get(tagName);
     return closingTags != null && closingTags.contains(childTagName);
-  }
-
-  public static boolean isSingleHtmlAttribute(String attrName) {
-    return EMPTY_ATTRS_MAP.contains(attrName.toLowerCase(Locale.US));
   }
 
   public static boolean isHtmlBlockTag(String tagName) {
@@ -261,16 +253,18 @@ public class HtmlUtil {
   }
 
   public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor, @Nullable XmlElement context) {
-    final String[] values = descriptor.getEnumeratedValues();
-    if (values == null) {
-      return false;
-    }
-    if (values.length == 2) {
-      return values[0].isEmpty() && values[1].equals(descriptor.getName())
-             || values[1].isEmpty() && values[0].equals(descriptor.getName());
-    }
-    else if (values.length == 1) {
-      return descriptor.getName().equals(values[0]);
+    if (descriptor instanceof HtmlAttributeDescriptorImpl && descriptor.isEnumerated()) {
+      final String[] values = descriptor.getEnumeratedValues();
+      if (values == null) {
+        return false;
+      }
+      if (values.length == 2) {
+        return values[0].isEmpty() && values[1].equals(descriptor.getName())
+               || values[1].isEmpty() && values[0].equals(descriptor.getName());
+      }
+      else if (values.length == 1) {
+        return descriptor.getName().equals(values[0]);
+      }
     }
     return context != null && isCustomBooleanAttribute(descriptor.getName(), context);
   }
