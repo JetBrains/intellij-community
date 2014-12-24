@@ -28,6 +28,7 @@ import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,21 +39,24 @@ public class LinearBekController extends CascadeLinearGraphController {
   private final static int MAX_BLOCK_SIZE = 200; // specially tailored for 17740ba5899bc13de622808e0e0f4fbf6285e8b5
   @NotNull private final LinearGraph myCompiledGraph;
 
-  public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
+  public LinearBekController(@NotNull BekBaseLinearGraphController controller,
+                             @NotNull PermanentGraphInfo permanentGraphInfo,
+                             @NotNull final TimestampGetter timestampGetter) {
     super(controller, permanentGraphInfo);
     long start = System.currentTimeMillis();
+    final BekIntMap bekIntMap = controller.getBekIntMap();
     myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(),
-                                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap()));
+                                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), bekIntMap),
+                                   new BekTimestampGetter(timestampGetter, bekIntMap));
     long end = System.currentTimeMillis();
     System.err.println(((double)end - start) / 1000);
   }
 
-  static LinearGraph compileGraph(@NotNull final LinearGraph graph, @NotNull final GraphLayout graphLayout) {
+  static LinearGraph compileGraph(@NotNull final LinearGraph graph,
+                                  @NotNull final GraphLayout graphLayout,
+                                  @NotNull TimestampGetter timestampGetter) {
     final WorkingGraph workingGraph = new WorkingGraph(graph);
-    final List<Integer> heads = graphLayout.getHeadNodeIndex();
-
-    new GraphVisitorAlgorithm(true).visitGraph(graph, graphLayout, new MyGraphVisitor(workingGraph, graphLayout, heads));
-
+    new GraphVisitorAlgorithm(true).visitGraph(graph, graphLayout, new MyGraphVisitor(workingGraph, graphLayout, timestampGetter));
     return workingGraph.createLinearBekGraph();
   }
 
@@ -134,7 +138,6 @@ public class LinearBekController extends CascadeLinearGraphController {
     return myCompiledGraph;
   }
 
-
   public static GraphAdditionalEdges createSimpleAdditionalEdges() {
     return GraphAdditionalEdges.newInstance(new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
   }
@@ -171,14 +174,18 @@ public class LinearBekController extends CascadeLinearGraphController {
   }
 
   private static class MyGraphVisitor implements GraphVisitorAlgorithm.GraphVisitor {
+    // this high delta is kinda useless (its about like ten cases in idea when a block does not match this), but I really want to collapse 17740ba5899bc13de622808e0e0f4fbf6285e8b5
+    private static final long MAX_DELTA_TIME = 60 * 60 * 24 * 365 * 1000l;
     private final WorkingGraph myWorkingGraph;
     private final GraphLayout myGraphLayout;
     private final List<Integer> myHeads;
+    private final TimestampGetter myTimestampGetter;
 
-    public MyGraphVisitor(WorkingGraph workingGraph, GraphLayout graphLayout, List<Integer> heads) {
+    public MyGraphVisitor(WorkingGraph workingGraph, GraphLayout graphLayout, TimestampGetter timestampGetter) {
       myWorkingGraph = workingGraph;
       myGraphLayout = graphLayout;
-      myHeads = heads;
+      myHeads = graphLayout.getHeadNodeIndex();
+      myTimestampGetter = timestampGetter;
     }
 
     @Override
@@ -231,7 +238,8 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (next == firstChildIndex || next < currentNodeIndex + k) {
           // found first child
           // or we were here before
-        } else if (next == currentNodeIndex + k) {
+        }
+        else if (next == currentNodeIndex + k) {
           // all is fine, continuing
           k++;
           addDownEdges(myWorkingGraph, next, queue);
@@ -276,6 +284,10 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (k >= MAX_BLOCK_SIZE) {
           return;
         }
+        if (Math.abs(myTimestampGetter.getTimestamp(currentNodeIndex) - myTimestampGetter.getTimestamp(currentNodeIndex + k)) >
+            MAX_DELTA_TIME) {
+          return;
+        }
       }
 
       boolean mergeWithOldCommit = currentNodeIndex + k == firstChildIndex && visited.get(firstChildIndex);
@@ -302,6 +314,26 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (o2.getDownNodeIndex() == null) return 1;
         return o1.getDownNodeIndex().compareTo(o2.getDownNodeIndex());
       }
+    }
+  }
+
+  private static class BekTimestampGetter implements TimestampGetter {
+    private final TimestampGetter myTimestampGetter;
+    private final BekIntMap myBekIntMap;
+
+    public BekTimestampGetter(TimestampGetter timestampGetter, BekIntMap bekIntMap) {
+      myTimestampGetter = timestampGetter;
+      myBekIntMap = bekIntMap;
+    }
+
+    @Override
+    public int size() {
+      return myTimestampGetter.size();
+    }
+
+    @Override
+    public long getTimestamp(int index) {
+      return myTimestampGetter.getTimestamp(myBekIntMap.getUsualIndex(index));
     }
   }
 }
