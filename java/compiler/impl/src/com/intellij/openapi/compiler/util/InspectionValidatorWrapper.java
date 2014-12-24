@@ -28,7 +28,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.application.Result;
@@ -257,24 +257,23 @@ public class InspectionValidatorWrapper implements Validator {
     return true;
   }
 
-  private boolean checkUnderReadAction(PsiFile file, CompileContext context, Computable<Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
-    AccessToken token = ReadAction.start();
-    try {
-      if (!file.isValid()) return false;
+  private boolean checkUnderReadAction(final PsiFile file, final CompileContext context, final Computable<Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        if (!file.isValid()) return false;
 
-      final Document document = myPsiDocumentManager.getCachedDocument(file);
-      if (document != null && myPsiDocumentManager.isUncommited(document)) {
-        final String url = file.getViewProvider().getVirtualFile().getUrl();
-        context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
-        return false;
+        final Document document = myPsiDocumentManager.getCachedDocument(file);
+        if (document != null && myPsiDocumentManager.isUncommited(document)) {
+          final String url = file.getViewProvider().getVirtualFile().getUrl();
+          context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
+          return false;
+        }
+
+        if (reportProblems(context, runnable.compute())) return false;
+        return true;
       }
-
-      if (reportProblems(context, runnable.compute())) return false;
-    }
-    finally {
-      token.finish();
-    }
-    return true;
+    });
   }
 
   private boolean reportProblems(CompileContext context, Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap) {

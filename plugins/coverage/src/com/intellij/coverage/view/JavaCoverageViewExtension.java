@@ -90,12 +90,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       return myAnnotator.getPackageCoverageInfo((PsiPackage)value, myStateBean.myFlattenPackages);
     }
     if (value instanceof PsiNamedElement) {
-      for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-        PackageAnnotator.SummaryCoverageInfo info = extension.getSummaryCoverageInfo(myAnnotator, (PsiNamedElement)value);
-        if (info != null) {
-          return info;
-        }
-      }
+      return myAnnotator.getExtensionCoverageInfo((PsiNamedElement) value);
     }
     return null;
   }
