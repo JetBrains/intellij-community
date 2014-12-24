@@ -133,21 +133,21 @@ public class ProjectViewDirectoryHelper {
       if (parentDir == null || skipDirectory(parentDir) && withSubDirectories) {
         addAllSubpackages(children, psiDirectory, moduleFileIndex, settings);
       }
-      PsiDirectory[] subdirs = psiDirectory.getSubdirectories();
-      for (PsiDirectory subdir : subdirs) {
-        if (!skipDirectory(subdir)) {
-          continue;
-        }
-        VirtualFile directoryFile = subdir.getVirtualFile();
+      if (withSubDirectories) {
+        PsiDirectory[] subdirs = psiDirectory.getSubdirectories();
+        for (PsiDirectory subdir : subdirs) {
+          if (!skipDirectory(subdir)) {
+            continue;
+          }
+          VirtualFile directoryFile = subdir.getVirtualFile();
 
-        if (Registry.is("ide.hide.excluded.files")) {
-          if (fileIndex.isExcluded(directoryFile)) continue;
-        }
-        else {
-          if (FileTypeRegistry.getInstance().isFileIgnored(directoryFile)) continue;
-        }
+          if (Registry.is("ide.hide.excluded.files")) {
+            if (fileIndex.isExcluded(directoryFile)) continue;
+          }
+          else {
+            if (FileTypeRegistry.getInstance().isFileIgnored(directoryFile)) continue;
+          }
 
-        if (withSubDirectories) {
           children.add(new PsiDirectoryNode(project, subdir, settings));
         }
       }
@@ -228,17 +228,23 @@ public class ProjectViewDirectoryHelper {
     for (PsiElement child : children) {
       LOG.assertTrue(child.isValid());
 
-      final VirtualFile vFile;
+      if (!(child instanceof PsiFileSystemItem)) {
+        LOG.error("Either PsiFile or PsiDirectory expected as a child of " + child.getParent() + ", but was " + child);
+        continue;
+      }
+      final VirtualFile vFile = ((PsiFileSystemItem) child).getVirtualFile();
+      if (vFile == null) {
+        continue;
+      }
+      if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
+        continue;
+      }
       if (child instanceof PsiFile) {
-        vFile = ((PsiFile)child).getVirtualFile();
-        if (vFile != null) {
-          addNode(moduleFileIndex, vFile, container, PsiFileNode.class, child, viewSettings);
-        }
+        container.add(new PsiFileNode(child.getProject(), (PsiFile) child, viewSettings));
       }
       else if (child instanceof PsiDirectory) {
         if (withSubDirectories) {
           PsiDirectory dir = (PsiDirectory)child;
-          vFile = dir.getVirtualFile();
           if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
             if (viewSettings.isHideEmptyMiddlePackages() && !skipDirectory(psiDir) && isEmptyMiddleDirectory(dir, true)) {
               processPsiDirectoryChildren(dir, directoryChildrenInProject(dir, viewSettings),
@@ -246,31 +252,9 @@ public class ProjectViewDirectoryHelper {
               continue;
             }
           }
-          addNode(moduleFileIndex, vFile, container, PsiDirectoryNode.class, child, viewSettings);
+          container.add(new PsiDirectoryNode(child.getProject(), (PsiDirectory) child, viewSettings));
         }
       }
-      else {
-        LOG.error("Either PsiFile or PsiDirectory expected as a child of " + child.getParent() + ", but was " + child);
-      }
-    }
-  }
-
-  public void addNode(ModuleFileIndex moduleFileIndex,
-                      VirtualFile vFile,
-                      List<AbstractTreeNode> container,
-                      Class<? extends AbstractTreeNode> nodeClass,
-                      PsiElement element,
-                      final ViewSettings settings) {
-    // this check makes sense for classes not in library content only
-    if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
-      return;
-    }
-
-    try {
-      container.add(ProjectViewNode.createTreeNode(nodeClass, element.getProject(), element, settings));
-    }
-    catch (Exception e) {
-      LOG.error(e);
     }
   }
 
