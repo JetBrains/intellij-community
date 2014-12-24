@@ -38,10 +38,8 @@ public class PyDirectoryIconProvider extends IconProvider {
     if (element instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory)element;
       // Preserve original icons for excluded directories and source roots
-      if (!isSpecialDirectory(directory)) {
-        if (PyUtil.isPackage(directory, false, null) && isImportable(directory)) {
-          return PlatformIcons.PACKAGE_ICON;
-        }
+      if (!isSpecialDirectory(directory) && isImportablePackage(directory)) {
+        return PlatformIcons.PACKAGE_ICON;
       }
     }
     return null;
@@ -56,13 +54,13 @@ public class PyDirectoryIconProvider extends IconProvider {
     return module == null || PyUtil.getSourceRoots(module).contains(vFile);
   }
 
-  private static boolean isImportable(@NotNull PsiDirectory directory) {
+  private static boolean isImportablePackage(@NotNull PsiDirectory directory) {
     final Collection<VirtualFile> sourceRoots = PyUtil.getSourceRoots(directory);
     for (PsiDirectory dir = directory; dir != null; dir = dir.getParentDirectory()) {
       if (sourceRoots.contains(dir.getVirtualFile())) {
         return true;
       }
-      if (!PyNames.isIdentifier(dir.getName())) {
+      if (!PyNames.isIdentifier(dir.getName()) || !PyUtil.isPackage(dir, false, null)) {
         return false;
       }
     }
