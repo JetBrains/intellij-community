@@ -91,14 +91,18 @@ public final class HttpRequests {
   }
 
   @NotNull
-  public static String createErrorMessage(@NotNull IOException e, @NotNull Request request) throws IOException {
+  public static String createErrorMessage(@NotNull IOException e, @NotNull Request request, boolean includeHeaders) throws IOException {
     URLConnection connection = request.getConnection();
-    String errorMessage = "Cannot download '" + connection.getURL().toExternalForm() + "': " + e.getMessage() + "\n, headers: " + connection.getHeaderFields();
+    StringBuilder builder = new StringBuilder();
+    builder.append("Cannot download '").append(connection.getURL().toExternalForm()).append("': ").append(e.getMessage());
+    if (includeHeaders) {
+      builder.append("\n, headers: ").append(connection.getHeaderFields());
+    }
     if (connection instanceof HttpURLConnection) {
       HttpURLConnection httpConnection = (HttpURLConnection)connection;
-      errorMessage += "\n, response: " + httpConnection.getResponseCode() + ' ' + httpConnection.getResponseMessage();
+      builder.append("\n, response: ").append(httpConnection.getResponseCode()).append(' ').append(httpConnection.getResponseMessage());
     }
-    return errorMessage;
+    return builder.toString();
   }
 
   static <T> T wrapAndProcess(RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
@@ -201,33 +205,28 @@ public final class HttpRequests {
 
       @NotNull
       public File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
-        OutputStream out = null;
+        FileUtilRt.createParentDirs(file);
+
         boolean deleteFile = true;
         try {
-          if (indicator != null) {
-            indicator.checkCanceled();
-          }
-
-          FileUtilRt.createParentDirs(file);
-          out = new FileOutputStream(file);
-          NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
-          deleteFile = false;
-        }
-        catch (IOException e) {
-          throw new IOException(createErrorMessage(e, this), e);
-        }
-        finally {
+          OutputStream out = new FileOutputStream(file);
           try {
-            if (out != null) {
-              out.close();
-            }
+            NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+            deleteFile = false;
+          }
+          catch (IOException e) {
+            throw new IOException(createErrorMessage(e, this, false), e);
           }
           finally {
-            if (deleteFile) {
-              FileUtilRt.delete(file);
-            }
+            out.close();
           }
         }
+        finally {
+          if (deleteFile) {
+            FileUtilRt.delete(file);
+          }
+        }
+
         return file;
       }
     }
@@ -244,11 +243,11 @@ public final class HttpRequests {
   private static URLConnection openConnection(RequestBuilder builder) throws IOException {
     String url = builder.myUrl;
 
-    if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
-      url = "https:" + url.substring(5);
-    }
-
     for (int i = 0; i < builder.myRedirectLimit; i++) {
+      if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
+        url = "https:" + url.substring(5);
+      }
+
       URLConnection connection;
       if (ApplicationManager.getApplication() == null) {
         connection = new URL(url).openConnection();
@@ -275,9 +274,11 @@ public final class HttpRequests {
       if (builder.myGzip) {
         connection.setRequestProperty("Accept-Encoding", "gzip");
       }
+
       if (builder.myAccept != null) {
         connection.setRequestProperty("Accept", builder.myAccept);
       }
+
       connection.setUseCaches(false);
 
       if (connection instanceof HttpURLConnection) {
