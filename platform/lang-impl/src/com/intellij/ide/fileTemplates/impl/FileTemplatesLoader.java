@@ -107,11 +107,11 @@ public class FileTemplatesLoader {
     return new FTManager(myPatternsManager);
   }
 
-  public FTManager getCodeTemplatesManager() {
+  FTManager getCodeTemplatesManager() {
     return new FTManager(myCodeTemplatesManager);
   }
 
-  public FTManager getJ2eeTemplatesManager() {
+  FTManager getJ2eeTemplatesManager() {
     return new FTManager(myJ2eeTemplatesManager);
   }
 
