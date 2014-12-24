@@ -22,8 +22,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class HttpRequestsTest  {
   private final HttpRequests.RequestProcessor<Void> myProcessor = new HttpRequests.RequestProcessor<Void>() {
@@ -56,10 +56,5 @@ public class HttpRequestsTest  {
   public void testReadTimeout() throws IOException {
     HttpRequests.request("http://openjdk.java.net").readTimeout(1).connect(myProcessor);
     fail();
-  }
-
-  @Test(timeout = 5000)
-  public void testReadString() throws IOException {
-    assertThat(HttpRequests.request("http://openjdk.java.net").readString(null), containsString("Download"));
   }
 }
