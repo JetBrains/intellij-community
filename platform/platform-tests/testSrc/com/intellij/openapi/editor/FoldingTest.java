@@ -22,6 +22,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestFileType;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author max
@@ -194,5 +195,25 @@ public class FoldingTest extends AbstractEditorTest {
     addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
     
     assertTrue(myModel.isOffsetCollapsed(5));
+  }
+  
+  public void testIdenticalRegionsAreRemoved() {
+    addFoldRegion(0, 5, "...");
+    addFoldRegion(0, 4, "...");
+    assertNumberOfValidFoldRegions(2);
+    
+    myEditor.getDocument().deleteString(4, 5);
+
+    assertNumberOfValidFoldRegions(1);
+  }
+
+  private void assertNumberOfValidFoldRegions(int expectedValue) {
+    int actualValue = 0;
+    for (FoldRegion region : myModel.getAllFoldRegions()) {
+      if (region.isValid()) {
+        actualValue++;
+      }
+    }
+    assertEquals(expectedValue, actualValue);
   }
 }

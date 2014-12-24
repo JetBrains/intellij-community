@@ -23,6 +23,8 @@ import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgCommitCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 
 import java.util.List;
 
@@ -51,7 +53,8 @@ public class HgCommitTest extends HgPlatformTest {
     logCommand.setLogFile(false);
     HgFile hgFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(myRepository));
     List<HgFileRevision> revisions = logCommand.execute(hgFile, -1, false);
-    HgCommitCommand commit = new HgCommitCommand(myProject, myRepository, changedCommit, true);
+    HgRepository hgRepo = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
+    HgCommitCommand commit = new HgCommitCommand(myProject, hgRepo, changedCommit, true);
     commit.execute();
     List<HgFileRevision> revisionsAfterAmendCommit = logCommand.execute(hgFile, -1, false);
     assertTrue(revisions.size() == revisionsAfterAmendCommit.size());

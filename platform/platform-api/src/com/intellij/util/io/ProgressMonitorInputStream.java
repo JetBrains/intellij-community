@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 
 final class ProgressMonitorInputStream extends InputStream {
   private final ProgressIndicator indicator;
@@ -41,12 +40,8 @@ final class ProgressMonitorInputStream extends InputStream {
     return c;
   }
 
-  private void updateProgress(long increment) throws InterruptedIOException {
-    if (indicator.isCanceled()) {
-      InterruptedIOException exception = new InterruptedIOException("progress");
-      exception.bytesTransferred = (int)count;
-      throw exception;
-    }
+  private void updateProgress(long increment) {
+    indicator.checkCanceled();
     if (increment > 0) {
       count += increment;
       indicator.setFraction((double)count / available);

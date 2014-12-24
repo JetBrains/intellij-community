@@ -26,6 +26,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,13 +34,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
  * @since 10/1/12
  */
 public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
+  private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);
 
   static final String ZIP = ".zip";
 
@@ -47,8 +52,8 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
     @NotNull
     @Override
     protected MultiMap<String, Pair<URL, ClassLoader>> compute() {
-      MultiMap<String, Pair<URL, ClassLoader>> map = new MultiMap<String, Pair<URL, ClassLoader>>();
-      Map<URL, ClassLoader> urls = new HashMap<URL, ClassLoader>();
+      MultiMap<String, Pair<URL, ClassLoader>> map = MultiMap.createSmartList();
+      Map<URL, ClassLoader> urls = new THashMap<URL, ClassLoader>();
       //for (IdeaPluginDescriptor plugin : plugins) {
       //  if (!plugin.isEnabled()) continue;
       //  try {
@@ -65,9 +70,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
       //}
 
       URL configURL = getCustomTemplatesURL();
-      if (configURL != null) {
-        urls.put(configURL, ClassLoader.getSystemClassLoader());
-      }
+      urls.put(configURL, ClassLoader.getSystemClassLoader());
 
       for (Map.Entry<URL, ClassLoader> url : urls.entrySet()) {
         try {
@@ -94,23 +97,23 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
     }
   };
 
+  @NotNull
   private static URL getCustomTemplatesURL() {
-    String path = getCustomTemplatesPath();
     try {
-      return new File(path).toURI().toURL();
+      return new File(getCustomTemplatesPath()).toURI().toURL();
     }
     catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }
   }
 
+  @NotNull
   static String getCustomTemplatesPath() {
     return PathManager.getConfigPath() + "/projectTemplates";
   }
 
   public static File getTemplateFile(String name) {
-    String configURL = getCustomTemplatesPath();
-    return new File(configURL + "/" + name + ".zip");
+    return new File(getCustomTemplatesPath() + "/" + name + ".zip");
   }
 
   @NotNull
@@ -123,13 +126,11 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(String group, WizardContext context) {
-    Collection<Pair<URL, ClassLoader>> urls = myGroups.getValue().get(group);
+  public ProjectTemplate[] createTemplates(@NotNull String group, WizardContext context) {
     List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
-    for (Pair<URL, ClassLoader> url : urls) {
+    for (Pair<URL, ClassLoader> url : myGroups.getValue().get(group)) {
       try {
-        List<String> children = UrlUtil.getChildrenRelativePaths(url.first);
-        for (String child : children) {
+        for (String child : UrlUtil.getChildrenRelativePaths(url.first)) {
           if (child.endsWith(ZIP)) {
             URL templateUrl = new URL(url.first.toExternalForm() + "/" + child);
             templates.add(new LocalArchivedTemplate(templateUrl, url.second));
@@ -152,6 +153,4 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
   public Icon getGroupIcon(String group) {
     return CUSTOM_GROUP.equals(group) ? AllIcons.Modules.Types.UserDefined : super.getGroupIcon(group);
   }
-
-  private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,7 +222,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
 
   private VirtualFile create(VirtualFile parent, String name, boolean dir) {
     final VirtualFile file = dir ?
-                             VcsTestUtil.createDir(myProject, parent, name) :
+                             VcsTestUtil.findOrCreateDir(myProject, parent, name) :
                              createFile(myProject, parent, name, "content" + Math.random());
     dirty(file);
     return file;

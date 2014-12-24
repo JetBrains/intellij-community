@@ -150,7 +150,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     CheckUtil.checkWritable(this);
     VirtualFile parentFile = myFile.getParent();
     if (parentFile == null) {
-      throw new IncorrectOperationException(VfsBundle.message("cannot.rename.root.directory"));
+      throw new IncorrectOperationException(VfsBundle.message("cannot.rename.root.directory", myFile.getPath()));
     }
     VirtualFile child = parentFile.findChild(name);
     if (child != null && !child.equals(myFile)) {
