@@ -246,7 +246,10 @@ public class FormatChangedTextUtil {
 
   @NotNull
   public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
-    List<TextRange> cachedChangedLines = getCachedChangedLines(project, file);
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return ContainerUtil.emptyList();
+
+    List<TextRange> cachedChangedLines = getCachedChangedLines(project, document);
     if (cachedChangedLines != null) {
       return cachedChangedLines;
     }
@@ -260,17 +263,12 @@ public class FormatChangedTextUtil {
     }
 
     String contentFromVcs = getRevisionedContentFrom(change);
-    return contentFromVcs != null ? calculateChangedTextRanges(project, file, contentFromVcs)
+    return contentFromVcs != null ? calculateChangedTextRanges(document, contentFromVcs)
                                   : ContainerUtil.<TextRange>emptyList();
   }
 
   @Nullable
-  private static List<TextRange> getCachedChangedLines(@NotNull Project project, @NotNull PsiFile file) {
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) {
-      return ContainerUtil.emptyList();
-    }
-
+  private static List<TextRange> getCachedChangedLines(@NotNull Project project, @NotNull Document document) {
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
     if (tracker != null) {
       List<Range> ranges = tracker.getRanges();
@@ -297,17 +295,10 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  protected static List<TextRange> calculateChangedTextRanges(@NotNull Project project,
-                                                              @NotNull PsiFile file,
+  protected static List<TextRange> calculateChangedTextRanges(@NotNull Document document,
                                                               @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
   {
     Document documentFromVcs = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(contentFromVcs, true, false);
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-
-    if (document == null) {
-      return ContainerUtil.emptyList();
-    }
-
     List<Range> changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
     return getChangedTextRanges(document, changedRanges);
   }
