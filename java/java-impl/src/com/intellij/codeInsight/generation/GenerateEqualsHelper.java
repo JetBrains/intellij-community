@@ -18,9 +18,9 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -234,6 +234,9 @@ public class GenerateEqualsHelper implements Runnable {
 
   @NonNls private static final MessageFormat ARRAY_COMPARER_MF =
     new MessageFormat("if(!java.util.Arrays.equals({1}, {0}.{1})) return false;\n");
+
+  @NonNls private static final MessageFormat ARRAY_DEEP_COMPARER_MF =
+    new MessageFormat("if(!java.util.Arrays.deepEquals({1}, {0}.{1})) return false;\n");
   @NonNls private static final MessageFormat FIELD_COMPARER_MF =
     new MessageFormat("if({1}!=null ? !{1}.equals({0}.{1}) : {0}.{1}!= null)return false;\n");
   @NonNls private static final MessageFormat NON_NULL_FIELD_COMPARER_MF = new MessageFormat("if(!{1}.equals({0}.{1}))return false;\n");
@@ -244,9 +247,14 @@ public class GenerateEqualsHelper implements Runnable {
   private void addArrayEquals(StringBuffer buffer, PsiField field) {
     final PsiType fieldType = field.getType();
     if (isNestedArray(fieldType)) {
-      buffer.append(" ");
-      buffer.append(CodeInsightBundle.message("generate.equals.compare.nested.arrays.comment", field.getName()));
-      buffer.append("\n");
+      if (JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
+        ARRAY_DEEP_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
+      }
+      else {
+        buffer.append(" ");
+        buffer.append(CodeInsightBundle.message("generate.equals.compare.nested.arrays.comment", field.getName()));
+        buffer.append("\n");
+      }
       return;
     }
     if (isArrayOfObjects(fieldType)) {
@@ -474,7 +482,14 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private static void adjustHashCodeToArrays(@NonNls StringBuilder buffer, final PsiField field, final String name) {
-    if (field.getType() instanceof PsiArrayType && hasArraysHashCode(field)) {
+    final PsiType fieldType = field.getType();
+    if (fieldType instanceof PsiArrayType && 
+        JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
+      if (isNestedArray(fieldType)) {
+        buffer.append(" ");
+        buffer.append("// Probably incorrect - hashCode for high dimension arrays with Arrays.hashCode");
+        buffer.append("\n");
+      }
       buffer.append("java.util.Arrays.hashCode(");
       buffer.append(name);
       buffer.append(")");
@@ -483,16 +498,6 @@ public class GenerateEqualsHelper implements Runnable {
       buffer.append(name);
       buffer.append(".hashCode()");
     }
-  }
-
-  private static boolean hasArraysHashCode(final PsiField field) {
-    // the method was added in JDK 1.5 - check for actual method presence rather than language level
-    Module module = ModuleUtilCore.findModuleForPsiElement(field);
-    if (module == null) return false;
-    PsiClass arraysClass = JavaPsiFacade.getInstance(field.getProject()).findClass("java.util.Arrays", module.getModuleWithLibrariesScope());
-    if (arraysClass == null) return false;
-    final PsiMethod[] methods = arraysClass.findMethodsByName("hashCode", false);
-    return methods.length > 0;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
