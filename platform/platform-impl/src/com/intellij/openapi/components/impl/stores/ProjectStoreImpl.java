@@ -63,8 +63,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   private StorageScheme myScheme = StorageScheme.DEFAULT;
   private String myPresentableUrl;
 
-  ProjectStoreImpl(@NotNull ProjectImpl project) {
-    super(project);
+  ProjectStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
+    super(pathMacroManager);
 
     myProject = project;
   }
@@ -387,7 +387,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject);
+    return new ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject);
   }
 
   static class  ProjectStorageData extends BaseStorageData {

@@ -37,8 +37,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
-  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, @NotNull ProjectManagerImpl projectManager) {
-    super(project);
+  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, @NotNull ProjectManagerImpl projectManager, @NotNull PathMacroManager pathMacroManager) {
+    super(project, pathMacroManager);
 
     myProjectManager = projectManager;
     myElement = projectManager.getDefaultProjectRootElement();
@@ -60,9 +60,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       _d = myElement;
     }
 
-    ComponentManager componentManager = getComponentManager();
     final Element element = _d;
-    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(),
+    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, myPathMacroManager.createTrackingSubstitutor(),
                                                             ROOT_TAG_NAME, null) {
       @Override
       @Nullable

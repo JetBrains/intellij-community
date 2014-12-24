@@ -18,7 +18,10 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StateStorageOperation;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,7 +41,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   private final ApplicationImpl myApplication;
   private final StateStorageManager myStateStorageManager;
-  private final DefaultsStateStorage myDefaultsStateStorage;
 
   private String myConfigPath;
 
@@ -91,7 +93,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
         }
       }
     };
-    myDefaultsStateStorage = new DefaultsStateStorage(null);
   }
 
   @Override
@@ -138,7 +139,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   @Nullable
   @Override
-  protected StateStorage getDefaultsStorage() {
-    return myDefaultsStateStorage;
+  protected PathMacroManager getPathMacroManagerForDefaults() {
+    return null;
   }
 }

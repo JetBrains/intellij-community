@@ -214,7 +214,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
 
     @Nullable
     @Override
-    protected StateStorage getDefaultsStorage() {
+    protected PathMacroManager getPathMacroManagerForDefaults() {
       return null;
     }
 
