@@ -23,9 +23,13 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,6 +59,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.nio.charset.Charset;
 import java.util.*;
@@ -237,8 +242,25 @@ public class HtmlUtil {
   public static String[] getHtmlTagNames() {
     return HtmlDescriptorsTable.getHtmlTagNames();
   }
+  
+  public static boolean isShortNotationOfBooleanAttributePreferred() {
+    return Registry.is("html.prefer.short.notation.of.boolean.attributes", true);
+  }
+  
+  @TestOnly
+  public static void setShortNotationOfBooleanAttributeIsPreferred(boolean value, Disposable parent) {
+    final boolean oldValue = isShortNotationOfBooleanAttributePreferred();
+    final RegistryValue registryValue = Registry.get("html.prefer.short.notation.of.boolean.attributes");
+    registryValue.setValue(value);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        registryValue.setValue(oldValue);
+      }
+    });
+  }
 
-  public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor) {
+  public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor, @Nullable XmlElement context) {
     final String[] values = descriptor.getEnumeratedValues();
     if (values == null) {
       return false;
@@ -249,6 +271,19 @@ public class HtmlUtil {
     }
     else if (values.length == 1) {
       return descriptor.getName().equals(values[0]);
+    }
+    return context != null && isCustomBooleanAttribute(descriptor.getName(), context);
+  }
+
+  public static boolean isCustomBooleanAttribute(@NotNull String attributeName, @NotNull XmlElement context) {
+    final String entitiesString = getEntitiesString(context, XmlEntitiesInspection.BOOLEAN_ATTRIBUTE_SHORT_NAME);
+    if (entitiesString != null) {
+      StringTokenizer tokenizer = new StringTokenizer(entitiesString, ",");
+      while (tokenizer.hasMoreElements()) {
+        if (tokenizer.nextToken().equalsIgnoreCase(attributeName)) {
+          return true;
+        }
+      }
     }
     return false;
   }

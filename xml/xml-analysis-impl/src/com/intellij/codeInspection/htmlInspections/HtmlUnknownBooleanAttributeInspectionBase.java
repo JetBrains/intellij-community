@@ -86,7 +86,7 @@ public abstract class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnkn
         XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
         if (attributeDescriptor != null) {
           String name = attribute.getName();
-          if (!HtmlUtil.isBooleanAttribute(attributeDescriptor) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
+          if (!HtmlUtil.isBooleanAttribute(attributeDescriptor, null) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
             LocalQuickFix[] quickFixes = new LocalQuickFix[]{
               new AddCustomHtmlElementIntentionAction(BOOLEAN_ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.boolean.attribute", name)),
               XmlQuickFixFactory.getInstance().addAttributeValueFix(attribute),

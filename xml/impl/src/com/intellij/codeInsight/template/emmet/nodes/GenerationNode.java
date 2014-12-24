@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.google.common.base.Strings;
-import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
 import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
@@ -51,11 +50,13 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.google.common.collect.Lists.newArrayList;
 
@@ -74,6 +75,7 @@ public class GenerationNode extends UserDataHolderBase {
 
   private GenerationNode myParent;
   private boolean myContainsSurroundedTextMarker = false;
+  public static final Pattern ATTRIBUTE_VARIABLE_PATTERN = Pattern.compile("\\$[A-z_0-9]+\\$");
 
   public GenerationNode(TemplateToken templateToken,
                         int numberInIteration,
@@ -444,37 +446,41 @@ public class GenerationNode extends UserDataHolderBase {
       }
     }
     
-    for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-      final String attributeName = attribute.getKey();
-      final XmlAttribute xmlAttribute = tag.getAttribute(attributeName);
-      if (xmlAttribute != null) {
-        final String attributeValue = attribute.getValue();
-        
-        if (ZenCodingUtil.containsSurroundedTextMarker(attributeValue)) {
-          myContainsSurroundedTextMarker = true;
-        }
+    for (XmlAttribute xmlAttribute : tag.getAttributes()) {
+      final String attributeName = xmlAttribute.getName();
+      final XmlAttributeValue xmlAttributeValueElement = xmlAttribute.getValueElement();
+      if (xmlAttributeValueElement != null && !attributes.containsKey(attributeName)) {
+        continue;
+      }
 
-        final EmmetOptions emmetOptions = EmmetOptions.getInstance();
-        if (isBooleanAttribute(attributeName, attributeValue)) {
-          if (emmetOptions.isCompactBooleanAllowed() && ZenCodingUtil.isHtml(callback)) {
-            final XmlAttributeValue valueElement = xmlAttribute.getValueElement();
-            if (valueElement != null) {
-              final PsiElement prevSibling = valueElement.getPrevSibling();
-              if (prevSibling != null && prevSibling.textMatches("=")) {
-                xmlAttribute.deleteChildRange(prevSibling, valueElement);
-              }
+      String attributeValue = StringUtil.notNullize(attributes.get(attributeName), StringUtil.notNullize(xmlAttribute.getValue()));
+      if (ZenCodingUtil.containsSurroundedTextMarker(attributeValue)) {
+        myContainsSurroundedTextMarker = true;
+      }
+
+      if (isBooleanAttribute(attributeValue, xmlAttribute, ZenCodingUtil.isHtml(callback))) {
+        if (HtmlUtil.isShortNotationOfBooleanAttributePreferred()) {
+          if (xmlAttributeValueElement != null) {
+            final PsiElement prevSibling = xmlAttributeValueElement.getPrevSibling();
+            if (prevSibling != null && prevSibling.textMatches("=")) {
+              xmlAttribute.deleteChildRange(prevSibling, xmlAttributeValueElement);
             }
-          }
-          else {
-            tag.setAttribute(attributeName, attributeName);
           }
         }
         else {
-          tag.setAttribute(attributeName,
-                           Strings.isNullOrEmpty(attributeValue)
-                           ? "$" + prepareVariableName(attributeName) + "$"
-                           : ZenCodingUtil.getValue(attributeValue, myNumberInIteration, myTotalIterations, mySurroundedText));
+          if (xmlAttributeValueElement == null) {
+            xmlAttribute.delete();
+          }
+          tag.setAttribute(attributeName, attributeName);
         }
+      }
+      else {
+        if (xmlAttributeValueElement == null) {
+          xmlAttribute.delete();
+        }
+        tag.setAttribute(attributeName, StringUtil.isEmpty(attributeValue)
+                                        ? "$" + prepareVariableName(attributeName) + "$"
+                                        : ZenCodingUtil.getValue(attributeValue, myNumberInIteration, myTotalIterations, mySurroundedText));
       }
     }
     
@@ -487,11 +493,15 @@ public class GenerationNode extends UserDataHolderBase {
     }
   }
 
-  private static boolean isBooleanAttribute(String name, String value) {
-    if (value.equals(XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE)) {
+  private static boolean isBooleanAttribute(@Nullable String attributeValue, @NotNull XmlAttribute xmlAttribute, boolean isHtml) {
+    if (XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE.equals(attributeValue)) {
       return true;
     }
-    return Strings.isNullOrEmpty(value) && EmmetOptions.getInstance().getBooleanAttributes().contains(name.toLowerCase(Locale.US));
+    if (isHtml) {
+      final XmlAttributeDescriptor descriptor = xmlAttribute.getDescriptor();
+      return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, xmlAttribute);
+    }
+    return false;
   }
 
   private static boolean isDefaultAttribute(String xmlAttributeLocalName) {
@@ -500,6 +510,10 @@ public class GenerationNode extends UserDataHolderBase {
 
   private static boolean isImpliedAttribute(String xmlAttributeLocalName) {
     return StringUtil.startsWithChar(xmlAttributeLocalName, '!');
+  }
+
+  private static boolean isEmptyValue(String attributeValue) {
+    return StringUtil.isEmpty(attributeValue) || ATTRIBUTE_VARIABLE_PATTERN.matcher(attributeValue).matches();
   }
 
   @Nullable
@@ -526,7 +540,7 @@ public class GenerationNode extends UserDataHolderBase {
   private static XmlAttribute findEmptyAttribute(@NotNull List<XmlAttribute> attributes) {
     for (XmlAttribute attribute : attributes) {
       final String attributeValue = attribute.getValue();
-      if (StringUtil.isEmpty(attributeValue) || StringUtil.startsWithChar(attributeValue, '$') && StringUtil.endsWithChar(attributeValue, '$')) {
+      if (isEmptyValue(attributeValue)) {
         return attribute;
       }
     }
