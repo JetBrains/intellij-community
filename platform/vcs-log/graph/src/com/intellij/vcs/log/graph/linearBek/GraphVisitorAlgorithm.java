@@ -76,43 +76,6 @@ public class GraphVisitorAlgorithm {
     }
   }
 
-  // TODO we wont be needing this
-  public void visitSubgraph(@NotNull LinearGraph graph, @NotNull GraphVisitor visitor, int start, int depth) {
-    final BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
-
-    IntStack stack = new IntStack();
-
-    visited.set(start, true);
-    stack.push(start);
-    visitor.enterSubtree(start, start, visited);
-
-    while (!stack.empty()) {
-      int nextNode = simpleNextNode(graph, stack.peek(), visited);
-      if (nextNode != NODE_NOT_FOUND && stack.size() < depth) {
-        visited.set(nextNode, true);
-        stack.push(nextNode);
-        visitor.enterSubtree(nextNode, start, visited);
-      }
-      else {
-        visitor.leaveSubtree(stack.pop(), start, visited);
-      }
-    }
-
-    visitor.leaveSubtree(start, start, visited);
-  }
-
-  private int simpleNextNode(@NotNull LinearGraph graph, int currentNode, @NotNull BitSetFlags visited) {
-    List<Integer> downNodes = getDownNodes(graph, currentNode);
-    if (myBackwards) Collections.reverse(downNodes);
-
-    for (int downNode : downNodes) {
-      if (!visited.get(downNode)) {
-        return downNode;
-      }
-    }
-    return NODE_NOT_FOUND;
-  }
-
   private int nextNode(@NotNull LinearGraph graph, @NotNull GraphLayout layout, int currentNode, @NotNull BitSetFlags visited) {
     List<Integer> downNodes = getDownNodes(graph, currentNode);
     if (myBackwards) Collections.reverse(downNodes);
@@ -142,18 +105,5 @@ public class GraphVisitorAlgorithm {
     void enterSubtree(int nodeIndex, int currentHead, BitSetFlags visited);
 
     void leaveSubtree(int nodeIndex, int currentHead, BitSetFlags visited); // TODO make it better
-  }
-
-  public abstract static class SimpleVisitor implements GraphVisitor {
-    public abstract void visitNode(int nodeIndex);
-
-    @Override
-    public void enterSubtree(int nodeIndex, int currentHead, BitSetFlags visited) {
-      visitNode(nodeIndex);
-    }
-
-    @Override
-    public void leaveSubtree(int nodeIndex, int currentHead, BitSetFlags visited) {
-    }
   }
 }
