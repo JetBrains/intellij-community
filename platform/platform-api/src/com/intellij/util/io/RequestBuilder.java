@@ -96,7 +96,7 @@ public final class RequestBuilder {
   }
 
   @NotNull
-  public RequestBuilder userAgent() {
+  public RequestBuilder productNameAsUserAgent() {
     Application app = ApplicationManager.getApplication();
     if (app != null && !app.isDisposed()) {
       return userAgent(ApplicationInfo.getInstance().getVersionName());
