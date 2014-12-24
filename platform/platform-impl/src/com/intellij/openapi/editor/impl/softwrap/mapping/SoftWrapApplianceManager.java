@@ -395,6 +395,7 @@ public class SoftWrapApplianceManager implements Dumpable {
 
     if (myContext.delayedSoftWrap != null) {
       myStorage.remove(myContext.delayedSoftWrap);
+      myContext.delayedSoftWrap = null;
     }
     
     if (softWrap == null) {
