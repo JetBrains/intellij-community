@@ -782,6 +782,7 @@ public class ClassWriter {
 
         buffer.append(';');
         buffer.appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
       }
       else {
         if (!clinit && !dinit) {

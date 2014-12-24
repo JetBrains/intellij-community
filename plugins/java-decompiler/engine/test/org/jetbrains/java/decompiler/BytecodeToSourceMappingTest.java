@@ -26,9 +26,11 @@ public class BytecodeToSourceMappingTest extends SingleClassesTestBase {
   protected Map<String, Object> getDecompilerOptions() {
     return new HashMap<String, Object>() {{
       put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
+      put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
     }};
   }
 
   @Test public void testSimpleBytecodeMapping() { doTest("pkg/TestClassSimpleBytecodeMapping"); }
   @Test public void testSynchronizedMapping() { doTest("pkg/TestSynchronizedMapping"); }
+  @Test public void testAbstractMethods() { doTest("pkg/TestAbstractMethods"); }
 }
