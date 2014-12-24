@@ -741,7 +741,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       TableColumn column = getColumnModel().getColumn(columnToPack);
       int currentWidth = column.getWidth();
       int expandedWidth = getExpandedColumnWidth(columnToPack);
-      int newWidth = currentWidth >= expandedWidth ? getPreferredHeaderWidth(columnToPack) : expandedWidth;
+      int newWidth = getColumnModel().getColumnMargin() +
+                     (currentWidth >= expandedWidth ? getPreferredHeaderWidth(columnToPack) : expandedWidth);
 
       setResizingColumn(column);
       column.setWidth(newWidth);
