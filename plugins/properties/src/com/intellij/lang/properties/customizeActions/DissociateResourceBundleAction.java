@@ -69,11 +69,10 @@ public class DissociateResourceBundleAction extends AnAction {
   public void update(final AnActionEvent e) {
     final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
     if (!resourceBundles.isEmpty()) {
-      if (resourceBundles.size() == 1) {
-        e.getPresentation().setText(String.format(SINGLE_RB_PRESENTATION_TEXT_TEMPLATE, ContainerUtil.getFirstItem(resourceBundles).getBaseName()), false);
-      } else {
-        e.getPresentation().setText(String.format(MULTIPLE_RB_PRESENTATION_TEXT_TEMPLATE, resourceBundles.size()), false);
-      }
+      final String actionText = resourceBundles.size() == 1 ?
+                                String.format(SINGLE_RB_PRESENTATION_TEXT_TEMPLATE, ContainerUtil.getFirstItem(resourceBundles).getBaseName()) :
+                                String.format(MULTIPLE_RB_PRESENTATION_TEXT_TEMPLATE, resourceBundles.size());
+      e.getPresentation().setText(actionText, false);
       e.getPresentation().setVisible(true);
     } else {
       e.getPresentation().setVisible(false);
