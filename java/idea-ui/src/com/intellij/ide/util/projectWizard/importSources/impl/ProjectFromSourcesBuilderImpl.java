@@ -410,7 +410,8 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
            "tests".equalsIgnoreCase(name) || 
            "testSource".equalsIgnoreCase(name) || 
            "testSources".equalsIgnoreCase(name) || 
-           "testSrc".equalsIgnoreCase(name);
+           "testSrc".equalsIgnoreCase(name) ||
+           "tst".equalsIgnoreCase(name);
   }
 
   public interface ProjectConfigurationUpdater {
