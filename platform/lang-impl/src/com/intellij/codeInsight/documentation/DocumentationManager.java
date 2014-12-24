@@ -91,7 +91,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
 
   private Editor myEditor = null;
-  private ParameterInfoController myParameterInfoController;
+  private PsiElement myExpressionList;
   private final Alarm myUpdateDocAlarm;
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
@@ -294,23 +294,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (list != null) {
       LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
       if (lookup != null) {
-        myParameterInfoController = null; // take completion variants for documentation then
+        myExpressionList = null; // take completion variants for documentation then
       } else {
-        myParameterInfoController = ParameterInfoController.findControllerAtOffset(editor, list.getTextRange().getStartOffset());
+        myExpressionList = list;
       }
     }
 
     final PsiElement originalElement = getContextElement(editor, file);
     PsiElement element = assertSameProject(findTargetElement(editor, file));
 
-    if (element == null && myParameterInfoController != null) {
-      final Object[] objects = myParameterInfoController.getSelectedElements();
-
-      if (objects != null && objects.length > 0) {
-        if (objects[0] instanceof PsiElement) {
-          element = assertSameProject((PsiElement)objects[0]);
-        }
-      }
+    if (element == null && myExpressionList != null) {
+      element = myExpressionList;
     }
 
     if (element == null && file == null) return; //file == null for text field editor
@@ -493,7 +487,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           Disposer.dispose(component);
           myEditor = null;
           myPreviouslyFocused = null;
-          myParameterInfoController = null;
+          myExpressionList = null;
           return Boolean.TRUE;
         }
       })
@@ -1065,12 +1059,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             }
           }
       );
-      if (myParameterInfoController != null) {
+      if (myExpressionList != null) {
         final String doc = ApplicationManager.getApplication().runReadAction(
             new NullableComputable<String>() {
               @Override
               public String compute() {
-                return generateParameterInfoDocumentation(provider);
+                return generateDocumentation(provider);
               }
             }
         );
@@ -1113,35 +1107,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     @Nullable
-    private String generateParameterInfoDocumentation(DocumentationProvider provider) {
-      final Object[] objects = myParameterInfoController.getSelectedElements();
-
-      if (objects.length > 0) {
-        @NonNls StringBuffer sb = null;
-
-        for (Object o : objects) {
-          PsiElement parameter = null;
-          if (o instanceof PsiElement) {
-            parameter = (PsiElement)o;
-          }
-
-          if (parameter != null) {
-            final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
-            final String str2 = provider.generateDoc(parameter, originalElement != null ? originalElement.getElement() : null);
-            if (str2 == null) continue;
-            if (sb == null) sb = new StringBuffer();
-            sb.append(str2);
-            sb.append("<br>");
-          }
-          else {
-            sb = null;
-            break;
-          }
-        }
-
-        if (sb != null) return sb.toString();
-      }
-      return null;
+    private String generateDocumentation(DocumentationProvider provider) {
+      return provider.generateDoc(myExpressionList, null);
     }
 
     @Override

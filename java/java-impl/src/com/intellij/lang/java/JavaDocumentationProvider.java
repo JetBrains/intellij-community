@@ -48,6 +48,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -477,11 +478,55 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String generateDoc(final PsiElement element, final PsiElement originalElement) {
+  public String generateDoc(PsiElement element, final PsiElement originalElement) {
+    if (element instanceof PsiExpressionList) {
+      element = element.getParent(); // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
+    }
     if (element instanceof PsiMethodCallExpression) {
       return getMethodCandidateInfo((PsiMethodCallExpression)element);
     }
 
+    // Try hard for documentation of incomplete new Class instantiation
+    PsiElement elt = originalElement != null ? PsiTreeUtil.prevLeaf(originalElement): element;
+    if (elt instanceof PsiErrorElement) elt = elt.getPrevSibling();
+    else if (elt != null && !(elt instanceof PsiNewExpression)) {
+      elt = elt.getParent();
+    }
+    if (elt instanceof PsiNewExpression) {
+      PsiClass targetClass = null;
+
+      if (element instanceof PsiJavaCodeReferenceElement) {     // new Class<caret>
+        PsiElement resolve = ((PsiJavaCodeReferenceElement)element).resolve();
+        if (resolve instanceof PsiClass) targetClass = (PsiClass)resolve;
+      } else if (element instanceof PsiClass) { //Class in completion
+        targetClass = (PsiClass)element;
+      } else if (element instanceof PsiNewExpression) { // new Class(<caret>)
+        PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassReference();
+        if (reference != null) {
+          PsiElement resolve = reference.resolve();
+          if (resolve instanceof PsiClass) targetClass = (PsiClass)resolve;
+        }
+      }
+
+      if (targetClass != null) {
+        PsiMethod[] constructors = targetClass.getConstructors();
+        if (constructors.length > 0) {
+          if (constructors.length == 1) return generateDoc(constructors[0], originalElement);
+          @NonNls final StringBuilder sb = new StringBuilder();
+
+          for(PsiMethod constructor:constructors) {
+            final String str = PsiFormatUtil.formatMethod(constructor, PsiSubstitutor.EMPTY,
+                                                          PsiFormatUtilBase.SHOW_NAME |
+                                                          PsiFormatUtilBase.SHOW_TYPE |
+                                                          PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                          PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
+            createElementLink(sb, targetClass, StringUtil.escapeXml(str));
+          }
+
+          return CodeInsightBundle.message("javadoc.constructor.candidates", targetClass.getName(), sb);
+        }
+      }
+    }
 
     //external documentation finder
     return generateExternalJavadoc(element);
@@ -514,11 +559,15 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
-  private static String getMethodCandidateInfo(PsiMethodCallExpression expr) {
+  private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
     final String text = expr.getText();
     if (candidates.length > 0) {
+      if (candidates.length == 1) {
+        PsiElement element = candidates[0].getElement();
+        if (element instanceof PsiMethod) return generateDoc(element, null);
+      }
       @NonNls final StringBuilder sb = new StringBuilder();
 
       for (final CandidateInfo candidate : candidates) {
