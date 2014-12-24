@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.diff.util;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.diff.fragments.DiffFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
 import org.jetbrains.annotations.NotNull;
@@ -74,10 +75,25 @@ public enum Side {
     return array[myIndex];
   }
 
+  public int select(@NotNull int[] array) {
+    assert array.length == 2;
+    return array[myIndex];
+  }
+
   @NotNull
   public <T> T selectN(@NotNull List<T> list) {
     assert list.size() == 2;
     return list.get(myIndex);
+  }
+
+  @Nullable
+  public <T> T select(@NotNull Couple<T> region) {
+    return isLeft() ? region.first : region.second;
+  }
+
+  @NotNull
+  public <T> T selectN(@NotNull Couple<T> region) {
+    return isLeft() ? region.first : region.second;
   }
 
   //
