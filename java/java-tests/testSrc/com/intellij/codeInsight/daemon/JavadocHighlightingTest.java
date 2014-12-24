@@ -95,6 +95,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testValueNotOnField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
   public void testValueNotOnStaticField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
   public void testValueOnNotInitializedField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
+  public void testJava18Tags() throws Exception { doTestWithLangLevel(LanguageLevel.JDK_1_8); }
 
   public void testUnknownInlineTag() throws Exception { doTest(); }
   public void testUnknownTags() throws Exception { doTest(); }
