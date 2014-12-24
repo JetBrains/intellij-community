@@ -52,7 +52,7 @@ public class PatchReader {
   @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
 
   public PatchReader(CharSequence patchContent) {
-    this(patchContent, false);
+    this(patchContent, true);
   }
 
   public PatchReader(CharSequence patchContent, boolean parseHunks) {
