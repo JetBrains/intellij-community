@@ -224,6 +224,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       addCell(siblingPanel, true);
       setSelectedCell(selectedCell);
     }
+    saveToFile();
+
   }
 
   public void deleteSelectedCell() {
@@ -248,6 +250,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   public void saveToFile() {
     final String oldText = myDocument.getText();
     final String newText = IpnbParser.newDocumentText(this);
+    if (newText == null) return;
+    if (oldText.equals(newText)) {
+      new Alarm().addRequest(new MySynchronizeRequest(), 10, ModalityState.stateForComponent(this));
+      return;
+    }
     try {
       final ReplaceInfo replaceInfo = findFragmentToChange(oldText, newText);
       if (replaceInfo.getStartOffset() != -1) {
@@ -283,7 +290,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
   }
 
-  public static ReplaceInfo findFragmentToChange(final String oldText, final String newText) {
+  public static ReplaceInfo findFragmentToChange(@NotNull final String oldText, @NotNull final String newText) {
     if (oldText.equals(newText)) {
       return new ReplaceInfo(-1, -1, null);
     }
