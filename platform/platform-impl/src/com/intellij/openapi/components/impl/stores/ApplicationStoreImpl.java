@@ -33,8 +33,7 @@ import java.io.IOException;
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
   private static final Logger LOG = Logger.getInstance(ApplicationStoreImpl.class);
 
-  private static final String XML_EXTENSION = ".xml";
-  private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
+  private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + DirectoryStorageData.DEFAULT_EXT;
   private static final String ROOT_ELEMENT_NAME = "application";
 
   private final ApplicationImpl myApplication;
@@ -59,7 +58,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       @Override
       protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
         if (component instanceof NamedJDOMExternalizable) {
-          return StoragePathMacros.APP_CONFIG + "/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
+          return StoragePathMacros.APP_CONFIG + '/' + ((NamedJDOMExternalizable)component).getExternalFileName() + DirectoryStorageData.DEFAULT_EXT;
         }
         else {
           return DEFAULT_STORAGE_SPEC;
@@ -68,7 +67,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
       @Override
       protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
-        if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
+        if (fileSpec.equals(StoragePathMacros.APP_CONFIG + '/' + PathMacrosImpl.EXT_FILE_NAME + DirectoryStorageData.DEFAULT_EXT)) return null;
         return super.getMacroSubstitutor(fileSpec);
       }
 
