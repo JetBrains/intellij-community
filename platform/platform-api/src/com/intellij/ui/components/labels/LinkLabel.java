@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicLabelUI;
+import javax.swing.plaf.synth.SynthGraphicsUtils;
+import javax.swing.plaf.synth.SynthStyle;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
@@ -145,7 +147,7 @@ public class LinkLabel<T> extends JLabel {
 
       boolean underline = myUnderline && myPaintUnderline;
       if (underline) {
-        Rectangle bounds = getTextBounds();
+        Rectangle bounds = getBounds(false); // get calculated text bounds
         if (bounds != null) {
           int lineY = bounds.y + bounds.height - 1;
           g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
@@ -226,7 +228,7 @@ public class LinkLabel<T> extends JLabel {
       }
     }
     if (getText() != null) {
-      Rectangle bounds = getTextBounds();
+      Rectangle bounds = getBounds(false); // get calculated text bounds
       if (bounds != null) {
         return bounds.contains(pt.x + insets.left, pt.y + insets.top);
       }
@@ -346,15 +348,33 @@ public class LinkLabel<T> extends JLabel {
     myPaintDefaultIcon = paintDefaultIcon;
   }
 
-  private Rectangle getTextBounds() {
+  private Rectangle getBounds(boolean icon) {
     try {
-      Field field = BasicLabelUI.class.getDeclaredField("paintTextR");
-      field.setAccessible(true);
-      Rectangle labelBounds = (Rectangle)field.get(getUI());
-      return labelBounds.isEmpty() ? null : labelBounds;
+      Object ui = getUI();
+      Class<?> type = ui.getClass();
+      String name = type.getSimpleName();
+      if (name.equals("AlloyIdeaLabelUI")) {
+        return getValue(ui, type.getSuperclass(), icon ? "b" : "c");
+      }
+      else if (name.equals("AlloyLabelUI")) {
+        return getValue(ui, type, icon ? "b" : "c");
+      }
+      else if (name.equals("SynthLabelUI")) {
+        SynthStyle style = getValue(ui, type, "style");
+        return getValue(style.getGraphicsUtils(null), SynthGraphicsUtils.class, icon ? "paintIconR" : "paintTextR");
+      }
+      else {
+        return getValue(ui, BasicLabelUI.class, icon ? "paintIconR" : "paintTextR");
+      }
     }
     catch (Exception ignored) {
       return null;
     }
+  }
+
+  private static <T> T getValue(Object object, Class<?> type, String name) throws Exception {
+    Field field = type.getDeclaredField(name);
+    field.setAccessible(true);
+    return (T)field.get(object);
   }
 }
