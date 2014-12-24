@@ -478,9 +478,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String generateDoc(PsiElement element, final PsiElement originalElement) {
+  public String generateDoc(PsiElement element, PsiElement originalElement) {
     if (element instanceof PsiExpressionList) {
       element = element.getParent(); // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
+      originalElement = null;
     }
     if (element instanceof PsiMethodCallExpression) {
       return getMethodCandidateInfo((PsiMethodCallExpression)element);
@@ -520,7 +521,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                                           PsiFormatUtilBase.SHOW_TYPE |
                                                           PsiFormatUtilBase.SHOW_PARAMETERS,
                                                           PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
-            createElementLink(sb, targetClass, StringUtil.escapeXml(str));
+            createElementLink(sb, constructor, StringUtil.escapeXml(str));
           }
 
           return CodeInsightBundle.message("javadoc.constructor.candidates", targetClass.getName(), sb);

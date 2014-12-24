@@ -91,7 +91,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
 
   private Editor myEditor = null;
-  private PsiElement myExpressionList;
   private final Alarm myUpdateDocAlarm;
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
@@ -291,20 +290,21 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     final PsiElement list =
       ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
+    PsiElement expressionList = null;
     if (list != null) {
       LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
       if (lookup != null) {
-        myExpressionList = null; // take completion variants for documentation then
+        expressionList = null; // take completion variants for documentation then
       } else {
-        myExpressionList = list;
+        expressionList = list;
       }
     }
 
     final PsiElement originalElement = getContextElement(editor, file);
     PsiElement element = assertSameProject(findTargetElement(editor, file));
 
-    if (element == null && myExpressionList != null) {
-      element = myExpressionList;
+    if (element == null && expressionList != null) {
+      element = expressionList;
     }
 
     if (element == null && file == null) return; //file == null for text field editor
@@ -487,7 +487,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           Disposer.dispose(component);
           myEditor = null;
           myPreviouslyFocused = null;
-          myExpressionList = null;
           return Boolean.TRUE;
         }
       })
@@ -1059,17 +1058,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             }
           }
       );
-      if (myExpressionList != null) {
-        final String doc = ApplicationManager.getApplication().runReadAction(
-            new NullableComputable<String>() {
-              @Override
-              public String compute() {
-                return generateDocumentation(provider);
-              }
-            }
-        );
-        if (doc != null) return doc;
-      }
+
       if (provider instanceof ExternalDocumentationProvider) {
         final List<String> urls = ApplicationManager.getApplication().runReadAction(
             new NullableComputable<List<String>>() {
@@ -1104,11 +1093,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             }
           }
       );
-    }
-
-    @Nullable
-    private String generateDocumentation(DocumentationProvider provider) {
-      return provider.generateDoc(myExpressionList, null);
     }
 
     @Override

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight
-
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
@@ -40,7 +39,7 @@ class Foo2 {{
       originalElement
     )
 
-    assert doc == """<html>Candidates for new <b>Foo</b>() are:<br>&nbsp;&nbsp;<a href="psi_element://Foo">Foo()</a><br>&nbsp;&nbsp;<a href="psi_element://Foo">Foo(int param)</a><br></html>"""
+    assert doc == """<html>Candidates for new <b>Foo</b>() are:<br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo()">Foo()</a><br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo(int)">Foo(int param)</a><br></html>"""
   }
 
   public void testConstructorDoc2() {
@@ -51,13 +50,15 @@ class Foo2 {{
   new Foo(<caret>)
 }}
 '''
-    def exprList = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiExpressionList.class)
+
+    def elementAt = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
+    def exprList = PsiTreeUtil.getParentOfType(elementAt, PsiExpressionList.class)
     def doc = new JavaDocumentationProvider().generateDoc(
       exprList,
-      null
+      elementAt
     )
 
-    assert doc == """<html>Candidates for new <b>Foo</b>() are:<br>&nbsp;&nbsp;<a href="psi_element://Foo">Foo()</a><br>&nbsp;&nbsp;<a href="psi_element://Foo">Foo(int param)</a><br></html>"""
+    assert doc == """<html>Candidates for new <b>Foo</b>() are:<br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo()">Foo()</a><br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo(int)">Foo(int param)</a><br></html>"""
   }
 
   public void testMethodDocWhenInArgList() {

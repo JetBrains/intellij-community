@@ -73,7 +73,8 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     );
 
     assertEquals(doc,
-                 "<html>Candidates for new <b>Time</b>() are:<br>&nbsp;&nbsp;<a href=\"psi_element://Time\">Time()</a><br>&nbsp;&nbsp;<a href=\"psi_element://Time\">Time(long time)</a><br></html>");
+                 "<html>Candidates for new <b>Time</b>() are:<br>&nbsp;&nbsp;<a href=\"psi_element://Time#Time()\">Time()</a><br>&nbsp;" +
+                 "&nbsp;<a href=\"psi_element://Time#Time(long)\">Time(long time)</a><br></html>");
   }
 
   public void testTypeParametersTemplate() throws Exception {
