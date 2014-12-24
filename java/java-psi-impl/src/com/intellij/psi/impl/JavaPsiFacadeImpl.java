@@ -243,17 +243,17 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
-  private static class AndPredicate implements Predicate<PsiNamedElement> {
-    private final List<Predicate<PsiNamedElement>> myComponents = new SmartList<Predicate<PsiNamedElement>>();
+  private static class AndPredicate<T> implements Predicate<T> {
+    private final List<Predicate<T>> myComponents = new SmartList<Predicate<T>>();
 
-    public AndPredicate(Predicate<PsiNamedElement> filter1, Predicate<PsiNamedElement> filter2) {
+    public AndPredicate(Predicate<T> filter1, Predicate<T> filter2) {
       myComponents.add(filter1);
       myComponents.add(filter2);
     }
 
     @Override
-    public boolean apply(@Nullable PsiNamedElement input) {
-      for (Predicate<PsiNamedElement> component : myComponents) {
+    public boolean apply(@Nullable T input) {
+      for (Predicate<T> component : myComponents) {
         if (!component.apply(input)) {
           return false;
         }
@@ -263,34 +263,38 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   @NotNull
-  public PsiElement[] getPackageChildren(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    Map<String, PsiNamedElement> result = new HashMap<String, PsiNamedElement>();
-    Predicate<PsiNamedElement> filter = null;
+  public PsiFile[] getPackageFiles(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    Predicate<PsiFile> filter = null;
 
     for (PsiElementFinder finder : filteredFinders()) {
-      Predicate<PsiNamedElement> finderFilter = finder.getPackageChildrenFilter(psiPackage, scope);
+      Predicate<PsiFile> finderFilter = finder.getPackageFilesFilter(psiPackage, scope);
       if (finderFilter != null) {
         if (filter == null) {
           filter = finderFilter;
         }
         else if (filter instanceof AndPredicate) {
-          ((AndPredicate) filter).myComponents.add(finderFilter);
+          ((AndPredicate<PsiFile>) filter).myComponents.add(finderFilter);
         }
         else {
-          filter = new AndPredicate(filter, finderFilter);
+          filter = new AndPredicate<PsiFile>(filter, finderFilter);
+        }
+      }
+    }
+
+    Set<PsiFile> result = new HashSet<PsiFile>();
+    PsiDirectory[] directories = psiPackage.getDirectories(scope);
+    for (PsiDirectory directory : directories) {
+      for (PsiFile file : directory.getFiles()) {
+        if (filter == null || filter.apply(file)) {
+          result.add(file);
         }
       }
     }
 
     for (PsiElementFinder finder : filteredFinders()) {
-      PsiNamedElement[] children = finder.getChildren(psiPackage, scope);
-      for (PsiNamedElement child : children) {
-        if (!result.containsKey(child.getName()) && (filter == null || filter.apply(child))) {
-          result.put(child.getName(), child);
-        }
-      }
+      Collections.addAll(result, finder.getPackageFiles(psiPackage, scope));
     }
-    return result.values().toArray(new PsiElement[result.size()]);
+    return result.toArray(new PsiFile[result.size()]);
   }
 
   public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,

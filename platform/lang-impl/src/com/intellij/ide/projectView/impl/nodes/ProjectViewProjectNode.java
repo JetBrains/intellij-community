@@ -133,16 +133,16 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     if (roots.length == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots[0]);
       if (psi != null) {
-        return createTreeNode(PsiDirectoryNode.class, myProject, psi, getSettings());
+        return new PsiDirectoryNode(myProject, psi, getSettings());
       }
     }
 
-    return createTreeNode(ProjectViewModuleNode.class, getProject(), module, getSettings());
+    return new ProjectViewModuleNode(getProject(), module, getSettings());
   }
 
   @Override
   protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-    return createTreeNode(ProjectViewModuleGroupNode.class, getProject(), moduleGroup, getSettings());
+    return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
   }
 }

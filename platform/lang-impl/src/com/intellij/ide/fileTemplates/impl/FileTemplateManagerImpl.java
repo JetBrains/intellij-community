@@ -145,7 +145,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     myScheme = scheme;
     for (FTManager manager : myAllManagers) {
       manager.setScheme(scheme);
-      manager.loadCustomizedContent();
     }
   }
 

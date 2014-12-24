@@ -20,6 +20,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
@@ -46,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
+  private static final Logger LOG = Logger.getInstance(PsiPackageImpl.class);
+
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
@@ -153,15 +157,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getFacade().getClasses(this, scope);
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
-    return getChildren(allScope());
-  }
-
-  @Override
-  public PsiElement[] getChildren(@NotNull GlobalSearchScope scope) {
-    return getFacade().getPackageChildren(this, scope);
+  public PsiFile[] getFiles(@NotNull GlobalSearchScope scope) {
+    return getFacade().getPackageFiles(this, scope);
   }
 
   @Override
@@ -321,7 +319,17 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
                                         @NotNull Condition<String> nameCondition) {
     for (PsiClass aClass : classes) {
       String name = aClass.getName();
-      if (name != null && nameCondition.value(name) && !processor.execute(aClass, state)) return false;
+      if (name != null && nameCondition.value(name)) {
+        try {
+          if (!processor.execute(aClass, state)) return false;
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
     }
     return true;
   }
