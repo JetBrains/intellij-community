@@ -90,7 +90,7 @@ class JavaPredefinedConfigurations {
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.implementors.of.interface.within.hierarchy"),
-        "class 'Class implements 'Interface:* {}",
+        "class 'Class implements '_Interface:* {}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
