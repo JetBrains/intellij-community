@@ -216,7 +216,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         for (File jar : jars) {
           @NonNls String name = jar.getName();
           if (jar.isFile() && Arrays.binarySearch(forbidden, name) < 0 && (name.endsWith(".jar") || name.endsWith(".zip"))) {
-            result.add(jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR));
+            VirtualFile file = jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
+            LOG.assertTrue(file != null, jar.getPath() + " not found");
+            result.add(file);
           }
         }
       }
