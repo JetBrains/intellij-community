@@ -60,7 +60,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     try {
       HttpRequests.request(url.toExternalForm())
         .connectTimeout(60 * 1000)
-        .userAgent()
+        .productNameAsUserAgent()
         .hostNameVerifier(CertificateManager.HOSTNAME_VERIFIER)
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
