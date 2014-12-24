@@ -157,10 +157,10 @@ public class DividerPolygon {
 
   @NotNull
   private static Interval getVisibleInterval(Editor editor) {
-    int offset = editor.getScrollingModel().getVerticalScrollOffset();
-    LogicalPosition logicalPosition = editor.xyToLogicalPosition(new Point(0, offset));
-    int line = logicalPosition.line;
-    return new Interval(line, line + editor.getComponent().getHeight() / editor.getLineHeight() + 1);
+    Rectangle area = editor.getScrollingModel().getVisibleArea();
+    LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
+    LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
+    return new Interval(position1.line, position2.line);
   }
 
   public interface DividerPaintable {
