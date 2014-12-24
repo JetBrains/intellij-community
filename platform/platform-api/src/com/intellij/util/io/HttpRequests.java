@@ -16,8 +16,9 @@
 package com.intellij.util.io;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,7 +28,6 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.HttpConfigurable;
@@ -55,7 +55,7 @@ import java.util.zip.GZIPInputStream;
  * });
  * }</pre>
  */
-public abstract class HttpRequests {
+public final class HttpRequests {
   private static final boolean ourWrapClassLoader =
     SystemInfo.isJavaVersionAtLeast("1.7") && !SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
 
@@ -84,7 +84,7 @@ public abstract class HttpRequests {
     T process(@NotNull Request request) throws IOException;
   }
 
-  protected HttpRequests() {
+  private HttpRequests() {
   }
 
   @NotNull
@@ -98,7 +98,7 @@ public abstract class HttpRequests {
     return errorMessage;
   }
 
-  public abstract static class RequestBuilder {
+  public final static class RequestBuilder {
     private final String myUrl;
     private int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
     private int myTimeout = HttpConfigurable.READ_TIMEOUT;
@@ -111,7 +111,7 @@ public abstract class HttpRequests {
 
     private HTTPMethod myMethod;
 
-    protected RequestBuilder(@NotNull String url) {
+    private RequestBuilder(@NotNull String url) {
       myUrl = url;
     }
 
@@ -158,7 +158,15 @@ public abstract class HttpRequests {
     }
 
     @NotNull
-    public abstract RequestBuilder userAgent();
+    public RequestBuilder userAgent() {
+      Application app = ApplicationManager.getApplication();
+      if (app != null && !app.isDisposed()) {
+        return userAgent(ApplicationInfo.getInstance().getVersionName());
+      }
+      else {
+        return userAgent("IntelliJ");
+      }
+    }
 
     @NotNull
     public RequestBuilder accept(@Nullable String mimeType) {
@@ -224,15 +232,7 @@ public abstract class HttpRequests {
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
-    if (ApplicationManager.getApplication() == null) {
-      try {
-        return ((HttpRequests)ReflectionUtil.newInstance(Class.forName("com.intellij.util.io.HttpRequestsImpl"))).createRequestBuilder(url);
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return ServiceManager.getService(HttpRequests.class).createRequestBuilder(url);
+    return new RequestBuilder(url);
   }
 
   @NotNull
@@ -241,8 +241,6 @@ public abstract class HttpRequests {
     builder.myMethod = HTTPMethod.HEAD;
     return builder;
   }
-
-  protected abstract RequestBuilder createRequestBuilder(@NotNull String url);
 
   private static <T> T wrapAndProcess(RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
     // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
