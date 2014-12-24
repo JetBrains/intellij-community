@@ -74,6 +74,9 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     Disposer.dispose(myAlarm);
     abortRediff();
+
+    onDispose();
+
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -81,8 +84,6 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
         onDisposeAwt();
       }
     });
-
-    onDispose();
   }
 
   @CalledInAwt

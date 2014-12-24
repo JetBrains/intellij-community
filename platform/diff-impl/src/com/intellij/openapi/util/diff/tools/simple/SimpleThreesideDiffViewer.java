@@ -80,8 +80,8 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
   @Override
   protected void onDisposeAwt() {
-    super.onDisposeAwt();
     destroyChangedBlocks();
+    super.onDisposeAwt();
   }
 
   @NotNull

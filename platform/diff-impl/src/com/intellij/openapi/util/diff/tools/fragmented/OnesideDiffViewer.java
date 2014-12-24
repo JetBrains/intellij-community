@@ -122,9 +122,9 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
   @Override
   public void onDispose() {
-    super.onDispose();
     updateContextHints();
     EditorFactory.getInstance().releaseEditor(myEditor);
+    super.onDispose();
   }
 
   private void processContextHints() {

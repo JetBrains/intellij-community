@@ -116,10 +116,10 @@ class BinaryDiffViewer extends ListenerDiffViewerBase {
 
   @Override
   public void onDispose() {
-    super.onDispose();
     updateContextHints();
     destroyEditorListeners();
     destroyEditors();
+    super.onDispose();
   }
 
   private void processContextHints() {

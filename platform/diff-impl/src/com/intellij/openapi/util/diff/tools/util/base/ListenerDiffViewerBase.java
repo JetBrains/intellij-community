@@ -37,13 +37,12 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
 
   @Override
   protected void onDispose() {
-    super.onDispose();
-
     if (myFileListener != null) VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
 
     for (Document document : getDocuments()) {
       document.removeDocumentListener(myDocumentListener);
     }
+    super.onDispose();
   }
 
   @NotNull

@@ -51,8 +51,8 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
 
   @Override
   protected void onDispose() {
-    super.onDispose();
     destroyEditorListeners();
+    super.onDispose();
   }
 
   @CalledInAwt

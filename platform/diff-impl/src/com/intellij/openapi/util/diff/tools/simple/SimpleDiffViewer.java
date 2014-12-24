@@ -79,8 +79,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @Override
   protected void onDisposeAwt() {
-    super.onDisposeAwt();
     destroyChangedBlocks();
+    super.onDisposeAwt();
   }
 
   @NotNull

@@ -92,9 +92,14 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @Override
   protected void onDispose() {
-    super.onDispose();
     updateContextHints();
+    super.onDispose();
+  }
+
+  @Override
+  protected void onDisposeAwt() {
     destroyEditors();
+    super.onDisposeAwt();
   }
 
   private void processContextHints() {
