@@ -38,9 +38,8 @@ public class PackageUtil {
   @NotNull
   public static PsiPackage[] getSubpackages(@NotNull PsiPackage aPackage,
                                             @Nullable Module module,
-                                            @NotNull Project project,
                                             final boolean searchInLibraries) {
-    final PsiDirectory[] dirs = getDirectories(aPackage, project, module, searchInLibraries);
+    final PsiDirectory[] dirs = getDirectories(aPackage, module, searchInLibraries);
     final Set<PsiPackage> subpackages = new HashSet<PsiPackage>();
     for (PsiDirectory dir : dirs) {
       final PsiDirectory[] subdirectories = dir.getSubdirectories();
@@ -70,7 +69,7 @@ public class PackageUtil {
       children.add(new PackageElementNode(project, new PackageElement(module, aPackage, inLibrary), settings));
     }
     if (settings.isFlattenPackages() || shouldSkipPackage) {
-      final PsiPackage[] subpackages = getSubpackages(aPackage, module, project, inLibrary);
+      final PsiPackage[] subpackages = getSubpackages(aPackage, module, inLibrary);
       for (PsiPackage subpackage : subpackages) {
         addPackageAsChild(children, subpackage, module, settings, inLibrary);
       }
@@ -81,8 +80,7 @@ public class PackageUtil {
                                        @Nullable Module module,
                                        boolean strictlyEmpty,
                                        final boolean inLibrary) {
-    final Project project = aPackage.getProject();
-    final PsiDirectory[] dirs = getDirectories(aPackage, project, module, inLibrary);
+    final PsiDirectory[] dirs = getDirectories(aPackage, module, inLibrary);
     for (final PsiDirectory dir : dirs) {
       if (!TreeViewUtil.isEmptyMiddlePackage(dir, strictlyEmpty)) {
         return false;
@@ -93,10 +91,9 @@ public class PackageUtil {
 
   @NotNull
   public static PsiDirectory[] getDirectories(@NotNull PsiPackage aPackage,
-                                              @NotNull Project project,
                                               @Nullable Module module,
                                               boolean inLibrary) {
-    final GlobalSearchScope scopeToShow = getScopeToShow(project, module, inLibrary);
+    final GlobalSearchScope scopeToShow = getScopeToShow(aPackage.getProject(), module, inLibrary);
     return aPackage.getDirectories(scopeToShow);
   }
 
