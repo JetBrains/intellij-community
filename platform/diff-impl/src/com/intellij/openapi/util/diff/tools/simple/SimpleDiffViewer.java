@@ -33,10 +33,10 @@ import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.*;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.util.diff.util.DiffUtil.DocumentData;
 import com.intellij.openapi.util.diff.util.Side;
@@ -701,15 +701,14 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private class MyDividerPainter implements DiffSplitter.Painter, DividerPolygon.DividerPaintable {
+  private class MyDividerPainter implements DiffSplitter.Painter, DividerPolygonUtil.DividerPaintable {
     @Override
     public void paint(@NotNull Graphics g, @NotNull Component divider) {
       if (myEditor1 == null || myEditor2 == null) return;
       Graphics2D gg = getDividerGraphics(g, divider);
 
-      int width = divider.getWidth();
-      //DividerPolygon.paintSimplePolygons(gg, DividerPolygon.createVisiblePolygons(myEditor1, myEditor2, this), width);
-      DividerPolygon.paintPolygons(gg, DividerPolygon.createVisiblePolygons(myEditor1, myEditor2, this), width);
+      //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
+      DividerPolygonUtil.paintPolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
       gg.dispose();
     }
 

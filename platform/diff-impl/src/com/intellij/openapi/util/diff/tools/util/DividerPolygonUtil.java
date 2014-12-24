@@ -18,7 +18,6 @@ package com.intellij.openapi.util.diff.tools.util;
 import com.intellij.openapi.diff.impl.splitter.Transformation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.diff.util.DiffDrawUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -29,67 +28,53 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A polygon, which is drawn between editors in merge or diff dialogs, and which indicates the change flow from one editor to another.
- */
-public class DividerPolygon {
-  @NotNull private final Color myColor;
-  private final int myStart1;
-  private final int myStart2;
-  private final int myEnd1;
-  private final int myEnd2;
+public class DividerPolygonUtil {
+  public static void paintPolygons(@NotNull Graphics2D gg,
+                                   int width,
+                                   @NotNull Editor editor1,
+                                   @NotNull Editor editor2,
+                                   @NotNull DividerPaintable paintable) {
+    List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
 
-  public DividerPolygon(int start1, int start2, int end1, int end2, @NotNull Color color) {
-    myStart1 = start1;
-    myStart2 = start2;
-    myEnd1 = end1;
-    myEnd2 = end2;
-    myColor = color;
-  }
-
-  private void paint(Graphics2D g, int width) {
-    DiffDrawUtil.drawCurveTrapezium(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myColor);
-  }
-
-  private void paintSimple(Graphics2D g, int width) {
-    DiffDrawUtil.drawTrapezium(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myColor);
-  }
-
-  public String toString() {
-    return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myColor;
-  }
-
-  public static void paintPolygons(@NotNull Graphics2D g, @NotNull List<DividerPolygon> polygons, int width) {
-    GraphicsUtil.setupAAPainting(g);
-
+    GraphicsUtil.setupAAPainting(gg);
     for (DividerPolygon polygon : polygons) {
-      polygon.paint(g, width);
+      polygon.paint(gg, width);
     }
   }
 
-  public static void paintSimplePolygons(@NotNull Graphics2D g, @NotNull List<DividerPolygon> polygons, int width) {
-    GraphicsUtil.setupAAPainting(g);
+  public static void paintSimplePolygons(@NotNull Graphics2D gg,
+                                         int width,
+                                         @NotNull Editor editor1,
+                                         @NotNull Editor editor2,
+                                         @NotNull DividerPaintable paintable) {
+    List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
 
+    GraphicsUtil.setupAAPainting(gg);
     for (DividerPolygon polygon : polygons) {
-      polygon.paintSimple(g, width);
+      polygon.paintSimple(gg, width);
     }
   }
 
-  public static void paintPolygonsOnScrollbar(@NotNull Graphics2D g, @NotNull EditorEx editor, @NotNull List<DividerPolygon> polygons) {
+  public static void paintPolygonsOnScrollbar(@NotNull Graphics2D g,
+                                              int width,
+                                              @NotNull Editor editor1,
+                                              @NotNull Editor editor2,
+                                              @NotNull DividerPaintable paintable) {
+    List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
+
     for (DividerPolygon polygon : polygons) {
       int startY = polygon.myStart1;
       int endY = polygon.myEnd1;
       int height = endY - startY;
 
-      int scrollbarWidth = editor.getScrollPane().getVerticalScrollBar().getWidth();
       int startX = 0;
-      int endX = startX + scrollbarWidth - 1;
+      int endX = startX + width - 1;
 
       Color color = polygon.myColor;
 
       g.setColor(color);
       if (height > 2) {
-        g.fillRect(startX, startY, scrollbarWidth, height);
+        g.fillRect(startX, startY, width, height);
 
         Color framingColor = DiffDrawUtil.getFramingColor(color);
         UIUtil.drawLine(g, startX, startY, endX, startY, null, framingColor);
@@ -139,19 +124,16 @@ public class DividerPolygon {
         return yOffset - editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
       }
     };
-    //return new FoldingTransformation(editor);
   }
 
   private static DividerPolygon createPolygon(@NotNull Transformation[] transformations,
                                               int startLine1, int endLine1,
                                               int startLine2, int endLine2,
                                               @NotNull Color color) {
-    Transformation leftTransform = transformations[0];
-    Transformation rightTransform = transformations[1];
-    int start1 = leftTransform.transform(startLine1);
-    int end1 = leftTransform.transform(endLine1);
-    int start2 = rightTransform.transform(startLine2);
-    int end2 = rightTransform.transform(endLine2);
+    int start1 = transformations[0].transform(startLine1);
+    int end1 = transformations[0].transform(endLine1);
+    int start2 = transformations[1].transform(startLine2);
+    int end2 = transformations[1].transform(endLine2);
     return new DividerPolygon(start1, start2, end1, end2, color);
   }
 
@@ -168,6 +150,38 @@ public class DividerPolygon {
 
     interface Handler {
       boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color);
+    }
+  }
+
+  /**
+   * A polygon, which is drawn between editors in merge or diff dialogs, and which indicates the change flow from one editor to another.
+   */
+  public static class DividerPolygon {
+    // pixels from the top of editor
+    private final int myStart1;
+    private final int myStart2;
+    private final int myEnd1;
+    private final int myEnd2;
+    @NotNull private final Color myColor;
+
+    public DividerPolygon(int start1, int start2, int end1, int end2, @NotNull Color color) {
+      myStart1 = start1;
+      myStart2 = start2;
+      myEnd1 = end1;
+      myEnd2 = end2;
+      myColor = color;
+    }
+
+    private void paint(Graphics2D g, int width) {
+      DiffDrawUtil.drawCurveTrapezium(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myColor);
+    }
+
+    private void paintSimple(Graphics2D g, int width) {
+      DiffDrawUtil.drawTrapezium(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myColor);
+    }
+
+    public String toString() {
+      return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myColor;
     }
   }
 

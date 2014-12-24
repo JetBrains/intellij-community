@@ -27,10 +27,10 @@ import com.intellij.openapi.util.diff.fragments.MergeLineFragment;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.*;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideContentPanel.DiffDivider;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.openapi.util.diff.util.ThreeSide;
@@ -491,7 +491,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
   }
 
-  private class MyDividerPaintable implements DividerPolygon.DividerPaintable {
+  private class MyDividerPaintable implements DividerPolygonUtil.DividerPaintable {
     @NotNull private final Side mySide;
 
     public MyDividerPaintable(@NotNull Side side) {
@@ -531,8 +531,8 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       Editor editor2 = mySide.selectN(myEditors.get(1), myEditors.get(2));
 
       int width = divider.getWidth();
-      //DividerPolygon.paintSimplePolygons(gg, DividerPolygon.createVisiblePolygons(editor1, editor2, myPaintable), width);
-      DividerPolygon.paintPolygons(gg, DividerPolygon.createVisiblePolygons(editor1, editor2, myPaintable), width);
+      //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
+      DividerPolygonUtil.paintPolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
       gg.dispose();
     }
   }
@@ -545,7 +545,8 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       EditorEx editor1 = myEditors.get(1);
       EditorEx editor2 = myEditors.get(2);
 
-      DividerPolygon.paintPolygonsOnScrollbar((Graphics2D)g, editor1, DividerPolygon.createVisiblePolygons(editor1, editor2, myPaintable));
+      int width = editor1.getScrollPane().getVerticalScrollBar().getWidth();
+      DividerPolygonUtil.paintPolygonsOnScrollbar((Graphics2D)g, width, editor1, editor2, myPaintable);
     }
   }
 
