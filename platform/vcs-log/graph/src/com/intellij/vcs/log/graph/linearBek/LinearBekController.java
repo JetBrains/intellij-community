@@ -228,10 +228,10 @@ public class LinearBekController extends CascadeLinearGraphController {
         Integer next = nextEdge.getDownNodeIndex();
         if (next == null) return; // well, what do you do
 
-        if (next == firstChildIndex) {
+        if (next == firstChildIndex || next < currentNodeIndex + k) {
           // found first child
-        }
-        else if (next <= currentNodeIndex + k) {
+          // or we were here before
+        } else if (next == currentNodeIndex + k) {
           // all is fine, continuing
           k++;
           addDownEdges(myWorkingGraph, next, queue);
