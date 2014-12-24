@@ -585,9 +585,24 @@ public class JavaDocInfoGenerator {
 
   public void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
     generateDescription(buffer, docComment);
+    generateApiSection(buffer, docComment);
     generateDeprecatedSection(buffer, docComment);
     generateSinceSection(buffer, docComment);
     generateSeeAlsoSection(buffer, docComment);
+  }
+
+  private void generateApiSection(StringBuilder buffer, PsiDocComment comment) {
+    final String[] tagNames = {"apiNote", "implSpec", "implNote"};
+    for (String tagName : tagNames) {
+      PsiDocTag tag = comment.findTagByName(tagName);
+      if (tag != null) {
+        buffer.append("<DD><DL>");
+        buffer.append("<DT><b>").append(tagName).append("</b>");
+        buffer.append("<DD>");
+        generateValue(buffer, tag.getDataElements(), ourEmptyElementsProvider);
+        buffer.append("</DD></DL></DD>");
+      }
+    }
   }
 
   private void generatePackageHtmlJavaDoc(final StringBuilder buffer, final PsiFile packageHtmlFile, boolean generatePrologueAndEpilogue) {
@@ -909,6 +924,7 @@ public class JavaDocInfoGenerator {
     generateThrowsSection(buffer, method, comment);
 
     if (comment != null) {
+      generateApiSection(buffer, comment);
       generateSinceSection(buffer, comment);
       generateSeeAlsoSection(buffer, comment);
     }
