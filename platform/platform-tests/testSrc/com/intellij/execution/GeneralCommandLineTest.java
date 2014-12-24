@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -239,6 +240,13 @@ public class GeneralCommandLineTest {
     checkEnvPassing(commandLine, testEnv, false);
   }
 
+  @Test
+  public void emptyEnvironmentPassing() throws Exception {
+    Pair<String, String> nonEmpty = Pair.create("a", "b");
+    Map<String, String> inputEnv = newHashMap(Pair.create("", "c"), nonEmpty);
+    GeneralCommandLine commandLine = makeJavaCommand(EnvPassingTest.class, null);
+    checkEnvPassing(commandLine, inputEnv, SystemInfo.isWindows ? newHashMap(nonEmpty) : inputEnv, false);
+  }
 
   private static String execAndGetOutput(GeneralCommandLine commandLine, @Nullable String encoding) throws Exception {
     Process process = commandLine.createProcess();
@@ -284,6 +292,13 @@ public class GeneralCommandLineTest {
   }
 
   private static void checkEnvPassing(GeneralCommandLine commandLine, Map<String, String> testEnv, boolean passParentEnv) throws Exception {
+    checkEnvPassing(commandLine, testEnv, testEnv, passParentEnv);
+  }
+
+  private static void checkEnvPassing(GeneralCommandLine commandLine,
+                                      Map<String, String> testEnv,
+                                      Map<String, String> expectedOutputEnv,
+                                      boolean passParentEnv) throws Exception {
     commandLine.getEnvironment().putAll(testEnv);
     commandLine.setPassParentEnvironment(passParentEnv);
     String output = execAndGetOutput(commandLine, null);
@@ -291,7 +306,7 @@ public class GeneralCommandLineTest {
     Set<String> lines = new HashSet<String>(Arrays.asList(StringUtil.convertLineSeparators(output).split("\n")));
     lines.remove("=====");
 
-    for (Map.Entry<String, String> entry : testEnv.entrySet()) {
+    for (Map.Entry<String, String> entry : expectedOutputEnv.entrySet()) {
       String str = EnvPassingTest.format(entry);
       assertTrue("\"" + str + "\" should be in " + lines,
                  lines.contains(str));
