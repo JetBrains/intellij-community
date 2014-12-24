@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.cells.*;
@@ -66,6 +67,7 @@ public class IpnbParser {
     writeToFile(ipnbPanel.getIpnbFile().getPath(), json);
   }
 
+  @Nullable
   public static String newDocumentText(@NotNull final IpnbFilePanel ipnbPanel) {
     final IpnbFile ipnbFile = ipnbPanel.getIpnbFile();
     if (ipnbFile == null) return null;
