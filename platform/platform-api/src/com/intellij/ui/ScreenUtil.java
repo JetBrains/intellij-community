@@ -69,10 +69,16 @@ public class ScreenUtil {
   }
 
   public static Shape getAllScreensShape() {
-    Rectangle[] rectangles = getAllScreenBounds();
+    GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    if (devices.length == 0) {
+      return new Rectangle();
+    }
+    if (devices.length == 1) {
+      return getScreenRectangle(devices[0]);
+    }
     Area area = new Area();
-    for (Rectangle rectangle : rectangles) {
-      area.add(new Area(rectangle));
+    for (GraphicsDevice device : devices) {
+      area.add(new Area(getScreenRectangle(device)));
     }
     return area;
   }
@@ -84,6 +90,12 @@ public class ScreenUtil {
    */
   public static Rectangle getAllScreensRectangle() {
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    if (devices.length == 0) {
+      return new Rectangle();
+    }
+    if (devices.length == 1) {
+      return getScreenRectangle(devices[0]);
+    }
     int minX = 0;
     int maxX = 0;
     int minY = 0;
