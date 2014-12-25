@@ -60,26 +60,29 @@ public class DiffDrawUtil {
                                         int start1, int end1,
                                         int start2, int end2,
                                         @NotNull Color color) {
-    drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, color, true);
+    drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, color, getFramingColor(color));
   }
 
   public static void drawCurveTrapezium(@NotNull Graphics2D g,
                                         int x1, int x2,
                                         int start1, int end1,
                                         int start2, int end2,
-                                        @NotNull Color color,
-                                        boolean drawBorders) {
+                                        @Nullable Color fillColor,
+                                        @Nullable Color frameColor) {
     Shape upperCurve = makeCurve(x1, x2, start1, start2, true);
     Shape lowerCurve = makeCurve(x1, x2, end1, end2, false);
 
     Path2D path = new Path2D.Double();
     path.append(upperCurve, true);
     path.append(lowerCurve, true);
-    g.setColor(color);
-    g.fill(path);
 
-    if (drawBorders) {
-      g.setColor(getFramingColor(color));
+    if (fillColor != null) {
+      g.setColor(fillColor);
+      g.fill(path);
+    }
+
+    if (frameColor != null) {
+      g.setColor(frameColor);
       g.draw(upperCurve);
       g.draw(lowerCurve);
     }

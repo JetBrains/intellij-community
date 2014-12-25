@@ -198,7 +198,7 @@ public class PropertiesTableModel extends ListTableModel<PropertyDiffRecord> {
         int start2 = fragment.getStartLine2() * lineHeight + topOffset;
         int end2 = fragment.getEndLine2() * lineHeight + topOffset;
 
-        DiffDrawUtil.drawCurveTrapezium((Graphics2D)g, 0, myPanel.getWidth(), start1, end1, start2, end2, color, false);
+        DiffDrawUtil.drawCurveTrapezium((Graphics2D)g, 0, myPanel.getWidth(), start1, end1, start2, end2, color, null);
       }
     }
   }
