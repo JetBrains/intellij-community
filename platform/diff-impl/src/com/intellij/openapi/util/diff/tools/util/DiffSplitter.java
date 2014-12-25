@@ -27,7 +27,6 @@ import java.awt.*;
 
 
 public class DiffSplitter extends Splitter {
-  private boolean myQueued = false;
   @Nullable private Painter myPainter;
 
   public DiffSplitter() {
@@ -49,19 +48,7 @@ public class DiffSplitter extends Splitter {
   }
 
   public void repaintDivider() {
-    if (myQueued) return;
-
-    final JPanel divider = getDivider();
-    divider.repaint();
-    myQueued = true;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        // TODO: is it OK to use paintImmediately? Maybe we can do better with simplified painting ?
-        divider.paintImmediately(0, 0, divider.getWidth(), divider.getHeight());
-        myQueued = false;
-      }
-    });
+    getDivider().repaint();
   }
 
   public interface Painter {
