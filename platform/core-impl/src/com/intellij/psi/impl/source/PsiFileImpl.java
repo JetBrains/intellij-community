@@ -18,10 +18,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.lang.ASTFactory;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.FileASTNode;
-import com.intellij.lang.Language;
+import com.intellij.lang.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -48,10 +45,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
-import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
@@ -256,7 +250,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
     stubs.next(); // Skip file stub;
     final List<Pair<StubBasedPsiElementBase, CompositeElement>> result = ContainerUtil.newArrayList();
-    final StubBuilder builder = ((IStubFileElementType)getContentElementType()).getBuilder();
+    final IStubFileElementType elementType = getElementTypeForStubBuilder();
+    assert elementType != null;
+    final StubBuilder builder = elementType.getBuilder();
 
     LazyParseableElement.setSuppressEagerPsiCreation(true);
     try {
@@ -297,6 +293,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       reportStubAstMismatch("Stub list in " + getName() + " has more elements than PSI", stubTree, cachedDocument);
     }
     return result;
+  }
+
+  @Nullable
+  public IStubFileElementType getElementTypeForStubBuilder() {
+    final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).getFileNodeType();
+    return type instanceof IStubFileElementType ? (IStubFileElementType)type : null;
   }
 
   protected void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
