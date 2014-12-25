@@ -372,7 +372,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
         myFoldingModel.install(equalLines, myRequest, false, mySettings.getContextRange()); // TODO: settings
 
-        // TODO: remember current in current caret position position on rediff rather than positon in combined file
         myScrollToLineHelper.onRediff();
 
         myStatusPanel.update();
