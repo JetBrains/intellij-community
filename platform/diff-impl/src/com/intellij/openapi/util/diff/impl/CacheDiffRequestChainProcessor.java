@@ -32,10 +32,10 @@ import com.intellij.openapi.util.diff.requests.NoDiffRequest;
 import com.intellij.openapi.util.diff.tools.ErrorDiffTool;
 import com.intellij.openapi.util.diff.tools.external.ExternalDiffTool;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -652,6 +652,12 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
   private class MyPanel extends JPanel implements DataProvider {
     public MyPanel() {
       super(new BorderLayout());
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      updateRequest();
     }
 
     @Nullable

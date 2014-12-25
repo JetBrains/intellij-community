@@ -24,12 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DocumentContent;
-import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.diff.SimpleDiffRequest;
-import com.intellij.openapi.diff.ex.DiffPanelOptions;
-import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -52,6 +46,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.diff.DiffManager;
+import com.intellij.openapi.util.diff.DiffRequestPanel;
+import com.intellij.openapi.util.diff.contents.DocumentContent;
+import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -668,22 +669,22 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
           final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
 
-          SimpleDiffRequest request = new SimpleDiffRequest(project, title);
           FileType fileType = file.getFileType();
           String fsContent = LoadTextUtil.loadText(file).toString();
-          request.setContents(new SimpleContent(fsContent, fileType),
-                              new DocumentContent(project, document, fileType));
-          request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
-                                   UIBundle.message("file.cache.conflict.diff.content.memory.content"));
+          DocumentContent content1 = DiffContentFactory.create(fsContent, fileType);
+          DocumentContent content2 = DiffContentFactory.create(project, document, file);
+          String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
+          String title1 = UIBundle.message("file.cache.conflict.diff.content.file.system.content");
+          String title2 = UIBundle.message("file.cache.conflict.diff.content.memory.content");
+          DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+          request.putUserData(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, new Object());
           DialogBuilder diffBuilder = new DialogBuilder(project);
-          DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project, diffBuilder, null);
-          diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
+          DiffRequestPanel diffPanel = DiffManager.getInstance().createRequestPanel(project, diffBuilder, diffBuilder.getWindow());
+          diffPanel.setRequest(request);
           diffBuilder.setCenterPanel(diffPanel.getComponent());
           diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");
-          diffPanel.setDiffRequest(request);
           diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
           diffBuilder.addCancelAction();
           diffBuilder.setTitle(title);

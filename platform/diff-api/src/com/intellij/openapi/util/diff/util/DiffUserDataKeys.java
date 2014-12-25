@@ -37,4 +37,5 @@ public interface DiffUserDataKeys {
 
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
+  Key<Object> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");
 }

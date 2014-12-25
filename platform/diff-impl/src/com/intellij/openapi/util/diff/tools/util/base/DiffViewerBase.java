@@ -127,42 +127,51 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     onBeforeRediff();
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final Runnable result = performRediff(indicator);
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      // most of performRediff implementations take ReadLock inside. If EDT is holding write lock - this will never happen,
+      // and diff will not be calculated. This could happen for diff from FileDocumentManager.
 
-        if (indicator.isCanceled()) {
-          semaphore.release();
-          return;
-        }
-
-        if (!resultRef.compareAndSet(null, result)) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              finishRediff(result, modificationStamp, indicator);
-            }
-          }, ModalityState.any());
-        }
-        semaphore.release();
-      }
-    });
-
-    try {
-      if (tryRediffSynchronously()) {
-        // TODO: we should vary delay: 400 ms is OK for initial loading, but too slow for active typing
-        semaphore.tryAcquire(ASYNC_REDIFF_POSTPONE_DELAY, TimeUnit.MILLISECONDS);
-      }
-    }
-    catch (InterruptedException ignore) {
-    }
-    if (!resultRef.compareAndSet(null, TOO_SLOW_OPERATION)) {
-      // update presentation in the same thread to reduce blinking, caused by 'invokeLater' and fast performRediff()
-      finishRediff(resultRef.get(), modificationStamp, indicator);
+      Runnable result = performRediff(indicator);
+      finishRediff(result, modificationStamp, indicator);
     }
     else {
-      onSlowRediff();
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          final Runnable result = performRediff(indicator);
+
+          if (indicator.isCanceled()) {
+            semaphore.release();
+            return;
+          }
+
+          if (!resultRef.compareAndSet(null, result)) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                finishRediff(result, modificationStamp, indicator);
+              }
+            }, ModalityState.any());
+          }
+          semaphore.release();
+        }
+      });
+
+      try {
+        if (tryRediffSynchronously()) {
+          // TODO: we should vary delay: 400 ms is OK for initial loading, but too slow for active typing
+          semaphore.tryAcquire(ASYNC_REDIFF_POSTPONE_DELAY, TimeUnit.MILLISECONDS);
+        }
+      }
+      catch (InterruptedException ignore) {
+      }
+      if (!resultRef.compareAndSet(null, TOO_SLOW_OPERATION)) {
+        // update presentation in the same thread to reduce blinking, caused by 'invokeLater' and fast performRediff()
+        finishRediff(resultRef.get(), modificationStamp, indicator);
+      }
+      else {
+        onSlowRediff();
+      }
     }
   }
 
