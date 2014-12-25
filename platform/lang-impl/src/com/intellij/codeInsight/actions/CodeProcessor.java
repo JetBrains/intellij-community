@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -99,23 +100,41 @@ class CodeProcessor {
     }
 
     if (myShouldNotify) {
-      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
-      final CharSequence textBeforeChange = document != null ? document.getImmutableCharSequence() : null;
-      processor.setPostRunnable(new Runnable() {
-        @Override
-        public void run() {
-          if (document != null) {
-            String info = prepareMessage(document, textBeforeChange);
-            showHint(myEditor, info);
-          }
-        }
-      });
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
+      if (document != null) {
+        processor.setPostRunnable(getNotificationCallBack(document));
+      }
     }
 
     processor.run();
   }
 
-  private int getProcessedLinesNumber(final Document document, final CharSequence before) {
+  private Runnable getNotificationCallBack(@NotNull final Document document) {
+    final CharSequence textBeforeChange = document.getImmutableCharSequence();
+    final Runnable calculateChangesAndNotify = new Runnable() {
+      @Override
+      public void run() {
+        final String info = prepareMessage(document, textBeforeChange);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
+              showHint(myEditor, info);
+            }
+          }
+        });
+      }
+    };
+
+    return new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().executeOnPooledThread(calculateChangesAndNotify);
+      }
+    };
+  }
+
+  private static int getProcessedLinesNumber(final Document document, final CharSequence before) {
     int totalLinesProcessed = 0;
     try {
       List<TextRange> ranges = FormatChangedTextUtil.calculateChangedTextRanges(document, before);
@@ -163,7 +182,7 @@ class CodeProcessor {
     return info;
   }
 
-  private void showHint(@NotNull Editor editor, @NotNull String info) {
+  private static void showHint(@NotNull Editor editor, @NotNull String info) {
     JComponent component = HintUtil.createInformationLabel(info);
     LightweightHint hint = new LightweightHint(component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
