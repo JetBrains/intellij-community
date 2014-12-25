@@ -21,7 +21,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -61,25 +60,33 @@ class CodeProcessor {
 
     myShouldOptimizeImports = runOptions.isOptimizeImports();
     myShouldRearrangeCode = runOptions.isRearrangeCode();
-    myProcessSelectedText = runOptions.getTextRangeType() == SELECTED_TEXT;
+    myProcessSelectedText = myEditor != null && runOptions.getTextRangeType() == SELECTED_TEXT;
     myProcessChangesTextOnly = runOptions.getTextRangeType() == VCS_CHANGED_TEXT;
 
-    myShouldNotify = editor != null && !myProcessSelectedText;
+    myShouldNotify = myEditor != null && !myProcessSelectedText;
   }
 
   public void processCode() {
-    AbstractLayoutCodeProcessor processor;
+    AbstractLayoutCodeProcessor processor = null;
     if (myShouldOptimizeImports) {
       processor = new OptimizeImportsProcessor(myProject, myFile);
-      new ReformatCodeProcessor(processor, myProcessChangesTextOnly);
+    }
+
+    if (processor != null) {
+      if (myProcessSelectedText) {
+        processor = new ReformatCodeProcessor(processor, myEditor.getSelectionModel());
+      }
+      else {
+        processor = new ReformatCodeProcessor(processor, myProcessChangesTextOnly);
+      }
     }
     else {
-      SelectionModel model = myEditor.getSelectionModel();
-      TextRange range = myProcessSelectedText && model.hasSelection()
-                        ? new TextRange(model.getSelectionStart(), model.getSelectionEnd())
-                        : null;
-
-      processor = new ReformatCodeProcessor(myProject, myFile, range, false);
+      if (myProcessSelectedText) {
+        processor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
+      }
+      else {
+        processor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
+      }
     }
 
     if (myShouldRearrangeCode) {

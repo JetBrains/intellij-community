@@ -18,6 +18,9 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -47,6 +50,7 @@ import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -577,11 +581,7 @@ public abstract class AbstractLayoutCodeProcessor {
     return true;
   }
 
-  protected static Collection<TextRange> getSelectedRanges(@Nullable SelectionModel selectionModel) {
-    if (selectionModel == null) {
-      return ContainerUtil.emptyList();
-    }
-
+  protected static Collection<TextRange> getSelectedRanges(@NotNull SelectionModel selectionModel) {
     final List<TextRange> ranges = new SmartList<TextRange>();
     if (selectionModel.hasSelection()) {
       TextRange range = TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
@@ -596,5 +596,16 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     return ranges;
+  }
+
+  protected void handleFileTooBigException(Logger logger, FilesTooBigForDiffException e, @NotNull PsiFile file) {
+    logger.info("Error while calculating changed ranges for: " + file.getVirtualFile(), e);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      Notification notification = new Notification(ApplicationBundle.message("reformat.changed.text.file.too.big.notification.groupId"),
+                                                   ApplicationBundle.message("reformat.changed.text.file.too.big.notification.title"),
+                                                   ApplicationBundle.message("reformat.changed.text.file.too.big.notification.text", file.getName()),
+                                                   NotificationType.INFORMATION);
+      notification.notify(file.getProject());
+    }
   }
 }
