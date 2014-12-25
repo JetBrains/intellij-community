@@ -144,8 +144,10 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       if (k >= MAX_BLOCK_SIZE) {
         return;
       }
-      if (Math.abs(myTimestampGetter.getTimestamp(currentNodeIndex) - myTimestampGetter.getTimestamp(currentNodeIndex + k)) >
+      if (Math.abs(myTimestampGetter.getTimestamp(currentNodeIndex) - myTimestampGetter.getTimestamp(currentNodeIndex + k - 1)) >
           MAX_DELTA_TIME) {
+        // there is a big question what we should really check here
+        // maybe we should also ensure that we do not remove edges to very old commits too
         return;
       }
     }
