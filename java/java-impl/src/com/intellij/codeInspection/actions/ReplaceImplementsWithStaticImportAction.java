@@ -48,7 +48,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
   @Override
   @NotNull
   public String getText() {
-    return "Replace Implements with Static Import";
+    return "Replace implements with static import";
   }
 
   @Override

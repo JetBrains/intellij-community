@@ -21,21 +21,23 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -58,77 +60,60 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 /**
- * User: anna
+ * @author anna
  */
 public class InstalledPluginsManagerMain extends PluginManagerMain {
+  private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
+
+  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   public InstalledPluginsManagerMain(PluginManagerUISettings uiSettings) {
     super(uiSettings);
     init();
+
     myActionsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-    final JButton jbButton = new JButton("Install JetBrains plugin...");
-    jbButton.setMnemonic('j');
-    jbButton.addActionListener(new BrowseRepoListener(JETBRAINS_VENDOR));
-    myActionsPanel.add(jbButton);
 
-    final JButton button = new JButton("Browse repositories...");
-    button.setMnemonic('b');
-    button.addActionListener(new BrowseRepoListener(null));
-    myActionsPanel.add(button);
+    JButton installJB = new JButton("Install JetBrains plugin...");
+    installJB.setMnemonic('j');
+    installJB.addActionListener(new BrowseRepoListener(JETBRAINS_VENDOR));
+    myActionsPanel.add(installJB);
 
-    final JButton installPluginFromFileSystem = new JButton("Install plugin from disk...");
-    installPluginFromFileSystem.setMnemonic('d');
-    installPluginFromFileSystem.addActionListener(new ActionListener() {
+    JButton browse = new JButton("Browse repositories...");
+    browse.setMnemonic('b');
+    browse.addActionListener(new BrowseRepoListener(null));
+    myActionsPanel.add(browse);
+
+    JButton installFromDisk = new JButton("Install plugin from disk...");
+    installFromDisk.setMnemonic('d');
+    installFromDisk.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        perform(pluginsModel, new UpdateUI() {
+        final InstalledPluginsTableModel model = (InstalledPluginsTableModel)pluginsModel;
+        chooseAndInstall(model, new Consumer<Pair<File, IdeaPluginDescriptor>>() {
           @Override
-          public void update(@NotNull File file, @NotNull IdeaPluginDescriptorImpl pluginDescriptor) throws IOException {
+          public void consume(Pair<File, IdeaPluginDescriptor> pair) {
+            model.appendOrUpdateDescriptor(pair.second);
             setRequireShutdown(true);
-            select(pluginDescriptor);
+            select(pair.second);
           }
         }, myActionsPanel);
       }
     });
-    myActionsPanel.add(installPluginFromFileSystem);
-    final StatusText emptyText = pluginTable.getEmptyText();
+    myActionsPanel.add(installFromDisk);
+
+    StatusText emptyText = pluginTable.getEmptyText();
     emptyText.setText("Nothing to show.");
     emptyText.appendText(" Click ");
     emptyText.appendText("Browse", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
     emptyText.appendText(" to search for non-bundled plugins.");
   }
 
-  public static class InstallFromDiskAction extends AnAction {
-    public InstallFromDiskAction(@Nullable String text) {
-      super(text, "", AllIcons.Nodes.Plugin);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      perform(new InstalledPluginsTableModel(), null, null).doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-          int response =
-            app.isRestartCapable() ? PluginManagerConfigurable.showRestartIDEADialog() : PluginManagerConfigurable.showShutDownIDEADialog();
-          if (response == Messages.YES) {
-            app.restart(true);
-          }
-        }
-      });
-    }
-  }
-
-  private abstract static class UpdateUI {
-    public abstract void update(@NotNull File file, @NotNull IdeaPluginDescriptorImpl descriptor) throws IOException;
-  }
-
-  @NotNull
-  private static ActionCallback perform(@NotNull final PluginTableModel model,
-                                        @Nullable final UpdateUI ui,
-                                        @Nullable final Component parent) {
-    final ActionCallback callback = new ActionCallback();
+  private static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
+                                       @NotNull final Consumer<Pair<File, IdeaPluginDescriptor>> callback,
+                                       @Nullable final Component parent) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -138,50 +123,54 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     };
     descriptor.setTitle("Choose Plugin File");
     descriptor.setDescription("JAR and ZIP archives are accepted");
-    FileChooser.chooseFile(descriptor, null, parent, null, new Consumer<VirtualFile>() {
+    final String oldPath = PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH);
+    final VirtualFile toSelect = oldPath == null ? null : VfsUtil.findFileByIoFile(new File(FileUtil.toSystemDependentName(oldPath)), false);
+    FileChooser.chooseFile(descriptor, null, parent, toSelect, new Consumer<VirtualFile>() {
       @Override
       public void consume(@NotNull VirtualFile virtualFile) {
-        final File file = VfsUtilCore.virtualToIoFile(virtualFile);
+        File file = VfsUtilCore.virtualToIoFile(virtualFile);
+        PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, FileUtil.toSystemIndependentName(file.getParent()));
+
         try {
-          final IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
+          IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
           if (pluginDescriptor == null) {
             MessagesEx.showErrorDialog(parent, "Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
             return;
           }
-          if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
-            MessagesEx.showErrorDialog(parent, "Plugin " + pluginDescriptor.getName() + " is incompatible with current installation",
-                                       CommonBundle.getErrorTitle());
+
+          if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
+            String message = "Plugin '" + pluginDescriptor.getName() + "' was already installed";
+            MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
             return;
           }
-          final IdeaPluginDescriptor alreadyInstalledPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
-          if (alreadyInstalledPlugin != null) {
-            final File oldFile = alreadyInstalledPlugin.getPath();
+
+          if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
+            String message = "Plugin '" + pluginDescriptor.getName() + "' is incompatible with this installation";
+            MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
+            return;
+          }
+
+          IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
+          if (installedPlugin != null) {
+            File oldFile = installedPlugin.getPath();
             if (oldFile != null) {
               StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(oldFile));
             }
           }
-          if (((InstalledPluginsTableModel)model).appendOrUpdateDescriptor(pluginDescriptor)) {
-            PluginDownloader.install(file, file.getName(), false);
-            checkInstalledPluginDependencies(model, pluginDescriptor, parent);
-            if (ui != null) {
-              ui.update(file, pluginDescriptor);
-            }
-            callback.setDone();
-          }
-          else {
-            MessagesEx.showInfoMessage(parent, "Plugin " + pluginDescriptor.getName() + " was already installed",
-                                       CommonBundle.getWarningTitle());
-          }
+
+          PluginInstaller.install(file, file.getName(), false);
+          ourState.onPluginInstall(pluginDescriptor);
+          checkInstalledPluginDependencies(model, pluginDescriptor, parent);
+          callback.consume(pair(file, (IdeaPluginDescriptor)pluginDescriptor));
         }
         catch (IOException ex) {
           MessagesEx.showErrorDialog(parent, ex.getMessage(), CommonBundle.getErrorTitle());
         }
       }
     });
-    return callback;
   }
 
-  private static void checkInstalledPluginDependencies(@NotNull PluginTableModel pluginsModel,
+  private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,
                                                        @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
                                                        @Nullable Component parent) {
     final Set<PluginId> notInstalled = new HashSet<PluginId>();
@@ -190,8 +179,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     final PluginId[] optionalDependentPluginIds = pluginDescriptor.getOptionalDependentPluginIds();
     for (PluginId id : dependentPluginIds) {
       if (ArrayUtilRt.find(optionalDependentPluginIds, id) > -1) continue;
-      final boolean disabled = ((InstalledPluginsTableModel)pluginsModel).isDisabled(id);
-      final boolean enabled = ((InstalledPluginsTableModel)pluginsModel).isEnabled(id);
+      final boolean disabled = model.isDisabled(id);
+      final boolean enabled = model.isEnabled(id);
       if (!enabled && !disabled && !PluginManagerCore.isModuleDependency(id)) {
         notInstalled.add(id);
       }
@@ -200,39 +189,32 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     }
     if (!notInstalled.isEmpty()) {
-      MessagesEx.showWarningDialog(parent, "Plugin " +
-                                           pluginDescriptor.getName() +
-                                           " depends on unknown plugin" +
-                                           (notInstalled.size() > 1 ? "s " : " ") +
-                                           StringUtil.join(notInstalled, new Function<PluginId, String>() {
-                                             @Override
-                                             public String fun(PluginId id) {
-                                               return id.toString();
-                                             }
-                                           }, ", "), CommonBundle.getWarningTitle());
+      String deps = StringUtil.join(notInstalled, new Function<PluginId, String>() {
+        @Override
+        public String fun(PluginId id) {
+          return id.toString();
+        }
+      }, ", ");
+      String message = "Plugin " + pluginDescriptor.getName() + " depends on unknown plugin" + (notInstalled.size() > 1 ? "s " : " ") + deps;
+      MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
     }
     if (!disabledIds.isEmpty()) {
       final Set<IdeaPluginDescriptor> dependencies = new HashSet<IdeaPluginDescriptor>();
-      for (IdeaPluginDescriptor ideaPluginDescriptor : pluginsModel.getAllPlugins()) {
+      for (IdeaPluginDescriptor ideaPluginDescriptor : model.getAllPlugins()) {
         if (disabledIds.contains(ideaPluginDescriptor.getPluginId())) {
           dependencies.add(ideaPluginDescriptor);
         }
       }
-      final String disabledPluginsMessage = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
-      String message = "Plugin " +
-                       pluginDescriptor.getName() +
-                       " depends on " +
-                       disabledPluginsMessage +
-                       StringUtil.join(dependencies, new Function<IdeaPluginDescriptor, String>() {
-                         @Override
-                         public String fun(IdeaPluginDescriptor ideaPluginDescriptor) {
-                           return ideaPluginDescriptor.getName();
-                         }
-                       }, ", ") +
-                       ". Enable " + disabledPluginsMessage.trim() + "?";
+      String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
+      String deps = StringUtil.join(dependencies, new Function<IdeaPluginDescriptor, String>() {
+        @Override
+        public String fun(IdeaPluginDescriptor descriptor) {
+          return descriptor.getName();
+        }
+      }, ", ");
+      String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
       if (MessagesEx.showOkCancelDialog(parent, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.OK) {
-        ((InstalledPluginsTableModel)pluginsModel)
-          .enableRows(dependencies.toArray(new IdeaPluginDescriptor[dependencies.size()]), Boolean.TRUE);
+        model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[dependencies.size()]), Boolean.TRUE);
       }
     }
   }
@@ -255,14 +237,20 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     };
   }
 
+  @Override
   protected JScrollPane createTable() {
     pluginsModel = new InstalledPluginsTableModel();
+    if (PluginManagerUISettings.getInstance().installedSortByStatus) {
+      pluginsModel.setSortByStatus(true);
+    }
+
     pluginTable = new PluginTable(pluginsModel);
     pluginTable.setTableHeader(null);
 
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(pluginTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     pluginTable.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final int column = InstalledPluginsTableModel.getCheckboxColumn();
         final int[] selectedRows = pluginTable.getSelectedRows();
@@ -308,7 +296,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       actionGroup.add(new RefreshAction());
       actionGroup.addAction(createSortersGroup());
       actionGroup.add(Separator.getInstance());
-      actionGroup.add(new ActionInstallPlugin(getAvailable(), getInstalled()));
+      actionGroup.add(new InstallPluginAction(getAvailable(), getInstalled()));
       actionGroup.add(new UninstallPluginAction(this, pluginTable));
     }
     return actionGroup;
@@ -362,8 +350,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       pluginDescriptor.setEnabled(enabled != null && enabled.booleanValue());
     }
     for (IdeaPluginDescriptor descriptor : pluginsModel.filtered) {
-      descriptor.setEnabled(
-        ((InstalledPluginsTableModel)pluginsModel).isEnabled(descriptor.getPluginId()));
+      descriptor.setEnabled(((InstalledPluginsTableModel)pluginsModel).isEnabled(descriptor.getPluginId()));
     }
     try {
       final ArrayList<String> ids = new ArrayList<String>();
@@ -403,6 +390,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       return "<html><body style=\"padding: 5px;\">Unable to apply changes: plugin" +
              (dependentToRequiredListMap.size() == 1 ? " " : "s ") +
              StringUtil.join(dependentToRequiredListMap.keySet(), new Function<PluginId, String>() {
+               @Override
                public String fun(final PluginId pluginId) {
                  final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
                  return "\"" + (ideaPluginDescriptor != null ? ideaPluginDescriptor.getName() : pluginId.getIdString()) + "\"";
@@ -426,7 +414,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
       final DefaultActionGroup gr = new DefaultActionGroup();
       for (final String enabledValue : InstalledPluginsTableModel.ENABLED_VALUES) {
-        gr.add(new AnAction(enabledValue) {
+        gr.add(new DumbAwareAction(enabledValue) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             final IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
@@ -489,6 +477,22 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           }
         };
       configurableEditor.show();
+    }
+  }
+
+  public static class InstallFromDiskAction extends AnAction {
+    public InstallFromDiskAction(@Nullable String text) {
+      super(text, "", AllIcons.Nodes.Plugin);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      chooseAndInstall(new InstalledPluginsTableModel(), new Consumer<Pair<File, IdeaPluginDescriptor>>() {
+        @Override
+        public void consume(Pair<File, IdeaPluginDescriptor> pair) {
+          PluginManagerConfigurable.shutdownOrRestartApp();
+        }
+      }, null);
     }
   }
 

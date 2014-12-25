@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
+import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.ui.ClassNameReferenceEditor;
@@ -64,7 +65,7 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Set;
 
-public class MoveClassesOrPackagesDialog extends RefactoringDialog {
+public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   @NonNls private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
   private final PsiElement[] myElementsToMove;
   private final MoveCallback myMoveCallback;
@@ -90,6 +91,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private ComboboxWithBrowseButton myDestinationFolderCB;
   private JPanel myTargetPanel;
   private JLabel myTargetDestinationLabel;
+  private JPanel myOpenInEditorPanel;
   private boolean myHavePackages;
   private boolean myTargetDirectoryFixed;
   private boolean mySuggestToMoveToAnotherRoot;
@@ -138,6 +140,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         myInnerClassChooser.requestFocus();
       }
     });
+
+    for (PsiElement element : elementsToMove) {
+      if (element.getContainingFile() != null) {
+        myOpenInEditorPanel.add(initOpenInEditorCb(), BorderLayout.EAST);
+        break;
+      }
+    }
   }
 
   private void updateControlsEnabled() {
@@ -376,6 +385,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
+    saveOpenInEditorOption();
     if (isMoveToPackage()) {
       invokeMoveToPackage();
     }
@@ -419,6 +429,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
       MoveClassesOrPackagesProcessor processor = createMoveToPackageProcessor(destination, myElementsToMove, myMoveCallback);
       if (processor.verifyValidPackageName()) {
+        processor.setOpenInEditor(isOpenInEditor());
         invokeRefactoring(processor);
       }
     }
@@ -476,7 +487,9 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     for (int i = 0; i < myElementsToMove.length; i++) {
       classesToMove[i] = (PsiClass)myElementsToMove[i];
     }
-    invokeRefactoring(createMoveToInnerProcessor(targetClass, classesToMove, myMoveCallback));
+    final MoveClassToInnerProcessor processor = createMoveToInnerProcessor(targetClass, classesToMove, myMoveCallback);
+    processor.setOpenInEditor(isOpenInEditor());
+    invokeRefactoring(processor);
   }
 
   //for scala plugin
@@ -509,5 +522,15 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   private List<VirtualFile> getSourceRoots() {
     return JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject);
+  }
+
+  @Override
+  protected String getMovePropertySuffix() {
+    return "Class";
+  }
+
+  @Override
+  protected String getCbTitle() {
+    return "Open moved in editor";
   }
 }

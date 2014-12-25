@@ -22,6 +22,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestFileType;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author max
@@ -82,6 +83,20 @@ public class FoldingTest extends AbstractEditorTest {
         assertNull(region);
         region = myModel.addFoldRegion(5, 30, ".");
         assertNotNull(region);
+      }
+    });
+  }
+
+  public void testIntersectsWithRegionFarInStorageOrder() {
+    myModel.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        FoldRegion region = myModel.addFoldRegion(0, 10, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(1, 5, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(6, 11, ".");
+        assertNull(region);
       }
     });
   }
@@ -149,5 +164,56 @@ public class FoldingTest extends AbstractEditorTest {
 
     FoldRegion[] topLevelRegions = myModel.fetchTopLevel();
     assertArrayEquals(new FoldRegion[]{region}, topLevelRegions);
+  }
+
+  public void testLastCollapsedRegionBefore() {
+    addCollapsedFoldRegion(1, 3, "...");
+    addCollapsedFoldRegion(5, 6, "...");
+
+    assertEquals(-1, myModel.getLastCollapsedRegionBefore(0));
+    assertEquals(-1, myModel.getLastCollapsedRegionBefore(1));
+    assertEquals(-1, myModel.getLastCollapsedRegionBefore(2));
+    assertEquals(0, myModel.getLastCollapsedRegionBefore(3));
+    assertEquals(0, myModel.getLastCollapsedRegionBefore(4));
+    assertEquals(0, myModel.getLastCollapsedRegionBefore(5));
+    assertEquals(1, myModel.getLastCollapsedRegionBefore(6));
+    assertEquals(1, myModel.getLastCollapsedRegionBefore(7));
+  }
+  
+  public void testSelectionIsRemovedWhenInterruptedByFolding() {
+    myEditor.getSelectionModel().setSelection(0, 5);
+    addCollapsedFoldRegion(3, 6, "...");
+    
+    assertFalse(myEditor.getSelectionModel().hasSelection());
+  }
+  
+  public void testModelRemainsConsistentOnTextRemoval() {
+    addCollapsedFoldRegion(0, 10, "...");
+    addCollapsedFoldRegion(1, 9, "...");
+    
+    myEditor.getDocument().deleteString(0, 1);
+    addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
+    
+    assertTrue(myModel.isOffsetCollapsed(5));
+  }
+  
+  public void testIdenticalRegionsAreRemoved() {
+    addFoldRegion(0, 5, "...");
+    addFoldRegion(0, 4, "...");
+    assertNumberOfValidFoldRegions(2);
+    
+    myEditor.getDocument().deleteString(4, 5);
+
+    assertNumberOfValidFoldRegions(1);
+  }
+
+  private void assertNumberOfValidFoldRegions(int expectedValue) {
+    int actualValue = 0;
+    for (FoldRegion region : myModel.getAllFoldRegions()) {
+      if (region.isValid()) {
+        actualValue++;
+      }
+    }
+    assertEquals(expectedValue, actualValue);
   }
 }

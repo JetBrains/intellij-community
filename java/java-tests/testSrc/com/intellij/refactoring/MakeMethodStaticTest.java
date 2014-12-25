@@ -172,10 +172,24 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     checkResultByFile("/refactoring/makeMethodStatic/after22.java");
   }
 
+  public void testDeepStaticOverrides() throws Exception {
+    configureByFile("/refactoring/makeMethodStatic/beforeOverrides.java");
+    perform(false);
+    checkResultByFile("/refactoring/makeMethodStatic/afterOverrides.java");
+  }
+
+  public void testDeepStatic() throws Exception {
+    configureByFile("/refactoring/makeMethodStatic/beforeDeep.java");
+    perform(false);
+    checkResultByFile("/refactoring/makeMethodStatic/afterDeep.java");
+  }
+
   public void testPreserveTypeParams() throws Exception {
-    configureByFile("/refactoring/makeMethodStatic/beforePreserveTypeParams.java");
-    performWithFields();
-    checkResultByFile("/refactoring/makeMethodStatic/afterPreserveTypeParams.java");
+    doTestFields(false);
+  }
+
+  public void testFieldsAndDelegation() throws Exception {
+    doTestFields(true);
   }
 
   public void testInnerStaticClassUsed() throws Exception {
@@ -203,6 +217,14 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     checkResultByFile("/refactoring/makeMethodStatic/after" + getTestName(false) + ".java");
   }
 
+  private void doTestFields(boolean delegate) throws Exception {
+    final String testName = getTestName(false);
+    configureByFile("/refactoring/makeMethodStatic/before" + testName + ".java");
+    performWithFields(delegate);
+    checkResultByFile("/refactoring/makeMethodStatic/after" + testName + ".java");
+  }
+
+
   private static void perform(boolean addClassParameter) {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
@@ -215,6 +237,10 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
   }
 
   private static void performWithFields() {
+    performWithFields(false);
+  }
+
+  private static void performWithFields(boolean delegate) {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
@@ -226,6 +252,6 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
             method,
             new Settings(true, addClassParameter ? "anObject" : null,
                          parametersForFields.toArray(
-                           new VariableData[parametersForFields.size()]))).run();
+                           new VariableData[parametersForFields.size()]), delegate)).run();
   }
 }

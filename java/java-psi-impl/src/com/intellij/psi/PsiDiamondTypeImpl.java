@@ -18,6 +18,8 @@ package com.intellij.psi;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -167,6 +169,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>");
 
     if (PsiUtil.isRawSubstitutor(staticFactory, inferredSubstitutor)) {
+      if (!JavaVersionService.getInstance().isAtLeast(argumentList, JavaSdkVersion.JDK_1_8) && 
+          PsiUtil.skipParenthesizedExprUp(newExpression.getParent()) instanceof PsiExpressionList) {
+        for (PsiTypeParameter parameter : parameters) {
+          result.addInferredType(PsiType.getJavaLangObject(psiClass.getManager(), GlobalSearchScope.allScope(psiClass.getProject())));
+        }
+      }
       return result;
     }
 
@@ -205,6 +213,11 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       @Override
       protected PsiClass getContainingClass(PsiMethod method) {
         return containingClass;
+      }
+
+      @Override
+      protected boolean acceptVarargs() {
+        return true;
       }
     };
     processor.setArgumentList(argumentList);
@@ -353,8 +366,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList != null) {
       final MethodCandidateInfo staticFactoryCandidateInfo =
-        new MethodCandidateInfo(staticFactoryMethod, PsiSubstitutor.EMPTY, false, false, argumentList, parent,
-                                argumentList.getExpressionTypes(), null) {
+        new MethodCandidateInfo(staticFactoryMethod, PsiSubstitutor.EMPTY, false, false, argumentList, parent, null, null) {
+          private PsiType[] myExpressionTypes;
+
           @Override
           public boolean isVarargs() {
             return varargs;
@@ -363,6 +377,18 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
           @Override
           protected PsiElement getParent() {
             return parent;
+          }
+
+          @Override
+          public PsiType[] getArgumentTypes() {
+            if (myExpressionTypes == null) {
+              final PsiType[] expressionTypes = argumentList.getExpressionTypes();
+              if (MethodCandidateInfo.isOverloadCheck()) {
+                return expressionTypes;
+              }
+              myExpressionTypes = expressionTypes;
+            }
+            return myExpressionTypes;
           }
 
           @Override

@@ -72,6 +72,10 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
   @Override
   protected AbstractInplaceIntroducer invokeRefactoring() {
     final MyIntroduceHandler introduceHandler = createIntroduceHandler();
+    return invokeRefactoring(introduceHandler);
+  }
+
+  protected AbstractInplaceIntroducer invokeRefactoring(MyIntroduceHandler introduceHandler) {
     final PsiExpression expression = getExpressionFromEditor();
     if (expression != null) {
       introduceHandler.invokeImpl(LightPlatformTestCase.getProject(), expression, getEditor());

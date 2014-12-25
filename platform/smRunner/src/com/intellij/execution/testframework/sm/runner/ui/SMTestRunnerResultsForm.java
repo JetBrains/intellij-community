@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -100,9 +101,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                  AnAction[] consoleActions,
                                  final TestConsoleProperties consoleProperties,
                                  final ExecutionEnvironment environment,
-                                 final String splitterPropertyName) {
+                                 @Nullable String splitterPropertyName) {
     super(console, consoleActions, consoleProperties, environment,
-          splitterPropertyName != null ? splitterPropertyName : DEFAULT_SM_RUNNER_SPLITTER_PROPERTY, 0.5f);
+          StringUtil.notNullize(splitterPropertyName, DEFAULT_SM_RUNNER_SPLITTER_PROPERTY), 0.2f);
     myConsoleProperties = consoleProperties;
 
     myProject = runConfiguration.getProject();

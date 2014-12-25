@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -74,7 +76,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private void doRestoreNode(final RestorableStateNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo, final String nodeName) {
     XDebuggerTreeState.NodeInfo childInfo = parentInfo.removeChild(nodeName);
     if (childInfo != null) {
-      if (!Comparing.equal(childInfo.getValue(), treeNode.getRawValue())) {
+      if (!checkExtendedModified(treeNode) && !(Comparing.equal(childInfo.getValue(), treeNode.getRawValue()))) {
         treeNode.markChanged();
       }
       if (!myStopRestoringSelection && childInfo.isSelected()) {
@@ -89,9 +91,22 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
 
       restoreChildren((XDebuggerTreeNode)treeNode, childInfo);
     }
-    else {
+    else if (!checkExtendedModified(treeNode)) {
       treeNode.markChanged();
     }
+  }
+
+  private static boolean checkExtendedModified(RestorableStateNode treeNode) {
+    if (treeNode instanceof XValueNodeImpl) {
+      XValuePresentation presentation = ((XValueNodeImpl)treeNode).getValuePresentation();
+      if (presentation instanceof XValueExtendedPresentation) {
+        if (((XValueExtendedPresentation)presentation).isModified()) {
+          treeNode.markChanged();
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
   public void nodeLoaded(@NotNull final RestorableStateNode node, final String name) {

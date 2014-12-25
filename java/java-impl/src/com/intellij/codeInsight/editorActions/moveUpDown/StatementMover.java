@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,8 @@ class StatementMover extends LineMover {
       PsiElement element = firstNonWhiteElement(offset, file, true);
 
       while (element != null && !(element instanceof PsiFile)) {
-        if (!element.getTextRange().grown(-1).shiftRight(1).contains(offset)) {
+        TextRange elementTextRange = element.getTextRange();
+        if (elementTextRange.isEmpty() || !elementTextRange.grown(-1).shiftRight(1).contains(offset)) {
           PsiElement elementToSurround = null;
           boolean found = false;
           if ((element instanceof PsiStatement || element instanceof PsiComment)

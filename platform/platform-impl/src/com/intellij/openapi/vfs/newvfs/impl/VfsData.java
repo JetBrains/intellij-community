@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -197,7 +198,7 @@ public class VfsData {
       myIntArray.set(getOffset(fileId) * 2, nameId);
     }
 
-    void setUserMap(int fileId, KeyFMap map) {
+    void setUserMap(int fileId, @NotNull KeyFMap map) {
       myObjectArray.set(getOffset(fileId), map);
     }
 
@@ -250,9 +251,9 @@ public class VfsData {
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
   public static class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
-    volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
-    int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY;
-    private THashSet<String> myAdoptedNames;
+    @NotNull volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
+    @NotNull int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY;
+    private Set<String> myAdoptedNames;
 
     VirtualFileSystemEntry[] getFileChildren(int fileId, VirtualDirectoryImpl parent) {
       assert fileId > 0;

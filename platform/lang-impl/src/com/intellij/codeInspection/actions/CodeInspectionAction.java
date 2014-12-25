@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,17 +60,21 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   @Override
   protected void analyze(@NotNull Project project, @NotNull AnalysisScope scope) {
     try {
-      scope.setSearchInLibraries(false);
-      FileDocumentManager.getInstance().saveAllDocuments();
-      final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
-      inspectionContext.setExternalProfile(myExternalProfile);
-      inspectionContext.setCurrentScope(scope);
-      inspectionContext.doInspections(scope);
+      runInspections(project, scope);
     }
     finally {
       myGlobalInspectionContext = null;
       myExternalProfile = null;
     }
+  }
+
+  protected void runInspections(Project project, AnalysisScope scope) {
+    scope.setSearchInLibraries(false);
+    FileDocumentManager.getInstance().saveAllDocuments();
+    final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
+    inspectionContext.setExternalProfile(myExternalProfile);
+    inspectionContext.setCurrentScope(scope);
+    inspectionContext.doInspections(scope);
   }
 
 
@@ -102,9 +106,9 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Profile) {
-          final Profile profile = (Profile)value;
+          Profile profile = (Profile)value;
           setText(profile.getName());
-          setIcon(profile.isLocal() ? AllIcons.General.Settings : AllIcons.General.ProjectSettings);
+          setIcon(profile.isProjectLevel() ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
         }
       }
     });
@@ -116,9 +120,8 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       public void actionPerformed(ActionEvent e) {
         final IDEInspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profileManager);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
-        errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()).getName());
-        editor.show();
-        if (editor.isOK()) {
+        errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()));
+        if (editor.showAndGet()) {
           reloadProfiles(profiles, profileManager, projectProfileManager, manager);
         }
         else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.ComponentVersionProvider;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
@@ -56,7 +55,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
 
   public void testGetStateSucceeded() throws Exception {
     MyXmlElementStorage storage =
-        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))), myParentDisposable);
+      new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))));
     Element state = storage.getState(this, "test", Element.class, null);
     assertNotNull(state);
     assertEquals("component", state.getName());
@@ -64,30 +63,30 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
   }
 
   public void testGetStateNotSucceeded() throws Exception {
-    MyXmlElementStorage storage = new MyXmlElementStorage(tag("root"), myParentDisposable);
+    MyXmlElementStorage storage = new MyXmlElementStorage(tag("root"));
     Element state = storage.getState(this, "test", Element.class, null);
     assertNull(state);
   }
 
   public void testSetStateOverridesOldState() throws Exception {
     MyXmlElementStorage storage =
-        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))), myParentDisposable);
+      new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))));
     Element newState = tag("component", attr("name", "test"), tag("bar"));
     StateStorage.ExternalizationSession externalizationSession = storage.startExternalization();
     externalizationSession.setState(this, "test", newState, null);
-    storage.startSave(externalizationSession).save();
+    externalizationSession.createSaveSession().save();
     assertNotNull(storage.mySavedElement);
     assertNotNull(storage.mySavedElement.getChild("component").getChild("bar"));
     assertNull(storage.mySavedElement.getChild("component").getChild("foo"));
   }
 
 
-  private class MyXmlElementStorage extends XmlElementStorage {
+  private static class MyXmlElementStorage extends XmlElementStorage {
     private final Element myElement;
     private Element mySavedElement;
 
-    public MyXmlElementStorage(Element element, final Disposable parentDisposable) throws StateStorageException {
-      super("", RoamingType.PER_USER, new MyPathMacroManager(), "root", null, ComponentVersionProvider.EMPTY);
+    public MyXmlElementStorage(Element element) throws StateStorageException {
+      super("", RoamingType.PER_USER, new MyPathMacroManager(), "root", null);
       myElement = element;
     }
 

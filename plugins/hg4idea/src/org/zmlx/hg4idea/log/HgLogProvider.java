@@ -233,7 +233,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getStructureFilter() != null) {
-      for (VirtualFile file : filterCollection.getStructureFilter().getFiles(root)) {
+      for (VirtualFile file : filterCollection.getStructureFilter().getFiles()) {
         filterParameters.add(file.getPath());
       }
     }
@@ -266,6 +266,12 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
     return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
+  }
+
+  @Nullable
+  @Override
+  public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
+    return null;
   }
 
   private static boolean branchExists(@NotNull HgRepository repository, @NotNull String branchName) {

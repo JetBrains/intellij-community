@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,11 +30,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,21 +43,26 @@ import java.util.*;
 public class GenerateAntBuildAction extends CompileActionBase {
   @NonNls private static final String XML_EXTENSION = ".xml";
 
+  @Override
   protected void doAction(DataContext dataContext, final Project project) {
     ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).convertPatterns();
     final GenerateAntBuildDialog dialog = new GenerateAntBuildDialog(project);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       final String[] names = dialog.getRepresentativeModuleNames();
-      final GenerationOptionsImpl[] genOptions = {null};
-      Runnable runnable = new Runnable() {
+      final GenerationOptionsImpl[] genOptions = new GenerationOptionsImpl[1];
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
-          genOptions[0] = new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(),
-                                                    dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
-                                                    dialog.isIdeaHomeGenerated(), names, dialog.getOutputFileName());
+          genOptions[0] = ApplicationManager.getApplication().runReadAction(new Computable<GenerationOptionsImpl>() {
+            @Override
+            public GenerationOptionsImpl compute() {
+              return new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(),
+                                               dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
+                                               dialog.isIdeaHomeGenerated(), names, dialog.getOutputFileName());
+            }
+          });
         }
-      };
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Analyzing project structure...", true, project)) {
+      }, "Analyzing project structure...", true, project)) {
         return;
       }
       if (!validateGenOptions(project, genOptions[0])) {
@@ -100,6 +106,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     return true;
   }
 
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
@@ -137,6 +144,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
       }
 
       new Task.Modal(project, CompilerBundle.message("generate.ant.build.title"), false) {
+        @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
           indicator.setText(CompilerBundle.message("generate.ant.build.progress.message"));
@@ -263,7 +271,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
    * @throws FileNotFoundException        if file not found
    */
   private static PrintWriter makeWriter(final File buildxmlFile) throws UnsupportedEncodingException, FileNotFoundException {
-    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), "UTF-8"));
+    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), CharsetToolkit.UTF8_CHARSET));
   }
 
   private void ensureFilesWritable(Project project, File[] files) throws IOException {

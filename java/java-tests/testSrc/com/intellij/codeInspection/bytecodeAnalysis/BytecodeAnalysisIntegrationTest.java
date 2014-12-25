@@ -17,7 +17,6 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -45,6 +44,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.IdeaDecompiler;
 
 import java.security.MessageDigest;
@@ -132,13 +132,17 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   public void testInferredAnnoGutter() {
     setUpLibraries();
     openDecompiledClass("org.apache.velocity.util.ExceptionUtils");
-    checkHasGutter("<i>@Contract(&quot;null,_,_-&gt;null&quot;)</i>");
+    checkHasGutter("<html><i>Inferred</i> annotations available. Full signature:<p>\n" +
+                   "<i>@Contract(&quot;null,_,_-&gt;null&quot;)</i>&nbsp;\n" +
+                   "public static&nbsp;Throwable&nbsp;<b>createWithCause</b>(");
   }
 
   public void testExternalAnnoGutter() {
     setUpExternalUpAnnotations();
     openDecompiledClass("java.lang.Boolean");
-    checkHasGutter("@org.jetbrains.annotations.Contract(&quot;null-&gt;false&quot;)&nbsp;");
+    checkHasGutter("<html>External and <i>inferred</i> annotations available. Full signature:<p>\n" +
+                   "@org.jetbrains.annotations.Contract(&quot;null-&gt;false&quot;)&nbsp;\n" +
+                   "private static&nbsp;boolean&nbsp;<b>toBoolean</b>(@org.jetbrains.annotations.Nullable&nbsp;String&nbsp;var0)</html>");
   }
 
   private void checkHasGutter(final String expectedText) {
@@ -168,6 +172,10 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
       @Override
       public void visitPackage(PsiPackage aPackage) {
+        // annotations are in classpaths, but we are not interested in inferred annotations for them
+        if ("org.intellij.lang.annotations".equals(aPackage.getQualifiedName())) {
+          return;
+        }
         for (PsiPackage subPackage : aPackage.getSubPackages(scope)) {
           visitPackage(subPackage);
         }
@@ -237,21 +245,23 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     PsiAnnotation externalContractAnnotation = findExternalAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
     PsiAnnotation inferredContractAnnotation = findInferredAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
 
-    String externalContractAnnotationString =
-      externalContractAnnotation == null ? "null" : "@Contract(" + AnnotationUtil.getStringAttributeValue(externalContractAnnotation, null) + ")";
-    String inferredContractAnnotationString =
-      inferredContractAnnotation == null ? "null" : "@Contract(" + AnnotationUtil.getStringAttributeValue(inferredContractAnnotation, null) + ")";
+    String externalContractAnnotationText =
+      externalContractAnnotation == null ? "null" : externalContractAnnotation.getText();
+    String inferredContractAnnotationText =
+      inferredContractAnnotation == null ? "null" : inferredContractAnnotation.getText();
 
-    if (!externalContractAnnotationString.equals(inferredContractAnnotationString)) {
-      diffs.add(methodKey + ": " + externalContractAnnotationString + " != " + inferredContractAnnotationString);
+    if (!externalContractAnnotationText.equals(inferredContractAnnotationText)) {
+      diffs.add(methodKey + ": " + externalContractAnnotationText + " != " + inferredContractAnnotationText);
     }
 
   }
 
+  @Nullable
   private PsiAnnotation findInferredAnnotation(PsiModifierListOwner owner, String fqn) {
-    return InferredAnnotationsManager.getInstance(myModule.getProject()).findInferredAnnotation(owner, fqn);
+    return ProjectBytecodeAnalysis.getInstance(getProject()).findInferredAnnotation(owner, fqn);
   }
 
+  @Nullable
   private PsiAnnotation findExternalAnnotation(PsiModifierListOwner owner, String fqn) {
     return ExternalAnnotationsManager.getInstance(myModule.getProject()).findExternalAnnotation(owner, fqn);
   }

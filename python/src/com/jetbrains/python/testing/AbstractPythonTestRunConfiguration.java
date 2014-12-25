@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -224,8 +224,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
     target.setTestType(source.getTestType());
     target.setPattern(source.getPattern());
     target.usePattern(source.usePattern());
-    target.addContentRoots(source.addContentRoots());
-    target.addSourceRoots(source.addSourceRoots());
+    target.setAddContentRoots(source.shouldAddContentRoots());
+    target.setAddSourceRoots(source.shouldAddSourceRoots());
   }
 
   public AbstractPythonTestRunConfigurationParams getTestRunConfigurationParams() {

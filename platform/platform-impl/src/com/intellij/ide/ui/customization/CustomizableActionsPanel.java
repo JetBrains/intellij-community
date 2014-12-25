@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,8 +150,7 @@ public class CustomizableActionsPanel {
         if (selectionPath != null) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
           final FindAvailableActionsDialog dlg = new FindAvailableActionsDialog();
-          dlg.show();
-          if (dlg.isOK()) {
+          if (dlg.showAndGet()) {
             final Set<Object> toAdd = dlg.getTreeSelectedActionIds();
             if (toAdd == null) return;
             for (final Object o : toAdd) {
@@ -179,8 +178,7 @@ public class CustomizableActionsPanel {
         final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
         if (selectionPath != null) {
           EditIconDialog dlg = new EditIconDialog((DefaultMutableTreeNode)selectionPath.getLastPathComponent());
-          dlg.show();
-          if (dlg.isOK()) {
+          if (dlg.showAndGet()) {
             myActionsTree.repaint();
           }
         }

@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +51,7 @@ public class HgRebaseCommand {
 
   @Nullable
   private HgCommandResult performRebase(@NotNull String... args) {
-    DvcsUtil.workingTreeChangeStarted(project);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       HgCommandResult result =
         new HgCommandExecutor(project)
@@ -60,7 +61,7 @@ public class HgRebaseCommand {
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project);
+      DvcsUtil.workingTreeChangeFinished(project, token);
     }
   }
 }

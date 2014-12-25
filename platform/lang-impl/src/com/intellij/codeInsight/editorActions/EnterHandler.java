@@ -460,7 +460,7 @@ public class EnterHandler extends BaseEnterHandler {
 
       myOffset = Math.min(myOffset, myDocument.getTextLength());
       caretModel.moveToOffset(myOffset);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      EditorModificationUtil.scrollToCaret(myEditor);
       myEditor.getSelectionModel().removeSelection();
       if (myCaretAdvance != 0) {
         LogicalPosition caretPosition = caretModel.getLogicalPosition();

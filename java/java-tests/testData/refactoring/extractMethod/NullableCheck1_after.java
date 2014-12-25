@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.Nullable;
+
 class Test {
    String foo(int i, boolean flag) {
 
@@ -8,6 +10,7 @@ class Test {
       return null;
    }
 
+    @Nullable
     private String newMethod(int i, boolean flag) {
         String xxx = "";
         if (flag) {

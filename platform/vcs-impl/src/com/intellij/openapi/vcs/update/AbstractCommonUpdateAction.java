@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,15 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,6 +74,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return myActionInfo.getActionName(myScopeInfo.getScopeName(dataContext, myActionInfo));
   }
 
+  @Override
   protected void actionPerformed(@NotNull final VcsContext context) {
     final Project project = context.getProject();
 
@@ -114,8 +117,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           ProgressManager.getInstance().run(task);
         }
       }
-      catch (ProcessCanceledException e1) {
-        //ignore
+      catch (ProcessCanceledException ignored) {
       }
     }
   }
@@ -157,8 +159,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       UpdateOrStatusOptionsDialog dialogOrStatus = myActionInfo.createOptionsDialog(project, envToConfMap,
                                                                                     myScopeInfo.getScopeName(dataContext,
                                                                                                              myActionInfo));
-      dialogOrStatus.show();
-      if (!dialogOrStatus.isOK()) {
+      if (!dialogOrStatus.showAndGet()) {
         throw new ProcessCanceledException();
       }
     }
@@ -175,27 +176,23 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return envToConfMap;
   }
 
-  private Map<AbstractVcs,Collection<FilePath>> createVcsToFilesMap(FilePath[] roots, Project project) {
-    HashMap<AbstractVcs, Collection<FilePath>> resultPrep = new HashMap<AbstractVcs, Collection<FilePath>>();
-
+  private Map<AbstractVcs, Collection<FilePath>> createVcsToFilesMap(@NotNull FilePath[] roots, @NotNull Project project) {
+    MultiMap<AbstractVcs, FilePath> resultPrep = MultiMap.createSet();
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs != null) {
         UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
         if (updateEnvironment != null) {
-          if (!resultPrep.containsKey(vcs)) resultPrep.put(vcs, new HashSet<FilePath>());
-          resultPrep.get(vcs).add(file);
+          resultPrep.putValue(vcs, file);
         }
       }
     }
 
-    final Map<AbstractVcs, Collection<FilePath>> result = new HashMap<AbstractVcs, Collection<FilePath>>();
+    final Map<AbstractVcs, Collection<FilePath>> result = new THashMap<AbstractVcs, Collection<FilePath>>();
     for (Map.Entry<AbstractVcs, Collection<FilePath>> entry : resultPrep.entrySet()) {
-      final AbstractVcs vcs = entry.getKey();
-      final List<FilePath> paths = new ArrayList<FilePath>(entry.getValue());
-      result.put(vcs, vcs.filterUniqueRoots(paths, ObjectsConvertor.FILEPATH_TO_VIRTUAL));
+      AbstractVcs vcs = entry.getKey();
+      result.put(vcs, vcs.filterUniqueRoots(new ArrayList<FilePath>(entry.getValue()), ObjectsConvertor.FILEPATH_TO_VIRTUAL));
     }
-
     return result;
   }
 
@@ -203,6 +200,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   private FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
     final ArrayList<FilePath> result = new ArrayList<FilePath>();
     final Project project = vcsContext.getProject();
+    assert project != null;
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs != null) {
@@ -217,7 +215,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           if (virtualFile != null && virtualFile.isDirectory()) {
             final VirtualFile[] vcsRoots = ProjectLevelVcsManager.getInstance(vcsContext.getProject()).getAllVersionedRoots();
             for(VirtualFile vcsRoot: vcsRoots) {
-              if (VfsUtil.isAncestor(virtualFile, vcsRoot, false)) {
+              if (VfsUtilCore.isAncestor(virtualFile, vcsRoot, false)) {
                 result.add(file);
               }
             }
@@ -230,6 +228,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
   protected abstract boolean filterRootsBeforeAction();
 
+  @Override
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();
 
@@ -276,6 +275,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
  }
 
+  @Override
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
   }
@@ -289,6 +289,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   }
 
   private class Updater extends Task.Backgroundable {
+    private final String LOCAL_HISTORY_ACTION = VcsBundle.message("local.history.update.from.vcs");
+
     private final Project myProject;
     private final ProjectLevelVcsManagerEx myProjectLevelVcsManager;
     private UpdatedFiles myUpdatedFiles;
@@ -304,6 +306,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     private Label myBefore;
     private Label myAfter;
+    private LocalHistoryAction myLocalHistoryAction;
 
     public Updater(final Project project, final FilePath[] roots, final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles) {
       super(project, getTemplatePresentation().getText(), true, VcsConfiguration.getInstance(project).getUpdateOption());
@@ -343,16 +346,19 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
+    @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       suspendIfNeeded();
       try {
         runImpl();
-      } catch (Throwable t) {
+      }
+      catch (Throwable t) {
         releaseIfNeeded();
         if (t instanceof Error) {
-          throw ((Error) t);
-        } else if (t instanceof RuntimeException) {
-          throw ((RuntimeException) t);
+          throw ((Error)t);
+        }
+        else if (t instanceof RuntimeException) {
+          throw ((RuntimeException)t);
         }
         throw new RuntimeException(t);
       }
@@ -363,7 +369,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, "Before update");
-
+      myLocalHistoryAction = LocalHistory.getInstance().startAction(LOCAL_HISTORY_ACTION);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
       try {
@@ -431,19 +437,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     private void doVfsRefresh() {
-      final String actionName = VcsBundle.message("local.history.update.from.vcs");
-      final LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
-      try {
-        LOG.info("Calling refresh files after update for roots: " + Arrays.toString(myRoots));
-        RefreshVFsSynchronously.updateAllChanged(myUpdatedFiles);
-        notifyAnnotations();
-      }
-      finally {
-        action.finish();
-        if ((! myProject.isOpen()) || myProject.isDisposed()) {
-          LocalHistory.getInstance().putSystemLabel(myProject, actionName);
-        }
-      }
+      LOG.info("Calling refresh files after update for roots: " + Arrays.toString(myRoots));
+      RefreshVFsSynchronously.updateAllChanged(myUpdatedFiles);
+      notifyAnnotations();
     }
 
     private void notifyAnnotations() {
@@ -478,17 +474,20 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
+    @Override
     public void onSuccess() {
       try {
         onSuccessImpl(false);
-      } finally {
+      }
+      finally {
         releaseIfNeeded();
       }
     }
 
     private void onSuccessImpl(final boolean wasCanceled) {
-      if ((! myProject.isOpen()) || myProject.isDisposed()) {
+      if (!myProject.isOpen() || myProject.isDisposed()) {
         ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+        LocalHistory.getInstance().putSystemLabel(myProject, LOCAL_HISTORY_ACTION); // TODO check why this label is needed
         return;
       }
       boolean continueChain = false;
@@ -503,6 +502,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         updateSession.onRefreshFilesCompleted();
       }
       // only after conflicts are resolved, put a label
+      if (myLocalHistoryAction != null) {
+        myLocalHistoryAction.finish();
+      }
       myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
 
       if (myActionInfo.canChangeFileStatus()) {
@@ -510,8 +512,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
         revisionsCache.invalidate(myUpdatedFiles);
         UpdateFilesHelper.iterateFileGroupFiles(myUpdatedFiles, new UpdateFilesHelper.Callback() {
+          @Override
           public void onFile(final String filePath, final String groupId) {
-            @NonNls final String path = VfsUtil.pathToUrl(filePath.replace(File.separatorChar, '/'));
+            @NonNls final String path = VfsUtilCore.pathToUrl(filePath.replace(File.separatorChar, '/'));
             final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
             if (file != null) {
               files.add(file);
@@ -521,64 +524,71 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         myDirtyScopeManager.filesDirty(files, null);
       }
 
-      final boolean updateSuccess = (! someSessionWasCancelled) && (myGroupedExceptions.isEmpty());
+      final boolean updateSuccess = !someSessionWasCancelled && myGroupedExceptions.isEmpty();
 
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) {
-              ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
-              return;
-            }
-            if (! myGroupedExceptions.isEmpty()) {
-              if (continueChainFinal) {
-                gatherContextInterruptedMessages();
-              }
-              AbstractVcsHelper.getInstance(myProject).showErrors(myGroupedExceptions, VcsBundle.message("message.title.vcs.update.errors",
-                                                                                                         getTemplatePresentation().getText()));
-            } else if (someSessionWasCancelled) {
-              ProgressManager.progress(VcsBundle.message("progress.text.updating.canceled"));
-            } else {
-              ProgressManager.progress(VcsBundle.message("progress.text.updating.done"));
-            }
-
-            final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
-            if (myUpdatedFiles.isEmpty() && myGroupedExceptions.isEmpty()) {
-              if (someSessionWasCancelled) {
-                VcsBalloonProblemNotifier.showOverChangesView(myProject, VcsBundle.message("progress.text.updating.canceled"), MessageType.WARNING);
-              } else {
-                VcsBalloonProblemNotifier.showOverChangesView(myProject, getAllFilesAreUpToDateMessage(myRoots), MessageType.INFO);
-              }
-            }
-            else if (! myUpdatedFiles.isEmpty()) {
-              final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
-              final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-              cache.processUpdatedFiles(myUpdatedFiles, new Consumer<List<CommittedChangeList>>() {
-                @Override
-                public void consume(List<CommittedChangeList> incomingChangeLists) {
-                  tree.setChangeLists(incomingChangeLists);
-                }
-              });
-
-              if (someSessionWasCancelled) {
-                VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Incomplete" + prepareNotificationWithUpdateInfo(), MessageType.WARNING);
-              } else {
-                VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Finished" + prepareNotificationWithUpdateInfo(), MessageType.INFO);
-              }
-            }
-
+        @Override
+        public void run() {
+          if (myProject.isDisposed()) {
             ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+            return;
+          }
 
-            if (continueChainFinal && updateSuccess) {
-              if (!noMerged) {
-                showContextInterruptedError();
-              } else {
-                // trigger next update; for CVS when updating from several branches simultaneously
-                reset();
-                ProgressManager.getInstance().run(Updater.this);
-              }
+          if (!myGroupedExceptions.isEmpty()) {
+            if (continueChainFinal) {
+              gatherContextInterruptedMessages();
+            }
+            AbstractVcsHelper.getInstance(myProject).showErrors(myGroupedExceptions, VcsBundle.message("message.title.vcs.update.errors",
+                                                                                                       getTemplatePresentation().getText()));
+          }
+          else if (someSessionWasCancelled) {
+            ProgressManager.progress(VcsBundle.message("progress.text.updating.canceled"));
+          }
+          else {
+            ProgressManager.progress(VcsBundle.message("progress.text.updating.done"));
+          }
+
+          final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
+          if (myUpdatedFiles.isEmpty() && myGroupedExceptions.isEmpty()) {
+            if (someSessionWasCancelled) {
+              VcsBalloonProblemNotifier.showOverChangesView(myProject, VcsBundle.message("progress.text.updating.canceled"), MessageType.WARNING);
+            }
+            else {
+              VcsBalloonProblemNotifier.showOverChangesView(myProject, getAllFilesAreUpToDateMessage(myRoots), MessageType.INFO);
             }
           }
-        }, null, myProject);
+          else if (!myUpdatedFiles.isEmpty()) {
+            final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
+            final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+            cache.processUpdatedFiles(myUpdatedFiles, new Consumer<List<CommittedChangeList>>() {
+              @Override
+              public void consume(List<CommittedChangeList> incomingChangeLists) {
+                tree.setChangeLists(incomingChangeLists);
+              }
+            });
+
+            if (someSessionWasCancelled) {
+              VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Incomplete" + prepareNotificationWithUpdateInfo(), MessageType.WARNING);
+            }
+            else {
+              VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Finished" + prepareNotificationWithUpdateInfo(), MessageType.INFO);
+            }
+          }
+
+          ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+
+          if (continueChainFinal && updateSuccess) {
+            if (!noMerged) {
+              showContextInterruptedError();
+            }
+            else {
+              // trigger next update; for CVS when updating from several branches simultaneously
+              reset();
+              ProgressManager.getInstance().run(Updater.this);
+            }
+          }
+        }
+      }, null, myProject);
     }
 
     private void showContextInterruptedError() {
@@ -610,10 +620,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       return updateInfoTree;
     }
 
+    @Override
     public void onCancel() {
       try {
         onSuccessImpl(true);
-      } finally {
+      }
+      finally {
         releaseIfNeeded();
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,22 @@ public class PyMethodDescriptor implements MethodDescriptor<PyParameterInfo, Str
     for (int i = 0; i < parameters.length; i++) {
       PyParameter parameter = parameters[i];
       final PyExpression defaultValue = parameter.getDefaultValue();
-      final String name = parameter instanceof PyNamedParameter && !((PyNamedParameter)parameter).isPositionalContainer() &&
-                          !((PyNamedParameter)parameter).isKeywordContainer() ? parameter.getName() : parameter.getText();
-      parameterInfos.add(new PyParameterInfo(i, name, defaultValue == null? null : defaultValue.getText(),
+      final String name;
+      if (parameter instanceof PyNamedParameter) {
+        if (((PyNamedParameter)parameter).isPositionalContainer()) {
+          name = "*" + parameter.getName();
+        }
+        else if (((PyNamedParameter)parameter).isKeywordContainer()) {
+          name = "**" + parameter.getName();
+        }
+        else {
+          name = parameter.getName();
+        }
+      }
+      else {
+        name = parameter.getText();
+      }
+      parameterInfos.add(new PyParameterInfo(i, name, defaultValue == null ? null : defaultValue.getText(),
                                              defaultValue != null && !StringUtil.isEmptyOrSpaces(defaultValue.getText())));
     }
     return parameterInfos;

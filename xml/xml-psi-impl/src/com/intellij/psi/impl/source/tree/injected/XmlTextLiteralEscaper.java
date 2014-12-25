@@ -16,9 +16,8 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.psi.impl.source.xml.XmlTextImpl;
 import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.impl.source.xml.XmlTextImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +30,6 @@ public class XmlTextLiteralEscaper extends LiteralTextEscaper<XmlTextImpl> {
 
   @Override
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-    ProperTextRange.assertProperRange(rangeInsideHost);
     int startInDecoded = myHost.physicalToDisplay(rangeInsideHost.getStartOffset());
     int endInDecoded = myHost.physicalToDisplay(rangeInsideHost.getEndOffset());
     outChars.append(myHost.getValue(), startInDecoded, endInDecoded);

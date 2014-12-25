@@ -28,6 +28,8 @@ import java.util.List;
  * @author Dennis.Ushakov
  */
 public class CustomProtocolHandler {
+  public static final String LINE_NUMBER_ARG_NAME = "--line";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.CustomProtocolHandler");
   public boolean openLink(@NotNull URI uri) {
     LOG.info("CustomProtocolHandler.openLink");
@@ -57,7 +59,7 @@ public class CustomProtocolHandler {
 
     if (file != null) {
       if (line != null) {
-        args.add("--line");
+        args.add(LINE_NUMBER_ARG_NAME);
         args.add(line);
       }
       args.add(file);

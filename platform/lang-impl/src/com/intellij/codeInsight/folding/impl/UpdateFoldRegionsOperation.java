@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
@@ -42,13 +44,15 @@ import static com.intellij.util.containers.ContainerUtil.newTroveMap;
  * @author cdr
  */
 class UpdateFoldRegionsOperation implements Runnable {
+
+  enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
   
   private static final Logger LOG = Logger.getInstance("#" + UpdateFoldRegionsOperation.class.getName());
   
   private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
-  private final boolean myApplyDefaultState;
+  private final ApplyDefaultStateMode myApplyDefaultState;
   private final FoldingUpdate.FoldingMap myElementsToFoldMap;
   private final boolean myForInjected;
 
@@ -56,7 +60,7 @@ class UpdateFoldRegionsOperation implements Runnable {
                              @NotNull Editor editor,
                              @NotNull PsiFile file,
                              @NotNull FoldingUpdate.FoldingMap elementsToFoldMap,
-                             boolean applyDefaultState,
+                             ApplyDefaultStateMode applyDefaultState,
                              boolean forInjected) {
     myProject = project;
     myEditor = editor;
@@ -144,8 +148,14 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean shouldExpandNewRegion(PsiElement element, TextRange range, Map<TextRange, Boolean> rangeToExpandStatusMap) {
-    if (myApplyDefaultState) {
+    if (myApplyDefaultState != ApplyDefaultStateMode.NO) {
       // Considering that this code is executed only on initial fold regions construction on editor opening.
+      if (myApplyDefaultState == ApplyDefaultStateMode.EXCEPT_CARET_REGION) {
+        TextRange lineRange = OpenFileDescriptor.getRangeToUnfoldOnNavigation(myEditor);
+        if (lineRange.intersects(range)) {
+          return true;
+        }
+      }
       return !FoldingPolicy.isCollapseByDefault(element);
     }
 
@@ -189,8 +199,10 @@ class UpdateFoldRegionsOperation implements Runnable {
           }
         }
         if (!matchingDescriptorFound) {
-          for (FoldingDescriptor descriptor : descriptors) {
-            rangeToExpandStatusMap.put(descriptor.getRange(), region.isExpanded());
+          if (Registry.is("editor.durable.folding.state")) {
+            for (FoldingDescriptor descriptor : descriptors) {
+              rangeToExpandStatusMap.put(descriptor.getRange(), region.isExpanded());
+            }
           }
           toRemove.add(region);
         }

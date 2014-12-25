@@ -15,20 +15,29 @@
  */
 package com.intellij.vcs.log.graph;
 
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ImmutableList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class GraphCommitImpl<CommitId> implements GraphCommit<CommitId> {
+public class GraphCommitImpl<CommitId> extends ImmutableList<CommitId> implements GraphCommit<CommitId>{
 
   @NotNull private final CommitId myId;
-  @NotNull private final List<CommitId> myParents;
+  @NotNull private final Object myParents;
   private final long myTimestamp;
 
   public GraphCommitImpl(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
     myId = id;
-    myParents = parents;
     myTimestamp = timestamp;
+    if (parents.isEmpty()) {
+      myParents = ArrayUtil.EMPTY_OBJECT_ARRAY;
+    } else if (parents.size() == 1) {
+      myParents = parents.get(0);
+      assert !(myParents instanceof Object[]);
+    } else {
+      myParents = parents.toArray();
+    }
   }
 
   @NotNull
@@ -40,7 +49,28 @@ public class GraphCommitImpl<CommitId> implements GraphCommit<CommitId> {
   @NotNull
   @Override
   public List<CommitId> getParents() {
-    return myParents;
+    return this;
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public CommitId get(int index) {
+    if (myParents instanceof Object[]) {
+      Object[] array = (Object[])myParents;
+      if (index < 0 || index >= array.length) {
+        throw new ArrayIndexOutOfBoundsException(index);
+      }
+      return (CommitId)array[index];
+    }
+    if (index != 0) {
+      throw new ArrayIndexOutOfBoundsException(index);
+    }
+    return (CommitId)myParents;
+  }
+
+  @Override
+  public int size() {
+    return myParents instanceof Object[] ? ((Object[])myParents).length : 1;
   }
 
   @Override

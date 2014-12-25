@@ -288,6 +288,7 @@ public class ResolveUtil {
                                                          @NotNull PsiScopeProcessor nonCodeProcessor,
                                                          @NotNull ResolveState state,
                                                          @NotNull PsiElement place) {
+    type = TypesUtil.boxPrimitiveType(type,place.getManager(),place.getResolveScope());
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
@@ -380,11 +381,13 @@ public class ResolveUtil {
     else {
       key = base.getCanonicalText();
     }
-    Map<String, PsiType> result = cache.get(key);
+    Map<String, PsiType> result = key == null ? null : cache.get(key);
     if (result == null) {
       result = new HashMap<String, PsiType>();
       collectSuperTypes(base, result, project);
-      cache.put(key, result);
+      if (key != null) {
+        cache.put(key, result);
+      }
     }
     return result;
   }
@@ -726,7 +729,7 @@ public class ResolveUtil {
                                                           boolean byShape,
                                                           @Nullable PsiType... argumentTypes) {
     if (methodName == null) return GroovyResolveResult.EMPTY_ARRAY;
-
+    thisType = TypesUtil.boxPrimitiveType(thisType, place.getManager(), place.getResolveScope());
     MethodResolverProcessor processor =
       new MethodResolverProcessor(methodName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY, allVariants, byShape);
     final ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, place);
@@ -813,7 +816,8 @@ public class ResolveUtil {
   public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate, GrExpression expression, @Nullable PsiType[] args) {
     final PsiElement element = candidate.getElement();
     if (element instanceof PsiMethod && !candidate.isInvokedOnProperty()) {
-      return TypesUtil.substituteBoxAndNormalizeType(org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element), candidate.getSubstitutor(), candidate.getSpreadState(), expression);
+      return TypesUtil.substituteAndNormalizeType(org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element),
+                                                  candidate.getSubstitutor(), candidate.getSpreadState(), expression);
     }
 
     final PsiType type;
@@ -829,7 +833,7 @@ public class ResolveUtil {
     if (type instanceof GrClosureType) {
       final GrSignature signature = ((GrClosureType)type).getSignature();
       PsiType returnType = GrClosureSignatureUtil.getReturnType(signature, args, expression);
-      return TypesUtil.substituteBoxAndNormalizeType(returnType, candidate.getSubstitutor(), candidate.getSpreadState(), expression);
+      return TypesUtil.substituteAndNormalizeType(returnType, candidate.getSubstitutor(), candidate.getSpreadState(), expression);
     }
     return null;
   }

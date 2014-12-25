@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.pom.java.LanguageLevel;
 
 /**
  * @author ven

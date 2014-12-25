@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
         return replaceSubstringWithDictFormatting(oldExpression, quotes, prefix, suffix, formatValue, newText);
       }
       else {
-        final TypeEvalContext context = TypeEvalContext.userInitiated(oldExpression.getContainingFile());
+        final TypeEvalContext context = TypeEvalContext.userInitiated(oldExpression.getProject(), oldExpression.getContainingFile());
         final PyType valueType = context.getType(formatValue);
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
         final PyType tupleType = builtinCache.getTupleType();
@@ -441,7 +441,10 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
 
   private static int getExpressionPriority(PyElement expr) {
     int priority = 0;
-    if (expr instanceof PySubscriptionExpression || expr instanceof PySliceExpression || expr instanceof PyCallExpression) priority = 1;
+    if (expr instanceof PyReferenceExpression ||
+        expr instanceof PySubscriptionExpression ||
+        expr instanceof PySliceExpression ||
+        expr instanceof PyCallExpression) priority = 1;
     else if (expr instanceof PyPrefixExpression) {
       final IElementType opType = getOperationType(expr);
       if (opType == PLUS || opType == MINUS || opType == TILDE) priority = 2;

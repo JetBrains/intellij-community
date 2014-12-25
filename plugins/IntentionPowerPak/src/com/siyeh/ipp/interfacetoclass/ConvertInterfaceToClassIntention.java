@@ -16,8 +16,6 @@
 package com.siyeh.ipp.interfacetoclass;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
@@ -40,6 +38,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.application.WriteAction.start;
 
 public class ConvertInterfaceToClassIntention extends Intention {
 
@@ -138,13 +139,13 @@ public class ConvertInterfaceToClassIntention extends Intention {
     if (conflicts.isEmpty()) {
       conflictsDialogOK = true;
     } else {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (getApplication().isUnitTestMode()) {
         throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
       }
       final ConflictsDialog conflictsDialog = new ConflictsDialog(anInterface.getProject(), conflicts, new Runnable() {
         @Override
         public void run() {
-          final AccessToken token = WriteAction.start();
+          final AccessToken token = start();
           try {
             convertInterfaceToClass(anInterface);
           }
@@ -153,8 +154,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
           }
         }
       });
-      conflictsDialog.show();
-      conflictsDialogOK = conflictsDialog.isOK();
+      conflictsDialogOK = conflictsDialog.showAndGet();
     }
     if (conflictsDialogOK) {
       convertInterfaceToClass(anInterface);

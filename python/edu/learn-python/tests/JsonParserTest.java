@@ -21,7 +21,7 @@ public class JsonParserTest {
   private Course myCourse = null;
   @Before
   public void setUp() throws FileNotFoundException {
-    Reader reader = new InputStreamReader(new FileInputStream("EDIDE/testData/course.json"));
+    Reader reader = new InputStreamReader(new FileInputStream("testData/course.json"));
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     myCourse = gson.fromJson(reader, Course.class);
   }

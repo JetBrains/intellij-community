@@ -14,7 +14,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -58,21 +57,13 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixtureBuilder.getFixture());
 
-    UIUtil.invokeAndWaitIfNeeded(
-      new Runnable() {
-        @Override
-        public void run() {
-          ModuleFixtureBuilder moduleFixtureBuilder = fixtureBuilder.addModule(MyModuleFixtureBuilder.class);
-          moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
-          moduleFixtureBuilder.addSourceContentRoot(getTestDataPath());
-          final List<String> contentRoots = getContentRoots();
-          for (String contentRoot : contentRoots) {
-            moduleFixtureBuilder.addContentRoot(getTestDataPath() + contentRoot);
-          }
-        }
-      }
-    );
-
+    ModuleFixtureBuilder moduleFixtureBuilder = fixtureBuilder.addModule(MyModuleFixtureBuilder.class);
+    moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
+    moduleFixtureBuilder.addSourceContentRoot(getTestDataPath());
+    final List<String> contentRoots = getContentRoots();
+    for (String contentRoot : contentRoots) {
+      moduleFixtureBuilder.addContentRoot(getTestDataPath() + contentRoot);
+    }
 
     myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());

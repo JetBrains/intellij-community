@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>prop_test.py</file>
+    <line>3</line>
+    <description>Getter should return or yield something</description>
+  </problem>
+</problems>
+

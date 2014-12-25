@@ -30,8 +30,7 @@ import java.util.Set;
  */
 public class PsiPolyExpressionUtil {
   public static boolean hasStandaloneForm(PsiExpression expression) {
-    if (expression instanceof PsiLambdaExpression ||
-        expression instanceof PsiMethodReferenceExpression ||
+    if (expression instanceof PsiFunctionalExpression ||
         expression instanceof PsiParenthesizedExpression ||
         expression instanceof PsiConditionalExpression ||
         expression instanceof PsiCallExpression) {
@@ -41,7 +40,7 @@ public class PsiPolyExpressionUtil {
   }
 
   public static boolean isPolyExpression(final PsiExpression expression) {
-    if (expression instanceof PsiLambdaExpression || expression instanceof PsiMethodReferenceExpression) {
+    if (expression instanceof PsiFunctionalExpression) {
       return true;
     } 
     else if (expression instanceof PsiParenthesizedExpression) {
@@ -126,8 +125,11 @@ public class PsiPolyExpressionUtil {
   }
 
   private static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {
-    final PsiElement context = expr.getParent();
-    return context instanceof PsiExpressionList || context instanceof PsiConditionalExpression || isAssignmentContext(expr, context);
+    final PsiElement context = PsiUtil.skipParenthesizedExprUp(expr.getParent());
+    return context instanceof PsiExpressionList || 
+           context instanceof PsiArrayInitializerExpression || 
+           context instanceof PsiConditionalExpression || 
+           isAssignmentContext(expr, context);
   }
 
   private static boolean isAssignmentContext(PsiExpression expr, PsiElement context) {

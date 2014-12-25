@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -328,7 +328,7 @@ public class PyPackageManagementService extends PackageManagementService {
       final String cause = stdoutCause != null ? stdoutCause : stderrCause;
       final String message =  cause != null ? cause : ee.getMessage();
       final String command = ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " ");
-      return new ErrorDescription(message, command, ee.getStdout(), findErrorSolution(ee, cause, sdk));
+      return new ErrorDescription(message, command, ee.getStdout() + "\n" + ee.getStderr(), findErrorSolution(ee, cause, sdk));
     }
     else {
       return ErrorDescription.fromMessage(e.getMessage());

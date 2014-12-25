@@ -1,11 +1,18 @@
 package com.siyeh.ig.numeric;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ImplicitNumericConversionInspectionTest extends IGInspectionTestCase {
+public class ImplicitNumericConversionInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/numeric/implicit_numeric_conversion",
-           new ImplicitNumericConversionInspection());
+  public void testImplicitNumericConversion() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ImplicitNumericConversionInspection();
   }
 }

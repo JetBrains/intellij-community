@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -65,7 +67,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     task.executeInBackground(false, new GitTaskResultHandlerAdapter() {
       @Override
       protected void run(GitTaskResult taskResult) {
-        DvcsUtil.workingTreeChangeStarted(project);
+        AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
         try {
           editor.close();
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
@@ -74,7 +76,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
           notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
         }
         finally {
-          DvcsUtil.workingTreeChangeFinished(project);
+          DvcsUtil.workingTreeChangeFinished(project, token);
         }
       }
     });
@@ -103,18 +105,29 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
         messageId = "rebase.result.amend";
         break;
       case FINISHED:
+        isError = false;
+        messageId = "rebase.result.success";
+        break;
       default:
         messageId = null;
     }
+
+    String message;
+    String title;
     if (messageId != null) {
-      String message = GitBundle.message(messageId, result.current, result.total);
-      String title = GitBundle.message(messageId + ".title");
-      if (isError) {
-        Messages.showErrorDialog(project, message, title);
-      }
-      else {
-        Messages.showInfoMessage(project, message, title);
-      }
+      message = GitBundle.message(messageId, result.current, result.total);
+      title = GitBundle.message(messageId + ".title");
+    }
+    else {
+      message = "Rebase finished: " + StringUtil.capitalize(StringUtil.toLowerCase(result.status.name()));
+      title = "";
+    }
+
+    if (isError) {
+      Messages.showErrorDialog(project, message, title);
+    }
+    else {
+      Messages.showInfoMessage(project, message, title);
     }
   }
 

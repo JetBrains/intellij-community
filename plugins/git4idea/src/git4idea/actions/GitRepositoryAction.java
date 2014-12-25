@@ -18,9 +18,6 @@ package git4idea.actions;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -53,21 +50,10 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
    */
   final List<TransactionRunnable> myDelayedTasks = new ArrayList<TransactionRunnable>();
 
-  /**
-   * {@inheritDoc}
-   */
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     myDelayedTasks.clear();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
-    DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      return;
-    }
+    FileDocumentManager.getInstance().saveAllDocuments();
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     GitVcs vcs = GitVcs.getInstance(project);
     final List<VirtualFile> roots = getGitRoots(project, vcs);
     if (roots == null) return;
@@ -196,9 +182,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
                                   final Set<VirtualFile> affectedRoots,
                                   List<VcsException> exceptions) throws VcsException;
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);

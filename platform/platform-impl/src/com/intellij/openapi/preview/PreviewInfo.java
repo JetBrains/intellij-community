@@ -17,6 +17,7 @@ package com.intellij.openapi.preview;
 
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -67,18 +68,33 @@ public class PreviewInfo<V, C> {
     return myData;
   }
 
+  @Nullable
   public C initComponent(boolean requestFocus) {
     return myProvider.initComponent(myData, requestFocus);
   }
 
+  public boolean isModified(boolean beforeReuse) {
+    return myProvider.isModified(myData, beforeReuse);
+  }
+
   @Override
   public int hashCode() {
-    return myProvider.hashCode() * 31 + myData.hashCode();
+    return myProvider.hashCode();
   }
 
   @Override
   public boolean equals(Object obj) {
-    return obj == this ||
-           (obj instanceof PreviewInfo && ((PreviewInfo)obj).myProvider.equals(myProvider) && ((PreviewInfo)obj).myData.equals(myData));
+    if (obj == this) return true;
+    if (!(obj instanceof PreviewInfo)) return false;
+    //noinspection unchecked
+    return ((PreviewInfo)obj).getId() == getId() && myProvider.contentsAreEqual( (V)((PreviewInfo)obj).myData, myData);
+  }
+
+  public void release() {
+    myProvider.release(myData);
+  }
+
+  public boolean supportsStandardPlace() {
+    return myProvider.supportsStandardPlace();
   }
 }

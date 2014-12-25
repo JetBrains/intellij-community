@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 
 public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   private static final String CREATE_MODULE_INTENTION = MavenDomBundle.message("fix.create.module");
@@ -520,7 +521,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     importProject(parentPom);
 
-    VfsUtil.saveText(parentPom, createPomXml(
+    myFixture.saveText(parentPom, createPomXml(
                                 "<groupId>test</groupId>" +
                                 "<artifactId>project</artifactId>" +
                                 "<version>1</version>" +
@@ -529,7 +530,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                                 "<modules>" +
                                 "  <module>../ppp/new<caret>Module</module>" +
                                 "</modules>"));
-
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     IntentionAction i = getIntentionAtCaret(parentPom, CREATE_MODULE_WITH_PARENT_INTENTION);
     assertNotNull(i);
     myFixture.launchAction(i);

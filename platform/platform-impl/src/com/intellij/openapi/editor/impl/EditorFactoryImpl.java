@@ -37,6 +37,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -241,7 +242,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   @Override
   @NotNull
   public Editor[] getAllEditors() {
-    return myEditors.toArray(new Editor[myEditors.size()]);
+    return ArrayUtil.stripTrailingNulls(myEditors.toArray(new Editor[myEditors.size()]));
   }
 
   @Override

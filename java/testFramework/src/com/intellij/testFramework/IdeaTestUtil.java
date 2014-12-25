@@ -23,10 +23,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -51,7 +48,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(module.getProject());
 
     final LanguageLevel projectLevel = projectExt.getLanguageLevel();
-    final LanguageLevel moduleLevel = LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
+    final LanguageLevel moduleLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
     try {
       projectExt.setLanguageLevel(level);
       setModuleLanguageLevel(module, level);
@@ -64,7 +61,8 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   public static void setModuleLanguageLevel(Module module, final LanguageLevel level) {
-    final LanguageLevelModuleExtension modifiable = (LanguageLevelModuleExtension)LanguageLevelModuleExtension.getInstance(module).getModifiableModel(true);
+    final LanguageLevelModuleExtensionImpl
+      modifiable = (LanguageLevelModuleExtensionImpl)LanguageLevelModuleExtensionImpl.getInstance(module).getModifiableModel(true);
     modifiable.setLanguageLevel(level);
     modifiable.commit();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.profile.codeInspection.ui.InspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -52,9 +52,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 public class InspectionManagerEx extends InspectionManagerBase {
-  private GlobalInspectionContextImpl myGlobalInspectionContext = null;
+  private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private final NotNullLazyValue<ContentManager> myContentManager;
   private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<GlobalInspectionContextImpl>();
+  private final AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
+  private GlobalInspectionContextImpl myGlobalInspectionContext;
+
 
   public InspectionManagerEx(final Project project) {
     super(project);
@@ -111,6 +114,15 @@ public class InspectionManagerEx extends InspectionManagerBase {
     });
   }
 
+  private static void processText(@NotNull @NonNls String descriptionText,
+                                  @NotNull InspectionToolWrapper tool,
+                                  @NotNull SearchableOptionsRegistrar myOptionsRegistrar) {
+    if (ApplicationManager.getApplication().isDisposed()) return;
+    final Set<String> words = myOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
+    for (String word : words) {
+      myOptionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), InspectionToolsConfigurable.ID, InspectionToolsConfigurable.DISPLAY_NAME);
+    }
+  }
 
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
@@ -149,6 +161,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
     myRunningContexts.remove(globalInspectionContext);
   }
 
+  @NotNull
   public Set<GlobalInspectionContextImpl> getRunningContexts() {
     return myRunningContexts;
   }
@@ -169,8 +182,6 @@ public class InspectionManagerEx extends InspectionManagerBase {
     return myContentManager;
   }
 
-  private final AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
-  private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   public void buildInspectionSearchIndexIfNecessary() {
     if (!myToolsAreInitialized.getAndSet(true)) {
       final SearchableOptionsRegistrar myOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
@@ -193,16 +204,6 @@ public class InspectionManagerEx extends InspectionManagerBase {
           }
         }
       });
-    }
-  }
-
-  private static void processText(@NotNull @NonNls String descriptionText,
-                                  @NotNull InspectionToolWrapper tool,
-                                  @NotNull SearchableOptionsRegistrar myOptionsRegistrar) {
-    if (ApplicationManager.getApplication().isDisposed()) return;
-    final Set<String> words = myOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
-    for (String word : words) {
-      myOptionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), InspectionToolsConfigurable.ID, InspectionToolsConfigurable.DISPLAY_NAME);
     }
   }
 }

@@ -17,7 +17,6 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
@@ -26,14 +25,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public interface IComponentStore {
   void initComponent(@NotNull Object component, boolean service);
 
   void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);
-
-  void reinitComponents(@NotNull Set<String> componentNames, @NotNull Collection<String> notReloadableComponents, boolean reloadData);
 
   @NotNull
   Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames);
@@ -54,8 +52,7 @@ public interface IComponentStore {
     }
   }
 
-  @Nullable
-  ComponentSaveSession startSave();
+  void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
 
   interface Reloadable extends IComponentStore {
     /**

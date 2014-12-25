@@ -1,6 +1,5 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -9,6 +8,7 @@ import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.frame.CallFrameView;
 import org.jetbrains.debugger.values.ObjectValue;
 import org.jetbrains.debugger.values.Value;
@@ -44,14 +44,14 @@ public interface DebuggerViewSupport {
    */
   boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context);
 
-  void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
+  void computeSourcePosition(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
 
   @NotNull
-  ThreeState computeInlineDebuggerData(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback);
+  ThreeState computeInlineDebuggerData(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback);
 
   // return null if you don't need to add additional properties
   @Nullable
-  ActionCallback computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node);
+  Promise<Void> computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node);
 
   @NotNull
   MemberFilter createMemberFilter(@NotNull VariableContext context);

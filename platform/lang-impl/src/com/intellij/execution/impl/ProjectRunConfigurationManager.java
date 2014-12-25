@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.HashSet;
-import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -49,78 +42,47 @@ import java.util.Set;
              stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
   }
 )
-public class ProjectRunConfigurationManager implements ProjectComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance(ProjectRunConfigurationManager.class);
-
+public class ProjectRunConfigurationManager implements PersistentStateComponent<Element> {
   private final RunManagerImpl myManager;
-  private List<Element> myUnloadedElements = null;
+  private List<Element> myUnloadedElements;
 
-  public ProjectRunConfigurationManager(final RunManagerImpl manager) {
+  public ProjectRunConfigurationManager(@NotNull RunManagerImpl manager) {
     myManager = manager;
   }
 
   @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "ProjectRunConfigurationManager";
-  }
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
-  }
-
-  @Override
   public Element getState() {
-     try {
-       final Element e = new Element("state");
-       writeExternal(e);
-       return e;
-     }
-     catch (WriteExternalException e1) {
-       LOG.error(e1);
-       return null;
-     }
-   }
-
-   @Override
-   public void loadState(Element state) {
-     try {
-       readExternal(state);
-     }
-     catch (InvalidDataException e) {
-       LOG.error(e);
-     }
-   }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    myUnloadedElements = null;
-    final Set<String> existing = new HashSet<String>();
-
-    final List children = element.getChildren();
-    for (final Object child : children) {
-      final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration((Element)child, true);
-      if (configuration == null && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
-        if (myUnloadedElements == null) myUnloadedElements = new ArrayList<Element>(2);
-        myUnloadedElements.add(element);
+    Element state = new Element("state");
+    for (RunnerAndConfigurationSettings configuration : myManager.getStableConfigurations(true)) {
+      myManager.addConfigurationElement(state, configuration);
+    }
+    if (!ContainerUtil.isEmpty(myUnloadedElements)) {
+      for (Element unloadedElement : myUnloadedElements) {
+        state.addContent(unloadedElement.clone());
       }
+    }
+    return state;
+  }
 
+  @Override
+  public void loadState(Element state) {
+    if (myUnloadedElements != null) {
+      myUnloadedElements.clear();
+    }
+
+    Set<String> existing = new THashSet<String>();
+    for (Iterator<Element> iterator = state.getChildren().iterator(); iterator.hasNext(); ) {
+      Element child = iterator.next();
+      RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(child, true);
       if (configuration != null) {
         existing.add(configuration.getUniqueID());
+      }
+      else if (child.getName().equals(RunManagerImpl.CONFIGURATION)) {
+        if (myUnloadedElements == null) {
+          myUnloadedElements = new SmartList<Element>();
+        }
+        iterator.remove();
+        myUnloadedElements.add(child);
       }
     }
 
@@ -141,42 +103,10 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
     myManager.getSortedConfigurations();
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    final Collection<RunnerAndConfigurationSettings> configurations = myManager.getStableConfigurations();
-    for (RunnerAndConfigurationSettings configuration : configurations) {
-      if (myManager.isConfigurationShared(configuration)){
-        myManager.addConfigurationElement(element, configuration);
-      }
-    }
-    if (myUnloadedElements != null) {
-      for (Element unloadedElement : myUnloadedElements) {
-        element.addContent(unloadedElement.clone());
-      }
-    }
-  }
-
-  public static class RunConfigurationStateSplitter implements StateSplitter {
+  static class RunConfigurationStateSplitter extends StateSplitterEx {
     @Override
-    public List<Pair<Element, String>> splitState(Element e) {
-      final UniqueNameGenerator generator = new UniqueNameGenerator();
-
-      List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-
-      final List list = e.getChildren();
-      for (final Object o : list) {
-        Element library = (Element)o;
-        final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(library.getAttributeValue(RunManagerImpl.NAME_ATTR))) + ".xml";
-        result.add(Pair.create(library, name));
-      }
-
-      return result;
-    }
-
-    @Override
-    public void mergeStatesInto(Element target, Element[] elements) {
-      for (Element e : elements) {
-        target.addContent(e);
-      }
+    public List<Pair<Element, String>> splitState(@NotNull Element state) {
+      return splitState(state, RunManagerImpl.NAME_ATTR);
     }
   }
 }

@@ -137,7 +137,7 @@ public abstract class OccurrencesChooser<T> {
 
     JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setTitle("Multiple occurrences found")
-      .setMovable(false)
+      .setMovable(true)
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChoosenCallback(new Runnable() {

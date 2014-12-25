@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 /**
@@ -63,6 +64,29 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertModuleOutput("project",
                        getProjectPath() + "/build",
                        getProjectPath() + "/build/classes/test");
+  }
+
+  @Test
+  @TargetVersions("2.2+")
+  public void testSourceGeneratedFoldersWithIdeaPlugin() throws Exception {
+
+    importProject(
+      "apply plugin: 'java'\n" +
+      "apply plugin: 'idea'\n" +
+      "idea {\n" +
+      "  module {\n" +
+      "    generatedSourceDirs += file('src/main/java')\n" +
+      "    generatedSourceDirs += file('src/test/java')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertDefaultGradleJavaProjectFolders("project");
+    assertGeneratedSources("project", "src/main/java");
+    assertGeneratedTestSources("project", "src/test/java");
   }
 
   @Test

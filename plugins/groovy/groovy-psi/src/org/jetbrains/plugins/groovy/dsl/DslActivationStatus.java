@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -29,45 +28,37 @@ import java.util.Map;
 
 @State(
   name = "DslActivationStatus",
-  storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivation.xml")
-  }
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivation.xml", roamingType = RoamingType.DISABLED)
 )
-public class DslActivationStatus implements ApplicationComponent, PersistentStateComponent<Element> {
+public class DslActivationStatus implements PersistentStateComponent<Element> {
   private final Map<VirtualFile, String> myStatus = new THashMap<VirtualFile, String>();
   private static final String ENABLED = "enabled";
 
   public static DslActivationStatus getInstance() {
-    return ApplicationManager.getApplication().getComponent(DslActivationStatus.class);
+    return ServiceManager.getService(DslActivationStatus.class);
   }
 
-  public void activateUntilModification(@NotNull VirtualFile vfile) {
+  public synchronized void activateUntilModification(@NotNull VirtualFile vfile) {
     myStatus.put(vfile, ENABLED);
   }
 
-  public void disableFile(@NotNull VirtualFile vfile, @NotNull String error) {
+  public synchronized void disableFile(@NotNull VirtualFile vfile, @NotNull String error) {
     myStatus.put(vfile, error);
   }
 
   @Nullable
-  public String getInactivityReason(VirtualFile file) {
+  public synchronized String getInactivityReason(VirtualFile file) {
     String status = myStatus.get(file);
     return status == null || status == ENABLED ? null : status;
   }
 
-  public boolean isActivated(VirtualFile file) {
+  public synchronized boolean isActivated(VirtualFile file) {
     return myStatus.get(file) == ENABLED;
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "DslActivationStatus";
   }
 
   @Nullable
   @Override
-  public Element getState() {
+  public synchronized Element getState() {
     Element root = new Element("x");
     for (Map.Entry<VirtualFile, String> entry : myStatus.entrySet()) {
       VirtualFile file = entry.getKey();
@@ -81,7 +72,7 @@ public class DslActivationStatus implements ApplicationComponent, PersistentStat
   }
 
   @Override
-  public void loadState(Element state) {
+  public synchronized void loadState(Element state) {
     List<Element> children = state.getChildren("file");
     for (Element element : children) {
       String url = element.getAttributeValue("url", "");
@@ -91,15 +82,5 @@ public class DslActivationStatus implements ApplicationComponent, PersistentStat
         myStatus.put(file, status);
       }
     }
-  }
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
   }
 }

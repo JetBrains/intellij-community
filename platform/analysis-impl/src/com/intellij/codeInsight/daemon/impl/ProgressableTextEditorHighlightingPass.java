@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,18 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,18 +65,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myHighlightInfoProcessor = highlightInfoProcessor;
   }
 
-  @NotNull
-  private HighlightingSession sessionCreated(@NotNull TextRange restrictRange,
-                                             @NotNull PsiFile file,
-                                             @Nullable Editor editor,
-                                             @NotNull ProgressIndicator progress,
-                                             EditorColorsScheme scheme,
-                                             int passId) {
-    HighlightingSessionImpl impl = new HighlightingSessionImpl(file, editor, progress, scheme, passId, restrictRange);
-    myHighlightingSession = impl;
-    return impl;
-  }
-
   @Override
   protected boolean isValid() {
     return super.isValid() && (myFile == null || myFile.isValid());
@@ -83,9 +76,22 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   @Override
   public final void doCollectInformation(@NotNull final ProgressIndicator progress) {
+    if (!(progress instanceof DaemonProgressIndicator)) {
+      throw new IncorrectOperationException("Highlighting must be run under DaemonProgressIndicator, but got: "+progress);
+    }
     myFinished = false;
     if (myFile != null) {
-      myHighlightingSession = sessionCreated(myRestrictRange, myFile, myEditor, progress, getColorsScheme(), getId());
+      myHighlightingSession = new HighlightingSessionImpl(myFile, myEditor, progress, getColorsScheme(), getId(), myRestrictRange);
+      if (!progress.isCanceled()) {
+        Disposer.register((Disposable)progress, myHighlightingSession);
+        if (progress.isCanceled()) {
+          Disposer.dispose(myHighlightingSession);
+          Disposer.dispose((Disposable)progress);
+        }
+      }
+      progress.checkCanceled();
+
+      ((DaemonProgressIndicator)progress).putUserData(HIGHLIGHTING_SESSION, myHighlightingSession);
     }
     try {
       collectInformationWithProgress(progress);
@@ -95,6 +101,12 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
         sessionFinished();
       }
     }
+  }
+  private static final Key<HighlightingSession> HIGHLIGHTING_SESSION = Key.create("HIGHLIGHTING_SESSION");
+  public static HighlightingSession getHighlightingSession(@NotNull ProgressIndicator indicator) {
+    return indicator instanceof WrappedProgressIndicator ?
+           getHighlightingSession(((WrappedProgressIndicator)indicator).getOriginalProgressIndicator()) :
+           ((UserDataHolder)indicator).getUserData(HIGHLIGHTING_SESSION);
   }
 
   protected abstract void collectInformationWithProgress(@NotNull ProgressIndicator progress);
@@ -153,7 +165,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
   }
 
-  public static class EmptyPass extends TextEditorHighlightingPass {
+  static class EmptyPass extends TextEditorHighlightingPass {
     public EmptyPass(final Project project, @Nullable final Document document) {
       super(project, document, false);
     }

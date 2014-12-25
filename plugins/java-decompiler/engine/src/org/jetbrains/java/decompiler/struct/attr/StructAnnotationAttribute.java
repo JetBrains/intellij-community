@@ -81,7 +81,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
         String className = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         String constName = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         FieldDescriptor descr = FieldDescriptor.parseDescriptor(className);
-        return new FieldExprent(constName, descr.type.value, true, null, descr);
+        return new FieldExprent(constName, descr.type.value, true, null, descr, null);
 
       case 'c': // class
         String descriptor = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
@@ -122,7 +122,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
           default:
             throw new RuntimeException("invalid class type: " + type.type);
         }
-        return new ConstExprent(VarType.VARTYPE_CLASS, value);
+        return new ConstExprent(VarType.VARTYPE_CLASS, value, null);
 
       case '[': // array
         List<Exprent> elements = Collections.emptyList();
@@ -143,7 +143,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
           newType = new VarType(elementType.type, 1, elementType.value);
         }
 
-        NewExprent newExpr = new NewExprent(newType, Collections.<Exprent>emptyList());
+        NewExprent newExpr = new NewExprent(newType, Collections.<Exprent>emptyList(), null);
         newExpr.setDirectArrayInit(true);
         newExpr.setLstArrayElements(elements);
         return newExpr;
@@ -155,23 +155,23 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
         PrimitiveConstant cn = pool.getPrimitiveConstant(data.readUnsignedShort());
         switch (tag) {
           case 'B':
-            return new ConstExprent(VarType.VARTYPE_BYTE, cn.value);
+            return new ConstExprent(VarType.VARTYPE_BYTE, cn.value, null);
           case 'C':
-            return new ConstExprent(VarType.VARTYPE_CHAR, cn.value);
+            return new ConstExprent(VarType.VARTYPE_CHAR, cn.value, null);
           case 'D':
-            return new ConstExprent(VarType.VARTYPE_DOUBLE, cn.value);
+            return new ConstExprent(VarType.VARTYPE_DOUBLE, cn.value, null);
           case 'F':
-            return new ConstExprent(VarType.VARTYPE_FLOAT, cn.value);
+            return new ConstExprent(VarType.VARTYPE_FLOAT, cn.value, null);
           case 'I':
-            return new ConstExprent(VarType.VARTYPE_INT, cn.value);
+            return new ConstExprent(VarType.VARTYPE_INT, cn.value, null);
           case 'J':
-            return new ConstExprent(VarType.VARTYPE_LONG, cn.value);
+            return new ConstExprent(VarType.VARTYPE_LONG, cn.value, null);
           case 'S':
-            return new ConstExprent(VarType.VARTYPE_SHORT, cn.value);
+            return new ConstExprent(VarType.VARTYPE_SHORT, cn.value, null);
           case 'Z':
-            return new ConstExprent(VarType.VARTYPE_BOOLEAN, cn.value);
+            return new ConstExprent(VarType.VARTYPE_BOOLEAN, cn.value, null);
           case 's':
-            return new ConstExprent(VarType.VARTYPE_STRING, cn.value);
+            return new ConstExprent(VarType.VARTYPE_STRING, cn.value, null);
           default:
             throw new RuntimeException("invalid element type!");
         }

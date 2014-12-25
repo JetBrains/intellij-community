@@ -23,6 +23,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -110,7 +111,8 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
   public Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
     if (key.row < 0 || key.row >= myComponent.getRowCount() ||
         key.column < 0 || key.column >= myComponent.getColumnCount() ||
-        key.row == myComponent.getEditingRow() && key.column == myComponent.getEditingColumn()) {
+        key.row == myComponent.getEditingRow() && key.column == myComponent.getEditingColumn() ||
+        hasDraggingOrResizingColumn()) {
       return null;
     }
 
@@ -142,5 +144,10 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     }
 
     return new TableCell(rowIndex, columnIndex);
+  }
+
+  private boolean hasDraggingOrResizingColumn() {
+    JTableHeader header = myComponent.getTableHeader();
+    return header != null && (header.getResizingColumn() != null || header.getDraggedColumn() != null);
   }
 }

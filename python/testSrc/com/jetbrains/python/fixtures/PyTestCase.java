@@ -17,7 +17,6 @@ package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -31,6 +30,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -40,10 +41,13 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataPath;
@@ -79,8 +83,8 @@ import java.util.*;
  */
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
-  public static String PYTHON_2_MOCK_SDK = "2.7";
-  public static String PYTHON_3_MOCK_SDK = "3.2";
+  public static final String PYTHON_2_MOCK_SDK = "2.7";
+  public static final String PYTHON_3_MOCK_SDK = "3.4";
 
   private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
@@ -243,19 +247,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   /**
-   * @return completion strings suggested by {@link com.intellij.testFramework.fixtures.CodeInsightTestFixture#completeBasic()}
-   */
-  @NotNull
-  protected List<String> getCompletionStrings() {
-    final LookupElement[] elements = myFixture.completeBasic();
-    final List<String> result = new ArrayList<String>(elements.length);
-    for (final LookupElement element : elements) {
-      result.add(element.getLookupString());
-    }
-    return result;
-  }
-
-  /**
    * Returns elements certain element allows to navigate to (emulates CTRL+Click, actually).
    * You need to pass element as argument or
    * make sure your fixture is configured for some element (see {@link com.intellij.testFramework.fixtures.CodeInsightTestFixture#getElementAtCaret()})
@@ -300,6 +291,31 @@ public abstract class PyTestCase extends UsefulTestCase {
         });
       }
     }, null, null);
+  }
+
+  /**
+   * Runs refactoring using special handler
+   *
+   * @param handler handler to be used
+   */
+  protected void refactorUsingHandler(@NotNull final RefactoringActionHandler handler) {
+    final Editor editor = myFixture.getEditor();
+    assertInstanceOf(editor, EditorEx.class);
+    handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
+  }
+
+  /**
+   * Configures project by some path. It is here to emulate {@link com.intellij.platform.PlatformProjectOpenProcessor}
+   *
+   * @param path         path to open
+   * @param configurator configurator to use
+   */
+  protected void configureProjectByProjectConfigurators(@NotNull final String path,
+                                                        @NotNull final DirectoryProjectConfigurator configurator) {
+    final VirtualFile newPath =
+      myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
+    final Ref<Module> moduleRef = new Ref<Module>(myFixture.getModule());
+    configurator.configureProject(myFixture.getProject(), newPath, moduleRef);
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {

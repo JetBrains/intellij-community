@@ -56,6 +56,7 @@ public class DecompilerTestFixture {
       put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
       put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
       put(IFernflowerPreferences.LITERALS_AS_IS, "1");
+      put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
       putAll(options);
     }});
   }

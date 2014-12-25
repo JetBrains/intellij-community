@@ -1,7 +1,6 @@
 package com.intellij.json.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
-import com.intellij.json.JsonFileType;
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonValue;
@@ -21,7 +20,7 @@ public class JsonFileImpl extends PsiFileBase implements JsonFile {
   @NotNull
   @Override
   public FileType getFileType() {
-    return JsonFileType.INSTANCE;
+    return getViewProvider().getVirtualFile().getFileType();
   }
 
   @Nullable

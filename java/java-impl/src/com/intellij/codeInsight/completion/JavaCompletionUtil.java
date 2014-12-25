@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,6 +51,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
@@ -383,7 +385,7 @@ public class JavaCompletionUtil {
           }
           mentioned.add(CompletionUtil.getOriginalOrSelf((PsiMember)o));
         }
-        set.add(highlightIfNeeded(qualifierType, castQualifier(item, castItem, plainQualifier, processor), o));
+        set.add(highlightIfNeeded(qualifierType, castQualifier(item, castItem, plainQualifier, processor), o, element));
       }
     }
 
@@ -503,11 +505,36 @@ public class JavaCompletionUtil {
     return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
   }
 
-  public static LookupElement highlightIfNeeded(PsiType qualifierType, LookupElement item, Object object) {
-    return containsMember(qualifierType, object) ? highlight(item) : item;
+  @NotNull
+  public static LookupElement highlightIfNeeded(@Nullable PsiType qualifierType,
+                                                @NotNull LookupElement item,
+                                                @NotNull Object object,
+                                                @NotNull PsiElement place) {
+    if (object instanceof PsiMember &&
+        Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place))) {
+      return LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+        @Override
+        public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+          element.getDelegate().renderElement(presentation);
+          presentation.setItemTextForeground(JBColor.RED);
+        }
+      });
+    }
+    if (containsMember(qualifierType, object)) {
+      LookupElementRenderer<LookupElementDecorator<LookupElement>> boldRenderer =
+        new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+          @Override
+          public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+            element.getDelegate().renderElement(presentation);
+            presentation.setItemTextBold(true);
+          }
+        };
+      return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, boldRenderer), 1);
+    }
+    return item;
   }
 
-  public static boolean containsMember(PsiType qualifierType, Object object) {
+  public static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object) {
     if (qualifierType instanceof PsiArrayType && object instanceof PsiMember) { //length and clone()
       PsiFile file = ((PsiMember)object).getContainingFile();
       if (file == null || file.getVirtualFile() == null) { //yes, they're a bit dummy

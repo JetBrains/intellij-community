@@ -18,7 +18,7 @@ package org.jetbrains.plugins.ipnb;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PlatformIcons;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,8 +47,8 @@ public class IpnbFileType implements FileType {
   }
 
   public Icon getIcon() {
-    return PlatformIcons.UI_FORM_ICON;
-  } //TODO
+    return PythonIcons.Python.IpythonNotebook;
+  }
 
   public boolean isBinary() {
     return false;

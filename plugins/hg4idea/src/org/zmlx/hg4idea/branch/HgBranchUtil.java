@@ -16,13 +16,15 @@
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class HgBranchUtil {
 
@@ -30,11 +32,10 @@ public class HgBranchUtil {
    * Only common hg heavy branches
    */
   @NotNull
-  public static Collection<String> getCommonBranches(@NotNull Collection<HgRepository> repositories) {
+  public static List<String> getCommonBranches(@NotNull Collection<HgRepository> repositories) {
     Collection<String> commonBranches = null;
     for (HgRepository repository : repositories) {
-      Map<String, Set<Hash>> branchesWithHashes = repository.getBranches();
-      Collection<String> names = branchesWithHashes.keySet();
+      Collection<String> names = repository.getOpenedBranches();
       if (commonBranches == null) {
         commonBranches = names;
       }
@@ -53,7 +54,7 @@ public class HgBranchUtil {
   }
 
   @NotNull
-  public static Collection<String> getCommonBookmarks(@NotNull Collection<HgRepository> repositories) {
+  public static List<String> getCommonBookmarks(@NotNull Collection<HgRepository> repositories) {
     Collection<String> commonBookmarkNames = null;
     for (HgRepository repository : repositories) {
       Collection<HgNameWithHashInfo> bookmarksInfo = repository.getBookmarks();

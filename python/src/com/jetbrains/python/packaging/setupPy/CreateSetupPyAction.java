@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -53,14 +52,14 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   private static final String EMAIL_PROPERTY = "python.packaging.author.email";
 
   public CreateSetupPyAction() {
-    super(FileTemplateManager.getInstance().getInternalTemplate("Setup Script"));
+    super(FileTemplateManager.getDefaultInstance().getInternalTemplate("Setup Script"));
     getTemplatePresentation().setText("Create setup.py");
   }
 
   @Override
   public FileTemplate getTemplate() {
     // to ensure changes are picked up, reload the template on every call (PY-6681)
-    return FileTemplateManager.getInstance().getInternalTemplate("Setup Script");
+    return FileTemplateManager.getDefaultInstance().getInternalTemplate("Setup Script");
   }
 
   @Override

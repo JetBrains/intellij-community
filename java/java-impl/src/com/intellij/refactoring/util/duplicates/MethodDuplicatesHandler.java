@@ -73,12 +73,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
 
     final AnalysisScope scope = new AnalysisScope(file);
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
-                                                                RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
-                                                                project, scope, module != null ? module.getName() : null, false,
-                                                                AnalysisUIOptions.getInstance(project), element);
-    dlg.show();
-    if (dlg.isOK()) {
+    final BaseAnalysisActionDialog dlg =
+      new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
+                                   RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
+                                   project, scope, module != null ? module.getName() : null, false,
+                                   AnalysisUIOptions.getInstance(project), element);
+    if (dlg.showAndGet()) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Locate duplicates", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -195,23 +195,24 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         }
       }
     });
-    replaceDuplicate(project, duplicates, members);
-    if (!silent) {
-      final Runnable nothingFoundRunnable = new Runnable() {
-        @Override
-        public void run() {
-          if (duplicates.isEmpty()) {
+    if (duplicates.isEmpty()) {
+      if (!silent) {
+        final Runnable nothingFoundRunnable = new Runnable() {
+          @Override
+          public void run() {
             final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
                                                              ApplicationNamesInfo.getInstance().getProductName());
             Messages.showInfoMessage(project, message, REFACTORING_NAME);
           }
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          nothingFoundRunnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
         }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        nothingFoundRunnable.run();
-      } else {
-        ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
       }
+    } else {
+      replaceDuplicate(project, duplicates, members);
     }
   }
 
@@ -256,6 +257,16 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   }
 
   public static List<Match> hasDuplicates(final PsiFile file, final PsiMember member) {
+    final DuplicatesFinder duplicatesFinder = createDuplicatesFinder(member);
+    if (duplicatesFinder == null) {
+      return Collections.emptyList();
+    }
+
+    return duplicatesFinder.findDuplicates(file);
+  }
+
+  @Nullable
+  public static DuplicatesFinder createDuplicatesFinder(PsiMember member) {
     PsiElement[] pattern;
     ReturnValue matchedReturnValue = null;
     if (member instanceof PsiMethod) {
@@ -287,17 +298,14 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       pattern = new PsiElement[]{((PsiField)member).getInitializer()};
     }
     if (pattern.length == 0) {
-      return Collections.emptyList();
+      return null;
     }
     final List<? extends PsiVariable> inputVariables = 
       member instanceof PsiMethod ? Arrays.asList(((PsiMethod)member).getParameterList().getParameters()) : new ArrayList<PsiVariable>();
-    final DuplicatesFinder duplicatesFinder =
-      new DuplicatesFinder(pattern, 
-                           new InputVariables(inputVariables, member.getProject(), new LocalSearchScope(pattern), false), 
-                           matchedReturnValue,
-                           new ArrayList<PsiVariable>());
-
-    return duplicatesFinder.findDuplicates(file);
+    return new DuplicatesFinder(pattern,
+                                new InputVariables(inputVariables, member.getProject(), new LocalSearchScope(pattern), false),
+                                matchedReturnValue,
+                                new ArrayList<PsiVariable>());
   }
 
   static String getStatusMessage(final int duplicatesNo) {

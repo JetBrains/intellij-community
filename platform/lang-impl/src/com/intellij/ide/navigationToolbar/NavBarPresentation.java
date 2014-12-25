@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,8 +78,8 @@ public class NavBarPresentation {
           }
         });
 
-        if (icon != null && (icon.getIconHeight() > 16 || icon.getIconWidth() > 16)) {
-          icon = IconUtil.cropIcon(icon, 16, 16);
+        if (icon != null && (icon.getIconHeight() > 16 * 2 || icon.getIconWidth() > 16 * 2)) {
+          icon = IconUtil.cropIcon(icon, 16 * 2, 16 * 2);
         }
         return icon;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,155 +27,180 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RefJavaUtilImpl extends RefJavaUtil{
 
   @Override
-  public void addReferences(final PsiModifierListOwner psiFrom, final RefJavaElement ref, @Nullable PsiElement findIn) {
+  public void addReferences(@NotNull final PsiModifierListOwner psiFrom, @NotNull final RefJavaElement ref, @Nullable PsiElement findIn) {
     final RefJavaElementImpl refFrom = (RefJavaElementImpl)ref;
-    if (findIn != null) {
-      findIn.accept(
-        new JavaRecursiveElementWalkingVisitor() {
-          @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-            final PsiElement target = reference.resolve();
+    if (findIn == null) {
+      return;
+    }
+    findIn.accept(
+      new JavaRecursiveElementWalkingVisitor() {
+        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          final PsiElement target = reference.resolve();
 
-            if (target instanceof PsiClass) {
-              final PsiClass aClass = (PsiClass)target;
-              final RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(aClass);
-              refFrom.addReference(refClass, aClass, psiFrom, false, true, null);
-            }
-
-            if (target instanceof PsiModifierListOwner && isDeprecated(target)) {
-              refFrom.setUsesDeprecatedApi(true);
-            }
+          if (target instanceof PsiClass) {
+            final PsiClass aClass = (PsiClass)target;
+            final RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(aClass);
+            refFrom.addReference(refClass, aClass, psiFrom, false, true, null);
           }
 
-          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-            visitElement(expression);
+          if (target instanceof PsiModifierListOwner && isDeprecated(target)) {
+            refFrom.setUsesDeprecatedApi(true);
+          }
+        }
 
-            PsiElement psiResolved = expression.resolve();
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+          visitElement(expression);
 
-            if (psiResolved instanceof PsiModifierListOwner) {
-              if (isDeprecated(psiResolved)) refFrom.setUsesDeprecatedApi(true);
-            }
+          PsiElement psiResolved = expression.resolve();
 
-            RefElement refResolved = refFrom.getRefManager().getReference(psiResolved);
-            refFrom.addReference(
-              refResolved, psiResolved, psiFrom, PsiUtil.isAccessedForWriting(expression),
-              PsiUtil.isAccessedForReading(expression), expression
-            );
-
-            if (refResolved instanceof RefMethod) {
-              updateRefMethod(psiResolved, refResolved, expression, psiFrom, refFrom);
-            }
+          if (psiResolved instanceof PsiModifierListOwner) {
+            if (isDeprecated(psiResolved)) refFrom.setUsesDeprecatedApi(true);
           }
 
+          RefElement refResolved = refFrom.getRefManager().getReference(psiResolved);
+          refFrom.addReference(
+            refResolved, psiResolved, psiFrom, PsiUtil.isAccessedForWriting(expression),
+            PsiUtil.isAccessedForReading(expression), expression
+          );
 
-          @Override public void visitEnumConstant(PsiEnumConstant enumConstant) {
-            super.visitEnumConstant(enumConstant);
-            processNewLikeConstruct(enumConstant.resolveConstructor(), enumConstant.getArgumentList());
+          if (refResolved instanceof RefMethod) {
+            updateRefMethod(psiResolved, refResolved, expression, psiFrom, refFrom);
           }
+        }
 
-          @Override public void visitNewExpression(PsiNewExpression newExpr) {
-            super.visitNewExpression(newExpr);
-            PsiMethod psiConstructor = newExpr.resolveConstructor();
-            final PsiExpressionList argumentList = newExpr.getArgumentList();
 
-            RefMethod refConstructor = processNewLikeConstruct(psiConstructor, argumentList);
+        @Override public void visitEnumConstant(PsiEnumConstant enumConstant) {
+          super.visitEnumConstant(enumConstant);
+          processNewLikeConstruct(enumConstant.resolveConstructor(), enumConstant.getArgumentList());
+        }
 
-            if (refConstructor == null) {  // No explicit constructor referenced. Should use default one.
-              PsiType newType = newExpr.getType();
-              if (newType instanceof PsiClassType) {
-                processClassReference(PsiUtil.resolveClassInType(newType), refFrom, psiFrom, true);
-              }
+        @Override public void visitNewExpression(PsiNewExpression newExpr) {
+          super.visitNewExpression(newExpr);
+          PsiMethod psiConstructor = newExpr.resolveConstructor();
+          final PsiExpressionList argumentList = newExpr.getArgumentList();
+
+          RefMethod refConstructor = processNewLikeConstruct(psiConstructor, argumentList);
+
+          if (refConstructor == null) {  // No explicit constructor referenced. Should use default one.
+            PsiType newType = newExpr.getType();
+            if (newType instanceof PsiClassType) {
+              processClassReference(PsiUtil.resolveClassInType(newType), refFrom, psiFrom, true);
             }
           }
+        }
 
-          @Nullable
-          private RefMethod processNewLikeConstruct(final PsiMethod psiConstructor, final PsiExpressionList argumentList) {
-            if (psiConstructor != null) {
-              if (isDeprecated(psiConstructor)) refFrom.setUsesDeprecatedApi(true);
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {
+          super.visitLambdaExpression(expression);
+          processFunctionalExpression(expression);
+        }
+
+        @Override
+        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+          super.visitMethodReferenceExpression(expression);
+          processFunctionalExpression(expression);
+        }
+
+        private void processFunctionalExpression(PsiFunctionalExpression expression) {
+          final PsiClass aClass = PsiUtil.resolveClassInType(expression.getFunctionalInterfaceType());
+          if (aClass != null) {
+            refFrom.addReference(refFrom.getRefManager().getReference(aClass), aClass, psiFrom, false, true, null);
+            final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
+            if (interfaceMethod != null) {
+              refFrom.addReference(refFrom.getRefManager().getReference(interfaceMethod), interfaceMethod, psiFrom, false, true, null);
             }
+          }
+        }
 
-            RefMethodImpl refConstructor = (RefMethodImpl)refFrom.getRefManager().getReference(
-              psiConstructor
-            );
-            refFrom.addReference(refConstructor, psiConstructor, psiFrom, false, true, null);
-
-            if (argumentList != null) {
-              PsiExpression[] psiParams = argumentList.getExpressions();
-              for (PsiExpression param : psiParams) {
-                param.accept(this);
-              }
-
-              if (refConstructor != null) {
-                refConstructor.updateParameterValues(psiParams);
-              }
-            }
-            return refConstructor;
+        @Nullable
+        private RefMethod processNewLikeConstruct(final PsiMethod psiConstructor, final PsiExpressionList argumentList) {
+          if (psiConstructor != null) {
+            if (isDeprecated(psiConstructor)) refFrom.setUsesDeprecatedApi(true);
           }
 
-          @Override public void visitAnonymousClass(PsiAnonymousClass psiClass) {
-            super.visitAnonymousClass(psiClass);
+          RefMethodImpl refConstructor = (RefMethodImpl)refFrom.getRefManager().getReference(
+            psiConstructor
+          );
+          refFrom.addReference(refConstructor, psiConstructor, psiFrom, false, true, null);
+
+          if (argumentList != null) {
+            PsiExpression[] psiParams = argumentList.getExpressions();
+            for (PsiExpression param : psiParams) {
+              param.accept(this);
+            }
+
+            if (refConstructor != null) {
+              refConstructor.updateParameterValues(psiParams);
+            }
+          }
+          return refConstructor;
+        }
+
+        @Override public void visitClass(PsiClass psiClass) {
+          super.visitClass(psiClass);
+          RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(psiClass);
+          refFrom.addReference(refClass, psiClass, psiFrom, false, true, null);
+        }
+
+        @Override public void visitReturnStatement(PsiReturnStatement statement) {
+          super.visitReturnStatement(statement);
+
+          if (refFrom instanceof RefMethodImpl) {
+            RefMethodImpl refMethod = (RefMethodImpl)refFrom;
+            refMethod.updateReturnValueTemplate(statement.getReturnValue());
+          }
+        }
+
+        @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+          super.visitClassObjectAccessExpression(expression);
+          final PsiTypeElement operand = expression.getOperand();
+          final PsiType type = operand.getType();
+          if (type instanceof PsiClassType) {
+            processClassReference(((PsiClassType)type).resolve(), refFrom, psiFrom, false);
+          }
+        }
+
+        private void processClassReference(final PsiClass psiClass,
+                                           final RefJavaElementImpl refFrom,
+                                           final PsiModifierListOwner psiFrom,
+                                           boolean defaultConstructorOnly) {
+          if (psiClass != null) {
             RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(psiClass);
-            refFrom.addReference(refClass, psiClass, psiFrom, false, true, null);
-          }
 
-          @Override public void visitReturnStatement(PsiReturnStatement statement) {
-            super.visitReturnStatement(statement);
+            if (refClass != null) {
+              boolean hasConstructorsMarked = false;
 
-            if (refFrom instanceof RefMethodImpl) {
-              RefMethodImpl refMethod = (RefMethodImpl)refFrom;
-              refMethod.updateReturnValueTemplate(statement.getReturnValue());
-            }
-          }
-
-          @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
-            super.visitClassObjectAccessExpression(expression);
-            final PsiTypeElement operand = expression.getOperand();
-            final PsiType type = operand.getType();
-            if (type instanceof PsiClassType) {
-              processClassReference(((PsiClassType)type).resolve(), refFrom, psiFrom, false);
-            }
-          }
-
-          private void processClassReference(final PsiClass psiClass,
-                                             final RefJavaElementImpl refFrom,
-                                             final PsiModifierListOwner psiFrom,
-                                             boolean defaultConstructorOnly) {
-            if (psiClass != null) {
-              RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(psiClass);
-
-              if (refClass != null) {
-                boolean hasConstructorsMarked = false;
-
-                if (defaultConstructorOnly) {
-                  RefMethodImpl refDefaultConstructor = (RefMethodImpl)refClass.getDefaultConstructor();
-                  if (refDefaultConstructor != null && !(refDefaultConstructor instanceof RefImplicitConstructor)) {
-                    refDefaultConstructor.addInReference(refFrom);
-                    refFrom.addOutReference(refDefaultConstructor);
-                    hasConstructorsMarked = true;
-                  }
+              if (defaultConstructorOnly) {
+                RefMethodImpl refDefaultConstructor = (RefMethodImpl)refClass.getDefaultConstructor();
+                if (refDefaultConstructor != null && !(refDefaultConstructor instanceof RefImplicitConstructor)) {
+                  refDefaultConstructor.addInReference(refFrom);
+                  refFrom.addOutReference(refDefaultConstructor);
+                  hasConstructorsMarked = true;
                 }
-                else {
-                  for (RefMethod cons : refClass.getConstructors()) {
-                    if (cons instanceof RefImplicitConstructor) continue;
-                    ((RefMethodImpl)cons).addInReference(refFrom);
-                    refFrom.addOutReference(cons);
-                    hasConstructorsMarked = true;
-                  }
+              }
+              else {
+                for (RefMethod cons : refClass.getConstructors()) {
+                  if (cons instanceof RefImplicitConstructor) continue;
+                  ((RefMethodImpl)cons).addInReference(refFrom);
+                  refFrom.addOutReference(cons);
+                  hasConstructorsMarked = true;
                 }
+              }
 
-                if (!hasConstructorsMarked) {
-                  refFrom.addReference(refClass, psiClass, psiFrom, false, true, null);
-                }
+              if (!hasConstructorsMarked) {
+                refFrom.addReference(refClass, psiClass, psiFrom, false, true, null);
               }
             }
           }
         }
-      );
-    }
+      }
+    );
   }
 
   private void updateRefMethod(PsiElement psiResolved,
@@ -226,7 +251,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
 
   @Override
-  public RefClass getTopLevelClass(RefElement refElement) {
+  public RefClass getTopLevelClass(@NotNull RefElement refElement) {
     RefEntity refParent = refElement.getOwner();
 
     while (refParent != null && refParent instanceof RefElement && !(refParent instanceof RefFile)) {
@@ -238,7 +263,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
   }
 
   @Override
-  public boolean isInheritor(RefClass subClass, RefClass superClass) {
+  public boolean isInheritor(@NotNull RefClass subClass, RefClass superClass) {
     if (subClass == superClass) return true;
 
     for (RefClass baseClass : subClass.getBaseClasses()) {
@@ -259,8 +284,9 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     return refPackage == null ? InspectionsBundle.message("inspection.reference.default.package") : refPackage.getQualifiedName();
   }
 
+  @NotNull
   @Override
-  public String getAccessModifier(PsiModifierListOwner psiElement) {
+  public String getAccessModifier(@NotNull PsiModifierListOwner psiElement) {
      if (psiElement instanceof PsiParameter) return PsiModifier.PACKAGE_LOCAL;
 
      PsiModifierList list = psiElement.getModifierList();
@@ -397,7 +423,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
    }
 
   @Override
-  public void setAccessModifier(RefJavaElement refElement, String newAccess) {
+  public void setAccessModifier(@NotNull RefJavaElement refElement, @NotNull String newAccess) {
     ((RefJavaElementImpl)refElement).setAccessModifier(newAccess);
   }
 

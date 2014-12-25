@@ -17,8 +17,10 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +44,7 @@ public class NonClasspathDirectoriesScope extends GlobalSearchScope {
   }
 
   @NotNull
-  public static GlobalSearchScope compose(List<VirtualFile> roots) {
+  public static GlobalSearchScope compose(@NotNull List<VirtualFile> roots) {
     if (roots.isEmpty()) {
       return EMPTY_SCOPE;
     }
@@ -87,5 +89,20 @@ public class NonClasspathDirectoriesScope extends GlobalSearchScope {
     int result = super.hashCode();
     result = 31 * result + myRoots.hashCode();
     return result;
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    if (myRoots.size() == 1) {
+      VirtualFile root = myRoots.iterator().next();
+      return "Directory '" + root.getName() + "'";
+    }
+    return "Directories " + StringUtil.join(myRoots, new Function<VirtualFile, String>() {
+      @Override
+      public String fun(VirtualFile file) {
+        return "'" + file.getName() + "'";
+      }
+    }, ", ");
   }
 }

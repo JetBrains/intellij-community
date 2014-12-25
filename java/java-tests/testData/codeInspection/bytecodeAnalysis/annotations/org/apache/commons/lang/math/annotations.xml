@@ -8,6 +8,11 @@
   <item name="org.apache.commons.lang.math.DoubleRange DoubleRange(java.lang.Number, java.lang.Number) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.math.DoubleRange boolean containsDouble(double)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.DoubleRange boolean containsNumber(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -35,6 +40,46 @@
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.math.DoubleRange double getMaximumDouble()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange double getMinimumDouble()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange float getMaximumFloat()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange float getMinimumFloat()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange int getMaximumInteger()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange int getMinimumInteger()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange long getMaximumLong()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange long getMinimumLong()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.FloatRange FloatRange(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -43,6 +88,11 @@
   </item>
   <item name="org.apache.commons.lang.math.FloatRange FloatRange(java.lang.Number, java.lang.Number) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange boolean containsFloat(float)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.math.FloatRange boolean containsNumber(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -71,8 +121,98 @@
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.math.FloatRange double getMaximumDouble()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange double getMinimumDouble()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange float getMaximumFloat()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange float getMinimumFloat()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange int getMaximumInteger()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange int getMinimumInteger()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange long getMaximumLong()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange long getMinimumLong()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.Fraction boolean equals(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction boolean equals(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction double doubleValue()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction float floatValue()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction int compareTo(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction int getDenominator()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction int getNumerator()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction int getProperNumerator()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction int getProperWhole()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction int intValue()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction long longValue()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction abs()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -122,6 +262,11 @@
       <val val="&quot;!null-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.math.IEEE754rUtils IEEE754rUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.IEEE754rUtils double max(double[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -143,6 +288,11 @@
   <item name="org.apache.commons.lang.math.IntRange IntRange(java.lang.Number, java.lang.Number) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.math.IntRange boolean containsInteger(int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.IntRange boolean containsNumber(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -162,12 +312,57 @@
   <item name="org.apache.commons.lang.math.IntRange boolean equals(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.math.IntRange boolean equals(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.IntRange boolean overlapsRange(org.apache.commons.lang.math.Range) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.math.IntRange boolean overlapsRange(org.apache.commons.lang.math.Range)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange double getMaximumDouble()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange double getMinimumDouble()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange float getMaximumFloat()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange float getMinimumFloat()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange int getMaximumInteger()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange int getMinimumInteger()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange long getMaximumLong()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange long getMinimumLong()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.math.JVMRandom void nextBytes(byte[]) 0">
@@ -181,6 +376,11 @@
   </item>
   <item name="org.apache.commons.lang.math.LongRange LongRange(java.lang.Number, java.lang.Number) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange boolean containsLong(long)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.math.LongRange boolean containsNumber(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -201,12 +401,57 @@
   <item name="org.apache.commons.lang.math.LongRange boolean equals(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.math.LongRange boolean equals(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.LongRange boolean overlapsRange(org.apache.commons.lang.math.Range) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.math.LongRange boolean overlapsRange(org.apache.commons.lang.math.Range)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange double getMaximumDouble()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange double getMinimumDouble()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange float getMaximumFloat()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange float getMinimumFloat()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange int getMaximumInteger()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange int getMinimumInteger()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange long getMaximumLong()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange long getMinimumLong()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.math.NumberRange NumberRange(java.lang.Number) 0">
@@ -229,6 +474,21 @@
   <item name="org.apache.commons.lang.math.NumberRange boolean equals(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.math.NumberRange java.lang.Number getMaximumNumber()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberRange java.lang.Number getMinimumNumber()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils NumberUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.NumberUtils boolean isAllZeros(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -247,8 +507,18 @@
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.math.NumberUtils byte max(byte, byte, byte)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.NumberUtils byte max(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils byte min(byte, byte, byte)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils byte min(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -277,8 +547,18 @@
   <item name="org.apache.commons.lang.math.NumberUtils float toFloat(java.lang.String, float) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.math.NumberUtils int max(int, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.NumberUtils int max(int[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils int min(int, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils int min(int[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -358,8 +638,18 @@
     </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.math.NumberUtils long max(long, long, long)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.NumberUtils long max(long[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils long min(long, long, long)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils long min(long[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -370,11 +660,26 @@
   <item name="org.apache.commons.lang.math.NumberUtils long toLong(java.lang.String, long) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.math.NumberUtils short max(short, short, short)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.NumberUtils short max(short[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.math.NumberUtils short min(short, short, short)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.math.NumberUtils short min(short[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.RandomUtils RandomUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.math.RandomUtils boolean nextBoolean(java.util.Random) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -393,6 +698,11 @@
   </item>
   <item name="org.apache.commons.lang.math.RandomUtils long nextLong(java.util.Random) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Range Range()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.math.Range boolean containsDouble(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>

@@ -17,6 +17,7 @@ package org.jetbrains.generate.tostring.template;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.generate.tostring.exception.TemplateResourceException;
 
 import java.io.BufferedInputStream;
@@ -70,6 +71,6 @@ public class TemplateResourceLocator {
    */
   private static String readFile(String resource) throws IOException {
     BufferedInputStream in = new BufferedInputStream(TemplateResourceLocator.class.getResourceAsStream(resource));
-    return StringUtil.convertLineSeparators(FileUtil.loadTextAndClose(new InputStreamReader(in, "UTF-8")));
+    return StringUtil.convertLineSeparators(FileUtil.loadTextAndClose(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET)));
   }
 }

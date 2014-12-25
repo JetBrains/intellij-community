@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.LineSeparator;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,9 +53,8 @@ public class FileBasedStorage extends XmlElementStorage {
                           @NotNull String rootElementName,
                           @NotNull Disposable parentDisposable,
                           @Nullable final Listener listener,
-                          @Nullable StreamProvider streamProvider,
-                          ComponentVersionProvider componentVersionProvider) {
-    super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider, componentVersionProvider);
+                          @Nullable StreamProvider streamProvider) {
+    super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider);
 
     myFilePath = filePath;
     myFile = new File(filePath);
@@ -82,7 +80,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
           @Override
           public void contentsChanged(@NotNull final VirtualFileEvent event) {
-            assert listener != null;
             listener.storageFileChanged(event, FileBasedStorage.this);
           }
         }, false, parentDisposable);
@@ -101,6 +98,13 @@ public class FileBasedStorage extends XmlElementStorage {
   @Override
   protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
     return new FileSaveSession(storageData);
+  }
+
+  public void forceSave() {
+    XmlElementStorageSaveSession externalizationSession = startExternalization();
+    if (externalizationSession != null) {
+      externalizationSession.forceSave();
+    }
   }
 
   private class FileSaveSession extends XmlElementStorageSaveSession {
@@ -151,32 +155,7 @@ public class FileBasedStorage extends XmlElementStorage {
   @Override
   @NotNull
   protected StorageData createStorageData() {
-    FileStorageData data = new FileStorageData(myRootElementName);
-    data.myFilePath = myFilePath;
-    return data;
-  }
-
-  public static class FileStorageData extends StorageData {
-    String myFilePath;
-
-    public FileStorageData(final String rootElementName) {
-      super(rootElementName);
-    }
-
-    protected FileStorageData(FileStorageData storageData) {
-      super(storageData);
-      myFilePath = storageData.myFilePath;
-    }
-
-    @Override
-    public StorageData clone() {
-      return new FileStorageData(this);
-    }
-
-    @NonNls
-    public String toString() {
-      return "FileStorageData[" + myFilePath + "]";
-    }
+    return new StorageData(myRootElementName);
   }
 
   @Nullable
@@ -262,8 +241,6 @@ public class FileBasedStorage extends XmlElementStorage {
       // storage roaming was changed to DISABLED, but settings repository has old state
       return;
     }
-
-    resetProviderCache();
 
     try {
       Element newElement = deleted ? null : loadDataFromStreamProvider();

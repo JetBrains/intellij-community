@@ -71,6 +71,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final Project myProject;
 
   private final List<DataProvider> dataProviders = new SmartList<DataProvider>();
+  private ArrayList<Content> mySelectionHistory = new ArrayList<Content>();
 
   /**
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class
@@ -279,6 +280,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         indexToSelect = selectedIndex - 1;
       }
 
+      mySelectionHistory.remove(content);
       myContents.remove(content);
       content.removePropertyChangeListener(this);
 
@@ -296,7 +298,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       if (newSize > 0 && trackSelection) {
         if (indexToSelect > -1) {
-          final Content toSelect = myContents.get(indexToSelect);
+          final Content toSelect = mySelectionHistory.size() > 0 ? mySelectionHistory.get(0) : myContents.get(indexToSelect);
           if (!isSelected(toSelect)) {
             if (myUI.isSingleSelection()) {
               setSelectedContentCB(toSelect).notify(result);
@@ -487,6 +489,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @NotNull
   @Override
   public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus, boolean implicit) {
+    mySelectionHistory.remove(content);
+    mySelectionHistory.add(0, content);
     if (isSelected(content) && requestFocus) {
       return requestFocus(content, forcedFocus);
     }

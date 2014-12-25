@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -29,15 +27,13 @@ import java.nio.charset.Charset;
  * @author yole
  */
 public abstract class EncodingRegistry {
-  public static Getter<EncodingRegistry> ourInstanceGetter;
-
   public abstract boolean isNative2Ascii(@NotNull VirtualFile virtualFile);
   public abstract boolean isNative2AsciiForPropertiesFiles();
 
   /**
    * @return charset configured in Settings|File Encodings|IDE encoding
    */
-  @Nullable
+  @NotNull
   public abstract Charset getDefaultCharset();
 
   /**
@@ -61,10 +57,7 @@ public abstract class EncodingRegistry {
   }
 
   public static EncodingRegistry getInstance() {
-    if (ourInstanceGetter == null) {
-      return (EncodingRegistry)ApplicationManager.getApplication().getPicoContainer().getComponentInstance("com.intellij.openapi.vfs.encoding.EncodingManager");
-    }
-    return ourInstanceGetter.get();
+    return EncodingManager.getInstance();
   }
 
 

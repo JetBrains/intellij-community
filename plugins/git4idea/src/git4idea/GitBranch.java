@@ -66,8 +66,8 @@ public abstract class GitBranch extends GitReference {
    *    if this information wasn't supplied to the GitBranch constructor.</p>
    */
   @NotNull
-  public String getHash() {
-    return myHash.asString();
+  public Hash getHash() {
+    return myHash;
   }
 
   /**

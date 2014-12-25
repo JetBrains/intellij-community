@@ -477,10 +477,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   private XmlAttributeDescriptor getAttributeImpl(String localName, String namespace, @Nullable Set<XmlTag> visited) {
     if (myTag == null) return null;
 
-    XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)myTag.getNSDescriptor(namespace, true);
+    XmlNSDescriptor nsDescriptor = myTag.getNSDescriptor(namespace, true);
 
-    if (nsDescriptor != this && nsDescriptor != null) {
-      return nsDescriptor.getAttributeImpl(
+    if (nsDescriptor != this && nsDescriptor instanceof XmlNSDescriptorImpl) {
+      return ((XmlNSDescriptorImpl)nsDescriptor).getAttributeImpl(
         localName,
         namespace,
         visited
@@ -886,7 +886,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return findSpecialTag(name, "attributeGroup", myTag, this, null);
   }
 
-  public XmlElementDescriptor[] getSubstitutes(String localName, String namespace) {
+  public synchronized XmlElementDescriptor[] getSubstitutes(String localName, String namespace) {
     if (!initSubstitutes()) {
       return XmlElementDescriptor.EMPTY_ARRAY;
     }
@@ -1030,7 +1030,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return myTag;
   }
 
-  public boolean hasSubstitutions() {
+  public synchronized boolean hasSubstitutions() {
     initSubstitutes();
     return mySubstitutions != null && mySubstitutions.size() > 0;
   }

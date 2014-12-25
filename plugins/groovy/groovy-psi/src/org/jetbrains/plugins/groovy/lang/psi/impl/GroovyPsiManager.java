@@ -32,7 +32,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,9 +64,9 @@ public class GroovyPsiManager {
 
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
 
-  private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
-  private final Map<String, Map<GlobalSearchScope, PsiClass>> myClassCache = new ConcurrentSoftValueHashMap<String, Map<GlobalSearchScope, PsiClass>>();
-  private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = new ConcurrentHashMap<PsiMember, Boolean>();
+  private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
+  private final Map<String, Map<GlobalSearchScope, PsiClass>> myClassCache = ContainerUtil.createConcurrentSoftValueMap();
+  private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.newConcurrentMap();
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
 
@@ -160,7 +161,7 @@ public class GroovyPsiManager {
   public PsiClass findClassWithCache(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
     Map<GlobalSearchScope, PsiClass> map = myClassCache.get(fqName);
     if (map == null) {
-      map = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
+      map = ContainerUtil.newConcurrentMap();
       myClassCache.put(fqName, map);
     }
     PsiClass cached = map.get(resolveScope);

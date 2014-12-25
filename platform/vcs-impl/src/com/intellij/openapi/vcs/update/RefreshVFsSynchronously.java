@@ -15,15 +15,13 @@
  */
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,99 +38,72 @@ public class RefreshVFsSynchronously {
     FilesToRefreshCollector callback = new FilesToRefreshCollector();
     UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, callback);
 
-    for (File file : callback.getToRefreshDeletedOrReplaced()) {
-      refreshDeletedOrReplaced(file);
-    }
+    refreshDeletedOrReplaced(callback.getToRefreshDeletedOrReplaced());
+    refreshFiles(callback.getToRefresh());
+  }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LocalFileSystem.getInstance().refreshIoFiles(callback.getToRefresh(), false, false, null);
-      return;
+  @NotNull
+  public static Collection<VirtualFile> refreshFiles(@NotNull Collection<File> files) {
+    Collection<VirtualFile> filesToRefresh = ContainerUtil.newHashSet();
+    for (File file : files) {
+      VirtualFile vf = findFirstValidVirtualParent(file);
+      if (vf != null) {
+        filesToRefresh.add(vf);
+      }
     }
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    try {
-      LocalFileSystem.getInstance().refreshIoFiles(callback.getToRefresh(), true, false, new Runnable() {
-        @Override
-        public void run() {
-          semaphore.up();
-        }
-      });
+    VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(filesToRefresh, VirtualFile.class));
+    return filesToRefresh;
+  }
+
+  private static void refreshDeletedOrReplaced(@NotNull Collection<File> deletedOrReplaced) {
+    Collection<VirtualFile> filesToRefresh = ContainerUtil.newHashSet();
+    for (File file : deletedOrReplaced) {
+      File parent = file.getParentFile();
+      VirtualFile vf = findFirstValidVirtualParent(parent);
+      if (vf != null) {
+        filesToRefresh.add(vf);
+      }
     }
-    catch (Throwable t) {
-      semaphore.up();
-      throw new RuntimeException(t);
-    }
-    semaphore.waitFor();
+    VfsUtil.markDirtyAndRefresh(false, true, false, ArrayUtil.toObjectArray(filesToRefresh, VirtualFile.class));
   }
 
   @Nullable
-  public static VirtualFile findCreatedFile(final File root) {
-    refresh(root);
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    return lfs.findFileByIoFile(root);
-  }
-
-  private static void refresh(final File root) {
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile vFile = lfs.refreshAndFindFileByIoFile(root);
-    if (vFile != null) {
-      vFile.refresh(false, false);
-      return;
-    }
-  }
-
-  private static void refreshDeletedOrReplaced(final File root) {
-    final File parent = root.getParentFile();
+  private static VirtualFile findFirstValidVirtualParent(@Nullable File file) {
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
     VirtualFile vf = null;
-    // parent should also notice the change
-    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final VirtualFile rootVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
-    if (parent != null) {
-      vf = localFileSystem.refreshAndFindFileByIoFile(parent);
+    while (file != null && (vf == null || !vf.isValid())) {
+      vf = lfs.findFileByIoFile(file);
+      file = file.getParentFile();
     }
-    if (vf == null) {
-      vf = rootVf;
-    }
-    if (vf != null) {
-      ((NewVirtualFile)vf).markDirtyRecursively();
-      vf.refresh(false, true);
-    }
+    return vf == null || !vf.isValid() ? null : vf;
   }
 
   public static void updateChangesForRollback(final List<Change> changes) {
     updateChangesImpl(changes, RollbackChangeWrapper.ourInstance);
   }
 
-  public static void updateChanges(final List<Change> changes) {
+  public static void updateChanges(final Collection<Change> changes) {
     updateChangesImpl(changes, DirectChangeWrapper.ourInstance);
   }
 
-  private static void updateChangesImpl(final List<Change> changes, final ChangeWrapper wrapper) {
-    // approx so ok
-    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-    if (pi != null) {
-      pi.setIndeterminate(false);
-    }
-    final double num = changes.size();
-
-    int cnt = 0;
+  private static void updateChangesImpl(final Collection<Change> changes, final ChangeWrapper wrapper) {
+    Collection<File> deletedOrReplaced = ContainerUtil.newHashSet();
+    Collection<File> toRefresh = ContainerUtil.newHashSet();
     for (Change change : changes) {
       if ((! wrapper.beforeNull(change)) && (wrapper.movedOrRenamedOrReplaced(change) || (wrapper.afterNull(change)))) {
-        refreshDeletedOrReplaced(wrapper.getBeforeFile(change));
-      } else if (! wrapper.beforeNull(change)) {
-        refresh(wrapper.getBeforeFile(change));
+        deletedOrReplaced.add(wrapper.getBeforeFile(change));
+      } else if (!wrapper.beforeNull(change)) {
+        toRefresh.add(wrapper.getBeforeFile(change));
       }
-      if ((! wrapper.afterNull(change)) && 
+      if ((! wrapper.afterNull(change)) &&
           (wrapper.beforeNull(change) || (! Comparing.equal(change.getAfterRevision().getFile(), change.getBeforeRevision().getFile())))
          ) {
-        refresh(wrapper.getAfterFile(change));
-      }
-      if (pi != null) {
-        ++ cnt;
-        pi.setFraction(cnt/num);
-        pi.setText2("Refreshing: " + change.toString());
+        toRefresh.add(wrapper.getAfterFile(change));
       }
     }
+
+    refreshFiles(toRefresh);
+    refreshDeletedOrReplaced(deletedOrReplaced);
   }
 
   private static class RollbackChangeWrapper implements ChangeWrapper {

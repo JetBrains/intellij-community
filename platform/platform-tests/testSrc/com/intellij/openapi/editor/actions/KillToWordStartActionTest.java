@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,13 @@ public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase 
       "<caret>  this is the first string"
     );
   }
-  
+
+  public void testEscapeChars() throws Exception {
+    configureFromFileText(getTestName(false) + ".java", "class Foo { String s = \"a\\nb<caret>\"; }");
+    killToWordStart();
+    checkResultByText("class Foo { String s = \"a\\n<caret>\"; }");
+  }
+
   private void doTest(@NotNull String before, @NotNull String after) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", before);
     killToWordStart();

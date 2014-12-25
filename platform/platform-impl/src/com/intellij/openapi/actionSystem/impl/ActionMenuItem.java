@@ -56,11 +56,11 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
   private final Presentation myPresentation;
   private final String myPlace;
   private final boolean myInsideCheckedGroup;
+  private final boolean myEnableMnemonics;
+  private final boolean myToggleable;
   private DataContext myContext;
   private AnActionEvent myEvent;
   private MenuItemSynchronizer myMenuItemSynchronizer;
-  private final boolean myEnableMnemonics;
-  private final boolean myToggleable;
   private boolean myToggled;
 
   public ActionMenuItem(final AnAction action,
@@ -90,6 +90,10 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     else {
       setText("loading...");
     }
+  }
+
+  private static boolean isEnterKeyStroke(KeyStroke keyStroke) {
+    return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && keyStroke.getModifiers() == 0;
   }
 
   public void prepare() {
@@ -170,10 +174,6 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     }
   }
 
-  private static boolean isEnterKeyStroke(KeyStroke keyStroke) {
-    return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && keyStroke.getModifiers() == 0;
-  }
-
   @Override
   public void updateUI() {
     if (UIUtil.isStandardMenuLAF()) {
@@ -206,6 +206,52 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
   public void updateContext(@NotNull DataContext context) {
     myContext = context;
     myEvent = new AnActionEvent(null, context, myPlace, myPresentation, ActionManager.getInstance(), 0);
+  }
+
+  private void updateIcon(AnAction action) {
+    if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().SHOW_ICONS_IN_MENUS)) {
+      action.update(myEvent);
+      myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
+      if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu ||
+          UIUtil.isUnderNimbusLookAndFeel() ||
+          UIUtil.isUnderWindowsLookAndFeel() && SystemInfo.isWin7OrNewer) {
+        setState(myToggled);
+      }
+      else if (!(getUI() instanceof GtkMenuItemUI)) {
+        if (myToggled) {
+          setIcon(ourCheckedIcon);
+          setDisabledIcon(IconLoader.getDisabledIcon(ourCheckedIcon));
+        }
+        else {
+          setIcon(ourUncheckedIcon);
+          setDisabledIcon(IconLoader.getDisabledIcon(ourUncheckedIcon));
+        }
+      }
+    }
+    else {
+      if (UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+        Icon icon = myPresentation.getIcon();
+        if (action instanceof ToggleAction && ((ToggleAction)action).isSelected(myEvent)) {
+          icon = new PoppedIcon(icon, 16, 16);
+        }
+        setIcon(icon);
+        if (myPresentation.getDisabledIcon() != null) {
+          setDisabledIcon(myPresentation.getDisabledIcon());
+        }
+        else {
+          setDisabledIcon(IconLoader.getDisabledIcon(icon));
+        }
+      }
+    }
+  }
+
+  public boolean isToggleable() {
+    return myToggleable;
+  }
+
+  @Override
+  public boolean isSelected() {
+    return myToggled;
   }
 
   private final class ActionTransmitter implements ActionListener {
@@ -272,52 +318,6 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
         }
       });
     }
-  }
-
-  private void updateIcon(AnAction action) {
-    if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup)) {
-      action.update(myEvent);
-      myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
-      if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu ||
-          UIUtil.isUnderNimbusLookAndFeel() ||
-          UIUtil.isUnderWindowsLookAndFeel() && SystemInfo.isWin7OrNewer) {
-        setState(myToggled);
-      }
-      else if (!(getUI() instanceof GtkMenuItemUI)) {
-        if (myToggled) {
-          setIcon(ourCheckedIcon);
-          setDisabledIcon(IconLoader.getDisabledIcon(ourCheckedIcon));
-        }
-        else {
-          setIcon(ourUncheckedIcon);
-          setDisabledIcon(IconLoader.getDisabledIcon(ourUncheckedIcon));
-        }
-      }
-    }
-    else {
-      if (UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
-        Icon icon = myPresentation.getIcon();
-        if (action instanceof ToggleAction && ((ToggleAction)action).isSelected(myEvent)) {
-          icon = new PoppedIcon(icon, 16, 16);
-        }
-        setIcon(icon);
-        if (myPresentation.getDisabledIcon() != null) {
-          setDisabledIcon(myPresentation.getDisabledIcon());
-        }
-        else {
-          setDisabledIcon(IconLoader.getDisabledIcon(icon));
-        }
-      }
-    }
-  }
-
-  public boolean isToggleable() {
-    return myToggleable;
-  }
-
-  @Override
-  public boolean isSelected() {
-    return myToggled;
   }
 
   private final class MenuItemSynchronizer implements PropertyChangeListener, Disposable {

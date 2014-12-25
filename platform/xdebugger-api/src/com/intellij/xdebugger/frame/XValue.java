@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.frame;
 
 import com.intellij.util.ThreeState;
+import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,14 @@ public abstract class XValue extends XValueContainer {
    */
   @Nullable
   public String getEvaluationExpression() {
+    return null;
+  }
+
+  /**
+   * @return evaluator to calculate value of the current object instance
+   */
+  @Nullable
+  public XInstanceEvaluator getInstanceEvaluator() {
     return null;
   }
 

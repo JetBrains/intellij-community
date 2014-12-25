@@ -289,6 +289,16 @@ java.lang.Throwable#suppressedExceptions
 java.lang.Throwable#Throwable(java.lang.String;java.lang.Throwable;boolean;boolean;)
 java.lang.Throwable#addSuppressed(java.lang.Throwable;)
 java.lang.Throwable#getSuppressed()
+java.lang.invoke.CallSite
+java.lang.invoke.ConstantCallSite
+java.lang.invoke.MethodHandle
+java.lang.invoke.MethodHandleProxies
+java.lang.invoke.MethodHandles
+java.lang.invoke.MethodHandles.Lookup
+java.lang.invoke.MethodType
+java.lang.invoke.MutableCallSite
+java.lang.invoke.SwitchPoint
+java.lang.invoke.VolatileCallSite
 java.lang.invoke.WrongMethodTypeException
 java.lang.Long#compare(long;long;)
 java.lang.LinkageError#LinkageError(java.lang.String;java.lang.Throwable;)

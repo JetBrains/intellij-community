@@ -44,25 +44,25 @@ public class SuppressManagerImpl extends SuppressManager {
   }
 
   @Override
-  public boolean isSuppressedFor(@NotNull final PsiElement element, final String toolId) {
+  public boolean isSuppressedFor(@NotNull final PsiElement element, @NotNull final String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(element, toolId) != null;
   }
 
   @Override
   @Nullable
-  public PsiElement getElementMemberSuppressedIn(@NotNull final PsiDocCommentOwner owner, final String inspectionToolID) {
+  public PsiElement getElementMemberSuppressedIn(@NotNull final PsiDocCommentOwner owner, @NotNull final String inspectionToolID) {
     return JavaSuppressionUtil.getElementMemberSuppressedIn(owner, inspectionToolID);
   }
 
   @Override
   @Nullable
-  public PsiElement getAnnotationMemberSuppressedIn(@NotNull final PsiModifierListOwner owner, final String inspectionToolID) {
+  public PsiElement getAnnotationMemberSuppressedIn(@NotNull final PsiModifierListOwner owner, @NotNull final String inspectionToolID) {
     return JavaSuppressionUtil.getAnnotationMemberSuppressedIn(owner, inspectionToolID);
   }
 
   @Override
   @Nullable
-  public PsiElement getDocCommentToolSuppressedIn(@NotNull final PsiDocCommentOwner owner, final String inspectionToolID) {
+  public PsiElement getDocCommentToolSuppressedIn(@NotNull final PsiDocCommentOwner owner, @NotNull final String inspectionToolID) {
     return JavaSuppressionUtil.getDocCommentToolSuppressedIn(owner, inspectionToolID);
   }
 
@@ -80,7 +80,7 @@ public class SuppressManagerImpl extends SuppressManager {
 
   @Override
   @Nullable
-  public PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, final String toolId) {
+  public PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, @NotNull final String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(place, toolId);
   }
 

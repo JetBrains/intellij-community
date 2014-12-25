@@ -15,25 +15,24 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -75,62 +74,64 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
         final PsiElement body = expression.getBody();
-        if (body instanceof PsiCodeBlock) {
-          PsiExpression psiExpression = getExpression((PsiCodeBlock)body);
-          if (psiExpression != null) {
-            if (!expression.isVoidCompatible() && LambdaUtil.isExpressionStatementExpression(psiExpression)) {
-              final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-              if (parent instanceof PsiExpressionList) {
-                final PsiElement gParent = parent.getParent();
-                if (gParent instanceof PsiCallExpression) {
-                  final CandidateInfo[] candidates = PsiResolveHelper.SERVICE.getInstance(gParent.getProject())
-                    .getReferencedMethodCandidates((PsiCallExpression)gParent, false);
-                  if (candidates.length > 1) {
-                    final List<CandidateInfo> info = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
-                    final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
-                    final JavaMethodsConflictResolver conflictResolver = new JavaMethodsConflictResolver((PsiExpressionList)parent, level);
-                    final int applicability = conflictResolver.checkApplicability(info);
-                    conflictResolver.checkSpecifics(info, applicability, level);
-                    if (info.size() > 1) {
-                      return;
-                    }
-                  }
-                }
-              }
-            }
-            final PsiElement errorElement;
-            final PsiElement parent = psiExpression.getParent();
-            if (parent instanceof PsiReturnStatement) {
-              errorElement = parent.getFirstChild();
-            } else {
-              errorElement = body.getFirstChild();
-            }
-            holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
+        final PsiExpression psiExpression = isCodeBlockRedundant(expression, body);
+        if (psiExpression != null) {
+          final PsiElement errorElement;
+          final PsiElement parent = psiExpression.getParent();
+          if (parent instanceof PsiReturnStatement) {
+            errorElement = parent.getFirstChild();
+          } else {
+            errorElement = body.getFirstChild();
           }
+          holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
         }
       }
     };
   }
 
-  @Nullable
-  private static PsiExpression getExpression(PsiCodeBlock body) {
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length == 1) {
-      if (statements[0] instanceof PsiBlockStatement) {
-        return getExpression(((PsiBlockStatement)statements[0]).getCodeBlock());
-      }
-      if (statements[0] instanceof PsiReturnStatement || statements[0] instanceof PsiExpressionStatement) {
-        if (statements[0] instanceof PsiReturnStatement) {
-          final PsiReturnStatement returnStatement = (PsiReturnStatement)statements[0];
-          return returnStatement.getReturnValue();
+  public static PsiExpression isCodeBlockRedundant(PsiExpression expression, PsiElement body) {
+    if (body instanceof PsiCodeBlock) {
+      PsiExpression psiExpression = LambdaUtil.extractSingleExpressionFromBody(body);
+      if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
+        if (LambdaUtil.isExpressionStatementExpression(psiExpression)) {
+          final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+          if (parent instanceof PsiExpressionList) {
+            final PsiElement gParent = parent.getParent();
+            if (gParent instanceof PsiCallExpression) {
+              final CandidateInfo[] candidates = PsiResolveHelper.SERVICE.getInstance(gParent.getProject())
+                .getReferencedMethodCandidates((PsiCallExpression)gParent, false);
+              if (candidates.length > 1) {
+                final List<CandidateInfo> info = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
+                final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
+                final JavaMethodsConflictResolver conflictResolver = new JavaMethodsConflictResolver((PsiExpressionList)parent, level);
+                final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
+                if (argumentList == null) {
+                  return null;
+                }
+                JavaMethodsConflictResolver.checkParametersNumber(info, argumentList.getExpressions().length, false);
+                conflictResolver.checkSpecifics(info, MethodCandidateInfo.ApplicabilityLevel.VARARGS, level);
+                if (info.size() > 1) {
+                  return null;
+                }
+              }
+            }
+          }
         }
-        else {
-          return ((PsiExpressionStatement)statements[0]).getExpression();
-        }
+        return psiExpression;
       }
     }
     return null;
+  }
+
+  private static boolean findCommentsOutsideExpression(PsiElement body, PsiExpression psiExpression) {
+    final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(body, PsiComment.class);
+    for (PsiComment comment : comments) {
+      if (!PsiTreeUtil.isAncestor(psiExpression, comment, true)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class ReplaceWithExprFix implements LocalQuickFix, HighPriorityAction {
@@ -150,11 +151,12 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element != null) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
           final PsiElement body = lambdaExpression.getBody();
           if (body != null) {
-            PsiExpression expression = getExpression((PsiCodeBlock)body);
+            PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
             if (expression != null) {
               body.replace(expression);
             }

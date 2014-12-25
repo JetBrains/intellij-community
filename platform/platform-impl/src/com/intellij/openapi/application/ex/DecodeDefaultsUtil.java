@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.application.ex;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,35 +26,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 public class DecodeDefaultsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.ex.DecodeDefaultsUtil");
-  private static final Map<String, URL> myResourceCache = Collections.synchronizedMap(new HashMap<String, URL>());
+  private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new THashMap<String, URL>());
 
   @NonNls private static final String XML_EXTENSION = ".xml";
 
   public static URL getDefaults(Object requestor, final String componentResourcePath) {
-    if (myResourceCache.containsKey(componentResourcePath)) {
-      return myResourceCache.get(componentResourcePath);
+    if (RESOURCE_CACHE.containsKey(componentResourcePath)) {
+      return RESOURCE_CACHE.get(componentResourcePath);
     }
 
     URL url = getDefaultsImpl(requestor, componentResourcePath);
-    myResourceCache.put(componentResourcePath, url);
+    RESOURCE_CACHE.put(componentResourcePath, url);
     return url;
   }
 
   private static URL getDefaultsImpl(final Object requestor, final String componentResourcePath) {
-    boolean isPathAbsoulte = StringUtil.startsWithChar(componentResourcePath, '/');
-    if (isPathAbsoulte) {
+    boolean isPathAbsolute = StringUtil.startsWithChar(componentResourcePath, '/');
+    if (isPathAbsolute) {
       return requestor.getClass().getResource(componentResourcePath + XML_EXTENSION);
     }
     else {
       return getResourceByRelativePath(requestor, componentResourcePath, XML_EXTENSION);
     }
   }
-
 
   @Nullable
   public static InputStream getDefaultsInputStream(Object requestor, final String componentResourcePath) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,18 +115,17 @@ public class ExportTestResultsAction extends DumbAwareAction {
     boolean showDialog = true;
     while (showDialog) {
       final ExportTestResultsDialog d = new ExportTestResultsDialog(project, config, filename);
-      d.show();
-      if (!d.isOK()) {
+      if (!d.showAndGet()) {
         return;
       }
       filename = d.getFileName();
       showDialog = getOutputFile(config, project, filename).exists()
-          && Messages.showOkCancelDialog(
-               project,
-               ExecutionBundle.message("export.test.results.file.exists.message", filename),
-               ExecutionBundle.message("export.test.results.file.exists.title"),
-               Messages.getQuestionIcon()
-             ) != Messages.OK;
+                   && Messages.showOkCancelDialog(
+        project,
+        ExecutionBundle.message("export.test.results.file.exists.message", filename),
+        ExecutionBundle.message("export.test.results.file.exists.title"),
+        Messages.getQuestionIcon()
+      ) != Messages.OK;
     }
 
     final String filename_ = filename;

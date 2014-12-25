@@ -17,6 +17,7 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 
+import com.intellij.psi.tree.IElementType;
 import org.intellij.lang.regexp.RegExpElementTypes;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
@@ -34,7 +35,12 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
 
   public boolean isCapturing() {
     final ASTNode node = getNode().getFirstChildNode();
-    return node != null && node.getElementType() == RegExpTT.GROUP_BEGIN;
+    if (node == null) {
+      return false;
+    }
+    final IElementType type = node.getElementType();
+    return type == RegExpTT.GROUP_BEGIN || type == RegExpTT.RUBY_NAMED_GROUP ||
+           type == RegExpTT.RUBY_QUOTED_NAMED_GROUP || type == RegExpTT.PYTHON_NAMED_GROUP;
   }
 
   public boolean isSimple() {
@@ -56,8 +62,12 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
            getNode().findChildByType(RegExpTT.RUBY_QUOTED_NAMED_GROUP) != null;
   }
 
+  public boolean isNamedGroup() {
+    return getNode().findChildByType(RegExpTT.RUBY_NAMED_GROUP) != null;
+  }
+
   public String getGroupName() {
-    if (!isPythonNamedGroup()) {
+    if (!isPythonNamedGroup() && !isRubyNamedGroup()) {
       return null;
     }
     final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);

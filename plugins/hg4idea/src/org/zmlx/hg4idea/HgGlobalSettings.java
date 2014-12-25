@@ -12,10 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
@@ -28,10 +25,12 @@ import java.util.Map;
 
 @State(
   name = "HgGlobalSettings",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/hg.xml", roamingType = RoamingType.PER_PLATFORM),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml", deprecated = true)
+  }
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
-
   @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = {"C:\\Program Files\\Mercurial",
     "C:\\Program Files (x86)\\Mercurial",
     "C:\\cygwin\\bin"};
@@ -53,10 +52,12 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
     public Map<String, String> myRememberedUserNames = new HashMap<String, String>();
   }
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(State state) {
     myState = state;
   }

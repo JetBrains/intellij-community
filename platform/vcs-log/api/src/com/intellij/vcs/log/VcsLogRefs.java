@@ -30,4 +30,6 @@ public interface VcsLogRefs {
   @NotNull
   Collection<VcsRef> getBranches();
 
+  @NotNull
+  Collection<VcsRef> refsToCommit(int commitId);
 }

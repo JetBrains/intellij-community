@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.ListSeparator;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -34,7 +35,6 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ui.UIUtil;
@@ -46,14 +46,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider, SwitchProvider {
@@ -467,52 +465,41 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       myShouldNotShowPopup = false;
       return;
     }
-    BaseListPopupStep step = new BaseListPopupStep<Content>(null, myManager.getContents()) {
-      @Override
-      public PopupStep onChosen(Content selectedValue, boolean finalChoice) {
-        myManager.setSelectedContent(selectedValue, true, true);
-        return FINAL_CHOICE;
-      }
 
-      @NotNull
-      @Override
-      public String getTextFor(Content value) {
-        final String displayName = value.getTabName();
-        return displayName != null ? displayName : "";
-      }
-
-      @Override
-      public Icon getIconFor(Content aValue) {
-        return aValue.getPopupIcon();
-      }
-
-      @Override
-      public boolean isMnemonicsNavigationEnabled() {
-        return true;
-      }
-
-      @Override
-      public ListSeparator getSeparatorAbove(Content value) {
-        final String separator = value.getSeparator();
-        return separator != null ? new ListSeparator(separator) : super.getSeparatorAbove(value);
-      }
-    };
-
-    step.setDefaultOptionIndex(Arrays.asList(myManager.getContents()).indexOf(myManager.getSelectedContent()));
-    final ListPopup popup = new ListPopupImpl(step) {
-      @Override
-      public void cancel(InputEvent e) {
-        super.cancel(e);
-        if (e instanceof MouseEvent) {
-          final MouseEvent me = (MouseEvent)e;
-          final Component component = SwingUtilities.getDeepestComponentAt(e.getComponent(), me.getX(), me.getY());
-          if (UIUtil.isActionClick(me) && component instanceof ContentComboLabel &&
-              SwingUtilities.isDescendingFrom(component, ToolWindowContentUi.this)) {
-            myShouldNotShowPopup = true;
-          }
+    final Content[] contents = myManager.getContents();
+    final AnAction[] actions = new AnAction[contents.length];
+    for (int i = 0; i < actions.length; i++) {
+      final Content content = contents[i];
+      if (content instanceof TabbedContent) {
+        final List<Pair<String, JComponent>> tabs = ((TabbedContent)content).getTabs();
+        final AnAction[] tabActions = new AnAction[tabs.size()];
+        for (int j = 0; j < tabActions.length; j++) {
+          final int index = j;
+          tabActions[j] = new DumbAwareAction(tabs.get(index).first) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+              myManager.setSelectedContent(content);
+              ((TabbedContent)content).selectContent(index);
+            }
+          };
         }
+        final DefaultActionGroup group = new DefaultActionGroup(tabActions);
+        group.getTemplatePresentation().setText(((TabbedContent)content).getTitlePrefix());
+        group.setPopup(true);
+        actions[i] = group;
+      } else {
+        actions[i] = new DumbAwareAction(content.getTabName()) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            myManager.setSelectedContent(content, true, true);
+          }
+        };
       }
-    };
+    }
+
+    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(actions),
+                                                                  DataManager.getInstance().getDataContext(myManager.getComponent()),
+                                                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
     getCurrentLayout().showContentPopup(popup);
   }
 

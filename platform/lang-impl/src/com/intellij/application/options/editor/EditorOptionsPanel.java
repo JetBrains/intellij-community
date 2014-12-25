@@ -47,11 +47,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -91,13 +94,14 @@ public class EditorOptionsPanel {
   private JCheckBox    myCbUseSoftWrapsAtConsole;
   private JCheckBox    myCbUseCustomSoftWrapIndent;
   private JTextField   myCustomSoftWrapIndent;
-  private JCheckBox    myCbShowAllSoftWraps;
+  private JCheckBox    myCbShowSoftWrapsOnlyOnCaretLine;
   private JCheckBox    myPreselectCheckBox;
   private JBCheckBox   myCbShowQuickDocOnMouseMove;
   private JBLabel      myQuickDocDelayLabel;
   private JTextField   myQuickDocDelayTextField;
   private JComboBox    myRichCopyColorSchemeComboBox;
   private JCheckBox    myShowInlineDialogForCheckBox;
+  private JBLabel myStripTrailingSpacesExplanationLabel;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
 
@@ -114,6 +118,15 @@ public class EditorOptionsPanel {
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
     myStripTrailingSpacesCombo.addItem(STRIP_NONE);
+    ActionListener explainer = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        explainTrailingSpaces(getStripTrailingSpacesValue());
+      }
+    };
+    myStripTrailingSpacesCombo.addActionListener(explainer);
+    myCbVirtualSpace.addActionListener(explainer);
+
 
 
     myHighlightSettingsPanel.setLayout(new BorderLayout());
@@ -164,7 +177,7 @@ public class EditorOptionsPanel {
     myCbUseSoftWrapsAtConsole.setSelected(editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
     myCbUseCustomSoftWrapIndent.setSelected(editorSettings.isUseCustomSoftWrapIndent());
     myCustomSoftWrapIndent.setText(Integer.toString(editorSettings.getCustomSoftWrapIndent()));
-    myCbShowAllSoftWraps.setSelected(editorSettings.isAllSoftWrapsShown());
+    myCbShowSoftWrapsOnlyOnCaretLine.setSelected(!editorSettings.isAllSoftWrapsShown());
     updateSoftWrapSettingsRepresentation();
 
     myCbVirtualSpace.setSelected(editorSettings.isVirtualSpace());
@@ -186,6 +199,7 @@ public class EditorOptionsPanel {
     else if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(stripTrailingSpaces)) {
       myStripTrailingSpacesCombo.setSelectedItem(STRIP_ALL);
     }
+    explainTrailingSpaces(stripTrailingSpaces);
 
     myCbEnsureBlankLineBeforeCheckBox.setSelected(editorSettings.isEnsureNewLineAtEOF());
     myCbShowQuickDocOnMouseMove.setSelected(editorSettings.isShowQuickDocOnMouseOverElement());
@@ -227,6 +241,24 @@ public class EditorOptionsPanel {
     }
   }
 
+  private void explainTrailingSpaces(@NotNull @EditorSettingsExternalizable.StripTrailingSpaces String stripTrailingSpaces) {
+    if(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(stripTrailingSpaces)) {
+      myStripTrailingSpacesExplanationLabel.setVisible(false);
+      return;
+    }
+    myStripTrailingSpacesExplanationLabel.setVisible(true);
+    boolean isVirtualSpace = myCbVirtualSpace.isSelected();
+    String text;
+    String virtSpaceText = myCbVirtualSpace.getText();
+    if (isVirtualSpace) {
+      text = "Trailing spaces will be trimmed even in the line under caret.<br>To disable trimming in that line uncheck the '<b>"+virtSpaceText+"</b>' above.";
+    }
+    else {
+      text = "Trailing spaces will <b><font color=red>NOT</font></b> be trimmed in the line under caret.<br>To enable trimming in that line too check the '<b>"+virtSpaceText+"</b>' above.";
+    }
+    myStripTrailingSpacesExplanationLabel.setText(XmlStringUtil.wrapInHtml(text));
+  }
+
   public void apply() throws ConfigurationException {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
@@ -250,7 +282,7 @@ public class EditorOptionsPanel {
     editorSettings.setUseSoftWraps(myCbUseSoftWrapsAtConsole.isSelected(), SoftWrapAppliancePlaces.CONSOLE);
     editorSettings.setUseCustomSoftWrapIndent(myCbUseCustomSoftWrapIndent.isSelected());
     editorSettings.setCustomSoftWrapIndent(getCustomSoftWrapIndent());
-    editorSettings.setAllSoftwrapsShown(myCbShowAllSoftWraps.isSelected());
+    editorSettings.setAllSoftwrapsShown(!myCbShowSoftWrapsOnlyOnCaretLine.isSelected());
     editorSettings.setVirtualSpace(myCbVirtualSpace.isSelected());
     editorSettings.setCaretInsideTabs(myCbCaretInsideTabs.isSelected());
     editorSettings.setAdditionalPageAtBottom(myCbVirtualPageAtBottom.isSelected());
@@ -411,7 +443,7 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbUseSoftWrapsAtConsole, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
     isModified |= isModified(myCbUseCustomSoftWrapIndent, editorSettings.isUseCustomSoftWrapIndent());
     isModified |= editorSettings.getCustomSoftWrapIndent() != getCustomSoftWrapIndent();
-    isModified |= isModified(myCbShowAllSoftWraps, editorSettings.isAllSoftWrapsShown());
+    isModified |= isModified(myCbShowSoftWrapsOnlyOnCaretLine, !editorSettings.isAllSoftWrapsShown());
     isModified |= isModified(myCbVirtualSpace, editorSettings.isVirtualSpace());
     isModified |= isModified(myCbCaretInsideTabs, editorSettings.isCaretInsideTabs());
     isModified |= isModified(myCbVirtualPageAtBottom, editorSettings.isAdditionalPageAtBottom());
@@ -472,17 +504,17 @@ public class EditorOptionsPanel {
     }
   }
 
+  @NotNull
+  @EditorSettingsExternalizable.StripTrailingSpaces
   private String getStripTrailingSpacesValue() {
     Object selectedItem = myStripTrailingSpacesCombo.getSelectedItem();
     if(STRIP_NONE.equals(selectedItem)) {
       return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE;
     }
-    else if(STRIP_CHANGED.equals(selectedItem)){
+    if(STRIP_CHANGED.equals(selectedItem)){
       return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED;
     }
-    else {
-      return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE;
-    }
+    return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE;
   }
 
   private int getCustomSoftWrapIndent() {
@@ -523,8 +555,10 @@ public class EditorOptionsPanel {
   }
 
   private void updateSoftWrapSettingsRepresentation() {
-    myCbUseCustomSoftWrapIndent.setEnabled(myCbUseSoftWrapsAtEditor.isSelected() || myCbUseSoftWrapsAtConsole.isSelected());
+    boolean softWrapsEnabled = myCbUseSoftWrapsAtEditor.isSelected() || myCbUseSoftWrapsAtConsole.isSelected();
+    myCbUseCustomSoftWrapIndent.setEnabled(softWrapsEnabled);
     myCustomSoftWrapIndent.setEnabled(myCbUseCustomSoftWrapIndent.isEnabled() && myCbUseCustomSoftWrapIndent.isSelected());
+    myCbShowSoftWrapsOnlyOnCaretLine.setEnabled(softWrapsEnabled);
   }
 
   public JComponent getComponent() {

@@ -69,7 +69,7 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
         for (final AbstractDomChildrenDescription description : t.getGenericInfo().getChildrenDescriptions()) {
           if (!(description instanceof DomChildrenDescription) || localName.equals(((DomChildrenDescription)description).getXmlElementName())) {
             for (final DomElement element : description.getValues(t)) {
-              if (localName.equals(element.getXmlElementName()) && pattern.getCondition().accepts(element, context)) {
+              if (localName.equals(element.getXmlElementName()) && pattern.accepts(element, context)) {
                 return true;
               }
             }

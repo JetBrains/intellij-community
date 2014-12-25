@@ -1,7 +1,6 @@
 package com.intellij.dupLocator.treeHash;
 
 import com.intellij.dupLocator.DuplicatesProfile;
-import com.intellij.dupLocator.ExternalizableDuplocatorState;
 import com.intellij.dupLocator.NodeSpecificHasher;
 import com.intellij.dupLocator.PsiElementRole;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
@@ -233,12 +232,8 @@ class TreeHasherBase extends AbstractTreeHasher {
 
     final DuplicatesProfileBase duplicatesProfile = ((NodeSpecificHasherBase)nodeSpecificHasher).getDuplicatesProfile();
     final PsiElementRole role = duplicatesProfile.getRole(element);
-    if (role != null) {
-      final ExternalizableDuplocatorState state =
-        duplicatesProfile.getDuplocatorState(duplicatesProfile.getLanguage(element));
-      if (!state.distinguishRole(role)) {
-        return Couple.of(0, result.second);
-      }
+    if (role != null && !duplicatesProfile.getDuplocatorState(duplicatesProfile.getLanguage(element)).distinguishRole(role)) {
+      return Couple.of(0, result.second);
     }
     return result;
   }
@@ -246,12 +241,7 @@ class TreeHasherBase extends AbstractTreeHasher {
   private static boolean shouldBeAnonymized(PsiElement element, NodeSpecificHasherBase nodeSpecificHasher) {
     final DuplicatesProfileBase duplicatesProfile = nodeSpecificHasher.getDuplicatesProfile();
     final PsiElementRole role = duplicatesProfile.getRole(element);
-    if (role != null) {
-      final ExternalizableDuplocatorState state =
-        duplicatesProfile.getDuplocatorState(duplicatesProfile.getLanguage(element));
-      return !state.distinguishRole(role);
-    }
-    return false;
+    return role != null && !duplicatesProfile.getDuplocatorState(duplicatesProfile.getLanguage(element)).distinguishRole(role);
   }
 
   @NotNull

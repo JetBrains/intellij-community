@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
@@ -92,8 +91,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       @Override
       public void actionPerformed(ActionEvent e) {
         myManifestAttributesDialog = new CustomManifestAttributesDialog(myWholePanel, myCustomManifestAttributes);
-        myManifestAttributesDialog.show();
-        if (myManifestAttributesDialog.isOK()) {
+        if (myManifestAttributesDialog.showAndGet()) {
           myCustomManifestAttributes = myManifestAttributesDialog.getAttrs();
         }
       }
@@ -314,6 +312,11 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       @Override
       protected JavaFxManifestAttribute createElement() {
         return new JavaFxManifestAttribute("", "");
+      }
+
+      @Override
+      protected boolean isEmpty(JavaFxManifestAttribute element) {
+        return StringUtil.isEmpty(element.getName()) && StringUtil.isEmpty(element.getValue());
       }
 
       @Override

@@ -104,7 +104,7 @@ public class ConcatenationHelper {
     }
 
     if (first2str == 0) {
-      lstOperands.add(0, new ConstExprent(VarType.VARTYPE_STRING, ""));
+      lstOperands.add(0, new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
     }
 
     // remove redundant String.valueOf
@@ -133,7 +133,7 @@ public class ConcatenationHelper {
       List<Exprent> lstTmp = new ArrayList<Exprent>();
       lstTmp.add(func);
       lstTmp.add(lstOperands.get(i));
-      func = new FunctionExprent(FunctionExprent.FUNCTION_STRCONCAT, lstTmp);
+      func = new FunctionExprent(FunctionExprent.FUNCTION_STR_CONCAT, lstTmp, expr.bytecode);
     }
 
     return func;
@@ -168,7 +168,7 @@ public class ConcatenationHelper {
 
   private static boolean isNewConcat(NewExprent expr, VarType cltype) {
 
-    if (expr.getNewtype().equals(cltype)) {
+    if (expr.getNewType().equals(cltype)) {
       VarType[] params = expr.getConstructor().getDescriptor().params;
       if (params.length == 0 || (params.length == 1 &&
                                  params[0].equals(VarType.VARTYPE_STRING))) {

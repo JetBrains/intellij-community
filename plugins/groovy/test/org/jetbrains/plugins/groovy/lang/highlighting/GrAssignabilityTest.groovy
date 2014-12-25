@@ -236,7 +236,7 @@ def foo = new A().&foo
 int i = foo()
 int <warning descr="Cannot assign 'Date' to 'int'">i2</warning> = foo(2)
 Date d = foo(2)
-Date <warning descr="Cannot assign 'Integer' to 'Date'">d2</warning> = foo()
+Date <warning descr="Cannot assign 'int' to 'Date'">d2</warning> = foo()
 ''')
   }
 
@@ -291,7 +291,7 @@ class Ca {
 
 use(Ca) {
   1.<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
-  (1 as int).<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
+  (1 as int).<warning descr="Category method 'foo' cannot be applied to 'int'">foo</warning>()
 }
 ''')
   }
@@ -340,7 +340,7 @@ class A {
   void testTupleAssignment() {
     testHighlighting('''\
 def (String x, int y)
-(x, <warning descr="Cannot assign 'String' to 'Integer'">y</warning>) = foo()
+(x, <warning descr="Cannot assign 'String' to 'int'">y</warning>) = foo()
 
 print x + y
 
@@ -398,7 +398,7 @@ private int getObjects() {
         //...
     }
 
-    <warning descr="Cannot assign 'String' to 'int'">return</warning> '';
+    <warning descr="Cannot return 'String' from method returning 'int'">return</warning> '';;
 }
 ''')
   }
@@ -448,7 +448,7 @@ String[] foox() {
 }
 
 int[] bar() {
-  <warning descr="Cannot assign 'String' to 'int[]'">return</warning> 'ab'
+  <warning descr="Cannot return 'String' from method returning 'int[]'">return</warning> 'ab'
 }
 ''')
   }
@@ -457,9 +457,10 @@ int[] bar() {
     testHighlighting('''\
 int <warning descr="Cannot assign 'null' to 'int'">x</warning> = null
 double <warning descr="Cannot assign 'null' to 'double'">y</warning> = null
+boolean a = null
 Integer z = null
-boolean <warning descr="Cannot assign 'null' to 'boolean'">a</warning> = null
 Boolean b = null
+Integer i = null
 ''')
   }
 
@@ -478,7 +479,7 @@ _Boolean(null)
   void testInnerWarning() {
     testHighlighting('''\
 public static void main(String[] args) {
-    bar (foo(foo(foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('2')</warning>)))
+    bar <warning descr="'bar' in '_' cannot be applied to '(java.lang.Number)'">(foo(foo(foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('2')</warning>)))</warning>
 }
 
 static def <T extends Number> T foo(T abc) {
@@ -509,7 +510,7 @@ Money d = [amount: 100, currency:'USA']
   void testBooleanIsAssignableToAny() {
     testHighlighting('''\
       boolean b1 = new Object()
-      boolean <warning descr="Cannot assign 'null' to 'boolean'">b2</warning> = null
+      boolean b2 = null
       Boolean b3 = new Object()
       Boolean b4 = null
 ''')
@@ -790,14 +791,14 @@ X <warning>x</warning> = {print 2}
     testHighlighting('''\
 void foo() {}
 
-def <warning>foo</warning> = foo()
+def foo = foo()
 
 def bar() {
   foo() //no warning
 }
 
 def zoo() {
-  <warning>return</warning> foo()
+  return foo()
 }
 ''')
   }

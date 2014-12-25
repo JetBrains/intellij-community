@@ -43,7 +43,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Mike
@@ -148,8 +149,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;
   }
 
-  private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
-  private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
+  private ConcurrentMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict =
+    ContainerUtil.newConcurrentMap();
+  private ConcurrentMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict =
+    ContainerUtil.newConcurrentMap();
 
   @Override
   public void clearCaches() {
@@ -169,7 +172,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       myExtResourcesModCount = curExtResourcesModCount;
     }
 
-    final ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
+    final ConcurrentMap<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
     if (strict) {
       defaultDescriptorsCache = myDefaultDescriptorsCacheStrict;
     }
@@ -375,8 +378,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
   private void updateSelfDependentDtdDescriptors(XmlDocumentImpl copy, HashMap<String,
     CachedValue<XmlNSDescriptor>> cacheStrict, HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict) {
-    copy.myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
-    copy.myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
+    copy.myDefaultDescriptorsCacheNotStrict = ContainerUtil.newConcurrentMap();
+    copy.myDefaultDescriptorsCacheStrict = ContainerUtil.newConcurrentMap();
 
     for(Map.Entry<String, CachedValue<XmlNSDescriptor>> e:cacheStrict.entrySet()) {
       if (e.getValue().hasUpToDateValue()) {

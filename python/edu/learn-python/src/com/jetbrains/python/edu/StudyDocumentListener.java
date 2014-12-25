@@ -2,12 +2,14 @@ package com.jetbrains.python.edu;
 
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Listens changes in study files and updates
@@ -15,9 +17,7 @@ import com.jetbrains.python.edu.course.TaskWindow;
  */
 public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
-  private int myOldLine;
-  private int myOldLineStartOffset;
-  private TaskWindow myTaskWindow;
+  private List<TaskWindowWrapper> myTaskWindows = new ArrayList<TaskWindowWrapper>();
 
   public StudyDocumentListener(TaskFile taskFile) {
     myTaskFile = taskFile;
@@ -28,15 +28,13 @@ public class StudyDocumentListener extends DocumentAdapter {
   // with fragments containing "\n"
   @Override
   public void beforeDocumentChange(DocumentEvent e) {
-    int offset = e.getOffset();
-    int oldEnd = offset + e.getOldLength();
     Document document = e.getDocument();
-    myOldLine = document.getLineNumber(oldEnd);
-    myOldLineStartOffset = document.getLineStartOffset(myOldLine);
-    int line = document.getLineNumber(offset);
-    int offsetInLine = offset - document.getLineStartOffset(line);
-    LogicalPosition pos = new LogicalPosition(line, offsetInLine);
-    myTaskWindow = myTaskFile.getTaskWindow(document, pos);
+    myTaskWindows.clear();
+    for (TaskWindow taskWindow : myTaskFile.getTaskWindows()) {
+      int twStart = taskWindow.getRealStartOffset(document);
+      int twEnd = twStart + taskWindow.getLength();
+      myTaskWindows.add(new TaskWindowWrapper(taskWindow, twStart, twEnd));
+    }
   }
 
   @Override
@@ -46,17 +44,47 @@ public class StudyDocumentListener extends DocumentAdapter {
       Document document = e.getDocument();
       int offset = e.getOffset();
       int change = event.getNewLength() - event.getOldLength();
-      if (myTaskWindow != null) {
-        int newLength = myTaskWindow.getLength() + change;
-        myTaskWindow.setLength(newLength <= 0 ? 0 : newLength);
+      for (TaskWindowWrapper taskWindowWrapper : myTaskWindows) {
+        int twStart = taskWindowWrapper.getTwStart();
+        if (twStart > offset) {
+          twStart += change;
+        }
+        int twEnd = taskWindowWrapper.getTwEnd();
+        if (twEnd >= offset) {
+          twEnd += change;
+        }
+        TaskWindow taskWindow = taskWindowWrapper.getTaskWindow();
+        int line = document.getLineNumber(twStart);
+        int start = twStart - document.getLineStartOffset(line);
+        int length = twEnd - twStart;
+        taskWindow.setLine(line);
+        taskWindow.setStart(start);
+        taskWindow.setLength(length);
       }
-      int newEnd = offset + event.getNewLength();
-      int newLine = document.getLineNumber(newEnd);
-      int lineChange = newLine - myOldLine;
-      myTaskFile.incrementLines(myOldLine + 1, lineChange);
-      int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
-      int oldEndOffsetInLine = offset + e.getOldLength() - myOldLineStartOffset;
-      myTaskFile.updateLine(lineChange, myOldLine, newEndOffsetInLine, oldEndOffsetInLine);
+    }
+  }
+
+  private static class TaskWindowWrapper {
+    public TaskWindow myTaskWindow;
+    public int myTwStart;
+    public int myTwEnd;
+
+    public TaskWindowWrapper(TaskWindow taskWindow, int twStart, int twEnd) {
+      myTaskWindow = taskWindow;
+      myTwStart = twStart;
+      myTwEnd = twEnd;
+    }
+
+    public int getTwStart() {
+      return myTwStart;
+    }
+
+    public int getTwEnd() {
+      return myTwEnd;
+    }
+
+    public TaskWindow getTaskWindow() {
+      return myTaskWindow;
     }
   }
 }

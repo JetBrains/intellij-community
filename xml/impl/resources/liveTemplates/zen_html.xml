@@ -159,6 +159,14 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
+  <template description="&lt;link rel=&quot;import&quot; href=&quot;&quot;&gt;"
+            name="link:im" toReformat="true" toShortenFQNames="true"
+            value="&lt;link rel=&quot;import&quot; href=&quot;$HTML$.html&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="HTML"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
   <template description="&lt;link rel=&quot;stylesheet&quot; href=&quot;print.css&quot; media=&quot;print&quot;&gt;"
             name="link:print" toReformat="true" toShortenFQNames="true"
             value="&lt;link rel=&quot;stylesheet&quot; href=&quot;$STYLE$.css&quot; media=&quot;print&quot;/&gt;">
@@ -241,7 +249,7 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;script&gt;...&lt;/script&gt;" name="script" toReformat="true" toShortenFQNames="true" value="&lt;script&gt;$END$&lt;/script&gt;">
+  <template description="&lt;script&gt;...&lt;/script&gt;" name="script" toReformat="true" toShortenFQNames="true" value="&lt;script !src=&quot;&quot;&gt;$END$&lt;/script&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -647,20 +655,18 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;select name=&quot;...&quot; id=&quot;...&quot; disabled=&quot;...&quot;&gt;...&lt;/select&gt;" name="select:disabled" toReformat="true"
-            toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot; disabled=&quot;$VAR2$&quot;&gt;$END$&lt;/select&gt;">
+  <template description="&lt;select name=&quot;...&quot; id=&quot;...&quot; disabled&gt;...&lt;/select&gt;" name="select:disabled" toReformat="true"
+            toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot; disabled&gt;$END$&lt;/select&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;select name=&quot;...&quot; id=&quot;...&quot; disabled=&quot;...&quot;&gt;...&lt;/select&gt;" name="select:d" toReformat="true"
-            toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot; disabled=&quot;$VAR2$&quot;&gt;$END$&lt;/select&gt;">
+  <template description="&lt;select name=&quot;...&quot; id=&quot;...&quot; disabled&gt;...&lt;/select&gt;" name="select:d" toReformat="true"
+            toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot; disabled&gt;$END$&lt;/select&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -770,30 +776,26 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;button disabled=&quot;&quot;&gt;...&lt;/button&gt;" name="button:disabled" toReformat="true" toShortenFQNames="true"
-            value="&lt;button disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/button&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;button disabled&gt;...&lt;/button&gt;" name="button:disabled" toReformat="true" toShortenFQNames="true"
+            value="&lt;button disabled&gt;$END$&lt;/button&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;button disabled=&quot;&quot;&gt;...&lt;/button&gt;" name="button:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;button disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/button&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;button disabled&gt;...&lt;/button&gt;" name="button:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;button disabled&gt;$END$&lt;/button&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;fieldset disabled=&quot;&quot;&gt;...&lt;/fieldset&gt;" name="fieldset:disabled" toReformat="true" toShortenFQNames="true"
-            value="&lt;fieldset disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/fieldset&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;fieldset disabled&gt;...&lt;/fieldset&gt;" name="fieldset:disabled" toReformat="true" toShortenFQNames="true"
+            value="&lt;fieldset disabled&gt;$END$&lt;/fieldset&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;fieldset disabled=&quot;&quot;&gt;...&lt;/fieldset&gt;" name="fieldset:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;fieldset disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/fieldset&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;fieldset disabled&gt;...&lt;/fieldset&gt;" name="fieldset:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;fieldset disabled&gt;$END$&lt;/fieldset&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -870,9 +872,8 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;fieldset disabled=&quot;&quot;&gt;...&lt;/fieldset&gt;" name="fst:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;fieldset disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/fieldset&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;fieldset disabled&gt;...&lt;/fieldset&gt;" name="fst:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;fieldset disabled&gt;$END$&lt;/fieldset&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -901,9 +902,8 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;button disabled=&quot;&quot;&gt;...&lt;/button&gt;" name="btn:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;button disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/button&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;button disabled&gt;...&lt;/button&gt;" name="btn:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;button disabled&gt;$END$&lt;/button&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -992,9 +992,8 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;fieldset disabled=&quot;&quot;&gt;...&lt;/fieldset&gt;" name="fset:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;fieldset disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/fieldset&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;fieldset disabled&gt;...&lt;/fieldset&gt;" name="fset:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;fieldset disabled&gt;$END$&lt;/fieldset&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>

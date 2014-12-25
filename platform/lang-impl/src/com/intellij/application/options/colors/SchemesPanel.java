@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,15 @@
 
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SaveSchemeDialog;
-import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +40,6 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
   private JButton myDeleteButton;
 
-  private JButton myExportButton;
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
 
@@ -65,25 +59,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       public void actionPerformed(@NotNull ActionEvent e) {
         if (mySchemeComboBox.getSelectedIndex() != -1) {
           EditorColorsScheme selected = myOptions.selectScheme((String)mySchemeComboBox.getSelectedItem());
-          if (ColorAndFontOptions.isReadOnly(selected)) {
-            myDeleteButton.setEnabled(false);
-            if (myExportButton != null) {
-              myExportButton.setEnabled(false);
-            }
-          }
-          else if (ColorSettingsUtil.isSharedScheme(selected)) {
-            myDeleteButton.setEnabled(true);
-            if (myExportButton != null) {
-              myExportButton.setEnabled(false);
-            }
-          }
-          else {
-            myDeleteButton.setEnabled(true);
-            if (myExportButton != null) {
-              myExportButton.setEnabled(true);
-            }
-          }
-
+          myDeleteButton.setEnabled(!ColorAndFontOptions.isReadOnly(selected));
           if (areSchemesLoaded()) {
             myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
           }
@@ -103,13 +79,13 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
     int gridx = 0;
 
-    panel.add(new JLabel(ApplicationBundle.message("combobox.scheme.name")),
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5),
+    panel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")),
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 5),
                                      0, 0));
 
     mySchemeComboBox = new JComboBox();
     panel.add(mySchemeComboBox,
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10),
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 10),
                                      0, 0));
 
     JButton saveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
@@ -120,7 +96,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     });
     panel.add(saveAsButton,
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5),
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 5, 5),
                                      0, 0));
 
     myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
@@ -133,56 +109,9 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     });
     panel.add(myDeleteButton,
-              new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+              new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
                                      0));
 
-    SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> schemesManager =
-      ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager();
-    if (schemesManager.isExportAvailable()) {
-      myExportButton = new JButton("Share...");
-      myExportButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull final ActionEvent e) {
-          EditorColorsScheme selected = myOptions.getOriginalSelectedScheme();
-          ExportSchemeAction
-            .doExport((EditorColorsSchemeImpl)selected, ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager());
-        }
-      });
-
-      panel.add(myExportButton,
-                new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 5), 0,
-                                       0));
-      myExportButton.setMnemonic('S');
-
-    }
-
-    if (schemesManager.isImportAvailable()) {
-      JButton myImportButton = new JButton("Import Shared...");
-      myImportButton.setMnemonic('I');
-      myImportButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull final ActionEvent e) {
-          SchemesToImportPopup<EditorColorsScheme, EditorColorsSchemeImpl> popup =
-            new SchemesToImportPopup<EditorColorsScheme, EditorColorsSchemeImpl>(SchemesPanel.this) {
-              @Override
-              protected void onSchemeSelected(final EditorColorsSchemeImpl scheme) {
-                if (scheme != null) {
-                  myOptions.addImportedScheme(scheme);
-                  //changeToScheme(myOptions.getSelectedScheme());
-                }
-
-              }
-            };
-          popup.show(((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager(), myOptions.getSchemes());
-
-        }
-      });
-
-      panel.add(myImportButton,
-                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
-                                       0));
-
-    }
     for (final ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
       final JButton button = new JButton(importHandler.getTitle());
       button.addActionListener(new ActionListener() {
@@ -197,7 +126,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
         }
       });
       panel.add(button,
-                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0,
+                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
                                        0));
     }
 
@@ -208,8 +137,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     List<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
     String selectedName = myOptions.getSelectedScheme().getName();
     SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       myOptions.saveSchemeAs(dialog.getSchemeName());
     }
   }
@@ -256,9 +184,5 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
   public void addListener(ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
-  }
-
-  public void disposeUIResources() {
-    
   }
 }

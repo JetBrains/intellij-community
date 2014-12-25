@@ -25,20 +25,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * Created by Max Medvedev on 07/04/14
  */
 public class GrMapTypeImpl extends GrMapType {
-  private final Map<String, PsiType> myStringEntries;
+  private final LinkedHashMap<String, PsiType> myStringEntries;
   private final List<Couple<PsiType>> myOtherEntries;
 
   GrMapTypeImpl(JavaPsiFacade facade,
                 GlobalSearchScope scope,
-                Map<String, PsiType> stringEntries,
+                LinkedHashMap<String, PsiType> stringEntries,
                 List<Couple<PsiType>> otherEntries,
                 LanguageLevel languageLevel) {
     super(facade, scope, languageLevel);
@@ -92,7 +92,7 @@ public class GrMapTypeImpl extends GrMapType {
 
   @NotNull
   @Override
-  protected Map<String, PsiType> getStringEntries() {
+  protected LinkedHashMap<String, PsiType> getStringEntries() {
     return myStringEntries;
   }
 

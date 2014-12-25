@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package git4idea.checkout;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -55,8 +57,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     BasicAction.saveAll();
     GitCloneDialog dialog = new GitCloneDialog(project);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
     dialog.rememberSettings();
@@ -90,7 +91,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
         if (!cloneResult.get()) {
           return;
         }
-
+        DvcsUtil.addMappingIfSubRoot(project, FileUtil.join(parentDirectory, directoryName), GitVcs.NAME);
         destinationParent.refresh(true, true, new Runnable() {
           public void run() {
             if (project.isOpen() && (!project.isDisposed()) && (!project.isDefault())) {

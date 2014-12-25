@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -48,7 +49,7 @@ public class ExecutionPointHighlighter {
   private Editor myEditor;
   private XSourcePosition mySourcePosition;
   private OpenFileDescriptor myOpenFileDescriptor;
-  private boolean myUseSelection;
+  private boolean myNotTopFrame;
   private GutterIconRenderer myGutterIconRenderer;
   private static final Key<Boolean> EXECUTION_POINT_HIGHLIGHTER_KEY = Key.create("EXECUTION_POINT_HIGHLIGHTER_KEY");
 
@@ -69,7 +70,7 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  public void show(final @NotNull XSourcePosition position, final boolean useSelection,
+  public void show(final @NotNull XSourcePosition position, final boolean notTopFrame,
                    @Nullable final GutterIconRenderer gutterIconRenderer) {
     updateRequested.set(false);
     AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
@@ -85,7 +86,7 @@ public class ExecutionPointHighlighter {
         //myOpenFileDescriptor.setUseCurrentWindow(true);
 
         myGutterIconRenderer = gutterIconRenderer;
-        myUseSelection = useSelection;
+        myNotTopFrame = notTopFrame;
 
         doShow(true);
       }
@@ -170,9 +171,9 @@ public class ExecutionPointHighlighter {
       adjustCounter(myEditor, -1);
     }
 
-    if (myUseSelection && myEditor != null) {
-      myEditor.getSelectionModel().removeSelection();
-    }
+    //if (myNotTopFrame && myEditor != null) {
+    //  myEditor.getSelectionModel().removeSelection();
+    //}
 
     if (myRangeHighlighter != null) {
       myRangeHighlighter.dispose();
@@ -186,16 +187,18 @@ public class ExecutionPointHighlighter {
     Document document = myEditor.getDocument();
     if (line < 0 || line >= document.getLineCount()) return;
 
-    if (myUseSelection) {
-      myEditor.getSelectionModel().setSelection(document.getLineStartOffset(line), document.getLineEndOffset(line) + document.getLineSeparatorLength(line));
-      return;
-    }
+    //if (myNotTopFrame) {
+    //  myEditor.getSelectionModel().setSelection(document.getLineStartOffset(line), document.getLineEndOffset(line) + document.getLineSeparatorLength(line));
+    //  return;
+    //}
 
     if (myRangeHighlighter != null) return;
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    myRangeHighlighter = myEditor.getMarkupModel().addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                                                      scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES));
+    myRangeHighlighter = DocumentMarkupModel.forDocument(document, myProject, true).addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
+                                                                      myNotTopFrame
+                                                                      ? scheme.getAttributes(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES)
+                                                                      : scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES));
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_KEY, true);
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }

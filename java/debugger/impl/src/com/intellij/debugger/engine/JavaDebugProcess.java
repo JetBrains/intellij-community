@@ -54,7 +54,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +72,13 @@ public class JavaDebugProcess extends XDebugProcess {
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
 
-  public JavaDebugProcess(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
+  public static JavaDebugProcess create(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
+    JavaDebugProcess res = new JavaDebugProcess(session, javaSession);
+    javaSession.getProcess().setXDebugProcess(res);
+    return res;
+  }
+
+  protected JavaDebugProcess(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
     super(session);
     myJavaSession = javaSession;
     myEditorsProvider = new JavaDebuggerEditorsProvider();
@@ -321,9 +326,6 @@ public class JavaDebugProcess extends XDebugProcess {
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
-    addActionToGroup(settings, XDebuggerActions.INLINE_DEBUGGER);
-    addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
-    addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP_ON_SELECTION);
     settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);
     settings.addAction(new WatchLastMethodReturnValueAction(), Constraints.FIRST);
   }

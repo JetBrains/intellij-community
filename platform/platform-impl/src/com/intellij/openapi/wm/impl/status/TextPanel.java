@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class TextPanel extends JComponent {
 
   @Override
   public Font getFont() {
-    return SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont();
+    return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label();
   }
 
   protected TextPanel(final boolean decorate) {

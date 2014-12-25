@@ -71,13 +71,13 @@ Uninstalling IntelliJ IDEA
 
 Licensing & pricing
 ==========================
-  Licensing and pricing information can be found at http://www.jetbrains.com/idea/buy/index.html.
+  Licensing and pricing information can be found at https://www.jetbrains.com/idea/buy/index.html.
 
 
 IntelliJ IDEA Overview
 ==========================
   For general info and facts on IntelliJ IDEA, you can refer to IntelliJ IDEA Info Kit at
-  http://www.jetbrains.com/idea/documentation/product_info_kit.html.
+  https://www.jetbrains.com/idea/documentation/product_info_kit.html.
 
 
 IDEA Development Package
@@ -102,7 +102,7 @@ IDEA Development Package
       * StarTeam, Perforce, Subversion, Visual SourceSafe integration
       * Tomcat, Weblogic, WebSphere, Geronimo, JBoss, GlassFish, JSR45 integration
 
-  Download page: http://www.jetbrains.com/idea/download/index.html
+  Download page: https://www.jetbrains.com/idea/download/index.html
 
   Source code of additional open source plugins shipped with IntelliJ IDEA is available in the Subversion
   repository at:
@@ -139,7 +139,7 @@ IntelliJ Community Site
 Support
 =======
   For technical support and assistance, you may find necessary information at the Support page
-  (http://www.jetbrains.com/support/index.html) or contact us at support@jetbrains.com.
+  (https://www.jetbrains.com/support/index.html) or contact us at support@jetbrains.com.
 
 
 Bug Reporting:
@@ -158,7 +158,7 @@ Contacting us:
 
 
 =============
-You are encouraged to visit our IntelliJ IDEA web site at http://www.jetbrains.com/idea/
+You are encouraged to visit our IntelliJ IDEA web site at https://www.jetbrains.com/idea/
 or to contact us via e-mail at feedback@jetbrains.com if you have any comments about
 this release. In particular, we are very interested in any ease-of-use, user
 interface suggestions that you may have. We will be posting regular updates

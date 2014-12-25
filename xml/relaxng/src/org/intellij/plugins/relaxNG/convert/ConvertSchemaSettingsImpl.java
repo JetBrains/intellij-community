@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.DocumentAdapter;
@@ -120,12 +120,8 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
 
     myEncoding.setModel(new DefaultComboBoxModel(suggestions.toArray()));
-    final Charset charset = EncodingManager.getInstance().getDefaultCharset();
-    if (charset == null) {
-      myEncoding.setSelectedItem(System.getProperty("file.encoding", "UTF-8"));
-    } else {
-      myEncoding.setSelectedItem(charset.name());
-    }
+    final Charset charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
+    myEncoding.setSelectedItem(charset.name());
 
     final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(project);
     final int indent = styleSettings.getIndentSize(type);
@@ -253,8 +249,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final AdvancedOptionsDialog dialog = new AdvancedOptionsDialog(myProject, myInputType, getOutputType());
     dialog.setOptions(myInputOptions, myOutputOptions);
 
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       myInputOptions = dialog.getInputOptions();
       myOutputOptions = dialog.getOutputOptions();
     }

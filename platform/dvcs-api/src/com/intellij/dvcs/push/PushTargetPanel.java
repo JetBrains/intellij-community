@@ -24,7 +24,10 @@ import javax.swing.*;
 
 public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
 
-  abstract public void render(@NotNull ColoredTreeCellRenderer renderer);
+  /**
+   * @param isActive true if appropriate repository changes will be pushed, a.e. if repository checked
+   */
+  abstract public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive);
 
   @NotNull
   abstract public T getValue();
@@ -35,4 +38,6 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
 
   @Nullable
   public abstract ValidationInfo verify();
+
+  public abstract void setFireOnChangeAction(@NotNull Runnable action);
 }

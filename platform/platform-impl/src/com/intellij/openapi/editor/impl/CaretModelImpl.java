@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -61,28 +60,23 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public CaretModelImpl(EditorImpl editor) {
     myEditor = editor;
     myCarets.add(new CaretImpl(myEditor));
+  }
 
-    DocumentBulkUpdateListener bulkUpdateListener = new DocumentBulkUpdateListener() {
+  void onBulkDocumentUpdateStarted() {
+    for (CaretImpl caret : myCarets) {
+      caret.onBulkDocumentUpdateStarted();
+    }
+  }
+
+  void onBulkDocumentUpdateFinished() {
+    doWithCaretMerging(new Runnable() {
       @Override
-      public void updateStarted(@NotNull Document doc) {
+      public void run() {
         for (CaretImpl caret : myCarets) {
-          caret.onBulkDocumentUpdateStarted(doc);
+          caret.onBulkDocumentUpdateFinished();
         }
       }
-
-      @Override
-      public void updateFinished(@NotNull final Document doc) {
-        doWithCaretMerging(new Runnable() {
-          @Override
-          public void run() {
-            for (CaretImpl caret : myCarets) {
-              caret.onBulkDocumentUpdateFinished(doc);
-            }
-          }
-        });
-      }
-    };
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, bulkUpdateListener);
+    });
   }
 
   @Override
@@ -270,7 +264,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Nullable
   @Override
   public Caret addCaret(@NotNull VisualPosition pos) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     CaretImpl caret = new CaretImpl(myEditor);
     caret.moveToVisualPosition(pos, false);
     if (addCaret(caret)) {
@@ -297,7 +291,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public boolean removeCaret(@NotNull Caret caret) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     if (myCarets.size() <= 1 || !(caret instanceof CaretImpl)) {
       return false;
     }
@@ -313,7 +307,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void removeSecondaryCarets() {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     if (!supportsMultipleCarets()) {
       return;
     }
@@ -335,7 +329,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void runForEachCaret(@NotNull final CaretAction action, final boolean reverseOrder) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     if (!supportsMultipleCarets()) {
       action.perform(getPrimaryCaret());
       return;
@@ -364,7 +358,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void runBatchCaretOperation(@NotNull Runnable runnable) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     doWithCaretMerging(runnable);
   }
 
@@ -448,7 +442,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void setCaretsAndSelections(@NotNull final List<CaretState> caretStates, final boolean updateSystemSelection) {
-    myEditor.assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     if (caretStates.isEmpty()) {
       throw new IllegalArgumentException("At least one caret should exist");
     }

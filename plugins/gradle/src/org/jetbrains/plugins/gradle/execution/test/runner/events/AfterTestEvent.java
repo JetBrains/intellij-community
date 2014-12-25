@@ -54,10 +54,10 @@ public class AfterTestEvent extends AbstractTestEvent {
     final TestEventResult result = getTestEventResultType(eventXml);
     switch (result) {
       case SUCCESS:
-        testProxy.setFinished();
         addToInvokeLater(new Runnable() {
           @Override
           public void run() {
+            testProxy.setFinished();
             getResultsViewer().onTestFinished(testProxy);
           }
         });
@@ -88,12 +88,17 @@ public class AfterTestEvent extends AbstractTestEvent {
             comparisonPair = parseComparisonMessage(exceptionMsg, "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"");
           }
 
-          if (comparisonPair != null) {
-            testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, comparisonPair.second, comparisonPair.first);
-          }
-          else {
-            testProxy.setTestFailed(exceptionMsg, stackTrace, "error".equals(failureType));
-          }
+          final Couple<String> finalComparisonPair = comparisonPair;
+          addToInvokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (finalComparisonPair != null) {
+                testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, finalComparisonPair.second, finalComparisonPair.first);
+              }
+              else {
+                testProxy.setTestFailed(exceptionMsg, stackTrace, "error".equals(failureType));
+              }
+            }});
         }
         addToInvokeLater(new Runnable() {
           @Override

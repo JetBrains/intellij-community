@@ -51,7 +51,7 @@
         <option name="FOREGROUND" value="A5C261" />
       </value>
     </option>
-    <option name="CLASS_REFERENCE">
+    <option name="OC.CLASS_REFERENCE">
       <value>
         <option name="FOREGROUND" value="FFFFFF" />
       </value>
@@ -200,7 +200,7 @@
         <option name="FOREGROUND" value="D0D0FF" />
       </value>
     </option>
-    <option name="CONDITIONALLY_NOT_COMPILED">
+    <option name="OC.CONDITIONALLY_NOT_COMPILED">
       <value>
         <option name="FOREGROUND" value="BC9458" />
         <option name="FONT_TYPE" value="2" />
@@ -604,7 +604,7 @@
         <option name="BACKGROUND" value="30322b" />
       </value>
     </option>
-    <option name="ENUM_CONST">
+    <option name="OC.ENUM_CONST">
       <value>
         <option name="FOREGROUND" value="6D9CBE" />
       </value>
@@ -814,7 +814,7 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="IVAR">
+    <option name="OC.IVAR">
       <value>
         <option name="FOREGROUND" value="D0D0FF" />
       </value>
@@ -906,7 +906,7 @@
         <option name="FOREGROUND" value="A5C261" />
       </value>
     </option>
-    <option name="LABEL">
+    <option name="OC.LABEL">
       <value>
         <option name="FOREGROUND" value="CC7833" />
       </value>
@@ -926,7 +926,7 @@
         <option name="FOREGROUND" value="D0D0FF" />
       </value>
     </option>
-    <option name="MACRONAME">
+    <option name="OC.MACRONAME">
       <value>
         <option name="FOREGROUND" value="FFC66D" />
       </value>
@@ -936,7 +936,7 @@
         <option name="BACKGROUND" value="3a6da0" />
       </value>
     </option>
-    <option name="MESSAGE_ARGUMENT">
+    <option name="OC.MESSAGE_ARGUMENT">
       <value>
         <option name="FOREGROUND" value="FFC66D" />
       </value>
@@ -1563,7 +1563,7 @@
         <option name="ERROR_STRIPE_COLOR" value="ff" />
       </value>
     </option>
-    <option name="TYPEDEF">
+    <option name="OC.TYPEDEF">
       <value>
         <option name="FOREGROUND" value="CC7833" />
       </value>

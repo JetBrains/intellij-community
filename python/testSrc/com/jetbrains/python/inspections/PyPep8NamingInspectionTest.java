@@ -65,8 +65,17 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-13537
+  public void testDescendantOfStandardClass() {
+    myFixture.configureByFile("inspections/PyPep8NamingInspection/" + getTestName(true) + ".py");
+    final PyPep8NamingInspection inspection = new PyPep8NamingInspection();
+    inspection.ignoredBaseClasses.add("collections.OrderedDict");
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(false, false, true);
+  }
+
   public void testTest() {
-    doTest();
+    doMultiFileTest();
   }
 
   public void testOverrideFromModule() {
@@ -81,4 +90,12 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     myFixture.enableInspections(PyPep8NamingInspection.class);
     myFixture.checkHighlighting(false, false, true);
   }
+
+  private void doMultiFileTest() {
+    myFixture.copyDirectoryToProject("inspections/PyPep8NamingInspection/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.enableInspections(PyPep8NamingInspection.class);
+    myFixture.checkHighlighting(false, false, true);
+  }
+
 }

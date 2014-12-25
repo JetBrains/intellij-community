@@ -16,8 +16,8 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ public class HighlightSeverityTest extends LightDaemonAnalyzerTestCase {
 
 
   public void testErrorLikeUnusedSymbol() throws Exception {
-    enableInspectionTool(new LocalInspectionToolWrapper(new UnusedSymbolLocalInspection()) {
+    enableInspectionTool(new GlobalInspectionToolWrapper(new UnusedDeclarationInspection()) {
       @NotNull
       @Override
       public HighlightDisplayLevel getDefaultLevel() {

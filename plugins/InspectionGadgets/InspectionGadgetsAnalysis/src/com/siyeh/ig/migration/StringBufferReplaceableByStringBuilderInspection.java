@@ -150,6 +150,11 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     return new StringBufferReplaceableByStringBuilderVisitor();
   }
 
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
   private static class StringBufferReplaceableByStringBuilderVisitor extends BaseInspectionVisitor {
 
     private static final Set<String> excludes = ContainerUtil.newHashSet(CommonClassNames.JAVA_LANG_STRING_BUILDER,
@@ -157,9 +162,6 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
 
     @Override
     public void visitDeclarationStatement(PsiDeclarationStatement statement) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
-        return;
-      }
       super.visitDeclarationStatement(statement);
       final PsiElement[] declaredElements = statement.getDeclaredElements();
       if (declaredElements.length == 0) {

@@ -78,6 +78,11 @@ public class HgStatusCommand {
       targetRevision = null;
     }
 
+    public Builder removed(boolean val) {
+      includeRemoved = val;
+      return this;
+    }
+
     public Builder unknown(boolean val) {
       includeUnknown = val;
       return this;
@@ -191,7 +196,7 @@ public class HgStatusCommand {
     }
     List<String> errors = result.getErrorLines();
     if (errors != null && !errors.isEmpty()) {
-      if (result.getExitValue() != 0) {
+      if (result.getExitValue() != 0 && !myProject.isDisposed()) {
         String title = "Could not execute hg status command ";
         LOG.warn(title + errors.toString());
         VcsNotifier.getInstance(myProject).logInfo(title, errors.toString());

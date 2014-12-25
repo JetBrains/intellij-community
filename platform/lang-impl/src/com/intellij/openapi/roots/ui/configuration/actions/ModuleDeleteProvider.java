@@ -57,7 +57,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
 
   private static boolean isPrimaryModule(Module[] modules) {
     if (!ProjectAttachProcessor.canAttachToProject()) {
-      return !PlatformUtils.isIdeaUltimate();
+      return !PlatformUtils.isIntelliJ();
     }
     for (Module module : modules) {
       final File moduleFile = new File(module.getModuleFilePath());

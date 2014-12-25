@@ -34,4 +34,9 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testEnum() { doTest("pkg/TestEnum"); }
   @Test public void testDebugSymbols() { doTest("pkg/TestDebugSymbols"); }
   @Test public void testInvalidMethodSignature() { doTest("InvalidMethodSignature"); }
+  @Test public void testInnerClassConstructor() { doTest("pkg/TestInnerClassConstructor"); }
+  @Test public void testInnerClassConstructor11() { doTest("v11/TestInnerClassConstructor"); }
+  @Test public void testTryCatchFinally() { doTest("pkg/TestTryCatchFinally"); }
+  @Test public void testAmbiguousCall() { doTest("pkg/TestAmbiguousCall"); }
+  @Test public void testAmbiguousCallWithDebugInfo() { doTest("pkg/TestAmbiguousCallWithDebugInfo"); }
 }

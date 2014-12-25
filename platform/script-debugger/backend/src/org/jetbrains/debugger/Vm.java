@@ -2,6 +2,7 @@ package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 public interface Vm {
   @NotNull
@@ -26,13 +27,13 @@ public interface Vm {
    * @param enabled new value to set or null
    */
   @NotNull
-  ActionCallback enableBreakpoints(boolean enabled);
+  Promise<?> enableBreakpoints(boolean enabled);
 
   /**
    * Controls whether VM stops on exceptions
    */
   @NotNull
-  ActionCallback setBreakOnException(ExceptionCatchMode catchMode);
+  Promise<?> setBreakOnException(ExceptionCatchMode catchMode);
 
   @NotNull
   EvaluateContext getEvaluateContext();

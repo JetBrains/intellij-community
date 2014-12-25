@@ -154,4 +154,8 @@ public abstract class ToolWindowManager {
 
   @Nullable
   public abstract Balloon getToolWindowBalloon(String id);
+
+  public abstract boolean isMaximized(@NotNull ToolWindow wnd);
+
+  public abstract void setMaximized(@NotNull ToolWindow wnd, boolean maximized);
 }

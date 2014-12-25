@@ -131,12 +131,13 @@ public class BorderEffect {
     int startX = startPoint.x;
     int startY = startPoint.y;
     int endX = endPoint.x;
+    int lineHeight = editor.getLineHeight();
     if (height == 0) {
       int width = endX == startX ? 1 : endX - startX - 1;
       if (effectType == EffectType.ROUNDED_BOX) {
-        UIUtil.drawRectPickedOut((Graphics2D)g, startX, startY, width, editor.getLineHeight() - 1);
+        UIUtil.drawRectPickedOut((Graphics2D)g, startX, startY, width, lineHeight - 1);
       } else {
-        g.drawRect(startX, startY, width, editor.getLineHeight() - 1);
+        g.drawRect(startX, startY, width, lineHeight - 1);
       }
       return;
     }
@@ -144,9 +145,14 @@ public class BorderEffect {
     border.horizontalTo(editor.getMaxWidthInRange(startOffset, endOffset) - 1);
     border.verticalRel(height - 1);
     border.horizontalTo(endX);
-    border.verticalRel(editor.getLineHeight());
-    border.horizontalTo(0);
-    border.verticalRel(-height + 1);
+    if (endX > 0) {
+      border.verticalRel(lineHeight);
+      border.horizontalTo(0);
+      border.verticalRel(-height + 1);
+    }
+    else if (height > lineHeight) {
+      border.verticalRel(-height + lineHeight + 1);
+    }
     border.horizontalTo(startX);
     border.verticalTo(startY);
   }

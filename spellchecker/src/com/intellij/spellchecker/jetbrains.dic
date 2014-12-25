@@ -6,7 +6,9 @@ anyschema
 aopalliance
 appender
 archivelog
+argc
 args
+argv
 arial
 arity
 asensitive
@@ -48,6 +50,7 @@ builtin
 bzip
 calc
 callee
+camelcase
 cancelable
 cancellable
 capath
@@ -60,15 +63,18 @@ charset
 charsets
 checkbox
 checkboxes
+checkstyle
 checksum
 chmod
 classpath
 clazz
+clion
 clob
 clojure
 cloneable
 closable
 closeable
+cmake
 cmdline
 codebase
 codeinsight
@@ -76,12 +82,15 @@ codesign
 commandline
 committer
 commonjs
+concat
+cond
 conf
 config
 configs
 configurator
 configurators
 const
+constexpr
 contravariant
 controlfile
 covariant
@@ -89,6 +98,7 @@ cron
 ctrl
 customizer
 cyclomatic
+cygwin
 datafile
 datafiles
 datetime
@@ -128,14 +138,18 @@ ehcache
 elseif
 elsif
 endregion
+endif
 enqueue
 enum
 enums
+eqeqeq
+eval
 evex
 exif
 expr
 facebook
 facelet
+fallthrough
 favicon
 filename
 fileset
@@ -144,6 +158,7 @@ filesystem
 filesystems
 finalizer
 finalizers
+findbugs
 firefox
 fixme
 foreach
@@ -189,7 +204,10 @@ html
 http
 https
 iconable
+iife
 impl
+implementor
+implementors
 inbox
 incrementer
 indextype
@@ -207,6 +225,7 @@ insteadof
 intellij
 iphone
 iphoneos
+isnan
 isnull
 javabean
 javabeans
@@ -225,6 +244,7 @@ jnilib
 jpeg
 jpdl
 jquery
+jsdoc
 jsessionid
 jshint
 json
@@ -234,6 +254,8 @@ keychain
 keychains
 keyframe
 keyframes
+keymap
+keymaps
 kotlin
 labeler
 labelers
@@ -282,6 +304,7 @@ middleint
 middleware
 millis
 minextents
+mingw
 minimizable
 minvalue
 miny
@@ -340,6 +363,7 @@ nowrap
 nullabilities
 nullability
 nullif
+nullptr
 nvarchar
 oauth
 objc
@@ -357,6 +381,7 @@ pageable
 param
 parameterizable
 params
+paren
 patcher
 patchers
 pathname
@@ -374,6 +399,7 @@ plist
 plsql
 plugin
 plugins
+plusplus
 pointcut
 pointcuts
 portlet
@@ -397,6 +423,7 @@ println
 processlist
 profiler
 progressbar
+proto
 proven
 proxool
 pycharm
@@ -408,6 +435,7 @@ rebase
 rebased
 rebasing
 rect
+redeclare
 redis
 redispatch
 redistributions
@@ -495,6 +523,7 @@ sigwaiting
 sigwinch
 sigxcpu
 sigxfsz
+sizeof
 slru
 smallfile
 smallint
@@ -562,10 +591,15 @@ tuple
 twitter
 typedef
 typedefs
+typename
+typeof
+ubuntu
+unary
 unboxing
 unbuffered
 uncomment
 uncommented
+undef
 underwave
 undoable
 undofile
@@ -596,8 +630,11 @@ verdana
 versa
 vertices
 viewlet
+viewport
+viewports
 vtlvariable
 watchlist
+wchar
 webpack
 webservice
 whitespace
@@ -612,6 +649,8 @@ writeln
 wsdl
 xcode
 xcodeproj
+xctest
+xcworkspace
 xhtml
 xmlbeans
 xmlschema

@@ -41,6 +41,7 @@ import static com.intellij.reference.SoftReference.deref;
  * Concurrent map with weak keys and strong values.
  * Null keys are NOT allowed
  * Null values are NOT allowed
+ * @deprecated Use {@link ContainerUtil#createConcurrentWeakKeySoftValueMap(int, float, int, gnu.trove.TObjectHashingStrategy)} instead
  */
 public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K, V> {
   private final ConcurrentMap<KeyReference<K,V>, ValueReference<K,V>> myMap;
@@ -49,22 +50,25 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   @NotNull private final TObjectHashingStrategy<K> myHashingStrategy;
 
   public ConcurrentWeakKeySoftValueHashMap(int initialCapacity,
-                                           float loadFactor,
-                                           int concurrencyLevel,
-                                           @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+                                              float loadFactor,
+                                              int concurrencyLevel,
+                                              @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
     myHashingStrategy = hashingStrategy;
-    myMap = new ConcurrentHashMap<KeyReference<K, V>, ValueReference<K, V>>(initialCapacity, loadFactor, concurrencyLevel, TObjectHashingStrategy.CANONICAL);
+    myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, ContainerUtil.<KeyReference<K,V>>canonicalStrategy());
   }
 
   public interface KeyReference<K, V> extends Getter<K> {
+    @Override
     K get();
 
     @NotNull
     ValueReference<K,V> getValueReference(); // no strong references
 
     // MUST work even with gced references for the code in processQueue to work
+    @Override
     boolean equals(Object o);
 
+    @Override
     int hashCode();
   }
 
@@ -72,6 +76,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     @NotNull
     KeyReference<K,V> getKeyReference(); // no strong references
 
+    @Override
     V get();
   }
 
@@ -87,6 +92,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
       myStrategy = strategy;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof KeyReference)) return false;
@@ -96,6 +102,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
       if (t == other) return true;
       return myHash == o.hashCode() && myStrategy.equals(t, other);
     }
+    @Override
     public int hashCode() {
       return myHash;
     }
@@ -116,6 +123,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
    }
 
    // MUST work with gced references too for the code in processQueue to work
+   @Override
    public final boolean equals(final Object o) {
      if (this == o) return true;
      if (o == null) return false;
@@ -125,6 +133,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
      return myHash == that.hashCode() && Comparing.equal(get(), that.get());
    }
 
+   @Override
    public final int hashCode() {
      return myHash;
    }
@@ -186,10 +195,12 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
       return myKey;
     }
 
+    @Override
     public boolean equals(Object o) {
       return o.equals(this); // see WeakKey.equals()
     }
 
+    @Override
     public int hashCode() {
       return myHash;
     }
@@ -250,6 +261,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     return v;
   }
 
+  @Override
   public void putAll(@NotNull Map<? extends K, ? extends V> m) {
     for (Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
       put(e.getKey(), e.getValue());

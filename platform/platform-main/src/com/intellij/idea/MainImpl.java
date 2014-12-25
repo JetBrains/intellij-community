@@ -16,6 +16,7 @@
 package com.intellij.idea;
 
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.util.PlatformUtils;
 
 import javax.swing.*;
@@ -32,12 +33,17 @@ public class MainImpl {
 
     StartupUtil.prepareAndStart(args, new StartupUtil.AppStarter() {
       @Override
-      public void start(boolean newConfigFolder) {
+      public void start(final boolean newConfigFolder) {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
             PluginManager.installExceptionHandler();
+
+            if (newConfigFolder && !Boolean.getBoolean(ConfigImportHelper.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)) {
+              StartupUtil.runStartupWizard();
+            }
+
             final IdeaApplication app = new IdeaApplication(args);
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(new Runnable() {

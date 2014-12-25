@@ -15,14 +15,16 @@
  */
 package org.zmlx.hg4idea.push;
 
+import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.push.*;
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -31,10 +33,14 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   @NotNull private final Project myProject;
   @NotNull private final HgVcs myVcs;
+  @NotNull private final HgProjectSettings mySettings;
+  @NotNull private final PushSettings myCommonPushSettings;
 
   public HgPushSupport(@NotNull Project project) {
     myProject = project;
     myVcs = ObjectUtils.assertNotNull(HgVcs.getInstance(myProject));
+    mySettings = myVcs.getProjectSettings();
+    myCommonPushSettings = ServiceManager.getService(project, PushSettings.class);
   }
 
   @NotNull
@@ -59,7 +65,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   @Override
   public HgTarget getDefaultTarget(@NotNull HgRepository repository) {
     String defaultPushPath = repository.getRepositoryConfig().getDefaultPushPath();
-    return defaultPushPath == null ? null : new HgTarget(defaultPushPath);
+    return defaultPushPath == null ? null : new HgTarget(defaultPushPath, repository.getCurrentBranchName());
   }
 
   @NotNull
@@ -98,6 +104,17 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   @Override
   public boolean shouldRequestIncomingChangesForNotCheckedRepositories() {
-    return false;
+    // load commit for all repositories if sync
+    return mySettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC;
+  }
+
+  @Override
+  public void saveSilentForcePushTarget(@NotNull HgTarget target) {
+    myCommonPushSettings.addForcePushTarget(target.getPresentation(), target.getBranchName());
+  }
+
+  @Override
+  public boolean isSilentForcePushAllowed(@NotNull HgTarget target) {
+    return myCommonPushSettings.containsForcePushTarget(target.getPresentation(), target.getBranchName());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -44,23 +43,22 @@ public class EditComponentAction extends AnAction {
     Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
     final ComponentItemDialog dialog = new ComponentItemDialog(project, parentWindow, itemToBeEdited, false);
     dialog.setTitle(UIDesignerBundle.message("title.edit.component"));
-    dialog.show();
-    if(!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
 
     GroupItem groupItem = null;
     Palette palette = Palette.getInstance(project);
     // If the itemToBeAdded is already in palette do nothing
-    for(GroupItem group: palette.getGroups()) {
-      if (group.containsItemCopy(selectedItem, itemToBeEdited.getClassName())){
+    for (GroupItem group : palette.getGroups()) {
+      if (group.containsItemCopy(selectedItem, itemToBeEdited.getClassName())) {
         return;
       }
       if (group.containsItemClass(selectedItem.getClassName())) {
         groupItem = group;
       }
     }
-    LOG.assertTrue(groupItem != null);        
+    LOG.assertTrue(groupItem != null);
 
     palette.replaceItem(groupItem, selectedItem, itemToBeEdited);
     palette.fireGroupsChanged();

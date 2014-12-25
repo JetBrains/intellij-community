@@ -23,12 +23,11 @@ import java.io.IOException;
 
 public class UtilsTest extends TestCase {
 
-  private boolean mIsWindows;
+  public static boolean mIsWindows = System.getProperty("os.name").startsWith("Windows");
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    mIsWindows = Utils.isWindows();
   }
 
   public void testDelete() throws Exception {

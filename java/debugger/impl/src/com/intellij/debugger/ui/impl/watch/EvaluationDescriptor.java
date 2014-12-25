@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHand
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author lex
@@ -100,7 +101,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
                 ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(myProject,
                                                                      psiFile, fragment, CompilingEvaluator.getGeneratedClassName());
                 if (data != null) {
-                  return new CompilingEvaluator(psiContext, data);
+                  return new CompilingEvaluatorImpl(psiContext, data);
                 }
               }
               catch (PrepareFailedException e) {
@@ -144,10 +145,6 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     }
   }
 
-  public String calcValueName() {
-    return getName();
-  }
-
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElement evaluationCode = getEvaluationCode(context);
     if(evaluationCode instanceof PsiExpressionCodeFragment) {
@@ -158,6 +155,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     }
   }
 
+  @Nullable
   public Modifier getModifier() {
     return myModifier;
   }

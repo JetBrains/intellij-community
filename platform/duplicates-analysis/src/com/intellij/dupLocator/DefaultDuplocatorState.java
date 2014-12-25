@@ -1,10 +1,6 @@
 package com.intellij.dupLocator;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,16 +14,6 @@ public class DefaultDuplocatorState implements ExternalizableDuplocatorState {
   public boolean DISTINGUISH_LITERALS = true;
   public int LOWER_BOUND = 10;
   public int DISCARD_COST = 0;
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    XmlSerializer.deserializeInto(this, element);
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    XmlSerializer.serializeInto(this, element);
-  }
 
   @Override
   public boolean distinguishRole(@NotNull PsiElementRole role) {
@@ -61,5 +47,4 @@ public class DefaultDuplocatorState implements ExternalizableDuplocatorState {
   public int getDiscardCost() {
     return DISCARD_COST;
   }
-
 }

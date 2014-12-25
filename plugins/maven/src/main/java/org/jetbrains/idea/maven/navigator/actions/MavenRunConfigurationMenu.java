@@ -5,6 +5,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 /**
@@ -54,14 +55,14 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       if (myEnabled) {
         ProgramRunnerUtil.executeConfiguration(myProject, mySettings, myExecutor);
       }
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEnabled);
     }

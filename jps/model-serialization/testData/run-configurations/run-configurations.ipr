@@ -45,6 +45,8 @@
       <patterns />
       <method />
     </configuration>
+    <configuration default="false" name="invalid">
+    </configuration>
   </component>
 </project>
 

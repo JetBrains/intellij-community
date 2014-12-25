@@ -1,4 +1,4 @@
-// "Add Catch Clause(s)" "false"
+// "Add 'catch' clause(s)" "false"
 // should not try to add catch clauses across method boundaries
 class s {
     int f() throws Exception {

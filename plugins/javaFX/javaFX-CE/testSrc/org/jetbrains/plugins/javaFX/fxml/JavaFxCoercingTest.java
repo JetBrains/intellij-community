@@ -18,7 +18,6 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +55,6 @@ public class JavaFxCoercingTest extends AbstractJavaFXTestCase {
   protected void enableInspections() {
     myFixture.enableInspections(new XmlPathReferenceInspection(), 
                                 new RequiredAttributesInspection(), 
-                                new UnusedSymbolLocalInspection(), 
                                 new UnusedDeclarationInspection());
   }
 

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.ipnb.format.cells;
 import org.jetbrains.annotations.NotNull;
 
 public class IpnbHeadingCell extends IpnbEditableCell {
-  private int myLevel;
+  private int myLevel;   // from 1 to 6
 
   public IpnbHeadingCell(@NotNull final String[] source, int level) {
     super(source);

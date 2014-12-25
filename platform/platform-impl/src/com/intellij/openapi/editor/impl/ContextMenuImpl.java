@@ -116,17 +116,13 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   }
 
   private void toggleContextToolbar(final boolean show) {
-    final Component toolbar = myComponent.getComponent(0);
-    final int count = ((Container)toolbar).getComponentCount();
-    if (count == 0) {
+    myActionToolbar.updateActionsImmediately();
+    if (((Container)myActionToolbar).getComponentCount() == 0) {
       return;
     }
 
     if (myShow != show) {
       myShow = show;
-      if (myShow && myActionToolbar != null) {
-        myActionToolbar.updateActionsImmediately();
-      }
       restartTimer();
     }
   }

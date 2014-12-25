@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -206,7 +207,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         return;
       }
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
-      if (acceptFullyQualifiedNamesInJavadoc(reference, styleSettings)) {
+      PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
+      if (containingComment != null && acceptFullyQualifiedNamesInJavadoc(containingComment, styleSettings)) {
         return;
       }
       final PsiFile containingFile = reference.getContainingFile();
@@ -260,13 +262,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
   }
 
-  public static boolean acceptFullyQualifiedNamesInJavadoc(PsiJavaCodeReferenceElement reference, CodeStyleSettings styleSettings) {
-    final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
-    if (containingComment != null) {
-      if (styleSettings.USE_FQ_CLASS_NAMES_IN_JAVADOC || JavaDocUtil.isInsidePackageInfo(containingComment)) {
-        return true;
-      }
+  public static boolean acceptFullyQualifiedNamesInJavadoc(PsiDocComment comment, CodeStyleSettings styleSettings) {
+    if (JavaDocUtil.isInsidePackageInfo(comment)) {
+      return true;
     }
-    return false;
+    JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+    return javaSettings.useFqNamesInJavadocAlways();
   }
 }

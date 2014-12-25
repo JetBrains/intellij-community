@@ -98,16 +98,16 @@ public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<Jav
   @Override
   public XBreakpoint<JavaMethodBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
     final AddWildcardBreakpointDialog dialog = new AddWildcardBreakpointDialog(project);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return null;
     }
     return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<JavaMethodBreakpointProperties>>() {
       @Override
       public XBreakpoint<JavaMethodBreakpointProperties> compute() {
-        return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(JavaWildcardMethodBreakpointType.this, new JavaMethodBreakpointProperties(
-          dialog.getClassPattern(),
-          dialog.getMethodName()));
+        return XDebuggerManager.getInstance(project).getBreakpointManager()
+          .addBreakpoint(JavaWildcardMethodBreakpointType.this, new JavaMethodBreakpointProperties(
+            dialog.getClassPattern(),
+            dialog.getMethodName()));
       }
     });
   }

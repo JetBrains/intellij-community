@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
+
 final class Method {
   final String internalClassName;
   final String methodName;
@@ -36,10 +38,28 @@ final class Method {
     return result;
   }
 
+  /**
+   * Primary constructor
+   *
+   * @param internalClassName class name in asm format
+   * @param methodName method name
+   * @param methodDesc method descriptor in asm format
+   */
   Method(String internalClassName, String methodName, String methodDesc) {
     this.internalClassName = internalClassName;
     this.methodName = methodName;
     this.methodDesc = methodDesc;
+  }
+
+  /**
+   * Convenient constructor to convert asm instruction into method key
+   *
+   * @param mNode asm node from which method key is extracted
+   */
+  Method(MethodInsnNode mNode) {
+    this.internalClassName = mNode.owner;
+    this.methodName = mNode.name;
+    this.methodDesc = mNode.desc;
   }
 
   @Override
@@ -49,14 +69,19 @@ final class Method {
 }
 
 enum Value {
-  Bot, NotNull, Null, True, False, Top
+  Bot, NotNull, Null, True, False, Pure, Top
 }
 
 interface Direction {
   final class In implements Direction {
-    static final int NOT_NULL = 0;
-    static final int NULLABLE = 1;
     final int paramIndex;
+
+    static final int NOT_NULL_MASK = 0;
+    static final int NULLABLE_MASK = 1;
+    /**
+     * @see #NOT_NULL_MASK
+     * @see #NULLABLE_MASK
+     */
     final int nullityMask;
 
     In(int paramIndex, int nullityMask) {
@@ -153,6 +178,18 @@ interface Direction {
     @Override
     public int hashCode() {
       return -2;
+    }
+  };
+
+  Direction Pure = new Direction() {
+    @Override
+    public int hashCode() {
+      return -3;
+    }
+
+    @Override
+    public String toString() {
+      return "Pure";
     }
   };
 }

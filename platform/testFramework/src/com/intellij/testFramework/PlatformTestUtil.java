@@ -25,6 +25,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -33,6 +35,7 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -65,6 +68,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.io.*;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
@@ -87,11 +91,11 @@ public class PlatformTestUtil {
   private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
-  public static <T> void registerExtension(final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
+  public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
 
-  public static <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
+  public static <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull final T t, @NotNull Disposable parentDisposable) {
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
     extensionPoint.registerExtension(t);
     Disposer.register(parentDisposable, new Disposable() {
@@ -121,12 +125,23 @@ public class PlatformTestUtil {
   }
 
   public static String print(JTree tree, boolean withSelection) {
-    return print(tree, withSelection, null);
+    return print(tree, tree.getModel().getRoot(), withSelection, null, null);
+  }
+
+  public static String print(JTree tree, Object root, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
+    return print(tree, root,  withSelection, printInfo, null);
   }
 
   public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
+    return print(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
+  }
+  
+  public static String print(JTree tree, Object root, 
+                             boolean withSelection,
+                             @Nullable Queryable.PrintInfo printInfo,
+                             @Nullable Condition<String> nodePrintCondition) {
     StringBuilder buffer = new StringBuilder();
-    final Collection<String> strings = printAsList(tree, withSelection, nodePrintCondition);
+    final Collection<String> strings = printAsList(tree, root, withSelection, printInfo, nodePrintCondition);
     for (String string : strings) {
       buffer.append(string).append("\n");
     }
@@ -134,9 +149,15 @@ public class PlatformTestUtil {
   }
 
   public static Collection<String> printAsList(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
+    return printAsList(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
+  }
+
+  private static Collection<String> printAsList(JTree tree, Object root, 
+                                                boolean withSelection,
+                                                @Nullable Queryable.PrintInfo printInfo,
+                                                Condition<String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<String>();
-    Object root = tree.getModel().getRoot();
-    printImpl(tree, root, strings, 0, withSelection, nodePrintCondition);
+    printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
   }
 
@@ -145,13 +166,14 @@ public class PlatformTestUtil {
                                 Collection<String> strings,
                                 int level,
                                 boolean withSelection,
+                                @Nullable Queryable.PrintInfo printInfo,
                                 @Nullable Condition<String> nodePrintCondition) {
     DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
 
     final Object userObject = defaultMutableTreeNode.getUserObject();
     String nodeText;
     if (userObject != null) {
-      nodeText = toString(userObject, null);
+      nodeText = toString(userObject, printInfo);
     }
     else {
       nodeText = "null";
@@ -183,7 +205,7 @@ public class PlatformTestUtil {
     int childCount = tree.getModel().getChildCount(root);
     if (expanded) {
       for (int i = 0; i < childCount; i++) {
-        printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, nodePrintCondition);
+        printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, printInfo, nodePrintCondition);
       }
     }
   }
@@ -446,6 +468,18 @@ public class PlatformTestUtil {
   public static String getRtJarPath() {
     String home = System.getProperty("java.home");
     return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
+  }
+
+  public static void saveProject(Project project) {
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    boolean oldValue = application.isDoNotSave();
+    try {
+      application.doNotSave(false);
+      project.save();
+    }
+    finally {
+      application.doNotSave(oldValue);
+    }
   }
 
   public static class TestInfo {
@@ -803,10 +837,20 @@ public class PlatformTestUtil {
   }
 
   public static void tryGcSoftlyReachableObjects() {
-    List<Object> list = ContainerUtil.newArrayList();
+    ReferenceQueue<Object> q = new ReferenceQueue<Object>();
+    SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
+    List<Object> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
     for (int i = 0; i < 100; i++) {
+      if (q.poll() != null) {
+        break;
+      }
       list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
     }
+  }
+
+  private static int useReference(SoftReference<Object> ref) {
+    Object o = ref.get();
+    return o == null ? 0 : Math.abs(o.hashCode()) % 10;
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {
@@ -834,7 +878,7 @@ public class PlatformTestUtil {
     }
   }
 
-  private static void patchSystemFileEncoding(String encoding) throws NoSuchFieldException, IllegalAccessException {
+  private static void patchSystemFileEncoding(String encoding) {
     ReflectionUtil.resetField(Charset.class, Charset.class, "defaultCharset");
     System.setProperty("file.encoding", encoding);
   }

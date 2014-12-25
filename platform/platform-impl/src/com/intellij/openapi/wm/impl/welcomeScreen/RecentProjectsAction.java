@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -27,22 +27,22 @@ import javax.swing.*;
 
 /**
  * This action is not visible in the UI but we keep it available to let users invoke it from keyboard.
- *
- * @author pti
- *         Date: Mar 2, 2005
  */
 public class RecentProjectsAction extends WelcomePopupAction {
+  @Override
   protected void fillActions(final DefaultActionGroup group) {
-    final AnAction[] recentProjectActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
+    final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
     for (AnAction action : recentProjectActions) {
       group.add(action);
     }
   }
 
+  @Override
   protected String getTextForEmpty() {
     return UIBundle.message("welcome.screen.recent.projects.action.no.recent.projects.to.display.action.name");
   }
 
+  @Override
   protected String getCaption() {
     return "";
   }
@@ -54,7 +54,7 @@ public class RecentProjectsAction extends WelcomePopupAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setVisible(RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0);
+    e.getPresentation().setVisible(RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0);
   }
 
   @Override

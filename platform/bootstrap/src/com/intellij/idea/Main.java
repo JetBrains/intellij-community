@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -129,16 +130,28 @@ public class Main {
     // always delete previous patch copy
     File patchCopy = new File(tempDir, patchFileName + "_copy");
     File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
-    if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy)) {
+    File jnaUtilsCopy = new File(tempDir, "jna-utils.jar." + platform + "_copy");
+    File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy");
+    if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy) || !FileUtilRt.delete(jnaUtilsCopy) || !FileUtilRt.delete(jnaCopy)) {
       throw new IOException("Cannot delete temporary files in " + tempDir);
     }
 
     File patch = new File(tempDir, patchFileName);
     if (!patch.exists()) return;
+
     File log4j = new File(PathManager.getLibPath(), "log4j.jar");
-    if (!log4j.exists()) throw new IOException("Log4J missing: " + log4j);
+    if (!log4j.exists()) throw new IOException("Log4J is missing: " + log4j);
+
+    File jnaUtils = new File(PathManager.getLibPath(), "jna-utils.jar");
+    if (!jnaUtils.exists()) throw new IOException("jna-utils.jar is missing: " + jnaUtils);
+
+    File jna = new File(PathManager.getLibPath(), "jna.jar");
+    if (!jna.exists()) throw new IOException("jna is missing: " + jna);
+
     copyFile(patch, patchCopy, true);
     copyFile(log4j, log4jCopy, false);
+    copyFile(jna, jnaCopy, false);
+    copyFile(jnaUtils, jnaUtilsCopy, false);
 
     int status = 0;
     if (Restarter.isSupported()) {
@@ -154,7 +167,7 @@ public class Main {
                          System.getProperty("java.home") + "/bin/java",
                          "-Xmx500m",
                          "-classpath",
-                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath(),
+                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath() + File.pathSeparator + jnaCopy.getPath() + File.pathSeparator + jnaUtilsCopy.getPath(),
                          "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
@@ -209,12 +222,13 @@ public class Main {
       JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setText(message.replaceAll("\t", "    "));
-      textPane.setBackground(Color.white);
+      textPane.setBackground(UIUtil.getPanelBackground());
       textPane.setCaretPosition(0);
       JScrollPane scrollPane = new JScrollPane(
         textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      scrollPane.setBorder(null);
 
-      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 150;
+      int maxHeight = Math.min(600, Toolkit.getDefaultToolkit().getScreenSize().height - 150);
       Dimension component = scrollPane.getPreferredSize();
       if (component.height >= maxHeight) {
         Object setting = UIManager.get("ScrollBar.width");

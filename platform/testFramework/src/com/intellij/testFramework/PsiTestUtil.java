@@ -96,6 +96,7 @@ public class PsiTestUtil {
 
     final VirtualFile vDir =
       LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    PlatformTestCase.synchronizeTempDirVfs(vDir);
     assert vDir != null && vDir.isDirectory() : dir;
 
     Project project = module != null ? module.getProject() : null;
@@ -260,6 +261,12 @@ public class PsiTestUtil {
     PsiFile dummyFile = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), file.getText());
     String reparsedTree = DebugUtil.psiTreeToString(dummyFile, false);
     Assert.assertEquals(reparsedTree, originalTree);
+  }
+
+  public static void addLibrary(final Module module, final String libPath) {
+    File file = new File(libPath);
+    String libName = file.getName();
+    addLibrary(module, libName, file.getParent(), libName);
   }
 
   public static void addLibrary(final Module module, final String libName, final String libPath, final String... jarArr) {

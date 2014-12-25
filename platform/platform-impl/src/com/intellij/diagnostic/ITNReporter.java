@@ -83,8 +83,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     ErrorReportConfigurable settings = ErrorReportConfigurable.getInstance();
     if (!settings.KEEP_ITN_PASSWORD && !StringUtil.isEmpty(settings.ITN_LOGIN) && StringUtil.isEmpty(settings.getPlainItnPassword())) {
       JetBrainsAccountDialog dlg = new JetBrainsAccountDialog(parentComponent);
-      dlg.show();
-      if (!dlg.isOK()) {
+      if (!dlg.showAndGet()) {
         return false;
       }
     }
@@ -111,9 +110,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     Object data = event.getData();
     if (data instanceof AbstractMessage) {
       errorBean.setAssigneeId(((AbstractMessage)data).getAssigneeId());
-    }
-    if (data instanceof LogMessageEx) {
-      errorBean.setAttachments(((LogMessageEx)data).getAttachments());
+      errorBean.setAttachments(((AbstractMessage)data).getAttachments());
     }
 
     String login = settings.ITN_LOGIN;

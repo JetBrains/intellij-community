@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,10 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -54,7 +57,7 @@ import java.util.concurrent.ConcurrentHashMap;
              stateSplitter = InspectionProjectProfileManagerImpl.ProfileStateSplitter.class)
   }
 )
-public class InspectionProjectProfileManagerImpl extends InspectionProjectProfileManager implements ProjectComponent, PersistentStateComponent<Element> {
+public class InspectionProjectProfileManagerImpl extends InspectionProjectProfileManager {
   private final Map<String, InspectionProfileWrapper>  myName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
   private final SeverityRegistrar mySeverityRegistrar;
   private final NamedScopeManager myLocalScopesHolder;
@@ -66,34 +69,11 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
                                              @NotNull NamedScopeManager localScopesHolder) {
     super(project, inspectionProfileManager, holder);
     myLocalScopesHolder = localScopesHolder;
-    mySeverityRegistrar = new SeverityRegistrar();
+    mySeverityRegistrar = new SeverityRegistrar(project.getMessageBus());
   }
 
   public static InspectionProjectProfileManagerImpl getInstanceImpl(Project project){
     return (InspectionProjectProfileManagerImpl)project.getComponent(InspectionProjectProfileManager.class);
-  }
-
-  @Override
-  public Element getState() {
-    try {
-      final Element e = new Element("settings");
-      writeExternal(e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
-  }
-
-  @Override
-  public void loadState(Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
   }
 
   @Override
@@ -122,7 +102,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   }
 
   @Override
-  public void deleteProfile(String name) {
+  public void deleteProfile(@NotNull String name) {
     super.deleteProfile(name);
     final InspectionProfileWrapper profileWrapper = myName2Profile.remove(name);
     if (profileWrapper != null) {
@@ -133,7 +113,9 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   @Override
   public void projectOpened() {
     StartupManager startupManager = StartupManager.getInstance(myProject);
-    if (startupManager == null) return; // upsource
+    if (startupManager == null) {
+      return; // upsource
+    }
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
       public void run() {
@@ -219,15 +201,26 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   }
 
   @Override
-  public void readExternal(final Element element) throws InvalidDataException {
-    mySeverityRegistrar.readExternal(element);
-    super.readExternal(element);
+  public void loadState(Element state) {
+    try {
+      mySeverityRegistrar.readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+    super.loadState(state);
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
-    super.writeExternal(element);
-    mySeverityRegistrar.writeExternal(element);
+  public Element getState() {
+    Element state = super.getState();
+    try {
+      mySeverityRegistrar.writeExternal(state);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return state;
   }
 
   @Override
@@ -236,9 +229,9 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   }
 
   @Override
-  public void convert(Element element) throws InvalidDataException {
+  public void convert(Element element) {
     super.convert(element);
-    if (PROJECT_PROFILE != null) {
+    if (myProjectProfile != null) {
       ((ProfileEx)getProjectProfileImpl()).convert(element, getProject());
     }
   }

@@ -15,48 +15,122 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcs.log.VcsLogSettings;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.Arrays;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
- *
+ * <p/>
  * Delegates to the VcsLogManager.
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider, NotNullFunction<Project, Boolean> {
 
   public static final String TAB_NAME = "Log";
+  private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
 
-  @NotNull private final VcsLogManager myLogManager;
+  @NotNull private final Project myProject;
+  @NotNull private VcsLogManager myLogManager;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final VcsLogSettings mySettings;
+  @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
+  private MessageBusConnection myConnection;
 
-  public VcsLogContentProvider(@NotNull VcsLogManager logManager) {
-    myLogManager = logManager;
+  public VcsLogContentProvider(@NotNull Project project,
+                               @NotNull ProjectLevelVcsManager manager,
+                               @NotNull VcsLogSettings settings,
+                               @NotNull VcsLogUiProperties uiProperties) {
+    myProject = project;
+    myVcsManager = manager;
+    mySettings = settings;
+    myUiProperties = uiProperties;
+    myLogManager = new VcsLogManager(project, settings, uiProperties);
+  }
+
+  @Nullable
+  public static VcsLogManager findLogManager(@NotNull Project project) {
+    final ChangesViewContentEP[] eps = project.getExtensions(ChangesViewContentEP.EP_NAME);
+    ChangesViewContentEP ep = ContainerUtil.find(eps, new Condition<ChangesViewContentEP>() {
+      @Override
+      public boolean value(ChangesViewContentEP ep) {
+        return ep.getClassName().equals(VcsLogContentProvider.class.getName());
+      }
+    });
+    if (ep == null) {
+      LOG.warn("Proper content provider ep not found among [" + toString(eps) + "]");
+      return null;
+    }
+    ChangesViewContentProvider instance = ep.getInstance(project);
+    if (!(instance instanceof VcsLogContentProvider)) {
+      LOG.error("Class name matches, but the class doesn't. class name: " + ep.getClassName() + ", class: " + ep.getClass());
+      return null;
+    }
+    VcsLogContentProvider provider = (VcsLogContentProvider)instance;
+    return provider.myLogManager;
+  }
+
+  @NotNull
+  private static String toString(@NotNull ChangesViewContentEP[] eps) {
+    return StringUtil.join(eps, new Function<ChangesViewContentEP, String>() {
+      @Override
+      public String fun(ChangesViewContentEP ep) {
+        return String.format("%s-%s-%s", ep.tabName, ep.className, ep.predicateClassName);
+      }
+    }, ",");
   }
 
   @NotNull
   @Override
   public Boolean fun(Project project) {
-    if (!Registry.is("git.new.log")) {
-      return false;
-    }
-    return !myLogManager.findLogProviders().isEmpty();
+    return !myLogManager.findLogProviders(Arrays.asList(myVcsManager.getAllVcsRoots())).isEmpty();
   }
 
   @Override
   public JComponent initContent() {
-    return myLogManager.initContent();
+    myConnection = myProject.getMessageBus().connect();
+    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
+    initContentInternal();
+    return myContainer;
+  }
+
+  private void initContentInternal() {
+    myContainer.add(myLogManager.initContent(Arrays.asList(myVcsManager.getAllVcsRoots()), TAB_NAME), BorderLayout.CENTER);
   }
 
   @Override
   public void disposeContent() {
+    myConnection.disconnect();
     Disposer.dispose(myLogManager);
   }
 
+  private class MyVcsListener implements VcsListener {
+    @Override
+    public void directoryMappingChanged() {
+      myContainer.removeAll();
+      Disposer.dispose(myLogManager);
 
+      myLogManager = new VcsLogManager(myProject, mySettings, myUiProperties);
+      initContentInternal();
+    }
+  }
 }

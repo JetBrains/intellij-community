@@ -143,24 +143,25 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         final PsiField field = fieldDescriptor.getField();
         for (PsiReference reference : ReferencesSearch.search(field)) {
           final PsiElement place = reference.getElement();
-          LOG.assertTrue(place instanceof PsiReferenceExpression);
-          final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
-          final PsiClass ancestor;
-          if (qualifierExpression == null) {
-            ancestor = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
-          }
-          else {
-            ancestor = PsiUtil.resolveClassInType(qualifierExpression.getType());
-          }
+          if (place instanceof PsiReferenceExpression) {
+            final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
+            final PsiClass ancestor;
+            if (qualifierExpression == null) {
+              ancestor = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
+            }
+            else {
+              ancestor = PsiUtil.resolveClassInType(qualifierExpression.getType());
+            }
 
-          final boolean isGetter = !PsiUtil.isAccessedForWriting((PsiExpression)place);
-          for (PsiMethod overridden : isGetter ? getters : setters) {
-            if (InheritanceUtil.isInheritorOrSelf(myClass, ancestor, true)) {
-              conflicts.putValue(overridden, "There is already a " +
-                                             RefactoringUIUtil.getDescription(overridden, true) +
-                                             " which would hide generated " +
-                                             (isGetter ? "getter" : "setter") + " for " + place.getText());
-              break;
+            final boolean isGetter = !PsiUtil.isAccessedForWriting((PsiExpression)place);
+            for (PsiMethod overridden : isGetter ? getters : setters) {
+              if (InheritanceUtil.isInheritorOrSelf(myClass, ancestor, true)) {
+                conflicts.putValue(overridden, "There is already a " +
+                                               RefactoringUIUtil.getDescription(overridden, true) +
+                                               " which would hide generated " +
+                                               (isGetter ? "getter" : "setter") + " for " + place.getText());
+                break;
+              }
             }
           }
         }

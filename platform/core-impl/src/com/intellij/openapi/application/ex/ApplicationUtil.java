@@ -16,9 +16,18 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ApplicationUtil {
   // throws exception if can't grab read action right now
@@ -41,7 +50,51 @@ public class ApplicationUtil {
     }
   }
 
-  public static class CannotRunReadActionException extends RuntimeException{
+  /**
+   * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
+   * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
+   */
+  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable, @NotNull final ProgressIndicator indicator) throws Exception {
+    final Ref<T> result = Ref.create();
+    final Ref<Throwable> error = Ref.create();
+
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              result.set(callable.call());
+            }
+            catch (Throwable t) {
+              error.set(t);
+            }
+          }
+        }, indicator);
+      }
+    });
+
+    while (true) {
+      try {
+        indicator.checkCanceled();
+      }
+      catch (ProcessCanceledException e) {
+        future.cancel(true);
+        throw e;
+      }
+
+      try {
+        future.get(200, TimeUnit.MILLISECONDS);
+        ExceptionUtil.rethrowAll(error.get());
+        return result.get();
+      }
+      catch (TimeoutException ignored) { }
+    }
+  }
+
+  public static class CannotRunReadActionException extends RuntimeException {
+    @SuppressWarnings({"NullableProblems", "NonSynchronizedMethodOverridesSynchronizedMethod"})
     @Override
     public Throwable fillInStackTrace() {
       return this;

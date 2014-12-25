@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -88,7 +87,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
   public static final Comparator<Task> TASK_UPDATE_COMPARATOR = new Comparator<Task>() {
-    public int compare(Task o1, Task o2) {
+    public int compare(@NotNull Task o1, @NotNull Task o2) {
       int i = Comparing.compare(o2.getUpdated(), o1.getUpdated());
       return i == 0 ? Comparing.compare(o2.getCreated(), o1.getCreated()) : i;
     }
@@ -112,11 +111,16 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public LocalTask put(String key, LocalTask task) {
       LocalTask result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
-        ArrayList<LocalTask> list = new ArrayList<LocalTask>(values());
-        Collections.sort(list, TASK_UPDATE_COMPARATOR);
-        for (LocalTask oldest : list) {
-          if (!oldest.isDefault()) {
-            remove(oldest);
+        ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<Map.Entry<String,LocalTask>>(entrySet());
+        Collections.sort(list, new Comparator<Map.Entry<String, LocalTask>>() {
+          @Override
+          public int compare(@NotNull Map.Entry<String, LocalTask> o1, @NotNull Map.Entry<String, LocalTask> o2) {
+            return TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue());
+          }
+        });
+        for (Map.Entry<String, LocalTask> oldest : list) {
+          if (!oldest.getValue().isDefault()) {
+            remove(oldest.getKey());
             break;
           }
         }
@@ -136,7 +140,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
-  private Set<TaskRepository> myBadRepositories = new ConcurrentHashSet<TaskRepository>();
+  private Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
 
   public TaskManagerImpl(Project project, WorkingContextManager contextManager, ChangeListManager changeListManager) {
 
@@ -612,8 +616,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
             }
           }
           catch (XmlSerializationException e) {
-            // ignore
-            LOG.error(e.getMessage());
+            LOG.error(e.getMessage(), e);
           }
         }
       }
@@ -687,7 +690,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           if (myConfig.updateEnabled && !myUpdating) {
             updateIssues(null);
           }
@@ -813,7 +816,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         long start = System.currentTimeMillis();
         Task[] tasks = repository.getIssues(request, offset, limit, withClosed, cancelled);
         long timeSpent = System.currentTimeMillis() - start;
-        LOG.debug(String.format("Total %s ms to download %d issues from '%s'", timeSpent, tasks.length, repository.getUrl()));
+        LOG.debug(String.format("Total %s ms to download %d issues from '%s' (pattern '%s')",
+                                timeSpent, tasks.length, repository.getUrl(), request));
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
@@ -978,8 +982,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public String suggestBranchName(Task task) {
-    if (task.isIssue() && StringUtil.isNotEmpty(task.getNumber())) {
-      return task.getId().replace(' ', '-');
+    if (task.isIssue()) {
+      return TaskUtil.formatTask(task, myConfig.branchNameFormat).replace(' ', '-');
     }
     else {
       String summary = task.getSummary();
@@ -1035,6 +1039,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean markAsInProgress = false;
 
     public String changelistNameFormat = "{id} {summary}";
+    public String branchNameFormat = "{id}";
 
     public boolean searchClosedTasks = false;
     @Tag("servers")

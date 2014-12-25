@@ -71,6 +71,12 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LongConstructorVisitor();
   }
@@ -124,9 +130,6 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
     @Override
     public void visitNewExpression(
       @NotNull PsiNewExpression expression) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       super.visitNewExpression(expression);
       final PsiType type = expression.getType();
       if (type == null) {

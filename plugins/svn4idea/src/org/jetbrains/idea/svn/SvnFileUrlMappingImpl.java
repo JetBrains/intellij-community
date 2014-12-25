@@ -191,8 +191,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
-  public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
-    if (ThreadLocalDefendedInvoker.isInside()) return result;
+  @NotNull
+  public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
+    if (ThreadLocalDefendedInvoker.isInside()) return ContainerUtil.newArrayList(result);
 
     synchronized (myMonitor) {
       final List<VirtualFile> cachedRoots = myMoreRealMapping.getUnderVcsRoots();
@@ -200,11 +201,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       if (! lonelyRoots.isEmpty()) {
         myChecker.reportNoRoots(lonelyRoots);
       }
-      if (cachedRoots.isEmpty()) {
-        // todo +-
-        return result;
-      }
-      return cachedRoots;
+
+      return ContainerUtil.newArrayList(cachedRoots.isEmpty() ? result : cachedRoots);
     }
   }
 

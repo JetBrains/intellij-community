@@ -28,6 +28,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jdom.Element;
 
@@ -53,7 +54,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     new DialogWrapper(myProject) {
       {
         init();
-        setTitle("Configure annotations");
+        setTitle("Configure Annotations");
       }
 
       @Override
@@ -73,11 +74,15 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
   @Override
   public JButton createConfigureAnnotationsBtn() {
+    return createConfigureAnnotationsButton();
+  }
+
+  public static JButton createConfigureAnnotationsButton() {
     final JButton configureAnnotations = new JButton("Configure annotations...");
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        configureAnnotations();
+        getInstance(ProjectUtil.guessCurrentProject(configureAnnotations)).configureAnnotations();
       }
     });
     return configureAnnotations;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -54,9 +53,8 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
       final VirtualFile baseDir = project.getBaseDir();
       if (baseDir != null) destinationDirectory = baseDir.getPresentableUrl();
 
-      ExportDialog dialog = new ExportDialog(context.getDebugProcess(),  destinationDirectory);
-      dialog.show();
-      if (dialog.isOK()) {
+      ExportDialog dialog = new ExportDialog(context.getDebugProcess(), destinationDirectory);
+      if (dialog.showAndGet()) {
         try {
           File file = new File(dialog.getFilePath());
           BufferedWriter writer = new BufferedWriter(new FileWriter(file));
@@ -69,7 +67,8 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
           }
         }
         catch (IOException ex) {
-          Messages.showMessageDialog(project, ex.getMessage(), ActionsBundle.actionText(DebuggerActions.EXPORT_THREADS), Messages.getErrorIcon());
+          Messages
+            .showMessageDialog(project, ex.getMessage(), ActionsBundle.actionText(DebuggerActions.EXPORT_THREADS), Messages.getErrorIcon());
         }
       }
     }

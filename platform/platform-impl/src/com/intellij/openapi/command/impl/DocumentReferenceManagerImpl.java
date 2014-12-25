@@ -45,6 +45,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   private final Map<Document, DocumentReference> myDocToRef = new WeakKeyWeakValueHashMap<Document, DocumentReference>();
 
   private static final Key<Reference<DocumentReference>> FILE_TO_REF_KEY = Key.create("FILE_TO_REF_KEY");
+  private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
   private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<FilePath, DocumentReference>();
 
   @Override
@@ -131,6 +132,15 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   @Override
   public DocumentReference create(@NotNull VirtualFile file) {
     assertInDispatchThread();
+
+    if (!file.isInLocalFileSystem()) { // we treat local files differently from non local because we can undo their deletion
+      DocumentReference reference = file.getUserData(FILE_TO_STRONG_REF_KEY);
+      if (reference == null) {
+        file.putUserData(FILE_TO_STRONG_REF_KEY, reference = new DocumentReferenceByNonlocalVirtualFile(file));
+      }
+      return reference;
+    }
+
     assert file.isValid() : "file is invalid: " + file;
 
     DocumentReference result = SoftReference.dereference(file.getUserData(FILE_TO_REF_KEY));

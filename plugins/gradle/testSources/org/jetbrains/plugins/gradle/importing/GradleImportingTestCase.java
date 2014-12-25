@@ -16,20 +16,30 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -46,12 +56,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator;
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
+import static org.junit.Assume.assumeThat;
 
 /**
  * @author Vladislav.Soroka
@@ -63,6 +73,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   private static final int GRADLE_DAEMON_TTL_MS = 10000;
 
   @Rule public TestName name = new TestName();
+  @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
 
   @NotNull
   @org.junit.runners.Parameterized.Parameter(0)
@@ -72,6 +83,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    assumeThat(gradleVersion, versionMatcherRule.getMatcher());
     myProjectSettings = new GradleProjectSettings();
     GradleSettings.getInstance(myProject).setGradleVmOptions("-Xmx64m -XX:MaxPermSize=64m");
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
@@ -87,6 +99,16 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     finally {
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void collectAllowedRoots(List<String> roots) throws IOException {
+    final String javaHome = System.getenv("JAVA_HOME");
+    if (javaHome != null) {
+      roots.add(javaHome);
+    }
+
+    roots.add(PathManager.getOptionsPath());
   }
 
   @Override
@@ -111,6 +133,15 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Override
   protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+    ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListenerAdapter() {
+      @Override
+      public void onProjectsLinked(@NotNull Collection settings) {
+        final Object item = ContainerUtil.getFirstItem(settings);
+        if (item instanceof GradleProjectSettings) {
+          ((GradleProjectSettings)item).setGradleJvm(null);
+        }
+      }
+    });
     super.importProject(config);
   }
 
@@ -137,7 +168,13 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     assert wrapperJarFrom != null;
 
     final VirtualFile wrapperJarFromTo = createProjectSubFile("gradle/wrapper/gradle-wrapper.jar");
-    wrapperJarFromTo.setBinaryContent(wrapperJarFrom.contentsToByteArray());
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        wrapperJarFromTo.setBinaryContent(wrapperJarFrom.contentsToByteArray());
+      }
+    }.execute().throwException();
+
 
     Properties properties = new Properties();
     properties.setProperty("distributionBase", "GRADLE_USER_HOME");

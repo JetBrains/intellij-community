@@ -24,7 +24,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -91,7 +91,7 @@ public class NestedMemberAccess {
 
             if (exprent.type == Exprent.EXPRENT_EXIT) {
               ExitExprent exexpr = (ExitExprent)exprent;
-              if (exexpr.getExittype() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
+              if (exexpr.getExitType() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
                 exprCore = exexpr.getValue();
               }
             }
@@ -188,7 +188,7 @@ public class NestedMemberAccess {
                       if (((VarExprent)asexpr.getRight()).getIndex() == parcount - 1) {
 
                         ExitExprent exexpr = (ExitExprent)exprentSecond;
-                        if (exexpr.getExittype() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
+                        if (exexpr.getExitType() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
                           if (exexpr.getValue().type == Exprent.EXPRENT_VAR &&
                               ((VarExprent)asexpr.getRight()).getIndex() == parcount - 1) {
                             type = METHOD_ACCESS_FIELD_SET;
@@ -364,7 +364,7 @@ public class NestedMemberAccess {
         ExitExprent exsource = (ExitExprent)source;
         if (exsource.getValue().type == Exprent.EXPRENT_VAR) { // qualified this
           VarExprent var = (VarExprent)exsource.getValue();
-          String varname = methsource.varproc.getVarName(new VarVersionPaar(var));
+          String varname = methsource.varproc.getVarName(new VarVersionPair(var));
 
           if (!methdest.setOuterVarNames.contains(varname)) {
             VarNamesCollector vnc = new VarNamesCollector();
@@ -375,8 +375,8 @@ public class NestedMemberAccess {
           }
 
           int index = methdest.counter.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
-          VarExprent ret = new VarExprent(index, var.getVartype(), methdest.varproc);
-          methdest.varproc.setVarName(new VarVersionPaar(index, 0), varname);
+          VarExprent ret = new VarExprent(index, var.getVarType(), methdest.varproc);
+          methdest.varproc.setVarName(new VarVersionPair(index, 0), varname);
 
           retexprent = ret;
         }

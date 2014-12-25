@@ -191,11 +191,21 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       }
     });
 
+    collectAllSameShapedTypes(expectedTypes, allowedTypes);
+
     ArrayList<PsiType> result = normalizeTypeList(allowedTypes);
     return result.toArray(PsiType.createArray(result.size()));
   }
 
-  private PsiType[] getTypesForAll(final boolean areTypesDirected) {
+  private static void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<PsiType> allowedTypes) {
+    for (ExpectedTypeInfo info : expectedTypes) {
+      if (info.getKind() == ExpectedTypeInfo.TYPE_SAME_SHAPED) {
+        allowedTypes.add(info.getDefaultType());
+      }
+    }
+  }
+
+  protected PsiType[] getTypesForAll(final boolean areTypesDirected) {
     final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<ExpectedTypeInfo[]>();
     for (PsiExpression occurrence : myOccurrences) {
       final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(occurrence, false, myOccurrenceClassProvider, isUsedAfter());
@@ -227,6 +237,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
         allowedTypes.add(type);
       }
     });
+
+    for (ExpectedTypeInfo[] typeInfos : expectedTypesFromAll) {
+      collectAllSameShapedTypes(typeInfos, allowedTypes);
+    }
 
     final ArrayList<PsiType> result = normalizeTypeList(allowedTypes);
     if (!areTypesDirected) {

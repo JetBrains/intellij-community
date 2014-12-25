@@ -567,6 +567,11 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ForCanBeForeachVisitor();
   }
@@ -906,9 +911,6 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     @Override
     public void visitForStatement(@NotNull PsiForStatement forStatement) {
       super.visitForStatement(forStatement);
-      if (!PsiUtil.isLanguageLevel5OrHigher(forStatement)) {
-        return;
-      }
       if (isArrayLoopStatement(forStatement) || isCollectionLoopStatement(forStatement, ignoreUntypedCollections) ||
           REPORT_INDEXED_LOOP && isIndexedListLoopStatement(forStatement, ignoreUntypedCollections)) {
         registerStatementError(forStatement);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,6 +130,11 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     return false;
   }
 
+  @Override
+  public PsiType getReturnType() {
+    return null;
+  }
+
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
@@ -161,8 +166,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     }
     if (conflicts.size() > 0) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
-      conflictsDialog.show();
-      if (!conflictsDialog.isOK()){
+      if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) close(CANCEL_EXIT_CODE);
         return;
       }
@@ -235,6 +239,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
         myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
         myParametersTableContainer.removeAll();
         myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
+        myParametersTableContainer.revalidate();
         updateSignature();
         updateVarargsEnabled();
       }

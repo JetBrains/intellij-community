@@ -16,15 +16,15 @@
 package org.jetbrains.java.decompiler.main.collectors;
 
 import java.util.HashSet;
+import java.util.Set;
 
 public class VarNamesCollector {
 
-  private HashSet<String> usedNames = new HashSet<String>();
+  private Set<String> usedNames = new HashSet<String>();
 
-  public VarNamesCollector() {
-  }
+  public VarNamesCollector() { }
 
-  public VarNamesCollector(HashSet<String> setNames) {
+  public VarNamesCollector(Set<String> setNames) {
     usedNames.addAll(setNames);
   }
 
@@ -37,15 +37,10 @@ public class VarNamesCollector {
   }
 
   public String getFreeName(String proposition) {
-
     while (usedNames.contains(proposition)) {
       proposition += "x";
     }
     usedNames.add(proposition);
     return proposition;
-  }
-
-  public HashSet<String> getUsedNames() {
-    return usedNames;
   }
 }

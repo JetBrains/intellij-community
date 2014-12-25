@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.AncestorListenerAdapter;
@@ -105,10 +104,6 @@ public class StartBrowserPanel {
     myUrlField.setText(url);
   }
 
-  public void clearBorder() {
-    myRoot.setBorder(null);
-  }
-
   public boolean isSelected() {
     return myStartBrowserCheckBox.isSelected();
   }
@@ -143,7 +138,7 @@ public class StartBrowserPanel {
     finally {
       token.finish();
     }
-    return psiFile != null && !(psiFile instanceof PsiBinaryFile) ? WebBrowserServiceImpl.getUrlForContext(psiFile) : null;
+    return WebBrowserServiceImpl.getDebuggableUrl(psiFile);
   }
 
   @NotNull

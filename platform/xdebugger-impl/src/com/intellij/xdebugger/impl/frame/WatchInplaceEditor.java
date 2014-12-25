@@ -66,6 +66,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     if (myOldNode != null && index != -1) {
       myWatchesView.addWatchExpression(myOldNode.getExpression(), index, false);
     }
+    getTree().setSelectionRow(index);
   }
 
   @Override
@@ -77,6 +78,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     if (!XDebuggerUtilImpl.isEmptyExpression(expression) && index != -1) {
       myWatchesView.addWatchExpression(expression, index, false);
     }
+    getTree().setSelectionRow(index);
   }
 
   @Override

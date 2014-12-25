@@ -16,23 +16,20 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/mostSpecific";
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new UnusedSymbolLocalInspection(),
-    };
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedDeclarationInspection());
   }
 
   public void testVoidConflict() throws Exception {
@@ -104,7 +101,9 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testJDK8042508() throws Exception {
-    doTest(false);
+    if (Registry.is("JDK8042508.bug.fixed", false)) {
+      doTest(false);
+    }
   }
 
   public void testIDEA125855() throws Exception {
@@ -112,6 +111,10 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA127584() throws Exception {
+    doTest();
+  }
+
+  public void testVarargsSpecificsDuringMethodReferenceResolve() throws Exception {
     doTest();
   }
 

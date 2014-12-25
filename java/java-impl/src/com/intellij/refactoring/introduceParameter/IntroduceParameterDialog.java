@@ -100,6 +100,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myTypeSelectorManager = typeSelectorManager;
     setTitle(REFACTORING_NAME);
     init();
+    myPanel.updateTypeSelector();
   }
 
   protected void dispose() {
@@ -265,7 +266,6 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       getParameterName(), myPanel.isReplaceAllOccurences(),
       myPanel.getReplaceFieldsWithGetters(), isDeclareFinal(), myPanel.isGenerateDelegate(), getSelectedType(), myPanel.getParametersToRemove());
     invokeRefactoring(processor);
-    myParameterNameField.requestFocusInWindow();
   }
 
 

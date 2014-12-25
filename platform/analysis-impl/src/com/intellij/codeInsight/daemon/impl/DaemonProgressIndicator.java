@@ -16,8 +16,10 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TraceableDisposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -25,14 +27,15 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * @author cdr
  */
-public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
+public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator, Disposable {
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug ? new Throwable() : null);
+  private volatile boolean myDisposed;
 
   @Override
   public synchronized void stop() {
     super.stop();
-    super.cancel();
+    cancel();
   }
 
   public synchronized void stopIfRunning() {
@@ -40,7 +43,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
       stop();
     }
     else {
-      super.cancel();
+      cancel();
     }
   }
 
@@ -48,6 +51,13 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   public final void cancel() {
     myTraceableDisposable.kill("Daemon Progress Canceled");
     super.cancel();
+    Disposer.dispose(this);
+  }
+
+  // called when canceled
+  @Override
+  public void dispose() {
+    myDisposed = true;
   }
 
   @Override
@@ -73,7 +83,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   }
 
   @TestOnly
-  public static void setDebug(boolean debug) {
+  static void setDebug(boolean debug) {
     DaemonProgressIndicator.debug = debug;
   }
 
@@ -90,5 +100,9 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   @Override
   public String toString() {
     return super.toString() + (debug ? "; "+myTraceableDisposable.getStackTrace()+"\n;" : "");
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 }

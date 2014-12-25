@@ -145,6 +145,13 @@ public class AnnotationsHighlightUtil {
     if (value instanceof PsiExpression) {
       PsiExpression expr = (PsiExpression)value;
       PsiType type = expr.getType();
+
+      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      if (psiClass != null && psiClass.isEnum() && !(expr instanceof PsiReferenceExpression && ((PsiReferenceExpression)expr).resolve() instanceof PsiEnumConstant)) {
+        String description = JavaErrorMessages.message("annotation.non.enum.constant.attribute.value");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create(); 
+      }
+
       if (type != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expr) ||
           expectedType instanceof PsiArrayType &&
           TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(), expr)) {
@@ -694,7 +701,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  private static RetentionPolicy getRetentionPolicy(PsiClass annotation) {
+  public static RetentionPolicy getRetentionPolicy(@NotNull PsiClass annotation) {
     PsiModifierList modifierList = annotation.getModifierList();
     if (modifierList != null) {
       PsiAnnotation retentionAnno = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION);

@@ -42,6 +42,7 @@ public class CheckLevelHighlightInfoHolder extends HighlightInfoHolder {
     return myHolder.getColorsScheme();
   }
 
+  @NotNull
   @Override
   public PsiFile getContextFile() {
     return myHolder.getContextFile();

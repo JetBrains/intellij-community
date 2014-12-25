@@ -35,4 +35,29 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings {
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
   public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS = false;
 
+  public int BLANK_LINES_AROUND_INITIALIZER = 1;
+  
+  public static final int FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED = 1;
+  public static final int FULLY_QUALIFY_NAMES_ALWAYS = 2;
+  public static final int SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT = 3;
+
+  public int CLASS_NAMES_IN_JAVADOC = FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
+  
+  public boolean useFqNamesInJavadocAlways() {
+    return CLASS_NAMES_IN_JAVADOC == FULLY_QUALIFY_NAMES_ALWAYS;
+  }
+  
+  @Override
+  public void importLegacySettings() {
+    importLegacyUseFqClassNamesInJavadocSetting();
+  }
+
+  private void importLegacyUseFqClassNamesInJavadocSetting() {
+    CodeStyleSettings settings = getContainer();
+    boolean isDefaultValue = settings.USE_FQ_CLASS_NAMES_IN_JAVADOC;
+    if (!isDefaultValue) {
+      CLASS_NAMES_IN_JAVADOC = SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT;
+      settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
+    }
+  }
 }

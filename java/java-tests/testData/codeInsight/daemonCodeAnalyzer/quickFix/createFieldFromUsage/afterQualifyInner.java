@@ -1,4 +1,4 @@
-// "Create Field 'field'" "true"
+// "Create field 'field'" "true"
 class A{
     private final Outer.Inner field<caret>;
 

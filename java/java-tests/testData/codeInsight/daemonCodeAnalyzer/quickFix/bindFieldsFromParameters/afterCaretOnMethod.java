@@ -1,4 +1,4 @@
-// "Bind Method Parameters to Fields" "true"
+// "Bind method parameters to fields" "true"
 
 class A{
     private int myP1;

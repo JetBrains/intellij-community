@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -195,6 +196,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (inherited) {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
         if (type instanceof PyClassType) {
+          if (!myIsDefinition) {
+            type = type.toInstance();
+          }
           PsiElement superMember = resolveClassMember(((PyClassType)type).getPyClass(), myIsDefinition, name, null);
           if (superMember != null) {
             return ResolveResultList.to(superMember);
@@ -410,9 +414,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
     addOwnClassMembers(location, namesAlready, suppressParentheses, ret);
 
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(location != null ?
-                                                                          CompletionUtil.getOriginalOrSelf(location).getContainingFile() :
-                                                                          null);
+    PsiFile origin = (location != null) ?
+                     CompletionUtil.getOriginalOrSelf(location)
+                       .getContainingFile() :
+                     null;
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(myClass.getProject(), origin);
     addInheritedMembers(prefix, location, namesAlready, context, ret, typeEvalContext);
 
     // from providers

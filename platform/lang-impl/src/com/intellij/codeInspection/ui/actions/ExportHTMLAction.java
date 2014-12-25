@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ package com.intellij.codeInspection.ui.actions;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.HTMLExportFrameMaker;
 import com.intellij.codeInspection.export.HTMLExportUtil;
@@ -96,8 +99,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       exportToHTMLSettings.OUTPUT_DIRECTORY = PathManager.getHomePath() + File.separator + "inspections";
     }
     exportToHTMLDialog.reset();
-    exportToHTMLDialog.show();
-    if (!exportToHTMLDialog.isOK()) {
+    if (!exportToHTMLDialog.showAndGet()) {
       return;
     }
     exportToHTMLDialog.apply();
@@ -111,7 +113,8 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
           public void run() {
             if (!exportToHTML) {
               dupm2XML(outputDirectoryName);
-            } else {
+            }
+            else {
               final HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myView.getProject());
               maker.start();
               try {
@@ -136,8 +139,11 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
         };
 
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(exportRunnable,
-            exportToHTML ? InspectionsBundle.message("inspection.generating.html.progress.title")
-            : InspectionsBundle.message("inspection.generating.xml.progress.title"), true, myView.getProject())) {
+                                                                               exportToHTML ? InspectionsBundle
+                                                                                 .message("inspection.generating.html.progress.title")
+                                                                                            : InspectionsBundle
+                                                                                 .message("inspection.generating.xml.progress.title"), true,
+                                                                               myView.getProject())) {
           return;
         }
 
@@ -247,9 +253,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
       final Map<String, Set<RefEntity>> toolContent = presentation.getContent();
-      if (toolContent != null) {
-        content.putAll(toolContent);
-      }
+      content.putAll(toolContent);
     }
 
     final Set<RefEntity> defaultPackageEntities = content.remove(null);
@@ -285,9 +289,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
       final Set<RefModule> problems = presentation.getModuleProblems();
-      if (problems != null) {
-        modules.addAll(problems);
-      }
+      modules.addAll(problems);
     }
 
     final List<RefModule> sortedModules = new ArrayList<RefModule>(modules);

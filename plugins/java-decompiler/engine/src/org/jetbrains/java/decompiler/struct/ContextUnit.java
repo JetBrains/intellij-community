@@ -15,6 +15,8 @@
  */
 package org.jetbrains.java.decompiler.struct;
 
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader.Link;
@@ -112,7 +114,11 @@ public class ContextUnit {
           if (entryName != null) {
             String content = decompiledData.getClassContent(cl);
             if (content != null) {
-              resultSaver.saveClassFile(filename, cl.qualifiedName, entryName, content);
+              int[] mapping = null;
+              if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
+                mapping = DecompilerContext.getBytecodeSourceMapper().getOriginalLinesMapping();
+              }
+              resultSaver.saveClassFile(filename, cl.qualifiedName, entryName, content, mapping);
             }
           }
         }

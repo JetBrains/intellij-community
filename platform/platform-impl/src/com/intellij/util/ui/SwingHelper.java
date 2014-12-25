@@ -435,8 +435,14 @@ public class SwingHelper {
     textPane.setFont(font != null ? font : UIUtil.getLabelFont());
     textPane.setContentType(UIUtil.HTML_MIME);
     textPane.setEditable(false);
-    textPane.setBackground(background != null ? background : UIUtil.getLabelBackground());
+    if (background != null) {
+      textPane.setBackground(background);
+    }
+    else {
+      textPane.setOpaque(false);
+    }
     textPane.setForeground(foreground != null ? foreground : UIUtil.getLabelForeground());
+    textPane.setFocusable(false);
     return textPane;
   }
 

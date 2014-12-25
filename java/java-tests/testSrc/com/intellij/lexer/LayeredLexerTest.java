@@ -18,8 +18,11 @@ package com.intellij.lexer;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -107,6 +110,22 @@ public class LayeredLexerTest extends TestCase {
     assertEquals(null, lexer.getTokenType());
   }
 
+  public void testDelegatesWithBigStates() throws Exception {
+    final LayeredLexer lexer = new LayeredLexer(new SimpleStateSteppingLexer());
+    lexer.registerSelfStoppingLayer(new SimpleStateSteppingLexer(),
+                                    new IElementType[]{TokenType.CODE_FRAGMENT},
+                                    IElementType.EMPTY_ARRAY);
+
+    lexer.start("1234567890123#1234567890123#1234567890123");
+    assertLexerSequence(lexer,
+      "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "1", "2", "3",
+      "#",
+      "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "1", "2", "3",
+      "#",
+      "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "1", "2", "3"
+    );
+  }
+
   private static Lexer setupLexer(String text) {
     LayeredLexer lexer = new LayeredLexer(JavaParserDefinition.createLexer(LanguageLevel.JDK_1_3));
     lexer.registerSelfStoppingLayer(new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
@@ -116,10 +135,111 @@ public class LayeredLexerTest extends TestCase {
     return lexer;
   }
 
+  private static void assertLexerSequence(Lexer lexer, String... tokenTexts) {
+    for (String tokenText : tokenTexts) {
+      assertEquals(tokenText, nextToken(lexer));
+    }
+    assertEquals(null, lexer.getTokenType());
+  }
+
   private static String nextToken(Lexer lexer) {
     assertTrue(lexer.getTokenType() != null);
     final String s = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
     lexer.advance();
     return s;
+  }
+
+  private static class SimpleStateSteppingLexer extends LexerBase {
+
+    private static final char MARK = '#';
+
+    private CharSequence myBuffer;
+    private int myStartOffset;
+    private int myEndOffset;
+    private int myState;
+    private int myPos;
+
+    @Override
+    public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+      myBuffer = buffer;
+      myStartOffset = startOffset;
+      myEndOffset = endOffset;
+      myState = initialState;
+
+      myPos = myStartOffset;
+    }
+
+    @Override
+    public int getState() {
+      return myState;
+    }
+
+    @Nullable
+    @Override
+    public IElementType getTokenType() {
+      if (myPos >= myEndOffset) {
+        return null;
+      }
+
+      if (findNextMarkIfStoppedOnMarkAndNotAtStart() != myEndOffset) {
+        return TokenType.CODE_FRAGMENT;
+      }
+
+      return TokenType.BAD_CHARACTER;
+    }
+
+    @Override
+    public int getTokenStart() {
+      return myPos;
+    }
+
+    @Override
+    public int getTokenEnd() {
+      if (myPos == myEndOffset) {
+        return myPos;
+      }
+
+      final int nextMark = findNextMarkIfStoppedOnMarkAndNotAtStart();
+      if (nextMark != myEndOffset) {
+        return nextMark + 1;
+      }
+      return myPos + 1;
+    }
+
+    @Override
+    public void advance() {
+      myPos = getTokenEnd();
+
+      if (myState == 0) {
+        myState = 1;
+      }
+      else {
+        myState <<= 1;
+      }
+    }
+
+    @NotNull
+    @Override
+    public CharSequence getBufferSequence() {
+      return myBuffer;
+    }
+
+    @Override
+    public int getBufferEnd() {
+      return myEndOffset;
+    }
+
+    private int findNextMarkIfStoppedOnMarkAndNotAtStart() {
+      if (myPos == myStartOffset ||
+          myPos < myEndOffset && myBuffer.charAt(myPos) != MARK) {
+        return myEndOffset;
+      }
+
+      int i = myPos + 1;
+      while (i < myEndOffset && myBuffer.charAt(i) != MARK) {
+        i++;
+      }
+      return i;
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.ide.FrameStateManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
@@ -289,7 +289,7 @@ public class TipManager implements Disposable, PopupMenuListener {
     });
 
     final HideTooltipAction hide = new HideTooltipAction();
-    hide.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), myComponent);
+    hide.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myComponent);
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {

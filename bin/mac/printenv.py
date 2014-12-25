@@ -7,7 +7,7 @@ import os
 import sys
 
 if len(sys.argv) != 2:
-    raise Error('Exactly one argument expected')
+    raise Exception('Exactly one argument expected')
 
 f = open(sys.argv[1], 'w')
 try:

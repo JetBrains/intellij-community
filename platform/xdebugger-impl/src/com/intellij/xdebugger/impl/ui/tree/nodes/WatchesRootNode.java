@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -106,6 +107,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
   }
 
   private void replaceNode(final WatchNode oldNode, final WatchNode newNode) {
+    int[] selectedRows = getTree().getSelectionRows();
     for (int i = 0; i < myChildren.size(); i++) {
       WatchNode child = myChildren.get(i);
       if (child == oldNode) {
@@ -118,6 +120,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
         else {
           fireNodeStructureChanged(newNode);
         }
+        getTree().setSelectionRows(selectedRows);
         return;
       }
     }
@@ -170,6 +173,24 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     myChildren.clear();
     myLoadedChildren = null;
     fireNodeStructureChanged();
+  }
+
+  public void moveUp(WatchNode node) {
+    int index = getIndex(node);
+    if (index > 0) {
+      ContainerUtil.swapElements(myChildren, index, index - 1);
+    }
+    fireNodeStructureChanged();
+    getTree().setSelectionRow(index - 1);
+  }
+
+  public void moveDown(WatchNode node) {
+    int index = getIndex(node);
+    if (index < myChildren.size() - 1) {
+      ContainerUtil.swapElements(myChildren, index, index + 1);
+    }
+    fireNodeStructureChanged();
+    getTree().setSelectionRow(index + 1);
   }
 
   public void addNewWatch() {

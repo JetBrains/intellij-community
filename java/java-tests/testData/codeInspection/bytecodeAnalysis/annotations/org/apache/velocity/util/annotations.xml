@@ -2,6 +2,16 @@
   <item name="org.apache.velocity.util.ArrayIterator ArrayIterator(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.util.ArrayIterator boolean hasNext()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.util.ClassUtils ClassUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.util.ClassUtils java.io.InputStream getResourceAsStream(java.lang.Class, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -14,13 +24,43 @@
   <item name="org.apache.velocity.util.ClassUtils org.apache.velocity.util.introspection.VelMethod getMethod(java.lang.String, java.lang.Object[], java.lang.Class[], java.lang.Object, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.SimpleNode, boolean)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.velocity.util.EnumerationIterator void remove()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.util.ExceptionUtils ExceptionUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.util.ExceptionUtils java.lang.Throwable createWithCause(java.lang.Class, java.lang.String, java.lang.Throwable)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.velocity.util.MapFactory MapFactory()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.util.SimplePool int getMax()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.util.SimplePool java.lang.Object get()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.SimplePool java.lang.Object[] getPool()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.util.StringUtils StringUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.util.StringUtils boolean allEmpty(java.util.List) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -97,6 +137,11 @@
   </item>
   <item name="org.apache.velocity.util.StringUtils java.lang.String removeUnderScores(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.util.StringUtils java.lang.String select(boolean, java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.util.StringUtils java.lang.String stackTrace(java.lang.Throwable)">
     <annotation name="org.jetbrains.annotations.Contract">

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,53 @@ package com.intellij.util.xmlb;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-interface Binding {
-  @Nullable
-  Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
+import java.util.List;
+
+abstract class Binding {
+  protected final Accessor myAccessor;
+
+  protected Binding(Accessor accessor) {
+    myAccessor = accessor;
+  }
+
+  @NotNull
+  public Accessor getAccessor() {
+    return myAccessor;
+  }
 
   @Nullable
-  Object deserialize(Object context, @NotNull Object... nodes);
+  public abstract Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
 
-  boolean isBoundTo(Object node);
+  @Nullable
+  public abstract Object deserialize(Object context, @NotNull Object node);
 
-  Class getBoundNodeType();
+  public Object deserializeEmpty(Object context) {
+    return null;
+  }
 
-  void init();
+  public abstract boolean isBoundTo(Object node);
+
+  public abstract Class getBoundNodeType();
+
+  public void init() {
+  }
+
+  @SuppressWarnings("CastToIncompatibleInterface")
+  @Nullable
+  public static Object deserializeList(@NotNull Binding binding, Object context, @NotNull List<?> nodes) {
+    if (binding instanceof MultiNodeBinding) {
+      return ((MultiNodeBinding)binding).deserializeList(context, nodes);
+    }
+    else {
+      if (nodes.size() == 1) {
+        return binding.deserialize(context, nodes.get(0));
+      }
+      else if (nodes.isEmpty()) {
+        return binding.deserializeEmpty(context);
+      }
+      else {
+        throw new AssertionError("Duplicate data for " + binding + " will be ignored");
+      }
+    }
+  }
 }

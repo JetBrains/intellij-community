@@ -146,8 +146,10 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       @Override
       protected void run() throws Throwable {
         File tempDirectory = FileUtil.createTempDirectory(myName, "");
-        File projectFile = new File(tempDirectory, myName + PROJECT_FILE_SUFFIX);
+        PlatformTestCase.synchronizeTempDirVfs(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory));
         myFilesToDelete.add(tempDirectory);
+
+        File projectFile = new File(tempDirectory, myName + PROJECT_FILE_SUFFIX);
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();

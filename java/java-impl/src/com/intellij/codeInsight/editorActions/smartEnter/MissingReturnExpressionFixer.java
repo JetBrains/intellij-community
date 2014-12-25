@@ -83,7 +83,7 @@ public class MissingReturnExpressionFixer implements Fixer {
     
     if (!(prev instanceof PsiJavaToken)) {
       int offset = returnStatement.getTextRange().getEndOffset();
-      final PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, true, PsiLambdaExpression.class);
       if (method != null && method.getReturnType() == PsiType.VOID) {
         offset = returnStatement.getTextRange().getStartOffset() + "return".length();
       } 

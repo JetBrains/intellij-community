@@ -111,6 +111,17 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     return index;
   }
 
+  @Override
+  public boolean indexExists(File dir) throws RemoteException {
+    try {
+      return IndexReader.indexExists(dir);
+    }
+    catch (Exception e) {
+      Maven2ServerGlobals.getLogger().warn(e);
+    }
+    return false;
+  }
+
   private String getRepositoryPathOrUrl(IndexingContext index) {
     File file = index.getRepository();
     return file == null ? index.getRepositoryUrl() : file.getPath();

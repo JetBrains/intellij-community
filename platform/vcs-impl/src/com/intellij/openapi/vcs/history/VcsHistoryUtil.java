@@ -176,17 +176,6 @@ public class VcsHistoryUtil {
     return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
   }
 
-  public static String loadRevisionContentGuessEncoding(final VcsFileRevision revision, @Nullable final Project project) throws VcsException, IOException {
-    final byte[] bytes = loadRevisionContent(revision);
-
-    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : null;
-    if (e == null) {
-      e = EncodingManager.getInstance();
-    }
-
-    return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
-  }
-
   private static DiffContent createContent(@NotNull Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType, String filePath) {
     if (isCurrent(revision) && (doc != null)) { return new DocumentContent(project, doc); }
     if (isEmpty(revision)) { return SimpleContent.createEmpty(); }

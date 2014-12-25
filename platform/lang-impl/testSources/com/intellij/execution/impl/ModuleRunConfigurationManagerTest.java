@@ -148,7 +148,7 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
     }
 
     @Override
-    void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettings template) {
+    void addConfigurationElement(@NotNull Element parentNode, RunnerAndConfigurationSettings template) {
       myAddedElements.add(template);
     }
   }

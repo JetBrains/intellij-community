@@ -27,7 +27,7 @@ public class TipOfTheDayManager implements StartupActivity, DumbAware {
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    if (!myVeryFirstProjectOpening || !GeneralSettings.getInstance().showTipsOnStartup()) {
+    if (!myVeryFirstProjectOpening || !GeneralSettings.getInstance().isShowTipsOnStartup()) {
       return;
     }
 

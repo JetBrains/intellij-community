@@ -32,7 +32,7 @@ import java.util.*;
  * - less-garbage (does not create Object[0] arrays)
  * - non-cloneable, non-serializable, no-subList-method variant of {@link java.util.concurrent.CopyOnWriteArrayList}.
  * It generally is faster than COWAL in case of low write-contention.
- * (Note that it is not advisable to use COWAL in high write-contention code anyway, consider using {@link ConcurrentHashMap}) instead)
+ * (Note that it is not advisable to use COWAL in high write-contention code anyway, consider using {@link java.util.concurrent.ConcurrentHashMap}) instead)
  */
 class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, ConcurrentList<E> {
   @SuppressWarnings("FieldMayBeFinal")
@@ -596,6 +596,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    */
   @Override
   public boolean removeAll(@NotNull Collection<?> c) {
+    if (c.isEmpty()) return false;
     while (true) {
       Object[] elements = array;
       Object[] newElements = createArrayRemoveAll(elements, c);
@@ -734,6 +735,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    */
   @Override
   public boolean addAll(@NotNull Collection<? extends E> c) {
+    if (c.isEmpty()) return false;
     Object[] cs = c.toArray();
     if (cs.length == 0) {
       return false;

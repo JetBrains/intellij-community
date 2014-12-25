@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
@@ -22,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorLastActionTracker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +40,9 @@ public class CloneCaretActionHandler extends EditorActionHandler {
     IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE,
     IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW,
     IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION,
-    IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION
+    IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION
   ));
 
   private final boolean myCloneAbove;
@@ -54,6 +58,9 @@ public class CloneCaretActionHandler extends EditorActionHandler {
 
   @Override
   protected void doExecute(Editor editor, @Nullable Caret targetCaret, DataContext dataContext) {
+    if (ModifierKeyDoubleClickHandler.getInstance().isRunningAction() && !isRepeatedActionInvocation()) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.add.carets.using.double.ctrl");
+    }
     if (targetCaret != null) {
       targetCaret.clone(myCloneAbove);
       return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,14 @@ package com.intellij.codeInspection.defaultFileTemplateUsage;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author cdr
@@ -60,26 +58,6 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
     return "DefaultFileTemplate";
   }
 
-  static Pair<? extends PsiElement, ? extends PsiElement> getInteriorRange(PsiCodeBlock codeBlock) {
-    PsiElement[] children = codeBlock.getChildren();
-    if (children.length == 0) return Pair.create(codeBlock, codeBlock);
-    int start;
-    for (start=0; start<children.length;start++) {
-      PsiElement child = children[start];
-      if (child instanceof PsiWhiteSpace) continue;
-      if (child instanceof PsiJavaToken && ((PsiJavaToken)child).getTokenType() == JavaTokenType.LBRACE) continue;
-      break;
-    }
-    int end;
-    for (end=children.length-1; end > start;end--) {
-      PsiElement child = children[end];
-      if (child instanceof PsiWhiteSpace) continue;
-      if (child instanceof PsiJavaToken && ((PsiJavaToken)child).getTokenType() == JavaTokenType.RBRACE) continue;
-      break;
-    }
-    return Pair.create(children[start], children[end]);
-  }
-
   @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -92,15 +70,15 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
     return true;
   }
 
-  public static LocalQuickFix createEditFileTemplateFix(final FileTemplate templateToEdit, final ReplaceWithFileTemplateFix replaceTemplateFix) {
-    return new MyLocalQuickFix(templateToEdit, replaceTemplateFix);
+  public static LocalQuickFix createEditFileTemplateFix(FileTemplate templateToEdit, ReplaceWithFileTemplateFix replaceTemplateFix) {
+    return new EditFileTemplateFix(templateToEdit, replaceTemplateFix);
   }
 
-  private static class MyLocalQuickFix implements LocalQuickFix {
+  private static class EditFileTemplateFix implements LocalQuickFix {
     private final FileTemplate myTemplateToEdit;
     private final ReplaceWithFileTemplateFix myReplaceTemplateFix;
 
-    public MyLocalQuickFix(FileTemplate templateToEdit, ReplaceWithFileTemplateFix replaceTemplateFix) {
+    public EditFileTemplateFix(FileTemplate templateToEdit, ReplaceWithFileTemplateFix replaceTemplateFix) {
       myTemplateToEdit = templateToEdit;
       myReplaceTemplateFix = replaceTemplateFix;
     }
@@ -119,12 +97,11 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
-      SwingUtilities.invokeLater(new Runnable(){
+      final FileTemplateConfigurable configurable = new FileTemplateConfigurable(project);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           configurable.setTemplate(myTemplateToEdit, null);
-
           boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
           if (ok) {
             WriteCommandAction.runWriteCommandAction(project, new Runnable() {

@@ -16,7 +16,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
-import com.intellij.idea.StartupUtil;
+import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -37,7 +37,7 @@ public class CustomizeKeyboardSchemeStepPanel extends AbstractCustomizeWizardSte
     myMacPanel = createBigButtonPanel(new VerticalFlowLayout(), macRadioButton, new Runnable() {
       @Override
       public void run() {
-        StartupUtil.setMyWizardMacKeymap(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP);
+        WelcomeWizardUtil.setWizardKeymap(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP);
       }
     });
     String style = "<style type=\"text/css\">" +
@@ -62,7 +62,7 @@ public class CustomizeKeyboardSchemeStepPanel extends AbstractCustomizeWizardSte
     myDefaultPanel = createBigButtonPanel(new VerticalFlowLayout(),defaultRadioButton, new Runnable() {
       @Override
       public void run() {
-        StartupUtil.setMyWizardMacKeymap(KeymapManager.MAC_OS_X_KEYMAP);
+        WelcomeWizardUtil.setWizardKeymap(KeymapManager.MAC_OS_X_KEYMAP);
       }
     } );
     myDefaultPanel.add(defaultRadioButton);

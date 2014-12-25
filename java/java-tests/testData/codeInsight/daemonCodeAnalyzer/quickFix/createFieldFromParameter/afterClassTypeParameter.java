@@ -1,4 +1,4 @@
-// "Create Field for Parameter 'p1'" "true"
+// "Create field for parameter 'p1'" "true"
 
 class Test<T>{
     private T myP1;

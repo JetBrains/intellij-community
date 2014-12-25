@@ -20,7 +20,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public class SubstitutedExpressionEvaluationHelper {
   }
 
   public Object computeExpression(final PsiExpression e, final Configuration.DfaOption dfaOption, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
-    final ConcurrentMap<PsiElement, Object> map = new ConcurrentHashMap<PsiElement, Object>();
+    final ConcurrentMap<PsiElement, Object> map = ContainerUtil.newConcurrentMap();
     //if (true) return myHelper.computeConstantExpression(e, false);
     return myHelper.computeExpression(e, false, new PsiConstantEvaluationHelper.AuxEvaluator() {
       @Nullable

@@ -50,6 +50,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
@@ -98,7 +99,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @Override
   public boolean isRefreshAfterCommitNeeded() {
-    return false;
+    return true;
   }
 
   @Nullable
@@ -218,7 +219,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       final List<GitRepository> preselectedRepositories = ContainerUtil.newArrayList(repositories);
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          new VcsPushDialog(myProject, preselectedRepositories).show();
+          new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show();
         }
       });
     }
@@ -694,7 +695,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
         String author = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
         myAuthorField.setSelectedItem(author);
-        myAuthorDate = new Date(commit.getTimestamp());
+        myAuthorDate = new Date(commit.getAuthorTime());
       }
       else {
         myAuthorField.setSelectedItem(null);

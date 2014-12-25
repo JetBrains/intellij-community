@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -133,14 +134,13 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
     myText.removeAll();
     for (int i = 0; i < text.length; i++) {
       final JLabel eachLabel = new JLabel(text[i], SwingConstants.CENTER);
-      final int gap = eachLabel.getIconTextGap();
-      eachLabel.setBorder(new EmptyBorder(0, 0, 0, gap));
-      eachLabel.setVerticalTextPosition(SwingConstants.TOP);
-      eachLabel.setFont(eachLabel.getFont().deriveFont(Font.BOLD, eachLabel.getFont().getSize()));
+      eachLabel.setBorder(new EmptyBorder(0, 0, 0, 5));
+      eachLabel.setFont(RelativeFont.BOLD.derive(eachLabel.getFont()));
       myText.add(eachLabel);
       if (i < text.length - 1) {
-        final JLabel eachIcon = new JLabel(AllIcons.General.ComboArrowRight, SwingConstants.CENTER);
-        eachIcon.setBorder(new EmptyBorder(0, 0, 0, gap));
+        final JLabel eachIcon = new JLabel("\u203A", SwingConstants.CENTER);
+        eachIcon.setFont(RelativeFont.HUGE.derive(eachIcon.getFont()));
+        eachIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
         myText.add(eachIcon);
       }
     }

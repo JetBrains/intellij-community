@@ -57,6 +57,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -792,6 +793,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private void hideAndDispose(final boolean ok) {
     if (myDisposed) return;
     myDisposed = true;
+    hideComboBoxPopups();
 
     final Runnable disposeRunnable = new Runnable() {
       @Override
@@ -825,6 +827,13 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     myVisible = false;
     myTracker = null;
+  }
+
+  private void hideComboBoxPopups() {
+    List<JComboBox> comboBoxes = UIUtil.findComponentsOfType(myComp, JComboBox.class);
+    for (JComboBox box : comboBoxes) {
+      box.hidePopup();
+    }
   }
 
   protected void onDisposed() { }

@@ -17,11 +17,14 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.components.StateSplitter;
+import com.intellij.openapi.components.StateSplitterEx;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
@@ -29,28 +32,42 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class DirectoryStorageData {
+import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfDiffers;
+
+public class DirectoryStorageData extends StorageDataBase {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageData.class);
 
-  private Map<String, THashMap<File, Element>> myStates = new THashMap<String, THashMap<File, Element>>();
-  private long myLastTimestamp = 0;
-  private DirectoryStorageData myOriginalData;
+  public static final String DEFAULT_EXT = ".xml";
 
+  private final Map<String, StateMap> myStates;
+
+  public DirectoryStorageData() {
+    this(new THashMap<String, StateMap>());
+  }
+
+  private DirectoryStorageData(@NotNull Map<String, StateMap> states) {
+    myStates = states;
+  }
+
+  @Override
   @NotNull
   public Set<String> getComponentNames() {
     return myStates.keySet();
   }
 
-  static boolean isStorageFile(@NotNull VirtualFile file) {
+  boolean isEmpty() {
+    return myStates.isEmpty();
+  }
+
+  public static boolean isStorageFile(@NotNull VirtualFile file) {
     // ignore system files like .DS_Store on Mac
-    return StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), ".xml");
+    return StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), DEFAULT_EXT);
   }
 
   public void loadFrom(@Nullable VirtualFile dir, @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor) {
@@ -58,30 +75,36 @@ public class DirectoryStorageData {
       return;
     }
 
+    StringInterner interner = new StringInterner();
     for (VirtualFile file : dir.getChildren()) {
       if (!isStorageFile(file)) {
         continue;
       }
 
       try {
-        final Element element = JDOMUtil.loadDocument(file.contentsToByteArray()).detachRootElement();
+        Element element = JDOMUtil.loadDocument(file.contentsToByteArray()).getRootElement();
+        String name = StorageData.getComponentNameIfValid(element);
+        if (name == null) {
+          continue;
+        }
+
         if (!element.getName().equals(StorageData.COMPONENT)) {
           LOG.error("Incorrect root tag name (" + element.getName() + ") in " + file.getPresentableUrl());
           continue;
         }
 
-        String componentName = element.getAttributeValue(StorageData.NAME);
-        if (componentName == null) {
-          LOG.error("Component name isn't specified in " + file.getPresentableUrl());
+        List<Element> elementChildren = element.getChildren();
+        if (elementChildren.isEmpty()) {
           continue;
         }
 
+        Element state = (Element)elementChildren.get(0).detach();
+        JDOMUtil.internElement(state, interner);
         if (pathMacroSubstitutor != null) {
-          pathMacroSubstitutor.expandPaths(element);
-          pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(element));
+          pathMacroSubstitutor.expandPaths(state);
+          pathMacroSubstitutor.addUnknownMacros(name, PathMacrosCollector.getMacroNames(state));
         }
-
-        put(componentName, new File(file.getPath()), element, true);
+        setState(name, file.getName(), state);
       }
       catch (IOException e) {
         LOG.info("Unable to load state", e);
@@ -92,32 +115,116 @@ public class DirectoryStorageData {
     }
   }
 
-  public void put(@NotNull String componentName, @NotNull File file, @NotNull Element element, boolean updateTimestamp) {
-    THashMap<File, Element> stateMap = myStates.get(componentName);
-    if (stateMap == null) {
-      stateMap = new THashMap<File, Element>();
-      myStates.put(componentName, stateMap);
+  @Nullable
+  public static DirectoryStorageData setStateAndCloneIfNeed(@NotNull String componentName,
+                                                            @Nullable String fileName,
+                                                            @Nullable Element newState,
+                                                            @NotNull DirectoryStorageData storageData) {
+    StateMap fileToState = storageData.myStates.get(componentName);
+    Object oldState = fileToState == null || fileName == null ? null : fileToState.get(fileName);
+    if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
+      if (fileName == null) {
+        if (fileToState == null) {
+          return null;
+        }
+      }
+      else if (oldState == null) {
+        return null;
+      }
+
+      DirectoryStorageData newStorageData = storageData.clone();
+      if (fileName == null) {
+        newStorageData.myStates.remove(componentName);
+      }
+      else {
+        StateMap clonedFileToState = newStorageData.myStates.get(componentName);
+        if (clonedFileToState.size() == 1) {
+          newStorageData.myStates.remove(componentName);
+        }
+        else {
+          clonedFileToState.remove(fileName);
+          if (clonedFileToState.isEmpty()) {
+            newStorageData.myStates.remove(componentName);
+          }
+        }
+      }
+      return newStorageData;
     }
 
-    stateMap.put(file, element);
-    if (updateTimestamp) {
-      updateLastTimestamp(file);
+    byte[] newBytes = null;
+    if (oldState instanceof Element) {
+      if (JDOMUtil.areElementsEqual((Element)oldState, newState)) {
+        return null;
+      }
     }
-  }
-
-  public void updateLastTimestamp(@NotNull File file) {
-    myLastTimestamp = Math.max(myLastTimestamp, file.lastModified());
-    if (myOriginalData != null) {
-      myOriginalData.myLastTimestamp = myLastTimestamp;
+    else if (oldState != null) {
+      newBytes = getNewByteIfDiffers(componentName, newState, (byte[])oldState);
+      if (newBytes == null) {
+        return null;
+      }
     }
+
+    DirectoryStorageData newStorageData = storageData.clone();
+    newStorageData.put(componentName, fileName, newBytes == null ? newState : newBytes);
+    return newStorageData;
   }
 
-  public long getLastTimeStamp() {
-    return myLastTimestamp;
+  @Nullable
+  public Object setState(@NotNull String componentName, @Nullable String fileName, @Nullable Element newState) {
+    StateMap fileToState = myStates.get(componentName);
+    if (fileName == null || newState == null || JDOMUtil.isEmpty(newState)) {
+      if (fileToState == null) {
+        return null;
+      }
+      else if (fileName == null) {
+        return myStates.remove(componentName);
+      }
+      else {
+        Object oldState = fileToState.remove(fileName);
+        if (fileToState.isEmpty()) {
+          myStates.remove(componentName);
+        }
+        return oldState;
+      }
+    }
+
+    if (fileToState == null) {
+      fileToState = new StateMap();
+      myStates.put(componentName, fileToState);
+      fileToState.put(fileName, newState);
+    }
+    else {
+      Object oldState = fileToState.get(fileName);
+
+      byte[] newBytes = null;
+      if (oldState instanceof Element) {
+        if (JDOMUtil.areElementsEqual((Element)oldState, newState)) {
+          return null;
+        }
+      }
+      else if (oldState != null) {
+        newBytes = getNewByteIfDiffers(fileName, newState, (byte[])oldState);
+        if (newBytes == null) {
+          return null;
+        }
+      }
+
+      fileToState.put(fileName, newBytes == null ? newState : newBytes);
+    }
+    return newState;
   }
 
-  void processComponent(@NotNull String componentName, @NotNull TObjectObjectProcedure<File, Element> consumer) {
-    THashMap<File, Element> map = myStates.get(componentName);
+  private void put(@NotNull String componentName, @NotNull String fileName, @NotNull Object state) {
+    StateMap fileToState = myStates.get(componentName);
+    if (fileToState == null) {
+      fileToState = new StateMap();
+      myStates.put(componentName, fileToState);
+    }
+    fileToState.put(fileName, state);
+  }
+
+  void processComponent(@NotNull String componentName, @NotNull TObjectObjectProcedure<String, Object> consumer) {
+    StateMap map = myStates.get(componentName);
     if (map != null) {
       map.forEachEntry(consumer);
     }
@@ -125,45 +232,62 @@ public class DirectoryStorageData {
 
   @Override
   protected DirectoryStorageData clone() {
-    final DirectoryStorageData result = new DirectoryStorageData();
-    result.myStates = new THashMap<String, THashMap<File, Element>>(myStates);
-    result.myLastTimestamp = myLastTimestamp;
-    result.myOriginalData = this;
-    return result;
+    return new DirectoryStorageData(new THashMap<String, StateMap>(myStates));
   }
 
   public void clear() {
     myStates.clear();
-    myOriginalData = null;
   }
 
-  public boolean containsComponent(final String componentName) {
-    return myStates.get(componentName) != null;
-  }
-
-  public void removeComponent(final String componentName) {
-    myStates.remove(componentName);
+  @Override
+  public boolean hasState(@NotNull String componentName) {
+    StateMap fileToState = myStates.get(componentName);
+    return fileToState != null && fileToState.hasStates();
   }
 
   @Nullable
-  public <T> T getMergedState(String componentName, Class<T> stateClass, StateSplitter splitter, @Nullable T mergeInto) {
-    final List<Element> subElements = new ArrayList<Element>();
-    processComponent(componentName, new TObjectObjectProcedure<File, Element>() {
-      @Override
-      public boolean execute(File file, Element element) {
-        final List children = element.getChildren();
-        assert children.size() == 1 : JDOMUtil.writeElement(element, File.separator);
-        Element subElement = (Element)children.get(0);
-        subElement.detach();
-        subElements.add(subElement);
-        return true;
+  public Element getCompositeStateAndArchive(@NotNull String componentName, @SuppressWarnings("deprecation") @NotNull StateSplitter splitter) {
+    StateMap fileToState = myStates.get(componentName);
+    Element state = new Element(StorageData.COMPONENT);
+    if (fileToState == null || fileToState.isEmpty()) {
+      return state;
+    }
+
+    if (splitter instanceof StateSplitterEx) {
+      StateSplitterEx splitterEx = (StateSplitterEx)splitter;
+      for (String fileName : fileToState.keys()) {
+        Element subState = fileToState.getStateAndArchive(fileName);
+        if (subState == null) {
+          return null;
+        }
+        splitterEx.mergeStateInto(state, subState);
       }
-    });
+    }
+    else {
+      List<Element> subElements = new SmartList<Element>();
+      for (String fileName : fileToState.keys()) {
+        Element subState = fileToState.getStateAndArchive(fileName);
+        if (subState == null) {
+          return null;
+        }
+        subElements.add(subState);
+      }
 
-    final Element state = new Element(StorageData.COMPONENT);
-    splitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
-    removeComponent(componentName);
+      if (!subElements.isEmpty()) {
+        splitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
+      }
+    }
+    return state;
+  }
 
-    return DefaultStateSerializer.deserializeState(state, stateClass, mergeInto);
+  @NotNull
+  public Element stateToElement(@NotNull String key, @Nullable Object state) {
+    return StateMap.stateToElement(key, state, Collections.<String, Element>emptyMap());
+  }
+
+  @NotNull
+  public Set<String> getFileNames(@NotNull String componentName) {
+    StateMap fileToState = myStates.get(componentName);
+    return fileToState == null || fileToState.isEmpty() ? Collections.<String>emptySet() : fileToState.keys();
   }
 }

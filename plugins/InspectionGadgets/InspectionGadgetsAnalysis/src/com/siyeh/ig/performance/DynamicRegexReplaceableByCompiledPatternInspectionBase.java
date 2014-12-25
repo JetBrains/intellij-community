@@ -34,13 +34,14 @@ import java.util.HashSet;
 
 public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends BaseInspection {
 
-  @SuppressWarnings("UnusedDeclaration")
+  @SuppressWarnings("PublicField")
   public boolean ignoreForSplitOptimization = true;
 
   @NonNls
   protected static final Collection<String> regexMethodNames = new HashSet<String>(4);
   static {
     regexMethodNames.add("matches");
+    regexMethodNames.add("replace");
     regexMethodNames.add("replaceFirst");
     regexMethodNames.add("replaceAll");
     regexMethodNames.add("split");

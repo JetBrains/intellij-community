@@ -18,6 +18,7 @@ package com.intellij.core;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.impl.stores.DefaultStateSerializer;
 import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.module.ModuleManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -77,7 +79,7 @@ public class CoreProjectLoader {
     if (libraries != null) {
       DirectoryStorageData data = new DirectoryStorageData();
       data.loadFrom(libraries, PathMacroManager.getInstance(project).createTrackingSubstitutor());
-      final Element libraryTable = data.getMergedState("libraryTable", Element.class, new ProjectLibraryTable.LibraryStateSplitter(), null);
+      final Element libraryTable = DefaultStateSerializer.deserializeState(data.getCompositeStateAndArchive("libraryTable", new ProjectLibraryTable.LibraryStateSplitter()), Element.class, null);
       ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
     }
 
@@ -88,7 +90,7 @@ public class CoreProjectLoader {
   @NotNull
   public static StorageData loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
     StorageData storageData = new StorageData("project");
-    storageData.load(StorageData.load(modulesXml), PathMacroManager.getInstance(componentManager), false);
+    storageData.load(JDOMUtil.loadDocument(modulesXml.contentsToByteArray()).getRootElement(), PathMacroManager.getInstance(componentManager), false);
     return storageData;
   }
 }

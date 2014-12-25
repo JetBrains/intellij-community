@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -22,6 +23,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseInspection {
 
@@ -43,6 +46,11 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PrimitiveArrayArgumentToVariableArgVisitor();
   }
@@ -52,9 +60,6 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      if (!PsiUtil.isLanguageLevel5OrHigher(call)) {
-        return;
-      }
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
@@ -67,7 +72,7 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
       }
       final JavaResolveResult result = call.resolveMethodGenerics();
       final PsiMethod method = (PsiMethod)result.getElement();
-      if (method == null) {
+      if (method == null || AnnotationUtil.isAnnotated(method, Arrays.asList("java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();

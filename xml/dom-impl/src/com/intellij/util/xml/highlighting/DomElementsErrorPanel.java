@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomChangeAdapter;
@@ -34,6 +34,7 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ui.CommittablePanel;
 import com.intellij.util.xml.ui.Highlightable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -152,25 +153,24 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   }
 
   private class DomElementsTrafficLightRenderer extends TrafficLightRenderer {
-
-    public DomElementsTrafficLightRenderer(final PsiFile xmlFile) {
+    public DomElementsTrafficLightRenderer(@NotNull XmlFile xmlFile) {
       super(xmlFile.getProject(),
             PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
     }
 
+    @NotNull
     @Override
-    protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
-      final DaemonCodeAnalyzerStatus status = super.getDaemonCodeAnalyzerStatus(fillErrorsCount, severityRegistrar);
-      if (status != null && isInspectionCompleted()) {
+    protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
+      final DaemonCodeAnalyzerStatus status = super.getDaemonCodeAnalyzerStatus(severityRegistrar);
+      if (isInspectionCompleted()) {
         status.errorAnalyzingFinished = true;
       }
       return status;
     }
 
     @Override
-    protected void fillDaemonCodeAnalyzerErrorsStatus(DaemonCodeAnalyzerStatus status,
-                                                      boolean fillErrorsCount,
-                                                      SeverityRegistrar severityRegistrar) {
+    protected void fillDaemonCodeAnalyzerErrorsStatus(@NotNull DaemonCodeAnalyzerStatus status,
+                                                      @NotNull SeverityRegistrar severityRegistrar) {
       for (int i = 0; i < status.errorCount.length; i++) {
         final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(i);
         if (minSeverity == null) {

@@ -103,10 +103,6 @@ interface SoftWrapAwareDocumentParsingListener {
 
   /**
    * Notifies current listener that particular document region re-parsing is about to begin.
-   * <p/>
-   * There is a possible case that recalculation is finished abruptly
-   * (see {@link #onRecalculationEnd(IncrementalCacheUpdateEvent, boolean)}). So, the listener is expected to be able to rollback
-   * all changes made after the current method call if necessary
    * 
    * @param event   object that contains information about re-parsed document region
    */
@@ -116,17 +112,15 @@ interface SoftWrapAwareDocumentParsingListener {
    * Notifies current listener that particular document region re-parsing has just finished.
    *
    * @param event   object that contains information about re-parsed document region
-   * @param normal  flag that indicates if recalculation is finished correctly. All information about changed regions
-   *                should be rolled back if this param value is <code>false</code>
    */
-  void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event, boolean normal);
+  void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event);
 
   /**
    * Notifies current listener that all dirty regions for the current editor have been recalculated.
    * <p/>
-   * It differs from {@link #onRecalculationEnd(IncrementalCacheUpdateEvent, boolean)} because there is a possible case that there
+   * It differs from {@link #onRecalculationEnd(IncrementalCacheUpdateEvent)} because there is a possible case that there
    * is more than one 'dirty' region which is necessary to recalculate.
-   * {@link #onRecalculationEnd(IncrementalCacheUpdateEvent, boolean)} will be called after every region recalculation then
+   * {@link #onRecalculationEnd(IncrementalCacheUpdateEvent)} will be called after every region recalculation then
    * and current method will be called one time when all recalculations have been performed.
    */
   void recalculationEnds();

@@ -265,6 +265,10 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   @NotNull
   public abstract GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType) throws IncorrectOperationException;
 
+  @Override
+  @NotNull
+  public abstract GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType, @Nullable PsiElement context) throws IncorrectOperationException;
+
   @NotNull
   @Override
   public abstract GrMethod createConstructor();

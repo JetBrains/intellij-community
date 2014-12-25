@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(TaskItemProvider.class);
 
-  private static final int DELAY_PERIOD = 1000; // ms
+  private static final int DELAY_PERIOD = 200; // ms
 
   private final Project myProject;
 
@@ -76,19 +76,31 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     });
 
     // Newer request always wins
-    Future<List<Task>> oldFeature = myFutureReference.getAndSet(future);
-    if (oldFeature != null) {
+    Future<List<Task>> oldFuture = myFutureReference.getAndSet(future);
+    if (oldFuture != null) {
       LOG.debug("Cancelling existing task");
-      oldFeature.cancel(true);
+      oldFuture.cancel(true);
     }
 
     if (myAlarm.isDisposed()) {
       return false;
     }
-    myAlarm.addRequest(future, DELAY_PERIOD);
+    myAlarm.addRequest(future, oldFuture == null && pattern.length() > 5 ? 0 : DELAY_PERIOD);
 
     try {
-      List<Task> tasks = future.get();
+      List<Task> tasks;
+      while (true) {
+        try {
+          tasks = future.get(10, TimeUnit.MILLISECONDS);
+          break;
+        }
+        catch (TimeoutException ignore) {
+        }
+        if (base.hasPostponedAction()) {
+            future.cancel(true);
+            return true;
+          }
+        }
       myFutureReference.compareAndSet(future, null);
 
       // Exclude *all* cached and local issues, not only those returned by TaskSearchSupport.getLocalAndCachedTasks().

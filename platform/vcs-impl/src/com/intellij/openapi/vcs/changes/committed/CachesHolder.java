@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,14 +45,14 @@ public class CachesHolder {
     myProject = project;
     myLocationCache = locationCache;
     myPlManager = ProjectLevelVcsManager.getInstance(myProject);
-    myCacheFiles = new ConcurrentHashMap<String, ChangesCacheFile>();
+    myCacheFiles = ContainerUtil.newConcurrentMap();
   }
 
   public CachesHolder(final Project project, final RepositoryLocationCache locationCache, final ProjectLevelVcsManager manager) {
     myProject = project;
     myPlManager = manager;
     myLocationCache = locationCache;
-    myCacheFiles = new ConcurrentHashMap<String, ChangesCacheFile>();
+    myCacheFiles = ContainerUtil.newConcurrentMap();
   }
 
   /**

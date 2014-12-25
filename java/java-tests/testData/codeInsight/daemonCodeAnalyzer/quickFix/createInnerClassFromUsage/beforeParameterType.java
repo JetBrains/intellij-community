@@ -1,4 +1,4 @@
-// "Create Inner Class 'Abc'" "true"
+// "Create inner class 'Abc'" "true"
 public class Test {
     private void foo(<caret>Abc param) {}
 }

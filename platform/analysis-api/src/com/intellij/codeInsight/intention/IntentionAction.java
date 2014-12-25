@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * Implement {@link com.intellij.openapi.util.Iconable Iconable} interface to
  * change icon in intention popup menu.
+ * <p/>
+ * Implement {@link com.intellij.codeInsight.intention.HighPriorityAction HighPriorityAction} or
+ * {@link com.intellij.codeInsight.intention.LowPriorityAction LowPriorityAction} to change ordering.
  *
  * @see IntentionManager#registerIntentionAndMetaData(com.intellij.codeInsight.intention.IntentionAction, java.lang.String...)
  */
@@ -40,6 +44,7 @@ public interface IntentionAction {
    * @see #isAvailable(Project,Editor,PsiFile)
    * @return the text to show in the intention popup.
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull String getText();
 
   /**

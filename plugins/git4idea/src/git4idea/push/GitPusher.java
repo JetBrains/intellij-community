@@ -32,11 +32,13 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
 
   @NotNull private final Project myProject;
   @NotNull private final GitVcsSettings mySettings;
+  @NotNull private final GitPushSupport myPushSupport;
   @NotNull private final GitRepositoryManager myRepositoryManager;
 
-  GitPusher(@NotNull Project project, @NotNull GitVcsSettings settings) {
+  GitPusher(@NotNull Project project, @NotNull GitVcsSettings settings, @NotNull GitPushSupport pushSupport) {
     myProject = project;
     mySettings = settings;
+    myPushSupport = pushSupport;
     myRepositoryManager = GitUtil.getRepositoryManager(project);
   }
 
@@ -48,6 +50,19 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
     GitPushResultNotification notification = GitPushResultNotification.create(myProject, result, myRepositoryManager.moreThanOneRoot());
     notification.notify(myProject);
     mySettings.setPushTagMode(pushTagMode);
+    rememberTargets(pushSpecs);
   }
 
+  private void rememberTargets(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs) {
+    for (Map.Entry<GitRepository, PushSpec<GitPushSource, GitPushTarget>> entry : pushSpecs.entrySet()) {
+      GitRepository repository = entry.getKey();
+      GitPushSource source = entry.getValue().getSource();
+      GitPushTarget target = entry.getValue().getTarget();
+      GitPushTarget defaultTarget = myPushSupport.getDefaultTarget(repository);
+      if (defaultTarget == null || !target.getBranch().equals(defaultTarget.getBranch())) {
+        mySettings.setPushTarget(repository, source.getBranch().getName(),
+                                 target.getBranch().getRemote().getName(), target.getBranch().getNameForRemoteOperations());
+      }
+    }
+  }
 }

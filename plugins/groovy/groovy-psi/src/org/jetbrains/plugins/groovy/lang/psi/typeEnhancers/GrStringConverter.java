@@ -20,6 +20,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -27,24 +28,24 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  * Created by Max Medvedev on 8/15/13
  */
 public class GrStringConverter extends GrTypeConverter {
+
   @Override
-  public boolean isAllowedInMethodCall() {
-    return false;
+  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+    return position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.RETURN_VALUE || position == ApplicableTo.EXPLICIT_CAST;
   }
 
   @Nullable
   @Override
-  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (TypesUtil.isClassType(lType, CommonClassNames.JAVA_LANG_STRING)) {
-      return Boolean.TRUE;
+  public ConversionResult isConvertibleEx(@NotNull PsiType lType,
+                                          @NotNull PsiType rType,
+                                          @NotNull GroovyPsiElement context,
+                                          @NotNull ApplicableTo currentPosition) {
+    if (!TypesUtil.isClassType(lType, CommonClassNames.JAVA_LANG_STRING)) return null;
+    if (currentPosition == ApplicableTo.EXPLICIT_CAST) {
+      return TypesUtil.isClassType(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING)
+             ? ConversionResult.OK
+             : null;
     }
-
-    if (TypesUtil.unboxPrimitiveTypeWrapper(lType) == PsiType.CHAR &&
-        (TypesUtil.isClassType(rType, CommonClassNames.JAVA_LANG_STRING) || TypesUtil
-          .isClassType(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING))) {
-      return Boolean.TRUE;
-    }
-
-    return null;
+    return ConversionResult.OK;
   }
 }

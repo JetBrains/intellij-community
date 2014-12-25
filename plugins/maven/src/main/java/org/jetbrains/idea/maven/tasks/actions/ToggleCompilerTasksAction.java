@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.tasks.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenCompilerTask;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -50,12 +52,14 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     final DataContext context = e.getDataContext();
+    final MavenTasksManager tasksManager = getTasksManager(context);
     List<MavenCompilerTask> tasks = getTasks(context);
+    if(tasksManager == null) return;
     if (state) {
-      addTasks(getTasksManager(context), tasks);
+      addTasks(tasksManager, tasks);
     }
     else {
-      removeTasks(getTasksManager(context), tasks);
+      removeTasks(tasksManager, tasks);
     }
   }
 
@@ -73,7 +77,8 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
     return result;
   }
 
-  protected boolean hasTask(MavenTasksManager manager, MavenCompilerTask task) {
+  protected boolean hasTask(@Nullable MavenTasksManager manager, MavenCompilerTask task) {
+    if(manager == null) return false;
     return manager.isCompileTaskOfPhase(task, myPhase);
   }
 
@@ -85,7 +90,10 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
     manager.removeCompileTasks(tasks, myPhase);
   }
 
+  @Nullable
   private static MavenTasksManager getTasksManager(DataContext context) {
-    return MavenTasksManager.getInstance(MavenActionUtil.getProject(context));
+    final Project project = MavenActionUtil.getProject(context);
+    if(project == null) return null;
+    return MavenTasksManager.getInstance(project);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
@@ -28,6 +30,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -94,8 +97,9 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   @NotNull
   public PsiExpressionList getArgumentList() {
     PsiExpressionList list = (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
-    if (list != null) return list;
-    LOG.error("Invalid PSI. Children:" + DebugUtil.psiToString(this, false));
+    if (list == null) {
+      LOG.error("Invalid PSI for'" + getText() + ". Parent:" + DebugUtil.psiToString(getParent(), false));
+    }
     return list;
   }
 
@@ -197,7 +201,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
         ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
       }
       if (is15OrHigher) {
-        return captureReturnType(call, method, ret, result.getSubstitutor());
+        return captureReturnType(call, method, ret, result, languageLevel);
       }
       return TypeConversionUtil.erasure(ret);
     }
@@ -206,15 +210,36 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   public static PsiType captureReturnType(PsiMethodCallExpression call,
                                           PsiMethod method,
                                           PsiType ret,
-                                          PsiSubstitutor substitutor) {
+                                          JavaResolveResult result, 
+                                          LanguageLevel languageLevel) {
+    PsiSubstitutor substitutor = result.getSubstitutor();
     PsiType substitutedReturnType = substitutor.substitute(ret);
-    if (substitutedReturnType == null) return TypeConversionUtil.erasure(ret);
+    if (substitutedReturnType == null) {
+      return TypeConversionUtil.erasure(ret);
+    }
+
     if (InferenceSession.wasUncheckedConversionPerformed(call)) {
       // 18.5.2
       // if unchecked conversion was necessary, then this substitution provides the parameter types of the invocation type, 
       // while the return type and thrown types are given by the erasure of m's type (without applying θ').
       return TypeConversionUtil.erasure(substitutedReturnType);
     }
+
+    //15.12.2.6. Method Invocation Type
+    // If unchecked conversion was necessary for the method to be applicable, 
+    // the parameter types of the invocation type are the parameter types of the method's type,
+    // and the return type and thrown types are given by the erasures of the return type and thrown types of the method's type.
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && 
+        (method.hasTypeParameters() || JavaVersionService.getInstance().isAtLeast(call, JavaSdkVersion.JDK_1_8)) &&
+        result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isApplicable()) {
+      final PsiType[] args = call.getArgumentList().getExpressionTypes();
+      final boolean allowUncheckedConversion = false;
+      final int applicabilityLevel = PsiUtil.getApplicabilityLevel(method, substitutor, args, languageLevel, allowUncheckedConversion, true);
+      if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE) {
+        return TypeConversionUtil.erasure(substitutedReturnType);
+      }
+    }
+
     if (PsiUtil.isRawSubstitutor(method, substitutor)) {
       final PsiType returnTypeErasure = TypeConversionUtil.erasure(ret);
       if (Comparing.equal(TypeConversionUtil.erasure(substitutedReturnType), returnTypeErasure)) {

@@ -21,10 +21,8 @@ public class JsonNumberLiteralImpl extends JsonLiteralImpl implements JsonNumber
     else super.accept(visitor);
   }
 
-  @Override
-  @NotNull
-  public PsiElement getNumber() {
-    return findNotNullChildByType(NUMBER);
+  public double getValue() {
+    return JsonPsiImplUtils.getValue(this);
   }
 
 }

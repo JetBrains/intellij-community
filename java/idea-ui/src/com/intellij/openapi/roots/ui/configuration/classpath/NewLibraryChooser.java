@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,8 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
 
   @Nullable
   public Library createLibrary() {
-    final NewLibraryConfiguration configuration = CreateNewLibraryAction.createNewLibraryConfiguration(myLibraryType, myParentComponent, myProject);
+    final NewLibraryConfiguration configuration =
+      CreateNewLibraryAction.createNewLibraryConfiguration(myLibraryType, myParentComponent, myProject);
     if (configuration == null) return null;
 
     final NewLibraryEditor libraryEditor = new NewLibraryEditor(configuration.getLibraryType(), configuration.getProperties());
@@ -76,8 +77,7 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
     CreateNewLibraryDialog dialog = new CreateNewLibraryDialog(myParentComponent, myContext, libraryEditor, tables, 1);
     final Module contextModule = LangDataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParentComponent));
     dialog.setContextModule(contextModule);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       return dialog.createLibrary();
     }
     return null;

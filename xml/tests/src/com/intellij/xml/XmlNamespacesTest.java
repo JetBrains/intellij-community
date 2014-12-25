@@ -19,16 +19,18 @@ import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
+public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public XmlNamespacesTest() {
@@ -188,7 +190,7 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
                                        "        xsi:schemaLocation=\"http://www.w3.org/2001/XMLSchema http://www.w3.org/2001/XMLSchema.xsd\n" +
                                        "                http://www.w3.org/2001/XInclude http://www.w3.org/2001/XInclude.xsd\">\n" +
                                        "\n" +
-                                       "    <<error descr=\"An 'include' failed, and no 'fallback' element was found.\">include</error> xmlns=\"http://www.w3.org/2001/XInclude\" href=\"<error descr=\"Cannot resolve file 'a.xml'\">a.xml</error>\"/>\n" +
+                                       "    <include xmlns=\"http://www.w3.org/2001/XInclude\" href=\"a.xml\"/>\n" +
                                        "</x:all>");
     myFixture.testHighlighting();
   }
@@ -235,6 +237,13 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
     myFixture.testHighlighting("import.xml", "import.xsd");
   }
 
+  public void testDoNotOptimizeWhenInspectionDisabled() throws Exception {
+    myFixture.disableInspections(new XmlUnusedNamespaceInspection());
+    String text = "<all xmlns=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
+    myFixture.configureByText(XmlFileType.INSTANCE, text);
+    doOptimizeImportsTest(text);
+  }
+
   private void doUnusedDeclarationTest(String text, String after, String name) throws Exception {
     doUnusedDeclarationTest(text, after, name, true);
   }
@@ -257,7 +266,7 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
     myFixture.testHighlighting();
     new WriteCommandAction(getProject(), getFile()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         new OptimizeImportsProcessor(getProject(), getFile()).runWithoutProgress();
       }
     }.execute();
@@ -279,10 +288,5 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/xml/tests/testData/unusedNs";
-  }
-
-  @Override
-  protected boolean isCommunity() {
-    return true;
   }
 }

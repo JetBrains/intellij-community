@@ -26,10 +26,12 @@ public class OverriderUsageInfo extends UsageInfo {
   private final boolean myToInsertArgs;
   private final boolean myToCatchExceptions;
   private final boolean myIsOriginalOverrider;
+  private final PsiMethod myOverridingMethod;
 
   public OverriderUsageInfo(final PsiMethod method, PsiMethod baseMethod, boolean  isOriginalOverrider,
                             boolean toInsertArgs, boolean toCatchExceptions) {
     super(method);
+    myOverridingMethod = method;
     myBaseMethod = baseMethod;
     myToInsertArgs = toInsertArgs;
     myToCatchExceptions = toCatchExceptions;
@@ -40,8 +42,8 @@ public class OverriderUsageInfo extends UsageInfo {
     return myBaseMethod;
   }
 
-  public PsiMethod getElement() {
-    return (PsiMethod)super.getElement();
+  public PsiMethod getOverridingMethod() {
+    return myOverridingMethod;
   }
 
   public boolean isOriginalOverrider() {

@@ -75,6 +75,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     return false;
   }
 
+  @Nullable
   @Override
   public Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;

@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
@@ -106,8 +108,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   public SimpleColoredComponent() {
     myFragments = new ArrayList<String>(3);
     myAttributes = new ArrayList<SimpleTextAttributes>(3);
-    myIpad = new Insets(1, 2, 1, 2);
-    myIconTextGap = 2;
+    myIpad = new JBInsets(1, 2, 1, 2);
+    myIconTextGap = JBUI.scale(2);
     myBorder = new MyBorder();
     myFixedWidths = new TIntIntHashMap(10);
     setOpaque(true);
@@ -833,7 +835,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     private Insets myInsets;
 
     public MyBorder() {
-      myInsets = new Insets(1, 1, 1, 1);
+      myInsets = new JBInsets(1, 1, 1, 1);
     }
 
     public void setInsets(final Insets insets) {
@@ -848,7 +850,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      return myInsets;
+      return (Insets)myInsets.clone();
     }
 
     @Override

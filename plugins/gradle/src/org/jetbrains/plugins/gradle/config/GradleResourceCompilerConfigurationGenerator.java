@@ -118,9 +118,6 @@ public class GradleResourceCompilerConfigurationGenerator {
         continue;
       }
 
-      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-      assert compilerModuleExtension != null;
-
       GradleModuleResourceConfiguration resourceConfig = new GradleModuleResourceConfiguration();
       resourceConfig.id = new ModuleVersion(externalProject.getGroup(), externalProject.getName(), externalProject.getVersion());
       resourceConfig.directory = FileUtil.toSystemIndependentName(externalProject.getProjectDir().getPath());
@@ -130,6 +127,19 @@ public class GradleResourceCompilerConfigurationGenerator {
 
       final ExternalSourceSet testSourcesSet = externalProject.getSourceSets().get("test");
       addResources(resourceConfig.testResources, testSourcesSet, ExternalSystemSourceType.TEST_RESOURCE);
+
+      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
+      if(compilerModuleExtension != null && compilerModuleExtension.isCompilerOutputPathInherited()) {
+        String outputPath = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrl());
+        for (ResourceRootConfiguration resource : resourceConfig.resources) {
+          resource.targetPath = outputPath;
+        }
+
+        String testOutputPath = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrlForTests());
+        for (ResourceRootConfiguration resource : resourceConfig.testResources) {
+          resource.targetPath = testOutputPath;
+        }
+      }
 
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
     }

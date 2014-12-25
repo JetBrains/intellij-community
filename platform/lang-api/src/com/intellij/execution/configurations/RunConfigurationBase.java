@@ -24,6 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +63,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
   private boolean myShowConsoleOnStdErr = false;
   private String myFileOutputPath = null;
 
-  protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
+  protected RunConfigurationBase(final Project project, @NotNull ConfigurationFactory factory, final String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
@@ -100,6 +102,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
   }
 
   @Override
+  @Transient
   public final String getName() {
     return myName;
   }
@@ -208,11 +211,14 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
     final Element fileOutputElement = element.getChild(FILE_OUTPUT);
     if (fileOutputElement != null) {
       myFileOutputPath = fileOutputElement.getAttributeValue(OUTPUT_FILE);
-      final String isSave = fileOutputElement.getAttributeValue(SAVE);
+      String isSave = fileOutputElement.getAttributeValue(SAVE);
       mySaveOutput = isSave != null && Boolean.parseBoolean(isSave);
     }
-    myShowConsoleOnStdOut = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_OUT));
-    myShowConsoleOnStdErr = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_ERR));
+
+    if (!isNewSerializationUsed()) {
+      myShowConsoleOnStdOut = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_OUT));
+      myShowConsoleOnStdErr = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_ERR));
+    }
   }
 
   @Override
@@ -235,14 +241,22 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
     if (myFileOutputPath != null || mySaveOutput) {
       element.addContent(fileOutputPathElement);
     }
-    if (myShowConsoleOnStdOut) {//default value shouldn't be written
-      element.setAttribute(SHOW_CONSOLE_ON_STD_OUT, String.valueOf(myShowConsoleOnStdOut));
-    }
-    if (myShowConsoleOnStdErr) {//default value shouldn't be written
-      element.setAttribute(SHOW_CONSOLE_ON_STD_ERR, String.valueOf(myShowConsoleOnStdErr));
+
+    if (!isNewSerializationUsed()) {
+      if (myShowConsoleOnStdOut) {//default value shouldn't be written
+        element.setAttribute(SHOW_CONSOLE_ON_STD_OUT, String.valueOf(true));
+      }
+      if (myShowConsoleOnStdErr) {//default value shouldn't be written
+        element.setAttribute(SHOW_CONSOLE_ON_STD_ERR, String.valueOf(true));
+      }
     }
   }
 
+  protected boolean isNewSerializationUsed() {
+    return false;
+  }
+
+  @Transient
   public boolean isSaveOutputToFile() {
     return mySaveOutput;
   }
@@ -251,6 +265,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
     mySaveOutput = redirectOutput;
   }
 
+  @Attribute(SHOW_CONSOLE_ON_STD_OUT)
   public boolean isShowConsoleOnStdOut() {
     return myShowConsoleOnStdOut;
   }
@@ -259,6 +274,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
     myShowConsoleOnStdOut = showConsoleOnStdOut;
   }
 
+  @Attribute(SHOW_CONSOLE_ON_STD_ERR)
   public boolean isShowConsoleOnStdErr() {
     return myShowConsoleOnStdErr;
   }
@@ -267,6 +283,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
     myShowConsoleOnStdErr = showConsoleOnStdErr;
   }
 
+  @Transient
   public String getOutputFilePath() {
     return myFileOutputPath;
   }

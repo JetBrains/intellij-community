@@ -15,6 +15,9 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.execution.configurations.RemoteRunProfile;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -33,7 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -45,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -151,27 +153,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
     myTreeModel = new DefaultTreeModel(null);
-    myTreeModel.addTreeModelListener(new TreeModelAdapter() {
-      @Override
-      public void treeNodesChanged(TreeModelEvent e) {
-        updateEditor();
-      }
-
-      @Override
-      public void treeNodesInserted(TreeModelEvent e) {
-        updateEditor();
-      }
-
-      @Override
-      public void treeNodesRemoved(TreeModelEvent e) {
-        updateEditor();
-      }
-
-      @Override
-      public void treeStructureChanged(TreeModelEvent e) {
-        updateEditor();
-      }
-    });
     setModel(myTreeModel);
     setCellRenderer(new XDebuggerTreeRenderer());
     new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
@@ -222,8 +203,17 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
   }
 
-  private void updateEditor() {
+  public void updateEditor() {
     myAlarm.cancelAndRequest();
+  }
+  
+  public boolean isUnderRemoteDebug() {
+    DataContext context = DataManager.getInstance().getDataContext(this);
+    ExecutionEnvironment env = LangDataKeys.EXECUTION_ENVIRONMENT.getData(context);
+    if (env != null && env.getRunProfile() instanceof RemoteRunProfile) {
+      return true;
+    }
+    return false;
   }
 
   private boolean expandIfEllipsis() {
@@ -339,6 +329,13 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.JUMP_TO_TYPE_SOURCE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.MARK_OBJECT).unregisterCustomShortcutSet(this);
+
+    // clear all possible inner fields that may still have links to debugger objects
+    myTreeModel.setRoot(null);
+    setCellRenderer(null);
+    UIUtil.dispose(this);
+    setLeadSelectionPath(null);
+    setAnchorSelectionPath(null);
   }
 
   private void registerShortcuts() {

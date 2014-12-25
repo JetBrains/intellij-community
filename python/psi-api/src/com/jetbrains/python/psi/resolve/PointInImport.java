@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@ public enum PointInImport {
   NONE,
 
   /**
-   * The reference is inside import and refers to a module
+   * The reference is inside import and it's either source qualifier in {@code from REFERENCE import ...}
+   * or imported name itself in {@code import REFERENCE}.
    */
   AS_MODULE,
 
   /**
-   * The reference is inside import and refers to a name imported from a module
+   * The reference is inside import and refers to a name imported from a module, i.e. it's concrete imported name in
+   * import statement of form {@code from somewhere import REFERENCE}, not the optional alias part.
    */
   AS_NAME
 }

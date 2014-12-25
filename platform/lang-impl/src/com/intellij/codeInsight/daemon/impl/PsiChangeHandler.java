@@ -49,7 +49,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
+class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   private static final ExtensionPointName<ChangeLocalityDetector> EP_NAME = ExtensionPointName.create("com.intellij.daemon.changeLocalityDetector");
   private /*NOT STATIC!!!*/ final Key<Boolean> UPDATE_ON_COMMIT_ENGAGED = Key.create("UPDATE_ON_COMMIT_ENGAGED");
 
@@ -57,7 +57,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = new THashMap<Document, List<Pair<PsiElement, Boolean>>>();
   private final FileStatusMap myFileStatusMap;
 
-  public PsiChangeHandler(@NotNull Project project,
+  PsiChangeHandler(@NotNull Project project,
                           @NotNull final PsiDocumentManagerImpl documentManager,
                           @NotNull EditorFactory editorFactory,
                           @NotNull MessageBusConnection connection,
@@ -75,8 +75,10 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
           PsiDocumentManagerBase.addRunOnCommit(document, new Runnable() {
             @Override
             public void run() {
-              updateChangesForDocument(document);
-              document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
+              if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) != null) {
+                updateChangesForDocument(document);
+                document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
+              }
             }
           });
         }
@@ -89,8 +91,9 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
       }
 
       @Override
-      public void transactionCompleted(@NotNull final Document doc, @NotNull final PsiFile file) {
-        updateChangesForDocument(doc);
+      public void transactionCompleted(@NotNull final Document document, @NotNull final PsiFile file) {
+        updateChangesForDocument(document);
+        document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null); // ensure we don't call updateChangesForDocument() twice which can lead to whole file re-highlight
       }
     });
   }

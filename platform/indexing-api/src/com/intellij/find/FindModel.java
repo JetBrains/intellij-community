@@ -16,6 +16,7 @@
 package com.intellij.find;
 
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.PatternUtil;
@@ -597,12 +598,19 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @param directoryName the directory scope.
    */
-  public void setDirectoryName(String directoryName) {
+  public void setDirectoryName(@Nullable String directoryName) {
     boolean changed = !StringUtil.equals(directoryName, directoryName);
     this.directoryName = directoryName;
     if (changed) {
       notifyObservers();
     }
+    if (directoryName != null) {
+      String path = FileUtil.toSystemIndependentName(directoryName);
+      if (path.endsWith("/.idea") || path.contains("/.idea/")) {
+        setSearchInProjectFiles(true);
+      }
+    }
+
   }
 
   /**

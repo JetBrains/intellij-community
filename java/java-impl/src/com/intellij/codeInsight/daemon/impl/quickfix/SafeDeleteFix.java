@@ -23,8 +23,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +55,12 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    SafeDeleteHandler.invoke(project, new PsiElement[]{startElement}, false);
+    final PsiElement[] elements = {startElement};
+    if (startElement instanceof PsiParameter) {
+      SafeDeleteProcessor.createInstance(project, null, elements, false, false, true).run();
+    } else {
+      SafeDeleteHandler.invoke(project, elements, false);
+    }
   }
 
   @Override

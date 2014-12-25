@@ -129,7 +129,13 @@ public class TodoCheckinHandlerWorker {
         continue;
       }
 
-      myNewTodoItems = new ArrayList<TodoItem>(Arrays.asList(mySearchHelper.findTodoItems(myPsiFile)));
+      myNewTodoItems = new ArrayList<TodoItem>(Arrays.asList(
+        ApplicationManager.getApplication().runReadAction(new Computable<TodoItem[]>() {
+          @Override
+          public TodoItem[] compute() {
+            return mySearchHelper.findTodoItems(myPsiFile);
+          }
+        })));
       applyFilterAndRemoveDuplicates(myNewTodoItems, myTodoFilter);
       if (change.getBeforeRevision() == null) {
         // take just all todos
@@ -250,7 +256,12 @@ public class TodoCheckinHandlerWorker {
 
     private void checkEditedFragment(TodoItem newTodoItem) {
       if (myBeforeFile == null) {
-        myBeforeFile = myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
+        myBeforeFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Override
+          public PsiFile compute() {
+            return myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
+          }
+        });
       }
       if (myOldItems == null)  {
         final Collection<IndexPatternOccurrence> all =

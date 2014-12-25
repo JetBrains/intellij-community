@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -41,7 +42,7 @@ public class KillToWordEndAction extends TextComponentEditorAction {
   
   private static class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       CaretModel caretModel = editor.getCaretModel();
       int caretOffset = caretModel.getOffset();
       Document document = editor.getDocument();
@@ -51,10 +52,9 @@ public class KillToWordEndAction extends TextComponentEditorAction {
 
       int caretLine = caretModel.getLogicalPosition().line;
       int lineEndOffset = document.getLineEndOffset(caretLine);
-      CharSequence text = document.getCharsSequence();
       boolean camel = editor.getSettings().isCamelWords();
       for (int i = caretOffset + 1; i < lineEndOffset; i++) {
-        if (EditorActionUtil.isWordEnd(text, i, camel)) {
+        if (EditorActionUtil.isWordOrLexemeEnd(editor, i, camel)) {
           KillRingUtil.cut(editor, caretOffset, i);
           return;
         }

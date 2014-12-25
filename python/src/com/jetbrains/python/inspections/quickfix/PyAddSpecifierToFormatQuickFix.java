@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
     final Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
     if (document == null) return;
     final int offset = element.getTextOffset();
-    final TypeEvalContext context = TypeEvalContext.userInitiated(file);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);
 
     final PyClassType strType = PyBuiltinCache.getInstance(element).getStrType();
     final PyClassType floatType = PyBuiltinCache.getInstance(element).getFloatType();

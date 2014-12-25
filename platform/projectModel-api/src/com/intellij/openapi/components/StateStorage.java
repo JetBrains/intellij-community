@@ -34,16 +34,10 @@ public interface StateStorage {
   @Nullable
   <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
 
-  boolean hasState(@Nullable Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException;
+  boolean hasState(@Nullable Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData);
 
   @Nullable
   ExternalizationSession startExternalization();
-
-  /**
-   * return null if nothing to save
-   */
-  @Nullable
-  SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
 
   /**
    * Get changed component names
@@ -52,6 +46,12 @@ public interface StateStorage {
 
   interface ExternalizationSession {
     void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec);
+
+    /**
+     * return null if nothing to save
+     */
+    @Nullable
+    SaveSession createSaveSession();
   }
 
   interface SaveSession {

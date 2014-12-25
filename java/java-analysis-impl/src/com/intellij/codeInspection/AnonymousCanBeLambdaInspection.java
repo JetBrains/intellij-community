@@ -15,13 +15,16 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -32,7 +35,10 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -40,6 +46,8 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 /**
@@ -78,29 +86,50 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAnonymousClass(PsiAnonymousClass aClass) {
+      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
-        if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
-          final PsiClassType baseClassType = aClass.getBaseClassType();
-          if (LambdaHighlightingUtil.checkInterfaceFunctional(baseClassType) == null) {
-            final PsiElement lambdaContext = aClass.getParent().getParent();
-            if (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) {
-              final PsiMethod[] methods = aClass.getMethods();
-              if (methods.length == 1 && aClass.getFields().length == 0) {
-                final PsiCodeBlock body = methods[0].getBody();
-                if (body != null && !hasForbiddenRefsInsideBody(methods[0], aClass)) {
-                  final PsiElement lBrace = aClass.getLBrace();
-                  LOG.assertTrue(lBrace != null);
-                  final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-                  holder.registerProblem(aClass.getParent(), "Anonymous #ref #loc can be replaced with lambda",
-                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaFix());
-                }
+        final PsiElement parent = aClass.getParent();
+        final PsiElement lambdaContext = parent != null ? parent.getParent() : null;
+        if (lambdaContext != null && 
+            (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) &&
+            canBeConvertedToLambda(aClass, new Condition<PsiClassType>() {
+              @Override
+              public boolean value(PsiClassType type) {
+                return LambdaHighlightingUtil.checkInterfaceFunctional(type) == null;
+              }
+            })) {
+          final PsiElement lBrace = aClass.getLBrace();
+          LOG.assertTrue(lBrace != null);
+          final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
+          holder.registerProblem(parent, "Anonymous #ref #loc can be replaced with lambda",
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaFix());
+        }
+      }
+    };
+  }
+
+  private static boolean hasRuntimeAnnotations(PsiMethod method) {
+    PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
+    for (PsiAnnotation annotation : annotations) {
+      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+      PsiElement target = ref != null ? ref.resolve() : null;
+      if (target instanceof PsiClass) {
+        final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation((PsiClass)target, Retention.class.getName());
+        if (retentionAnno != null) {
+          PsiAnnotationMemberValue value = retentionAnno.findAttributeValue("value");
+          if (value instanceof PsiReferenceExpression) {
+            final PsiElement resolved = ((PsiReferenceExpression)value).resolve();
+            if (resolved instanceof PsiField && RetentionPolicy.RUNTIME.name().equals(((PsiField)resolved).getName())) {
+              final PsiClass containingClass = ((PsiField)resolved).getContainingClass();
+              if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
+                return true;
               }
             }
           }
         }
       }
-    };
+    }
+    return false;
   }
 
   public static boolean hasForbiddenRefsInsideBody(PsiMethod method, PsiAnonymousClass aClass) {
@@ -145,12 +174,15 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
           if (i < parameters.length) {
             paramType = parameters[i].getType();
           }
-          else {
+          else if (parameters.length > 0) {
             paramType = parameters[parameters.length - 1].getType();
             if (!(paramType instanceof PsiEllipsisType)) {
               return null;
             }
             paramType = ((PsiEllipsisType)paramType).getComponentType();
+          }
+          else {
+            return null;
           }
 
           return substitutor.substitute(paramType);
@@ -158,6 +190,20 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       }
     }
     return null;
+  }
+
+  public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass, Condition<PsiClassType> baseClassTypeCondition) {
+    if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8) && baseClassTypeCondition.value(aClass.getBaseClassType())) {
+      final PsiMethod[] methods = aClass.getMethods();
+      if (methods.length == 1 && aClass.getFields().length == 0) {
+        final PsiMethod method = methods[0];
+        return method.getBody() != null &&
+               !hasForbiddenRefsInsideBody(method, aClass) &&
+               !hasRuntimeAnnotations(method) &&
+               !method.hasModifierProperty(PsiModifier.SYNCHRONIZED);
+      }
+    }
+    return false;
   }
 
   private static class ReplaceWithLambdaFix implements LocalQuickFix, HighPriorityAction {
@@ -177,9 +223,11 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiNewExpression) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
         final PsiAnonymousClass anonymousClass = ((PsiNewExpression)element).getAnonymousClass();
-        
+
         LOG.assertTrue(anonymousClass != null);
+
         ChangeContextUtil.encodeContextInfo(anonymousClass, true);
         final PsiElement lambdaContext = anonymousClass.getParent().getParent();
         boolean validContext = LambdaUtil.isValidLambdaContext(lambdaContext);
@@ -213,27 +261,18 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         PsiLambdaExpression lambdaExpression =
           (PsiLambdaExpression)elementFactory.createExpressionFromText(withoutTypesDeclared, anonymousClass);
 
-        final PsiStatement[] statements = body.getStatements();
-        PsiElement copy = body.copy();
-        if (statements.length == 1) {
-          if (statements[0] instanceof PsiReturnStatement) {
-            PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
-            if (value != null) {
-              copy = value.copy();
-            }
-          } else if (statements[0] instanceof PsiExpressionStatement) {
-            copy = ((PsiExpressionStatement)statements[0]).getExpression().copy();
-          }
-        }
-
         PsiElement lambdaBody = lambdaExpression.getBody();
         LOG.assertTrue(lambdaBody != null);
-        lambdaBody.replace(copy);
+        lambdaBody.replace(body);
 
         giveUniqueNames(project, lambdaContext, elementFactory, lambdaExpression, lambdaExpression.getParameterList().getParameters());
 
         final PsiNewExpression newExpression = (PsiNewExpression)anonymousClass.getParent();
         lambdaExpression = (PsiLambdaExpression)newExpression.replace(lambdaExpression);
+        final PsiExpression singleExpr = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression, lambdaExpression.getBody());
+        if (singleExpr != null) {
+          lambdaExpression.getBody().replace(singleExpr);
+        }
         ChangeContextUtil.decodeContextInfo(lambdaExpression, null, null);
         if (!validContext) {
           final PsiParenthesizedExpression typeCast =
@@ -364,9 +403,20 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     }
   }
 
-  public static boolean functionalInterfaceMethodReferenced(PsiMethod psiMethod, PsiAnonymousClass anonymClass) {
+  public static boolean functionalInterfaceMethodReferenced(PsiMethod psiMethod,
+                                                            PsiAnonymousClass anonymClass,
+                                                            PsiCallExpression callExpression) {
     if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = psiMethod.getContainingClass();
+      if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        return false;
+      }
+
+      if (callExpression instanceof PsiMethodCallExpression && 
+          ((PsiMethodCallExpression)callExpression).getMethodExpression().isQualified()) {
+        return false;
+      }
+
       if (InheritanceUtil.isInheritorOrSelf(anonymClass, containingClass, true) &&
           !InheritanceUtil.hasEnclosingInstanceInScope(containingClass, anonymClass.getParent(), true, true)) {
         return true;
@@ -399,7 +449,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       super.visitMethodCallExpression(methodCallExpression);
       final PsiMethod psiMethod = methodCallExpression.resolveMethod();
       if (psiMethod == myMethod ||
-          functionalInterfaceMethodReferenced(psiMethod, myAnonymClass) ||
+          functionalInterfaceMethodReferenced(psiMethod, myAnonymClass, methodCallExpression) ||
           psiMethod != null &&
           !methodCallExpression.getMethodExpression().isQualified() &&
           "getClass".equals(psiMethod.getName()) &&

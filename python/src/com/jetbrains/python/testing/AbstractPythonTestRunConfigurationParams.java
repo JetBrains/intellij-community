@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ public interface AbstractPythonTestRunConfigurationParams {
   String getPattern();
   void setPattern(String pattern);
 
-  boolean addContentRoots();
-  boolean addSourceRoots();
-  void addContentRoots(boolean addContentRoots);
-  void addSourceRoots(boolean addSourceRoots);
+  boolean shouldAddContentRoots();
+  boolean shouldAddSourceRoots();
+  void setAddContentRoots(boolean addContentRoots);
+  void setAddSourceRoots(boolean addSourceRoots);
 }

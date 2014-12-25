@@ -21,6 +21,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,11 +35,12 @@ import java.util.HashMap;
  */
 public final class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
-  implements SearchableConfigurable, ConfigurableGroup, Configurable.NoScroll {
+  implements SearchableConfigurable, Weighted, ConfigurableGroup, Configurable.NoScroll {
 
-  private final ArrayList<WeightConfigurable> myList = new ArrayList<WeightConfigurable>();
+  private ArrayList<Configurable> myList = new ArrayList<Configurable>();
   private final String myGroupId;
   private String myDisplayName;
+  private int myWeight;
 
   private SortedConfigurableGroup(String groupId) {
     myGroupId = groupId;
@@ -50,11 +52,9 @@ public final class SortedConfigurableGroup
     HashMap<String, SortedConfigurableGroup> map = new HashMap<String, SortedConfigurableGroup>();
     map.put(myGroupId, this);
     for (Configurable configurable : configurables) {
-      int weight = 0;
       String groupId = null;
       if (configurable instanceof ConfigurableWrapper) {
         ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        weight = wrapper.getExtensionPoint().groupWeight;
         groupId = wrapper.getExtensionPoint().groupId;
       }
       SortedConfigurableGroup composite = map.get(groupId);
@@ -62,7 +62,7 @@ public final class SortedConfigurableGroup
         composite = new SortedConfigurableGroup(groupId);
         map.put(groupId, composite);
       }
-      composite.add(weight, configurable);
+      composite.myList.add(configurable);
     }
     // process supported groups
     add(70, map.remove("appearance"));
@@ -96,21 +96,19 @@ public final class SortedConfigurableGroup
     }
   }
 
-  private void add(int weight, Configurable configurable) {
+  private void add(int weight, SortedConfigurableGroup configurable) {
     if (configurable != null) {
-      myList.add(new WeightConfigurable(configurable, weight));
+      configurable.myWeight = weight;
+      myList.add(configurable);
     }
   }
 
   @Override
   protected Configurable[] buildConfigurables() {
-    Collections.sort(myList);
-    int length = myList.size();
-    Configurable[] result = new Configurable[length];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = myList.get(i).myConfigurable;
-    }
+    Collections.sort(myList, COMPARATOR);
+    Configurable[] result = ArrayUtil.toObjectArray(myList, Configurable.class);
     myList.clear();
+    myList = null;
     return result;
   }
 
@@ -126,6 +124,11 @@ public final class SortedConfigurableGroup
     return "configurable.group." + myGroupId + ".help.topic";
   }
 
+  @Override
+  public int getWeight() {
+    return myWeight;
+  }
+
   @Nls
   @Override
   public String getDisplayName() {
@@ -135,22 +138,5 @@ public final class SortedConfigurableGroup
   @Override
   public String getShortName() {
     return getDisplayName();
-  }
-
-  private static final class WeightConfigurable implements Comparable<WeightConfigurable> {
-    private final Configurable myConfigurable;
-    private final int myWeight;
-
-    private WeightConfigurable(@NotNull Configurable configurable, int weight) {
-      myConfigurable = configurable;
-      myWeight = weight;
-    }
-
-    @Override
-    public int compareTo(@NotNull WeightConfigurable pair) {
-      return myWeight > pair.myWeight ? -1 :
-             myWeight < pair.myWeight ? 1 :
-             StringUtil.naturalCompare(myConfigurable.getDisplayName(), pair.myConfigurable.getDisplayName());
-    }
   }
 }

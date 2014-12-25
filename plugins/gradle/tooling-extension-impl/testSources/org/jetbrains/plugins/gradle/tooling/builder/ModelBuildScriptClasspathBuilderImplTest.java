@@ -53,24 +53,28 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
 
           if (module.getName().equals("moduleWithAdditionalClasspath")) {
             assertNotNull(classpathModel);
-            assertEquals(1, classpathModel.getClasspath().size());
+            assertEquals(3, classpathModel.getClasspath().size());
 
-            ClasspathEntryModel classpathEntry = classpathModel.getClasspath().getAt(0);
-            assertEquals("someDep.jar", new File(classpathEntry.getClasses().iterator().next()).getName());
+            assertEquals("junit-4.11.jar", new File(classpathModel.getClasspath().getAt(0).getClasses().iterator().next()).getName());
+            assertEquals("hamcrest-core-1.3.jar", new File(classpathModel.getClasspath().getAt(1).getClasses().iterator().next()).getName());
+            assertEquals("someDep.jar", new File(classpathModel.getClasspath().getAt(2).getClasses().iterator().next()).getName());
           }
           else if (module.getName().equals("baseModule") ||
                    module.getName().equals("moduleWithInheritedClasspath")) {
             assertNotNull("Null build classpath for module: " + module.getName(), classpathModel);
-            assertEquals("Wrong build classpath for module: " + module.getName(), 1, classpathModel.getClasspath().size());
+            assertEquals("Wrong build classpath for module: " + module.getName(), 3, classpathModel.getClasspath().size());
 
-            ClasspathEntryModel classpathEntry = classpathModel.getClasspath().getAt(0);
+            assertEquals("Wrong build classpath for module: " + module.getName(), "junit-4.11.jar",
+                         new File(classpathModel.getClasspath().getAt(0).getClasses().iterator().next()).getName());
+            assertEquals("Wrong build classpath for module: " + module.getName(), "hamcrest-core-1.3.jar",
+                         new File(classpathModel.getClasspath().getAt(1).getClasses().iterator().next()).getName());
             assertEquals("Wrong build classpath for module: " + module.getName(), "inheritedDep.jar",
-                         new File(classpathEntry.getClasses().iterator().next()).getName());
+                         new File(classpathModel.getClasspath().getAt(2).getClasses().iterator().next()).getName());
           }
           else if (module.getName().equals("moduleWithoutAdditionalClasspath") ||
                    module.getName().equals("testModelBuildScriptClasspathBuilder")) {
             assertNotNull("Wrong build classpath for module: " + module.getName(), classpathModel);
-            assertTrue("Wrong build classpath for module: " + module.getName(), classpathModel.getClasspath().isEmpty());
+            assertEquals("Wrong build classpath for module: " + module.getName(), 2, classpathModel.getClasspath().size());
           }
           else {
             fail("Unexpected module found: " + module.getName());

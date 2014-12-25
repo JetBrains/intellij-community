@@ -249,10 +249,14 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     private boolean processCommentInjections(PsiVariable owner) {
-      Ref<PsiElement> causeRef = Ref.create();
-      PsiElement anchor = owner.getFirstChild() instanceof PsiComment?
-                          (owner.getModifierList() != null? owner.getModifierList() : owner.getTypeElement()) : owner;
+      if (owner instanceof PsiCompiledElement) return true;
+
+      PsiElement anchor = !(owner.getFirstChild() instanceof PsiComment) ? owner :
+                          owner.getModifierList() != null ? owner.getModifierList() :
+                          owner.getTypeElement();
       if (anchor == null) return true;
+
+      Ref<PsiElement> causeRef = Ref.create();
       BaseInjection injection = mySupport.findCommentInjection(anchor, causeRef);
       return injection == null || processCommentInjectionInner(owner, causeRef.get(), injection);
     }

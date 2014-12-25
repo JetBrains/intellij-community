@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.dupLocator;
 
 import com.intellij.openapi.components.*;
@@ -22,19 +21,12 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Apr 8, 2004
- * Time: 2:47:43 PM
- * To change this template use File | Settings | File Templates.
- */
 @State(
-  name="DuplocatorSettings",
+  name = "DuplocatorSettings",
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/duplocatorSettings.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class DuplocatorSettings implements PersistentStateComponent<DuplocatorSettings> {
   public boolean DISTINGUISH_VARIABLES = false;

@@ -639,6 +639,11 @@ public abstract class InplaceRefactoring {
 
   protected abstract boolean performRefactoring();
 
+  /**
+   * if brokenOff but not canceled
+   */
+  protected void performCleanup() {}
+
   private void addVariable(final PsiReference reference,
                            final PsiElement selectedElement,
                            final TemplateBuilderImpl builder,
@@ -847,6 +852,8 @@ public abstract class InplaceRefactoring {
         super.templateFinished(template, brokenOff);
         if (!brokenOff) {
           bind = performRefactoring();
+        } else {
+          performCleanup();
         }
         moveOffsetAfter(!brokenOff);
       }

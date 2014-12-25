@@ -15,9 +15,11 @@
  */
 package com.intellij.tasks.vcs;
 
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,14 +33,10 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.branch.GitBranchesCollection;
-import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepository;
-import git4idea.test.GitExecutor;
-import git4idea.test.GitTestUtil;
-import git4idea.util.GitFileUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,17 +45,18 @@ import java.util.List;
  *         Date: 18.07.13
  */
 @SuppressWarnings("ConstantConditions")
-public class TaskBranchesTest extends PlatformTestCase {
+public abstract class TaskBranchesTest extends PlatformTestCase {
 
   private TaskManagerImpl myTaskManager;
   private ChangeListManagerImpl myChangeListManager;
   private VcsDirtyScopeManagerImpl myDirtyScopeManager;
 
-  public void testGitTaskHandler() throws Exception {
+  public void testVcsTaskHandler() throws Exception {
 
-    List<GitRepository> repositories = initRepositories("community", "idea");
-    GitRepository repository = repositories.get(0);
-    assertEquals("master", repository.getCurrentBranch().getName());
+    List<Repository> repositories = initRepositories("community", "idea");
+    Repository repository = repositories.get(0);
+    String defaultBranchName = getDefaultBranchName();
+    assertEquals(defaultBranchName, repository.getCurrentBranchName());
 
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(getProject());
     assertEquals(1, handlers.length);
@@ -66,29 +65,30 @@ public class TaskBranchesTest extends PlatformTestCase {
     VcsTaskHandler.TaskInfo defaultInfo = handler.getActiveTask();
     final String first = "first";
     VcsTaskHandler.TaskInfo firstInfo = handler.startNewTask(first);
-    assertEquals(2, repository.getBranches().getLocalBranches().size());
-    assertEquals(first, repository.getCurrentBranch().getName());
+    assertEquals(2, getNumberOfBranches(repository));
+    assertEquals(first, repository.getCurrentBranchName());
 
     handler.switchToTask(defaultInfo, null);
-    assertEquals("master", repository.getCurrentBranch().getName());
+    assertEquals(defaultBranchName, repository.getCurrentBranchName());
 
     final String second = "second";
     VcsTaskHandler.TaskInfo secondInfo = handler.startNewTask(second);
-    assertEquals(3, repository.getBranches().getLocalBranches().size());
-    assertEquals(second, repository.getCurrentBranch().getName());
-
+    assertEquals(3, getNumberOfBranches(repository));
+    assertEquals(second, repository.getCurrentBranchName());
+    handler.switchToTask(firstInfo, null);
+    commitChanges(repository);
     handler.closeTask(secondInfo, firstInfo);
-    repository.update();
-    assertEquals(2, repository.getBranches().getLocalBranches().size());
+    assertEquals(2, getNumberOfBranches(repository));
   }
 
   public void testTaskManager() throws Exception {
-    List<GitRepository> repositories = initRepositories("community", "idea");
+    List<Repository> repositories = initRepositories("community", "idea");
     LocalTask defaultTask = myTaskManager.getActiveTask();
     assertNotNull(defaultTask);
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
     LocalTask localTask = myTaskManager.activateTask(foo, false);
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    String defaultBranchName = getDefaultBranchName();
 
     assertEquals(4, localTask.getBranches().size());
     assertEquals(2, localTask.getBranches(true).size());
@@ -98,50 +98,53 @@ public class TaskBranchesTest extends PlatformTestCase {
 
     myTaskManager.activateTask(defaultTask, false);
 
-    GitRepository repository = repositories.get(0);
-    assertEquals("master", repository.getCurrentBranch().getName());
+    Repository repository = repositories.get(0);
+    assertEquals(defaultBranchName, repository.getCurrentBranchName());
 
     foo = myTaskManager.createLocalTask("foo");
     localTask = myTaskManager.activateTask(foo, false);
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
-    assertEquals("foo", repository.getCurrentBranch().getName());
+    assertEquals("foo", repository.getCurrentBranchName());
+    commitChanges(repository);
 
     myTaskManager.mergeBranch(localTask);
-    repository.update();
-    assertEquals("master", repository.getCurrentBranch().getName());
-    assertEquals(1, repository.getBranches().getLocalBranches().size());
+    assertEquals(defaultBranchName, repository.getCurrentBranchName());
+    assertEquals(1, getNumberOfBranches(repository));
 
     myTaskManager.activateTask(defaultTask, false);
     myTaskManager.activateTask(foo, false);
   }
 
-  public void testCommit() throws Exception {
-    GitRepository repository = initRepository("foo");
-    LocalTask defaultTask = myTaskManager.getActiveTask();
-    LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
-    final LocalTask localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
-
+  private void commitChanges(@NotNull Repository repository) throws IOException, VcsException {
     VirtualFile root = repository.getRoot();
     File file = new File(root.getPath(), "foo.txt");
     assertTrue(file.createNewFile());
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    GitFileUtils.addFiles(getProject(), root, virtualFile);
+    addFiles(getProject(), root, virtualFile);
     myDirtyScopeManager.fileDirty(virtualFile);
     myChangeListManager.ensureUpToDate(false);
     Change change = myChangeListManager.getChange(virtualFile);
     assertNotNull(change);
     ProjectLevelVcsManager.getInstance(getProject()).getAllActiveVcss()[0].getCheckinEnvironment()
       .commit(Collections.singletonList(change), "foo");
+  }
+
+  public void testCommit() throws Exception {
+    Repository repository = initRepository("foo");
+    LocalTask defaultTask = myTaskManager.getActiveTask();
+    LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
+    final LocalTask localTask = myTaskManager.activateTask(foo, false);
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    commitChanges(repository);
     myTaskManager.mergeBranch(localTask);
 
-    repository.update();
-    assertEquals("master", repository.getCurrentBranch().getName());
-    assertEquals(1, repository.getBranches().getLocalBranches().size());
+    assertEquals(getDefaultBranchName(), repository.getCurrentBranchName());
+    assertEquals(1, getNumberOfBranches(repository));
   }
 
   public void testOpenTaskDialog() throws Exception {
     initRepository("foo");
+    String defaultBranchName = getDefaultBranchName();
     LocalTaskImpl task = myTaskManager.createLocalTask("foo");
     OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
     Disposer.register(myTestRootDisposable, dialog.getDisposable());
@@ -149,7 +152,7 @@ public class TaskBranchesTest extends PlatformTestCase {
     assertEquals("foo", myTaskManager.getActiveTask().getSummary());
     List<BranchInfo> branches = task.getBranches(true);
     assertEquals(1, branches.size());
-    assertEquals("master", branches.get(0).name);
+    assertEquals(defaultBranchName, branches.get(0).name);
     branches = task.getBranches(false);
     assertEquals(1, branches.size());
     assertEquals("foo", branches.get(0).name);
@@ -173,8 +176,8 @@ public class TaskBranchesTest extends PlatformTestCase {
     assertEquals(1, defaultTask.getBranches().size());
   }
 
-  public void testCleanupRemovedBranch() {
-    GitRepository repository = initRepository("foo");
+  public void testCleanupRemovedBranch() throws InterruptedException {
+    Repository repository = initRepository("foo");
     LocalTask defaultTask = myTaskManager.getActiveTask();
     assertNotNull(defaultTask);
     assertEquals(0, defaultTask.getBranches().size());
@@ -189,42 +192,39 @@ public class TaskBranchesTest extends PlatformTestCase {
     info.name = "non-existing";
     info.repository = defaultTask.getBranches().get(0).repository;
     defaultTask.addBranch(info);
-
-    assertEquals("foo", repository.getCurrentBranch().getName());
+    assertEquals("foo", repository.getCurrentBranchName());
     myTaskManager.activateTask(defaultTask, false);
-    assertEquals("master", repository.getCurrentBranch().getName());
+    assertEquals(getDefaultBranchName(), repository.getCurrentBranchName());
     // do not re-create "non-existing"
-    assertEquals(2, repository.getBranches().getLocalBranches().size());
+    assertEquals(2, getNumberOfBranches(repository));
   }
 
-  private List<GitRepository> initRepositories(String... names) {
-    return ContainerUtil.map(names, new Function<String, GitRepository>() {
+  private List<Repository> initRepositories(String... names) {
+    return ContainerUtil.map(names, new Function<String, Repository>() {
       @Override
-      public GitRepository fun(String s) {
+      public Repository fun(String s) {
         return initRepository(s);
       }
     });
-  }
-
-  private GitRepository initRepository(String name) {
-    String tempDirectory = FileUtil.getTempDirectory();
-    String root = tempDirectory + "/"  + name;
-    assertTrue(new File(root).mkdirs());
-    GitRepository repository = GitTestUtil.createRepository(getProject(), root);
-    GitBranchesCollection branches = repository.getBranches();
-    assertEquals(1, branches.getLocalBranches().size());
-    return repository;
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
-    GitVcsSettings.getInstance(myProject).getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
-
     myChangeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(getProject());
     myChangeListManager.projectOpened();
     myDirtyScopeManager = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(getProject()));
     myDirtyScopeManager.projectOpened();
   }
+
+  @NotNull
+  protected abstract Repository initRepository(@NotNull String name);
+
+  @NotNull
+  protected abstract String getDefaultBranchName();
+
+  protected abstract int getNumberOfBranches(@NotNull Repository repository);
+
+  protected abstract void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull VirtualFile file) throws VcsException;
 }

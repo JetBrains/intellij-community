@@ -183,7 +183,7 @@ public class PluginManager extends PluginManagerCore {
           }
           else if (myPlugins2Enable != null && ENABLE.equals(description)) {
             disabledPlugins.removeAll(myPlugins2Enable);
-            PluginManagerMain.notifyPluginsWereUpdated("Changes were applied", null);
+            PluginManagerMain.notifyPluginsUpdated(null);
           }
 
           try {
@@ -193,8 +193,6 @@ public class PluginManager extends PluginManagerCore {
 
           myPlugins2Enable = null;
           myPlugins2Disable = null;
-
-          PluginManagerMain.notifyPluginsWereUpdated("Changes were applied", null);
         }
       }));
       myPluginError = null;

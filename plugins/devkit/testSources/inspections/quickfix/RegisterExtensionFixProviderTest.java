@@ -16,8 +16,7 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -32,7 +31,7 @@ public class RegisterExtensionFixProviderTest extends LightCodeInsightFixtureTes
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new UnusedDeclarationInspection(), new UnusedSymbolLocalInspection());
+    myFixture.enableInspections(new UnusedDeclarationInspectionBase(true));
   }
 
   public void testCreateLocalInspectionMapping() {

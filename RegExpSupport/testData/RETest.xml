@@ -297,6 +297,10 @@
       <expected>ERR</expected>
     </test>
     <test>
+      <pattern>[^]</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
       <pattern>[abhgefdc]ij</pattern>
       <expected>OK</expected>
     </test>
@@ -363,6 +367,18 @@
     <test>
       <pattern>[\p{L}&amp;&amp;[^\p{Lu}]]</pattern>
       <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\pL\pM\pZ\pS\pN\pP\pC\PL\PM\PZ\PS\PN\PP\PC</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\pA</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>\pl</pattern>
+      <expected>ERR</expected>
     </test>
     <test>
       <pattern>a\p</pattern>
@@ -529,6 +545,18 @@
       <pattern>(?i:*)</pattern>
       <expected>ERR</expected>
     </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>(?&lt;asdf&gt;[a-c])\1</pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>(?&lt;asdf&gt;[a-c])\k&lt;asdf&gt;</pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern><![CDATA[<error descr="Unresolved named group reference">\k<adsf></error>]]></pattern>
+      <expected>OK</expected>
+    </test>
   </groups>
   <escapes>
     <test>
@@ -571,6 +599,14 @@
       <pattern>\x4a</pattern>
       <expected>OK</expected>
     </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>\x{0}</pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>\x{2011F}</pattern>
+      <expected>OK</expected>
+    </test>
     <test>
       <pattern>[\x4a-\x4b]</pattern>
       <expected>OK</expected>
@@ -592,7 +628,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern>[\Qabc?*+.))]][]\E]</pattern>
+      <pattern><![CDATA[[\Qabc?*+.)<warning descr="Duplicate character ')' in character class">)</warning>]<warning descr="Duplicate character ']' in character class">]</warning>[<warning descr="Duplicate character ']' in character class">]</warning>\E]]]></pattern>
       <expected>OK</expected>
     </test>
     <test>
@@ -685,7 +721,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern>[:xdigit:]+</pattern>
+      <pattern><![CDATA[[:xdig<warning descr="Duplicate character 'i' in character class">i</warning>t<warning descr="Duplicate character ':' in character class">:</warning>]+]]></pattern>
       <expected>OK</expected>
     </test>
     <test>
@@ -710,6 +746,14 @@
       <pattern>([ab]+)=\1</pattern>
       <expected>OK</expected>
     </test>
+    <test>
+      <pattern>(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\105</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>(.)\11</pattern>
+      <expected>OK</expected>
+    </test>
     <test verify="false">
       <pattern>([ab]+)=\2</pattern>
       <expected>ERR</expected>
@@ -719,7 +763,7 @@
       <expected>ERR</expected>
     </test>
     <test verify="false">
-      <pattern><![CDATA[([ab]+=<warning descr="Backreference is nested into the capturing group it refers to">\1</warning>)]]></pattern>
+      <pattern><![CDATA[([ab]+=<warning descr="Back reference is nested into the capturing group it refers to">\1</warning>)]]></pattern>
       <expected>OK</expected>
     </test>
   </backrefs>
@@ -769,6 +813,18 @@
     </test>
     <test>
       <pattern>abc\x1</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>abc\x{</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>abc\x{}</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>abc\x{0</pattern>
       <expected>ERR</expected>
     </test>
     <test>
@@ -998,6 +1054,13 @@
   <bug id="IDEA-52291">
     <test>
       <pattern>(^|\.)\*(?=(\.|$))</pattern>
+      <expected>OK</expected>
+    </test>
+  </bug>
+
+  <bug id="IDEA-131542">
+    <test verify="false">
+      <pattern>\h \H \v \V</pattern>
       <expected>OK</expected>
     </test>
   </bug>

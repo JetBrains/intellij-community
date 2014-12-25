@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,7 @@ public class PythonSdkComboBox extends ComboboxWithBrowseButton {
         Sdk selectedSdk = getSelectedSdk();
         final Project project = myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject();
         ProjectJdksEditor editor = new ProjectJdksEditor(selectedSdk, project, PythonSdkComboBox.this);
-        editor.show();
-        if (editor.isOK()) {
+        if (editor.showAndGet()) {
           selectedSdk = editor.getSelectedJdk();
           updateSdkList(selectedSdk, false);
         }

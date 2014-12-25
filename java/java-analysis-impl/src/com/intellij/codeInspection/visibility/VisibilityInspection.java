@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +60,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
   public boolean SUGGEST_PRIVATE_FOR_INNERS = false;
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
-  @NonNls private static final String SHORT_NAME = "WeakerAccess";
+  @NonNls public static final String SHORT_NAME = "WeakerAccess";
   private static final String CAN_BE_PRIVATE = InspectionsBundle.message("inspection.visibility.compose.suggestion", "private");
   private static final String CAN_BE_PACKAGE_LOCAL = InspectionsBundle.message("inspection.visibility.compose.suggestion", "package local");
   private static final String CAN_BE_PROTECTED = InspectionsBundle.message("inspection.visibility.compose.suggestion", "protected");
@@ -150,71 +149,71 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                                                 @NotNull final InspectionManager manager,
                                                 @NotNull final GlobalInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
-    if (refEntity instanceof RefJavaElement) {
-      final RefJavaElement refElement = (RefJavaElement)refEntity;
+    if (!(refEntity instanceof RefJavaElement)) {
+      return null;
+    }
+    final RefJavaElement refElement = (RefJavaElement)refEntity;
 
-      if (refElement instanceof RefParameter) return null;
-      if (refElement.isSyntheticJSP()) return null;
+    if (refElement instanceof RefParameter) return null;
+    if (refElement.isSyntheticJSP()) return null;
 
-      //ignore entry points.
-      if (refElement.isEntry()) return null;
+    //ignore entry points.
+    if (refElement.isEntry()) return null;
 
-      //ignore implicit constructors. User should not be able to see them.
-      if (refElement instanceof RefImplicitConstructor) return null;
+    //ignore implicit constructors. User should not be able to see them.
+    if (refElement instanceof RefImplicitConstructor) return null;
 
-      if (refElement instanceof RefField) {
-        final Boolean isEnumConstant = refElement.getUserData(RefField.ENUM_CONSTANT);
-        if (isEnumConstant != null && isEnumConstant.booleanValue()) return null;
-      }
+    if (refElement instanceof RefField) {
+      final Boolean isEnumConstant = refElement.getUserData(RefField.ENUM_CONSTANT);
+      if (isEnumConstant != null && isEnumConstant.booleanValue()) return null;
+    }
 
-      //ignore library override methods.
-      if (refElement instanceof RefMethod) {
-        RefMethod refMethod = (RefMethod) refElement;
-        if (refMethod.isExternalOverride()) return null;
-        if (refMethod.isEntry()) return null;
-      }
+    //ignore library override methods.
+    if (refElement instanceof RefMethod) {
+      RefMethod refMethod = (RefMethod) refElement;
+      if (refMethod.isExternalOverride()) return null;
+    }
 
-      //ignore anonymous classes. They do not have access modifiers.
-      if (refElement instanceof RefClass) {
-        RefClass refClass = (RefClass) refElement;
-        if (refClass.isAnonymous() || refClass.isEntry() || refClass.isTestCase() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) return null;
-        if (isTopLevelClass(refClass) && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
-      }
+    //ignore anonymous classes. They do not have access modifiers.
+    if (refElement instanceof RefClass) {
+      RefClass refClass = (RefClass) refElement;
+      if (refClass.isAnonymous() || refClass.isTestCase() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) return null;
+      if (isTopLevelClass(refClass) && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
+    }
 
-      //ignore unreferenced code. They could be a potential entry points.
-      if (refElement.getInReferences().isEmpty()) return null;
+    //ignore unreferenced code. They could be a potential entry points.
+    if (refElement.getInReferences().isEmpty()) return null;
 
-      //ignore interface members. They always have public access modifier.
-      if (refElement.getOwner() instanceof RefClass) {
-        RefClass refClass = (RefClass) refElement.getOwner();
-        if (refClass.isInterface()) return null;
-      }
-      String access = getPossibleAccess(refElement);
-      if (access != refElement.getAccessModifier() && access != null) {
-        final PsiElement element = refElement.getElement();
-        final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
-        if (nameIdentifier != null) {
-          final String message;
-          String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
-          if (access.equals(PsiModifier.PRIVATE)) {
-            message = CAN_BE_PRIVATE;
-            quickFixName += PsiModifier.PRIVATE;
+    //ignore interface members. They always have public access modifier.
+    if (refElement.getOwner() instanceof RefClass) {
+      RefClass refClass = (RefClass) refElement.getOwner();
+      if (refClass.isInterface()) return null;
+    }
+    String access = getPossibleAccess(refElement);
+    if (access != refElement.getAccessModifier() && access != null) {
+      final PsiElement element = refElement.getElement();
+      final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
+      if (nameIdentifier != null) {
+        final String message;
+        String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
+        if (access.equals(PsiModifier.PRIVATE)) {
+          message = CAN_BE_PRIVATE;
+          quickFixName += PsiModifier.PRIVATE;
+        }
+        else {
+          if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
+            message = CAN_BE_PACKAGE_LOCAL;
+            quickFixName += "package local";
           }
           else {
-            if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
-              message = CAN_BE_PACKAGE_LOCAL;
-              quickFixName += "package local";
-            }
-            else {
-              message = CAN_BE_PROTECTED;
-              quickFixName += PsiModifier.PROTECTED;
-            }
+            message = CAN_BE_PROTECTED;
+            quickFixName += PsiModifier.PROTECTED;
           }
-          return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
-                                                                         message,
-                                                                         new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
-                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
         }
+        return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
+                                                                       message,
+                                                                       new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
       }
     }
     return null;
@@ -222,8 +221,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
   @Nullable
   @PsiModifier.ModifierConstant
-  public String getPossibleAccess(@Nullable RefJavaElement refElement) {
-    if (refElement == null) return null;
+  private String getPossibleAccess(@NotNull RefJavaElement refElement) {
     String curAccess = refElement.getAccessModifier();
     String weakestAccess = PsiModifier.PRIVATE;
 
@@ -547,13 +545,13 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @Override
   @Nullable
   public String getHint(@NotNull final QuickFix fix) {
-    return ((AcceptSuggestedAccess)fix).getHint();
+    return ((AcceptSuggestedAccess)fix).myHint;
   }
 
   private static class AcceptSuggestedAccess implements LocalQuickFix{
     private final RefManager myManager;
     @PsiModifier.ModifierConstant private final String myHint;
-    private String myName;
+    private final String myName;
 
     private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint, String name) {
       myManager = manager;
@@ -610,10 +608,6 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
           LOG.error(e);
         }
       }
-    }
-
-    public String getHint() {
-      return myHint;
     }
   }
 }

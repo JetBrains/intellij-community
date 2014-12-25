@@ -15,9 +15,13 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -25,6 +29,7 @@ import java.util.Arrays;
  */
 public class HashImpl implements Hash {
 
+  private static final int BASE = 16;
   private static final int SHORT_HASH_LENGTH = 7;
 
   @NotNull
@@ -38,26 +43,42 @@ public class HashImpl implements Hash {
   }
 
   @NotNull
+  public static Hash read(@NotNull DataInput in) throws IOException {
+    int length = DataInputOutputUtil.readINT(in);
+    byte[] buf = new byte[length];
+    in.readFully(buf);
+    return new HashImpl(buf);
+  }
+
+  public void write(@NotNull DataOutput out) throws IOException {
+    DataInputOutputUtil.writeINT(out, myData.length);
+    out.write(myData);
+  }
+
+  @NotNull
   private static byte[] buildData(@NotNull String inputStr) {
     // if length == 5, need 3 byte + 1 signal byte
     int length = inputStr.length();
     byte even = (byte)(length % 2);
     byte[] data = new byte[length / 2 + 1 + even];
     data[0] = even;
-    try {
-      for (int i = 0; i < length / 2; i++) {
-        int k = Integer.parseInt(inputStr.substring(2 * i, 2 * i + 2), 16);
-        data[i + 1] = (byte)(k - 128);
-      }
-      if (even == 1) {
-        int k = Integer.parseInt(inputStr.substring(length - 1), 16);
-        data[length / 2 + 1] = (byte)(k - 128);
-      }
+    for (int i = 0; i < length / 2; i++) {
+      int k = parseChar(inputStr, 2 * i) * BASE + parseChar(inputStr, 2 * i + 1);
+      data[i + 1] = (byte)(k - 128);
     }
-    catch (NumberFormatException e) {
-      throw new IllegalArgumentException("bad hash string: " + inputStr);
+    if (even == 1) {
+      int k = parseChar(inputStr, length - 1);
+      data[length / 2 + 1] = (byte)(k - 128);
     }
     return data;
+  }
+
+  private static int parseChar(@NotNull String inputString, int index) {
+    int k = Character.digit(inputString.charAt(index), BASE);
+    if (k < 0) {
+      throw new IllegalArgumentException("bad hash string: " + inputString);
+    }
+    return k;
   }
 
   private HashImpl(@NotNull byte[] hash) {

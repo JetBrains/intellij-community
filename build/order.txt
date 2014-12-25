@@ -1563,7 +1563,6 @@ com/intellij/openapi/project/impl/ProjectManagerImpl$1.class:/lib/idea.jar
 com/intellij/openapi/project/impl/ProjectManagerImpl$2.class:/lib/idea.jar
 com/intellij/openapi/project/impl/ProjectManagerImpl$6.class:/lib/idea.jar
 idea/IdeaApplicationInfo.xml:/lib/resources.jar
-idea/PropertiesComponent.xml:/lib/resources.jar
 com/intellij/openapi/fileTypes/impl/FileTypeAssocTable.class:/lib/idea.jar
 com/intellij/openapi/fileTypes/impl/FileTypeManagerImpl$2.class:/lib/idea.jar
 com/intellij/ide/highlighter/custom/impl/ReadFileType.class:/lib/idea.jar

@@ -78,38 +78,35 @@ public class InstalledPackagesPanel extends JPanel {
 
     myUpgradeButton = new AnActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         upgradeAction();
       }
     };
-    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myPackagesTable).disableUpDownActions()
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          if (myPackageManagementService != null) {
-            ManagePackagesDialog dialog = createManagePackagesDialog();
-            dialog.show();
-          }
+    myInstallButton = new AnActionButton("Install", IconUtil.getAddIcon()) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (myPackageManagementService != null) {
+          ManagePackagesDialog dialog = createManagePackagesDialog();
+          dialog.show();
         }
-      })
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          uninstallAction();
-        }
-      })
-      .addExtraAction(myUpgradeButton);
+      }
+    };
+    myUninstallButton = new AnActionButton("Uninstall", IconUtil.getRemoveIcon()) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        uninstallAction();
+      }
+    };
+    ToolbarDecorator decorator =
+      ToolbarDecorator.createDecorator(myPackagesTable).disableUpDownActions().disableAddAction().disableRemoveAction()
+        .addExtraAction(myInstallButton)
+        .addExtraAction(myUninstallButton)
+        .addExtraAction(myUpgradeButton);
 
     add(decorator.createPanel());
-    myInstallButton = decorator.getActionsPanel().getAnActionButton(CommonActionsPanel.Buttons.ADD);
-    myUninstallButton = decorator.getActionsPanel().getAnActionButton(CommonActionsPanel.Buttons.REMOVE);
     myInstallButton.setEnabled(false);
     myUninstallButton.setEnabled(false);
     myUpgradeButton.setEnabled(false);
-
-    myInstallButton.getTemplatePresentation().setText("Install");
-    myUninstallButton.getTemplatePresentation().setText("Uninstall");
-
 
     myPackagesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -288,6 +285,7 @@ public class InstalledPackagesPanel extends JPanel {
     final int[] selected = myPackagesTable.getSelectedRows();
     boolean upgradeAvailable = false;
     boolean canUninstall = selected.length != 0;
+    boolean canInstall = true;
     boolean canUpgrade = true;
     if (myPackageManagementService != null && selected.length != 0) {
       for (int i = 0; i != selected.length; ++i) {
@@ -299,6 +297,7 @@ public class InstalledPackagesPanel extends JPanel {
           if (!canUninstallPackage(pkg)) {
             canUninstall = false;
           }
+          canInstall = canInstallPackage(pkg);
           if (!canUpgradePackage(pkg)) {
             canUpgrade = false;
           }
@@ -313,10 +312,15 @@ public class InstalledPackagesPanel extends JPanel {
       }
     }
     myUninstallButton.setEnabled(canUninstall);
+    myInstallButton.setEnabled(canInstall);
     myUpgradeButton.setEnabled(upgradeAvailable && canUpgrade);
   }
 
   protected boolean canUninstallPackage(InstalledPackage pyPackage) {
+    return true;
+  }
+
+  protected boolean canInstallPackage(@NotNull final InstalledPackage pyPackage) {
     return true;
   }
 

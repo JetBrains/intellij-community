@@ -385,6 +385,32 @@ class BaseInterpreterInterface:
 
         return xml
 
+    def getArray(self, attr, roffset, coffset, rows, cols, format):
+        xml = "<xml>"
+        name = attr.split("\t")[-1]
+        array = pydevd_vars.evalInContext(name, self.getNamespace(), self.getNamespace())
+
+        array, metaxml, r, c, f = pydevd_vars.array_to_meta_xml(array, name, format)
+        xml += metaxml
+        format = '%' + f
+        if rows == -1 and cols == -1:
+            rows = r
+            cols = c
+        xml += pydevd_vars.array_to_xml(array, roffset, coffset, rows, cols, format)
+        xml += "</xml>"
+
+        return xml
+
+    def evaluate(self, expression):
+        xml = "<xml>"
+        result = pydevd_vars.evalInContext(expression, self.getNamespace(), self.getNamespace())
+
+        xml += pydevd_vars.varToXML(result, expression)
+
+        xml += "</xml>"
+
+        return xml
+
     def changeVariable(self, attr, value):
         def do_change_variable():
             Exec('%s=%s' % (attr, value), self.getNamespace(), self.getNamespace())

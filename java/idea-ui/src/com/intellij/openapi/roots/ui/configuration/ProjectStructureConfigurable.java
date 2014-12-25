@@ -19,6 +19,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.Facet;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -197,8 +198,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     toolbar.setTargetComponent(myComponent);
     myToolbarComponent = toolbar.getComponent();
     if (Registry.is("ide.new.project.settings")) {
-      left.setBackground(UIUtil.getSidePanelColor());
-      myToolbarComponent.setBackground(UIUtil.getSidePanelColor());
+      left.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+      myToolbarComponent.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     }
     left.add(myToolbarComponent, BorderLayout.NORTH);
     left.add(mySidePanel, BorderLayout.CENTER);
@@ -352,7 +353,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public void reset() {
     // need this to ensure VFS operations will not block because of storage flushing
     // and other maintenance IO tasks run in background
-    HeavyProcessLatch.INSTANCE.processStarted();
+    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Resetting Project Structure");
 
     try {
       myWasUiDisposed = false;
@@ -387,7 +388,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       }
     }
     finally {
-      HeavyProcessLatch.INSTANCE.processFinished();
+      token.finish();
     }
   }
 

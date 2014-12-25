@@ -17,7 +17,6 @@ package com.siyeh.ig.memory;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,6 +29,8 @@ public class ReturnOfInnerClassInspectionTest extends LightInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ReturnOfInnerClassInspection();
+    final ReturnOfInnerClassInspection inspection = new ReturnOfInnerClassInspection();
+    inspection.ignoreNonPublic = true;
+    return inspection;
   }
 }

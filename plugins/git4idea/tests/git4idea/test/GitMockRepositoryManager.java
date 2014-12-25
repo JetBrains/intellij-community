@@ -60,6 +60,21 @@ public class GitMockRepositoryManager implements RepositoryManager<GitRepository
   }
 
   @Override
+  public void addExternalRepository(@NotNull VirtualFile root, @NotNull GitRepository repository) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void removeExternalRepository(@NotNull VirtualFile root) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isExternal(@NotNull GitRepository repository) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean moreThanOneRoot() {
     return myRepositories.size() > 1;
   }

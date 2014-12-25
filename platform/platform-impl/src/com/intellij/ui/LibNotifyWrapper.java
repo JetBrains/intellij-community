@@ -25,8 +25,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 /**
  * @author Denis Fokin
  */
@@ -77,7 +75,7 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
   }
 
   @Override
-  public void notify(@NotNull Set<String> allNames, @NotNull String name, @NotNull String title, @NotNull String description) {
+  public void notify(@NotNull String name, @NotNull String title, @NotNull String description) {
     synchronized (myLock) {
       if (!myDisposed) {
         Pointer notification = myLibNotify.notify_notification_new(title, description, myIcon);

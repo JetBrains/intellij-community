@@ -29,14 +29,12 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
   public void annotate(@NotNull SvnTarget target,
                        @NotNull SVNRevision startRevision,
                        @NotNull SVNRevision endRevision,
-                       @Nullable SVNRevision pegRevision,
                        boolean includeMergedRevisions,
                        @Nullable DiffOptions diffOptions,
                        @Nullable final AnnotationConsumer handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
-    CommandUtil.put(parameters, target.getPathOrUrlString(), pegRevision);
-    parameters.add("--revision");
-    parameters.add(startRevision + ":" + endRevision);
+    CommandUtil.put(parameters, target);
+    CommandUtil.put(parameters, startRevision, endRevision);
     CommandUtil.put(parameters, includeMergedRevisions, "--use-merge-history");
     CommandUtil.put(parameters, diffOptions);
     parameters.add("--xml");

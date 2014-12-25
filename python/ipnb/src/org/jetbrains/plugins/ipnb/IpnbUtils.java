@@ -1,7 +1,11 @@
 package org.jetbrains.plugins.ipnb;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.MarkdownUtil;
+import com.intellij.util.ui.UIUtil;
 import com.petebevin.markdown.MarkdownProcessor;
 import net.sourceforge.jeuclid.MathMLParserSupport;
 import net.sourceforge.jeuclid.context.LayoutContextImpl;
@@ -29,17 +33,17 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 public class IpnbUtils {
   private static final Logger LOG = Logger.getInstance(IpnbUtils.class);
   private static final MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
-  private static final String ourImagePrefix = "http:\\image";
+  private static final String ourImagePrefix = "http://image";
   private static final Font ourFont = new Font(Font.SERIF, Font.PLAIN, 16);
   private static final String ourBodyRule = "body { font-family: \"DejaVu\"; " +
-                                         "font-size: " + ourFont.getSize() + "pt; " +
-                                         "width: " + IpnbEditorUtil.PANEL_WIDTH + "px;}";
+                                         "font-size: " + ourFont.getSize() + "pt;}";
 
   private static final String ourCodeRule = "code { font-family: \"DejaVu\"; " +
                                          "font-size: " + ourFont.getSize() + "pt;}";
@@ -49,33 +53,54 @@ public class IpnbUtils {
                                                      "padding: 8px 35px 8px 14px;" +
                                                      "border: 1px solid #fbeed5;}";
 
-    public static String markdown2Html(@NotNull final String description) {
-      return ourMarkdownProcessor.markdown(description);
+  private static final String ourAlertSuccessRule = ".alert-success{ background-color: #dff0d8;\n" +
+                                                    "color: #468847;" +
+                                                    "padding: 8px 35px 8px 14px;" +
+                                                    "border: 1px solid #d6e9c6;}";
+
+  private static final String ourAlertErrorRule = ".alert-error{ background-color: #f2dede;\n" +
+                                                  "color: #b94a48;" +
+                                                  "padding: 8px 35px 8px 14px;" +
+                                                  "border: 1px solid #eed3d7;}";
+
+  public static String markdown2Html(@NotNull String description) {
+    description = StringUtil.replace(description, "class=\"alert alert-success\"", "class=\"alert-success\"");
+    description = StringUtil.replace(description, "class=\"alert alert-error\"", "class=\"alert-error\"");
+    ArrayList<String> lines = ContainerUtil.newArrayList(description.split("\n|\r|\r\n"));
+    MarkdownUtil.replaceHeaders(lines);
+    return ourMarkdownProcessor.markdown(StringUtil.join(lines, "\n"));
   }
 
-  public static void addLatexToPanel(@NotNull final String source, @NotNull final JPanel panel) {
+  public static JEditorPane createLatexPane(@NotNull final String source) {
     final JEditorPane editorPane = new JEditorPane();
+    editorPane.setBackground(IpnbEditorUtil.getBackground());
     editorPane.setContentType(new HTMLEditorKit().getContentType());
+    editorPane.setEditorKit(new HTMLEditorKit());
 
     final StyleSheet sheet = ((HTMLDocument)editorPane.getDocument()).getStyleSheet();
     sheet.addRule(ourBodyRule);
     sheet.addRule(ourCodeRule);
     sheet.addRule(ourAlertRule);
+    sheet.addRule(ourAlertSuccessRule);
+    sheet.addRule(ourAlertErrorRule);
 
     editorPane.setEditable(false);
 
     final String html = convertToHtml(source, editorPane);
-
     editorPane.setText("<html><body>" + html + "</body></html>");
+
     editorPane.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(editorPane, e, panel);
-        panel.dispatchEvent(parentEvent);
+        final Container parent = editorPane.getParent();
+        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(editorPane, e, parent);
+        parent.dispatchEvent(parentEvent);
       }
     });
     editorPane.addHyperlinkListener(new BrowserHyperlinkListener());
-    panel.add(editorPane);
+    //TODO: jump to the section (see User Interface#Utilities)
+
+    return editorPane;
   }
 
   private static String convertToHtml(@NotNull final String source, @NotNull final JEditorPane editorPane) {
@@ -137,8 +162,8 @@ public class IpnbUtils {
           markdown.append(charAt);
         }
         if (formula.length() != 0) {
-          addFormula(formula.toString(), editorPane, imageIndex);
-          result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\">");
+          addFormula(formula.toString(), editorPane, imageIndex, result);
+
           imageIndex += 1;
           formula = new StringBuilder();
         }
@@ -146,12 +171,12 @@ public class IpnbUtils {
 
       if (inEnd && charAt == '}') {
         inMultiStringCode -= 1;
+        inEnd = false;
       }
 
     }
     if (formula.length() != 0) {
-      addFormula(formula.toString(), editorPane, imageIndex);
-      result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\">");
+      addFormula(formula.toString(), editorPane, imageIndex, result);
     }
     if (markdown.length() != 0) {
       result.append(markdown.toString());
@@ -159,7 +184,7 @@ public class IpnbUtils {
     return markdown2Html(result.toString());
   }
 
-  private static void addFormula(@NotNull final String formulaText, JEditorPane editorPane, int imageIndex) {
+  private static void addFormula(@NotNull final String formulaText, JEditorPane editorPane, int imageIndex, StringBuilder result) {
     final SnuggleEngine engine = new SnuggleEngine();
     engine.getPackages().add(0, IpnbTexPackageDefinitions.getPackage());
 
@@ -175,6 +200,7 @@ public class IpnbUtils {
       final String xmlString = session.buildXMLString(options);
       if (xmlString == null) return;
       final LayoutContextImpl context = (LayoutContextImpl)LayoutContextImpl.getDefaultLayoutContext();
+      context.setParameter(Parameter.MATHCOLOR, UIUtil.getTextAreaForeground());
       context.setParameter(Parameter.MATHSIZE, 18);
 
       final Document document = MathMLParserSupport.parseString(xmlString);
@@ -202,9 +228,15 @@ public class IpnbUtils {
     }
     catch (SAXException e) {
       LOG.error(e);
+      LOG.info("formula text " + formulaText);
     }
     catch (ParserConfigurationException e) {
       LOG.error(e);
     }
+    if (formulaText.startsWith("$$") || formulaText.startsWith("\\begin")) {
+      result.append("<p style = \"text-align:center;\"><img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\"/></p>");
+    }
+    else
+      result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\"/>");
   }
 }

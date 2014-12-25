@@ -36,6 +36,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -96,7 +98,7 @@ public class JavaParametersUtil {
   public static void configureModule(final RunConfigurationModule runConfigurationModule,
                                      final JavaParameters parameters,
                                      @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType,
-                                     final String jreHome) throws CantRunException {
+                                     @Nullable String jreHome) throws CantRunException {
     Module module = runConfigurationModule.getModule();
     if (module == null) {
       throw CantRunException.noModuleConfigured(runConfigurationModule.getModuleName());
@@ -104,20 +106,20 @@ public class JavaParametersUtil {
     configureModule(module, parameters, classPathType, jreHome);
   }
 
-  public static void configureModule(Module module, JavaParameters parameters, @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType, String jreHome) throws CantRunException {
+  public static void configureModule(Module module, JavaParameters parameters, @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType, @Nullable String jreHome) throws CantRunException {
     parameters.configureByModule(module, classPathType, createModuleJdk(module, jreHome));
   }
 
-  public static void configureProject(Project project, final JavaParameters parameters, @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType, final String jreHome)
+  public static void configureProject(Project project, final JavaParameters parameters, @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType, @Nullable String jreHome)
     throws CantRunException {
     parameters.configureByProject(project, classPathType, createProjectJdk(project, jreHome));
   }
 
-  private static Sdk createModuleJdk(final Module module, final String jreHome) throws CantRunException {
+  private static Sdk createModuleJdk(final Module module, @Nullable String jreHome) throws CantRunException {
     return jreHome == null ? JavaParameters.getModuleJdk(module) : createAlternativeJdk(jreHome);
   }
 
-  public static Sdk createProjectJdk(final Project project, final String jreHome) throws CantRunException {
+  public static Sdk createProjectJdk(final Project project, @Nullable String jreHome) throws CantRunException {
     return jreHome == null ? createProjectJdk(project) : createAlternativeJdk(jreHome);
   }
 
@@ -129,14 +131,14 @@ public class JavaParametersUtil {
     return jdk;
   }
 
-  private static Sdk createAlternativeJdk(final String jreHome) throws CantRunException {
+  private static Sdk createAlternativeJdk(@NotNull String jreHome) throws CantRunException {
     final Sdk configuredJdk = ProjectJdkTable.getInstance().findJdk(jreHome);
     if (configuredJdk != null) {
       return configuredJdk;
     }
     final boolean isJdk = JavaSdk.checkForJdk(new File(jreHome));
     if (isJdk) {
-      throw new CantRunException("Jre expected but jdk found");
+      throw new CantRunException("Alternative JRE path needs to point to a JRE, not to a complete JDK installation");
     }
     final Sdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
     if (jdk == null) throw CantRunException.noJdkConfigured();
@@ -145,9 +147,8 @@ public class JavaParametersUtil {
 
   public static void checkAlternativeJRE(CommonJavaRunConfigurationParameters configuration) throws RuntimeConfigurationWarning {
     if (configuration.isAlternativeJrePathEnabled()) {
-      final String alternativeJrePath = configuration.getAlternativeJrePath();
-      if (alternativeJrePath == null ||
-          alternativeJrePath.length() == 0 ||
+      String alternativeJrePath = configuration.getAlternativeJrePath();
+      if (StringUtil.isEmpty(alternativeJrePath) ||
           ProjectJdkTable.getInstance().findJdk(alternativeJrePath) == null && !JavaSdk.checkForJre(alternativeJrePath)) {
         throw new RuntimeConfigurationWarning(
           ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", alternativeJrePath));

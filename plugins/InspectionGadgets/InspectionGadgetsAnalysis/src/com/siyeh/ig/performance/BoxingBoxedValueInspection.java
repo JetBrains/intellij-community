@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,11 @@ public class BoxingBoxedValueInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BoxingBoxedValueVisitor();
   }
@@ -112,9 +117,6 @@ public class BoxingBoxedValueInspection extends BaseInspection {
 
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       super.visitNewExpression(expression);
       final PsiType constructorType = expression.getType();
       if (constructorType == null) {
@@ -166,9 +168,6 @@ public class BoxingBoxedValueInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(
       PsiMethodCallExpression expression) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();

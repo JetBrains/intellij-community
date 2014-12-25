@@ -343,7 +343,7 @@ public class GenerateToStringWorker {
               new GenerateToStringWorker(clazz, editor, insertAtOverride).execute(selectedMembers, template);
             }
             catch (Exception e) {
-              GenerateToStringUtils.handleException(clazz.getProject(), e);
+              GenerationUtil.handleException(clazz.getProject(), e);
             }
           }
         });

@@ -19,9 +19,12 @@ package com.intellij.psi.impl.include;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -39,4 +42,19 @@ public abstract class FileIncludeProvider {
 
   @NotNull
   public abstract FileIncludeInfo[] getIncludeInfos(FileContent content);
+
+  /**
+   * If all providers return <code>null</code> then <code>FileIncludeInfo</code> is resolved in a standard way using <code>FileReferenceSet</code>
+   */
+  @Nullable
+  public PsiFileSystemItem resolveIncludedFile(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {
+    return null;
+  }
+
+  /**
+   * Override this method and increment returned value each time when you change the logic of your provider.
+   */
+  public int getVersion() {
+    return 0;
+  }
 }

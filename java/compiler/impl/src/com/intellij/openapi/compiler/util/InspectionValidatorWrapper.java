@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.openapi.compiler.util;
 
@@ -8,7 +20,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
@@ -17,12 +28,12 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -81,7 +92,7 @@ public class InspectionValidatorWrapper implements Validator {
 
   private static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
                                                             @NotNull LocalInspectionTool inspectionTool) {
-    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
+    InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
     GlobalInspectionContext context = inspectionManager.createNewGlobalContext(false);
     return InspectionEngine.runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool), context);
   }
@@ -131,7 +142,7 @@ public class InspectionValidatorWrapper implements Validator {
     if (project.isDefault() || !ValidationConfiguration.shouldValidate(this, context)) {
       return ProcessingItem.EMPTY_ARRAY;
     }
-    final ExcludedEntriesConfiguration excludedEntriesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
+    final ExcludesConfiguration excludesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
     final List<ProcessingItem> items = new ReadAction<List<ProcessingItem>>() {
       @Override
       protected void run(final Result<List<ProcessingItem>> result) {
@@ -148,7 +159,7 @@ public class InspectionValidatorWrapper implements Validator {
             }
 
             if (myCompilerManager.isExcludedFromCompilation(file) ||
-                excludedEntriesConfiguration.isExcluded(file)) {
+                excludesConfiguration.isExcluded(file)) {
               return true;
             }
 
@@ -246,24 +257,23 @@ public class InspectionValidatorWrapper implements Validator {
     return true;
   }
 
-  private boolean checkUnderReadAction(PsiFile file, CompileContext context, Computable<Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
-    AccessToken token = ReadAction.start();
-    try {
-      if (!file.isValid()) return false;
+  private boolean checkUnderReadAction(final PsiFile file, final CompileContext context, final Computable<Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        if (!file.isValid()) return false;
 
-      final Document document = myPsiDocumentManager.getCachedDocument(file);
-      if (document != null && myPsiDocumentManager.isUncommited(document)) {
-        final String url = file.getViewProvider().getVirtualFile().getUrl();
-        context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
-        return false;
+        final Document document = myPsiDocumentManager.getCachedDocument(file);
+        if (document != null && myPsiDocumentManager.isUncommited(document)) {
+          final String url = file.getViewProvider().getVirtualFile().getUrl();
+          context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
+          return false;
+        }
+
+        if (reportProblems(context, runnable.compute())) return false;
+        return true;
       }
-
-      if (reportProblems(context, runnable.compute())) return false;
-    }
-    finally {
-      token.finish();
-    }
-    return true;
+    });
   }
 
   private boolean reportProblems(CompileContext context, Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap) {
@@ -271,6 +281,7 @@ public class InspectionValidatorWrapper implements Validator {
       return false;
     }
 
+    boolean errorsReported = false;
     for (Map.Entry<ProblemDescriptor, HighlightDisplayLevel> entry : problemsMap.entrySet()) {
       ProblemDescriptor problemDescriptor = entry.getKey();
       final PsiElement element = problemDescriptor.getPsiElement();
@@ -288,8 +299,11 @@ public class InspectionValidatorWrapper implements Validator {
       final int line = document.getLineNumber(offset);
       final int column = offset - document.getLineStartOffset(line);
       context.addMessage(category, problemDescriptor.getDescriptionTemplate(), virtualFile.getUrl(), line + 1, column + 1);
+      if (CompilerMessageCategory.ERROR == category) {
+        errorsReported = true;
+      }
     }
-    return true;
+    return errorsReported;
   }
 
   private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(final PsiFile file,

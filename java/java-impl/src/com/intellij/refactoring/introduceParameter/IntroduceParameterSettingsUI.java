@@ -185,7 +185,6 @@ public abstract class IntroduceParameterSettingsUI {
           box.setSelected(myCbReplaceAllOccurences.isSelected());
         }
       }
-      getTypeSelectionManager().setAllOccurrences(myCbReplaceAllOccurences.isSelected());
       if (myCbReplaceAllOccurences.isSelected()) {
         if (myCbDeleteLocalVariable != null) {
           myCbDeleteLocalVariable.makeSelectable();
@@ -197,11 +196,17 @@ public abstract class IntroduceParameterSettingsUI {
         }
       }
     }
+  }
+
+  protected void updateTypeSelector() {
+    if (myCbReplaceAllOccurences != null) {
+      getTypeSelectionManager().setAllOccurrences(myCbReplaceAllOccurences.isSelected());
+    }
     else {
       getTypeSelectionManager().setAllOccurrences(myIsInvokedOnDeclaration);
     }
   }
-
+  
   protected abstract TypeSelectorManager getTypeSelectionManager();
 
   protected void createRemoveParamsPanel(GridBagConstraints gbConstraints, JPanel panel) {
@@ -238,6 +243,9 @@ public abstract class IntroduceParameterSettingsUI {
   }
 
   public boolean isParamToRemove(PsiParameter param) {
+    if (myCbReplaceAllOccurences != null && !myCbReplaceAllOccurences.isSelected()) {
+      return false;
+    }
     if (param.isVarArgs()) {
       return myParametersToRemove[myParametersToRemove.length - 1] != null;
     }

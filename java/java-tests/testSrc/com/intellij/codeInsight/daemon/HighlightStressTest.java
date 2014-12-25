@@ -24,11 +24,11 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -47,11 +47,19 @@ import java.util.*;
 
 @SkipSlowTestLocally
 public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    if ("RandomEditingForUnused".equals(getTestName(false))) {
+      enableInspectionTool(new UnusedDeclarationInspection());
+    }
+  }
+
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     if ("RandomEditingForUnused".equals(getTestName(false))) {
-      return new LocalInspectionTool[]{new UnusedSymbolLocalInspection(), new UnusedImportLocalInspection(),};
+      return new LocalInspectionTool[]{new UnusedImportLocalInspection(),};
     }
     List<InspectionToolWrapper> all = InspectionToolRegistrar.getInstance().createTools();
     List<LocalInspectionTool> locals = new ArrayList<LocalInspectionTool>();

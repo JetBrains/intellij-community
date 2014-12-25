@@ -40,6 +40,8 @@ public final class DefaultRegExpPropertiesProvider {
           { "Sc", "CURRENCY_SYMBOL" },
           { "Sk", "MODIFIER_SYMBOL" },
           { "So", "OTHER_SYMBOL" },
+          { "Pi", "INITIAL_QUOTE_PUNCTUATION" },
+          { "Pf", "FINAL_QUOTE_PUNCTUATION" },
           { "L", "LETTER" },
           { "M", "MARK" },
           { "N", "NUMBER" },
@@ -47,6 +49,7 @@ public final class DefaultRegExpPropertiesProvider {
           { "C", "CONTROL" },
           { "P", "PUNCTUATION" },
           { "S", "SYMBOL" },
+          { "LC", "LETTER" },
           { "LD", "LETTER_OR_DIGIT" },
           { "L1", "Latin-1" },
           { "all", "ALL" },
@@ -66,6 +69,8 @@ public final class DefaultRegExpPropertiesProvider {
           { "javaLowerCase", },
           { "javaUpperCase", },
           { "javaTitleCase", },
+          { "javaAlphabetic", },
+          { "javaIdeographic", },
           { "javaDigit", },
           { "javaDefined", },
           { "javaLetter", },
@@ -84,8 +89,12 @@ public final class DefaultRegExpPropertiesProvider {
   private final String[][] myCharacterClasses = {
     {"d", "digit: [0-9]"},
     {"D", "nondigit: [^0-9]"},
+    {"h", "horizontal whitespace character: [ \\t\\xA0\\u1680\\u180e\\u2000-\\u200a\\u202f\\u205f\\u3000]"},
+    {"H", "non-horizontal whitespace character: [^\\h]"},
     {"s", "whitespace [ \\t\\n\\x0B\\f\\r]"},
     {"S", "non-whitespace [^\\s]"},
+    {"v", "vertical whitespace character: [\\n\\x0B\\f\\r\\x85\\u2028\\u2029]"},
+    {"V", "non-vertical whitespace character: [^\\v]"},
     {"w", "word character [a-zA-Z_0-9]"},
     {"W", "nonword character [^\\w]"},
     {"b", "word boundary"},
@@ -102,6 +111,23 @@ public final class DefaultRegExpPropertiesProvider {
     {"f", "form-feed character ('\\u000C')"},
     {"a", "alert (bell) character ('\\u0007')"},
     {"e", "escape character ('\\u001B')"}
+  };
+
+  private final String[][] myPosixCharacterClasses = {
+    {"alnum", "Alphanumeric characters"},
+    {"alpha", "Alphabetic characters"},
+    {"ascii", "ASCII characters"},
+    {"blank", "Space and tab"},
+    {"cntrl", "Control characters"},
+    {"digit", "Digits"},
+    {"graph", "Visible characters"},
+    {"lower", "Lowercase letters"},
+    {"print", "Visible characters and spaces"},
+    {"punct", "Punctuation and symbols"},
+    {"space", "All whitespace characters, including line breaks"},
+    {"upper", "Uppercase letters"},
+    {"word",  "Word characters (letters, numbers and underscores)"},
+    {"xdigit","Hexadecimal digits"},
   };
 
   private DefaultRegExpPropertiesProvider() {
@@ -147,5 +173,10 @@ public final class DefaultRegExpPropertiesProvider {
   @NotNull
   public String[][] getKnownCharacterClasses() {
     return myCharacterClasses;
+  }
+
+  @NotNull
+  public String[][] getPosixCharacterClasses() {
+    return myPosixCharacterClasses;
   }
 }

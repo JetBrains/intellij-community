@@ -38,7 +38,13 @@ public abstract class FileDocumentManager implements SavingRequestor {
   @Nullable
   public abstract VirtualFile getFile(@NotNull Document document);
 
+  /**
+   * This operation can modify documents that will be saved (due to 'Trip trailing spaces on Save' functionality).
+   */
   public abstract void saveAllDocuments();
+  /**
+   * This operation can modify the document (due to 'Trip trailing spaces on Save' functionality).
+   */
   public abstract void saveDocument(@NotNull Document document);
 
   /**

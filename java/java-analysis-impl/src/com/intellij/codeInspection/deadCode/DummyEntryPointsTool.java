@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class DummyEntryPointsTool extends UnusedDeclarationInspection {
+public class DummyEntryPointsTool extends UnusedDeclarationInspectionBase {
   public DummyEntryPointsTool() {
   }
 

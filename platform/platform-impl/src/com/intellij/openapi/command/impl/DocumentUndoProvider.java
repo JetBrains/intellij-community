@@ -20,12 +20,11 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -33,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public class DocumentUndoProvider implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.DocumentUndoProvider");
   private static final Key<Boolean> UNDOING_EDITOR_CHANGE = Key.create("DocumentUndoProvider.UNDOING_EDITOR_CHANGE");
 
   private final Project myProject;
@@ -61,32 +59,39 @@ public class DocumentUndoProvider implements Disposable {
     if (doc != null) doc.putUserData(UNDOING_EDITOR_CHANGE, null);
   }
 
-  private class MyEditorDocumentListener extends DocumentAdapter {
+  private class MyEditorDocumentListener implements DocumentListener {
+    @Override
+    public void beforeDocumentChange(DocumentEvent e) {
+      Document document = e.getDocument();
+      if (shouldBeIgnored(document)) return;
+
+      UndoManagerImpl undoManager = getUndoManager();
+      if (undoManager.isActive() && isUndoable(document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) && 
+          document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
+        throw new IllegalStateException("Do not change documents during undo as it will break undo sequence.");
+      }
+    }
+
     @Override
     public void documentChanged(final DocumentEvent e) {
       Document document = e.getDocument();
-
-      // if we don't ignore copy's events, we will receive notification
-      // for the same event twice (from original document too)
-      // and undo will work incorrectly
-      if (UndoManagerImpl.isCopy(document)) return;
-
-      if (allEditorsAreViewersFor(document)) return;
-      if (!shouldRecordActions(document)) return;
+      if (shouldBeIgnored(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
-      if (!undoManager.isActive() || !isUndoable(document)) {
+      if (undoManager.isActive() && isUndoable(document)) {
+        registerUndoableAction(e);
+      }
+      else {
         registerNonUndoableAction(document);
-        return;
       }
-
-      if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) {
-        if (document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
-          LOG.error("Do not change documents during undo as it will break undo sequence.");
-        }
-      }
-
-      registerUndoableAction(e);
+    }
+    
+    private boolean shouldBeIgnored(Document document) {
+      return UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
+                                              // for the same event twice (from original document too)
+                                              // and undo will work incorrectly
+             || allEditorsAreViewersFor(document) 
+             || !shouldRecordActions(document);
     }
 
     private boolean shouldRecordActions(final Document document) {

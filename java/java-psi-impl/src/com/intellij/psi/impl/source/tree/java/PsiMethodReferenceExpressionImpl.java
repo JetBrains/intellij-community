@@ -20,16 +20,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -86,22 +84,28 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                                                    MethodSignature signature) {
         return DuplicateConflictResolver.INSTANCE;
       }
-
-      @Override
-      protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
-        return functionalInterfaceType;
-      }
     };
 
-    final ResolveResult[] result = resolver.resolve(this, getContainingFile(), false);
+    final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
+    final PsiType added = map.put(this, functionalInterfaceType);
+    final ResolveResult[] result;
+    try {
+      result = resolver.resolve(this, getContainingFile(), false);
+    }
+    finally {
+      if (added == null) {
+        map.remove(this);
+      }
+    }
+
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
     final int interfaceArity = interfaceMethod.getParameterList().getParametersCount();
     for (ResolveResult resolveResult : result) {
       final PsiElement element = resolveResult.getElement();
       if (element instanceof PsiMethod) {
         final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
+        final int parametersCount = ((PsiMethod)element).getParameterList().getParametersCount();
         if (qualifierResolveResult.isReferenceTypeQualified() && getReferenceNameElement() instanceof PsiIdentifier) {
-          final int parametersCount = ((PsiMethod)element).getParameterList().getParametersCount();
           if (parametersCount == interfaceArity && isStatic) {
             return true;
           }
@@ -109,8 +113,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             return true;
           }
           if (((PsiMethod)element).isVarArgs()) return true;
-        } else if (!isStatic) {
-          return true;
+        }
+        else if (!isStatic) {
+          if (parametersCount == interfaceArity || ((PsiMethod)element).isVarArgs()) {
+            return true;
+          }
         }
       } else if (element instanceof PsiClass) {
         return true;
@@ -269,29 +276,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @NotNull
   @Override
-  public JavaResolveResult[] multiResolve(final boolean incompleteCode) {
-    FileElement fileElement = SharedImplUtil.findFileElement(this);
-    if (fileElement == null) {
-      LOG.error("fileElement == null!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    final PsiManagerEx manager = fileElement.getManager();
-    if (manager == null) {
-      LOG.error("getManager() == null!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    PsiFile file = SharedImplUtil.getContainingFile(fileElement);
-    boolean valid = file != null && file.isValid();
-    if (!valid) {
-      LOG.error("invalid!");
-      return JavaResolveResult.EMPTY_ARRAY;
-    }
-    final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
-    if (map != null && map.containsKey(this)) {
-      return RESOLVER.resolve(this, file, incompleteCode);
-    }
-    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, RESOLVER, true, incompleteCode, file);
-    return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
+  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+    return PsiImplUtil.multiResolveImpl(this, incompleteCode, RESOLVER);
   }
 
   @Override
@@ -394,12 +380,19 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       return false;
     }
 
-    final PsiElement argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
+    final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
     final boolean isExact = isExact();
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList) && isExact) {
+    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
-      if (candidateProperties != null && !InferenceSession.isPertinentToApplicability(this, candidateProperties.getMethod())) {
-        return true;
+      if (candidateProperties != null) {
+        final PsiMethod method = candidateProperties.getMethod();
+        if (isExact && !InferenceSession.isPertinentToApplicability(this, method)) {
+          return true;
+        }
+
+        if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
+          return true;
+        }
       }
     }
 
@@ -422,7 +415,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
      //        the result of applying capture conversion (5.1.10) to the return type of the invocation type (15.12.2.6) of the chosen declaration is R', 
      //        where R is the target type that may be used to infer R'; neither R nor R' is void; and R' is compatible with R in an assignment context.
 
-    Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.getFunctionalTypeMap();
+    Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
     final JavaResolveResult result;
     try {
       if (map.put(this, left) != null) {

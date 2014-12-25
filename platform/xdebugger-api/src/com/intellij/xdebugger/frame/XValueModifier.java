@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,18 @@ public abstract class XValueModifier {
     return null;
   }
 
+  /**
+   * Asynchronously calculates initial value
+   */
+  public void calculateInitialValueEditorText(XInitialValueCallback callback) {
+    callback.setValue(getInitialValueEditorText());
+  }
+
   public interface XModificationCallback extends XValueCallback {
     void valueModified();
+  }
+
+  public interface XInitialValueCallback {
+    void setValue(String initialValue);
   }
 }

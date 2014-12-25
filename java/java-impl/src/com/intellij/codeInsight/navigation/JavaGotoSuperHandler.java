@@ -69,9 +69,9 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
     PsiElement element = getElement(file, offset);
     if (element == null) return null;
 
-    final PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, PsiMethodReferenceExpression.class);
-    if (expression != null) {
-      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(expression);
+    final PsiElement psiElement = PsiTreeUtil.getParentOfType(element, PsiFunctionalExpression.class, PsiMember.class);
+    if (psiElement instanceof PsiFunctionalExpression) {
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(psiElement);
       if (interfaceMethod != null) {
         return ArrayUtil.prepend(interfaceMethod, interfaceMethod.findSuperMethods(false));
       }

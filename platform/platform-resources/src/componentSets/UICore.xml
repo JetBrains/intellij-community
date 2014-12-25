@@ -44,10 +44,6 @@
       <implementation-class>com.intellij.ide.FrameStateManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.GeneralSettings</interface-class>
-      <implementation-class>com.intellij.ide.GeneralSettings</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
     </component>
     <component>

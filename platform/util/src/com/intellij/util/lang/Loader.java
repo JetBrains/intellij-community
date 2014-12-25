@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.lang;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.IOException;
 import java.net.URL;
 
+/**
+ * An object responsible for loading classes and resources from a particular classpath element: a jar or a directory.
+ * 
+ * @see JarLoader
+ * @see FileLoader
+ */
 abstract class Loader {
   private final URL myURL;
   private final int myIndex;
 
-  protected Loader(URL url, int index) {
+  Loader(URL url, int index) {
     myURL = url;
     myIndex = index;
   }
 
-
-  protected URL getBaseURL() {
+  URL getBaseURL() {
     return myURL;
   }
 
   @Nullable
-  abstract Resource getResource(final String name, boolean flag);
+  abstract Resource getResource(String name, boolean flag);
+  
+  @NotNull abstract ClasspathCache.LoaderData buildData() throws IOException;
 
-  abstract void buildCache(ClasspathCache.LoaderData loaderData) throws IOException;
-
-  public int getIndex() {
+  int getIndex() {
     return myIndex;
   }
 }

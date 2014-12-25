@@ -83,7 +83,7 @@ public class GithubDownloadUtil {
     }
     Exception e = outcome.getException();
     if (e != null) {
-      throw new GeneratorException("Can not fetch content from " + url);
+      throw new GeneratorException("Can not fetch content from " + url, e);
     }
     throw new GeneratorException("Download was cancelled");
   }

@@ -110,7 +110,6 @@
     <component>
       <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
-      <option name="workspace" value="true"/>
       <loadForDefaultProject/>
     </component>
     <component>

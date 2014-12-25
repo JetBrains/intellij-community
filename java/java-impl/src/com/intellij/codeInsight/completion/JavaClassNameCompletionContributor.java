@@ -97,13 +97,13 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       for (final ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes(expr, true)) {
         final PsiType type = info.getType();
         final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-        if (psiClass != null) {
+        if (psiClass != null && psiClass.getName() != null) {
           consumer.consume(createClassLookupItem(psiClass, inJavaContext));
         }
         final PsiType defaultType = info.getDefaultType();
         if (!defaultType.equals(type)) {
           final PsiClass defClass = PsiUtil.resolveClassInType(defaultType);
-          if (defClass != null) {
+          if (defClass != null && defClass.getName() != null) {
             consumer.consume(createClassLookupItem(defClass, true));
           }
         }
@@ -132,6 +132,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           }
         }
       });
+  }
+
+  static LookupElement highlightIfNeeded(JavaPsiClassReferenceElement element, CompletionParameters parameters) {
+    return JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), parameters.getPosition());
   }
 
   public static JavaPsiClassReferenceElement createClassLookupItem(final PsiClass psiClass, final boolean inJavaContext) {

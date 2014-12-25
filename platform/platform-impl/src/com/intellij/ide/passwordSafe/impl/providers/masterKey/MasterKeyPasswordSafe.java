@@ -31,13 +31,13 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -338,12 +338,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   private static String decryptPassword(byte[] pw) throws MasterPasswordUnavailableException {
     if (!SystemInfo.isWindows) throw new AssertionError("Windows OS expected");
 
-    try {
-      return new String(WindowsCryptUtils.unprotect(pw), "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new IllegalStateException("UTF-8 not available", e);
-    }
+    return new String(WindowsCryptUtils.unprotect(pw), CharsetToolkit.UTF8_CHARSET);
   }
 
   public boolean isPasswordEncrypted() {

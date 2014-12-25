@@ -25,7 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
@@ -54,12 +54,12 @@ public class SSAConstructorSparseEx {
   private HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<String, SFormsFastMapDirect>();
 
   // (var, version), version
-  private HashMap<VarVersionPaar, FastSparseSet<Integer>> phi = new HashMap<VarVersionPaar, FastSparseSet<Integer>>();
+  private HashMap<VarVersionPair, FastSparseSet<Integer>> phi = new HashMap<VarVersionPair, FastSparseSet<Integer>>();
 
   // var, version
   private HashMap<Integer, Integer> lastversion = new HashMap<Integer, Integer>();
 
-  private List<VarVersionPaar> startVars = new ArrayList<VarVersionPaar>();
+  private List<VarVersionPair> startVars = new ArrayList<VarVersionPair>();
 
   // set factory
   private FastSparseSetFactory<Integer> factory;
@@ -157,7 +157,7 @@ public class SSAConstructorSparseEx {
     switch (expr.type) {
       case Exprent.EXPRENT_ASSIGNMENT:
         AssignmentExprent assexpr = (AssignmentExprent)expr;
-        if (assexpr.getCondtype() == AssignmentExprent.CONDITION_NONE) {
+        if (assexpr.getCondType() == AssignmentExprent.CONDITION_NONE) {
           Exprent dest = assexpr.getLeft();
           if (dest.type == Exprent.EXPRENT_VAR) {
             varassign = (VarExprent)dest;
@@ -166,7 +166,7 @@ public class SSAConstructorSparseEx {
         break;
       case Exprent.EXPRENT_FUNCTION:
         FunctionExprent func = (FunctionExprent)expr;
-        switch (func.getFunctype()) {
+        switch (func.getFuncType()) {
           case FunctionExprent.FUNCTION_IIF:
             processExprent(func.getLstOperands().get(0), varmaparr);
 
@@ -265,7 +265,7 @@ public class SSAConstructorSparseEx {
       else if (cardinality == 2) { // size > 1
         Integer current_vers = vardest.getVersion();
 
-        VarVersionPaar currpaar = new VarVersionPaar(varindex, current_vers);
+        VarVersionPair currpaar = new VarVersionPair(varindex, current_vers);
         if (current_vers != 0 && phi.containsKey(currpaar)) {
           setCurrentVar(varmap, varindex, current_vers);
           // update phi node
@@ -279,7 +279,7 @@ public class SSAConstructorSparseEx {
 
           setCurrentVar(varmap, varindex, nextver);
           // create new phi node
-          phi.put(new VarVersionPaar(varindex, nextver), vers);
+          phi.put(new VarVersionPair(varindex, nextver), vers);
         }
       } // 0 means uninitialized variable, which is impossible
     }
@@ -477,7 +477,7 @@ public class SSAConstructorSparseEx {
           setCurrentVar(map, varindex, version);
 
           extraVarVersions.put(dgraph.nodes.getWithKey(flatthelper.getMapDestinationNodes().get(stat.getStats().get(i).id)[0]).id, map);
-          startVars.add(new VarVersionPaar(varindex, version));
+          startVars.add(new VarVersionPair(varindex, version));
         }
     }
 
@@ -501,29 +501,29 @@ public class SSAConstructorSparseEx {
       FastSparseSet<Integer> set = factory.spawnEmptySet();
       set.add(version);
       map.put(varindex, set);
-      startVars.add(new VarVersionPaar(varindex, version));
+      startVars.add(new VarVersionPair(varindex, version));
 
       if (thisvar) {
         if (i == 0) {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stack_size;
+          varindex += md.params[i - 1].stackSize;
         }
       }
       else {
-        varindex += md.params[i].stack_size;
+        varindex += md.params[i].stackSize;
       }
     }
 
     return map;
   }
 
-  public HashMap<VarVersionPaar, FastSparseSet<Integer>> getPhi() {
+  public HashMap<VarVersionPair, FastSparseSet<Integer>> getPhi() {
     return phi;
   }
 
-  public List<VarVersionPaar> getStartVars() {
+  public List<VarVersionPair> getStartVars() {
     return startVars;
   }
 }

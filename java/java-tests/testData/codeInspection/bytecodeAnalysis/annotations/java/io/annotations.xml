@@ -1,4 +1,9 @@
 <root>
+  <item name="java.io.BufferedInputStream boolean markSupported()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.BufferedInputStream int read(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -7,6 +12,11 @@
   </item>
   <item name="java.io.BufferedReader BufferedReader(java.io.Reader, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.BufferedReader boolean markSupported()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.BufferedReader int read(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -23,6 +33,11 @@
   <item name="java.io.BufferedWriter BufferedWriter(java.io.Writer, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.BufferedWriter int min(int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.BufferedWriter void write(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -32,8 +47,28 @@
   <item name="java.io.ByteArrayInputStream ByteArrayInputStream(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.ByteArrayInputStream boolean markSupported()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.io.ByteArrayInputStream int available()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.ByteArrayInputStream int read(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ByteArrayInputStream void close()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.io.ByteArrayOutputStream int size()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.ByteArrayOutputStream java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -46,6 +81,11 @@
   </item>
   <item name="java.io.ByteArrayOutputStream java.lang.String toString(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ByteArrayOutputStream void close()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.ByteArrayOutputStream void write(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -103,6 +143,11 @@
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="java.io.File int getPrefixLength()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -145,6 +190,11 @@
   <item name="java.io.File java.io.File getParentFile()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.io.File java.io.FileSystem access$000()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.File java.io.File[] listFiles()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -165,6 +215,11 @@
   </item>
   <item name="java.io.File java.lang.String getParent()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.lang.String getPath()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.File java.lang.String slashify(java.lang.String, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -188,6 +243,11 @@
   </item>
   <item name="java.io.File void writeObject(java.io.ObjectOutputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.File.LazyInitialization LazyInitialization()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.FileInputStream FileInputStream(java.io.FileDescriptor) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -237,11 +297,36 @@
   <item name="java.io.FilterOutputStream void write(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.InputStream InputStream()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.io.InputStream boolean markSupported()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.io.InputStream int available()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.InputStream int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.io.InputStream int read(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.InputStream void close()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.io.InputStream void mark(int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.InputStreamReader InputStreamReader(java.io.InputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -267,8 +352,18 @@
   <item name="java.io.ObjectInputStream boolean access$400(java.io.ObjectInputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.ObjectInputStream boolean access$400(java.io.ObjectInputStream)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.ObjectInputStream int access$000(java.io.ObjectInputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ObjectInputStream int access$000(java.io.ObjectInputStream)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.ObjectInputStream int access$002(java.io.ObjectInputStream, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -279,8 +374,18 @@
   <item name="java.io.ObjectInputStream java.io.ObjectInputStream.BlockDataInputStream access$200(java.io.ObjectInputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.ObjectInputStream java.io.ObjectInputStream.BlockDataInputStream access$200(java.io.ObjectInputStream)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.ObjectInputStream java.io.ObjectInputStream.HandleTable access$100(java.io.ObjectInputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.io.ObjectInputStream.HandleTable access$100(java.io.ObjectInputStream)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.ObjectInputStream java.io.ObjectStreamClass readClassDescriptor()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -316,6 +421,9 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.ObjectInputStream java.lang.Object readObjectOverride()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.ObjectInputStream java.lang.Object readUnshared()">
@@ -323,7 +431,7 @@
   </item>
   <item name="java.io.ObjectInputStream java.lang.Object resolveObject(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+      <val val="value=&quot;!null-&gt;!null;null-&gt;null&quot;,pure=true"/>
     </annotation>
   </item>
   <item name="java.io.ObjectInputStream void access$500(java.io.ObjectInputStream) 0">
@@ -350,12 +458,22 @@
   <item name="java.io.ObjectInputStream void readSerialData(java.lang.Object, java.io.ObjectStreamClass) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.ObjectOutputStream int getProtocolVersion()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.ObjectOutputStream java.io.ObjectOutputStream.BlockDataOutputStream access$000(java.io.ObjectOutputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.ObjectOutputStream java.io.ObjectOutputStream.BlockDataOutputStream access$000(java.io.ObjectOutputStream)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.ObjectOutputStream java.lang.Object replaceObject(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+      <val val="value=&quot;!null-&gt;!null;null-&gt;null&quot;,pure=true"/>
     </annotation>
   </item>
   <item name="java.io.ObjectOutputStream void access$100(java.io.ObjectOutputStream, java.lang.Object, boolean) 0">
@@ -364,8 +482,18 @@
   <item name="java.io.ObjectOutputStream void annotateClass(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.io.ObjectOutputStream void annotateClass(java.lang.Class)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.ObjectOutputStream void annotateProxyClass(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectOutputStream void annotateProxyClass(java.lang.Class)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.ObjectOutputStream void defaultWriteFields(java.lang.Object, java.io.ObjectStreamClass) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -403,6 +531,11 @@
   <item name="java.io.ObjectOutputStream void writeObjectOverride(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.io.ObjectOutputStream void writeObjectOverride(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="java.io.ObjectOutputStream void writeOrdinaryObject(java.lang.Object, java.io.ObjectStreamClass, boolean) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -414,6 +547,21 @@
   </item>
   <item name="java.io.ObjectOutputStream void writeTypeString(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.OutputStream OutputStream()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.io.OutputStream void close()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.io.OutputStream void flush()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.OutputStream void write(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -534,6 +682,16 @@
   </item>
   <item name="java.io.Reader Reader(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.Reader boolean markSupported()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="java.io.Reader boolean ready()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="java.io.Reader int read(char[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

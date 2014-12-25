@@ -17,15 +17,11 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.NetUtils;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.List;
 
@@ -143,33 +139,15 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
 
     @Override
     public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
-
       final ActionCallback callback = new ActionCallback();
-
       Task task = new Task.Backgroundable(myProject, "Downloading sources...", true) {
         @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final ByteArrayOutputStream out;
-
+        public void run(@NotNull final ProgressIndicator indicator) {
+          final byte[] bytes;
           try {
             LOG.info("Downloading sources JAR: " + myUrl);
-
             indicator.checkCanceled();
-
-            HttpURLConnection urlConnection = HttpConfigurable.getInstance().openHttpConnection(myUrl);
-
-            int contentLength = urlConnection.getContentLength();
-
-            out = new ByteArrayOutputStream(contentLength > 0 ? contentLength : 100 * 1024);
-
-            InputStream in = urlConnection.getInputStream();
-
-            try {
-              NetUtils.copyStreamContent(indicator, in, out, contentLength);
-            }
-            finally {
-              in.close();
-            }
+            bytes = HttpRequests.request(myUrl).readBytes(indicator);
           }
           catch (IOException e) {
             LOG.warn(e);
@@ -193,7 +171,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
             public void run() {
               AccessToken accessToken = WriteAction.start();
               try {
-                storeFile(out.toByteArray());
+                storeFile(bytes);
               }
               finally {
                 accessToken.finish();

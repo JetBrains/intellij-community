@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,11 +24,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.*;
-import com.intellij.openapi.editor.impl.softwrap.mapping.*;
+import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareVisualSizeManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +55,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, DocumentBulkUpdateListener, FoldingListener,
+public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
                                           PropertyChangeListener, Dumpable, Disposable
 {
 
@@ -62,12 +66,12 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   private static final Logger LOG = Logger.getInstance("#" + SoftWrapModelImpl.class.getName());
 
+  private final LogicalPositionToOffsetTask   myLogicalToOffsetTask   = new LogicalPositionToOffsetTask();
   private final OffsetToLogicalTask   myOffsetToLogicalTask   = new OffsetToLogicalTask();
   private final VisualToLogicalTask   myVisualToLogicalTask   = new VisualToLogicalTask();
   private final LogicalToVisualTask   myLogicalToVisualTask   = new LogicalToVisualTask();
   private final FoldProcessingEndTask myFoldProcessingEndTask = new FoldProcessingEndTask();
 
-  private final List<DocumentListener>        myDocumentListeners = new ArrayList<DocumentListener>();
   private final List<SoftWrapChangeListener>  mySoftWrapListeners = new ArrayList<SoftWrapChangeListener>();
   
   /**
@@ -78,7 +82,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * <p/>
    * So, our strategy is to collect information about changed fold regions and process it only when batch folding processing ends.
    */
-  private final List<FoldRegionInfo> myDeferredFoldRegions = new ArrayList<FoldRegionInfo>();
+  private final List<TextRange> myDeferredFoldRegions = new ArrayList<TextRange>();
 
   private final SoftWrapFoldBasedApplianceStrategy myFoldBasedApplianceStrategy;
   private final CachingSoftWrapDataMapper          myDataMapper;
@@ -138,7 +142,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myFoldBasedApplianceStrategy = new SoftWrapFoldBasedApplianceStrategy(editor);
     myVisualSizeManager = new SoftWrapAwareVisualSizeManager(myPainter);
 
-    myDocumentListeners.add(myApplianceManager);
     myApplianceManager.addListener(myVisualSizeManager);
     myApplianceManager.addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
       @Override
@@ -148,15 +151,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
         }
       }
     });
-    EditorSettings settings = myEditor.getSettings();
-    myUseSoftWraps = settings.isUseSoftWraps();
+    myUseSoftWraps = areSoftWrapsEnabledInEditor();
     myFontPreferences = myEditor.getColorsScheme().getFontPreferences();
     
     editor.addPropertyChangeListener(this);
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, this);
-
     myApplianceManager.addListener(myDataMapper);
+  }
+
+  private boolean areSoftWrapsEnabledInEditor() {
+    return !(myEditor instanceof EditorWindow) && myEditor.getSettings().isUseSoftWraps() 
+           && (!(myEditor.getDocument() instanceof DocumentImpl) || !((DocumentImpl)myEditor.getDocument()).acceptsSlashR());
   }
 
   /**
@@ -164,8 +169,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    */
   public void reinitSettings() {
     boolean softWrapsUsedBefore = myUseSoftWraps;
-    EditorSettings settings = myEditor.getSettings();
-    myUseSoftWraps = settings.isUseSoftWraps();
+    myUseSoftWraps = areSoftWrapsEnabledInEditor();
 
     int tabWidthBefore = myTabWidth;
     myTabWidth = EditorUtil.getTabSize(myEditor);
@@ -187,7 +191,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public boolean isRespectAdditionalColumns() {
-    return myForceAdditionalColumns || !isSoftWrappingEnabled() || myApplianceManager.hasLinesWithFailedWrap();
+    return myForceAdditionalColumns;
   }
 
   @Override
@@ -200,7 +204,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     if (!myUseSoftWraps || myEditor.isOneLineMode() || myEditor.isPurePaintingMode()) {
       return false;
     }
-
+    
     // We check that current thread is EDT because attempt to retrieve information about visible area width may fail otherwise
     Application application = ApplicationManager.getApplication();
     Thread lastEdt = myLastEdt.get();
@@ -369,6 +373,21 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myOffsetToLogicalTask.input = offset;
       executeSafely(myOffsetToLogicalTask);
       return myOffsetToLogicalTask.output;
+    } finally {
+      myActive--;
+    }
+  }
+
+  @Override
+  public int logicalPositionToOffset(@NotNull LogicalPosition logicalPosition) {
+    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
+      return myEditor.logicalPositionToOffset(logicalPosition, false);
+    }
+    myActive++;
+    try {
+      myLogicalToOffsetTask.input = logicalPosition;
+      executeSafely(myLogicalToOffsetTask);
+      return myLogicalToOffsetTask.output;
     } finally {
       myActive--;
     }
@@ -548,9 +567,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDirty = true;
       return;
     }
-    for (DocumentListener listener : myDocumentListeners) {
-      listener.beforeDocumentChange(event);
-    }
+    myApplianceManager.beforeDocumentChange(event);
   }
 
   @Override
@@ -562,22 +579,14 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     if (!isSoftWrappingEnabled()) {
       return;
     }
-    for (DocumentListener listener : myDocumentListeners) {
-      listener.documentChanged(event);
-    }
+    myApplianceManager.documentChanged(event);
   }
 
-  @Override
-  public void updateStarted(@NotNull Document doc) {
-    if (doc != myEditor.getDocument()) return;
-    
+  void onBulkDocumentUpdateStarted() {
     myBulkUpdateInProgress = true;
   }
 
-  @Override
-  public void updateFinished(@NotNull Document doc) {
-    if (doc != myEditor.getDocument()) return;
-    
+  void onBulkDocumentUpdateFinished() {
     myBulkUpdateInProgress = false;
     if (!isSoftWrappingEnabled()) {
       return;
@@ -595,7 +604,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
     // We delay processing of changed fold regions till the invocation of onFoldProcessingEnd(), as
     // FoldingModel can return inconsistent data before that moment.
-    myDeferredFoldRegions.add(new FoldRegionInfo(region));
+    myDeferredFoldRegions.add(new TextRange(region.getStartOffset(), region.getEndOffset()));
   }
 
   @Override
@@ -796,6 +805,22 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
   }
   
+  private class LogicalPositionToOffsetTask implements SoftWrapAwareTask {
+
+    public LogicalPosition input;
+    public int output;
+
+    @Override
+    public void run(boolean softWrapAware) throws IllegalStateException {
+      output = softWrapAware ? myDataMapper.logicalPositionToOffset(input) : myEditor.logicalPositionToOffset(input, false);
+    }
+
+    @Override
+    public String toString() {
+      return "mapping from logical position (" + input + ") to offset";
+    }
+  }
+
   private class FoldProcessingEndTask implements SoftWrapAwareTask {
     @Override
     public void run(boolean softWrapAware) {
@@ -805,43 +830,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
       try {
         if (!myDirty) { // no need to recalculate specific areas if the whole document will be reprocessed
-          for (FoldRegionInfo info : myDeferredFoldRegions) {
-            // There is a possible case that given fold region is contained inside another collapsed fold region. We don't want to process
-            // such nested region then.
-            FoldRegion outerRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(info.start);
-            if (outerRegion != null && outerRegion != info.region && outerRegion.getStartOffset() <= info.start
-                && outerRegion.getEndOffset() >= info.end)
-            {
-              continue;
-            }
-
-            myApplianceManager.onFoldRegionStateChange(info.start, info.end);
-          }
+          myApplianceManager.recalculate(myDeferredFoldRegions);
         }
       }
       finally {
         myDeferredFoldRegions.clear();
       }
-
-      myApplianceManager.onFoldProcessingEnd();
     }
 
     @Override
     public String toString() {
       return "fold regions state change processing";
-    }
-  }
-  
-  private static class FoldRegionInfo {
-    
-    public final FoldRegion region;
-    public final int start;
-    public final int end;
-
-    FoldRegionInfo(@NotNull FoldRegion region) {
-      this.region = region;
-      start = region.getStartOffset();
-      end = region.getEndOffset();
     }
   }
 }

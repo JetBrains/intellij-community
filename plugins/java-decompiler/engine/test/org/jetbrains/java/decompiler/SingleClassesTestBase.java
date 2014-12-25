@@ -57,6 +57,7 @@ public abstract class SingleClassesTestBase {
       String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
 
       ConsoleDecompiler decompiler = fixture.getDecompiler();
+
       for (File file : collectClasses(classFile)) decompiler.addSpace(file, true);
       decompiler.decompileContext();
 

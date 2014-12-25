@@ -15,9 +15,8 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -54,22 +53,19 @@ public class GeneralStatement extends Statement {
   // public methods
   // *****************************************************************************
 
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-    String indstr = InterpreterUtil.getIndentString(indent);
-    StringBuilder buf = new StringBuilder();
-
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buf = new TextBuffer();
 
     if (isLabeled()) {
-      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
+      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
     }
 
-    buf.append(indstr).append("abstract statement {").append(new_line_separator);
-    for (int i = 0; i < stats.size(); i++) {
-      buf.append(stats.get(i).toJava(indent + 1, tracer));
+    buf.appendIndent(indent).append("abstract statement {").appendLineSeparator();
+    for (Statement stat : stats) {
+      buf.append(stat.toJava(indent + 1, tracer));
     }
-    buf.append(indstr).append("}");
+    buf.appendIndent(indent).append("}");
 
-    return buf.toString();
+    return buf;
   }
 }

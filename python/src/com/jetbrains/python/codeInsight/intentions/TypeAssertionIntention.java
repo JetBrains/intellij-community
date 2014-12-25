@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class TypeAssertionIntention implements IntentionAction {
         (reference != null && reference.resolve() == null)) {
       return false;
     }
-    final PyType type = TypeEvalContext.codeAnalysis(file).getType(problemElement);
+    final PyType type = TypeEvalContext.codeAnalysis(file.getProject(), file).getType(problemElement);
     return type == null;
   }
 

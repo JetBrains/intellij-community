@@ -15,14 +15,24 @@
  */
 package org.jetbrains.plugins.gradle.integrations.maven;
 
+import com.intellij.CommonBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
+import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
+import com.intellij.openapi.externalSystem.service.notification.NotificationData;
+import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -37,7 +47,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -48,10 +60,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
+import javax.swing.event.HyperlinkEvent;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -60,17 +72,16 @@ import java.util.Set;
  * @since 10/29/13
  */
 public class ImportMavenRepositoriesTask implements Runnable {
-  @NotNull
-  private final static MavenRemoteRepository mavenCentralRemoteRepository;
 
-  static {
-    mavenCentralRemoteRepository = new MavenRemoteRepository("central", null, "http://repo1.maven.org/maven2/", null, null, null);
-  }
+  private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
+  @NotNull
+  private final MavenRemoteRepository mavenCentralRemoteRepository;
 
   private final Project myProject;
 
   public ImportMavenRepositoriesTask(Project project) {
     myProject = project;
+    mavenCentralRemoteRepository = new MavenRemoteRepository("central", null, "http://repo1.maven.org/maven2/", null, null, null);
   }
 
   @Override
@@ -83,9 +94,10 @@ public class ImportMavenRepositoriesTask implements Runnable {
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     for (Module module : moduleManager.getModules()) {
-      final String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-      final String modulePath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-      if (!GradleConstants.SYSTEM_ID.getId().equals(externalSystemId) || modulePath == null) continue;
+      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
+
+      final String modulePath = ExternalSystemApiUtil.getExternalProjectPath(module);
+      if (modulePath == null) continue;
 
       String buildScript = FileUtil.findFileInProvidedPath(modulePath, GradleConstants.DEFAULT_SCRIPT_NAME);
       if (StringUtil.isEmpty(buildScript)) continue;
@@ -124,17 +136,60 @@ public class ImportMavenRepositoriesTask implements Runnable {
 
     if (mavenRemoteRepositories == null || mavenRemoteRepositories.isEmpty()) return;
 
+    // register imported maven repository URLs but do not force to download the index
+    // the index can be downloaded and/or updated later using Maven Configuration UI (Settings -> Build, Execution, Deployment -> Build tools -> Maven -> Repositories)
     MavenRepositoriesHolder.getInstance(myProject).update(mavenRemoteRepositories);
-
     MavenProjectIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(new Consumer<List<MavenIndex>>() {
       @Override
       public void consume(List<MavenIndex> indexes) {
-        if(myProject.isDisposed()) return;
-        for (MavenIndex mavenIndex : indexes) {
-          if (mavenIndex.getUpdateTimestamp() == -1 &&
-              MavenRepositoriesHolder.getInstance(myProject).contains(mavenIndex.getRepositoryId())) {
-            MavenProjectIndicesManager.getInstance(myProject).scheduleUpdate(Collections.singletonList(mavenIndex));
+        if (myProject.isDisposed()) return;
+
+        final List<String> repositoriesWithEmptyIndex = ContainerUtil.mapNotNull(indexes, new Function<MavenIndex, String>() {
+          @Override
+          public String fun(MavenIndex index) {
+            return index.getUpdateTimestamp() == -1 &&
+                   MavenRepositoriesHolder.getInstance(myProject).contains(index.getRepositoryPathOrUrl())
+                   ? index.getRepositoryPathOrUrl() : null;
           }
+        });
+
+        if (!repositoriesWithEmptyIndex.isEmpty()) {
+          final NotificationData notificationData = new NotificationData(
+            GradleBundle.message("gradle.integrations.maven.notification.not_updated_repository.title"),
+            "\n<br>" + GradleBundle.message("gradle.integrations.maven.notification.not_updated_repository.text", StringUtil.join(repositoriesWithEmptyIndex, "<br>")),
+            NotificationCategory.WARNING,
+            NotificationSource.PROJECT_SYNC);
+          notificationData.setBalloonNotification(true);
+          notificationData.setBalloonGroup(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
+          notificationData.setListener("#open", new NotificationListener.Adapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+              ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenRepositoriesConfigurable.class);
+            }
+          });
+
+          notificationData.setListener("#disable", new NotificationListener.Adapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+              final int result =
+                Messages.showYesNoDialog(myProject,
+                                         "Notification will be disabled for all projects.\n\n" +
+                                         "Settings | Appearance & Behavior | Notifications | " +
+                                         UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP +
+                                         "\ncan be used to configure the notification.",
+                                         "Unindexed Maven Repositories Gradle Detection",
+                                         "Disable Notification", CommonBundle.getCancelButtonText(),
+                                         Messages.getWarningIcon());
+              if (result == Messages.YES) {
+                NotificationsConfigurationImpl.getInstanceImpl().changeSettings(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP,
+                                                                                NotificationDisplayType.NONE, false, false);
+
+                notification.hideBalloon();
+              }
+            }
+          });
+
+          ExternalSystemNotificationManager.getInstance(myProject).showNotification(GradleConstants.SYSTEM_ID, notificationData);
         }
       }
     });
@@ -150,17 +205,16 @@ public class ImportMavenRepositoriesTask implements Runnable {
         if (call == null || call.getClosureArguments().length != 1) return null;
 
         GrExpression expression = call.getInvokedExpression();
-        return expression != null && ArrayUtil.contains(expression.getText(), blockNames) ? call.getClosureArguments()[0] : null;
+        return ArrayUtil.contains(expression.getText(), blockNames) ? call.getClosureArguments()[0] : null;
       }
     });
   }
 
   @NotNull
-  private static Collection<? extends MavenRemoteRepository> findMavenRemoteRepositories(@Nullable GrClosableBlock repositoriesBlock) {
+  private Collection<? extends MavenRemoteRepository> findMavenRemoteRepositories(@Nullable GrClosableBlock repositoriesBlock) {
     Set<MavenRemoteRepository> myRemoteRepositories = ContainerUtil.newHashSet();
     for (GrMethodCall repo : PsiTreeUtil
       .getChildrenOfTypeAsList(repositoriesBlock, GrMethodCall.class)) {
-      if (repo.getInvokedExpression() == null) continue;
 
       final String expressionText = repo.getInvokedExpression().getText();
       if ("mavenCentral".equals(expressionText)) {
@@ -185,7 +239,6 @@ public class ImportMavenRepositoriesTask implements Runnable {
           GrApplicationStatement statement = applicationStatementList.get(0);
           if (statement == null) continue;
           GrExpression expression = statement.getInvokedExpression();
-          if (expression == null) continue;
 
           if ("url".equals(expression.getText())) {
             URI urlArgumentValue = resolveUriFromSimpleExpression(statement.getExpressionArguments()[0]);

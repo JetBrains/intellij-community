@@ -18,5 +18,5 @@ package com.intellij.xdebugger.frame;
 /**
  * @author Konstantin Bulenkov
  */
-public interface XNearestSourcePosition extends XNavigatable {
+public interface XNearestSourcePosition extends XInlineSourcePosition {
 }

@@ -83,8 +83,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     if (!ApplicationManager.getApplication().isUnitTestMode() &&
         myVariableRenamer.hasAnythingToRename()) {
       final AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(myProject, myVariableRenamer);
-      dialog.show();
-      if (!dialog.isOK()) return false;
+      if (!dialog.showAndGet()) {
+        return false;
+      }
 
       final List<PsiNamedElement> variables = myVariableRenamer.getElements();
       for (final PsiNamedElement namedElement : variables) {
@@ -523,9 +524,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiReturnStatement) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-      assert method != null;
-      constrainingType = method.getReturnType();
+      final PsiElement el = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
+      constrainingType = el instanceof PsiMethod ? ((PsiMethod)el).getReturnType() 
+                                                 : el instanceof PsiLambdaExpression ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)el) : null;
     }
     else if (parent instanceof PsiAssignmentExpression) {
       constrainingType = ((PsiAssignmentExpression)parent).getLExpression().getType();

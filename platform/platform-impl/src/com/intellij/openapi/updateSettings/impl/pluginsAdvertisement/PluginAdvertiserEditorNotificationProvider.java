@@ -118,7 +118,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               try {
-                myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
+                myAllPlugins = RepositoryHelper.loadPlugins(indicator);
                 for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
                   if (plugins.contains(new PluginsAdvertiser.Plugin(loadedPlugin.getPluginId(), null, false))) {
                     myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
@@ -131,9 +131,9 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
             @Override
             public void onSuccess() {
-              final PluginsAdvertiserDialog advertiserDialog = new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins);
-              advertiserDialog.show();
-              if (advertiserDialog.isOK()) {
+              final PluginsAdvertiserDialog advertiserDialog =
+                new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins);
+              if (advertiserDialog.showAndGet()) {
                 myEnabledExtensions.add(extension);
                 myNotifications.updateAllNotifications();
               }

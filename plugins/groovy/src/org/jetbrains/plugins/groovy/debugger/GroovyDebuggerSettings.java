@@ -15,9 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.debugger;
 
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.openapi.util.Getter;
@@ -33,16 +30,6 @@ import java.util.Collections;
 
 import static java.util.Collections.singletonList;
 
-/**
- * @author ilyas
- */
-@State(
-  name = "GroovyDebuggerSettings",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/groovy_debug.xml"
-    )}
-)
 public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSettings> implements Getter<GroovyDebuggerSettings> {
   public Boolean DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS = true;
   public boolean ENABLE_GROOVY_HOTSWAP = Registry.is("enable.groovy.hotswap");

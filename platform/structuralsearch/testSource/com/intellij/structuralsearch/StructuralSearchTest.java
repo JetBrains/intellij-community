@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.idea.Bombed;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -589,6 +588,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1,
       findMatchesCount(s,s2_2)
     );
+
+    String pattern3 = "\"'String\"";
+    assertEquals("String literal", 1, findMatchesCount(s, pattern3));
+
+    String pattern4 = "\"test\"";
+    String source = "@SuppressWarnings(\"test\") class A {" +
+                    "  @SuppressWarnings({\"other\", \"test\"}) String field;" +
+                    "}";
+    assertEquals("String literal in annotation", 2, findMatchesCount(source, pattern4));
   }
 
   public void testCovariantArraySearch() {
@@ -1211,15 +1219,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       2
     );
 
-    options.setDistinct(true);
-    assertEquals(
-      "case sensitive disitinct match",
-      findMatchesCount(s129,s130),
-      1
-    );
-
-    options.setDistinct(false);
-
     final String s133 = "class C { int a; int A() { a = 1; }} void c(int a) { a = 2; }";
     final String s133_2 = "class C { int a() {} int A() { a(1); }}";
     final String s134 = "a";
@@ -1253,6 +1252,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       "parameterized cast match",
       findMatchesCount(s81,s82_3),
       1
+    );
+
+    assertEquals(
+      "parameterized symbol without variables matching",
+      findMatchesCount(s81, "S<T>"),
+      2
     );
 
     assertEquals(
@@ -1326,6 +1331,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s81_5,s82_9),
       1
     );
+    assertEquals(
+      "no exception on searching for diamond operator",
+      findMatchesCount(s81_5, "new 'Type<>('_Param)"),
+      0
+    );
+
     String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; }";
     String target1 = "java.util.Comparator 'a;";
     assertEquals(
@@ -1418,6 +1429,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     // typed var with instanceof
     assertEquals("typed instanceof",findMatchesCount(s65,s66),1);
+
+    assertEquals("don't throw exception on incomplete instanceof expression", findMatchesCount(s65, "'_T instanceof"), 2);
 
     // typed vars with arrays
     assertEquals("typed pattern with array",findMatchesCount(s23,s24_1),2);
@@ -2129,8 +2142,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       assertFalse("spaces around reg exp check",false);
     } catch(MalformedPatternException ex) {}
 
-    options.setDistinct(true);
-
     final String s101 = "class A { void b() { String d; String e; String[] f; f.length=1; f.length=1; } }";
     final String s102 = "'_:[ref('T)] '_;";
 
@@ -2139,8 +2150,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s101,s102),
       1
     );
-
-    options.setDistinct(false);
 
     final String s103 = " a=1; ";
     final String s104 = "'T:{ ;";
@@ -2984,5 +2993,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}}";
     String pattern = "new Foo.Bar();";
     assertEquals("should find qualified with outer class", 1, findMatchesCount(source, pattern));
+  }
+
+  public void testFindCommentsEverywhere() {
+    String source = "abstract class A<T/*1*/> implements java.util.List<T/*2*/>, /*3*/java.io.Serializable {" +
+                    "  @SuppressWarnings({\"one\",/*10*/ \"two\"})" +
+                    "  public /*11*/ static void m(/*12*/) {" +
+                    "    System./*4*/out.println(/*5*/);" +
+                    "    A<String/*6*/> a1 = new A(){};" +
+                    "    int i = 1 + /*7*/ + 2;" +
+                    "    try (java.io.FileInputStream /*8*/in = new java.io.FileInputStream(\"name\")) {" +
+                    "    } catch (java.lang./*9*/Exception e) {" +
+                    "    }" +
+                    "  }" +
+                    "}";
+    String pattern = "/*$Text$*/";
+    assertEquals("should find comments in all the right places", 12, findMatchesCount(source, pattern));
   }
 }

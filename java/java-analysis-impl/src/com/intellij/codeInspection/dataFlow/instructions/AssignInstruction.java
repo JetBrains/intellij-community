@@ -28,13 +28,17 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiExpression;
+import org.jetbrains.annotations.Nullable;
 
 public class AssignInstruction extends Instruction {
   private final PsiExpression myRExpression;
+  @Nullable private final DfaValue myAssignedValue;
 
-  public AssignInstruction(PsiExpression RExpression) {
+  public AssignInstruction(PsiExpression RExpression, @Nullable DfaValue assignedValue) {
     myRExpression = RExpression;
+    myAssignedValue = assignedValue;
   }
 
   @Override
@@ -44,6 +48,11 @@ public class AssignInstruction extends Instruction {
 
   public PsiExpression getRExpression() {
     return myRExpression;
+  }
+
+  @Nullable
+  public DfaValue getAssignedValue() {
+    return myAssignedValue;
   }
 
   public String toString() {

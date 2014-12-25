@@ -82,6 +82,7 @@ public class ControlFlowGraph implements CodeConstants {
   }
 
   public String toString() {
+    if (blocks == null) return "Empty";
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 

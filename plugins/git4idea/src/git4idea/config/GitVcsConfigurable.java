@@ -26,6 +26,8 @@ import javax.swing.*;
 
 public class GitVcsConfigurable implements Configurable {
 
+  public static final String DISPLAY_NAME = GitVcs.NAME;
+
   private final Project myProject;
   private final GitVcsSettings mySettings;
   @NotNull private final GitSharedSettings mySharedSettings;
@@ -40,7 +42,7 @@ public class GitVcsConfigurable implements Configurable {
   @NotNull
   @Override
   public String getDisplayName() {
-    return GitVcs.NAME;
+    return DISPLAY_NAME;
   }
 
   @Nullable

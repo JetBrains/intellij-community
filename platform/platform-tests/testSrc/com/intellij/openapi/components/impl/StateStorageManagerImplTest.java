@@ -41,7 +41,7 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
     super.setUp();
     myStateStorageManager = new StateStorageManagerImpl(null, "foo", null, ApplicationManager.getApplication().getPicoContainer()) {
       @Override
-      protected StorageData createStorageData(@NotNull String storageSpec) {
+      protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
         throw new UnsupportedOperationException("Method createStorageData not implemented in " + getClass());
       }
 
@@ -49,11 +49,6 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
       @Override
       protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
         throw new UnsupportedOperationException("Method getOldStorageSpec not implemented in " + getClass());
-      }
-
-      @Override
-      protected String getVersionsFilePath() {
-        return null;
       }
     };
     myStateStorageManager.addMacro("$MACRO1$", "/temp/m1");

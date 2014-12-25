@@ -91,7 +91,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       final PsiClassType.ClassResolveResult sResult = ((PsiClassType)myS).resolveGenerics();
       final PsiClass tClass = tResult.getElement();
       //equal erasure
-      if (tClass != null && tClass.equals(sResult.getElement())) {
+      if (tClass != null && tClass.getManager().areElementsEquivalent(tClass, sResult.getElement())) {
         final PsiSubstitutor tSubstitutor = tResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = sResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : tClass.getTypeParameters()) {

@@ -149,6 +149,11 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryBoxingVisitor();
   }
@@ -157,9 +162,6 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       super.visitNewExpression(expression);
       final PsiType constructorType = expression.getType();
       if (constructorType == null) {
@@ -199,9 +201,6 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       super.visitMethodCallExpression(expression);
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();

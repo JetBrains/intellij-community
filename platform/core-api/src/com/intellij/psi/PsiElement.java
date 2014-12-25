@@ -516,6 +516,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * for example, PSI elements created for the watch expressions in the debugger.
    * Non-physical elements do not generate tree change events.
    * Also, {@link PsiDocumentManager#getDocument(PsiFile)} returns null for non-physical elements.
+   * Not to be confused with {@link FileViewProvider#isPhysical()}.
    *
    * @return true if the element is physical, false otherwise.
    */

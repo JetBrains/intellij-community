@@ -29,9 +29,17 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
     myHost = host;
   }
 
+  /**
+   * Add decoded and unescaped characters from the host element to {@code outChars} buffer. If it's impossible to properly decode some chars
+   * from the specified range (e.g. if the range starts or ends inside escaped sequence), decode the longest acceptable prefix of the range and return {@code false}
+   * @param rangeInsideHost range to be decoded. It's guarantied to be inside {@link #getRelevantTextRange()}
+   * @param outChars buffer for output chars. Use {@code append} methods only, <strong>it's forbidden to modify or remove existing characters</strong>
+   * @return {@code true} if whole range was successfully decoded, {@code false} otherwise
+   */
   public abstract boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars);
 
   /**
+   * This method is called only after {@link #decode}, so it's possible to prepare necessary data in {@link #decode} and then use it here.
    * @param offsetInDecoded offset in the parsed injected file
    * @param rangeInsideHost range where injection is performed,
    *   E.g. if some language fragment xyz was injected into string literal expression "xyz", then rangeInsideHost = (1,4)
@@ -53,11 +61,17 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
    */
   public abstract int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost);
 
+  /**
+   * @return range inside the host where injection can be performed; usually it's range of text without boundary quotes
+   */
   @NotNull
   public TextRange getRelevantTextRange() {
     return TextRange.from(0, myHost.getTextLength());
   }
 
+  /**
+   * @return {@code true} if the host cannot accept multiline content, {@code false} otherwise
+   */
   public abstract boolean isOneLine();
 
   public static <T extends PsiLanguageInjectionHost> LiteralTextEscaper<T> createSimple(T element) {

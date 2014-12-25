@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -22,52 +23,53 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Set;
 
 public class SwitchExprent extends Exprent {
 
   private Exprent value;
-
   private List<List<ConstExprent>> caseValues = new ArrayList<List<ConstExprent>>();
 
-  {
-    this.type = EXPRENT_SWITCH;
-  }
-
-  public SwitchExprent(Exprent value) {
+  public SwitchExprent(Exprent value, Set<Integer> bytecodeOffsets) {
+    super(EXPRENT_SWITCH);
     this.value = value;
+
+    addBytecodeOffsets(bytecodeOffsets);
   }
 
+  @Override
   public Exprent copy() {
-    SwitchExprent swexpr = new SwitchExprent(value.copy());
+    SwitchExprent swExpr = new SwitchExprent(value.copy(), bytecode);
 
     List<List<ConstExprent>> lstCaseValues = new ArrayList<List<ConstExprent>>();
     for (List<ConstExprent> lst : caseValues) {
       lstCaseValues.add(new ArrayList<ConstExprent>(lst));
     }
-    swexpr.setCaseValues(lstCaseValues);
+    swExpr.setCaseValues(lstCaseValues);
 
-    return swexpr;
+    return swExpr;
   }
 
+  @Override
   public VarType getExprType() {
     return value.getExprType();
   }
 
+  @Override
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
 
     result.addMinTypeExprent(value, VarType.VARTYPE_BYTECHAR);
     result.addMaxTypeExprent(value, VarType.VARTYPE_INT);
 
-    VarType valtype = value.getExprType();
+    VarType valType = value.getExprType();
     for (List<ConstExprent> lst : caseValues) {
       for (ConstExprent expr : lst) {
         if (expr != null) {
-          VarType casetype = expr.getExprType();
-          if (!casetype.equals(valtype)) {
-            valtype = VarType.getCommonSupertype(casetype, valtype);
-            result.addMinTypeExprent(value, valtype);
+          VarType caseType = expr.getExprType();
+          if (!caseType.equals(valType)) {
+            valType = VarType.getCommonSupertype(caseType, valType);
+            result.addMinTypeExprent(value, valType);
           }
         }
       }
@@ -76,6 +78,7 @@ public class SwitchExprent extends Exprent {
     return result;
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<Exprent>();
     lst.add(value);
@@ -83,11 +86,19 @@ public class SwitchExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     tracer.addMapping(bytecode);
-    return "switch(" + value.toJava(indent, tracer) + ")";
+    return value.toJava(indent, tracer).enclose("switch(", ")");
   }
 
+  @Override
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
+    if (oldExpr == value) {
+      value = newExpr;
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) {
       return true;
@@ -99,12 +110,6 @@ public class SwitchExprent extends Exprent {
 
     SwitchExprent sw = (SwitchExprent)o;
     return InterpreterUtil.equalObjects(value, sw.getValue());
-  }
-
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-    if (oldexpr == value) {
-      value = newexpr;
-    }
   }
 
   public Exprent getValue() {

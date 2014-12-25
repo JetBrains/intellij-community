@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.util.containers.StringInterner;
@@ -520,8 +521,23 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
       qualifierExpression = ((PsiReferenceExpression) qualifierExpression).getQualifierExpression();
     }
+
     PsiElement resolvedExpression = expression.resolve();
-    if (resolvedExpression instanceof PsiVariable) {
+    if (resolvedExpression instanceof PsiEnumConstant) {
+      PsiReferenceExpression qualifier = (PsiReferenceExpression)expression.getQualifier();
+      if (qualifier == null) return;
+      PsiElement element = qualifier.resolve();
+      if (!(element instanceof PsiClass)) return;
+      String name = ClassUtil.getJVMClassName((PsiClass)element);
+      try {
+        Class aClass = Class.forName(name);
+        myResult = Enum.valueOf(aClass, ((PsiEnumConstant)resolvedExpression).getName());
+      }
+      catch (Throwable ignore) {
+      }
+      return;
+    }
+    else if (resolvedExpression instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable) resolvedExpression;
       // avoid cycles
       if (myVisitedVars != null && myVisitedVars.contains(variable)) {

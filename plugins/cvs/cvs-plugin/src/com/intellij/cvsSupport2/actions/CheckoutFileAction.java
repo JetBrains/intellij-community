@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,9 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     List<FilePath> files = Arrays.asList(filesArray);
     if (CvsVcs2.getInstance(project).getCheckoutOptions().getValue() || OptionsDialog.shiftIsPressed(context.getModifiers())) {
       CheckoutFileDialog checkoutFileDialog = new CheckoutFileDialog(project, files);
-      checkoutFileDialog.show();
-      if (!checkoutFileDialog.isOK()) return CvsHandler.NULL;
+      if (!checkoutFileDialog.showAndGet()) {
+        return CvsHandler.NULL;
+      }
     }
 
     return CommandCvsHandler.createCheckoutFileHandler(filesArray, CvsConfiguration.getInstance(project),

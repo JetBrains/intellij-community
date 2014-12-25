@@ -61,6 +61,9 @@ public class FunctionalInterfaceParameterizationUtil {
     return psiClassType instanceof PsiClassType ? getNonWildcardParameterization((PsiClassType)psiClassType) : null;
   }
 
+  /**
+   * 18.5.3. Functional Interface Parameterization Inference 
+   */
   private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr) {
     final PsiParameter[] lambdaParams = expr.getParameterList().getParameters();
     if (psiClassType instanceof PsiIntersectionType) {
@@ -115,15 +118,19 @@ public class FunctionalInterfaceParameterizationUtil {
 
       final PsiClassType parameterization = elementFactory.createType(psiClass, newTypeParameters);
 
+      //If F<A'1, ..., A'm> is not a well-formed type (that is, the type arguments are not within their bounds), 
+      // or if F<A'1, ..., A'm> is not a subtype of F<A1, ..., Am>, no valid parameterization exists.
       if (!isWellFormed(psiClass, typeParameters, newTypeParameters)) {
         return null;
       }
 
+      //Otherwise, the inferred parameterization is either F<A'1, ..., A'm>, if all the type arguments are types,
       if (!TypeConversionUtil.containsWildcards(parameterization) && psiClassType.isAssignableFrom(parameterization)) {
         return parameterization;
       }
 
-      return getNonWildcardParameterization((PsiClassType)psiClassType);
+      //or the non-wildcard parameterization (§9.8) of F<A'1, ..., A'm>, if one or more type arguments are still wildcards.
+      return getNonWildcardParameterization(parameterization);
     }
     return null;
   }

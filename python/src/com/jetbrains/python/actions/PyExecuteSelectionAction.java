@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,17 +190,25 @@ public class PyExecuteSelectionAction extends AnAction {
   private static Collection<RunContentDescriptor> getConsoles(Project project) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
-    if (toolWindow != null) {
+    if (toolWindow != null && toolWindow.getToolWindow().isVisible()) {
       return toolWindow.getConsoleContentDescriptors();
     }
 
-    return ExecutionHelper.findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
-      @NotNull
-      @Override
-      public Boolean fun(RunContentDescriptor dom) {
-        return dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom);
-      }
-    });
+    Collection<RunContentDescriptor> descriptors =
+      ExecutionHelper.findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
+        @NotNull
+        @Override
+        public Boolean fun(RunContentDescriptor dom) {
+          return dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom);
+        }
+      });
+
+    if (descriptors.isEmpty() && toolWindow != null) {
+      return toolWindow.getConsoleContentDescriptors();
+    }
+    else {
+      return descriptors;
+    }
   }
 
   private static boolean isAlive(RunContentDescriptor dom) {

@@ -97,7 +97,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
       LOG.info(e);
     }
     if(sourcePosition == null) {
-      throw new NoDataException();
+      throw NoDataException.INSTANCE;
     }
     return sourcePosition;
   }
@@ -135,7 +135,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   private void checkSourcePositionFileType(final SourcePosition classPosition) throws NoDataException {
     final FileType fileType = classPosition.getFile().getFileType();
     if(!myFileTypes.contains(fileType)) {
-      throw new NoDataException();
+      throw NoDataException.INSTANCE;
     }
   }
 

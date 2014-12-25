@@ -20,12 +20,14 @@ import com.intellij.execution.Location;
 import com.intellij.execution.junit2.events.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.info.TestInfo;
+import com.intellij.execution.junit2.states.ComparisonFailureState;
 import com.intellij.execution.junit2.states.IgnoredState;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -325,10 +327,19 @@ public class TestProxy extends AbstractTestProxy {
 
   @Override
   @Nullable
-  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
-    if (myState instanceof AssertEqualsDiffViewerProvider) {
-      return (AssertEqualsDiffViewerProvider)myState;
+  public DiffHyperlink getDiffViewerProvider() {
+    if (myState instanceof ComparisonFailureState) {
+      return ((ComparisonFailureState)myState).getHyperlink();
     }
+
+    for (TestProxy proxy : getChildren()) {
+      if (!proxy.isDefect()) continue;
+      final DiffHyperlink provider = proxy.getDiffViewerProvider();
+      if (provider != null) {
+        return provider;
+      }
+    }
+
     return null;
   }
 }

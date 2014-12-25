@@ -66,6 +66,11 @@
   <item name="org.apache.velocity.runtime.parser.node.ASTDirective java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.parser.node.ASTDirective java.lang.String getDirectiveName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTDivNode java.lang.Number perform(java.lang.Number, java.lang.Number, org.apache.velocity.context.InternalContextAdapter) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -83,7 +88,7 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTElseStatement boolean evaluate(org.apache.velocity.context.InternalContextAdapter)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+      <val val="value=&quot;!null-&gt;true;null-&gt;true&quot;,pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTElseStatement java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
@@ -133,7 +138,7 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTFalse boolean evaluate(org.apache.velocity.context.InternalContextAdapter)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+      <val val="value=&quot;!null-&gt;false;null-&gt;false&quot;,pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTFalse java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
@@ -141,6 +146,11 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTFalse java.lang.Object value(org.apache.velocity.context.InternalContextAdapter) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.ASTFalse java.lang.Object value(org.apache.velocity.context.InternalContextAdapter)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTFloatingPointLiteral java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -152,6 +162,11 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTFloatingPointLiteral java.lang.Object value(org.apache.velocity.context.InternalContextAdapter) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.ASTFloatingPointLiteral java.lang.Object value(org.apache.velocity.context.InternalContextAdapter)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTGENode java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -187,6 +202,11 @@
   <item name="org.apache.velocity.runtime.parser.node.ASTIfStatement void process(org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.ParserVisitor) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.velocity.runtime.parser.node.ASTIfStatement void process(org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.ParserVisitor)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTIncludeStatement java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -217,6 +237,11 @@
   <item name="org.apache.velocity.runtime.parser.node.ASTIntegerLiteral java.lang.Object value(org.apache.velocity.context.InternalContextAdapter) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.velocity.runtime.parser.node.ASTIntegerLiteral java.lang.Object value(org.apache.velocity.context.InternalContextAdapter)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTIntegerRange java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -243,7 +268,7 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTMathNode java.lang.Object handleSpecial(java.lang.Object, java.lang.Object, org.apache.velocity.context.InternalContextAdapter)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;null;_,!null,_-&gt;null;_,_,!null-&gt;null;_,_,null-&gt;null;_,null,_-&gt;null;null,_,_-&gt;null&quot;"/>
+      <val val="value=&quot;!null,_,_-&gt;null;_,!null,_-&gt;null;_,_,!null-&gt;null;_,_,null-&gt;null;_,null,_-&gt;null;null,_,_-&gt;null&quot;,pure=true"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -280,6 +305,11 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTMethod java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.ASTMethod java.lang.String getMethodName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTMethod.MethodCacheKey MethodCacheKey(java.lang.String, java.lang.Class[]) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -351,10 +381,18 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTReference java.lang.String getDollarBang()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTReference java.lang.String getNullString(org.apache.velocity.context.InternalContextAdapter) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.ASTReference java.lang.String getRootString()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTReference java.lang.String printClass(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -374,6 +412,11 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTSetDirective java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.ASTStringLiteral boolean isConstant()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTStringLiteral java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -450,7 +493,7 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTTrue boolean evaluate(org.apache.velocity.context.InternalContextAdapter)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+      <val val="value=&quot;!null-&gt;true;null-&gt;true&quot;,pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTTrue java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
@@ -458,6 +501,11 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTTrue java.lang.Object value(org.apache.velocity.context.InternalContextAdapter) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.ASTTrue java.lang.Object value(org.apache.velocity.context.InternalContextAdapter)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTVariable java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -467,6 +515,16 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTprocess java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.AbstractExecutor boolean isAlive()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.AbstractExecutor java.lang.reflect.Method getMethod()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.BooleanPropertyExecutor BooleanPropertyExecutor(org.apache.velocity.runtime.RuntimeLogger, org.apache.velocity.util.introspection.Introspector, java.lang.Class, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -491,6 +549,11 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.MapSetExecutor java.lang.Object execute(java.lang.Object, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.MathUtils MathUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.MathUtils boolean isInteger(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -560,6 +623,11 @@
   <item name="org.apache.velocity.runtime.parser.node.MathUtils java.math.BigInteger toBigInteger(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.parser.node.NodeUtils NodeUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.runtime.parser.node.NodeUtils java.lang.String interpolate(java.lang.String, org.apache.velocity.context.Context) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -578,26 +646,76 @@
   <item name="org.apache.velocity.runtime.parser.node.PropertyExecutor java.lang.Object execute(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.velocity.runtime.parser.node.PropertyExecutor org.apache.velocity.util.introspection.Introspector getIntrospector()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.runtime.parser.node.PropertyExecutor void discover(java.lang.Class, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.PutExecutor java.lang.Object execute(java.lang.Object, java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.velocity.runtime.parser.node.SetExecutor boolean isAlive()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SetExecutor java.lang.reflect.Method getMethod()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.runtime.parser.node.SetPropertyExecutor java.lang.Object execute(java.lang.Object, java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SetPropertyExecutor org.apache.velocity.util.introspection.Introspector getIntrospector()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.SimpleNode boolean evaluate(org.apache.velocity.context.InternalContextAdapter) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.SimpleNode boolean evaluate(org.apache.velocity.context.InternalContextAdapter)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+      <val val="value=&quot;!null-&gt;false;null-&gt;false&quot;,pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode boolean isInvalid()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.SimpleNode boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;_,null-&gt;true;null,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode int getColumn()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode int getInfo()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode int getLine()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode int getType()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode int jjtGetNumChildren()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.SimpleNode java.lang.Object childrenAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object)">
@@ -613,7 +731,7 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.SimpleNode java.lang.Object execute(java.lang.Object, org.apache.velocity.context.InternalContextAdapter)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;null;_,!null-&gt;null;_,null-&gt;null;null,_-&gt;null&quot;"/>
+      <val val="value=&quot;!null,_-&gt;null;_,!null-&gt;null;_,null-&gt;null;null,_-&gt;null&quot;,pure=true"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -630,7 +748,7 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.SimpleNode java.lang.Object value(org.apache.velocity.context.InternalContextAdapter)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+      <val val="value=&quot;!null-&gt;null;null-&gt;null&quot;,pure=true"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -640,10 +758,40 @@
   <item name="org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String getLocation(org.apache.velocity.context.InternalContextAdapter)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String getTemplateName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String toString(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String toString(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode org.apache.velocity.runtime.RuntimeServices getRuntimeServices()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode org.apache.velocity.runtime.parser.Token getFirstToken()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode org.apache.velocity.runtime.parser.Token getLastToken()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode org.apache.velocity.runtime.parser.node.Node jjtGetChild(int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.parser.node.SimpleNode org.apache.velocity.runtime.parser.node.Node jjtGetParent()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
 </root>

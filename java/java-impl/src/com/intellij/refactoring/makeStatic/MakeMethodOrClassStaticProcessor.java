@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,8 +102,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       MultiMap<PsiElement, String> conflicts = getConflictDescriptions(usagesIn);
       if (conflicts.size() > 0) {
         ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
-        conflictsDialog.show();
-        if (!conflictsDialog.isOK()) {
+        if (!conflictsDialog.showAndGet()) {
           if (conflictsDialog.isShowConflicts()) prepareSuccessful();
           return false;
         }
@@ -112,16 +111,21 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         refUsages.set(filterInternalUsages(usagesIn));
       }
     }
-    refUsages.set(filterOverriding(usagesIn));
-
+    final ArrayList<UsageInfo> toMakeStatic = new ArrayList<UsageInfo>();
+    refUsages.set(filterOverriding(usagesIn, toMakeStatic));
+    if (!findAdditionalMembers(toMakeStatic)) return false;
     prepareSuccessful();
     return true;
   }
 
-  private static UsageInfo[] filterOverriding(UsageInfo[] usages) {
+  protected boolean findAdditionalMembers(ArrayList<UsageInfo> toMakeStatic) {return true;}
+
+  private static UsageInfo[] filterOverriding(UsageInfo[] usages, List<UsageInfo> suggestToMakeStatic) {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
-      if (!(usage instanceof OverridingMethodUsageInfo)) {
+      if (usage instanceof ChainedCallUsageInfo) {
+        suggestToMakeStatic.add(usage);
+      } else if (!(usage instanceof OverridingMethodUsageInfo)) {
         result.add(usage);
       }
     }
@@ -254,14 +258,18 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
         result.add(new UsageInfo(element));
       }
+
+      processExternalReference(element, method, result);
     }
   }
 
+  protected void processExternalReference(PsiElement element, PsiMethod method, ArrayList<UsageInfo> result) {}
+
   //should be called before setting static modifier
-  protected void setupTypeParameterList() throws IncorrectOperationException {
-    final PsiTypeParameterList list = myMember.getTypeParameterList();
+  protected void setupTypeParameterList(T member) throws IncorrectOperationException {
+    final PsiTypeParameterList list = member.getTypeParameterList();
     assert list != null;
-    final PsiTypeParameterList newList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(myMember);
+    final PsiTypeParameterList newList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(member);
     if (newList != null) {
       list.replace(newList);
     }

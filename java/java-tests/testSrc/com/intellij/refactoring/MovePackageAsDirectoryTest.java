@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
+import com.intellij.refactoring.rename.RenamePsiPackageProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,21 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
 
   public void testMovePackage() throws Exception {
     doTest(createAction("pack1", "target"));
+  }
+
+  public void testRenamePackage() throws Exception {
+    final PerformAction action = new PerformAction() {
+      @Override
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+        final PsiPackage sourcePackage = psiFacade.findPackage("pack1");
+        assertNotNull(sourcePackage);
+        
+        RenamePsiPackageProcessor.createRenameMoveProcessor("pack1.pack2", sourcePackage, false, false).run();
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    };
+    doTest(action);
   }
 
   public void testMovePackageWithTxtFilesInside() throws Exception {
@@ -139,7 +155,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     });
   }
 
-  private PerformAction createAction(final String packageName, final String targetPackageName) {
+  private MyPerformAction createAction(final String packageName, final String targetPackageName) {
     return new MyPerformAction(packageName, targetPackageName);
   }
 

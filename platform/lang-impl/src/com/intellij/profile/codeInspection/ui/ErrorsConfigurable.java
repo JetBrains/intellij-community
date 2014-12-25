@@ -19,6 +19,7 @@ package com.intellij.profile.codeInspection.ui;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.Profile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface ErrorsConfigurable extends Configurable {
-  void selectProfile(final String name);
+  void selectProfile(final Profile profile);
   void selectInspectionTool(final String selectedToolShortName);
   @Nullable
   Object getSelectedObject();

@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.vcs.update;
 
-
-
 public class CommonUpdateProjectAction extends AbstractCommonUpdateAction {
   public CommonUpdateProjectAction() {
     super(ActionInfo.UPDATE, ScopeInfo.PROJECT, true);
   }
 
+  @Override
   protected boolean filterRootsBeforeAction() {
     return false;
   }

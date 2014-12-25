@@ -35,7 +35,9 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
 
   @NotNull
   public static SuppressQuickFix[] getSuppressFixes(@NotNull String shortName, @NotNull XmlSuppressionProvider provider) {
-    final String id = HighlightDisplayKey.find(shortName).getID();
+    HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null) return SuppressQuickFix.EMPTY_ARRAY;
+    final String id = key.getID();
     return new SuppressQuickFix[]{new SuppressTagStatic(id, provider), new SuppressForFile(id, provider), new SuppressAllForFile(provider)};
   }
 

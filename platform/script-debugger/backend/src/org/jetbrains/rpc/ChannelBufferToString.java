@@ -3,6 +3,8 @@ package org.jetbrains.rpc;
 import com.intellij.util.text.StringFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.CharsetUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -29,7 +31,7 @@ public final class ChannelBufferToString {
     }
   }
 
-  public static CharBuffer readIntoCharBuffer(CharBuffer charBuffer, ByteBuf buffer, int byteCount) {
+  public static CharBuffer readIntoCharBuffer(@Nullable CharBuffer charBuffer, @NotNull ByteBuf buffer, int byteCount) {
     CharsetDecoder decoder = CharsetUtil.getDecoder(CharsetUtil.UTF_8);
     ByteBuffer in = buffer.nioBuffer(buffer.readerIndex(), byteCount);
     if (charBuffer == null) {
@@ -51,5 +53,12 @@ public final class ChannelBufferToString {
 
     buffer.skipBytes(byteCount);
     return charBuffer;
+  }
+
+  public static void writeIntAsAscii(int value, @NotNull ByteBuf buffer) {
+    String string = Integer.toString(value);
+    for (int i = 0; i < string.length(); i++) {
+      buffer.writeByte(string.charAt(i));
+    }
   }
 }

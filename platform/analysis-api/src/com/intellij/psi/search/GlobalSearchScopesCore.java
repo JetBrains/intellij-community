@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -86,6 +88,12 @@ public class GlobalSearchScopesCore {
     @Override
     public String getDisplayName() {
       return mySet.getName();
+    }
+
+    @NotNull
+    @Override
+    public Project getProject() {
+      return super.getProject();
     }
 
     @Override
@@ -255,6 +263,18 @@ public class GlobalSearchScopesCore {
       }
       return super.uniteWith(scope);
     }
+
+    @NotNull
+    @Override
+    public Project getProject() {
+      return super.getProject();
+    }
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return "Directory '" + myDirectory.getName() + "'";
+    }
   }
 
   static class DirectoriesScope extends GlobalSearchScope {
@@ -265,6 +285,9 @@ public class GlobalSearchScopesCore {
       super(project);
       myWithSubdirectories = withSubdirectories;
       myDirectories = directories;
+      if (directories.length < 2) {
+        throw new IllegalArgumentException("Expected >1 directories, but got: " + Arrays.asList(directories));
+      }
     }
 
     @Override
@@ -353,5 +376,27 @@ public class GlobalSearchScopesCore {
       }
       return super.uniteWith(scope);
     }
+
+    @NotNull
+    @Override
+    public Project getProject() {
+      return super.getProject();
+    }
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      if (myDirectories.length == 1) {
+        VirtualFile root = myDirectories[0];
+        return "Directory '" + root.getName() + "'";
+      }
+      return "Directories " + StringUtil.join(myDirectories, new Function<VirtualFile, String>() {
+        @Override
+        public String fun(VirtualFile file) {
+          return "'" + file.getName() + "'";
+        }
+      }, ", ");
+    }
+
   }
 }

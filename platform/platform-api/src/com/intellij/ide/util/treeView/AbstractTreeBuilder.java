@@ -305,16 +305,10 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().invokeLaterIfNeeded(false, new Runnable() {
       @Override
       public void run() {
-        if (updateStructure) {
-          if (forceResort) {
-            getUi().incComparatorStamp();
-          }
-
-          getUi().queueUpdate(element, true).notify(result);
+        if (updateStructure && forceResort) {
+          getUi().incComparatorStamp();
         }
-        else {
-          getUi().queueUpdate(element, false).notify(result);
-        }
+        getUi().queueUpdate(element, updateStructure).notify(result);
       }
     });
 

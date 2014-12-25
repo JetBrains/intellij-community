@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -287,8 +287,9 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
 
   private void doAddArchetype() {
     MavenAddArchetypeDialog dialog = new MavenAddArchetypeDialog(myMainPanel);
-    dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.showAndGet()) {
+      return;
+    }
 
     MavenArchetype archetype = dialog.getArchetype();
     MavenIndicesManager.getInstance().addArchetype(archetype);

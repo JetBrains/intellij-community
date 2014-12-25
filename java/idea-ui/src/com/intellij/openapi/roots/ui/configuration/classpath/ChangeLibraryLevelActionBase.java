@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,12 +80,12 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     final String libPath = baseDir != null ? baseDir.getPath() + "/lib" : "";
     final VirtualFile[] classesRoots = library.getFiles(OrderRootType.CLASSES);
     boolean allowEmptyName = isConvertingToModuleLibrary() && classesRoots.length == 1;
-    final String libraryName = allowEmptyName ? "" : StringUtil.notNullize(library.getName(), LibraryTypeServiceImpl.suggestLibraryName(classesRoots));
+    final String libraryName =
+      allowEmptyName ? "" : StringUtil.notNullize(library.getName(), LibraryTypeServiceImpl.suggestLibraryName(classesRoots));
     final LibraryTableModifiableModelProvider provider = getModifiableTableModelProvider();
     final ChangeLibraryLevelDialog dialog = new ChangeLibraryLevelDialog(getParentComponent(), myProject, myCopy,
                                                                          libraryName, libPath, allowEmptyName, provider);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return null;
     }
 
@@ -103,7 +103,8 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       }
     }
 
-    final Library copied = ((LibraryTableBase.ModifiableModelEx)provider.getModifiableModel()).createLibrary(StringUtil.nullize(dialog.getLibraryName()), library.getKind());
+    final Library copied = ((LibraryTableBase.ModifiableModelEx)provider.getModifiableModel())
+      .createLibrary(StringUtil.nullize(dialog.getLibraryName()), library.getKind());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)copied.getModifiableModel();
     LibraryEditingUtil.copyLibrary(library, copiedFiles, model);
 

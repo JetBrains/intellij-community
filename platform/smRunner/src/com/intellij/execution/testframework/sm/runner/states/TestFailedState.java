@@ -21,11 +21,12 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,7 +38,8 @@ public class TestFailedState extends AbstractState {
   public TestFailedState(@Nullable final String localizedMessage,
                          @Nullable final String stackTrace)
   {
-    myPresentationText = ContainerUtilRt.newArrayList(buildErrorPresentationText(localizedMessage, stackTrace));
+    myPresentationText =
+      ContainerUtil.createLockFreeCopyOnWriteList(Collections.singleton(buildErrorPresentationText(localizedMessage, stackTrace)));
   }
 
   public void addError(@Nullable String localizedMessage, @Nullable String stackTrace, Printer printer) {

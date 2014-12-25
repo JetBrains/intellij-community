@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,11 @@ public class NullArgumentToVariableArgMethodInspection
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NullArgumentToVariableArgVisitor();
   }
@@ -58,9 +63,6 @@ public class NullArgumentToVariableArgMethodInspection
       @NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
 
-      if (!PsiUtil.isLanguageLevel5OrHigher(call)) {
-        return;
-      }
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] args = argumentList.getExpressions();
       if (args.length == 0) {

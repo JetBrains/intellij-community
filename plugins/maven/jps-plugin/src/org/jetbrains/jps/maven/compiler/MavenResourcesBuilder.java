@@ -38,7 +38,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
     if (projectConfig == null) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Maven project configuration isn't available. Compilation of Maven projects is supported only if external build is started from an IDE."));
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Maven project configuration required for module '" + target.getModule().getName() + "' isn't available. Compilation of Maven projects is supported only if external build is started from an IDE."));
       throw new StopBuildException();
     }
 
@@ -98,7 +98,8 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         if (relPath == null) {
           continue;
         }
-        final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration(), config.outputDirectory);
+        final String outputDirectory = target.isTests() ? config.testOutputDirectory : config.outputDirectory;
+        final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration(), outputDirectory);
         if (outputDir == null) {
           continue;
         }

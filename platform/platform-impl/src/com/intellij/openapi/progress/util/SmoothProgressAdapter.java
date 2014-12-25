@@ -35,7 +35,7 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
 
   private final Alarm myStartupAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  protected ProgressIndicator myOriginal;
+  private final ProgressIndicator myOriginal;
   private final Project myProject;
 
   private volatile boolean myOriginalStarted;
@@ -201,7 +201,6 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
 
   @Override
   public final boolean isCanceled() {
-    if (super.isCanceled()) return true;
-    return myOriginalStarted && myOriginal.isCanceled();
+    return super.isCanceled() || myOriginalStarted && myOriginal.isCanceled();
   }
 }

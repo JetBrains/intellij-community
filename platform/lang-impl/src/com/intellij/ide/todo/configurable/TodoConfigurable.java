@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,8 +185,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
               TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());
               PatternDialog dialog = new PatternDialog(myPanel, pattern);
               dialog.setTitle(IdeBundle.message("title.add.todo.pattern"));
-              dialog.show();
-              if (!dialog.isOK()) {
+              if (!dialog.showAndGet()) {
                 return;
               }
               myPatterns.add(pattern);
@@ -332,8 +331,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     TodoPattern pattern = sourcePattern.clone();
     PatternDialog dialog = new PatternDialog(myPanel, pattern);
     dialog.setTitle(IdeBundle.message("title.edit.todo.pattern"));
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
     myPatterns.set(selectedIndex, pattern);

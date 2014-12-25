@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,23 +255,23 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public boolean addContentRoots() {
+  public boolean shouldAddContentRoots() {
     return myAddContentRootsCheckbox.isSelected();
   }
 
   @Override
-  public boolean addSourceRoots() {
+  public boolean shouldAddSourceRoots() {
     return myAddSourceRootsCheckbox.isSelected();
   }
 
   @Override
-  public void addContentRoots(boolean add) {
-    myAddContentRootsCheckbox.setSelected(add);
+  public void setAddContentRoots(boolean flag) {
+    myAddContentRootsCheckbox.setSelected(flag);
   }
 
   @Override
-  public void addSourceRoots(boolean add) {
-    myAddSourceRootsCheckbox.setSelected(add);
+  public void setAddSourceRoots(boolean flag) {
+    myAddSourceRootsCheckbox.setSelected(flag);
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
   private final String myFullName;
   private static String buildNameFor(final PyElement element) {
     if (element instanceof PyFunction) {
-      final TypeEvalContext context = TypeEvalContext.userInitiated(element.getContainingFile());
+      final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
       final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
       return element.getName() + "(" + StringUtil.join(parameters, new Function<PyParameter, String>() {
         @Override

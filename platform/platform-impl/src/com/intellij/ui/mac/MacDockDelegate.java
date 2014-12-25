@@ -16,7 +16,7 @@
 package com.intellij.ui.mac;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -35,7 +35,6 @@ import java.lang.reflect.Method;
  * @author Denis Fokin
  */
 public class MacDockDelegate implements SystemDock.Delegate {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacDockDelegate");
 
   private static boolean initialized = false;
@@ -57,8 +56,9 @@ public class MacDockDelegate implements SystemDock.Delegate {
     }
   }
 
+  @Override
   public void updateRecentProjectsMenu () {
-    final AnAction[] recentProjectActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
+    final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
     recentProjectsMenu.removeAll();
 
     for (final AnAction action : recentProjectActions) {

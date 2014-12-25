@@ -158,14 +158,17 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(GrReferenceTypeEnhancer.EP_NAME, new GroovyMapValueTypeEnhancer());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrTypeConverter.EP_NAME, GrTypeConverter.class);
-      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new ClosureToSamConverter());
       appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrBooleanTypeConverter());
-      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrContainerConverter());
-      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrContainerTypeConverter());
       appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrGenericTypeConverter());
+      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrClassConverter());
+      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrNullVoidConverter());
+      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrCharConverter());
       appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrNumberConverter());
       appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrStringConverter());
-      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrStringTypeConverter());
+      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrEnumConverter());
+      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrContainerTypeConverter());
+      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new ClosureToSamConverter());
+      appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrContainerConverter());
       appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GppTypeConverter());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyExpectedTypesContributor.EP_NAME, GroovyExpectedTypesContributor.class);

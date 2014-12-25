@@ -1,4 +1,9 @@
 <root>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils ExceptionUtils()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.exception.ExceptionUtils boolean isCauseMethodName(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -8,6 +13,11 @@
   <item name="org.apache.commons.lang.exception.ExceptionUtils boolean isNestedThrowable(java.lang.Throwable)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils boolean isThrowableNested()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.exception.ExceptionUtils boolean setCause(java.lang.Throwable, java.lang.Throwable) 0">
@@ -168,10 +178,25 @@
   <item name="org.apache.commons.lang.exception.NestableError java.lang.String getMessage()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.exception.NestableError java.lang.Throwable getCause()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.exception.NestableException java.lang.String getMessage()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.exception.NestableException java.lang.Throwable getCause()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.exception.NestableRuntimeException java.lang.String getMessage()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.NestableRuntimeException java.lang.Throwable getCause()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
 </root>

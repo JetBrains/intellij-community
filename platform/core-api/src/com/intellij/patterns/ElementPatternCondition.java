@@ -19,6 +19,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.Object;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,6 +44,10 @@ public class ElementPatternCondition<T> {
     myConditions.add(condition);
   }
 
+  /**
+   * @deprecated To remove in IDEA 15. Use {@link ElementPattern#accepts(Object, ProcessingContext)} instead.
+   */
+  @Deprecated
   public boolean accepts(@Nullable Object o, final ProcessingContext context) {
     if (!myInitialCondition.accepts(o, context)) return false;
     final int listSize = myConditions.size();

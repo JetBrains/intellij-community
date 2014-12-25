@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,8 @@ public class PyResolveUtil {
         final Scope scope = ControlFlowCache.getScope(scopeOwner);
         boolean found = false;
         if (name != null) {
-          final PsiElement resolved = scope.getNamedElement(name);
+          final boolean includeNestedGlobals = scopeOwner instanceof PyFile;
+          final PsiElement resolved = scope.getNamedElement(name, includeNestedGlobals);
           if (resolved != null) {
             if (!processor.execute(resolved, ResolveState.initial())) {
               found = true;

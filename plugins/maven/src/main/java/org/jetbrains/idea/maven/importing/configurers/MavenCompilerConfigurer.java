@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.importing.configurers;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -50,7 +50,7 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
       CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
 
       if (!compilerConfiguration.isExcludedFromCompilation(archetypeResourcesDir)) {
-        ExcludedEntriesConfiguration cfg = compilerConfiguration.getExcludedEntriesConfiguration();
+        ExcludesConfiguration cfg = compilerConfiguration.getExcludedEntriesConfiguration();
 
         cfg.addExcludeEntryDescription(new ExcludeEntryDescription(archetypeResourcesDir, true, false, project));
       }

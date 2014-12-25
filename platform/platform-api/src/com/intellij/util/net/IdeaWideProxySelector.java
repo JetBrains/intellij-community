@@ -22,7 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.proxy.CommonProxy;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.*;
@@ -100,6 +102,11 @@ public class IdeaWideProxySelector extends ProxySelector {
 
   private boolean isProxyException(URI uri) {
     String uriHost = uri.getHost();
+    return isProxyException(uriHost);
+  }
+
+  @Contract("null -> false")
+  public boolean isProxyException(@Nullable String uriHost) {
     if (StringUtil.isEmptyOrSpaces(uriHost) || StringUtil.isEmptyOrSpaces(myHttpConfigurable.PROXY_EXCEPTIONS)) {
       return false;
     }

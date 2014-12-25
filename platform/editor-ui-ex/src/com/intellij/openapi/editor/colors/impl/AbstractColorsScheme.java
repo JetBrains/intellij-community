@@ -32,6 +32,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -347,7 +349,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       attr.setErrorStripeColor(defaultColor);
     }
   }
-  private static final Map<String, Color> DEFAULT_ERROR_STRIPE_COLOR = new THashMap<String, Color>();
+  public static final Map<String, Color> DEFAULT_ERROR_STRIPE_COLOR = new THashMap<String, Color>();
   static {
     DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.ERRORS_ATTRIBUTES.getExternalName(), Color.red);
     DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES.getExternalName(), Color.red);
@@ -394,7 +396,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       myLineSpacing = Float.parseFloat(value);
     }
     else if (EDITOR_FONT_SIZE.equals(name)) {
-      setEditorFontSize(Integer.parseInt(value));
+      setEditorFontSize(JBUI.scale(Integer.parseInt(value)));
     }
     else if (EDITOR_FONT_NAME.equals(name)) {
       setEditorFontName(value);
@@ -403,7 +405,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       setConsoleLineSpacing(Float.parseFloat(value));
     }
     else if (CONSOLE_FONT_SIZE.equals(name)) {
-      setConsoleFontSize(Integer.parseInt(value));
+      setConsoleFontSize(JBUI.scale(Integer.parseInt(value)));
     }
     else if (CONSOLE_FONT_NAME.equals(name)) {
       setConsoleFontName(value);
@@ -424,7 +426,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       }
       else if (EDITOR_FONT_SIZE.equals(e.getAttributeValue(NAME_ATTR))) {
         try {
-          size = Integer.parseInt(getValue(e));
+          size = JBUI.scale(Integer.parseInt(getValue(e)));
         }
         catch (NumberFormatException ex) {
           // ignore
@@ -465,7 +467,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     if (useOldFontFormat) {
       element = new Element(OPTION_ELEMENT);
       element.setAttribute(NAME_ATTR, EDITOR_FONT_SIZE);
-      element.setAttribute(VALUE_ELEMENT, String.valueOf(getEditorFontSize()));
+      element.setAttribute(VALUE_ELEMENT, String.valueOf(getEditorFontSize() / JBUI.scale(1)));
       parentNode.addContent(element);
     }
     else {
@@ -482,7 +484,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         if (getConsoleFontSize() != getEditorFontSize()) {
           element = new Element(OPTION_ELEMENT);
           element.setAttribute(NAME_ATTR, CONSOLE_FONT_SIZE);
-          element.setAttribute(VALUE_ELEMENT, Integer.toString(getConsoleFontSize()));
+          element.setAttribute(VALUE_ELEMENT, Integer.toString(getConsoleFontSize() / JBUI.scale(1)));
           parentNode.addContent(element);
         }
       }

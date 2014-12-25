@@ -127,15 +127,14 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
         }
         else if (target instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)target;
-          if (InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) {
-            if (importStatement instanceof PsiImportStaticStatement) {
-              if (member.hasModifierProperty(PsiModifier.STATIC)) {
-                return importStatement;
-              }
-            }
-            else if (importStatement instanceof PsiImportStatement && member instanceof PsiClass) {
+          // a regular import statement does NOT import inner classes from super classes, but a static import does
+          if (importStatement instanceof PsiImportStaticStatement) {
+            if (member.hasModifierProperty(PsiModifier.STATIC) && InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) {
               return importStatement;
             }
+          }
+          else if (importStatement instanceof PsiImportStatement && member instanceof PsiClass && aClass.equals(containingClass)) {
+            return importStatement;
           }
         }
       }

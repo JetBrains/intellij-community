@@ -341,31 +341,11 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   @Override
   public void visitClassInitializer(PsiClassInitializer initializer) {
-    JavaElementArrangementEntry entry = createNewEntry(initializer, initializer.getTextRange(), FIELD, null, true);
+    JavaElementArrangementEntry entry = createNewEntry(initializer, initializer.getTextRange(), INIT_BLOCK, null, true);
     if (entry == null) {
       return;
     }
-
-    PsiElement classLBrace = null;
-    PsiClass clazz = initializer.getContainingClass();
-    if (clazz != null) {
-      classLBrace = clazz.getLBrace();
-    }
-    for (PsiElement e = initializer.getPrevSibling(); e != null; e = e.getPrevSibling()) {
-      JavaElementArrangementEntry prevEntry;
-      if (e == classLBrace) {
-        prevEntry = myEntries.get(clazz);
-      }
-      else {
-        prevEntry = myEntries.get(e);
-      }
-      if (prevEntry != null) {
-        entry.addDependency(prevEntry);
-      }
-      if (!(e instanceof PsiWhiteSpace)) {
-        break;
-      }
-    }
+    parseModifiers(initializer.getModifierList(), entry);
   }
 
   @NotNull
@@ -415,6 +395,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     myInfo.onMethodEntryCreated(method, entry);
     MethodSignatureBackedByPsiMethod overridden = SuperMethodsSearch.search(method, null, true, false).findFirst();
     if (overridden != null) {
+      entry.addModifier(OVERRIDDEN);
       myInfo.onOverriddenMethod(overridden.getMethod(), method);
     }
     boolean reset = myMethodBodyProcessor.setBaseMethod(method);
@@ -441,21 +422,19 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   private void parseProperties(PsiMethod method, JavaElementArrangementEntry entry) {
-    if (!myGroupingRules.contains(StdArrangementTokens.Grouping.GETTERS_AND_SETTERS)) {
-      return;
-    }
-
     String propertyName = null;
     boolean getter = true;
     if (PropertyUtil.isSimplePropertyGetter(method)) {
+      entry.addModifier(GETTER);
       propertyName = PropertyUtil.getPropertyNameByGetter(method);
     }
     else if (PropertyUtil.isSimplePropertySetter(method)) {
+      entry.addModifier(SETTER);
       propertyName = PropertyUtil.getPropertyNameBySetter(method);
       getter = false;
     }
 
-    if (propertyName == null) {
+    if (!myGroupingRules.contains(StdArrangementTokens.Grouping.GETTERS_AND_SETTERS) || propertyName == null) {
       return;
     }
 

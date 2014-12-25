@@ -22,16 +22,16 @@ import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.preview.PreviewPanelProvider;
 import com.intellij.openapi.preview.PreviewProviderId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.docking.DockManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, Pair<FileEditor[], FileEditorProvider[]>> {
   public static final PreviewProviderId<VirtualFile, Pair<FileEditor[], FileEditorProvider[]>> ID = PreviewProviderId.create("Files");
@@ -52,6 +52,11 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
     myWindow.setTabsPlacement(UISettings.TABS_NONE);
   }
 
+  @Override
+  public void dispose() {
+    myEditorsSplitters.dispose();
+  }
+
   @NotNull
   @Override
   protected JComponent getComponent() {
@@ -59,13 +64,15 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
   }
 
   @Override
-  public boolean shouldBeEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   protected Pair<FileEditor[], FileEditorProvider[]> initComponent(VirtualFile file, boolean requestFocus) {
-    return myManager.openFileWithProviders(file, requestFocus, myWindow);
+    Pair<FileEditor[], FileEditorProvider[]> result = myManager.openFileWithProviders(file, requestFocus, myWindow);
+    IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        myWindow.requestFocus(true);
+      }
+    });
+    return result;
   }
 
   @NotNull
@@ -86,14 +93,31 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
   }
 
   @Override
-  public boolean moveContentToStandardView(@NotNull VirtualFile file) {
+  public void showInStandardPlace(@NotNull VirtualFile file) {
     EditorWindow window = myManager.getCurrentWindow();
     if (window == null) { //main tab set is still not created, rare situation
       myManager.getMainSplitters().createCurrentWindow();
       window = myManager.getCurrentWindow();
     }
     myManager.openFileWithProviders(file, true, window);
-    return true;
+  }
+
+  @Override
+  public boolean isModified(VirtualFile content, boolean beforeReuse) {
+    for (EditorWithProviderComposite composite : myEditorsSplitters.getEditorsComposites()) {
+      if (composite.isModified() && Comparing.equal(composite.getFile(), content)) return true;
+    }
+    return false;
+  }
+
+  @Override
+  public void release(@NotNull VirtualFile content) {
+    myEditorsSplitters.closeFile(content, false);
+  }
+
+  @Override
+  public boolean contentsAreEqual(@NotNull VirtualFile content1, @NotNull VirtualFile content2) {
+    return Comparing.equal(content1, content2);
   }
 
   private class MyEditorsSplitters extends EditorsSplitters {
@@ -103,10 +127,7 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
 
     @Override
     protected void afterFileClosed(VirtualFile file) {
-      PreviewManager previewManager = PreviewManager.SERVICE.getInstance(myProject);
-      if (previewManager != null) {
-        previewManager.close(getId(), file);
-      }
+      PreviewManager.SERVICE.close(myProject, getId(), file);
     }
 
     @Override
@@ -114,16 +135,11 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
       return new EditorWindow(this) {
         @Override
         protected void onBeforeSetEditor(VirtualFile file) {
-          List<VirtualFile> toMove = new ArrayList<VirtualFile>();
           for (EditorWithProviderComposite composite : getEditorsComposites()) {
             if (composite.isModified()) {
-              toMove.add(composite.getFile());
-            }
-          }
-          PreviewManager previewManager = PreviewManager.SERVICE.getInstance(myProject);
-          if (previewManager != null) {
-            for (VirtualFile virtualFile : toMove) {
-              previewManager.moveToStandardPlace(getId(), virtualFile);
+              //Estimation: no more than one file is modified at the same time
+              PreviewManager.SERVICE.moveToStandardPlaceImpl(myProject, getId(), composite.getFile());
+              return;
             }
           }
         }

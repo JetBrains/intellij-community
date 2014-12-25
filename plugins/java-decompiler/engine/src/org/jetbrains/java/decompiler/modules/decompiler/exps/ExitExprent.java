@@ -29,45 +29,44 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Set;
 
 public class ExitExprent extends Exprent {
 
   public static final int EXIT_RETURN = 0;
   public static final int EXIT_THROW = 1;
 
-  // return or throw statement
-  private int exittype;
-
+  private final int exitType;
   private Exprent value;
+  private final VarType retType;
 
-  private VarType rettype;
-
-  {
-    this.type = EXPRENT_EXIT;
-  }
-
-  public ExitExprent(int exittype, Exprent value, VarType rettype) {
-    this.exittype = exittype;
+  public ExitExprent(int exitType, Exprent value, VarType retType, Set<Integer> bytecodeOffsets) {
+    super(EXPRENT_EXIT);
+    this.exitType = exitType;
     this.value = value;
-    this.rettype = rettype;
+    this.retType = retType;
+
+    addBytecodeOffsets(bytecodeOffsets);
   }
 
+  @Override
   public Exprent copy() {
-    return new ExitExprent(exittype, value == null ? null : value.copy(), rettype);
+    return new ExitExprent(exitType, value == null ? null : value.copy(), retType, bytecode);
   }
 
+  @Override
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
 
-    if (exittype == EXIT_RETURN && rettype.type != CodeConstants.TYPE_VOID) {
-      result.addMinTypeExprent(value, VarType.getMinTypeInFamily(rettype.type_family));
-      result.addMaxTypeExprent(value, rettype);
+    if (exitType == EXIT_RETURN && retType.type != CodeConstants.TYPE_VOID) {
+      result.addMinTypeExprent(value, VarType.getMinTypeInFamily(retType.typeFamily));
+      result.addMaxTypeExprent(value, retType);
     }
 
     return result;
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<Exprent>();
     if (value != null) {
@@ -77,81 +76,79 @@ public class ExitExprent extends Exprent {
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     tracer.addMapping(bytecode);
 
-    if (exittype == EXIT_RETURN) {
+    if (exitType == EXIT_RETURN) {
       TextBuffer buffer = new TextBuffer();
 
-      if (rettype.type != CodeConstants.TYPE_VOID) {
+      if (retType.type != CodeConstants.TYPE_VOID) {
         buffer.append(" ");
-        ExprProcessor.getCastedExprent(value, rettype, buffer, indent, false, tracer);
+        ExprProcessor.getCastedExprent(value, retType, buffer, indent, false, tracer);
       }
 
-      return "return" + buffer.toString();
+      return buffer.prepend("return");
     }
     else {
-
-      MethodWrapper meth = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+      MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
       ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
 
-      if (meth != null && node != null) {
-        StructExceptionsAttribute attr = (StructExceptionsAttribute)meth.methodStruct.getAttributes().getWithKey("Exceptions");
+      if (method != null && node != null) {
+        StructExceptionsAttribute attr = (StructExceptionsAttribute)method.methodStruct.getAttributes().getWithKey("Exceptions");
 
         if (attr != null) {
           String classname = null;
 
           for (int i = 0; i < attr.getThrowsExceptions().size(); i++) {
-            String excclassname = attr.getExcClassname(i, node.classStruct.getPool());
-            if ("java/lang/Throwable".equals(excclassname)) {
-              classname = excclassname;
+            String exClassName = attr.getExcClassname(i, node.classStruct.getPool());
+            if ("java/lang/Throwable".equals(exClassName)) {
+              classname = exClassName;
               break;
             }
-            else if ("java/lang/Exception".equals(excclassname)) {
-              classname = excclassname;
+            else if ("java/lang/Exception".equals(exClassName)) {
+              classname = exClassName;
             }
           }
 
           if (classname != null) {
-            VarType exctype = new VarType(classname, true);
-
+            VarType exType = new VarType(classname, true);
             TextBuffer buffer = new TextBuffer();
-            ExprProcessor.getCastedExprent(value, exctype, buffer, indent, false, tracer);
-
-            return "throw " + buffer.toString();
+            ExprProcessor.getCastedExprent(value, exType, buffer, indent, false, tracer);
+            return buffer.prepend("throw ");
           }
         }
       }
 
-      return "throw " + value.toJava(indent, tracer);
+      return value.toJava(indent, tracer).prepend("throw ");
     }
   }
 
+  @Override
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
+    if (oldExpr == value) {
+      value = newExpr;
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof ExitExprent)) return false;
 
     ExitExprent et = (ExitExprent)o;
-    return exittype == et.getExittype() &&
+    return exitType == et.getExitType() &&
            InterpreterUtil.equalObjects(value, et.getValue());
   }
 
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-    if (oldexpr == value) {
-      value = newexpr;
-    }
-  }
-
-  public int getExittype() {
-    return exittype;
+  public int getExitType() {
+    return exitType;
   }
 
   public Exprent getValue() {
     return value;
   }
 
-  public VarType getRettype() {
-    return rettype;
+  public VarType getRetType() {
+    return retType;
   }
 }

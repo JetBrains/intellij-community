@@ -19,19 +19,14 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -49,34 +44,39 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsConfigurablePanel extends JPanel implements Disposable {
-  private NotificationsTable myTable;
   private static final String REMOVE_KEY = "REMOVE";
+
+  private NotificationsTable myTable;
   private final JCheckBox myDisplayBalloons;
+  private final JCheckBox mySystemNotifications;
 
   public NotificationsConfigurablePanel() {
-    setLayout(new BorderLayout());
+    setLayout(new BorderLayout(5, 5));
     myTable = new NotificationsTable();
 
-    boolean newSettings = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view");
-    JScrollPane scrollPane = new JBScrollPane(myTable);
-    scrollPane.setBorder(newSettings ? BorderFactory.createEmptyBorder() : new LineBorder(UIUtil.getBorderColor()));
-    add(scrollPane, BorderLayout.CENTER);
     myDisplayBalloons = new JCheckBox("Display balloon notifications");
     myDisplayBalloons.setMnemonic('b');
-    if (newSettings) {
-      myDisplayBalloons.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    }
-    add(myDisplayBalloons, BorderLayout.NORTH);
     myDisplayBalloons.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         myTable.repaint();
       }
-
     });
 
+    mySystemNotifications = new JCheckBox("Enable system notifications");
+    mySystemNotifications.setMnemonic('s');
+    mySystemNotifications.setVisible(SystemNotifications.getInstance().isAvailable());
+
+    JPanel boxes = new JPanel();
+    boxes.setLayout(new BoxLayout(boxes, BoxLayout.Y_AXIS));
+    boxes.add(myDisplayBalloons);
+    boxes.add(mySystemNotifications);
+    add(boxes, BorderLayout.NORTH);
+
+    add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
     myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), REMOVE_KEY);
     myTable.getActionMap().put(REMOVE_KEY, new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         removeSelected();
       }
@@ -99,7 +99,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       }
     }
 
-    return NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS != myDisplayBalloons.isSelected();
+    NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
+    return configuration.SHOW_BALLOONS != myDisplayBalloons.isSelected() ||
+           configuration.SYSTEM_NOTIFICATIONS != mySystemNotifications.isSelected();
   }
 
   public void apply() {
@@ -108,7 +110,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       settingsWrapper.apply();
     }
 
-    NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS = myDisplayBalloons.isSelected();
+    NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
+    configuration.SHOW_BALLOONS = myDisplayBalloons.isSelected();
+    configuration.SYSTEM_NOTIFICATIONS = mySystemNotifications.isSelected();
   }
 
   public void reset() {
@@ -116,8 +120,10 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     for (SettingsWrapper settingsWrapper : list) {
       settingsWrapper.reset();
     }
-    
-    myDisplayBalloons.setSelected(NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS);
+
+    NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
+    myDisplayBalloons.setSelected(configuration.SHOW_BALLOONS);
+    mySystemNotifications.setSelected(configuration.SYSTEM_NOTIFICATIONS);
 
     myTable.invalidate();
     myTable.repaint();
@@ -191,7 +197,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
           if (value != NotificationDisplayType.TOOL_WINDOW) return true;
 
           String groupId = ((NotificationsTableModel)getModel()).getSettings(row).getGroupId();
-          return NotificationsConfigurationImpl.getNotificationsConfigurationImpl().hasToolWindowCapability(groupId);
+          return NotificationsConfigurationImpl.getInstanceImpl().hasToolWindowCapability(groupId);
         }
 
         @Override
@@ -291,7 +297,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         NotificationsConfigurationImpl.remove(getGroupId());
       }
       else {
-        NotificationsConfigurationImpl.getNotificationsConfigurationImpl().changeSettings(myVersion);
+        NotificationsConfigurationImpl.getInstanceImpl().changeSettings(myVersion);
       }
     }
 
@@ -310,7 +316,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     public NotificationsTableModel() {
       final List<SettingsWrapper> list = new ArrayList<SettingsWrapper>();
-      for (NotificationSettings setting : NotificationsConfigurationImpl.getAllSettings()) {
+      for (NotificationSettings setting : NotificationsConfigurationImpl.getInstanceImpl().getAllSettings()) {
         list.add(new SettingsWrapper(setting));
       }
 

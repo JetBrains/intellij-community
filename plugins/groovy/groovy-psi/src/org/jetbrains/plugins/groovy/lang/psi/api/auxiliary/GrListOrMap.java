@@ -39,6 +39,8 @@ public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiE
 
   boolean isMap();
 
+  boolean isEmpty();
+
   PsiElement getLBrack();
 
   PsiElement getRBrack();

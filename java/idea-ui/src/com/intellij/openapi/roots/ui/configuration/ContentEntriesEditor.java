@@ -16,7 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,8 +48,8 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
     myLanguageLevelConfigurable = new LanguageLevelConfigurable() {
       @Override
-      public LanguageLevelModuleExtension getLanguageLevelExtension() {
-        return getModel().getModuleExtension(LanguageLevelModuleExtension.class);
+      public LanguageLevelModuleExtensionImpl getLanguageLevelExtension() {
+        return getModel().getModuleExtension(LanguageLevelModuleExtensionImpl.class);
       }
     };
     mainPanel.add(myLanguageLevelConfigurable.createComponent(), BorderLayout.NORTH);

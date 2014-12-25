@@ -255,7 +255,7 @@ public class ExitHelper {
           Exprent expr = lstExpr.get(lstExpr.size() - 1);
           if (expr.type == Exprent.EXPRENT_EXIT) {
             ExitExprent ex = (ExitExprent)expr;
-            if (ex.getExittype() == ExitExprent.EXIT_RETURN && ex.getValue() == null) {
+            if (ex.getExitType() == ExitExprent.EXIT_RETURN && ex.getValue() == null) {
               // remove redundant return
               lstExpr.remove(lstExpr.size() - 1);
               res = true;
@@ -292,7 +292,7 @@ public class ExitHelper {
           Exprent expr = lstExpr.get(lstExpr.size() - 1);
           if (expr.type == Exprent.EXPRENT_EXIT) {
             ExitExprent ex = (ExitExprent)expr;
-            if (ex.getExittype() == ExitExprent.EXIT_RETURN && ex.getValue() == null) {
+            if (ex.getExitType() == ExitExprent.EXIT_RETURN && ex.getValue() == null) {
               lstExpr.remove(lstExpr.size() - 1);
 
               source.removeSuccessor(edge);
@@ -319,7 +319,7 @@ public class ExitHelper {
 
     ExitExprent retexpr = new ExitExprent(ExitExprent.EXIT_RETURN, null,
                                           ((MethodDescriptor)DecompilerContext
-                                            .getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR)).ret);
+                                            .getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR)).ret, null);
     // a changeable list needed
     bstat.setExprents(new ArrayList<Exprent>(Arrays.asList(new Exprent[]{retexpr})));
 

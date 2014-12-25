@@ -81,6 +81,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myGroupingRulesPanel = new ArrangementGroupingRulesPanel(settingsManager, colorsProvider);
     myMatchingRulesPanel = new ArrangementMatchingRulesPanel(myLanguage, settingsManager, colorsProvider);
 
+    myContent.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
     myContent.add(myGroupingRulesPanel, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     myContent.add(myMatchingRulesPanel, new GridBag().fillCell().weightx(1).weighty(1).coverLine());
 
@@ -140,6 +141,8 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(CodeStyleSettings settings) {
+    myMatchingRulesPanel.hideEditor();
+
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
     commonSettings.setArrangementSettings(createSettings());
     if (myForceArrangementPanel != null) {

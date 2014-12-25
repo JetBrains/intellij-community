@@ -31,8 +31,6 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,6 +53,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -81,6 +80,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -289,25 +289,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private static BrowseMode getBrowseMode(@JdkConstants.InputEventMask int modifiers) {
     if (modifiers != 0) {
       final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
-      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
-      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
+      if (KeymapUtil.matchActionMouseShortcutsModifiers(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
+      if (KeymapUtil.matchActionMouseShortcutsModifiers(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
+      if (KeymapUtil.matchActionMouseShortcutsModifiers(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
       if (modifiers == InputEvent.CTRL_MASK || modifiers == InputEvent.META_MASK) return BrowseMode.Declaration;
     }
     return BrowseMode.None;
-  }
-
-  private static boolean matchMouseShortcut(final Keymap activeKeymap, @JdkConstants.InputEventMask int modifiers, final String actionId) {
-    final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
-    for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
-      if (shortcut instanceof MouseShortcut) {
-        final MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
-        if (mouseShortcut.getModifiers() == syntheticShortcut.getModifiers()) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @Nullable
@@ -487,7 +474,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   @Nullable
-  private Info getInfoAt(@NotNull Editor editor, @NotNull PsiFile file, int offset, @NotNull BrowseMode browseMode) {
+  private Info getInfoAt(@NotNull final Editor editor, @NotNull PsiFile file, int offset, @NotNull BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
@@ -523,7 +510,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (resolvedElements.size() == 1) {
         return new InfoSingle(ref, resolvedElements.get(0));
       }
-      else if (resolvedElements.size() > 1) {
+      if (resolvedElements.size() > 1) {
         return elementAtPointer != null ? new InfoMultiple(elementAtPointer, ref) : null;
       }
     }
@@ -567,6 +554,27 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
+    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, file, offset);
+    if (element != null) {
+      PsiElement identifier = element.getNameIdentifier();
+      return new Info(identifier){
+        @Override
+        public void showDocInfo(@NotNull DocumentationManager docManager) {
+        }
+
+        @NotNull
+        @Override
+        public DocInfo getInfo() {
+          String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
+          return new DocInfo("Show usages of "+name, null, element);
+        }
+
+        @Override
+        public boolean isValid(@NotNull Document document) {
+          return element.isValid();
+        }
+      };
+    }
     return null;
   }
 
@@ -704,7 +712,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   /**
    * It's possible that we need to expand quick doc control's width in order to provide better visual representation
-   * (see http://youtrack.jetbrains.com/issue/IDEA-101425). This method calculates that width expand.
+   * (see https://youtrack.jetbrains.com/issue/IDEA-101425). This method calculates that width expand.
    *
    * @param buttonWidth  icon button's width
    * @param updatedText  text which will be should at the quick doc control

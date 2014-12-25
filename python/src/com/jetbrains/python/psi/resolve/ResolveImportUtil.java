@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -95,7 +94,7 @@ public class ResolveImportUtil {
       base = base.getOriginalFile(); // just to make sure
       result = base.getContainingDirectory();
       int count = 1;
-      while (result != null && result.findFile(PyNames.INIT_DOT_PY) != null) {
+      while (result != null && PyUtil.isPackage(result, base)) {
         if (count >= depth) return result;
         result = result.getParentDirectory();
         count += 1;
@@ -176,7 +175,7 @@ public class ResolveImportUtil {
     if (qualifiedName == null || sourceFile == null) {
       return Collections.emptyList();
     }
-    final String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relativeLevel);
+    final String marker = qualifiedName + "#" + Integer.toString(relativeLevel);
     final Set<String> beingImported = ourBeingImported.get();
     if (beingImported.contains(marker)) {
       return Collections.emptyList(); // break endless loop in import
@@ -393,17 +392,16 @@ public class ResolveImportUtil {
   /**
    * @param element what we test (identifier, reference, import element, etc)
    * @return the how the element relates to an enclosing import statement, if any
+   * @see com.jetbrains.python.psi.resolve.PointInImport
    */
+  @NotNull
   public static PointInImport getPointInImport(@NotNull PsiElement element) {
-    PsiElement parent = PsiTreeUtil.getNonStrictParentOfType(
-      element,
-      PyImportElement.class, PyFromImportStatement.class
-    );
+    final PsiElement parent = PsiTreeUtil.getNonStrictParentOfType(element, PyImportElement.class, PyFromImportStatement.class);
     if (parent instanceof PyFromImportStatement) {
       return PointInImport.AS_MODULE; // from foo ...
     }
     if (parent instanceof PyImportElement) {
-      PsiElement statement = parent.getParent();
+      final PsiElement statement = parent.getParent();
       if (statement instanceof PyImportStatement) {
         return PointInImport.AS_MODULE; // import foo,...
       }

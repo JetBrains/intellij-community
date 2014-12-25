@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author spleaner
- */
 public class HtmlUnknownAttributeInspection extends HtmlUnknownAttributeInspectionBase {
   public HtmlUnknownAttributeInspection() {
     super("");

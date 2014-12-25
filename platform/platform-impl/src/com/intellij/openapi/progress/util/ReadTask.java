@@ -32,7 +32,7 @@ public interface ReadTask {
   void computeInReadAction(@NotNull ProgressIndicator indicator);
 
   /**
-   * Is invoked on the background computation thread whenever the computation is canceled by a write action.
+   * Is invoked on Swing thread whenever the computation is canceled by a write action.
    * A likely implementation is to restart the computation, maybe based on the new state of the system.
    */
   void onCanceled(@NotNull ProgressIndicator indicator);

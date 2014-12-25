@@ -15,9 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -26,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
@@ -111,6 +111,69 @@ public class DfaUtil {
       return Collections.singletonList(qualifierExpression);
     }
     return Collections.emptyList();
+  }
+
+  @Nullable
+  static PsiElement getClosureInside(Instruction instruction) {
+    if (instruction instanceof MethodCallInstruction) {
+      PsiCallExpression anchor = ((MethodCallInstruction)instruction).getCallExpression();
+      if (anchor instanceof PsiNewExpression) {
+        return ((PsiNewExpression)anchor).getAnonymousClass();
+      }
+    }
+    else if (instruction instanceof LambdaInstruction) {
+      return ((LambdaInstruction)instruction).getLambdaExpression();
+    }
+    else if (instruction instanceof EmptyInstruction) {
+      PsiElement anchor = ((EmptyInstruction)instruction).getAnchor();
+      if (anchor instanceof PsiClass) {
+        return anchor;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static Nullness inferMethodNullity(PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    if (body == null || PsiUtil.resolveClassInType(method.getReturnType()) == null) {
+      return Nullness.UNKNOWN;
+    }
+
+    final AtomicBoolean hasNulls = new AtomicBoolean();
+    final AtomicBoolean hasNotNulls = new AtomicBoolean();
+    final AtomicBoolean hasUnknowns = new AtomicBoolean();
+
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor() {
+      @Override
+      public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
+                                                         DataFlowRunner runner,
+                                                         DfaMemoryState memState) {
+        DfaValue returned = memState.peek();
+        if (memState.isNull(returned)) {
+          hasNulls.set(true);
+        }
+        else if (memState.isNotNull(returned)) {
+          hasNotNulls.set(true);
+        }
+        else {
+          hasUnknowns.set(true);
+        }
+        return super.visitCheckReturnValue(instruction, runner, memState);
+      }
+    });
+
+    if (rc == RunnerResult.OK) {
+      if (hasNulls.get()) {
+        return Nullness.NULLABLE;
+      }
+      if (hasNotNulls.get() && !hasUnknowns.get()) {
+        return Nullness.NOT_NULL;
+      }
+    }
+
+    return Nullness.UNKNOWN;
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

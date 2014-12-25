@@ -897,7 +897,7 @@ public class PsiImplUtil {
     }
   }
 
-  public static boolean isSpreadAssignment(GrExpression lValue) {
+  public static boolean isSpreadAssignment(@Nullable GrExpression lValue) {
     if (lValue instanceof GrReferenceExpression) {
       GrReferenceExpression expression = (GrReferenceExpression)lValue;
       final PsiElement dot = expression.getDotToken();

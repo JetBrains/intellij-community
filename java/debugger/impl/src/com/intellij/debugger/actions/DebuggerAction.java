@@ -36,6 +36,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.frame.XDebugView;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,6 +159,13 @@ public abstract class DebuggerAction extends AnAction {
         event.getPresentation().setVisible(true);
       }
     });
+  }
+
+  public static void refreshViews(final AnActionEvent e) {
+    XDebuggerTree tree = XDebuggerTree.getTree(e.getDataContext());
+    if (tree != null) {
+    refreshViews(XDebugView.getSession(tree));
+    }
   }
 
   public static void refreshViews(@NotNull XValueNodeImpl node) {

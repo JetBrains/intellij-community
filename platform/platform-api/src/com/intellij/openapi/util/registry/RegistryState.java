@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,21 +25,18 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 @State(
-    name = "Registry",
-    storages = {
-        @Storage(
-            file = StoragePathMacros.APP_CONFIG + "/other.xml")}
+  name = "Registry",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
 public class RegistryState implements BaseComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(RegistryState.class);
 
-  public RegistryState() {
-  }
-
+  @Override
   public Element getState() {
     return Registry.getInstance().getState();
   }
 
+  @Override
   public void loadState(Element state) {
     Registry.getInstance().loadState(state);
     SortedMap<String, String> userProperties = new TreeMap<String, String>(Registry.getInstance().getUserProperties());
@@ -52,14 +49,17 @@ public class RegistryState implements BaseComponent, PersistentStateComponent<El
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "Registry";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 }

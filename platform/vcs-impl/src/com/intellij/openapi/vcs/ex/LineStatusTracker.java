@@ -190,11 +190,10 @@ public class LineStatusTracker {
     int second =
       range.getLine2() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine2());
 
-    final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
-      .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, null, HighlighterTargetArea.LINES_IN_RANGE);
-
     final TextAttributes attr = LineStatusTrackerDrawing.getAttributesFor(range);
-    highlighter.setErrorStripeMarkColor(attr.getErrorStripeColor());
+    final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
+      .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, attr, HighlighterTargetArea.LINES_IN_RANGE);
+
     highlighter.setThinErrorStripeMark(true);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);

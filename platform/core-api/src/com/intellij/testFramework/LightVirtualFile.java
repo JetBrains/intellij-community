@@ -254,7 +254,7 @@ public class LightVirtualFile extends VirtualFile {
   public byte[] contentsToByteArray() throws IOException {
     final Charset charset = getCharset();
     final String s = getContent().toString();
-    return charset != null ? s.getBytes(charset.name()) : s.getBytes();
+    return s.getBytes(charset.name());
   }
 
   @Override

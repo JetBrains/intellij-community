@@ -117,7 +117,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * registered file types.
    *
    * @param listener The listener instance.
-   * @deprecated Subscribe to #TOPIC on any message bus level.
+   * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
 
   public abstract void addFileTypeListener(@NotNull FileTypeListener listener);
@@ -127,7 +127,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * registered file types.
    *
    * @param listener The listener instance.
-   * @deprecated Subscribe to #TOPIC on any message bus level.
+   * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
 
   public abstract void removeFileTypeListener(@NotNull FileTypeListener listener);

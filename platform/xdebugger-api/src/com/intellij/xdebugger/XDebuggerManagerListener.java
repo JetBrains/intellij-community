@@ -17,7 +17,8 @@ package com.intellij.xdebugger;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface XDebuggerManagerListener {
+public interface
+  XDebuggerManagerListener {
   void processStarted(@NotNull XDebugProcess debugProcess);
 
   void processStopped(@NotNull XDebugProcess debugProcess);

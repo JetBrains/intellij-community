@@ -146,7 +146,20 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       return address;
     }
     catch (IOException e) {
-      throw new ExecutionException(DebugProcessImpl.processError(e));
+      int tryNum = 0;
+      while (true) {
+        try {
+          TransportService.ListenKey listenKey = transportService.startListening("javadebug_" + (int)(Math.random()*1000));
+          final String address = listenKey.address();
+          transportService.stopListening(listenKey);
+          return address;
+        }
+        catch (Exception ex) {
+          if (tryNum++ > 10) {
+            throw new ExecutionException(DebugProcessImpl.processError(ex));
+          }
+        }
+      }
     }
   }
 }

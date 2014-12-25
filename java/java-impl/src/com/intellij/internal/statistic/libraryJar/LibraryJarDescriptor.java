@@ -23,6 +23,9 @@ import com.intellij.util.xmlb.annotations.Tag;
  */
 @Tag("technology")
 public class LibraryJarDescriptor {
+
+  public static final LibraryJarDescriptor[] EMPTY = new LibraryJarDescriptor[0];
+
   /**
    * Name of library/framework
    */

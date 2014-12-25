@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,15 +36,15 @@ public interface BatchSuppressManager {
   @NotNull
   SuppressQuickFix[] createBatchSuppressActions(@NotNull HighlightDisplayKey key);
 
-  boolean isSuppressedFor(@NotNull PsiElement element, String toolId);
+  boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId);
 
-  PsiElement getElementMemberSuppressedIn(@NotNull PsiDocCommentOwner owner, String inspectionToolID);
-
-  @Nullable
-  PsiElement getAnnotationMemberSuppressedIn(@NotNull PsiModifierListOwner owner, String inspectionToolID);
+  PsiElement getElementMemberSuppressedIn(@NotNull PsiDocCommentOwner owner, @NotNull String inspectionToolID);
 
   @Nullable
-  PsiElement getDocCommentToolSuppressedIn(@NotNull PsiDocCommentOwner owner, String inspectionToolID);
+  PsiElement getAnnotationMemberSuppressedIn(@NotNull PsiModifierListOwner owner, @NotNull String inspectionToolID);
+
+  @Nullable
+  PsiElement getDocCommentToolSuppressedIn(@NotNull PsiDocCommentOwner owner, @NotNull String inspectionToolID);
 
   @NotNull
   Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiModifierListOwner owner);
@@ -53,7 +53,7 @@ public interface BatchSuppressManager {
   String getSuppressedInspectionIdsIn(@NotNull PsiElement element);
 
   @Nullable
-  PsiElement getElementToolSuppressedIn(@NotNull PsiElement place, String toolId);
+  PsiElement getElementToolSuppressedIn(@NotNull PsiElement place, @NotNull String toolId);
 
   boolean canHave15Suppressions(@NotNull PsiElement file);
 

@@ -17,25 +17,27 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Calendar;
-
 public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newMethodRef";
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedDeclarationInspection());
+  }
 
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new UnusedSymbolLocalInspection(),
       new UncheckedWarningLocalInspection()
     };
   }
@@ -313,6 +315,30 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testReceiverTypeSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testTypeParametersInitOrder() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA132560() throws Exception {
+    doTest();
+  }
+
+  public void testEnsureThatCapturedWildcardsAreNotOpenWithoutAnyReason() throws Exception {
+    doTest();
+  }
+
+  public void testVarargsParametersCountComparison() throws Exception {
+    doTest(true);
+  }
+
+  public void testPotentialCompatibilityWithInvalidShape() throws Exception {
+    doTest(true);
+  }
+
+  public void testSiteSubstitutionOfNonReceiverReference() throws Exception {
     doTest();
   }
 

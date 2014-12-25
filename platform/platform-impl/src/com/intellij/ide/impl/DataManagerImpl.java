@@ -30,7 +30,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.WeakValueHashMap;
 import gnu.trove.THashMap;
@@ -245,6 +247,21 @@ public class DataManagerImpl extends DataManager {
       IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(activeWindow);
       if (fm.isFocusBeingTransferred()) {
         return null;
+      }
+    }
+
+    // In case we have an active floating toolwindow and some component in another window focused,
+    // we want this other component to receive key events.
+    // Walking up the window ownership hierarchy from the floating toolwindow would have led us to the main IdeFrame
+    // whereas we want to be able to type in other frames as well.
+    if (activeWindow instanceof FloatingDecorator) {
+      IdeFocusManager ideFocusManager = IdeFocusManager.findInstanceByComponent(activeWindow);
+      IdeFrame lastFocusedFrame = ideFocusManager.getLastFocusedFrame();
+      JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
+      Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
+      boolean toolWindowIsNotFocused = myWindowManager.getFocusedComponent(activeWindow) == null;
+      if (toolWindowIsNotFocused && lastFocusedWindow != null) {
+        activeWindow = lastFocusedWindow;
       }
     }
 

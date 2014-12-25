@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -154,6 +157,29 @@ public class PyTypeChecker {
         return true;
       }
     }
+    if (actual instanceof PyStructuralType && ((PyStructuralType)actual).isInferredFromUsages()) {
+      return true;
+    }
+    if (expected instanceof PyStructuralType && actual instanceof PyStructuralType) {
+      final PyStructuralType expectedStructural = (PyStructuralType)expected;
+      final PyStructuralType actualStructural = (PyStructuralType)actual;
+      if (expectedStructural.isInferredFromUsages()) {
+        return true;
+      }
+      return expectedStructural.getAttributeNames().containsAll(actualStructural.getAttributeNames());
+    }
+    if (expected instanceof PyStructuralType && actual instanceof PyClassType) {
+      final PyClassType actualClassType = (PyClassType)actual;
+      if (overridesGetAttr(actualClassType.getPyClass(), context)) {
+        return true;
+      }
+      final Set<String> actualAttributes = getClassTypeAttributes(actualClassType, true, context);
+      return actualAttributes.containsAll(((PyStructuralType)expected).getAttributeNames());
+    }
+    if (actual instanceof PyStructuralType && expected instanceof PyClassType) {
+      final Set<String> expectedAttributes = getClassTypeAttributes((PyClassType)expected, true, context);
+      return expectedAttributes.containsAll(((PyStructuralType)actual).getAttributeNames());
+    }
     if (actual instanceof PyCallableType && expected instanceof PyCallableType) {
       final PyCallableType expectedCallable = (PyCallableType)expected;
       final PyCallableType actualCallable = (PyCallableType)actual;
@@ -178,6 +204,41 @@ public class PyTypeChecker {
       }
     }
     return matchNumericTypes(expected, actual);
+  }
+
+  @NotNull
+  public static Set<String> getClassTypeAttributes(@NotNull PyClassType type, boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> attributes = getClassAttributes(type.getPyClass(), inherited, context);
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      final Collection<PyCustomMember> members = provider.getMembers(type, null);
+      for (PyCustomMember member : members) {
+        attributes.add(member.getName());
+      }
+    }
+    return attributes;
+  }
+
+  @NotNull
+  private static Set<String> getClassAttributes(@NotNull PyClass cls, boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> attributes = new HashSet<String>();
+    for (PyFunction function : cls.getMethods(false)) {
+      attributes.add(function.getName());
+    }
+    for (PyTargetExpression instanceAttribute : cls.getInstanceAttributes()) {
+      attributes.add(instanceAttribute.getName());
+    }
+    for (PyTargetExpression classAttribute : cls.getClassAttributes()) {
+      attributes.add(classAttribute.getName());
+    }
+    if (inherited) {
+      for (PyClass ancestor : cls.getAncestorClasses()) {
+        final PyType ancestorType = context.getType(ancestor);
+        if (ancestorType instanceof PyClassType) {
+          attributes.addAll(getClassTypeAttributes((PyClassType)ancestorType, false, context));
+        }
+      }
+    }
+    return attributes;
   }
 
   private static boolean matchNumericTypes(PyType expected, PyType actual) {
@@ -392,12 +453,6 @@ public class PyTypeChecker {
   @Nullable
   public static AnalyzeCallResults analyzeCall(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     final PyExpression callee = call.getCallee();
-    if (callee instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualified = (PyQualifiedExpression)callee;
-      if (isResolvedToSeveralMethods(qualified, context)) {
-        return null;
-      }
-    }
     final PyArgumentList args = call.getArgumentList();
     if (args != null) {
       final CallArgumentsMapping mapping = args.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
@@ -439,7 +494,8 @@ public class PyTypeChecker {
           return null;
         }
         final Callable callable = ((PyFunctionType)type).getCallable();
-        final boolean isRight = PyNames.isRightOperatorName(typedElement.getName());
+        final String operatorName = typedElement.getName();
+        final boolean isRight = PyNames.isRightOperatorName(operatorName);
         final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
         final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
         final PyParameter[] parameters = callable.getParameterList().getParameters();
@@ -526,45 +582,35 @@ public class PyTypeChecker {
     else if (type instanceof PyCallableType) {
       return ((PyCallableType) type).isCallable();
     }
+    else if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
+      return true;
+    }
     return false;
   }
 
-  /**
-   * Hack for skipping type checking for method calls of union members if there are several call alternatives.
-   *
-   * TODO: Multi-resolve callees when analysing calls. This requires multi-resolving in followAssignmentsChain.
-   */
-  public static boolean isResolvedToSeveralMethods(@NotNull PyQualifiedExpression callee, @NotNull TypeEvalContext context) {
-    final PyExpression qualifier = callee.getQualifier();
-    if (qualifier != null) {
-      final PyType qualifierType = context.getType(qualifier);
-      if (qualifierType instanceof PyUnionType) {
-        final PyUnionType unionType = (PyUnionType)qualifierType;
-        final String name = callee.getName();
-        if (name == null) {
-          return false;
-        }
-        int sameNameCount = 0;
-        for (PyType member : unionType.getMembers()) {
-          if (member != null) {
-            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-            final List<? extends RatedResolveResult> results = member.resolveMember(name, callee, AccessDirection.READ, resolveContext
-            );
-            if (results != null && !results.isEmpty()) {
-              sameNameCount++;
-            }
-          }
-        }
-        if (sameNameCount > 1) {
-          return true;
-        }
-      }
-      final PyExpression qualifierExpr = qualifier instanceof PyCallExpression ? ((PyCallExpression)qualifier).getCallee() : qualifier;
-      if (qualifierExpr instanceof PyQualifiedExpression) {
-        return isResolvedToSeveralMethods((PyQualifiedExpression)qualifierExpr, context);
-      }
+  public static boolean overridesGetAttr(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    PsiElement method = resolveClassMember(cls, PyNames.GETATTR, context);
+    if (method != null) {
+      return true;
+    }
+    method = resolveClassMember(cls, PyNames.GETATTRIBUTE, context);
+    if (method != null && !PyBuiltinCache.getInstance(cls).isBuiltin(method)) {
+      return true;
     }
     return false;
+  }
+
+  @Nullable
+  private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name, @NotNull TypeEvalContext context) {
+    final PyType type = context.getType(cls);
+    if (type != null) {
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
+      if (results != null && !results.isEmpty()) {
+        return results.get(0).getElement();
+      }
+    }
+    return null;
   }
 
   public static class AnalyzeCallResults {

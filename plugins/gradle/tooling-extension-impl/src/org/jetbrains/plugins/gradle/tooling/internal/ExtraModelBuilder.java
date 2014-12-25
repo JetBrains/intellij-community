@@ -23,6 +23,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
+import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
 
 import java.util.ServiceLoader;
 
@@ -32,7 +33,7 @@ import java.util.ServiceLoader;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class ExtraModelBuilder implements ToolingModelBuilder {
-  private static final String RANGE_TOKEN = " <=> ";
+
   private static ServiceLoader<ModelBuilderService> buildersLoader =
     ServiceLoader.load(ModelBuilderService.class, ExtraModelBuilder.class.getClassLoader());
 
@@ -75,33 +76,6 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
   private boolean isVersionMatch(@NotNull ModelBuilderService builderService) {
     TargetVersions targetVersions = builderService.getClass().getAnnotation(TargetVersions.class);
-    if (targetVersions == null || targetVersions.value() == null || targetVersions.value().isEmpty()) return true;
-
-    final GradleVersion current = adjust(myCurrentGradleVersion, targetVersions.checkBaseVersions());
-
-    if (targetVersions.value().endsWith("+")) {
-      String minVersion = targetVersions.value().substring(0, targetVersions.value().length() - 1);
-      return compare(current, minVersion, targetVersions.checkBaseVersions()) >= 0;
-    }
-    else {
-      final int rangeIndex = targetVersions.value().indexOf(RANGE_TOKEN);
-      if (rangeIndex != -1) {
-        String minVersion = targetVersions.value().substring(0, rangeIndex);
-        String maxVersion = targetVersions.value().substring(rangeIndex + RANGE_TOKEN.length());
-        return compare(current, minVersion, targetVersions.checkBaseVersions()) >= 0 &&
-               compare(current, maxVersion, targetVersions.checkBaseVersions()) <= 0;
-      }
-      else {
-        return compare(current, targetVersions.value(), targetVersions.checkBaseVersions()) == 0;
-      }
-    }
-  }
-
-  private static int compare(@NotNull GradleVersion gradleVersion, @NotNull String otherGradleVersion, boolean checkBaseVersions) {
-    return gradleVersion.compareTo(adjust(GradleVersion.version(otherGradleVersion), checkBaseVersions));
-  }
-
-  private static GradleVersion adjust(@NotNull GradleVersion version, boolean checkBaseVersions) {
-    return checkBaseVersions ? version.getBaseVersion() : version;
+    return new VersionMatcher(myCurrentGradleVersion).isVersionMatch(targetVersions);
   }
 }

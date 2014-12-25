@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -31,10 +32,12 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +50,8 @@ import java.util.Arrays;
  * @author Konstantin Bulenkov
  */
 public class RunInspectionAction extends GotoActionBase {
+  private static final Logger LOGGER = Logger.getInstance("#" + RunInspectionAction.class.getName());
+
   public RunInspectionAction() {
     getTemplatePresentation().setText(IdeBundle.message("goto.inspection.action.text"));
   }
@@ -77,7 +82,7 @@ public class RunInspectionAction extends GotoActionBase {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            runInspection(project, (InspectionToolWrapper)element, virtualFile, psiElement, psiFile);
+            runInspection(project, ((InspectionToolWrapper)element).getShortName(), virtualFile, psiElement, psiFile);
           }
         });
       }
@@ -85,7 +90,7 @@ public class RunInspectionAction extends GotoActionBase {
   }
 
   private static void runInspection(@NotNull Project project,
-                                    @NotNull InspectionToolWrapper toolWrapper,
+                                    @NotNull String shortName,
                                     @Nullable VirtualFile virtualFile,
                                     PsiElement psiElement,
                                     PsiFile psiFile) {
@@ -114,10 +119,11 @@ public class RunInspectionAction extends GotoActionBase {
     final FileFilterPanel fileFilterPanel = new FileFilterPanel();
     fileFilterPanel.init();
 
-    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
-                                                                         AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), 
-                                                                         project, analysisScope, module != null ? module.getName() : null, 
-                                                                         true, AnalysisUIOptions.getInstance(project), psiElement) {
+    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(
+      AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
+      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
+      project, analysisScope, module != null ? module.getName() : null,
+      true, AnalysisUIOptions.getInstance(project), psiElement) {
 
       @Override
       protected JComponent getAdditionalActionSettings(Project project) {
@@ -140,11 +146,15 @@ public class RunInspectionAction extends GotoActionBase {
       }
     };
 
-    dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.showAndGet()) {
+      return;
+    }
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     AnalysisScope scope = dialog.getScope(uiOptions, analysisScope, project, module);
     PsiElement element = psiFile == null ? psiElement : psiFile;
+    final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionToolWrapper toolWrapper = currentProfile.getInspectionTool(shortName, project);
+    LOGGER.assertTrue(toolWrapper != null, "Missed inspection: " + shortName);
     RunInspectionIntention.rerunInspection(toolWrapper, managerEx, scope, element);
   }
 }

@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
@@ -111,6 +112,9 @@ public class ClassElement extends CompositeElement implements Constants {
         for (ASTNode run = anchor; run != null; run = run.getTreeNext()) {
           if (run == semicolonPlace) {
             anchor = before.booleanValue() ? semicolonPlace.getTreeNext() : semicolonPlace;
+            if (anchor != null && PsiImplUtil.isWhitespaceOrComment(anchor)) {
+              anchor = PsiTreeUtil.skipSiblingsForward(anchor.getPsi(), PsiWhiteSpace.class, PsiComment.class).getNode();
+            }
             break;
           }
         }

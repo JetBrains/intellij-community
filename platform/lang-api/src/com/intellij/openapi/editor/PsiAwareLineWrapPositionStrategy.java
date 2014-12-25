@@ -85,6 +85,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
       return -1;
     }
 
+    documentManager.commitDocument(document);
     PsiElement element = psiFile.findElementAt(maxPreferredOffset);
     if (element == null) {
       return -1;

@@ -21,7 +21,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,21 +30,23 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
@@ -55,11 +56,6 @@ import java.util.concurrent.TimeUnit;
  * @since 5/24/11 2:28 PM
  */
 public class TestDataGuessByExistingFilesUtil {
-
-  private static final long CACHE_ENTRY_TTL_MS = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
-
-  private static final Map<String, Pair<TestDataDescriptor, Long>> CACHE = new ConcurrentHashMap<String, Pair<TestDataDescriptor, Long>>();
-  private static final Set<String> CLASSES_WITHOUT_TEST_DATA = new java.util.HashSet<String>();
 
   private TestDataGuessByExistingFilesUtil() {
   }
@@ -156,20 +152,20 @@ public class TestDataGuessByExistingFilesUtil {
       return null;
     }
 
-    final String qualifiedName = psiClass.getQualifiedName();
-    if (CLASSES_WITHOUT_TEST_DATA.contains(qualifiedName)) {
+    final TestDataDescriptor cachedValue = CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<TestDataDescriptor>() {
+      @Nullable
+      @Override
+      public Result<TestDataDescriptor> compute() {
+        return new Result<TestDataDescriptor>(buildDescriptor(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
+    if (cachedValue == TestDataDescriptor.NOTHING_FOUND) {
       return null;
     }
-    final Pair<TestDataDescriptor, Long> cached = CACHE.get(qualifiedName);
-    if (cached != null) {
-      if (cached.first.isComplete()) {
-        return cached.first;
-      }
-      if (cached.second > System.currentTimeMillis()) {
-        return null;
-      }
-    }
+    return cachedValue;
+  }
 
+  private static TestDataDescriptor buildDescriptor(PsiClass psiClass) {
     TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     TestFramework framework = null;
     for (TestFramework each : frameworks) {
@@ -179,7 +175,7 @@ public class TestDataGuessByExistingFilesUtil {
       }
     }
     if (framework == null) {
-      return null;
+      return TestDataDescriptor.NOTHING_FOUND;
     }
 
     final PsiElement setUpMethod = framework.findSetUpMethod(psiClass);
@@ -194,14 +190,12 @@ public class TestDataGuessByExistingFilesUtil {
       }
       testNames.add(name);
     }
-    
+
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     final TestDataDescriptor descriptor = buildDescriptor(fileIndex, testNames, psiClass);
     if (isClassWithoutTestData(descriptor, testNames, psiClass)) {
-      CLASSES_WITHOUT_TEST_DATA.add(qualifiedName);
-      return null;
-    } 
-    CACHE.put(qualifiedName, new Pair<TestDataDescriptor, Long>(descriptor, System.currentTimeMillis() + CACHE_ENTRY_TTL_MS));
+      return TestDataDescriptor.NOTHING_FOUND;
+    }
     return descriptor;
   }
 
@@ -320,7 +314,7 @@ public class TestDataGuessByExistingFilesUtil {
             continue;
           }
           final VirtualFile file = ((PsiFile)element).getVirtualFile();
-          if (file == null || fileIndex.isInSource(file)) {
+          if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
             continue;
           }
 
@@ -533,6 +527,7 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static class TestDataDescriptor {
+    private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.<TestLocationDescriptor>emptyList());
 
     private final List<TestLocationDescriptor> myDescriptors = new ArrayList<TestLocationDescriptor>();
 

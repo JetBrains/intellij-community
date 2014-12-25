@@ -34,11 +34,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 
 public class RegExpParserDefinition implements ParserDefinition {
-  private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
+    private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
 
     @NotNull
     public Lexer createLexer(Project project) {
-        return new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES));
+        return new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES,
+                                          RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS,
+                                          RegExpCapability.UNICODE_CATEGORY_SHORTHAND));
     }
 
     public PsiParser createParser(Project project) {
@@ -98,10 +100,12 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpBoundaryImpl(node);
         } else if (type == RegExpElementTypes.INTERSECTION) {
             return new RegExpIntersectionImpl(node);
-        } else if (type == RegExpElementTypes.PY_NAMED_GROUP_REF) {
-            return new RegExpPyNamedGroupRefImpl(node);
+        } else if (type == RegExpElementTypes.NAMED_GROUP_REF) {
+            return new RegExpNamedGroupRefImpl(node);
         } else if (type == RegExpElementTypes.PY_COND_REF) {
             return new RegExpPyCondRefImpl(node);
+        } else if (type == RegExpElementTypes.POSIX_BRACKET_EXPRESSION) {
+            return new RegExpPosixBracketExpressionImpl(node);
         }
       
         return new ASTWrapperPsiElement(node);

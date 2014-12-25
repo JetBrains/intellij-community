@@ -44,7 +44,7 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
   @NotNull
   public EditorColorsScheme getColorsScheme(@NotNull EditorColorsScheme editorColorsScheme) {
     EditorColorsScheme result = null;
-    if (!ACTIVE_GLOBAL_SCHEME_MARKER.equals(mySchemeName)) {
+    if (mySchemeName != null && !ACTIVE_GLOBAL_SCHEME_MARKER.equals(mySchemeName)) {
       result = EditorColorsManager.getInstance().getScheme(mySchemeName);
     }
     return result == null ? editorColorsScheme : result;

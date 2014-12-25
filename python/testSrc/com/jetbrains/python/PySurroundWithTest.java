@@ -16,8 +16,11 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
+import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithIfSurrounder;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithTryExceptSurrounder;
@@ -37,6 +40,48 @@ public class PySurroundWithTest extends PyTestCase {
 
   public void testSurroundWithTryExcept() throws Exception {
     doTest(new PyWithTryExceptSurrounder());
+  }
+
+  // PY-11357
+  public void testCustomFoldingRegionFirstMethod() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  // PY-11357
+  public void testCustomFoldingRegionLastMethod() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  // PY-14261
+  public void testCustomFoldingRegionPreservesIndentation() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  public void testCustomFoldingRegionSingleCharacter() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  public void testCustomFoldingRegionSingleStatementInFile() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  public void testCustomFoldingRegionIllegalSelection() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  public void testCustomFoldingRegionSeveralMethods() throws Exception {
+    doTestSurroundWithCustomFoldingRegion();
+  }
+
+  private void doTestSurroundWithCustomFoldingRegion() throws Exception {
+    final Surrounder surrounder = ContainerUtil.find(CustomFoldingSurroundDescriptor.SURROUNDERS, new Condition<Surrounder>() {
+      @Override
+      public boolean value(Surrounder surrounder) {
+        return surrounder.getTemplateDescription().contains("<editor-fold");
+      }
+    });
+    assertNotNull(surrounder);
+    doTest(surrounder);
   }
 
   private void doTest(final Surrounder surrounder) throws Exception {

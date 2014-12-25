@@ -201,7 +201,8 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
     myFixture.configureByFile("main.py");
     final PyReferenceExpression referenceExpression = findLastReferenceByText("x");
     assertNotNull(referenceExpression);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(referenceExpression.getContainingFile()).withTracing();
+    final TypeEvalContext context =
+      TypeEvalContext.userInitiated(myFixture.getProject(), referenceExpression.getContainingFile()).withTracing();
     final PyType actual = context.getType(referenceExpression);
     final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
     assertEquals("B | unknown", actualType);
@@ -249,7 +250,7 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyReferenceExpression referenceExpression = findLastReferenceByText("x");
     assertNotNull(referenceExpression);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(referenceExpression.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getProject(), referenceExpression.getContainingFile());
     final PyType actual = context.getType(referenceExpression);
     final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
     assertEquals(expectedType, actualType);

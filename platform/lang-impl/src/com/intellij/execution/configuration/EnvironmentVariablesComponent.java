@@ -102,7 +102,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     }
   }
 
-  public static void writeExternal(Element element, Map<String, String> envs) {
+  public static void writeExternal(@NotNull Element element, @NotNull Map<String, String> envs) {
     final Element envsElement = new Element(ENVS);
     for (String envName : envs.keySet()) {
       final Element envElement = new Element(ENV);

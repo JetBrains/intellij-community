@@ -1,4 +1,4 @@
-// "Implement Methods" "true"
+// "Implement methods" "true"
 enum E {
     <caret>A;
 

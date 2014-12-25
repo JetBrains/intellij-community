@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,25 +72,16 @@ public class IntegerDivisionInFloatingPointContextInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.DIV)) {
         return;
       }
-      final PsiExpression lhs = expression.getLOperand();
-      final PsiType lhsType = lhs.getType();
-      if (!isIntegral(lhsType)) {
-        return;
-      }
-      final PsiExpression rhs = expression.getROperand();
-      if (rhs == null) {
-        return;
-      }
-      final PsiType rhsType = rhs.getType();
-      if (!isIntegral(rhsType)) {
-        return;
+      for (PsiExpression operand : expression.getOperands()) {
+        if (!isIntegral(operand.getType())) {
+          return;
+        }
       }
       final PsiExpression context = getContainingExpression(expression);
       if (context == null) {

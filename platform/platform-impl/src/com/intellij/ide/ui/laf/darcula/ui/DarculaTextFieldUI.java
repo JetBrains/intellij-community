@@ -85,6 +85,10 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
                 ui.showSearchPopup();
                 break;
               case CLEAR:
+                Object listener = c.getClientProperty("JTextField.Search.CancelAction");
+                if (listener instanceof ActionListener) {
+                  ((ActionListener)listener).actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
+                }
                 ((JTextField)c).setText("");
                 break;
             }
@@ -97,7 +101,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
   }
 
   protected void showSearchPopup() {
-    final Object value = getComponent().getClientProperty("JTextField.Search.FindPopup");
+    final Object value = myTextField.getClientProperty("JTextField.Search.FindPopup");
     if (value instanceof JPopupMenu) {
       final JPopupMenu popup = (JPopupMenu)value;
       popup.show(getComponent(), getSearchIconCoord().x, getComponent().getHeight());
@@ -168,7 +172,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
         }
       }
       Point p = getSearchIconCoord();
-      Icon searchIcon = getComponent().getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu ? UIManager.getIcon("TextField.darcula.searchWithHistory.icon") : UIManager.getIcon("TextField.darcula.search.icon");
+      Icon searchIcon = myTextField.getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu ? UIManager.getIcon("TextField.darcula.searchWithHistory.icon") : UIManager.getIcon("TextField.darcula.search.icon");
       if (searchIcon == null) {
         searchIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true);
       }

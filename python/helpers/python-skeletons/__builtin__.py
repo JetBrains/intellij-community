@@ -427,6 +427,24 @@ class int(object):
         """
         pass
 
+    def __eq__(self, y):
+        return False
+
+    def __ne__(self, y):
+        return False
+
+    def __lt__(self, y):
+        return False
+
+    def __gt__(self, y):
+        return False
+
+    def __le__(self, y):
+        return False
+
+    def __ge__(self, y):
+        return False
+
     def __add__(self, y):
         """Sum of x and y.
 
@@ -2165,6 +2183,12 @@ class dict(object):
 
         :type iterable: collections.Iterable[(T, V)]
         :rtype: dict[T, V]
+        """
+        pass
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
         """
         pass
 

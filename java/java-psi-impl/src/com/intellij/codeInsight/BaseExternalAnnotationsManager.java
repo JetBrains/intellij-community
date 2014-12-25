@@ -31,7 +31,11 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentMostlySingularMultiMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MostlySingularMultiMap;
+import com.intellij.util.containers.WeakKeyWeakValueHashMap;
+import com.intellij.util.text.CharSequenceReader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +48,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -54,7 +57,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   @NotNull private static final List<PsiFile> NULL_LIST = new ArrayList<PsiFile>(0);
   @NotNull
-  private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotations = new ConcurrentSoftValueHashMap<VirtualFile, List<PsiFile>>(10, 0.75f, 2);
+  private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotations = ContainerUtil.createConcurrentSoftValueMap();
   protected final PsiManager myPsiManager;
 
   public BaseExternalAnnotationsManager(final PsiManager psiManager) {
@@ -158,7 +161,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
 
-  private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> annotationFileToDataAndModStamp = new ConcurrentSoftHashMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>>();
+  private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> annotationFileToDataAndModStamp = ContainerUtil.createConcurrentSoftMap();
 
   @NotNull
   private MostlySingularMultiMap<String, AnnotationData> getDataFromFile(@NotNull final PsiFile file) {
@@ -170,7 +173,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     DataParsingSaxHandler handler = new DataParsingSaxHandler(file);
     try {
       SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-      saxParser.parse(new InputSource(new StringReader(escapeAttributes(file.getText()))), handler);
+      saxParser.parse(new InputSource(new CharSequenceReader(escapeAttributes(file.getViewProvider().getContents()))), handler);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -295,7 +298,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   // Old external annotations sometimes are bad XML: they have "<" and ">" characters in attributes values. To prevent SAX parser from
   // failing, we escape attributes values.
   @NotNull
-  private static String escapeAttributes(@NotNull String invalidXml) {
+  private static CharSequence escapeAttributes(@NotNull CharSequence invalidXml) {
     // We assume that XML has single- and double-quote characters only for attribute values, therefore we don't any complex parsing,
     // just have binary inAttribute state
     StringBuilder buf = new StringBuilder(invalidXml.length());
@@ -316,7 +319,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
         buf.append(c);
       }
     }
-    return buf.toString();
+    return buf;
   }
 
   @Override

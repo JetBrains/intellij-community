@@ -16,11 +16,9 @@
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.VcsRootChecker;
@@ -34,35 +32,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author Nadya Zabrodina
- */
 public class VcsRootScanner implements BulkFileListener, ModuleRootListener, VcsListener {
 
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;
   @NotNull private final VcsRootChecker[] myCheckers;
 
-  private volatile boolean myProjectIsInitialized;
-  private volatile boolean myMappingsAreReady;
-
   @NotNull private final Alarm myAlarm;
   private static final long WAIT_BEFORE_SCAN = TimeUnit.SECONDS.toMillis(1);
 
   public static void start(@NotNull Project project, @NotNull VcsRootChecker[] checkers) {
-    new VcsRootScanner(project, checkers);
+    new VcsRootScanner(project, checkers).scheduleScan();
   }
 
   private VcsRootScanner(@NotNull Project project, @NotNull VcsRootChecker[] checkers) {
     myRootProblemNotifier = VcsRootProblemNotifier.getInstance(project);
     myCheckers = checkers;
-
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        myProjectIsInitialized = true;
-        scanIfReady();
-      }
-    });
 
     final MessageBus messageBus = project.getMessageBus();
     messageBus.connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
@@ -82,7 +66,7 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener, Vcs
       String filePath = event.getPath();
       for (VcsRootChecker checker : myCheckers) {
         if (checker.isVcsDir(filePath)) {
-          scanIfReady();
+          scheduleScan();
           break;
         }
       }
@@ -95,23 +79,12 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener, Vcs
 
   @Override
   public void rootsChanged(ModuleRootEvent event) {
-    scanIfReady();
+    scheduleScan();
   }
 
   @Override
   public void directoryMappingChanged() {
-    myMappingsAreReady = true;
-    scanIfReady();
-  }
-
-  private void scanIfReady() {
-    if (readyToScan()) {
-      scheduleScan();
-    }
-  }
-
-  private boolean readyToScan() {
-    return myMappingsAreReady && myProjectIsInitialized;
+    scheduleScan();
   }
 
   private void scheduleScan() {

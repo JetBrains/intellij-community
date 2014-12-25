@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.userSkeletons;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -24,7 +23,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,9 +63,7 @@ public class PyUserSkeletonsUtil {
   private static List<String> getPossibleUserSkeletonsPaths() {
     final List<String> result = new ArrayList<String>();
     result.add(PathManager.getConfigPath() + File.separator + USER_SKELETONS_DIR);
-    result.add(ApplicationManager.getApplication().isInternal()
-               ? StringUtil.join(new String[]{PythonHelpersLocator.getPythonCommunityPath(), "helpers", USER_SKELETONS_DIR}, File.separator)
-               : PythonHelpersLocator.getHelperPath(USER_SKELETONS_DIR));
+    result.add(PythonHelpersLocator.getHelperPath(USER_SKELETONS_DIR));
     return result;
   }
 
@@ -159,7 +155,8 @@ public class PyUserSkeletonsUtil {
       assert owner != element;
       final PsiElement originalOwner = getUserSkeleton(owner, skeletonFile);
       if (originalOwner instanceof PyClass) {
-        final PyType type = TypeEvalContext.codeInsightFallback().getType((PyClass)originalOwner);
+        final PyClass classOwner = (PyClass)originalOwner;
+        final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
         if (type instanceof PyClassLikeType) {
           final PyClassLikeType classType = (PyClassLikeType)type;
           final PyClassLikeType instanceType = classType.toInstance();

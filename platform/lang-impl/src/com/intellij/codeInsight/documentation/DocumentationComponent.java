@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -54,6 +55,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -66,8 +68,11 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -83,9 +88,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   };
 
-  private static final int MAX_WIDTH = 500;
-  private static final int MAX_HEIGHT = 300;
-  private static final int MIN_HEIGHT = 45;
+  private static final int PREFERRED_WIDTH_EM = 37;
+  private static final int PREFERRED_HEIGHT_MIN_EM = 7;
+  private static final int PREFERRED_HEIGHT_MAX_EM = 20;
 
   private DocumentationManager myManager;
   private SmartPsiElementPointer myElement;
@@ -105,6 +110,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
     @Override
     public Image get(Object key) {
+      if (myManager == null || key == null) return null;
       PsiElement element = getElement();
       if (element == null) return null;
       URL url = (URL)key;
@@ -155,17 +161,29 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
       @Override
+      public EditorKit getEditorKit() {
+        return new HTMLEditorKit();
+      }
+
+      @Override
       public Dimension getPreferredScrollableViewportSize() {
+        int em = myEditorPane.getFont().getSize();
+        int prefWidth = PREFERRED_WIDTH_EM * em;
+        int prefHeightMin = PREFERRED_HEIGHT_MIN_EM * em;
+        int prefHeightMax = PREFERRED_HEIGHT_MAX_EM * em;
+
         if (getWidth() == 0 || getHeight() == 0) {
-          setSize(MAX_WIDTH, MAX_HEIGHT);
+          setSize(prefWidth, prefHeightMax);
         }
+
         Insets ins = myEditorPane.getInsets();
         View rootView = myEditorPane.getUI().getRootView(myEditorPane);
-        rootView.setSize(MAX_WIDTH,
-                         MAX_HEIGHT);  // Necessary! Without this line, size will not increase then you go from small page to bigger one
-        int prefHeight = (int)rootView.getPreferredSpan(View.Y_AXIS);
-        prefHeight += ins.bottom + ins.top + myScrollPane.getHorizontalScrollBar().getMaximumSize().height;
-        return new Dimension(MAX_WIDTH, Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, prefHeight)));
+        rootView.setSize(prefWidth, prefHeightMax);  // Necessary! Without this line, the size won't increase when the content does
+
+        int prefHeight = (int)rootView.getPreferredSpan(View.Y_AXIS) + ins.bottom + ins.top +
+                         myScrollPane.getHorizontalScrollBar().getMaximumSize().height;
+        prefHeight = Math.max(prefHeightMin, Math.min(prefHeightMax, prefHeight));
+        return new Dimension(prefWidth, prefHeight);
       }
 
       {
@@ -336,20 +354,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true);
 
-    myControlPanel = new JPanel();
-    myControlPanel.setLayout(new BorderLayout());
+    myControlPanel = new JPanel(new BorderLayout(5, 5));
     myControlPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
-    JPanel dummyPanel = new JPanel();
 
     myElementLabel = new JLabel();
-
-    dummyPanel.setLayout(new BorderLayout());
-    dummyPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-
-    dummyPanel.add(myElementLabel, BorderLayout.EAST);
+    myElementLabel.setMinimumSize(new Dimension(100, 0)); // do not recalculate size according to the text
 
     myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
-    myControlPanel.add(dummyPanel, BorderLayout.CENTER);
+    myControlPanel.add(myElementLabel, BorderLayout.CENTER);
     myControlPanel.add(myShowSettingsButton = new MyShowSettingsButton(), BorderLayout.EAST);
     myControlPanelVisible = false;
 
@@ -534,7 +546,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, boolean skip) {
-
     myElement = element;
 
     boolean justShown = false;
@@ -552,6 +563,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     if (!skip) {
       myText = text;
+    }
+
+    Document document = myEditorPane.getDocument();
+    if (document instanceof HTMLDocument && element != null) {
+       // set base URL for this javadoc to resolve relative images correctly
+      VirtualFile virtualFile = element.getVirtualFile();
+      VirtualFile directory = virtualFile == null ? null : virtualFile.getParent();
+      String path = directory == null ? "" : directory.getPath()+"/";
+
+      try {
+        URL url = new URL(URLUtil.FILE_PROTOCOL, null, path);
+        ((HTMLDocument)document).setBase(url);
+      }
+      catch (MalformedURLException ignored) {
+      }
     }
 
     //noinspection SSBasedInspection

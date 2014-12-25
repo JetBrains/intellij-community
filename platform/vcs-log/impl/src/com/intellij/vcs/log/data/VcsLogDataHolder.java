@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.util.StopWatch;
@@ -41,8 +41,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
-
-  public static final Topic<VcsLogRefreshListener> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", VcsLogRefreshListener.class);
 
   private static final Logger LOG = Logger.getInstance(VcsLogDataHolder.class);
 
@@ -66,7 +64,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
    * which is important because these details will be constantly visible to the user,
    * thus it would be annoying to re-load them from VCS if the cache overflows.
    */
-  @NotNull private final Map<Hash, VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
+  @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
 
   private final VcsUserRegistryImpl myUserRegistry;
 
@@ -92,12 +90,12 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
     try {
-      myHashMap = new VcsLogHashMap(myProject);
+      myHashMap = new VcsLogHashMap(myProject, logProviders);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // TODO: show a message to the user & fallback to using in-memory Hashes
     }
-    myContainingBranchesGetter = new ContainingBranchesGetter(project, this, this);
+    myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
 
     myFilterer = new VcsLogFiltererImpl(myProject, myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter,
                                                        uiProperties.isBek() ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal,
@@ -107,7 +105,6 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       @Override
       public void consume(DataPack dataPack) {
         myFilterer.onRefresh(dataPack);
-        myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).refresh(dataPack);
       }
     };
 
@@ -115,7 +112,9 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
                                           myDataPackUpdateHandler, new Consumer<Exception>() {
       @Override
       public void consume(Exception e) {
-        LOG.error(e);
+        if (!(e instanceof ProcessCanceledException)) {
+          LOG.error(e);
+        }
       }
     }, mySettings.getRecentCommitsCount());
   }
@@ -250,8 +249,8 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   }
 
   @Nullable
-  public VcsCommitMetadata getTopCommitDetails(@NotNull Hash hash) {
-    return myTopCommitsDetailsCache.get(hash);
+  public VcsCommitMetadata getTopCommitDetails(@NotNull Integer commitId) {
+    return myTopCommitsDetailsCache.get(commitId);
   }
 
   public CommitDetailsGetter getCommitDetailsGetter() {

@@ -47,7 +47,7 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
     for (CandidateInfo info : conflicts) {
       final PsiElement element = info.getElement();
       Object key;
-      if (element instanceof PsiMethod) {
+      if (info instanceof MethodCandidateInfo) {
         key = ((PsiMethod)element).getSignature(((MethodCandidateInfo)info).getSubstitutor(false));
       }
       else {

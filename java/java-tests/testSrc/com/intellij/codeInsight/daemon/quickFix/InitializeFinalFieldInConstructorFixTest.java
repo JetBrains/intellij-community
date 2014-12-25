@@ -1,14 +1,12 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 
 public class InitializeFinalFieldInConstructorFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{ new UnusedSymbolLocalInspection()};
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedDeclarationInspection());
   }
 
   public void test() throws Exception { doAllTests(); }

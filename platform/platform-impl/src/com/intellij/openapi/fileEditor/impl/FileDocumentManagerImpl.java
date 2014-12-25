@@ -67,8 +67,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ConcurrentHashSet;
-import com.intellij.util.containers.ConcurrentWeakValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +78,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -93,8 +93,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
-  private final Set<Document> myUnsavedDocuments = new ConcurrentHashSet<Document>();
-  private final Map<VirtualFile, Document> myDocuments = new ConcurrentWeakValueHashMap<VirtualFile, Document>();
+  private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
+  private final Map<VirtualFile, Document> myDocuments = ContainerUtil.createConcurrentWeakValueMap();
 
   private final MessageBus myBus;
 
@@ -122,6 +122,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
   }
 
+  private static void unwrapAndRethrow(Exception e) {
+    Throwable unwrapped = e;
+    if (e instanceof InvocationTargetException) {
+      unwrapped = e.getCause() == null ? e : e.getCause();
+    }
+    if (unwrapped instanceof Error) throw (Error)unwrapped;
+    if (unwrapped instanceof RuntimeException) throw (RuntimeException)unwrapped;
+    LOG.error(unwrapped);
+  }
+
   @SuppressWarnings("OverlyBroadCatchBlock")
   private void multiCast(@NotNull Method method, Object[] args) {
     try {
@@ -131,7 +141,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       LOG.error("Arguments: "+ Arrays.toString(args), e);
     }
     catch (Exception e) {
-      LOG.error(e);
+      unwrapAndRethrow(e);
     }
 
     // Allows pre-save document modification
@@ -140,7 +150,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         method.invoke(listener, args);
       }
       catch (Exception e) {
-        LOG.error(e);
+        unwrapAndRethrow(e);
       }
     }
 
@@ -149,7 +159,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       method.invoke(myTrailingSpacesStripper, args);
     }
     catch (Exception e) {
-      LOG.error(e);
+      unwrapAndRethrow(e);
     }
   }
 
@@ -632,8 +642,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
               documentEx.setReadOnly(false);
               LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
               file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-              documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
-              documentEx.setReadOnly(!wasWritable);
+              if (!isBinaryWithoutDecompiler(file)) {
+                documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
+                documentEx.setReadOnly(!wasWritable);
+              }
             }
           }
         );
@@ -736,7 +748,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     VirtualFile virtualFile = event.getFile();
-    if (virtualFile.getFileType() == UnknownFileType.INSTANCE && virtualFile.getLength() == 0) {
+    // check file type in second order to avoid content detection running
+    if (virtualFile.getLength() == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
   }
@@ -837,7 +850,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       @Override
       protected void createDefaultActions() {
         super.createDefaultActions();
-        myOKAction.putValue(Action.NAME, UIBundle.message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
+        myOKAction.putValue(Action.NAME, UIBundle
+          .message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
         myOKAction.putValue(DEFAULT_ACTION, null);
 
         if (!myOnClose) {
@@ -855,15 +869,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         area.setText(text);
         area.setEditable(false);
         area.setMinimumSize(new Dimension(area.getMinimumSize().width, 50));
-        panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+        panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+                  BorderLayout.CENTER);
 
         return panel;
       }
     };
 
-    dialog.show();
-
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       for (Document document : failures.keySet()) {
         reloadFromDisk(document);
       }

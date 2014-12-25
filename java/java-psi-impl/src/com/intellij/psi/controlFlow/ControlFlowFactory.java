@@ -30,17 +30,15 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.containers.ConcurrentList;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.concurrent.ConcurrentMap;
 
 public class ControlFlowFactory {
   // psiElements hold weakly, controlFlows softly
-  private final ConcurrentMap<PsiElement, Reference<ConcurrentList<ControlFlowContext>>> cachedFlows = new ConcurrentWeakHashMap<PsiElement, Reference<ConcurrentList<ControlFlowContext>>>();
+  private final ConcurrentMap<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = ContainerUtil.createConcurrentWeakKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(),
+                                                                                                                                                                                  ContainerUtil.<PsiElement>canonicalStrategy());
 
   private static final NotNullLazyKey<ControlFlowFactory, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ControlFlowFactory.class);
 
@@ -62,16 +60,10 @@ public class ControlFlowFactory {
     cachedFlows.clear();
   }
 
-  @Deprecated
-  public void registerSubRange(final PsiElement codeFragment, final ControlFlowSubRange flow, final boolean evaluateConstantIfConfition,
-                               final ControlFlowPolicy policy) {
-    registerSubRange(codeFragment, flow, evaluateConstantIfConfition, true, policy);
-  }
-
-  public void registerSubRange(final PsiElement codeFragment,
-                               final ControlFlowSubRange flow,
-                               final boolean evaluateConstantIfConfition,
-                               boolean enableShortCircuit, final ControlFlowPolicy policy) {
+  void registerSubRange(final PsiElement codeFragment,
+                        final ControlFlowSubRange flow,
+                        final boolean evaluateConstantIfConfition,
+                        boolean enableShortCircuit, final ControlFlowPolicy policy) {
     registerControlFlow(codeFragment, flow, evaluateConstantIfConfition, enableShortCircuit, policy);
   }
 
@@ -90,6 +82,7 @@ public class ControlFlowFactory {
       this.controlFlow = controlFlow;
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -99,6 +92,7 @@ public class ControlFlowFactory {
       return isFor(that);
     }
 
+    @Override
     public int hashCode() {
       int result = policy.hashCode();
       result = 31 * result + (evaluateConstantIfCondition ? 1 : 0);
@@ -106,7 +100,10 @@ public class ControlFlowFactory {
       return result;
     }
 
-    public boolean isFor(@NotNull ControlFlowPolicy policy, final boolean evaluateConstantIfCondition, final boolean enableShortCircuit, long modificationCount) {
+    private boolean isFor(@NotNull ControlFlowPolicy policy,
+                          final boolean evaluateConstantIfCondition,
+                          final boolean enableShortCircuit,
+                          long modificationCount) {
       if (modificationCount != this.modificationCount) return false;
       if (!policy.equals(this.policy)) return false;
       if (enableShortCircuit != this.enableShortCircuit) return false;
@@ -171,11 +168,10 @@ public class ControlFlowFactory {
 
   @NotNull
   private ConcurrentList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
-    Reference<ConcurrentList<ControlFlowContext>> cachedRef = cachedFlows.get(element);
-    ConcurrentList<ControlFlowContext> cached = com.intellij.reference.SoftReference.dereference(cachedRef);
+    ConcurrentList<ControlFlowContext> cached = cachedFlows.get(element);
     if (cached == null) {
       cached = ContainerUtil.createConcurrentList();
-      cachedFlows.put(element, new SoftReference<ConcurrentList<ControlFlowContext>>(cached));
+      cachedFlows.put(element, cached);
     }
     return cached;
   }

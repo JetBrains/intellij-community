@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,14 +75,17 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
+      return new PsiElementVisitor() { };
+    }
     return new JavaElementVisitor() {
-      @Override public void visitMethod(PsiMethod method) {
-        if (!PsiUtil.isLanguageLevel5OrHigher(method)) return;
+      @Override
+      public void visitMethod(PsiMethod method) {
         checkNullableStuffForMethod(method, holder);
       }
 
-      @Override public void visitField(PsiField field) {
-        if (!PsiUtil.isLanguageLevel5OrHigher(field)) return;
+      @Override
+      public void visitField(PsiField field) {
         final PsiType type = field.getType();
         final Annotated annotated = check(field, holder, type);
         if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
@@ -108,7 +111,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             }
             message += "\' but \'" + anno + "\' would be used for code generation.";
             final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
-            holder.registerProblem(annotationNameReferenceElement != null ? annotationNameReferenceElement : field.getNameIdentifier(),
+            holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
                                    message,
                                    ProblemHighlightType.WEAK_WARNING,
                                    new ChangeNullableDefaultsFix(notNull, nullable, manager));
@@ -161,8 +164,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                      addAnnoFix);
             }
             if (PropertyUtil.isSimpleSetter(setter)) {
-              if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false) ||
-                  annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false, false)) {
+              if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false)) {
                 final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
                 assertValidElement(setter, parameter, nameIdentifier1);
                 holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
@@ -187,12 +189,13 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           for (PsiExpression rhs : initializers) {
             if (rhs instanceof PsiReferenceExpression) {
               PsiElement target = ((PsiReferenceExpression)rhs).resolve();
-              if (target instanceof PsiParameter) {
+              if (target instanceof PsiParameter && target.isPhysical()) {
                 PsiParameter parameter = (PsiParameter)target;
                 AddAnnotationPsiFix fix = new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtil.toStringArray(annoToRemove));
                 if (REPORT_NOT_ANNOTATED_GETTER && !manager.hasNullability(parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
                   final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
                   assert nameIdentifier2 != null : parameter;
+                  assert nameIdentifier2.isPhysical() : parameter;
                   holder.registerProblem(nameIdentifier2, InspectionsBundle
                     .message("inspection.nullable.problems.annotated.field.constructor.parameter.not.annotated",
                              getPresentableAnnoName(field)),
@@ -229,8 +232,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         LOG.assertTrue(parameter.isPhysical(), setter.getText());
       }
 
-      @Override public void visitParameter(PsiParameter parameter) {
-        if (!PsiUtil.isLanguageLevel5OrHigher(parameter)) return;
+      @Override
+      public void visitParameter(PsiParameter parameter) {
         check(parameter, holder, parameter.getType());
       }
 
@@ -359,7 +362,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
     if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
       for (PsiMethod superMethod : superMethods) {
-        if (!nullableManager.hasNullability(method) && isNotNullNotInferred(superMethod, true, false)) {
+        if (!nullableManager.hasNullability(method) && isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL)) {
           final String defaultNotNull = nullableManager.getDefaultNotNull();
           final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
           final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull)
@@ -525,7 +528,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     return true;
   }
 
-  private static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
+  public static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     if (!manager.isNullable(owner, checkBases)) return false;

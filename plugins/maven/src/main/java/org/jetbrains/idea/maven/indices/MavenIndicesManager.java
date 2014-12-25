@@ -189,7 +189,7 @@ public class MavenIndicesManager implements Disposable {
   private void addArtifact(File artifactFile, String relativePath) {
     String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
 
-    MavenIndex index = getIndicesObject().find(LOCAL_REPOSITORY_ID, repositoryPath, MavenIndex.Kind.LOCAL);
+    MavenIndex index = getIndicesObject().find(repositoryPath, MavenIndex.Kind.LOCAL);
     if (index != null) {
       index.addArtifact(artifactFile);
     }
@@ -337,7 +337,7 @@ public class MavenIndicesManager implements Disposable {
       Element root = doc.getRootElement();
       if (root == null) return;
 
-      // Store artifact to set to remove duplicate created by old IDEA (http://youtrack.jetbrains.com/issue/IDEA-72105)
+      // Store artifact to set to remove duplicate created by old IDEA (https://youtrack.jetbrains.com/issue/IDEA-72105)
       Collection<MavenArchetype> result = new LinkedHashSet<MavenArchetype>();
 
       List<Element> children = root.getChildren(ELEMENT_ARCHETYPE);

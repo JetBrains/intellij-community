@@ -16,10 +16,14 @@
 package com.intellij.diagnostic;
 
 import com.intellij.notification.Notification;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 public abstract class AbstractMessage {
 
@@ -97,5 +101,10 @@ public abstract class AbstractMessage {
 
   public void setAssigneeId(Integer assigneeId) {
     myAssigneeId = assigneeId;
+  }
+  
+  @NotNull 
+  public List<Attachment> getAttachments() {
+    return Collections.emptyList();
   }
 }

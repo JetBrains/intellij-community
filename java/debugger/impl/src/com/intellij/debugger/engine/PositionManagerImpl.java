@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -81,7 +83,7 @@ public class PositionManagerImpl implements PositionManager {
           return;
         }
 
-        if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+        if (!classHasName(psiClass)) {
           final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
 
           if (parent == null) {
@@ -115,6 +117,10 @@ public class PositionManagerImpl implements PositionManager {
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor.get(), waitPrepareFor.get());
   }
 
+  private static boolean classHasName(PsiClass psiClass) {
+    return !PsiUtil.isLocalOrAnonymousClass(psiClass) && JVMNameUtil.getNonAnonymousClassName(psiClass) != null;
+  }
+
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if(location == null) {
@@ -137,6 +143,19 @@ public class PositionManagerImpl implements PositionManager {
     }
     catch (InternalError e) {
       lineNumber = -1;
+    }
+
+    if (lineNumber > -1) {
+      VirtualFile file = psiFile.getVirtualFile();
+      if (file != null) {
+        LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+        if (mapping != null) {
+          int line = mapping.bytecodeToSource(lineNumber + 1);
+          if (line > -1) {
+            return SourcePosition.createFromLine(psiFile, line - 1);
+          }
+        }
+      }
     }
 
     if (psiFile instanceof PsiCompiledElement || lineNumber < 0) {
@@ -226,7 +245,7 @@ public class PositionManagerImpl implements PositionManager {
         final PsiClass psiClass = JVMNameUtil.getClassAt(position);
         if (psiClass != null) {
           classAtPositionRef.set(psiClass);
-          if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+          if (!classHasName(psiClass)) {
             isLocalOrAnonymous.set(Boolean.TRUE);
             final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
             if (topLevelClass != null) {
@@ -329,7 +348,6 @@ public class PositionManagerImpl implements PositionManager {
           return null;
         }
 
-        final boolean canGetSynthetic = vmProxy.canGetSyntheticAttribute();
         int rangeBegin = Integer.MAX_VALUE;
         int rangeEnd = Integer.MIN_VALUE;
         for (Location location : fromClass.allLineLocations()) {
@@ -341,7 +359,7 @@ public class PositionManagerImpl implements PositionManager {
             continue;
           }
           final Method method = location.method();
-          if (method == null || (canGetSynthetic && method.isSynthetic()) || method.isBridge()) {
+          if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge()) {
             // do not take into account synthetic stuff
             continue;
           }

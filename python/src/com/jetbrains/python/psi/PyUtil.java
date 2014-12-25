@@ -38,7 +38,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,15 +45,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
@@ -68,11 +67,16 @@ import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,8 +93,6 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 public class PyUtil {
-
-  private static final Object[] EMPTY_OBJECTS = new Object[0];
 
   private PyUtil() {
   }
@@ -693,34 +695,11 @@ public class PyUtil {
   }
 
   public static boolean hasCustomDecorators(@NotNull PyDecoratable decoratable) {
-    PyDecoratorList decoratorList = decoratable.getDecoratorList();
-    if (decoratorList == null) {
-      return false;
-    }
-    for (PyDecorator decorator : decoratorList.getDecorators()) {
-      QualifiedName name = decorator.getQualifiedName();
-      if (name == null || (!PyNames.CLASSMETHOD.equals(name.toString()) && !PyNames.STATICMETHOD.equals(name.toString()))) {
-        return true;
-      }
-    }
-    return false;
+    return PyKnownDecoratorUtil.hasNonBuiltinDecorator(decoratable, TypeEvalContext.codeInsightFallback(null));
   }
 
   public static boolean isDecoratedAsAbstract(@NotNull final PyDecoratable decoratable) {
-    final PyDecoratorList decoratorList = decoratable.getDecoratorList();
-    if (decoratorList == null) {
-      return false;
-    }
-    for (PyDecorator decorator : decoratorList.getDecorators()) {
-      final QualifiedName qualifiedName = decorator.getQualifiedName();
-      if (qualifiedName != null) {
-        final String name = qualifiedName.toString();
-        if (name.endsWith(PyNames.ABSTRACTMETHOD) || name.endsWith(PyNames.ABSTRACTPROPERTY)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return PyKnownDecoratorUtil.hasAbstractDecorator(decoratable, TypeEvalContext.codeInsightFallback(null));
   }
 
   public static ASTNode createNewName(PyElement element, String name) {
@@ -748,6 +727,52 @@ public class PyUtil {
       currentElement = resolve;
     }
     return currentElement;
+  }
+
+  @NotNull
+  public static List<PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
+    if (element instanceof PyReferenceOwner) {
+      final PsiPolyVariantReference ref = ((PyReferenceOwner)element).getReference(resolveContext);
+      return filterTopPriorityResults(ref.multiResolve(false));
+    }
+    else {
+      final PsiReference reference = element.getReference();
+      return reference != null ? Collections.singletonList(reference.resolve()) : Collections.<PsiElement>emptyList();
+    }
+  }
+
+  @NotNull
+  public static List<PsiElement> multiResolveTopPriority(@NotNull PsiPolyVariantReference reference) {
+    return filterTopPriorityResults(reference.multiResolve(false));
+  }
+
+  @NotNull
+  private static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
+    if (resolveResults.length == 0) {
+      return Collections.emptyList();
+    }
+    final List<PsiElement> filtered = new ArrayList<PsiElement>();
+    final int maxRate = getMaxRate(resolveResults);
+    for (ResolveResult resolveResult : resolveResults) {
+      final int rate = resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
+      if (rate >= maxRate) {
+        filtered.add(resolveResult.getElement());
+      }
+    }
+    return filtered;
+  }
+
+  private static int getMaxRate(@NotNull ResolveResult[] resolveResults) {
+    int maxRate = Integer.MIN_VALUE;
+    for (ResolveResult resolveResult : resolveResults) {
+      if (resolveResult instanceof RatedResolveResult) {
+        final int rate = ((RatedResolveResult)resolveResult).getRate();
+        if (rate > maxRate) {
+          maxRate = rate;
+        }
+      }
+    }
+    return maxRate;
   }
 
   /**
@@ -822,13 +847,7 @@ public class PyUtil {
   @Nullable
   @SuppressWarnings("unchecked")
   public static <T> T as(@Nullable final Object expression, @NotNull final Class<T> clazz) {
-    if (expression == null) {
-      return null;
-    }
-    if (clazz.isAssignableFrom(expression.getClass())) {
-      return (T)expression;
-    }
-    return null;
+    return ObjectUtils.tryCast(expression, clazz);
   }
 
   // TODO: Move to PsiElement?
@@ -942,31 +961,16 @@ public class PyUtil {
     } // don't touch non-dirs
   }
 
-  @Nullable
-  public static PsiElement turnInitIntoDir(PsiElement target) {
-    if (target instanceof PyFile && isPackage((PsiFile)target)) {
-      return ((PsiFile)target).getContainingDirectory();
-    }
-    return target;
-  }
-
-  public static boolean isPackage(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
-    if (turnDirIntoInit(directory) != null) {
-      return true;
-    }
-    final LanguageLevel level = anchor != null ?
-                                LanguageLevel.forElement(anchor) :
-                                getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
-    if (level.isAtLeast(LanguageLevel.PYTHON33)) {
-      return true;
-    }
-    return hasNamespacePackageFile(directory);
-  }
-
-  public static boolean isPackage(@NotNull PsiFile file) {
-    return PyNames.INIT_DOT_PY.equals(file.getName());
-  }
-
+  /**
+   * If directory is a PsiDirectory, that is also a valid Python package, return PsiFile that points to __init__.py,
+   * if such file exists, or directory itself (i.e. namespace package). Otherwise, return {@code null}.
+   * Unlike {@link #turnDirIntoInit(com.intellij.psi.PsiElement)} this function handles namespace packages and
+   * accepts only PsiDirectories as target.
+   *
+   * @param directory directory to check
+   * @param anchor optional PSI element to determine language level as for {@link #isPackage(com.intellij.psi.PsiDirectory, com.intellij.psi.PsiElement)}
+   * @return PsiFile or PsiDirectory, if target is a Python package and {@code null} null otherwise
+   */
   @Nullable
   public static PsiElement getPackageElement(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
     if (isPackage(directory, anchor)) {
@@ -979,18 +983,67 @@ public class PyUtil {
     return null;
   }
 
-  private static boolean hasNamespacePackageFile(@NotNull PsiDirectory directory) {
-    final String name = directory.getName().toLowerCase();
-    final PsiDirectory parent = directory.getParent();
-    if (parent != null) {
-      for (PsiFile file : parent.getFiles()) {
-        final String filename = file.getName().toLowerCase();
-        if (filename.startsWith(name) && filename.endsWith("-nspkg.pth")) {
-          return true;
-        }
-      }
+  /**
+   * If target is a Python module named __init__.py file, return its directory. Otherwise return target unchanged.
+   * @param target PSI element to check
+   * @return PsiDirectory or target unchanged
+   */
+  @Contract("null -> null; !null -> !null")
+  @Nullable
+  public static PsiElement turnInitIntoDir(@Nullable PsiElement target) {
+    if (target instanceof PyFile && isPackage((PsiFile)target)) {
+      return ((PsiFile)target).getContainingDirectory();
     }
-    return false;
+    return target;
+  }
+
+  /**
+   * @see #isPackage(PsiDirectory, boolean, PsiElement)
+   */
+  public static boolean isPackage(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
+    return isPackage(directory, true, anchor);
+  }
+
+  /**
+   * Checks that given PsiDirectory can be treated as Python package, i.e. it's either contains __init__.py or it's a namespace package
+   * (effectively any directory in Python 3.3 and above). Setuptools namespace packages can be checked as well, but it requires access to
+   * {@link PySetuptoolsNamespaceIndex} and may slow things down during update of project indexes.
+   * Also note that this method does not check that directory itself and its parents have valid importable names,
+   * use {@link PyNames#isIdentifier(String)} for this purpose.
+   *
+   * @param directory PSI directory to check
+   * @param checkSetupToolsPackages whether setuptools namespace packages should be considered as well
+   * @param anchor    optional anchor element to determine language level
+   * @return whether given directory is Python package
+   *
+   * @see PyNames#isIdentifier(String)
+   */
+  public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
+    if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
+      return true;
+    }
+    final LanguageLevel level = anchor != null ?
+                                LanguageLevel.forElement(anchor) :
+                                getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
+    if (level.isAtLeast(LanguageLevel.PYTHON33)) {
+      return true;
+    }
+    return checkSetupToolsPackages && isSetuptoolsNamespacePackage(directory);
+  }
+
+  public static boolean isPackage(@NotNull PsiFile file) {
+    return PyNames.INIT_DOT_PY.equals(file.getName());
+  }
+
+  private static boolean isSetuptoolsNamespacePackage(@NotNull PsiDirectory directory) {
+    final String packagePath = getPackagePath(directory);
+    return packagePath != null && !PySetuptoolsNamespaceIndex.find(packagePath, directory.getProject()).isEmpty();
+  }
+
+  @Nullable
+  private static String getPackagePath(@NotNull PsiDirectory directory) {
+    final QualifiedName name = QualifiedNameFinder.findShortestImportableQName(directory);
+    return name != null ? name.toString() : null;
   }
 
   /**
@@ -1116,8 +1169,8 @@ public class PyUtil {
   public static Collection<VirtualFile> getSourceRoots(@NotNull Module module) {
     final Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    result.addAll(Arrays.asList(manager.getSourceRoots()));
-    result.addAll(Arrays.asList(manager.getContentRoots()));
+    Collections.addAll(result, manager.getSourceRoots());
+    Collections.addAll(result, manager.getContentRoots());
     return result;
   }
 
@@ -1183,23 +1236,6 @@ public class PyUtil {
     return false;
   }
 
-  public static class UnderscoreFilter implements Condition<String> {
-    private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
-
-    public UnderscoreFilter(int allowed) {
-      myAllowed = allowed;
-    }
-
-    public boolean value(String name) {
-      if (name == null) return false;
-      if (name.length() < 1) return false; // empty strings make no sense
-      int have_underscores = 0;
-      if (name.charAt(0) == '_') have_underscores = 1;
-      if (have_underscores != 0 && name.length() > 1 && name.charAt(1) == '_') have_underscores = 2;
-      return myAllowed >= have_underscores;
-    }
-  }
-
   @Nullable
   public static String getKeywordArgumentString(PyCallExpression expr, String keyword) {
     return PyPsiUtils.strValue(expr.getKeywordArgument(keyword));
@@ -1209,7 +1245,7 @@ public class PyUtil {
     if (isBaseException(pyClass.getQualifiedName())) {
       return true;
     }
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback(pyClass.getProject()))) {
       if (type != null && isBaseException(type.getClassQName())) {
         return true;
       }
@@ -1327,7 +1363,7 @@ public class PyUtil {
       final File file = new File(path);
       try {
         final VirtualFile baseDir = project.getBaseDir();
-        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
+        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
         final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
         final String content = (template != null) ? template.getText(fileTemplateManager.getDefaultProperties(project)) : null;
         psi = PyExtractSuperclassHelper.placeFile(project,
@@ -1486,9 +1522,22 @@ public class PyUtil {
     return resultCasted;
   }
 
+  /**
+   * Inserts specified element into the statement list either at the beginning or at its end. If new element is going to be
+   * inserted at the beginning, any preceding docstrings and/or calls to super methods will be skipped.
+   * Moreover if statement list previously didn't contain any statements, explicit new line and indentation will be inserted in
+   * front of it.
+   *
+   * @param element        element to insert
+   * @param statementList  statement list
+   * @param toTheBeginning whether to insert element at the beginning or at the end of the statement list
+   * @return actually inserted element as for {@link PsiElement#add(PsiElement)}
+   */
+  @NotNull
   public static PsiElement addElementToStatementList(@NotNull PsiElement element,
                                                      @NotNull PyStatementList statementList,
                                                      boolean toTheBeginning) {
+    final boolean statementListWasEmpty = statementList.getStatements().length == 0;
     final PsiElement firstChild = statementList.getFirstChild();
     if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {
       element = firstChild.replace(element);
@@ -1516,19 +1565,32 @@ public class PyUtil {
                 return statementList.addAfter(element, anchor);
               }
               anchor = next;
-            }
-            else {
-              break;
+              continue;
             }
           }
-          else {
-            break;
-          }
+          break;
         }
         element = statementList.addBefore(element, anchor);
       }
       else {
         element = statementList.add(element);
+      }
+    }
+    if (statementListWasEmpty) {
+      final PsiElement parent = statementList.getParent();
+      if (parent instanceof PyStatementListContainer) {
+        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(parent.getProject());
+        final PsiFile pyFile = parent.getContainingFile();
+        final Document document = documentManager.getDocument(pyFile);
+        if (document != null && document.getLineNumber(parent.getTextOffset()) == document.getLineNumber(statementList.getTextOffset())) {
+          final CodeStyleSettings codeStyleManager = CodeStyleSettingsManager.getSettings(parent.getProject());
+          final IndentOptions indentOptions = codeStyleManager.getCommonSettings(pyFile.getLanguage()).getIndentOptions();
+          final int indentSize = indentOptions.INDENT_SIZE;
+          final String indentation = StringUtil.repeatSymbol(' ', PyPsiUtils.getElementIndentation(parent) + indentSize);
+          documentManager.doPostponedOperationsAndUnblockDocument(document);
+          document.insertString(statementList.getTextOffset(), "\n" + indentation);
+          documentManager.commitDocument(document);
+        }
       }
     }
     return element;
@@ -1639,15 +1701,6 @@ public class PyUtil {
     return PyNames.INIT.equals(function.getName());
   }
 
-
-  private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
-    final PyElement element = classMemberInfo.getMember();
-    if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
-      return true;
-    }
-    return false;
-  }
-
   /**
    * Filters out {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}
    * that should not be displayed in this refactoring (like object)
@@ -1685,10 +1738,7 @@ public class PyUtil {
 
     private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
       final PyElement element = classMemberInfo.getMember();
-      if ((element instanceof PyClass) && PyNames.OBJECT.equals(element.getName())) {
-        return true;
-      }
-      return false;
+      return (element instanceof PyClass) && PyNames.OBJECT.equals(element.getName());
     }
   }
 
@@ -1716,5 +1766,32 @@ public class PyUtil {
     }
     final String symboldName = qualifiedName.getLastComponent();
     return expectedName.equals(symboldName);
+  }
+
+  /**
+   * Checks that given class is the root of class hierarchy, i.e. it's either {@code object} or
+   * special {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   *
+   * @param cls    Python class to check
+   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyNames#FAKE_OLD_BASE
+   */
+  public static boolean isObjectClass(@NotNull PyClass cls) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
+    return cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE);
+  }
+
+  /**
+   * Checks that given type is the root of type hierarchy, i.e. it's type of either {@code object} or special
+   * {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   *
+   * @param type   Python class to check
+   * @param anchor arbitrary PSI element to find appropriate SDK
+   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyNames#FAKE_OLD_BASE
+   */
+  public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
+    return type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType();
   }
 }

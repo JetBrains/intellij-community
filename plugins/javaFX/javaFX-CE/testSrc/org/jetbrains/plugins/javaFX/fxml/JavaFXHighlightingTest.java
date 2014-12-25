@@ -16,9 +16,8 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -283,6 +282,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testShortNamesInRootType() throws Exception {
+    doTest();
+  }
+
   public void testLineChartInstantiation() throws Exception {
     doTest();
   }
@@ -353,8 +356,7 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   protected void enableInspections() {
     myFixture.enableInspections(new XmlPathReferenceInspection(), 
                                 new RequiredAttributesInspection(), 
-                                new UnusedSymbolLocalInspection(), 
-                                new UnusedDeclarationInspection());
+                                new UnusedDeclarationInspectionBase(true));
   }
 
   @NotNull

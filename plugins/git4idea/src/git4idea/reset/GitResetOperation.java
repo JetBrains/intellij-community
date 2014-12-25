@@ -16,7 +16,7 @@
 package git4idea.reset;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.repo.RepositoryUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -75,7 +76,7 @@ public class GitResetOperation {
 
   public void execute() {
     saveAllDocuments();
-    DvcsUtil.workingTreeChangeStarted(myProject);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     Map<GitRepository, GitCommandResult> results = ContainerUtil.newHashMap();
     try {
       for (Map.Entry<GitRepository, VcsFullCommitDetails> entry : myCommits.entrySet()) {
@@ -94,10 +95,11 @@ public class GitResetOperation {
         results.put(repository, result);
         repository.update();
         VfsUtil.markDirtyAndRefresh(true, true, false, root);
+        VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject, token);
     }
     notifyResult(results);
   }
@@ -177,7 +179,7 @@ public class GitResetOperation {
 
   @NotNull
   private static String joinRepos(@NotNull Collection<GitRepository> repositories) {
-    return StringUtil.join(RepositoryUtil.sortRepositories(repositories), ", ");
+    return StringUtil.join(DvcsUtil.sortRepositories(repositories), ", ");
   }
 
   private static void saveAllDocuments() {

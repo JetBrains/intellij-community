@@ -531,9 +531,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private void editVariables() {
     ArrayList<Variable> newVariables = updateVariablesByTemplateText();
 
-    EditVariableDialog editVariableDialog = new EditVariableDialog(myTemplateEditor, myEditVariablesButton, newVariables, getApplicableContexts());
-    editVariableDialog.show();
-    if (editVariableDialog.isOK()) {
+    EditVariableDialog editVariableDialog =
+      new EditVariableDialog(myTemplateEditor, myEditVariablesButton, newVariables, getApplicableContexts());
+    if (editVariableDialog.showAndGet()) {
       applyVariables(newVariables);
     }
   }

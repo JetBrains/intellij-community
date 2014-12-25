@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -273,7 +274,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     if (result== null && styleProvider !=null) {
       result = styleProvider.getDocumentationElementForLink(psiManager, link, context);
     }
-    if (result== null && ourScriptProvider !=null) {
+    if (result== null && ourScriptProvider != null && !DumbService.isDumb(psiManager.getProject())) {
       result = ourScriptProvider.getDocumentationElementForLink(psiManager, link,context);
     }
     return result;

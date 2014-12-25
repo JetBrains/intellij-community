@@ -17,9 +17,11 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -86,6 +88,11 @@ public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDes
             if (method == null) {
               return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
             }
+          }
+        } else if (FxmlConstants.TYPE.equals(attributeName)) {
+          final PsiReference[] references = context.getReferences();
+          if (references.length == 0 || references[references.length - 1].resolve() == null) {
+            return "Cannot resolve class " + value;
           }
         }
       }

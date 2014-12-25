@@ -34,11 +34,8 @@ import org.jetbrains.annotations.Nullable;
 public class PsiUtil {
   private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
   private static final String IDE_PROJECT_MARKER_CLASS = JBList.class.getName();
-  public static final PsiElementVisitor EMPTY_VISITOR = new PsiElementVisitor() {
-  };
 
-  private PsiUtil() {
-  }
+  private PsiUtil() { }
 
   public static boolean isInstantiable(@NotNull PsiClass cls) {
     final PsiModifierList modList = cls.getModifierList();

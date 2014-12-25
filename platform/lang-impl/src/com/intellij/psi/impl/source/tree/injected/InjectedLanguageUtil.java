@@ -307,7 +307,7 @@ public class InjectedLanguageUtil {
     MultiHostRegistrarImpl registrar = null;
     PsiElement current = element;
     nextParent:
-    while (current != null && current != hostPsiFile) {
+    while (current != null && current != hostPsiFile && !(current instanceof PsiDirectory)) {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI);

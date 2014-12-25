@@ -28,7 +28,6 @@ import com.intellij.openapi.wm.*;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.components.OrphanGuardian;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
@@ -37,13 +36,10 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.Animator;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.TimedDeadzone;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.containers.FluentIterable;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NonNls;
@@ -100,6 +96,8 @@ public class JBTabsImpl extends JComponent
   private boolean myStealthTabMode = false;
 
   private boolean mySideComponentOnTabs = true;
+
+  private boolean mySizeBySelected;
 
   private DataProvider myDataProvider;
 
@@ -316,16 +314,19 @@ public class JBTabsImpl extends JComponent
         }
       }
     };
-    putClientProperty(OrphanGuardian.CLIENT_PROPERTY_KEY, new OrphanGuardian() {
-
-      @Override
-      public void iterateOrphans(Consumer<JComponent> consumer) {
-        for (TabInfo info : getVisibleInfos()) {
-          if (info == mySelectedInfo) continue;
-          consumer.consume(info.getComponent());
+    UIUtil.putClientProperty(
+      this, JBSwingUtilities.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+        @Override
+        public Iterator<JComponent> iterator() {
+          return FluentIterable.from(getVisibleInfos()).filter(Conditions.not(Conditions.is(mySelectedInfo))).transform(
+            new Function<TabInfo, JComponent>() {
+              @Override
+              public JComponent fun(TabInfo info) {
+                return info.getComponent();
+              }
+            }).iterator();
         }
-      }
-    });
+      });
   }
 
   protected SingleRowLayout createSingleRowLayout() {
@@ -343,6 +344,10 @@ public class JBTabsImpl extends JComponent
     }
 
     return this;
+  }
+
+  public int getActiveTabUnderlineHeight() {
+    return TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
   }
 
   public boolean isEditorTabs() {
@@ -822,6 +827,9 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback _setSelected(final TabInfo info, final boolean requestFocus) {
+    if (!isEnabled()) {
+      return ActionCallback.REJECTED;
+    }
     if (mySelectionChangeHandler != null) {
       return mySelectionChangeHandler.execute(info, requestFocus, new ActiveRunnable() {
         @NotNull
@@ -2320,6 +2328,10 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Dimension getMinimumSize() {
+    if (mySizeBySelected) {
+      return computeSizeBySelected(true);
+    }
+
     return computeSize(new Function<JComponent, Dimension>() {
       @Override
       public Dimension fun(JComponent component) {
@@ -2330,12 +2342,35 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Dimension getPreferredSize() {
+    if (mySizeBySelected) {
+      return computeSizeBySelected(false);
+    }
+
     return computeSize(new Function<JComponent, Dimension>() {
       @Override
       public Dimension fun(JComponent component) {
         return component.getPreferredSize();
       }
     }, 3);
+  }
+
+  @NotNull
+  private Dimension computeSizeBySelected(boolean minimum) {
+    Dimension size = new Dimension();
+    TabInfo tabInfo = getSelectedInfo();
+    if (tabInfo == null && myVisibleInfos.size() > 0) {
+      tabInfo = myVisibleInfos.get(0);
+    }
+
+    JComponent component = tabInfo == null ? null : tabInfo.getComponent();
+    if (component != null) {
+      Dimension tabSize = minimum ? component.getMinimumSize() : component.getPreferredSize();
+      size.width = tabSize.width;
+      size.height = tabSize.height;
+    }
+
+    addHeaderSize(size, 3);
+    return size;
   }
 
   private Dimension computeSize(Function<JComponent, Dimension> transform, int tabCount) {
@@ -2966,6 +3001,14 @@ public class JBTabsImpl extends JComponent
     relayout(true, false);
 
     return this;
+  }
+
+  public boolean isSizeBySelected() {
+    return mySizeBySelected;
+  }
+
+  public void setSizeBySelected(boolean value) {
+    mySizeBySelected = value;
   }
 
   public boolean useSmallLabels() {

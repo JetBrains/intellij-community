@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.lang.java;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -41,13 +43,21 @@ public class JavaSyntaxHighlighterFactory extends SyntaxHighlighterFactory imple
   }
 
   /**
-   * SyntaxHighlighterProvider implementation (for class files).
+   * SyntaxHighlighterProvider implementation (for .class files).
    */
   @Nullable
   @Override
   public SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
     if (project != null && file != null) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+
+      if (fileType == JavaClassFileType.INSTANCE && psiFile != null) {
+        Language language = psiFile.getLanguage();
+        if (language != JavaLanguage.INSTANCE) {
+          return SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
+        }
+      }
+
       if (psiFile instanceof ClsFileImpl) {
         LanguageLevel sourceLevel = ((ClsFileImpl)psiFile).getLanguageLevel();
         return new JavaFileHighlighter(sourceLevel);

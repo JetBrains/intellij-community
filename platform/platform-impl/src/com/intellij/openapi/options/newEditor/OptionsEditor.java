@@ -39,6 +39,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -146,7 +147,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     };
     if (Registry.is("ide.new.settings.dialog")) {
-      mySearch.setBackground(UIUtil.getSidePanelColor());
+      mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
       mySearch.setBorder(new EmptyBorder(5, 10, 2, 10));
     }
 
@@ -712,11 +713,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       if (c != null) {
         if (scrollable) {
-          JScrollPane scroll = ScrollPaneFactory.createScrollPane(c);
-          scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-          scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+          JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
+          scroll.setViewport(new GradientViewport(c, 5, 5, 5, 5, false));
           scroll.getVerticalScrollBar().setUnitIncrement(10);
-          scroll.setBorder(null);
           add(scroll, BorderLayout.CENTER);
         }
         else {
@@ -947,7 +946,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       final MouseEvent me = (MouseEvent)event;
       if (SwingUtilities.isDescendingFrom(me.getComponent(), SwingUtilities.getWindowAncestor(myContentWrapper)) || isPopupOverEditor(me.getComponent())) {
         queueModificationCheck();
-        myFilter.setHoldingFilter(false);
       }
     }
     else if (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED) {

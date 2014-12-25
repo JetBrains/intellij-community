@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,13 +51,13 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
   private static int ourSavedConsoleFontSize;
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean selected = UISettings.getInstance().PRESENTATION_MODE;
     e.getPresentation().setText(selected ? "Exit Presentation Mode" : "Enter Presentation Mode");
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e){
+  public void actionPerformed(@NotNull AnActionEvent e){
     UISettings settings = UISettings.getInstance();
     Project project = e.getProject();
 
@@ -179,7 +180,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     return hasVisible;
   }
 
-  private static boolean storeToolWindows(@Nullable Project project) {
+  static boolean storeToolWindows(@Nullable Project project) {
     if (project == null) return false;
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
 
@@ -194,7 +195,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     return hasVisible;
   }
 
-  private static void restoreToolWindows(Project project, boolean needsRestore, boolean inPresentation) {
+  static void restoreToolWindows(Project project, boolean needsRestore, boolean inPresentation) {
     if (project == null || !needsRestore) return;
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();

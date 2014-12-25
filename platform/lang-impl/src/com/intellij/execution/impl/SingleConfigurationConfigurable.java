@@ -20,6 +20,8 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -126,7 +128,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   public final JComponent createComponent() {
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
-    return myComponent.getWholePanel();
+    JComponent result = myComponent.getWholePanel();
+    DataManager.registerDataProvider(result, new MyDataProvider());
+    return result;
   }
 
   final JComponent getValidationComponent() {
@@ -401,6 +405,18 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     @NonNls
     private String generateWarningLabelText(final ValidationResult configurationException) {
       return "<html><body><b>" + configurationException.getTitle() + ": </b>" + configurationException.getMessage() + "</body></html>";
+    }
+  }
+
+  private class MyDataProvider implements DataProvider {
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
+        return getEditor();
+      }
+      return null;
     }
   }
 }

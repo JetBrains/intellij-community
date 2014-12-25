@@ -19,7 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -29,8 +29,11 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.stores.*;
+import com.intellij.openapi.components.impl.stores.ComponentStoreImpl;
 import com.intellij.openapi.components.impl.stores.ComponentStoreImpl.ReloadComponentStoreStatus;
+import com.intellij.openapi.components.impl.stores.FileBasedStorage;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -124,7 +127,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   /** @noinspection UnusedParameters*/
   public ProjectManagerImpl(@NotNull VirtualFileManager virtualFileManager,
-                            RecentProjectsManagerBase recentProjectsManager,
+                            RecentProjectsManager recentProjectsManager,
                             ProgressManager progressManager) {
     myProgressManager = progressManager;
     Application app = ApplicationManager.getApplication();
@@ -219,6 +222,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     }
   }
 
+  public static int TEST_PROJECTS_CREATED = 0;
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
   private static final int MAX_LEAKY_PROJECTS = 42;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
@@ -226,25 +230,34 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   @Override
   @Nullable
   public Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
+    return newProject(projectName, filePath, useDefaultProjectSettings, isDummy, ApplicationManager.getApplication().isUnitTestMode());
+  }
+
+  @Nullable
+  public Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy,
+                            boolean optimiseTestLoadSpeed) {
     filePath = toCanonicalName(filePath);
 
     //noinspection ConstantConditions
-    if (LOG_PROJECT_LEAKAGE_IN_TESTS && ApplicationManager.getApplication().isUnitTestMode()) {
-      for (int i = 0; i < 42; i++) {
-        if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
-        System.gc();
-        TimeoutUtil.sleep(100);
-        System.gc();
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      TEST_PROJECTS_CREATED++;
+      if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
+        for (int i = 0; i < 42; i++) {
+          if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
+          System.gc();
+          TimeoutUtil.sleep(100);
+          System.gc();
+        }
 
-      if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
-        List<Project> copy = new ArrayList<Project>(myProjects.keySet());
-        myProjects.clear();
-        throw new TooManyProjectLeakedException(copy);
+        if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
+          List<Project> copy = new ArrayList<Project>(myProjects.keySet());
+          myProjects.clear();
+          throw new TooManyProjectLeakedException(copy);
+        }
       }
     }
 
-    ProjectImpl project = createProject(projectName, filePath, false, ApplicationManager.getApplication().isUnitTestMode());
+    ProjectImpl project = createProject(projectName, filePath, false, optimiseTestLoadSpeed);
     try {
       initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
@@ -688,16 +701,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       return false;
     }
     return ComponentStoreImpl.reloadStore(causes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED;
-  }
-
-  @Override
-  public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
-    for (Pair<VirtualFile, StateStorage> entry : myChangedProjectFiles.values()) {
-      if (entry.first.equals(candidate)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override

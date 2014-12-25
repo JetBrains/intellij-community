@@ -11,17 +11,17 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogFilterUi;
-import com.intellij.vcs.log.VcsLogSettings;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -91,7 +91,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myToolbar = createActionsToolbar();
 
     myDetailsSplitter = new Splitter(true, 0.7f);
-    myDetailsSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myGraphTable));
+    myDetailsSplitter.setFirstComponent(setupScrolledGraph());
     setupDetailsSplitter(myUiProperties.isShowDetails());
 
     JComponent toolbars = new JPanel(new BorderLayout());
@@ -156,6 +156,12 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
+  private JScrollPane setupScrolledGraph() {
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable);
+    myGraphTable.viewportSet(scrollPane.getViewport());
+    return scrollPane;
+  }
+
   private static void setDefaultEmptyText(ChangesBrowser changesBrowser) {
     changesBrowser.getViewer().setEmptyText("");
   }
@@ -209,7 +215,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(myFilterUi.getActionGroup());
+    mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
@@ -232,7 +238,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   @Override
   public void calcData(DataKey key, DataSink sink) {
-    if (VcsLogDataKeys.VSC_LOG == key) {
+    if (VcsLogDataKeys.VCS_LOG == key) {
       sink.put(key, myLog);
     }
     else if (VcsLogDataKeys.VCS_LOG_UI == key) {
@@ -247,14 +253,28 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         sink.put(key, ArrayUtil.toObjectArray(selectedChanges, Change.class));
       }
     }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
+      List<Hash> hashes = myUI.getVcsLog().getSelectedCommits();
+      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<Hash, VcsRevisionNumber>() {
+        @Override
+        public VcsRevisionNumber fun(Hash hash) {
+          return new TextRevisionNumber(hash.asString(), hash.toShortString());
+        }
+      }), VcsRevisionNumber.class));
+    }
   }
 
-  public Component getToolbar() {
+  @NotNull
+  public JComponent getToolbar() {
     return myToolbar;
   }
 
   public boolean areGraphActionsEnabled() {
     return myGraphTable.getModel() instanceof GraphTableModel && myGraphTable.getRowCount() > 0;
+  }
+
+  public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
+    myBranchesPanel.onFiltersChange(filters);
   }
 
   private class CommitSelectionListener implements ListSelectionListener {
@@ -367,8 +387,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return ContainerUtil.concat(Arrays.<Component>asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent()),
-                                  myFilterUi.getComponents());
+      return Arrays.<Component>asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent());
     }
   }
 

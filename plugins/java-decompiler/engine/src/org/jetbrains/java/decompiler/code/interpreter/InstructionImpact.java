@@ -429,7 +429,7 @@ public class InstructionImpact {
         break;
       case CodeConstants.opc_aaload:
         var1 = stack.pop(2);
-        stack.push(new VarType(var1.type, var1.arraydim - 1, var1.value));
+        stack.push(new VarType(var1.type, var1.arrayDim - 1, var1.value));
         break;
       case CodeConstants.opc_astore:
         data.setVariable(instr.getOperand(0), stack.pop());
@@ -457,7 +457,7 @@ public class InstructionImpact {
         ck = pool.getLinkConstant(instr.getOperand(0));
         var1 = new VarType(ck.descriptor);
         stack.push(var1);
-        if (var1.stack_size == 2) {
+        if (var1.stackSize == 2) {
           stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
         }
         break;
@@ -466,7 +466,7 @@ public class InstructionImpact {
       case CodeConstants.opc_putstatic:
         ck = pool.getLinkConstant(instr.getOperand(0));
         var1 = new VarType(ck.descriptor);
-        stack.pop(var1.stack_size);
+        stack.pop(var1.stackSize);
         break;
       case CodeConstants.opc_invokevirtual:
       case CodeConstants.opc_invokespecial:
@@ -478,11 +478,11 @@ public class InstructionImpact {
           ck = pool.getLinkConstant(instr.getOperand(0));
           MethodDescriptor md = MethodDescriptor.parseDescriptor(ck.descriptor);
           for (int i = 0; i < md.params.length; i++) {
-            stack.pop(md.params[i].stack_size);
+            stack.pop(md.params[i].stackSize);
           }
           if (md.ret.type != CodeConstants.TYPE_VOID) {
             stack.push(md.ret);
-            if (md.ret.stack_size == 2) {
+            if (md.ret.stackSize == 2) {
               stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
             }
           }
@@ -494,9 +494,7 @@ public class InstructionImpact {
         break;
       case CodeConstants.opc_newarray:
         stack.pop();
-        var1 = new VarType(arr_type[instr.getOperand(0) - 4]);
-        var1.arraydim = 1;
-        stack.push(var1);
+        stack.push(new VarType(arr_type[instr.getOperand(0) - 4], 1).resizeArrayDim(1));
         break;
       case CodeConstants.opc_athrow:
         var1 = stack.pop();
@@ -516,7 +514,7 @@ public class InstructionImpact {
         cn = pool.getPrimitiveConstant(instr.getOperand(0));
         if (cn.isArray) {
           var1 = new VarType(CodeConstants.TYPE_OBJECT, 0, cn.getString());
-          var1.arraydim += dimensions;
+          var1 = var1.resizeArrayDim(var1.arrayDim + dimensions);
           stack.push(var1);
         }
         else {

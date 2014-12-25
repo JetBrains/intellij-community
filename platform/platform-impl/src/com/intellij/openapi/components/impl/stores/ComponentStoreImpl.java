@@ -15,21 +15,15 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
-import com.intellij.openapi.components.store.ComponentSaveSession;
+import com.intellij.openapi.components.impl.stores.StateStorageManager.ExternalizationSession;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
@@ -62,105 +56,111 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   protected abstract StateStorage getDefaultsStorage();
 
   @Override
-  public void initComponent(@NotNull final Object component, final boolean service) {
+  public void initComponent(@NotNull Object component, boolean service) {
     if (component instanceof SettingsSavingComponent) {
       mySettingsSavingComponents.add((SettingsSavingComponent)component);
     }
 
-    boolean isSerializable = component instanceof JDOMExternalizable ||
-                             component instanceof PersistentStateComponent;
+    if (!(component instanceof JDOMExternalizable || component instanceof PersistentStateComponent)) {
+      return;
+    }
 
-    if (!isSerializable) return;
-
+    AccessToken token = ReadAction.start();
     try {
-      ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (component instanceof PersistentStateComponent) {
-            initPersistentComponent((PersistentStateComponent<?>)component, false, false);
-          }
-          else {
-            initJdomExternalizable((JDOMExternalizable)component);
-          }
-        }
-      });
+      if (component instanceof PersistentStateComponent) {
+        initPersistentComponent((PersistentStateComponent<?>)component, null, false);
+      }
+      else {
+        initJdomExternalizable((JDOMExternalizable)component);
+      }
     }
     catch (StateStorageException e) {
+      throw e;
+    }
+    catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Exception e) {
       LOG.error(e);
     }
+    finally {
+      token.finish();
+    }
   }
 
   @Override
-  @Nullable
-  public final ComponentSaveSession startSave() {
-    if (myComponents.isEmpty()) {
-      return null;
-    }
-
-    StateStorageManager storageManager = getStateStorageManager();
-    StateStorageManager.ExternalizationSession externalizationSession = storageManager.startExternalization();
-    if (externalizationSession == null) {
-      return null;
-    }
-
-    String[] names = ArrayUtilRt.toStringArray(myComponents.keySet());
-    Arrays.sort(names);
-    for (String name : names) {
-      Object component = myComponents.get(name);
-      if (component instanceof PersistentStateComponent) {
-        commitPersistentComponent((PersistentStateComponent<?>)component, externalizationSession);
-      }
-      else if (component instanceof JDOMExternalizable) {
-        externalizationSession.setStateInOldStorage(component, ComponentManagerImpl.getComponentName(component), component);
+  public final void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles) {
+    ExternalizationSession externalizationSession = myComponents.isEmpty() ? null : getStateStorageManager().startExternalization();
+    if (externalizationSession != null) {
+      String[] names = ArrayUtilRt.toStringArray(myComponents.keySet());
+      Arrays.sort(names);
+      for (String name : names) {
+        Object component = myComponents.get(name);
+        if (component instanceof PersistentStateComponent) {
+          commitPersistentComponent((PersistentStateComponent<?>)component, externalizationSession);
+        }
+        else if (component instanceof JDOMExternalizable) {
+          externalizationSession.setStateInOldStorage(component, ComponentManagerImpl.getComponentName(component), component);
+        }
       }
     }
 
-    SaveSession storageManagerSaveSession = storageManager.startSave(externalizationSession);
-    if (storageManagerSaveSession == null) {
-      return null;
+    for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
+      try {
+        settingsSavingComponent.save();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
-    SaveSessionImpl session = createSaveSession();
-    session.myStorageManagerSaveSession = storageManagerSaveSession;
-    return session;
+    doSave(externalizationSession == null ? null : externalizationSession.createSaveSessions(), readonlyFiles);
   }
 
-  protected SaveSessionImpl createSaveSession() {
-    return new SaveSessionImpl();
+  protected void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    if (saveSessions != null) {
+      for (SaveSession session : saveSessions) {
+        executeSave(session, readonlyFiles);
+      }
+    }
+  }
+
+  protected static void executeSave(@NotNull SaveSession session, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    try {
+      session.save();
+    }
+    catch (ReadOnlyModificationException e) {
+      readonlyFiles.add(Pair.create(session, e.getFile()));
+    }
   }
 
   private <T> void commitPersistentComponent(@NotNull PersistentStateComponent<T> persistentStateComponent,
-                                             @NotNull StateStorageManager.ExternalizationSession session) {
+                                             @NotNull ExternalizationSession session) {
     T state = persistentStateComponent.getState();
     if (state != null) {
-      Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
+      Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StoreUtil.getStateSpec(persistentStateComponent), StateStorageOperation.WRITE);
       session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
     }
   }
 
-  @Nullable
-  private String initJdomExternalizable(@NotNull JDOMExternalizable component) {
-    final String componentName = ComponentManagerImpl.getComponentName(component);
-
+  private void initJdomExternalizable(@NotNull JDOMExternalizable component) {
+    String componentName = ComponentManagerImpl.getComponentName(component);
     doAddComponent(componentName, component);
 
     if (optimizeTestLoading()) {
-      return componentName;
+      return;
     }
 
     loadJdomDefaults(component, componentName);
 
     StateStorage stateStorage = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ);
     if (stateStorage == null) {
-      return null;
+      return;
     }
 
     Element element = getJdomState(component, componentName, stateStorage);
     if (element == null) {
-      return null;
+      return;
     }
 
     try {
@@ -170,12 +170,11 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       component.readExternal(element);
     }
     catch (InvalidDataException e) {
-      throw new RuntimeException(e);
+      LOG.error(e);
+      return;
     }
 
     validateUnusedMacros(componentName, true);
-
-    return componentName;
   }
 
   private void doAddComponent(String componentName, Object component) {
@@ -229,9 +228,10 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
   }
 
-  private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData, boolean isReinit) {
-    String name = getStateSpec(component).name();
-    if (!isReinit) {
+  private <T> String initPersistentComponent(@NotNull PersistentStateComponent<T> component, @Nullable Set<StateStorage> changedStorages, boolean reloadData) {
+    State stateSpec = StoreUtil.getStateSpec(component);
+    String name = stateSpec.name();
+    if (changedStorages == null || !reloadData) {
       doAddComponent(name, component);
     }
     if (optimizeTestLoading()) {
@@ -240,23 +240,18 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
     Class<T> stateClass = getComponentStateClass(component);
     T state = null;
-    //todo: defaults merging
     StateStorage defaultsStorage = getDefaultsStorage();
     if (defaultsStorage != null) {
       state = defaultsStorage.getState(component, name, stateClass, null);
     }
 
-    Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
+    Storage[] storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ);
     for (Storage storageSpec : storageSpecs) {
       StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
-      if (stateStorage != null && stateStorage.hasState(component, name, stateClass, reloadData)) {
+      if (stateStorage != null && (stateStorage.hasState(component, name, stateClass, reloadData) ||
+                                   (changedStorages != null && changedStorages.contains(stateStorage)))) {
         state = stateStorage.getState(component, name, stateClass, state);
-        if (state instanceof Element) {
-          // actually, our DefaultStateSerializer.deserializeState doesn't perform merge states if state is Element,
-          // storages are ordered by priority (first has higher priority), so, in this case we must just use first state
-          // https://youtrack.jetbrains.com/issue/IDEA-130930. More robust solution must be implemented later.
-          break;
-        }
+        break;
       }
     }
 
@@ -294,41 +289,62 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
   @NotNull
   public static String getComponentName(@NotNull PersistentStateComponent<?> persistentStateComponent) {
-    return getStateSpec(persistentStateComponent).name();
+    return StoreUtil.getStateSpec(persistentStateComponent).name();
   }
 
   @NotNull
-  private static <T> State getStateSpec(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
-    final Class<? extends PersistentStateComponent> aClass = persistentStateComponent.getClass();
-    final State stateSpec = aClass.getAnnotation(State.class);
-    if (stateSpec == null) {
-      final PluginId pluginId = PluginManagerCore.getPluginByClassName(aClass.getName());
-      if (pluginId != null) {
-        throw new PluginException("No @State annotation found in " + aClass, pluginId);
-      }
-      throw new RuntimeException("No @State annotation found in " + aClass);
-    }
-    return stateSpec;
-  }
-
-  @NotNull
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
-                                                   @NotNull StateStorageOperation operation) {
-    final State stateSpec = getStateSpec(persistentStateComponent);
-    final Storage[] storages = stateSpec.storages();
+  private <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+                                                 @NotNull State stateSpec,
+                                                 @NotNull StateStorageOperation operation) {
+    Storage[] storages = stateSpec.storages();
     if (storages.length == 1) {
       return storages;
     }
     assert storages.length > 0;
 
-    final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
+    Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
     if (storageChooserClass == StateStorageChooser.class) {
       StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
-      assert defaultStateStorageChooser != null : "State chooser not specified for: " + persistentStateComponent.getClass();
-      return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
-    }
-    else if (storageChooserClass == LastStorageChooserForWrite.class) {
-      return LastStorageChooserForWrite.INSTANCE.selectStorages(storages, persistentStateComponent, operation);
+      if (defaultStateStorageChooser == null) {
+        int actualStorageCount = 0;
+        for (Storage storage : storages) {
+          if (!storage.deprecated()) {
+            actualStorageCount++;
+          }
+        }
+
+        if (actualStorageCount > 1) {
+          LOG.error("State chooser not specified for: " + persistentStateComponent.getClass());
+        }
+
+        if (!storages[0].deprecated()) {
+          boolean othersAreDeprecated = true;
+          for (int i = 1; i < storages.length; i++) {
+            if (!storages[i].deprecated()) {
+              othersAreDeprecated = false;
+              break;
+            }
+          }
+
+          if (othersAreDeprecated) {
+            return storages;
+          }
+        }
+
+        Storage[] sorted = Arrays.copyOf(storages, storages.length);
+        Arrays.sort(sorted, new Comparator<Storage>() {
+          @Override
+          public int compare(Storage o1, Storage o2) {
+            int w1 = o1.deprecated() ? 1 : 0;
+            int w2 = o2.deprecated() ? 1 : 0;
+            return w1 - w2;
+          }
+        });
+        return sorted;
+      }
+      else {
+        return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
+      }
     }
     else {
       @SuppressWarnings("unchecked")
@@ -346,46 +362,11 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     return null;
   }
 
-  protected static void executeSave(@NotNull SaveSession saveSession, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-    try {
-      saveSession.save();
-    }
-    catch (ReadOnlyModificationException e) {
-      readonlyFiles.add(Pair.create(saveSession, e.getFile()));
-    }
-  }
-
-  protected class SaveSessionImpl implements ComponentSaveSession {
-    protected SaveSession myStorageManagerSaveSession;
-
-    @NotNull
-    @Override
-    public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
-        try {
-          settingsSavingComponent.save();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-
-      executeSave(myStorageManagerSaveSession, readonlyFiles);
-      return this;
-    }
-
-    @Override
-    public void finishSave() {
-      getStateStorageManager().finishSave(myStorageManagerSaveSession);
-      myStorageManagerSaveSession = null;
-    }
-  }
-
   @Override
   public boolean isReloadPossible(@NotNull final Set<String> componentNames) {
     for (String componentName : componentNames) {
       final Object component = myComponents.get(componentName);
-      if (component != null && (!(component instanceof PersistentStateComponent) || !getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
+      if (component != null && (!(component instanceof PersistentStateComponent) || !StoreUtil.getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
         return false;
       }
     }
@@ -399,7 +380,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     Set<String> notReloadableComponents = null;
     for (String componentName : componentNames) {
       Object component = myComponents.get(componentName);
-      if (component != null && (!(component instanceof PersistentStateComponent) || !getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
+      if (component != null && (!(component instanceof PersistentStateComponent) || !StoreUtil.getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
         if (notReloadableComponents == null) {
           notReloadableComponents = new LinkedHashSet<String>();
         }
@@ -410,17 +391,18 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @Override
-  public final void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
-    reinitComponents(componentNames, Collections.<String>emptySet(), reloadData);
+  public void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
+    reinitComponents(componentNames, Collections.<String>emptySet(), Collections.<StateStorage>emptySet());
   }
 
-  protected boolean reinitComponent(@NotNull String componentName, boolean reloadData) {
+  protected boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
     PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
     if (component == null) {
       return false;
     }
     else {
-      initPersistentComponent(component, reloadData, true);
+      boolean changedStoragesEmpty = changedStorages.isEmpty();
+      initPersistentComponent(component, changedStoragesEmpty ? null : changedStorages, changedStoragesEmpty);
       return true;
     }
   }
@@ -431,8 +413,11 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   @Override
   @Nullable
   public final Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages) {
-    Set<String> componentNames = new SmartHashSet<String>();
+    if (changedStorages.isEmpty()) {
+      return Collections.emptySet();
+    }
 
+    Set<String> componentNames = new SmartHashSet<String>();
     for (StateStorage storage : changedStorages.keySet()) {
       try {
         // we must update (reload in-memory storage data) even if non-reloadable component will be detected later
@@ -449,18 +434,18 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     Collection<String> notReloadableComponents = getNotReloadableComponents(componentNames);
-    reinitComponents(componentNames, notReloadableComponents, false);
+    reinitComponents(componentNames, notReloadableComponents, changedStorages.keySet());
     return notReloadableComponents.isEmpty() ? null : notReloadableComponents;
   }
 
-  @Override
-  public final void reinitComponents(@NotNull Set<String> componentNames, @NotNull Collection<String> notReloadableComponents, boolean reloadData) {
+  // used in settings repository plugin
+  public void reinitComponents(@NotNull Set<String> componentNames, @NotNull Collection<String> notReloadableComponents, @NotNull Set<StateStorage> changedStorages) {
     MessageBus messageBus = getMessageBus();
     messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
     try {
       for (String componentName : componentNames) {
         if (!notReloadableComponents.contains(componentName)) {
-          reinitComponent(componentName, reloadData);
+          reinitComponent(componentName, changedStorages);
         }
       }
     }

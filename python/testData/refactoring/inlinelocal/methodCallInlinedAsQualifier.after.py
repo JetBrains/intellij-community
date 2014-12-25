@@ -1,0 +1,1 @@
+a.method().strip()

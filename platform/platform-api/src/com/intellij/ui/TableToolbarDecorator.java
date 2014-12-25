@@ -120,8 +120,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
         table.setColumnSelectionInterval(0, 0);
         table.editCellAt(index, 0);
 
-        boolean temporaryHideVerticalScrollBar = table.getCellEditor() instanceof Animated;
-        TableUtil.updateScroller(table, temporaryHideVerticalScrollBar);
+        TableUtil.updateScroller(table);
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           @Override
@@ -145,7 +144,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
         if (TableUtil.doRemoveSelectedItems(table, tableModel, null)) {
           updateButtons();
           table.requestFocus();
-          TableUtil.updateScroller(table, false);
+          TableUtil.updateScroller(table);
         }
       }
     };

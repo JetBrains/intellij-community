@@ -65,7 +65,7 @@ public class PyTypeFromUsedAttributesHelper {
 
   @Nullable
   private PyType getType(@NotNull PyExpression expression) {
-    if (!ENABLED || !myContext.allowLocalUsages(expression)) {
+    if (!ENABLED || !myContext.allowCallContext(expression)) {
       return null;
     }
     final long startInference = System.currentTimeMillis();

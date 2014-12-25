@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author Yura Cangea
- */
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -30,66 +26,59 @@ import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Comparator;
 
+/**
+ * @author Yura Cangea
+ */
 public class FileTreeBuilder extends AbstractTreeBuilder {
   private final FileChooserDescriptor myChooserDescriptor;
-
-  private final Runnable myOnInitialized;
 
   public FileTreeBuilder(JTree tree,
                          DefaultTreeModel treeModel,
                          AbstractTreeStructure treeStructure,
                          Comparator<NodeDescriptor> comparator,
                          FileChooserDescriptor chooserDescriptor,
-                         @Nullable Runnable onInitialized) {
+                         @SuppressWarnings("UnusedParameters") Runnable onInitialized) {
     super(tree, treeModel, treeStructure, comparator, false);
-
-    myOnInitialized = onInitialized;
-
     myChooserDescriptor = chooserDescriptor;
+
     initRootNode();
 
-    installVirtualFileListener();
-  }
-
-
-  protected void onRootNodeInitialized() {
-    if (myOnInitialized != null) {
-      myOnInitialized.run();
-    }
-  }
-
-  private void installVirtualFileListener() {
-
-    VirtualFileAdapter myVirtualFileListener = new VirtualFileAdapter() {
+    VirtualFileAdapter listener = new VirtualFileAdapter() {
+      @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-        getUpdater().addSubtreeToUpdate(getRootNode());
+        doUpdate();
       }
 
+      @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
-        getUpdater().addSubtreeToUpdate(getRootNode());
+        doUpdate();
       }
 
+      @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
-        getUpdater().addSubtreeToUpdate(getRootNode());
+        doUpdate();
       }
 
+      @Override
       public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-        getUpdater().addSubtreeToUpdate(getRootNode());
+        doUpdate();
+      }
+
+      private void doUpdate() {
+        queueUpdateFrom(getRootNode(), false);
       }
     };
-
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener,this);
+    VirtualFileManager.getInstance().addVirtualFileListener(listener, this);
   }
 
-
+  @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    final Object element = nodeDescriptor.getElement();
+    Object element = nodeDescriptor.getElement();
     if (element != null) {
       FileElement descriptor = (FileElement)element;
       VirtualFile file = descriptor.getFile();
@@ -103,10 +92,12 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
     return true;
   }
 
+  @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     if (nodeDescriptor.getElement() instanceof RootFileElement) {
       return true;
-    } else if (!SystemInfo.isWindows) {
+    }
+    else if (!SystemInfo.isWindows) {
       NodeDescriptor parent = nodeDescriptor.getParentDescriptor();
       return parent != null && parent.getElement() instanceof RootFileElement;
     }
@@ -114,7 +105,7 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  @NotNull
+  @Override
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();
   }

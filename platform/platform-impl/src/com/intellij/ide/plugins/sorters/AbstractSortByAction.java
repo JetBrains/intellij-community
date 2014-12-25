@@ -44,6 +44,11 @@ public abstract class AbstractSortByAction extends ToggleAction {
   }
 
   @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
+  @Override
   public final void setSelected(AnActionEvent e, boolean state) {
     IdeaPluginDescriptor[] selected = myTable.getSelectedObjects();
     setSelected(state);

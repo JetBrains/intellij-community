@@ -56,7 +56,6 @@ public class TaskUiUtil {
     /**
      * {@link #onSuccess()} can't be used for this purpose, because it doesn't consider current modality state
      * which will prevent UI updating in modal dialog (e.g. in {@link com.intellij.tasks.config.TaskRepositoryEditor}).
-     * @return
      */
     @Nullable
     @Override
@@ -113,7 +112,7 @@ public class TaskUiUtil {
     protected void updateUI() {
       if (myResult != null) {
         myComboBox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(myResult)));
-        T extra = getExtraItem();
+        final T extra = getExtraItem();
         if (extra != null) {
           myComboBox.insertItemAt(extra, 0);
         }
@@ -121,8 +120,11 @@ public class TaskUiUtil {
         // is the same as the next selected
         myComboBox.setSelectedItem(null);
 
-        T selected = getSelectedItem();
+        final T selected = getSelectedItem();
         if (selected != null) {
+          if (!selected.equals(extra) && !myResult.contains(selected)) {
+            myComboBox.addItem(selected);
+          }
           myComboBox.setSelectedItem(selected);
         }
         else if (myComboBox.getItemCount() > 0) {
@@ -130,7 +132,6 @@ public class TaskUiUtil {
         }
       }
       else {
-        // Some error occurred
         handleError();
       }
     }

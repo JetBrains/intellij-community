@@ -31,10 +31,7 @@ import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -207,7 +204,7 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   private List<VFileEvent> mergeEventsAndReset() {
-    LinkedHashSet<VFileEvent> mergedEvents = new LinkedHashSet<VFileEvent>(myEvents);
+    Set<VFileEvent> mergedEvents = new LinkedHashSet<VFileEvent>(myEvents);
     List<VFileEvent> events = new ArrayList<VFileEvent>(mergedEvents);
     myEvents = new ArrayList<VFileEvent>();
     return events;
@@ -216,5 +213,10 @@ public class RefreshSessionImpl extends RefreshSession {
   @NotNull
   public ModalityState getModalityState() {
     return myModalityState;
+  }
+
+  @Override
+  public String toString() {
+    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in queue.";
   }
 }

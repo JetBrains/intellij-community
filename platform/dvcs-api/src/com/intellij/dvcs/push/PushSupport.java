@@ -69,7 +69,7 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public boolean shouldRequestIncomingChangesForNotCheckedRepositories() {
     return true;
   }
-  
+
   /**
    * Returns true if force push is allowed now in the selected repository.
    * <p/>
@@ -84,5 +84,9 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
    * If it is not allowed for all PushSupports in the project, the "Force Push" button will be invisible.
    */
   public abstract boolean isForcePushEnabled();
+
+  public abstract boolean isSilentForcePushAllowed(@NotNull Target target);
+
+  public abstract void saveSilentForcePushTarget(@NotNull Target target);
 
 }

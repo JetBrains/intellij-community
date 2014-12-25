@@ -32,7 +32,9 @@ import java.awt.*;
 public class DarculaEditorTextFieldBorder implements Border {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (isComboBoxEditor(c) || isCellEditor(c)) {
+    if (isComboBoxEditor(c) /*|| isCellEditor(c)*/) {
+      g.setColor(c.getBackground());
+      g.fillRect(x, y, width, height);
       return;
     }
     final EditorTextField textField = UIUtil.getParentOfType(EditorTextField.class, c);
@@ -65,8 +67,8 @@ public class DarculaEditorTextFieldBorder implements Border {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    if (isComboBoxEditor(c) || isCellEditor(c)) {
-      return new InsetsUIResource(0,0,0,0);
+    if (isComboBoxEditor(c) /*|| isCellEditor(c)*/) {
+      return new InsetsUIResource(2,3,2,3);
     }
     return new InsetsUIResource(6, 7, 6, 7);
   }

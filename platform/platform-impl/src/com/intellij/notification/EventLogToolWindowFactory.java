@@ -97,12 +97,12 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS;
+      return NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS = state;
+      NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS = state;
     }
   }
 

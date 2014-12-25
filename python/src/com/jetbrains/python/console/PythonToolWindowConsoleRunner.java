@@ -46,6 +46,15 @@ public class PythonToolWindowConsoleRunner extends PydevConsoleRunner {
     super(project, sdk, consoleType, workingDir, environmentVariables, statementsToExecute);
   }
 
+  @Override
+  public void open() {
+    getToolWindow().activate(new Runnable() {
+      @Override
+      public void run() {
+      }
+    }, true);
+  }
+
   public ToolWindow getToolWindow() {
     if (myToolWindow == null) {
       myToolWindow = ToolWindowManager.getInstance(getProject()).getToolWindow(PythonConsoleToolWindowFactory.ID);
@@ -55,8 +64,8 @@ public class PythonToolWindowConsoleRunner extends PydevConsoleRunner {
 
   @Override
   protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
-    PythonConsoleToolWindow terminalView = PythonConsoleToolWindow.getInstance(getProject());
-    terminalView.init(getToolWindow(), contentDescriptor);
+    PythonConsoleToolWindow consoleToolWindow = PythonConsoleToolWindow.getInstance(getProject());
+    consoleToolWindow.init(getToolWindow(), contentDescriptor);
   }
 
   @Override

@@ -95,6 +95,12 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
+  public void testEscapeChars() throws Exception {
+    configureFromFileText(getTestName(false) + ".java", "class Foo { String s = \"a\\<caret>nb\"; }");
+    killToWordEnd();
+    checkResultByText("class Foo { String s = \"a\\<caret>b\"; }");
+  }
+
   private void doTest(@NotNull String before, @NotNull String after) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", before);
     killToWordEnd();

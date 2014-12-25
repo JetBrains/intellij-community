@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.actions.ClipboardVsValueContents;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 
 /**
  * User: ksafonov
@@ -26,7 +27,7 @@ import com.intellij.util.ui.UIUtil;
 public class XCompareWithClipboardAction extends XFetchValueActionBase {
 
   @Override
-  protected void handle(final Project project, final String value) {
+  protected void handle(final Project project, final String value, XDebuggerTree tree) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {

@@ -17,6 +17,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -131,7 +132,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public VcsKey getSupportedVcs() {
-    throw new UnsupportedOperationException();
+    return MockAbstractVcs.getKey();
   }
 
   @NotNull
@@ -197,16 +198,25 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return myReadFirstBlockCounter;
   }
 
+  @Nullable
+  @Override
+  public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
+    return null;
+  }
+
   private static class MockRefManager implements VcsLogRefManager {
+
+    public static final Comparator<VcsRef> FAKE_COMPARATOR = new Comparator<VcsRef>() {
+      @Override
+      public int compare(VcsRef o1, VcsRef o2) {
+        return 0;
+      }
+    };
+
     @NotNull
     @Override
-    public Comparator<VcsRef> getComparator() {
-      return new Comparator<VcsRef>() {
-        @Override
-        public int compare(VcsRef o1, VcsRef o2) {
-          return 0;
-        }
-      };
+    public Comparator<VcsRef> getLabelsOrderComparator() {
+      return FAKE_COMPARATOR;
     }
 
     @NotNull
@@ -218,6 +228,12 @@ public class TestVcsLogProvider implements VcsLogProvider {
           return new SingletonRefGroup(ref);
         }
       });
+    }
+
+    @NotNull
+    @Override
+    public Comparator<VcsRef> getBranchLayoutComparator() {
+      return FAKE_COMPARATOR;
     }
   }
 

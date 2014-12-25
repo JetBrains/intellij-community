@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   private int myTargetOffset;
 
-  OffsetToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache)
+  OffsetToLogicalCalculationStrategy(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache)
   {
     super(editor, storage, cache);
   }
@@ -62,7 +63,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
         if (lastEntry.endOffset >= targetOffset - 1) {
           EditorPosition position = lastEntry.buildEndLinePosition();
           if (document.getCharsSequence().charAt(document.getTextLength() - 1) == '\n') {
-            position.onNewLine(true);
+            position.onNewLineSoftWrapAware();
           }
           setEagerMatch(position.buildLogicalPosition());
           return;
@@ -70,7 +71,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
       }
     } else if (cache.size() > 0 && cache.get(cache.size() - 1).endOffset < targetOffset) {
       EditorPosition position = cache.get(cache.size() - 1).buildEndLinePosition();
-      position.onNewLine(true);
+      position.onNewLineSoftWrapAware();
       setInitialPosition(position);
       return;
     }
@@ -79,18 +80,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     CacheEntry cacheEntry = null;
     if (i >= 0) {
       CacheEntry candidate = cache.get(i);
-      // There is a possible case that target offset points to the start of soft-wrap introduced visual line. We perform eager
-      // match then.
-      if (candidate.endOffset == targetOffset && i < cache.size() - 1 && cache.get(i + 1).startOffset == targetOffset) {
-        EditorPosition position = cache.get(i + 1).buildStartLinePosition();
-        SoftWrap softWrap = myStorage.getSoftWrap(targetOffset);
-        if (softWrap != null) {
-          position.visualColumn = softWrap.getIndentInColumns();
-          position.softWrapColumnDiff += softWrap.getIndentInColumns();
-          setEagerMatch(position.buildLogicalPosition());
-        }
-      }
-      else if (candidate.startOffset <= targetOffset) {
+      if (candidate.startOffset <= targetOffset) {
         cacheEntry = candidate;
       }
     }
@@ -135,14 +125,6 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     position.logicalLine = logicalLine;
     position.offset = myTargetOffset;
     
-    // Process use-case when target offset points to 'after soft wrap' position.
-    //SoftWrap softWrap = myStorage.getSoftWrap(offset);
-    //if (softWrap != null && offset < getAnchorCacheEntry().endOffset) {
-    //  position.visualColumn = softWrap.getIndentInColumns();
-    //  position.softWrapColumnDiff = position.visualColumn - position.logicalColumn;
-    //  return position.buildLogicalPosition();
-    //}
-
     return position.buildLogicalPosition();
   }
 
@@ -157,13 +139,13 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     if (targetLogicalLine == position.logicalLine) {
       // Target offset is located on the same logical line as folding start.
       position.logicalColumn += SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).toVisualColumnSymbolsNumber(
-        document.getCharsSequence(), foldRegion.getStartOffset(), myTargetOffset, position.x
+        foldRegion.getStartOffset(), myTargetOffset, position.x
       );
     }
     else {
       // Target offset is located on a different line with folding start.
       position.logicalColumn = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).toVisualColumnSymbolsNumber(
-        document.getCharsSequence(), foldRegion.getStartOffset(), myTargetOffset, 0
+        foldRegion.getStartOffset(), myTargetOffset, 0
       );
       position.softWrapColumnDiff = 0;
       int linesDiff = document.getLineNumber(myTargetOffset) - document.getLineNumber(foldRegion.getStartOffset());

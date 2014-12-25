@@ -27,6 +27,7 @@ import java.util.concurrent.locks.LockSupport;
  * Adapted from java.util.concurrent.ConcurrentHashMap to int keys
  * @author Doug Lea
  * @param <V> the type of mapped values
+ * @deprecated Use {@link ContainerUtil#createConcurrentIntObjectMap()} instead
  */
 // added hashing strategy argument
 // added cacheOrGet convenience method
@@ -2161,7 +2162,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     static {
       try {
-        U = sun.misc.Unsafe.getUnsafe();
+        U = getUnsafe();
         Class<?> k = TreeBin.class;
         LOCKSTATE = U.objectFieldOffset
           (k.getDeclaredField("lockState"));

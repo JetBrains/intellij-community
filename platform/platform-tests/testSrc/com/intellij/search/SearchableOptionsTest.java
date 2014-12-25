@@ -20,7 +20,7 @@ import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
+import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.testFramework.LightPlatformLangTestCase;
 
 import javax.swing.event.DocumentEvent;
@@ -32,10 +32,10 @@ import java.util.Set;
 public class SearchableOptionsTest extends LightPlatformLangTestCase {
   public void testFindCodeTemplates() throws Exception {
     final ConfigurableHit configurables =
-      SearchableOptionsRegistrar.getInstance().getConfigurables(new ConfigurableGroup[]{new IdeConfigurablesGroup()}, DocumentEvent.EventType.INSERT, null, "method", getProject());
+      SearchableOptionsRegistrar.getInstance().getConfigurables(new ConfigurableGroup[]{new ProjectConfigurablesGroup(getProject())}, DocumentEvent.EventType.INSERT, null, "method", getProject());
     final Set<Configurable> configurableSet = configurables.getAll();
     for (Configurable configurable : configurableSet) {
-      if (configurable.getDisplayName().equals(new AllFileTemplatesConfigurable().getDisplayName())) {
+      if (configurable.getDisplayName().equals(new AllFileTemplatesConfigurable(getProject()).getDisplayName())) {
         return;
       }
     }

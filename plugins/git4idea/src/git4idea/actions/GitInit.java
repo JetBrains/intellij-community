@@ -29,11 +29,11 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -41,9 +41,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Initialize git repository action
@@ -105,28 +103,9 @@ public class GitInit extends DumbAwareAction {
 
   public static void refreshAndConfigureVcsMappings(final Project project, final VirtualFile root, final String path) {
     root.refresh(false, false);
-    ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
-    final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcs.getDirectoryMappings());
-    VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, GitVcs.getInstance(project).getName());
-    for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
-      final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
-      if (m.getDirectory().equals(path)) {
-        if (m.getVcs().length() == 0) {
-          vcsDirectoryMappings.set(i, mapping);
-          mapping = null;
-          break;
-        }
-        else if (m.getVcs().equals(mapping.getVcs())) {
-          mapping = null;
-          break;
-        }
-      }
-    }
-    if (mapping != null) {
-      vcsDirectoryMappings.add(mapping);
-    }
-    vcs.setDirectoryMappings(vcsDirectoryMappings);
-    vcs.updateActiveVcss();
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+    manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, GitVcs.NAME));
+    manager.updateActiveVcss();
     VcsFileUtil.refreshFiles(project, Collections.singleton(root));
   }
 

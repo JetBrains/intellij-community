@@ -20,6 +20,7 @@ import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.SimpleInstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -66,9 +67,8 @@ public class BasicBlockStatement extends Statement {
   // public methods
   // *****************************************************************************
 
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-    return ExprProcessor.listToJava(varDefinitions, indent, tracer) +
-           ExprProcessor.listToJava(exprents, indent, tracer);
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    return ExprProcessor.listToJava(varDefinitions, indent, tracer).append(ExprProcessor.listToJava(exprents, indent, tracer));
   }
 
   public Statement getSimpleCopy() {

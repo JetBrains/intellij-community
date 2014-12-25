@@ -24,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
@@ -32,6 +31,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.*;
 
 public class FileUtilLightTest {
@@ -197,5 +198,21 @@ public class FileUtilLightTest {
     assertEquals(SystemProperties.getUserHome(), FileUtil.getLocationRelativeToUserHome(SystemProperties.getUserHome(), false));
     String expected = SystemInfo.isWindows ? "~\\relative" : "~/relative";
     assertEquals(expected, FileUtil.getLocationRelativeToUserHome(SystemProperties.getUserHome() + "/relative", false));
+  }
+
+  @Test
+  public void sanitizeFileName() {
+    String newS = "tmp";
+    assertThat(FileUtil.sanitizeFileName(newS), sameInstance(newS));
+    assertThat(FileUtil.sanitizeFileName("_test"), sameInstance("_test"));
+
+    assertThat(FileUtil.sanitizeFileName(" "), equalTo("_"));
+    assertThat(FileUtil.sanitizeFileName("\u2026"), equalTo(""));
+    assertThat(FileUtil.sanitizeFileName("q_test"), sameInstance("q_test"));
+    assertThat(FileUtil.sanitizeFileName("12_"), sameInstance("12_"));
+    assertThat(FileUtil.sanitizeFileName("12_  123"), equalTo("12___123"));
+    assertThat(FileUtil.sanitizeFileName(" 12\u2026123"), equalTo("_12123"));
+
+    assertThat(FileUtil.sanitizeFileName("a+b+c"), equalTo("a_b_c"));
   }
 }

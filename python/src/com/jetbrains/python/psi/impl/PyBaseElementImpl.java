@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     List<PsiReference> referencesList = new ArrayList<PsiReference>();
     final PsiFile file = element.getContainingFile();
     final PyResolveContext resolveContext = file != null ?
-                                     PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file)) :
+                                     PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file.getProject(), file)) :
                                      PyResolveContext.defaultContext();
     while (element != null) {
       addReferences(offset, element, referencesList, resolveContext);

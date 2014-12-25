@@ -64,7 +64,7 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
 
     LanguageLevel projectLanguageLevel = LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel();
     for (Module module : modules) {
-      LanguageLevel languageLevel = LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
+      LanguageLevel languageLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
       if (languageLevel == null) {
         languageLevel = projectLanguageLevel;
       }
@@ -74,7 +74,7 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
         if (!(entry instanceof ModuleOrderEntry)) continue;
         final Module dependantModule = ((ModuleOrderEntry)entry).getModule();
         if (dependantModule == null) continue;
-        LanguageLevel dependantLanguageLevel = LanguageLevelModuleExtension.getInstance(dependantModule).getLanguageLevel();
+        LanguageLevel dependantLanguageLevel = LanguageLevelModuleExtensionImpl.getInstance(dependantModule).getLanguageLevel();
         if (dependantLanguageLevel == null) {
           dependantLanguageLevel = projectLanguageLevel;
         }

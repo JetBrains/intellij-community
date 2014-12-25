@@ -214,6 +214,10 @@ public final class Presentation implements Cloneable {
 
   public void setIcon(@Nullable Icon icon) {
     Icon oldIcon = myIcon;
+    if (oldIcon == icon) {
+      return;
+    }
+
     myIcon = icon;
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, myIcon);
   }

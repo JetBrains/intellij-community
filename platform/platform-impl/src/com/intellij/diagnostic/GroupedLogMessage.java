@@ -15,6 +15,12 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 import java.util.List;
 
 public class GroupedLogMessage extends AbstractMessage {
@@ -59,5 +65,16 @@ public class GroupedLogMessage extends AbstractMessage {
       message.setAssigneeId(assigneeId);
     }
     super.setAssigneeId(assigneeId);
+  }
+
+  @NotNull
+  @Override
+  public List<Attachment> getAttachments() {
+    return ContainerUtil.concat(getMessages(), new Function<AbstractMessage, Collection<? extends Attachment>>() {
+      @Override
+      public Collection<? extends Attachment> fun(AbstractMessage message) {
+        return message.getAttachments();
+      }
+    });
   }
 }

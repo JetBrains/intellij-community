@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,46 +18,55 @@ package com.intellij.notification.impl;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationsConfiguration;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Map;
 
 /**
  * @author spleaner
  */
-@State(name = "NotificationConfiguration",
-       storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/notifications.xml")})
-public class NotificationsConfigurationImpl extends NotificationsConfiguration implements ExportableApplicationComponent,
-                                                                                          PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
+@State(
+  name = "NotificationConfiguration",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/notifications.xml")
+)
+public class NotificationsConfigurationImpl
+    extends NotificationsConfiguration
+    implements ApplicationComponent, PersistentStateComponent<Element> {
+
+  private static final Logger LOG = Logger.getInstance(NotificationsConfiguration.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
+  private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
 
-  private final Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
-  private final Map<String, String> myToolWindowCapable = new LinkedHashMap<String, String>();
+  private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR = new Comparator<NotificationSettings>() {
+    @Override
+    public int compare(@NotNull NotificationSettings o1, @NotNull NotificationSettings o2) {
+      return o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
+    }
+  };
+
+  private final Map<String, NotificationSettings> myIdToSettingsMap = new THashMap<String, NotificationSettings>();
+  private final Map<String, String> myToolWindowCapable = new THashMap<String, String>();
   private final MessageBus myMessageBus;
+
   public boolean SHOW_BALLOONS = true;
+  public boolean SYSTEM_NOTIFICATIONS = true;
 
-  public static NotificationsConfigurationImpl getNotificationsConfigurationImpl() {
-    return (NotificationsConfigurationImpl)getNotificationsConfiguration();
-  }
-
-  public NotificationsConfigurationImpl(@NotNull final MessageBus bus) {
+  public NotificationsConfigurationImpl(@NotNull MessageBus bus) {
     myMessageBus = bus;
   }
 
-  @Override
-  public synchronized void registerToolWindowCapability(@NotNull String groupId, @NotNull String toolWindowId) {
-    myToolWindowCapable.put(groupId, toolWindowId);
+  public static NotificationsConfigurationImpl getInstanceImpl() {
+    return (NotificationsConfigurationImpl)getNotificationsConfiguration();
   }
 
   public synchronized boolean hasToolWindowCapability(@NotNull String groupId) {
@@ -70,54 +79,35 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     return group == null ? null : group.getToolWindowId();
   }
 
-  public static NotificationSettings[] getAllSettings() {
-    return getNotificationsConfigurationImpl()._getAllSettings();
-  }
-
-  @Deprecated
-  public static void remove(NotificationSettings[] toRemove) {
-    getNotificationsConfigurationImpl()._remove(ContainerUtil.map2Array(toRemove, String.class, new Function<NotificationSettings, String>() {
-      @Override
-      public String fun(NotificationSettings notificationSettings) {
-        return notificationSettings.getGroupId();
-      }
-    }));
-  }
-
-  public static void remove(String... toRemove) {
-    getNotificationsConfigurationImpl()._remove(toRemove);
-  }
-
-  private synchronized void _remove(String... toRemove) {
-    for (final String id : toRemove) {
-      myIdToSettingsMap.remove(id);
-      myToolWindowCapable.remove(id);
-    }
-  }
-
-  private synchronized NotificationSettings[] _getAllSettings() {
-    Collection<NotificationSettings> settings = ContainerUtil.newHashSet(myIdToSettingsMap.values());
+  public synchronized NotificationSettings[] getAllSettings() {
+    Collection<NotificationSettings> settings = new THashSet<NotificationSettings>(myIdToSettingsMap.values());
     for (NotificationGroup group : NotificationGroup.getAllRegisteredGroups()) {
       settings.add(getSettings(group.getDisplayId()));
     }
     NotificationSettings[] result = settings.toArray(new NotificationSettings[settings.size()]);
-    Arrays.sort(result, new Comparator<NotificationSettings>() {
-      @Override
-      public int compare(NotificationSettings o1, NotificationSettings o2) {
-        return o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
-      }
-    });
+    Arrays.sort(result, NOTIFICATION_SETTINGS_COMPARATOR);
     return result;
   }
 
-  @Nullable
-  private synchronized NotificationSettings _getSettings(@NotNull final String groupId) {
-    return myIdToSettingsMap.get(groupId);
+  public static void remove(String... toRemove) {
+    getInstanceImpl().doRemove(toRemove);
   }
 
+  private synchronized void doRemove(String... toRemove) {
+    for (String groupId : toRemove) {
+      myIdToSettingsMap.remove(groupId);
+      myToolWindowCapable.remove(groupId);
+    }
+  }
+
+  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   @NotNull
-  public static NotificationSettings getSettings(@NotNull final String groupId) {
-    final NotificationSettings settings = getNotificationsConfigurationImpl()._getSettings(groupId);
+  public static NotificationSettings getSettings(@NotNull String groupId) {
+    NotificationSettings settings;
+    NotificationsConfigurationImpl impl = getInstanceImpl();
+    synchronized (impl) {
+      settings = impl.myIdToSettingsMap.get(groupId);
+    }
     return settings == null ? getDefaultSettings(groupId) : settings;
   }
 
@@ -168,7 +158,8 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
       new NotificationGroup(groupDisplayName, displayType, shouldLog);
       // and decide whether to save them explicitly (in case of non-default shouldReadAloud)
       changeSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud);
-    } else if (displayType == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupDisplayName)) {
+    }
+    else if (displayType == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupDisplayName)) {
       // the first time with tool window capability
       changeSettings(getSettings(groupDisplayName).withDisplayType(NotificationDisplayType.TOOL_WINDOW));
       myToolWindowCapable.put(groupDisplayName, null);
@@ -184,7 +175,8 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     String groupDisplayName = settings.getGroupId();
     if (settings.equals(getDefaultSettings(groupDisplayName))) {
       myIdToSettingsMap.remove(groupDisplayName);
-    } else {
+    }
+    else {
       myIdToSettingsMap.put(groupDisplayName, settings);
     }
   }
@@ -195,22 +187,22 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
 
   @Override
   public synchronized Element getState() {
-    @NonNls Element element = new Element("NotificationsConfiguration");
-    for (NotificationSettings settings : myIdToSettingsMap.values()) {
+    Element element = new Element("NotificationsConfiguration");
+
+    NotificationSettings[] sortedNotifications = myIdToSettingsMap.values().toArray(new NotificationSettings[myIdToSettingsMap.size()]);
+    Arrays.sort(sortedNotifications, NOTIFICATION_SETTINGS_COMPARATOR);
+    for (NotificationSettings settings : sortedNotifications) {
       element.addContent(settings.save());
     }
-    for (String entry: myToolWindowCapable.keySet()) {
-      element.addContent(new Element("toolWindow").setAttribute("group", entry));
-    }
-    for (NotificationGroup group : NotificationGroup.getAllRegisteredGroups()) {
-      String displayId = group.getDisplayId();
-      if (!myToolWindowCapable.containsKey(displayId) && group.getToolWindowId() != null) {
-        element.addContent(new Element("toolWindow").setAttribute("group", displayId));
-      }
-    }
+
     //noinspection NonPrivateFieldAccessedInSynchronizedContext
     if (!SHOW_BALLOONS) {
       element.setAttribute(SHOW_BALLOONS_ATTRIBUTE, "false");
+    }
+
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
+    if (!SYSTEM_NOTIFICATIONS) {
+      element.setAttribute(SYSTEM_NOTIFICATIONS_ATTRIBUTE, "false");
     }
 
     return element;
@@ -219,7 +211,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   @Override
   public synchronized void loadState(final Element state) {
     myIdToSettingsMap.clear();
-    for (@NonNls Element child : state.getChildren("notification")) {
+    for (Element child : state.getChildren("notification")) {
       final NotificationSettings settings = NotificationSettings.load(child);
       if (settings != null) {
         final String id = settings.getGroupId();
@@ -227,28 +219,16 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
         myIdToSettingsMap.put(id, settings);
       }
     }
-    for (@NonNls Element child : state.getChildren("toolWindow")) {
-      String group = child.getAttributeValue("group");
-      if (group != null && !myToolWindowCapable.containsKey(group)) {
-        myToolWindowCapable.put(group, null);
-      }
-    }
-    _remove("Log Only");
+    doRemove("Log Only");
+
     if ("false".equals(state.getAttributeValue(SHOW_BALLOONS_ATTRIBUTE))) {
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
       SHOW_BALLOONS = false;
     }
-  }
 
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("notifications")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return "Notifications";
+    if ("false".equals(state.getAttributeValue(SYSTEM_NOTIFICATIONS_ATTRIBUTE))) {
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      SYSTEM_NOTIFICATIONS = false;
+    }
   }
 }

@@ -30,7 +30,10 @@ public interface MatchProvider {
 
   List<Match> getDuplicates();
 
-  boolean hasDuplicates();
+  /**
+   * @return null if no confirmation prompt is expected
+   */
+  @Nullable Boolean hasDuplicates();
 
   @Nullable String getConfirmDuplicatePrompt(Match match);
 

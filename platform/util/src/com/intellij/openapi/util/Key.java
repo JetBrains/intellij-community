@@ -16,7 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ConcurrentWeakValueIntObjectHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
-  private static final ConcurrentWeakValueIntObjectHashMap<Key> allKeys = new ConcurrentWeakValueIntObjectHashMap<Key>();
+  private static final ConcurrentIntObjectMap<Key> allKeys = ContainerUtil.createConcurrentIntObjectWeakValueMap();
 
   public Key(@NotNull @NonNls String name) {
     myName = name;
@@ -43,6 +43,7 @@ public class Key<T> {
   }
 
   // made final because many classes depend on one-to-one key index <-> key instance relationship. See e.g. UserDataHolderBase
+  @Override
   public final int hashCode() {
     return myIndex;
   }
@@ -52,6 +53,7 @@ public class Key<T> {
     return obj == this;
   }
 
+  @Override
   public String toString() {
     return myName;
   }

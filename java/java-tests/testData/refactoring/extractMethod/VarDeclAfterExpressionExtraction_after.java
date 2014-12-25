@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 class BasicLazyResolveTest {
 
 
@@ -9,6 +11,7 @@ class BasicLazyResolveTest {
 
     }
 
+    @NotNull
     private Object newMethod() {
         return new Object() {
 

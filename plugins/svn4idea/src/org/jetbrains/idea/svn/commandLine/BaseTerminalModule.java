@@ -80,6 +80,6 @@ public abstract class BaseTerminalModule extends LineCommandAdapter implements C
   }
 
   protected void cancelAuthentication() {
-    myExecutor.destroyProcess("Authentication canceled for repository: " + myExecutor.getCommand().getRepositoryUrl());
+    myExecutor.destroyProcess("Authentication canceled for repository: " + myExecutor.getCommand().requireRepositoryUrl());
   }
 }

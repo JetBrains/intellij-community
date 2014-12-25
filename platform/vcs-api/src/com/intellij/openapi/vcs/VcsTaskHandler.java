@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -62,7 +63,7 @@ public abstract class VcsTaskHandler {
 
   public abstract boolean isEnabled(Project project);
 
-  public abstract TaskInfo startNewTask(String taskName);
+  public abstract TaskInfo startNewTask(@NotNull String taskName);
 
   public abstract void switchToTask(TaskInfo taskInfo, Runnable invokeAfter);
 

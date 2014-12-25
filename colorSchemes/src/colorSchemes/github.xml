@@ -27,7 +27,7 @@
         <option name="BACKGROUND" value="ffc8c8" />
       </value>
     </option>
-    <option name="CLASS_REFERENCE">
+    <option name="OC.CLASS_REFERENCE">
       <value>
         <option name="FOREGROUND" value="445588" />
         <option name="FONT_TYPE" value="1" />
@@ -63,7 +63,7 @@
         <option name="FOREGROUND" value="108888" />
       </value>
     </option>
-    <option name="CONDITIONALLY_NOT_COMPILED">
+    <option name="OC.CONDITIONALLY_NOT_COMPILED">
       <value>
         <option name="FOREGROUND" value="DD1144" />
       </value>
@@ -423,7 +423,7 @@
         <option name="BACKGROUND" value="f5f7f0" />
       </value>
     </option>
-    <option name="ENUM_CONST">
+    <option name="OC.ENUM_CONST">
       <value>
         <option name="FOREGROUND" value="AA2C8C" />
       </value>
@@ -601,7 +601,7 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="IVAR">
+    <option name="OC.IVAR">
       <value>
         <option name="FOREGROUND" value="108888" />
       </value>
@@ -695,7 +695,7 @@
         <option name="FOREGROUND" value="333333" />
       </value>
     </option>
-    <option name="LABEL">
+    <option name="OC.LABEL">
       <value>
         <option name="FOREGROUND" value="000000" />
         <option name="FONT_TYPE" value="1" />
@@ -750,7 +750,7 @@
         <option name="FOREGROUND" value="ffa500" />
       </value>
     </option>
-    <option name="MACRONAME">
+    <option name="OC.MACRONAME">
       <value>
         <option name="FOREGROUND" value="990000" />
         <option name="FONT_TYPE" value="1" />
@@ -767,7 +767,7 @@
         <option name="BACKGROUND" value="99ccff" />
       </value>
     </option>
-    <option name="MESSAGE_ARGUMENT">
+    <option name="OC.MESSAGE_ARGUMENT">
       <value>
         <option name="FOREGROUND" value="990000" />
         <option name="FONT_TYPE" value="1" />
@@ -1252,7 +1252,7 @@
         <option name="ERROR_STRIPE_COLOR" value="ff" />
       </value>
     </option>
-    <option name="TYPEDEF">
+    <option name="OC.TYPEDEF">
       <value>
         <option name="FOREGROUND" value="000000" />
         <option name="FONT_TYPE" value="1" />

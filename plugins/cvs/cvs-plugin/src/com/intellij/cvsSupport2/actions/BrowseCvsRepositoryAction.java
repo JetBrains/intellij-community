@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -66,8 +65,9 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
   @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final SelectCvsConfigurationDialog selectCvsConfigurationDialog = new SelectCvsConfigurationDialog(context.getProject());
-    selectCvsConfigurationDialog.show();
-    if (!selectCvsConfigurationDialog.isOK()) return CvsHandler.NULL;
+    if (!selectCvsConfigurationDialog.showAndGet()) {
+      return CvsHandler.NULL;
+    }
 
     mySelectedConfiguration = selectCvsConfigurationDialog.getSelectedConfiguration();
     return new MyCvsHandler();
@@ -99,7 +99,6 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
       });
       tabbedWindow.addTab(TITLE, browserPanel,
                           true, true, true, true, browserPanel.getActionGroup(), "cvs.browse");
-      tabbedWindow.ensureVisible(project);
     }
   }
 

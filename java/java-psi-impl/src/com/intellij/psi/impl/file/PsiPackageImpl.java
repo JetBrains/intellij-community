@@ -20,6 +20,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
@@ -38,7 +40,6 @@ import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
+  private static final Logger LOG = Logger.getInstance(PsiPackageImpl.class);
+
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
@@ -155,6 +158,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
+  public PsiFile[] getFiles(@NotNull GlobalSearchScope scope) {
+    return getFacade().getPackageFiles(this, scope);
+  }
+
+  @Override
   @Nullable
   public PsiModifierList getAnnotationList() {
     if (myAnnotationList == null) {
@@ -187,7 +195,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
     Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
     if (map == null) {
-      myClassCache = new SoftReference<Map<String, PsiClass[]>>(map = new ConcurrentSoftValueHashMap<String, PsiClass[]>());
+      myClassCache = new SoftReference<Map<String, PsiClass[]>>(map = ContainerUtil.createConcurrentSoftValueMap());
     }
     PsiClass[] classes = map.get(name);
     if (classes != null) {
@@ -311,7 +319,17 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
                                         @NotNull Condition<String> nameCondition) {
     for (PsiClass aClass : classes) {
       String name = aClass.getName();
-      if (name != null && nameCondition.value(name) && !processor.execute(aClass, state)) return false;
+      if (name != null && nameCondition.value(name)) {
+        try {
+          if (!processor.execute(aClass, state)) return false;
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
     }
     return true;
   }

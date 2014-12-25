@@ -99,7 +99,7 @@ public final class Urls {
     }
 
     if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
-      // nodejs debug — files only in local filesystem
+      // nodejs debug - files only in local filesystem
       return newLocalFileUrl(url);
     }
     return parseUrl(VfsUtilCore.toIdeaUrl(url));

@@ -146,9 +146,7 @@ def switchTest() {
 ''')
   }
 
-
-  @SuppressWarnings("GroovyUnusedDeclaration")
-  void ignoreTestSwitchDeep() {
+  void testDeepSwitch() {
     testHighlighting('''
 def deepSwitchTest() {
     def <warning descr="Variable 'sw' can be final">sw</warning>

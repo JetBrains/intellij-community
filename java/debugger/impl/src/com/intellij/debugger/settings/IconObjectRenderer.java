@@ -23,8 +23,8 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,11 +52,8 @@ class IconObjectRenderer extends CompoundReferenceRenderer implements FullValueE
   @Override
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
     throws EvaluateException {
-    ImageIcon icon = ImageObjectRenderer.getIcon(evaluationContext, descriptor.getValue(), "iconToBytes");
-    if (icon != null) {
-      return IconUtil.cropIcon(icon, 16, 16);
-    }
-    return null;
+    String getterName = AllIcons.Debugger.Value.getIconHeight() <= 16 ? "iconToBytesPreviewNormal" : "iconToBytesPreviewRetina";
+    return ImageObjectRenderer.getIcon(evaluationContext, descriptor.getValue(), getterName);
   }
 
   @NotNull

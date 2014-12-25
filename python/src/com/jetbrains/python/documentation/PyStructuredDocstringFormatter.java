@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,6 @@ public class PyStructuredDocstringFormatter {
     if (sdkHome == null) return null;
 
     final Charset charset = EncodingProjectManager.getInstance(module.getProject()).getDefaultCharset();
-    if (charset == null) return null;
 
     final ByteBuffer encoded = charset.encode(docstring);
     final byte[] data = new byte[encoded.limit()];

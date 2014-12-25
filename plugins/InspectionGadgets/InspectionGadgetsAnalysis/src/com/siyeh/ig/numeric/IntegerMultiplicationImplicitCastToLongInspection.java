@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class IntegerMultiplicationImplicitCastToLongInspection extends
-                                                               BaseInspection {
+public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspection {
 
   /**
    * @noinspection StaticCollection
@@ -45,6 +44,10 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
     s_typesToCheck.add("short");
     s_typesToCheck.add("byte");
     s_typesToCheck.add("char");
+    s_typesToCheck.add(CommonClassNames.JAVA_LANG_INTEGER);
+    s_typesToCheck.add(CommonClassNames.JAVA_LANG_SHORT);
+    s_typesToCheck.add(CommonClassNames.JAVA_LANG_BYTE);
+    s_typesToCheck.add(CommonClassNames.JAVA_LANG_CHARACTER);
   }
 
   @SuppressWarnings({"PublicField"})
@@ -60,8 +63,13 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "integer.multiplication.implicit.cast.to.long.problem.descriptor");
+    final IElementType tokenType = (IElementType)infos[0];
+    if (JavaTokenType.ASTERISK.equals(tokenType)) {
+      return InspectionGadgetsBundle.message("integer.multiplication.implicit.cast.to.long.problem.descriptor");
+    }
+    else {
+      return InspectionGadgetsBundle.message("integer.shift.implicit.cast.to.long.problem.descriptor");
+    }
   }
 
   @Override
@@ -80,9 +88,8 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.ASTERISK)
           && !tokenType.equals(JavaTokenType.LTLT)) {
@@ -92,12 +99,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
       if (!isNonLongInteger(type)) {
         return;
       }
-      final PsiExpression rhs = expression.getROperand();
-      if (rhs == null) {
-        return;
-      }
-      final PsiType rhsType = rhs.getType();
-      if (!isNonLongInteger(rhsType)) {
+      if (expression.getOperands().length < 2 || expression.getLastChild() instanceof PsiErrorElement) {
         return;
       }
       final PsiExpression context = getContainingExpression(expression);
@@ -112,18 +114,16 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
       if (!contextType.equals(PsiType.LONG)) {
         return;
       }
-      try {
-        final Object result =
-          ExpressionUtils.computeConstantExpression(expression,
-                                                    true);
-        if (ignoreNonOverflowingCompileTimeConstants &&
-            result != null) {
-          return;
+      if (ignoreNonOverflowingCompileTimeConstants) {
+        try {
+          if (ExpressionUtils.computeConstantExpression(expression, true) != null) {
+            return;
+          }
+        }
+        catch (ConstantEvaluationOverflowException ignore) {
         }
       }
-      catch (ConstantEvaluationOverflowException ignore) {
-      }
-      registerError(expression);
+      registerError(expression, tokenType);
     }
 
     private PsiExpression getContainingExpression(

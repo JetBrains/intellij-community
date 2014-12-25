@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NonNls;
@@ -172,6 +173,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
 
     myVFile = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
     VfsUtil.saveText(myVFile, text);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Bookmark bookmark = getManager().addTextBookmark(myVFile, 1, "xxx");
     assertNotNull(bookmark);

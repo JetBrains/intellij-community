@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.Nullable;
@@ -125,9 +126,19 @@ public class X11UiUtil {
       return null;
     }
 
+    private long getRootWindow(long screen) throws Exception {
+      awtLock.invoke(null);
+      try {
+        return (Long)RootWindow.invoke(null, display, screen);
+      }
+      finally {
+        awtUnlock.invoke(null);
+      }
+    }
+
     @Nullable
     private Long getNetWmWindow() throws Exception {
-      long rootWindow = (Long)RootWindow.invoke(null, display, 0);
+      long rootWindow = getRootWindow(0);
       long[] values = getLongArrayProperty(rootWindow, NET_SUPPORTING_WM_CHECK, XA_WINDOW);
       return values != null && values.length > 0 ? values[0] : null;
     }
@@ -140,7 +151,7 @@ public class X11UiUtil {
     @Nullable
     private String getUtfStringProperty(long window, long name) throws Exception {
       byte[] bytes = getWindowProperty(window, name, UTF8_STRING, FORMAT_BYTE);
-      return bytes != null ? new String(bytes, "UTF-8") : null;
+      return bytes != null ? new String(bytes, CharsetToolkit.UTF8_CHARSET) : null;
     }
 
     @Nullable
@@ -358,7 +369,7 @@ public class X11UiUtil {
       @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
       long window = (Long)X11.getWindow.invoke(peer);
       long screen = (Long)X11.getScreenNumber.invoke(peer);
-      long rootWindow = (Long)X11.RootWindow.invoke(null, X11.display, screen);
+      long rootWindow = X11.getRootWindow(screen);
       X11.sendClientMessage(rootWindow, window, X11.NET_WM_STATE, NET_WM_STATE_TOGGLE, X11.NET_WM_STATE_FULLSCREEN);
     }
     catch (Throwable t) {

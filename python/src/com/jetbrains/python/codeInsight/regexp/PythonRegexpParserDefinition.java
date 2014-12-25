@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,7 @@ public class PythonRegexpParserDefinition extends RegExpParserDefinition {
   public static final IFileElementType PYTHON_REGEXP_FILE = new IFileElementType("PYTHON_REGEXP_FILE", PythonRegexpLanguage.INSTANCE);
   protected final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.DANGLING_METACHARACTERS,
                                                                       RegExpCapability.OCTAL_NO_LEADING_ZERO,
-                                                                      RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS,
-                                                                      RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
+                                                                      RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS);
 
   @NotNull
   public Lexer createLexer(Project project) {

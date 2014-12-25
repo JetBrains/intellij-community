@@ -21,7 +21,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   @NonNls private static final String TEXT_ATTRIBUTE_NAME = "text";
 
   private boolean looseMatching;
-  private boolean distinct;
   private boolean recursiveSearch;
   private boolean caseSensitiveMatch;
   private boolean resultIsContextMatch = false;
@@ -98,21 +97,10 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     result.append("\nrecursive:");
     result.append(recursiveSearch);
 
-    result.append("\ndistinct:");
-    result.append(distinct);
-
     result.append("\ncasesensitive:");
     result.append(caseSensitiveMatch);
 
     return result.toString();
-  }
-
-  public boolean isDistinct() {
-    return distinct;
-  }
-
-  public void setDistinct(boolean distinct) {
-    this.distinct = distinct;
   }
 
   public boolean isRecursiveSearch() {
@@ -170,7 +158,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   public void writeExternal(Element element) {
     element.setAttribute(TEXT_ATTRIBUTE_NAME,getSearchPattern());
     element.setAttribute(RECURSIVE_ATTRIBUTE_NAME,String.valueOf(recursiveSearch));
-    if (distinct) element.setAttribute(DISTINCT_ATTRIBUTE_NAME,String.valueOf(distinct));
     element.setAttribute(CASESENSITIVE_ATTRIBUTE_NAME,String.valueOf(caseSensitiveMatch));
 
     //@TODO serialize scope!
@@ -200,13 +187,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     if (attr!=null) {
       try {
         recursiveSearch = attr.getBooleanValue();
-      } catch(DataConversionException ignored) {}
-    }
-
-    attr = element.getAttribute(DISTINCT_ATTRIBUTE_NAME);
-    if (attr!=null) {
-      try {
-        distinct = attr.getBooleanValue();
       } catch(DataConversionException ignored) {}
     }
 
@@ -259,7 +239,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     final MatchOptions matchOptions = (MatchOptions)o;
 
     if (caseSensitiveMatch != matchOptions.caseSensitiveMatch) return false;
-    if (distinct != matchOptions.distinct) return false;
     //if (enableAutoIdentifySearchTarget != matchOptions.enableAutoIdentifySearchTarget) return false;
     if (looseMatching != matchOptions.looseMatching) return false;
     if (recursiveSearch != matchOptions.recursiveSearch) return false;
@@ -288,7 +267,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   public int hashCode() {
     int result;
     result = (looseMatching ? 1 : 0);
-    result = 29 * result + (distinct ? 1 : 0);
     result = 29 * result + (recursiveSearch ? 1 : 0);
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
     // @TODO support scope

@@ -7,7 +7,7 @@ class MyClass(object):
         pass
 
 
-# Unbound method still treated as __method in Python 2
+# Unbound methods are still treated as __method in Python 2
 MyClass.method.__func__
 MyClass.method.<warning descr="Cannot find reference '__defaults__' in 'function'">__defaults__</warning>
 
@@ -16,10 +16,8 @@ inst = MyClass()
 inst.method.__func__
 inst.method.<warning descr="Cannot find reference '__defaults__' in 'function'">__defaults__</warning>
 
-# Reassigned bound method without qualifier
-m = inst.method
-
 # Static method
-# This reference should be marked as unresolved, but such warnings are suppressed for methods with decorators
-inst.static_method.__func__
+inst.static_method.<warning descr="Cannot find reference '__func__' in 'function'">__func__</warning>
 inst.static_method.__defaults__
+MyClass.static_method.<warning descr="Cannot find reference '__func__' in 'function'">__func__</warning>
+MyClass.static_method.__defaults__

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@
  */
 package com.intellij.tools;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.filters.InvalidExpressionException;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.PopupHandler;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -53,8 +53,9 @@ class FilterDialog extends DialogWrapper {
     dialog.myNameField.setText(filterInfo.getName());
     dialog.myDescriptionField.setText(filterInfo.getDescription());
     dialog.myRegexpField.setText(filterInfo.getRegExp());
-    dialog.show();
-    if (!dialog.isOK()) return false;
+    if (!dialog.showAndGet()) {
+      return false;
+    }
     filterInfo.setName(dialog.myNameField.getText());
     filterInfo.setDescription(dialog.myDescriptionField.getText());
     filterInfo.setRegExp(dialog.myRegexpField.getText());

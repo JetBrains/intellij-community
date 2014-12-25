@@ -113,7 +113,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
   }
 
   private void acknowledge(@NotNull X509Certificate certificate) throws CertificateEncodingException {
-    myAuthenticationService.getVcs().getSvnConfiguration().acknowledge("svn.ssl.server", myRealm, certificate);
+    myAuthenticationService.getVcs().getSvnConfiguration().acknowledge("cmd.ssl.server", myRealm, certificate);
   }
 
   @Override

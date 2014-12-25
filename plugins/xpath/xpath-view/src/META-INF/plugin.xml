@@ -19,8 +19,7 @@
   <!-- Plugin version -->
   <version>4</version>
 
-  <!-- Plugin's vendor -->
-  <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
+  <vendor>JetBrains</vendor>
 
   <change-notes>
     <![CDATA[
@@ -144,6 +143,9 @@
     <gotoSymbolContributor implementation="org.intellij.lang.xpath.xslt.impl.XsltChooseByNameContributor"/>
     <annotator language="XPath" implementationClass="org.intellij.lang.xpath.xslt.validation.XsltAnnotator"/>
     <annotator language="XML" implementationClass="org.intellij.lang.xpath.xslt.validation.XsltXmlAnnotator"/>
+
+    <xml.nsColorProvider implementation="org.intellij.lang.xpath.xslt.validation.XsltNSColorProvider"/>
+    <colorSettingsPage implementation="org.intellij.lang.xpath.xslt.validation.XsltColorPage"/>
 
     <lang.documentationProvider language="XML" implementationClass="org.intellij.lang.xpath.xslt.impl.XsltDocumentationProvider"/>
     <lang.documentationProvider language="XPath" implementationClass="org.intellij.lang.xpath.xslt.impl.XsltDocumentationProvider"/>

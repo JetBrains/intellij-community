@@ -80,6 +80,14 @@ public class Command {
   }
 
   @NotNull
+  public SVNURL requireRepositoryUrl() {
+    SVNURL result = getRepositoryUrl();
+    assert result != null;
+
+    return result;
+  }
+
+  @NotNull
   public SvnTarget getTarget() {
     return myTarget;
   }

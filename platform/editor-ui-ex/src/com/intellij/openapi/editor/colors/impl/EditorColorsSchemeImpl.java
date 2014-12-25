@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -73,6 +74,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return myAttributesMap.containsKey(key);
   }
 
+  @Nullable
   @Override
   public Color getColor(ColorKey key) {
     if (myColorsMap.containsKey(key)) {

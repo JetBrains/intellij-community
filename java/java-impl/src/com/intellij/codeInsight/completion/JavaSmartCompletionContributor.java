@@ -180,7 +180,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
             for (final LookupElement item : completeReference(element, reference, filter, true, false, parameters, result.getPrefixMatcher())) {
               if (item.getObject() instanceof PsiClass) {
-                result.addElement(decorate(LookupElementDecorator.withInsertHandler((LookupItem)item, ConstructorInsertHandler.SMART_INSTANCE), infos));
+                result.addElement(decorate(LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.SMART_INSTANCE), infos));
               }
             }
           }

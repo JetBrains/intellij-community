@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler;
 
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -23,11 +24,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -48,6 +49,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -75,6 +77,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   private final IFernflowerLogger myLogger = new IdeaLogger();
   private final Map<String, Object> myOptions = new HashMap<String, Object>();
   private boolean myLegalNoticeAccepted;
+  private final Map<VirtualFile, ProgressIndicator> myProgress = ContainerUtil.newConcurrentMap();
 
   public IdeaDecompiler() {
     myOptions.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
@@ -84,6 +87,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     myOptions.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
     myOptions.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
     myOptions.put(IFernflowerPreferences.BANNER, BANNER);
+    myOptions.put(IFernflowerPreferences.MAX_PROCESSING_METHOD, 30);
 
     Project project = DefaultProjectFactory.getInstance().getDefaultProject();
     CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
@@ -99,12 +103,19 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
           if (file.getFileType() == StdFileTypes.CLASS) {
             FileEditor editor = source.getSelectedEditor(file);
-            if (editor != null) {
-              showLegalNotice(source.getProject(), file);
+            if (editor instanceof TextEditor) {
+              CharSequence text = ((TextEditor)editor).getEditor().getDocument().getImmutableCharSequence();
+              if (StringUtil.startsWith(text, BANNER)) {
+                showLegalNotice(source.getProject(), file);
+              }
             }
           }
         }
       });
+    }
+
+    if (app.isUnitTestMode()) {
+      myOptions.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
     }
   }
 
@@ -113,7 +124,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          new LegalNoticeDialog(project, file).show();
+          if (!myLegalNoticeAccepted) {
+            new LegalNoticeDialog(project, file).show();
+          }
         }
       }, ModalityState.NON_MODAL);
     }
@@ -131,6 +144,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       return ClsFileImpl.decompile(file);
     }
 
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) myProgress.put(file, indicator);
+
     try {
       Map<String, VirtualFile> files = ContainerUtil.newLinkedHashMap();
       files.put(file.getPath(), file);
@@ -144,14 +160,36 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       MyBytecodeProvider provider = new MyBytecodeProvider(files);
       MyResultSaver saver = new MyResultSaver();
 
-      myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, Registry.is("decompiler.use.line.table") ? "1" : "0");
+      if (Registry.is("decompiler.use.line.mapping")) {
+        myOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
+        myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
+      }
+      else if (Registry.is("decompiler.use.line.table")) {
+        myOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0");
+        myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
+      }
+      else {
+        myOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0");
+        myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
+      }
+
+      if (Registry.is("decompiler.dump.original.lines")) {
+        myOptions.put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
+      }
+
       BaseDecompiler decompiler = new BaseDecompiler(provider, saver, myOptions, myLogger);
       for (String path : files.keySet()) {
         decompiler.addSpace(new File(path), true);
       }
       decompiler.decompileContext();
 
+      file.putUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY,
+                       new ExactMatchLineNumbersMapping(saver.myMapping));
+
       return saver.myResult;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -163,6 +201,15 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
         throw new CannotDecompileException(e);
       }
     }
+    finally {
+      myProgress.remove(file);
+    }
+  }
+
+  @TestOnly
+  @Nullable
+  public ProgressIndicator getProgress(@NotNull VirtualFile file) {
+    return myProgress.get(file);
   }
 
   private static class MyBytecodeProvider implements IBytecodeProvider {
@@ -188,11 +235,13 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
 
   private static class MyResultSaver implements IResultSaver {
     private String myResult = "";
+    private int[] myMapping = null;
 
     @Override
-    public void saveClassFile(String path, String qualifiedName, String entryName, String content) {
+    public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
       if (myResult.isEmpty()) {
         myResult = content;
+        myMapping = mapping;
       }
     }
 
@@ -289,6 +338,34 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     public void doCancelAction() {
       super.doCancelAction();
       FileEditorManager.getInstance(myProject).closeFile(myFile);
+    }
+  }
+
+  private static class ExactMatchLineNumbersMapping implements LineNumbersMapping {
+    private int[] myMapping;
+
+    private ExactMatchLineNumbersMapping(int[] mapping) {
+      myMapping = mapping;
+    }
+
+    @Override
+    public int bytecodeToSource(int line) {
+      for (int i = 0; i < myMapping.length; i += 2) {
+        if (myMapping[i] == line) {
+          return myMapping[i + 1];
+        }
+      }
+      return -1;
+    }
+
+    @Override
+    public int sourceToBytecode(int line) {
+      for (int i = 0; i < myMapping.length; i += 2) {
+        if (myMapping[i + 1] == line) {
+          return myMapping[i];
+        }
+      }
+      return -1;
     }
   }
 }

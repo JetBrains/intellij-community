@@ -13,23 +13,34 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
+import org.zmlx.hg4idea.provider.update.HgConflictResolver;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.zmlx.hg4idea.util.HgErrorUtil.hasUncommittedChangesConflict;
+import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgUpdateCommand {
 
@@ -75,7 +86,7 @@ public class HgUpdateCommand {
     final HgPromptCommandExecutor executor = new HgPromptCommandExecutor(project);
     executor.setShowOutput(true);
     HgCommandResult result;
-    DvcsUtil.workingTreeChangeStarted(project);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       result =
         executor.executeInCurrentThread(repo, "update", arguments);
@@ -89,10 +100,9 @@ public class HgUpdateCommand {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project);
+      DvcsUtil.workingTreeChangeFinished(project, token);
     }
 
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     VfsUtil.markDirtyAndRefresh(true, true, false, repo);
     return result;
   }
@@ -107,5 +117,66 @@ public class HgUpdateCommand {
       }
     });
     return exitCode.get();
+  }
+
+  public static void updateTo(@NotNull final String targetRevision, @NotNull List<HgRepository> repos, @Nullable final Runnable callInAwtLater) {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    for (HgRepository repo : repos) {
+      final VirtualFile repository = repo.getRoot();
+      Project project = repo.getProject();
+      updateRepoTo(project, repository, targetRevision, callInAwtLater);
+    }
+  }
+
+  public static void updateRepoTo(@NotNull final Project project,
+                                  @NotNull final VirtualFile repository,
+                                  @NotNull final String targetRevision,
+                                  @Nullable final Runnable callInAwtLater) {
+    updateRepoTo(project, repository, targetRevision, false, callInAwtLater);
+  }
+
+  public static void updateRepoTo(@NotNull final Project project,
+                                  @NotNull final VirtualFile repository,
+                                  @NotNull final String targetRevision,
+                                  final boolean clean,
+                                  @Nullable final Runnable callInAwtLater) {
+    new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.updateTo.description", targetRevision)) {
+      @Override
+      public void onSuccess() {
+        if (callInAwtLater != null) {
+          callInAwtLater.run();
+        }
+      }
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        updateRepoToInCurrentThread(project, repository, targetRevision, clean);
+      }
+    }.queue();
+  }
+
+  public static boolean updateRepoToInCurrentThread(@NotNull final Project project,
+                                                    @NotNull final VirtualFile repository,
+                                                    @NotNull final String targetRevision,
+                                                    final boolean clean) {
+    final HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(project, repository);
+    hgUpdateCommand.setRevision(targetRevision);
+    hgUpdateCommand.setClean(clean);
+    HgCommandResult result = hgUpdateCommand.execute();
+    new HgConflictResolver(project).resolve(repository);
+    boolean success = !HgErrorUtil.isCommandExecutionFailed(result);
+    boolean hasUnresolvedConflicts = !HgConflictResolver.findConflicts(project, repository).isEmpty();
+    if (!success) {
+      new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
+    }
+    else if (hasUnresolvedConflicts) {
+      new VcsNotifier(project)
+        .notifyImportantWarning("Unresolved conflicts.",
+                                HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
+    }
+    getRepositoryManager(project).updateRepository(repository);
+    HgErrorUtil.markDirtyAndHandleErrors(project, repository);
+    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, repository);
+    return success;
   }
 }

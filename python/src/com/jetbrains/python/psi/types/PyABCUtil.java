@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,10 @@ public class PyABCUtil {
   }
 
   public static boolean isSubtype(@NotNull PyType type, @NotNull String superClassName, @NotNull TypeEvalContext context) {
+    if (type instanceof PyStructuralType) {
+      // TODO: Convert abc types to structural types and check them properly
+      return true;
+    }
     if (type instanceof PyClassType) {
       final PyClassType classType = (PyClassType)type;
       final PyClass pyClass = classType.getPyClass();

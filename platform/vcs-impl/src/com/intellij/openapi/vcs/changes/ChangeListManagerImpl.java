@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
@@ -239,8 +240,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         return true;
       }
     }, question, "&Remember my choice");
-    dialog.show();
-    return dialog.isOK();
+    return dialog.showAndGet();
   }
 
   @Override
@@ -1217,21 +1217,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
-          final Set<VirtualFile> descendant = new HashSet<VirtualFile>();
-          for (VirtualFile item : items) {
-            final Processor<VirtualFile> addProcessor = new Processor<VirtualFile>() {
-              @Override
-              public boolean process(VirtualFile file) {
-                if (statusChecker.value(getStatus(file))) {
-                  descendant.add(file);
-                }
-                return true;
-              }
-            };
-            VcsRootIterator.iterateVfUnderVcsRoot(myProject, item, addProcessor);
-          }
-          final List<VcsException> result = environment.scheduleUnversionedFilesForAddition(new ArrayList<VirtualFile>(descendant));
-          allProcessedFiles.addAll(descendant);
+          Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
+          Set<VirtualFile> parents =
+            vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.<VirtualFile>emptySet();
+
+          // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
+          // (inside the method) - so common add logic just needs to refresh statuses of parents
+          List<VcsException> result = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+
+          allProcessedFiles.addAll(descendants);
+          allProcessedFiles.addAll(parents);
           if (result != null) {
             exceptions.addAll(result);
           }
@@ -1287,6 +1282,43 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     else {
       myChangesViewManager.scheduleRefresh();
     }
+  }
+
+  @NotNull
+  private Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull List<VirtualFile> items,
+                                                                @NotNull final Condition<FileStatus> condition) {
+    final Set<VirtualFile> result = ContainerUtil.newHashSet();
+    Processor<VirtualFile> addToResultProcessor = new Processor<VirtualFile>() {
+      @Override
+      public boolean process(VirtualFile file) {
+        if (condition.value(getStatus(file))) {
+          result.add(file);
+        }
+        return true;
+      }
+    };
+
+    for (VirtualFile item : items) {
+      VcsRootIterator.iterateVfUnderVcsRoot(myProject, item, addToResultProcessor);
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private Set<VirtualFile> getUnversionedParents(@NotNull Collection<VirtualFile> items, @NotNull Condition<FileStatus> condition) {
+    HashSet<VirtualFile> result = ContainerUtil.newHashSet();
+
+    for (VirtualFile item : items) {
+      VirtualFile parent = item.getParent();
+
+      while (parent != null && condition.value(getStatus(parent))) {
+        result.add(parent);
+        parent = parent.getParent();
+      }
+    }
+
+    return result;
   }
 
   @Override

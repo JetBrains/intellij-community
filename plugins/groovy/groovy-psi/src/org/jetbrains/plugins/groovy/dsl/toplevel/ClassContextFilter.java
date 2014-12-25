@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -86,7 +86,7 @@ public class ClassContextFilter implements ContextFilter {
   public static PsiType getCachedType(String typeText, PsiFile context) {
     Map<String, PsiType> map = context.getUserData(CACHED_TYPES);
     if (map == null) {
-      map = new ConcurrentHashMap<String, PsiType>();
+      map = ContainerUtil.newConcurrentMap();
       context.putUserData(CACHED_TYPES, map);
     }
     PsiType type = map.get(typeText);

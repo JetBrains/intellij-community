@@ -36,7 +36,7 @@ public class PyClassMROTest extends PyTestCase {
 
   // TypeError in Python
   public void testMROConflict() {
-    assertMRO(getClass("C"));
+    assertMRO(getClass("C"), "unknown");
   }
 
   public void testCircularInheritance() {
@@ -44,7 +44,7 @@ public class PyClassMROTest extends PyTestCase {
     myFixture.configureByFiles(getPath(testName), getPath(testName + "2"));
     final PyClass cls = myFixture.findElementByText("Foo", PyClass.class);
     assertNotNull(cls);
-    assertMRO(cls);
+    assertMRO(cls, "unknown");
   }
 
   public void testExampleFromDoc1() {
@@ -56,7 +56,7 @@ public class PyClassMROTest extends PyTestCase {
   }
 
   public void testExampleFromDoc3() {
-    assertMRO(getClass("G"));
+    assertMRO(getClass("G"), "unknown");
   }
 
   public void testExampleFromDoc4() {
@@ -87,8 +87,15 @@ public class PyClassMROTest extends PyTestCase {
     assertTrue("Calculation of MRO takes too much time: " + elapsed + " ms", elapsed < 1000);
   }
 
+  // PY-11401
+  public void testUnresolvedClassesImpossibleToBuildMRO() {
+    assertMRO(getClass("ObjectManager"),
+              "CopyContainer", "unknown", "Navigation", "unknown", "Tabs", "unknown", "unknown", "unknown", "Collection", "Resource",
+              "LockableItem", "EtagSupport", "Traversable", "object", "unknown");
+  }
+
   public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
-    final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.codeInsightFallback());
+    final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.codeInsightFallback(cls.getProject()));
     final List<String> classNames = new ArrayList<String>();
     for (PyClassLikeType type : types) {
       if (type != null) {

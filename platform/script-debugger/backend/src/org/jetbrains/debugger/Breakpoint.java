@@ -1,8 +1,8 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 /**
  * A breakpoint in the browser JavaScript virtual machine. The {@code set*}
@@ -54,7 +54,8 @@ public abstract class Breakpoint {
    * be called for the set* method invocations to take effect.
    *
    */
-  public abstract ActionCallback flush();
+  @NotNull
+  public abstract Promise<Void> flush();
 
   public abstract boolean isResolved();
 

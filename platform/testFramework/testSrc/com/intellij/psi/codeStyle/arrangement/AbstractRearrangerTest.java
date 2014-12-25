@@ -183,13 +183,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
     if (groupingRules == null) groupingRules = Collections.emptyList();
 
     List<?> rules = (List<?>)args.get("rules");
-    List<ArrangementSectionRule> sectionRules = Collections.emptyList();
-    if (rules != null) sectionRules = ContainerUtil.map(rules, new Function<Object, ArrangementSectionRule>() {
-      @Override
-      public ArrangementSectionRule fun(Object o) {
-        return o instanceof ArrangementSectionRule ? (ArrangementSectionRule)o : ArrangementSectionRule.create((StdArrangementMatchRule)o);
-      }
-    });
+    List<ArrangementSectionRule> sectionRules = getSectionRules(rules);
 
     @SuppressWarnings("unchecked")
     List<StdArrangementRuleAliasToken> aliases = (List<StdArrangementRuleAliasToken>)args.get("aliases");
@@ -210,6 +204,17 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
       assertNotNull("Expected to find fold region at offset " + it.start, foldRegion);
       assertEquals(it.end, foldRegion.getEndOffset());
     }
+  }
+
+  protected List<ArrangementSectionRule> getSectionRules(List<?> rules) {
+    List<ArrangementSectionRule> sectionRules = Collections.emptyList();
+    if (rules != null) sectionRules = ContainerUtil.map(rules, new Function<Object, ArrangementSectionRule>() {
+      @Override
+      public ArrangementSectionRule fun(Object o) {
+        return o instanceof ArrangementSectionRule ? (ArrangementSectionRule)o : ArrangementSectionRule.create((StdArrangementMatchRule)o);
+      }
+    });
+    return sectionRules;
   }
 
   private static boolean isEmpty(Collection<?> collection) {

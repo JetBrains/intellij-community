@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakHashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,6 @@ import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
@@ -226,8 +226,10 @@ public class UIUtil {
   private static final Color INACTIVE_HEADER_COLOR = Gray._128;
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
-  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = Gray._190;
-  public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = Gray._240;
+  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+
+  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
+  public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
   public static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 0);
 
   public static final int DEFAULT_HGAP = 10;
@@ -239,11 +241,9 @@ public class UIUtil {
 
 
   public static final Border DEBUG_MARKER_BORDER = new Border() {
-    private final Insets empty = new Insets(0, 0, 0, 0);
-
     @Override
     public Insets getBorderInsets(Component c) {
-      return empty;
+      return new Insets(0, 0, 0, 0);
     }
 
     @Override
@@ -276,6 +276,119 @@ public class UIUtil {
   private UIUtil() {
   }
 
+  /**
+   * Utility class for retina routine
+   */
+  private final static class DetectRetinaKit {
+
+    private final static WeakHashMap<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = new WeakHashMap<GraphicsDevice, Boolean>();
+
+    /**
+     * The best way to understand whether we are on a retina device is [NSScreen backingScaleFactor]
+     * But we should not invoke it from any thread. We do not have access to the AppKit thread
+     * on the other hand. So let's use a dedicated method. It is rather safe because it caches a
+     * value that has been got on AppKit previously.
+     */
+    private static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
+
+      Boolean isRetina  = devicesToRetinaSupportCacheMap.get(device);
+
+      if (isRetina != null){
+        return isRetina;
+      }
+
+      Method getScaleFactorMethod = null;
+      try {
+        getScaleFactorMethod = Class.forName("sun.awt.CGraphicsDevice").getMethod("getScaleFactor");
+      } catch (ClassNotFoundException e) {
+        // not an Oracle Mac JDK or API has been changed
+        LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
+      } catch (NoSuchMethodException e) {
+        LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
+      }
+
+      try {
+        isRetina =  (getScaleFactorMethod == null) || ((Integer)getScaleFactorMethod.invoke(device) != 1);
+      } catch (IllegalAccessException e) {
+        LOG.debug("CGraphicsDevice.getScaleFactor(): Access issue");
+        isRetina = false;
+      } catch (InvocationTargetException e) {
+        LOG.debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
+        isRetina = false;
+      }
+
+      devicesToRetinaSupportCacheMap.put(device, isRetina);
+
+      return isRetina;
+    }
+
+    /**
+     * Could be quite easily implemented with [NSScreen backingScaleFactor]
+     * and JNA
+     */
+    //private static boolean isAppleRetina (Graphics2D g2d) {
+    //  return false;
+    //}
+
+    /**
+     * For JDK6 we have a dedicated property which does not allow to understand anything
+     * per device but could be useful for image creation. We will get true in case
+     * if at least one retina device is present.
+     */
+    private static boolean hasAppleRetinaDevice() {
+      return (Float)Toolkit.getDefaultToolkit()
+        .getDesktopProperty(
+          "apple.awt.contentScaleFactor") != 1.0f;
+    }
+
+    /**
+     * This method perfectly detects retina Graphics2D for jdk7+
+     * For Apple JDK6 it returns false.
+     * @param g graphics to be tested
+     * @return false if the device of the Graphics2D is not a retina device,
+     * jdk is an Apple JDK or Oracle API has been changed.
+     */
+    private static boolean isMacRetina(Graphics2D g) {
+      GraphicsDevice device = g.getDeviceConfiguration().getDevice();
+      return isOracleMacRetinaDevice(device);
+    }
+
+    /**
+     * Checks that at least one retina device is present.
+     * Do not use this method if your are going to make decision for a particular screen.
+     * isRetina(Graphics2D) is more preferable
+     *
+     * @return true if at least one device is a retina device
+     */
+    private static boolean isRetina() {
+      if (SystemInfo.isAppleJvm) {
+        return hasAppleRetinaDevice();
+      }
+
+      // Oracle JDK
+
+      if (SystemInfo.isMac) {
+        GraphicsEnvironment e
+          = GraphicsEnvironment.getLocalGraphicsEnvironment();
+
+        GraphicsDevice[] devices = e.getScreenDevices();
+
+        //now get the configurations for each device
+        for (GraphicsDevice device : devices) {
+          if (isOracleMacRetinaDevice(device)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+  }
+
+  //public static boolean isMacRetina(Graphics2D g) {
+  //  return DetectRetinaKit.isMacRetina(g);
+  //}
+
   public static boolean isRetina() {
     if (GraphicsEnvironment.isHeadless()) return false;
 
@@ -284,32 +397,39 @@ public class UIUtil {
       return true;
     }
 
-    synchronized (ourRetina) {
-      if (ourRetina.isNull()) {
-        ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
+    if (Registry.is("new.retina.detection")) {
+      return DetectRetinaKit.isRetina();
+    } else {
+      synchronized (ourRetina) {
+        if (ourRetina.isNull()) {
+          ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
 
-        if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
-          if (!"false".equals(System.getProperty("ide.mac.retina"))) {
-            ourRetina.set(IsRetina.isRetina());
-            return ourRetina.get();
-          }
-        } else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
-          try {
-            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            final GraphicsDevice device = env.getDefaultScreenDevice();
-            Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
-            if (scale != null && scale.intValue() == 2) {
-              ourRetina.set(true);
-              return true;
+          if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
+            if (!"false".equals(System.getProperty("ide.mac.retina"))) {
+              ourRetina.set(IsRetina.isRetina());
+              return ourRetina.get();
             }
           }
-          catch (AWTError ignore) {}
-          catch (Exception ignore) {}
+          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
+            try {
+              GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+              final GraphicsDevice device = env.getDefaultScreenDevice();
+              Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
+              if (scale != null && scale.intValue() == 2) {
+                ourRetina.set(true);
+                return true;
+              }
+            }
+            catch (AWTError ignore) {
+            }
+            catch (Exception ignore) {
+            }
+          }
+          ourRetina.set(false);
         }
-        ourRetina.set(false);
-      }
 
-      return ourRetina.get();
+        return ourRetina.get();
+      }
     }
   }
 
@@ -345,31 +465,32 @@ public class UIUtil {
     return (T)component.getClientProperty(key);
   }
 
+  public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
+    component.putClientProperty(key, value);
+  }
+
   public static String getHtmlBody(String text) {
-    return getHtmlBody(new Html(text));
+    int htmlIndex = 6 + text.indexOf("<html>");
+    if (htmlIndex < 6) {
+      return text.replaceAll("\n", "<br>");
+    }
+    int htmlCloseIndex = text.indexOf("</html>", htmlIndex);
+    if (htmlCloseIndex < 0) {
+      htmlCloseIndex = text.length();
+    }
+    int bodyIndex = 6 + text.indexOf("<body>", htmlIndex);
+    if (bodyIndex < 6) {
+      return text.substring(htmlIndex, htmlCloseIndex);
+    }
+    int bodyCloseIndex = text.indexOf("</body>", bodyIndex);
+    if (bodyCloseIndex < 0) {
+      bodyCloseIndex = text.length();
+    }
+    return text.substring(bodyIndex, Math.min(bodyCloseIndex, htmlCloseIndex));
   }
 
   public static String getHtmlBody(Html html) {
-    String text = html.getText();
-    String result;
-    if (!text.startsWith("<html>")) {
-      result = text.replaceAll("\n", "<br>");
-    }
-    else {
-      final int bodyIdx = text.indexOf("<body>");
-      final int closedBodyIdx = text.indexOf("</body>");
-      if (bodyIdx != -1 && closedBodyIdx != -1) {
-        result = text.substring(bodyIdx + "<body>".length(), closedBodyIdx);
-      }
-      else {
-        text = StringUtil.trimStart(text, "<html>").trim();
-        text = StringUtil.trimEnd(text, "</html>").trim();
-        text = StringUtil.trimStart(text, "<body>").trim();
-        text = StringUtil.trimEnd(text, "</body>").trim();
-        result = text;
-      }
-    }
-
+    String result = getHtmlBody(html.getText());
     return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }
 
@@ -531,9 +652,9 @@ public class UIUtil {
     int defSize = getLabelFont().getSize();
     switch (size) {
       case SMALL:
-        return Math.max(defSize - 2f, 11f);
+        return Math.max(defSize - JBUI.scale(2f), JBUI.scale(11f));
       case MINI:
-        return Math.max(defSize - 4f, 9f);
+        return Math.max(defSize - JBUI.scale(4f), JBUI.scale(9f));
       default:
         return defSize;
     }
@@ -1125,6 +1246,7 @@ public class UIUtil {
 
   public static Color shade(final Color c, final double factor, final double alphaFactor) {
     assert factor >= 0 : factor;
+    //noinspection UseJBColor
     return new Color(
       Math.min((int)Math.round(c.getRed() * factor), 255),
       Math.min((int)Math.round(c.getGreen() * factor), 255),
@@ -1136,6 +1258,7 @@ public class UIUtil {
   public static Color mix(final Color c1, final Color c2, final double factor) {
     assert 0 <= factor && factor <= 1.0 : factor;
     final double backFactor = 1.0 - factor;
+    //noinspection UseJBColor
     return new Color(
       Math.min((int)Math.round(c1.getRed() * backFactor + c2.getRed() * factor), 255),
       Math.min((int)Math.round(c1.getGreen() * backFactor + c2.getGreen() * factor), 255),
@@ -1550,14 +1673,22 @@ public class UIUtil {
   }
 
   public static void applyRenderingHints(final Graphics g) {
+    Graphics2D g2d = (Graphics2D)g;
     Toolkit tk = Toolkit.getDefaultToolkit();
     //noinspection HardCodedStringLiteral
     Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
     if (map != null) {
-      ((Graphics2D)g).addRenderingHints(map);
+      g2d.addRenderingHints(map);
+      setHintingForLCDText(g2d);
     }
   }
 
+  public static void setHintingForLCDText(Graphics2D g2d) {
+    if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, Registry.intValue("lcd.contrast.value"));
+    }
+  }
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
@@ -2757,13 +2888,38 @@ public class UIUtil {
     }
   }
 
+  public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
+    component.setBackground(bg);
+    if (component instanceof Container) {
+      for (Component c : ((Container)component).getComponents()) {
+        setBackgroundRecursively(c, bg);
+      }
+    }
+  }
+
+  /**
+   * Adds an empty border with the specified insets to the specified component.
+   * If the component already has a border it will be preserved.
+   *
+   * @param component the component to which border added
+   * @param top       the inset from the top
+   * @param left      the inset from the left
+   * @param bottom    the inset from the bottom
+   * @param right     the inset from the right
+   */
+  public static void addInsets(@NotNull JComponent component, int top, int left, int bottom, int right) {
+    addBorder(component, BorderFactory.createEmptyBorder(top, left, bottom, right));
+  }
+
+  /**
+   * Adds an empty border with the specified insets to the specified component.
+   * If the component already has a border it will be preserved.
+   *
+   * @param component the component to which border added
+   * @param insets    the top, left, bottom, and right insets
+   */
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
-    if (component.getBorder() != null) {
-      component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
-    }
-    else {
-      component.setBorder(new EmptyBorder(insets));
-    }
+    addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
   }
 
   public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
@@ -2814,13 +2970,20 @@ public class UIUtil {
     return null;
   }
 
+  /**
+   * Adds the specified border to the specified component.
+   * If the component already has a border it will be preserved.
+   * If component or border is not specified nothing happens.
+   *
+   * @param component the component to which border added
+   * @param border    the border to add to the component
+   */
   public static void addBorder(JComponent component, Border border) {
-    if (component == null) return;
-
-    if (component.getBorder() != null) {
-      component.setBorder(new CompoundBorder(border, component.getBorder()));
-    }
-    else {
+    if (component != null && border != null) {
+      Border old = component.getBorder();
+      if (old != null) {
+        border = BorderFactory.createCompoundBorder(border, old);
+      }
       component.setBorder(border);
     }
   }
@@ -2864,11 +3027,19 @@ public class UIUtil {
     return JOptionPane.getRootFrame();
   }
 
+  public static void suppressFocusStealing (Window window) {
+    // Focus stealing is not a problem on Mac
+    if (SystemInfo.isMac) return;
+    if (Registry.is("suppress.focus.stealing")) {
+      setAutoRequestFocus(window, false);
+    }
+  }
+
   public static void setAutoRequestFocus (final Window onWindow, final boolean set){
     if (SystemInfo.isMac) return;
     if (SystemInfo.isJavaVersionAtLeast("1.7")) {
       try {
-        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus",new Class [] {boolean.class});
+        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class);
         setAutoRequestFocusMethod.invoke(onWindow, set);
       }
       catch (NoSuchMethodException e) { LOG.debug(e); }
@@ -3043,10 +3214,6 @@ public class UIUtil {
     return new EmptyBorder(0, leftGap, 0, 0);
   }
 
-  public static Color getSidePanelColor() {
-    return new JBColor(0xD2D6DD, 0x3C4447);
-  }
-
   /**
    * It is your responsibility to set correct horizontal align (left in case of UI Designer)
    */
@@ -3062,24 +3229,24 @@ public class UIUtil {
     textField.setColumns(4);
   }
 
-  public static <T> Border makeChameleonBorder(final Border border, final Condition<T> conditionToShow, final T checker) {
-    return new Border() {
-      @Override
-      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        if (conditionToShow.value(checker)) {
-          border.paintBorder(c, g, x, y, width, height);
-        }
-      }
+  /**
+   * Returns the first window ancestor of the component.
+   * Note that this method returns the component itself if it is a window.
+   *
+   * @param component the component used to find corresponding window
+   * @return the first window ancestor of the component; or {@code null}
+   *         if the component is not a window and is not contained inside a window
+   */
+  public static Window getWindow(Component component) {
+    return component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
+  }
 
-      @Override
-      public Insets getBorderInsets(Component c) {
-        return border.getBorderInsets(c);
-      }
-
-      @Override
-      public boolean isBorderOpaque() {
-        return border.isBorderOpaque() && conditionToShow.value(checker);
-      }
-    };
+  public static Image getDebugImage(Component component) {
+    BufferedImage image = createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D graphics = image.createGraphics();
+    graphics.setColor(Color.RED);
+    graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);
+    component.paint(graphics);
+    return image;
   }
 }

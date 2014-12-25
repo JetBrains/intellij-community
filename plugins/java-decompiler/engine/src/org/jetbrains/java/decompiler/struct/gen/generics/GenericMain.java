@@ -173,7 +173,7 @@ public class GenericMain {
 
   public static String getGenericCastTypeName(GenericType type) {
     String s = getTypeName(type);
-    int dim = type.arraydim;
+    int dim = type.arrayDim;
     while (dim-- > 0) {
       s += "[]";
     }

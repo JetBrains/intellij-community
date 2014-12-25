@@ -68,6 +68,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * {@link BaseGradleProjectResolverExtension} provides base implementation of Gradle project resolver.
@@ -328,6 +330,23 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final Collection<TaskData> tasks = ContainerUtil.newArrayList();
     final String moduleConfigPath = ideModule.getData().getLinkedExternalProjectPath();
 
+    ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
+
+    if (externalProject != null) {
+      for (ExternalTask task : externalProject.getTasks().values()) {
+        String taskName = task.getName();
+        if (taskName.trim().isEmpty() || isIdeaTask(taskName)) {
+          continue;
+        }
+        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, moduleConfigPath, task.getDescription());
+        taskData.setGroup(task.getGroup());
+        ideModule.createChild(ProjectKeys.TASK, taskData);
+        tasks.add(taskData);
+      }
+
+      return tasks;
+    }
+
     for (GradleTask task : gradleModule.getGradleProject().getTasks()) {
       String taskName = task.getName();
       if (taskName == null || taskName.trim().isEmpty() || isIdeaTask(taskName)) {
@@ -376,10 +395,20 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       if (!StringUtil.isEmpty(httpConfigurable.PROXY_EXCEPTIONS)) {
         List<String> hosts = StringUtil.split(httpConfigurable.PROXY_EXCEPTIONS, ",");
         if (!hosts.isEmpty()) {
-          extraJvmArgs.add(KeyValue.create("http.nonProxyHosts", StringUtil.join(hosts, StringUtil.TRIMMER, "|")));
+          final String nonProxyHosts = StringUtil.join(hosts, StringUtil.TRIMMER, "|");
+          extraJvmArgs.add(KeyValue.create("http.nonProxyHosts", nonProxyHosts));
+          extraJvmArgs.add(KeyValue.create("https.nonProxyHosts", nonProxyHosts));
         }
       }
+      if (httpConfigurable.USE_HTTP_PROXY && StringUtil.isNotEmpty(httpConfigurable.PROXY_LOGIN)) {
+        extraJvmArgs.add(KeyValue.create("http.proxyUser", httpConfigurable.PROXY_LOGIN));
+        extraJvmArgs.add(KeyValue.create("https.proxyUser", httpConfigurable.PROXY_LOGIN));
+        final String plainProxyPassword = httpConfigurable.getPlainProxyPassword();
+        extraJvmArgs.add(KeyValue.create("http.proxyPassword", plainProxyPassword));
+        extraJvmArgs.add(KeyValue.create("https.proxyPassword", plainProxyPassword));
+      }
       extraJvmArgs.addAll(HttpConfigurable.getJvmPropertiesList(false, null));
+
       return extraJvmArgs;
     }
     return Collections.emptyList();
@@ -526,15 +555,21 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
    * @param dirs        directories which paths should be stored at the given content root
    * @throws IllegalArgumentException if specified by {@link ContentRootData#storePath(ExternalSystemSourceType, String)}
    */
-  private static void populateContentRoot(@NotNull ContentRootData contentRoot,
-                                          @NotNull ExternalSystemSourceType type,
-                                          @Nullable Iterable<? extends IdeaSourceDirectory> dirs)
+  private static void populateContentRoot(@NotNull final ContentRootData contentRoot,
+                                          @NotNull final ExternalSystemSourceType type,
+                                          @Nullable final Iterable<? extends IdeaSourceDirectory> dirs)
     throws IllegalArgumentException {
     if (dirs == null) {
       return;
     }
     for (IdeaSourceDirectory dir : dirs) {
-      contentRoot.storePath(type, dir.getDirectory().getAbsolutePath());
+      ExternalSystemSourceType dirSourceType = type;
+      if (dir.isGenerated() && !dirSourceType.isGenerated()) {
+        final ExternalSystemSourceType generatedType =
+          ExternalSystemSourceType.from(dirSourceType.isTest(), dir.isGenerated(), dirSourceType.isResource(), dirSourceType.isExcluded());
+        dirSourceType = generatedType != null ? generatedType : dirSourceType;
+      }
+      contentRoot.storePath(dirSourceType, dir.getDirectory().getAbsolutePath());
     }
   }
 
@@ -623,7 +658,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
       if (unresolved) {
         // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
-        libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
+        libraryName = binaryPath.getPath().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
         int i = libraryName.indexOf(' ');
         if (i >= 0) {
           i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
@@ -641,6 +676,25 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     else {
       level = LibraryLevel.PROJECT;
       libraryName = String.format("%s:%s:%s", moduleVersion.getGroup(), moduleVersion.getName(), moduleVersion.getVersion());
+      if (binaryPath.isFile()) {
+        String libraryFileName = FileUtil.getNameWithoutExtension(binaryPath);
+        final String mavenLibraryFileName = String.format("%s-%s", moduleVersion.getName(), moduleVersion.getVersion());
+        if (!mavenLibraryFileName.equals(libraryFileName)) {
+          Pattern pattern = Pattern.compile(moduleVersion.getName() + "-" + moduleVersion.getVersion() + "-(.*)");
+          Matcher matcher = pattern.matcher(libraryFileName);
+          if (matcher.matches()) {
+            final String classifier = matcher.group(1);
+            libraryName += (":" + classifier);
+          }
+          else {
+            final String artifactId = StringUtil.trimEnd(StringUtil.trimEnd(libraryFileName, moduleVersion.getVersion()), "-");
+            libraryName = String.format("%s:%s:%s",
+                                        moduleVersion.getGroup(),
+                                        artifactId,
+                                        moduleVersion.getVersion());
+          }
+        }
+      }
     }
 
     final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);

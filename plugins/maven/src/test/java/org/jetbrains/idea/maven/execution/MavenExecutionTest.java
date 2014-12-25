@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -48,6 +49,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
     if (!hasMavenInstallation()) return;
 
     VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}");
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     new WriteAction<Object>() {
       @Override

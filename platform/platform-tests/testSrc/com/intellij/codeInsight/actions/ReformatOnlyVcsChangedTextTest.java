@@ -141,6 +141,24 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     );
   }
 
+  public void testNoReformatOn_DeletionModification() throws IOException {
+    doTest(
+      "public class B {\n" +
+      "           int a = 3;\n" +
+      "           String text;\n" +
+      "           Object last = null;\n" +
+      "           Object first = null;\n" +
+      "           Object second = null;\n" +
+      "}",
+
+      "public class B {\n" +
+      "           int a = 3;\n" +
+      "           String text;\n" +
+      "           Object last = null;\n" +
+      "}"
+    );
+  }
+
   public void testModification() throws IOException {
     doTest(
       "public class B {\n" +

@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
@@ -72,18 +73,24 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return null;
   }
 
-  public void appendCoverageArgument(final SimpleJavaParameters javaParameters) {
+  public void appendCoverageArgument(RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
     final CoverageRunner runner = getCoverageRunner();
     try {
       if (runner != null && runner instanceof JavaCoverageRunner) {
         final String path = getCoverageFilePath();
         assert path != null; // cannot be null here if runner != null
 
+        String sourceMapPath = null;
+        if (myCoverageProvider.isSourceMapNeeded(configuration)) {
+          sourceMapPath = getSourceMapPath(path);
+        }
+
         ((JavaCoverageRunner)runner).appendCoverageArgument(new File(path).getCanonicalPath(),
                                                             getPatterns(),
                                                             javaParameters,
                                                             isTrackPerTestCoverage() && !isSampling(),
-                                                            isSampling());
+                                                            isSampling(),
+                                                            sourceMapPath);
       }
     }
     catch (IOException e) {
@@ -91,6 +98,9 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     }
   }
 
+  public static String getSourceMapPath(String coverageDataFilePath) {
+    return coverageDataFilePath + ".sourceMap";
+  }
 
   @NotNull
   public JavaCoverageEngine getCoverageProvider() {
@@ -211,10 +221,10 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return myCoverageFilePath;
   }
 
-  public void setUpCoverageFilters(String className, String packageName) {
+  public void setUpCoverageFilters(@Nullable String className, @Nullable String packageName) {
     if (getCoveragePatterns() == null) {
       String pattern = null;
-      if (className != null && className.length() > 0) {
+      if (!StringUtil.isEmpty(className)) {
         int index = className.lastIndexOf('.');
         if (index >= 0) {
           pattern = className.substring(0, index);
@@ -224,8 +234,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
         pattern = packageName;
       }
 
-
-      if (pattern != null && pattern.length() > 0) {
+      if (!StringUtil.isEmpty(pattern)) {
         setCoveragePatterns(new ClassFilter[]{new ClassFilter(pattern + ".*")});
       }
     }

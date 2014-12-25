@@ -1,32 +1,33 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.AsyncValueLoaderManager;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.PromiseManager;
 import org.jetbrains.debugger.values.ObjectValue;
 import org.jetbrains.debugger.values.ValueManager;
 
 import java.util.List;
 
 public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extends ScopeBase {
-  private static final AsyncValueLoaderManager<DeclarativeScope, List<Variable>> VARIABLES_LOADER =
-    new AsyncValueLoaderManager<DeclarativeScope, List<Variable>>(DeclarativeScope.class) {
+  private static final PromiseManager<DeclarativeScope, List<Variable>> VARIABLES_LOADER =
+    new PromiseManager<DeclarativeScope, List<Variable>>(DeclarativeScope.class) {
       @Override
       public boolean isUpToDate(@NotNull DeclarativeScope host, @NotNull List<Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;
       }
 
+      @NotNull
       @Override
-      public void load(@NotNull DeclarativeScope host, @NotNull AsyncResult<List<Variable>> result) {
-        host.loadVariables(result);
+      public Promise<List<Variable>> load(@NotNull DeclarativeScope host, @NotNull Promise<List<Variable>> promise) {
+        //noinspection unchecked
+        return host.loadVariables();
       }
     };
 
   @SuppressWarnings("UnusedDeclaration")
-  private volatile AsyncResult<List<? extends Variable>> variables;
+  private volatile Promise<List<Variable>> variables;
 
   private volatile int cacheStamp = -1;
 
@@ -41,37 +42,38 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
   /**
    * You must call {@link #updateCacheStamp()} when data loaded
    */
-  protected abstract void loadVariables(@NotNull AsyncResult<List<? extends Variable>> result);
+  @NotNull
+  protected abstract Promise<List<Variable>> loadVariables();
 
   protected final void updateCacheStamp() {
     cacheStamp = valueManager.getCacheStamp();
   }
 
-  protected final void loadScopeObjectProperties(@NotNull ObjectValue value, @NotNull final AsyncResult<List<? extends Variable>> result) {
-    if (valueManager.rejectIfObsolete(result)) {
-      return;
+  @NotNull
+  protected final Promise<List<Variable>> loadScopeObjectProperties(@NotNull ObjectValue value) {
+    if (valueManager.isObsolete()) {
+      return ValueManager.reject();
     }
 
-    value.getProperties().doWhenDone(new Consumer<List<Variable>>() {
+    return value.getProperties().done(new Consumer<List<Variable>>() {
       @Override
       public void consume(List<Variable> variables) {
         updateCacheStamp();
-        result.setDone(variables);
       }
-    }).notifyWhenRejected(result);
+    });
   }
 
   @NotNull
   @Override
-  public final AsyncResult<List<Variable>> getVariables() {
+  public final Promise<List<Variable>> getVariables() {
     return VARIABLES_LOADER.get(this);
   }
 
   @NotNull
   @Override
-  public ActionCallback clearCaches() {
+  public Promise<Void> clearCaches() {
     cacheStamp = -1;
     VARIABLES_LOADER.reset(this);
-    return ActionCallback.DONE;
+    return Promise.DONE;
   }
 }

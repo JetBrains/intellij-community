@@ -43,7 +43,7 @@ public class ChangeSet {
   public ChangeSet(long id, long timestamp) {
     myId = id;
     myTimestamp = timestamp;
-    myChanges = ContainerUtil.createLockFreeCopyOnWriteList();
+    myChanges = new ArrayList<Change>();
   }
 
   public ChangeSet(DataInput in) throws IOException {
@@ -61,6 +61,7 @@ public class ChangeSet {
   }
 
   public void write(DataOutput out) throws IOException {
+    LocalHistoryLog.LOG.assertTrue(isLocked, "Changeset should be locked");
     out.writeLong(myId);
     StreamUtil.writeStringOrNull(out, myName);
     out.writeLong(myTimestamp);
@@ -118,7 +119,7 @@ public class ChangeSet {
   }
 
   public void addChange(final Change c) {
-    LocalHistoryLog.LOG.assertTrue(!isLocked, "Changset is already locked");
+    LocalHistoryLog.LOG.assertTrue(!isLocked, "Changeset is already locked");
     accessChanges(new Runnable() {
       @Override
       public void run() {

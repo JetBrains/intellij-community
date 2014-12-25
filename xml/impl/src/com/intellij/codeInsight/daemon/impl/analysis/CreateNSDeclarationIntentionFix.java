@@ -106,7 +106,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @Override
   @NotNull
   public String getText() {
-    final String alias = StringUtil.capitalize(getXmlExtension().getNamespaceAlias(getFile()));
+    final String alias = getXmlExtension().getNamespaceAlias(getFile());
     return XmlErrorMessages.message("create.namespace.declaration.quickfix", alias);
   }
 

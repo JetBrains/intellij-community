@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.format.Lesson;
@@ -43,15 +44,25 @@ public class CCCreateLesson extends DumbAwareAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final PsiDirectory lessonDirectory = DirectoryUtil.createSubdirectories("lesson" + (size+1), directory, "\\/");
-        if (lessonDirectory != null) {
-          view.selectElement(lessonDirectory);
-          final Lesson lesson = new Lesson(lessonName);
-          lesson.setIndex(size + 1);
-          course.addLesson(lesson, lessonDirectory);
-        }
+        createLesson(directory, size + 1, lessonName, view, course);
       }
     });
+  }
+
+  @Nullable
+  public static PsiDirectory createLesson(@NotNull final  PsiDirectory projectDir, int index, String name, final IdeView view,
+                                  @NotNull final Course course) {
+    String lessonFolderName = "lesson" + index;
+    final PsiDirectory lessonDirectory = DirectoryUtil.createSubdirectories("lesson" + index, projectDir, "\\/");
+    if (lessonDirectory != null) {
+      if (view != null) {
+        view.selectElement(lessonDirectory);
+      }
+      final Lesson lesson = new Lesson(name != null ? name : lessonFolderName);
+      lesson.setIndex(index);
+      course.addLesson(lesson, lessonDirectory);
+    }
+    return lessonDirectory;
   }
 
   @Override

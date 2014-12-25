@@ -23,10 +23,11 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Dec 18, 2007
-*/
+ * @since Dec 18, 2007
+ */
 public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
   public static final EnumeratorStringDescriptor INSTANCE = new EnumeratorStringDescriptor();
+
   @Override
   public int getHashCode(final String value) {
     return value.hashCode();

@@ -20,7 +20,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -59,6 +58,10 @@ public class PyFillParagraphTest extends PyTestCase {
   }
 
   public void testSingleLine() {
+    doTest();
+  }
+
+  public void testEmptyMultilineString() {
     doTest();
   }
 

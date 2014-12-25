@@ -21,7 +21,7 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.RelativeFont;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -37,14 +37,13 @@ public class StatisticsConfigurationComponent {
   private JRadioButton myMonthlyRadioButton;
   private JRadioButton myWeeklyRadioButton;
   private JLabel myLabel;
-  private JPanel myRadioButtonPanel;
 
   public StatisticsConfigurationComponent() {
     String product = ApplicationNamesInfo.getInstance().getFullProductName();
     String company = ApplicationInfo.getInstance().getCompanyName();
     myTitle.setText(StatisticsBundle.message("stats.title", product, company));
     myLabel.setText(StatisticsBundle.message("stats.config.details", company));
-    myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    RelativeFont.SMALL.install(myLabel);
 
     myAllowToSendUsagesCheckBox.setText(StatisticsBundle.message("stats.config.allow.send.stats.text", company));
     myAllowToSendUsagesCheckBox.addActionListener(new ActionListener() {

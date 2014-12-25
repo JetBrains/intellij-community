@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
-import org.jetbrains.idea.svn.branchConfig.BranchConfigurationDialog;
-import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.branchConfig.BranchConfigurationDialog;
+import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.integrate.MergeContext;
@@ -221,7 +221,7 @@ public class CopiesPanel {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             if (CONFIGURE_BRANCHES.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Configure Branches")) return;
-              BranchConfigurationDialog.configureBranches(myProject, root, true);
+              BranchConfigurationDialog.configureBranches(myProject, root);
             } else if (FIX_DEPTH.equals(e.getDescription())) {
               final int result =
                 Messages.showOkCancelDialog(myVcs.getProject(), "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
@@ -290,7 +290,7 @@ public class CopiesPanel {
         .append(info.getErrorMessage()).append("</td></tr>");
     }
     else {
-      sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\">").append(info.getRootUrl()).append("</td></tr>");
+      sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\">").append(info.getUrl().toDecodedString()).append("</td></tr>");
     }
     if (upgradeFormats.size() > 1) {
       sb.append("<tr valign=\"top\"><td>Format:</td><td>").append(info.getFormat().getName()).append("</td><td><a href=\"").
@@ -393,12 +393,11 @@ public class CopiesPanel {
   }
 
   private void changeFormat(@NotNull final WCInfo wcInfo, @NotNull final Collection<WorkingCopyFormat> supportedFormats) {
-    ChangeFormatDialog dialog = new ChangeFormatDialog(myProject, new File(wcInfo.getPath()), false, ! wcInfo.isIsWcRoot());
+    ChangeFormatDialog dialog = new ChangeFormatDialog(myProject, new File(wcInfo.getPath()), false, !wcInfo.isIsWcRoot());
 
     dialog.setSupported(supportedFormats);
     dialog.setData(wcInfo.getFormat());
-    dialog.show();
-    if (! dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
     final WorkingCopyFormat newFormat = dialog.getUpgradeMode();

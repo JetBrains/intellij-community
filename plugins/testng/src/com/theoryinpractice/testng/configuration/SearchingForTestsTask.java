@@ -578,8 +578,13 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     final PsiClass[] psiClasses;
     if (methods != null && methods.length > 0) {
       final Set<PsiClass> containingClasses = new LinkedHashSet<PsiClass>();
-      for (PsiMethod method : methods) {
-        containingClasses.add(method.getContainingClass());
+      for (final PsiMethod method : methods) {
+        containingClasses.add(ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+          @Override
+          public PsiClass compute() {
+            return method.getContainingClass();
+          }
+        }));
       }
       psiClasses = containingClasses.toArray(new PsiClass[containingClasses.size()]);
     } else {

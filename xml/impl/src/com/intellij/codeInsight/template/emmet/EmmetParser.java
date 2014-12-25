@@ -228,4 +228,13 @@ public abstract class EmmetParser {
     }
     return null;
   }
+  
+  
+  @Nullable
+  protected ZenCodingToken nextToken(int i) {
+    if (myIndex + i < myTokens.size()) {
+      return myTokens.get(myIndex + i);
+    }
+    return null;
+  }
 }

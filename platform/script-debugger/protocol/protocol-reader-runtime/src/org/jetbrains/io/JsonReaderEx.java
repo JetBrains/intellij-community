@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.util.Arrays;
 
 public final class JsonReaderEx implements Closeable {
   /** The only non-execute prefix this parser permits */
@@ -75,7 +76,7 @@ public final class JsonReaderEx implements Closeable {
   /*
    * The nesting stack. Using a manual array rather than an ArrayList saves 20%.
    */
-  private int[] stack = new int[32];
+  private int[] stack;
   private int stackSize = 0;
 
   private StringBuilder builder;
@@ -88,14 +89,16 @@ public final class JsonReaderEx implements Closeable {
   }
 
   public JsonReaderEx(@NotNull CharSequence in, int start) {
-    this(in, start, JsonScope.EMPTY_DOCUMENT);
+    this(in, start, new int[32]);
+
+    stack[stackSize++] = JsonScope.EMPTY_DOCUMENT;
   }
 
-  private JsonReaderEx(@NotNull CharSequence in, int start, int scope) {
+  private JsonReaderEx(@NotNull CharSequence in, int start, @NotNull int[] stack) {
     this.in = in;
     position = start;
     limit = in.length();
-    stack[stackSize++] = scope;
+    this.stack = stack;
   }
 
   private final static class JsonScope {
@@ -162,7 +165,8 @@ public final class JsonReaderEx implements Closeable {
         throw createParseError("Cannot create sub reader, next token " + nextToken + " is not value");
     }
 
-    JsonReaderEx subReader = new JsonReaderEx(in, position, stack[stackSize - 1]);
+    JsonReaderEx subReader = new JsonReaderEx(in, position, Arrays.copyOf(stack, stack.length));
+    subReader.stackSize = stackSize;
     subReader.peeked = peeked;
     subReader.peekedLong = peekedLong;
     subReader.peekedNumberLength = peekedNumberLength;
@@ -665,6 +669,15 @@ public final class JsonReaderEx implements Closeable {
    * Returns the next token, a {@link JsonToken#NAME property name}, and consumes it
    */
   public String nextName() {
+    String result = nextNameOrNull();
+    if (result == null) {
+      throw createParseError("Expected a name but was " + peek());
+    }
+    return result;
+  }
+
+  @Nullable
+  public String nextNameOrNull() {
     int p = peeked;
     if (p == PEEKED_NONE) {
       p = doPeek();
@@ -680,7 +693,10 @@ public final class JsonReaderEx implements Closeable {
       result = nextQuotedValue('"');
     }
     else {
-      throw createParseError("Expected a name but was " + peek());
+      if (p != PEEKED_END_OBJECT && p != PEEKED_END_ARRAY) {
+        throw createParseError("Expected a name but was " + peek());
+      }
+      return null;
     }
     peeked = PEEKED_NONE;
     return result;
@@ -713,6 +729,7 @@ public final class JsonReaderEx implements Closeable {
       return in.charAt(offset + index);
     }
 
+    @NotNull
     @Override
     public CharSequence subSequence(int start, int end) {
       if ((end - start) > length) {
@@ -1153,6 +1170,7 @@ public final class JsonReaderEx implements Closeable {
   /**
    * Closes this JSON reader and the underlying {@link java.io.Reader}.
    */
+  @Override
   public void close() {
     peeked = PEEKED_NONE;
     stack[0] = JsonScope.CLOSED;
@@ -1180,11 +1198,7 @@ public final class JsonReaderEx implements Closeable {
         push(JsonScope.EMPTY_OBJECT);
         count++;
       }
-      else if (p == PEEKED_END_ARRAY) {
-        stackSize--;
-        count--;
-      }
-      else if (p == PEEKED_END_OBJECT) {
+      else if (p == PEEKED_END_ARRAY || p == PEEKED_END_OBJECT) {
         stackSize--;
         count--;
       }

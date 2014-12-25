@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+
 /**
  * @author Denis Zhdanov
  * @since 7/17/12 11:24 AM
@@ -168,7 +170,8 @@ public class ArrangementUtil {
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        if (StdArrangementTokenType.ENTRY_TYPE.is(condition.getType())) {
+        ArrangementSettingsToken type = condition.getType();
+        if (StdArrangementTokenType.ENTRY_TYPE.is(condition.getType()) || MODIFIER_AS_TYPE.contains(type)) {
           result.set(condition.getType());
         }
       }
@@ -206,6 +209,13 @@ public class ArrangementUtil {
         ArrangementSettingsToken type = condition.getType();
         Object value = condition.getValue();
         result.put(condition.getType(), type.equals(value) ? null : value);
+        
+        if (type instanceof CompositeArrangementToken) {
+          Set<ArrangementSettingsToken> tokens = ((CompositeArrangementToken)type).getAdditionalTokens();
+          for (ArrangementSettingsToken token : tokens) {
+            result.put(token, null);
+          }
+        }
       }
 
       @Override

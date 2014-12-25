@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
@@ -24,42 +23,23 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
-
 @State(
   name = "CodeInsightSettings",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml"
-    )}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml")
 )
-public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable, ExportableComponent {
+public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightSettings");
-
-  @NonNls public static final String EXTERNAL_FILE_NAME = "editor.codeinsight";
 
   public static CodeInsightSettings getInstance() {
     return ServiceManager.getService(CodeInsightSettings.class);
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(EXTERNAL_FILE_NAME)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return CodeInsightBundle.message("codeinsight.settings");
   }
 
   @Override
@@ -100,10 +80,20 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = false;
 
-  @MagicConstant(intValues = {OFF, AUTOINDENT})
-  public int SMART_BACKSPACE = AUTOINDENT;
-  public static final int OFF = 0;
-  public static final int AUTOINDENT = 1;
+  @OptionTag
+  private int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
+  
+  @Transient
+  @NotNull
+  public SmartBackspaceMode getBackspaceMode() {
+    SmartBackspaceMode[] values = SmartBackspaceMode.values();
+    return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF; 
+  }
+
+  @Transient
+  public void setBackspaceMode(@NotNull SmartBackspaceMode mode) {
+    SMART_BACKSPACE = mode.ordinal();
+  }
 
   public boolean SMART_INDENT_ON_ENTER = true;
   public boolean INSERT_BRACE_ON_ENTER = true;

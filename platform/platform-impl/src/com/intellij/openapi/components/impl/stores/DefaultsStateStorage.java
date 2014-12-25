@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Set;
 
-
 class DefaultsStateStorage implements StateStorage {
   private final PathMacroManager myPathMacroManager;
 
@@ -42,7 +41,7 @@ class DefaultsStateStorage implements StateStorage {
   }
 
   @Nullable
-  public Element getState(final Object component, final String componentName) throws StateStorageException {
+  private Element getState(final Object component, final String componentName) throws StateStorageException {
     final URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
     if (url == null) {
       return null;
@@ -51,7 +50,7 @@ class DefaultsStateStorage implements StateStorage {
     try {
       Document document = JDOMUtil.loadDocument(url);
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
-      final Element documentElement = document.getRootElement();
+      final Element documentElement = document.detachRootElement();
 
       if (myPathMacroManager != null) {
         myPathMacroManager.expandPaths(documentElement);
@@ -79,13 +78,8 @@ class DefaultsStateStorage implements StateStorage {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public ExternalizationSession startExternalization() {
-    throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
-  }
-
-  @Override
-  public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
     return null;
   }
 

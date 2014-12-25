@@ -115,9 +115,16 @@ public class MagicCompletionContributor extends CompletionContributor {
     else if (IN_RETURN.accepts(pos)) {
       PsiReturnStatement statement = PsiTreeUtil.getParentOfType(pos, PsiReturnStatement.class);
       PsiExpression l = statement == null ? null : statement.getReturnValue();
-      PsiMethod method = PsiTreeUtil.getParentOfType(l, PsiMethod.class);
-      if (method != null) {
-        allowedValues = MagicConstantInspection.getAllowedValues(method, method.getReturnType(), null);
+      PsiElement element = PsiTreeUtil.getParentOfType(l, PsiMethod.class, PsiLambdaExpression.class);
+      if (element instanceof PsiMethod) {
+        allowedValues = MagicConstantInspection.getAllowedValues((PsiMethod)element, ((PsiMethod)element).getReturnType(), null);
+      } 
+      else if (element instanceof PsiLambdaExpression) {
+        final PsiType interfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
+        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
+        if (interfaceMethod != null) {
+          allowedValues = MagicConstantInspection.getAllowedValues(interfaceMethod, LambdaUtil.getFunctionalInterfaceReturnType(interfaceType), null);
+        }
       }
     }
     else if (IN_ANNOTATION_INITIALIZER.accepts(pos)) {

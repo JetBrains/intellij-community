@@ -59,7 +59,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
 
             if (node != null &&
                 node.getElementType() == XmlTokenType.XML_END_TAG_START) {
-              final LocalQuickFix localQuickFix = new ReplaceEmptyTagBodyByEmptyEndFix();
+              final LocalQuickFix localQuickFix = new Fix();
               holder.registerProblem(
                 tag,
                 XmlBundle.message("xml.inspections.tag.empty.body"),
@@ -98,7 +98,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
     return "CheckTagEmptyBody";
   }
 
-  private static class ReplaceEmptyTagBodyByEmptyEndFix implements LocalQuickFix {
+  public static class Fix implements LocalQuickFix {
     @Override
     @NotNull
     public String getName() {

@@ -255,7 +255,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     final PyExpression rhs = PyPsiUtils.flattenParens(rightExpression);
     if (rhs == null) return;
     final String paramText = sure(rhs).getText();
-    final TypeEvalContext context = TypeEvalContext.userInitiated(file);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);
     final PyType rhsType = context.getType(rhs);
     String prefix = "";
     if (PyTypeChecker.match(PyBuiltinCache.getInstance(rhs).getObjectType("unicode"), rhsType, context)) {

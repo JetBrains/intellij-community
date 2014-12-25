@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class ScopeImpl implements Scope {
     if (isNonlocal(name)) {
       return false;
     }
-    if (getNamedElement(name) != null) {
+    if (getNamedElement(name, true) != null) {
       return true;
     }
     if (isAugAssignment(name)) {
@@ -143,7 +143,7 @@ public class ScopeImpl implements Scope {
 
   @Nullable
   @Override
-  public PsiNamedElement getNamedElement(String name) {
+  public PsiNamedElement getNamedElement(String name, boolean includeNestedGlobals) {
     if (myNamedElements == null) {
       collectDeclarations();
     }
@@ -151,9 +151,9 @@ public class ScopeImpl implements Scope {
     if (element != null) {
       return element;
     }
-    if (isGlobal(name)) {
+    if (includeNestedGlobals && isGlobal(name)) {
       for (Scope scope : myNestedScopes) {
-        final PsiNamedElement global = scope.getNamedElement(name);
+        final PsiNamedElement global = scope.getNamedElement(name, true);
         if (global != null) {
           return global;
         }

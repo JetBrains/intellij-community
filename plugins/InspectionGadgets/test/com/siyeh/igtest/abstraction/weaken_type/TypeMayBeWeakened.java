@@ -1,10 +1,8 @@
 package com.siyeh.igtest.abstraction.weaken_type;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ArrayList;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.*;
 
 public class TypeMayBeWeakened {
 
@@ -172,5 +170,26 @@ class Helper {
     class B<T> extends A<T> {}
     B<String> <warning descr="Type of variable 'b' may be weakened to 'A'">b</warning> = new B();
     b.foo();
+  }
+}
+class MethodReference1 {
+  public void m(Set<Integer> list) {
+    f(MethodReference1::myTransform);
+  }
+
+  void f(java.util.function.Function<Integer, String> function) {}
+
+  private static String myTransform(int in) {
+    return Integer.toString(in);
+  }
+}
+class MethodReference2 {
+  public void main(String[] args) {
+    Runnable r = MethodReference2::myTransform;
+    Object o = myTransform();
+  }
+
+  private static String <warning descr="Return type of method 'myTransform()' may be weakened to 'java.lang.Object'">myTransform</warning>() {
+    return "Integer.toString(in)";
   }
 }

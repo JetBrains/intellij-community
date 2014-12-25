@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,12 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
   }
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+    return getArrayElement(myArray, myIndex);
+  }
+
+  public static Value getArrayElement(ArrayReference reference, int idx) throws EvaluateException {
     try {
-      return myArray.getValue(myIndex);
+      return reference.getValue(idx);
     }
     catch (ObjectCollectedException e) {
       throw EvaluateExceptionUtil.ARRAY_WAS_COLLECTED;

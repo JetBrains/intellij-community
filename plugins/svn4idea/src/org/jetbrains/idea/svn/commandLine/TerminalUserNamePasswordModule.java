@@ -79,8 +79,7 @@ public class TerminalUserNamePasswordModule extends BaseTerminalModule {
    * (before any user name prompt) for pre-configured/system user name.
    */
   private boolean handleAuthPrompt(boolean isUserName) {
-    // TODO: check command is not local and get @NotNull url - also make same for for ssh module
-    SVNURL repositoryUrl = myExecutor.getCommand().getRepositoryUrl();
+    SVNURL repositoryUrl = myExecutor.getCommand().requireRepositoryUrl();
 
     if (needAskAuthentication(isUserName)) {
       // TODO: Probably pass real realm to dialog

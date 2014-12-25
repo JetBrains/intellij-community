@@ -22,7 +22,7 @@
     <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction">
       <add-to-group group-id="Vcs.Browse"/>
     </action>
-    <action id="Subversion.ShareWholeProject" class="org.jetbrains.idea.svn.actions.ShareWholeProject">
+    <action id="Subversion.ShareWholeProject" text="Share Project (Subversion)..." class="org.jetbrains.idea.svn.actions.ShareWholeProject">
       <add-to-group group-id="Vcs.Import"/>
     </action>
 
@@ -52,7 +52,7 @@
       <action id="Subversion.Share" class="org.jetbrains.idea.svn.actions.ShareProjectAction"/>
       <action id="Subversion.Create.External" class="org.jetbrains.idea.svn.actions.CreateExternalAction"/>
       <separator/>
-      <action id="Subversion.Add" class="org.jetbrains.idea.svn.actions.AddAction"/>
+      <reference ref="ChangesView.AddUnversioned"/>
       <reference id="CheckinFiles"/>
       <reference id="UpdateFiles"/>
       <reference id="IntegrateFiles"/>
@@ -93,7 +93,7 @@
       <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.Diff"/>
     </reference>
     <group id="SubversionUpdateActionGroup" class="org.jetbrains.idea.svn.actions.SubversionGroup">
-      <reference id="Subversion.Add"/>
+      <reference ref="ChangesView.AddUnversioned"/>
       <reference id="ChangesView.Revert"/>
       <reference id="Subversion.Resolve"/>
       <reference id="Subversion.MarkResolved"/>
@@ -102,7 +102,7 @@
     </group>
 
     <group id="IgnoreChoicesGroup" popup="true" class="org.jetbrains.idea.svn.actions.IgnoreActionGroup">
-      <add-to-group group-id="SubversionGroup" relative-to-action="Subversion.Add" anchor="after"/>
+      <add-to-group group-id="SubversionGroup" relative-to-action="ChangesView.AddUnversioned" anchor="after"/>
     </group>
 
     <action class="org.jetbrains.idea.svn.dialogs.MergeFromAction" id="Subversion.MergeFrom">

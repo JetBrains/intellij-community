@@ -15,9 +15,12 @@
  */
 package com.intellij.lang.properties.editor;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
@@ -46,13 +49,20 @@ public class ChooseSubsequentPropertyValueEditorAction extends AnAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
+    getNext(e).getContentComponent().requestFocus();
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    boolean enabled = getNext(e) != null;
+    e.getPresentation().setEnabled(enabled);
+  }
+
+  protected Editor getNext(AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null) {
-      return;
+      return null;
     }
-    final Editor newFocusEditor = editor.getUserData(myNext ? NEXT_EDITOR_KEY : PREV_EDITOR_KEY);
-    if (newFocusEditor != null) {
-      newFocusEditor.getContentComponent().requestFocus();
-    }
+    return editor.getUserData(myNext ? NEXT_EDITOR_KEY : PREV_EDITOR_KEY);
   }
 }

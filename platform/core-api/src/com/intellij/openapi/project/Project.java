@@ -23,7 +23,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Project interface class.
+ * An object representing IntelliJ project.<br/>
+ *
+ * <li/>To get all its modules, use {@link com.intellij.openapi.module.ModuleManager#getModules()}<br/>
+ *
+ * <li/>To iterate over all project source files and directories, use {@code com.intellij.openapi.roots.ProjectFileIndex.SERVICE.getInstance(project).iterateContent(iterator)}<br/>
+ *
+ * <li/>To get the list of all open projects, use {@link com.intellij.openapi.project.ProjectManager#getOpenProjects()}
+ *
  */
 public interface Project extends ComponentManager, AreaInstance {
   @NonNls String DIRECTORY_STORE_FOLDER = ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR;
@@ -52,6 +59,7 @@ public interface Project extends ComponentManager, AreaInstance {
    *
    * @return a path to a project base directory, or <code>null</code> for default project
    */
+  @Nullable
   @NonNls
   String getBasePath();
 

@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
 import org.jdom.Content;
@@ -33,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 class OptionTagBinding extends BasePrimitiveBinding {
-  private static final Logger LOG = Logger.getInstance(OptionTagBinding.class);
-
   private final String myTagName;
   private final String myNameAttribute;
   private final String myValueAttribute;
@@ -42,15 +36,20 @@ class OptionTagBinding extends BasePrimitiveBinding {
   public OptionTagBinding(@NotNull Accessor accessor, @Nullable OptionTag optionTag) {
     super(accessor, optionTag == null ? null : optionTag.value(), optionTag == null ? null : optionTag.converter());
 
-    if (optionTag != null) {
-      myTagName = optionTag.tag();
-      myNameAttribute = optionTag.nameAttribute();
-      myValueAttribute = optionTag.valueAttribute();
-    }
-    else {
+    if (optionTag == null) {
       myTagName = Constants.OPTION;
       myNameAttribute = Constants.NAME;
       myValueAttribute = Constants.VALUE;
+    }
+    else {
+      myNameAttribute = optionTag.nameAttribute();
+      myValueAttribute = optionTag.valueAttribute();
+
+      String tagName = optionTag.tag();
+      if (StringUtil.isEmpty(myNameAttribute) && Constants.OPTION.equals(tagName)) {
+        tagName = myAccessor.getName();
+      }
+      myTagName = tagName;
     }
   }
 
@@ -88,16 +87,23 @@ class OptionTagBinding extends BasePrimitiveBinding {
   }
 
   @Override
-  public Object deserialize(Object context, @NotNull Object... nodes) {
-    if (nodes.length > 1) {
-      LOG.info("Duplicate options for " + context + " will be ignored");
-    }
-    assert nodes.length != 0 : "Empty nodes passed to: " + this;
+  public Object deserialize(Object context, @NotNull Object node) {
+    return deserialize(context, (Element)node);
+  }
 
-    Element element = ((Element)nodes[0]);
+  private Object deserialize(Object context, Element element) {
     Attribute valueAttribute = element.getAttribute(myValueAttribute);
-
-    if (valueAttribute != null) {
+    if (valueAttribute == null) {
+      List<Content> children = XmlSerializerImpl.getFilteredContent(element);
+      if (children.isEmpty()) {
+        myAccessor.write(context, null);
+      }
+      else {
+        assert myBinding != null;
+        myAccessor.write(context, Binding.deserializeList(myBinding, myAccessor.read(context), children));
+      }
+    }
+    else {
       Object value;
       if (myConverter != null) {
         value = myConverter.fromString(valueAttribute.getValue());
@@ -108,24 +114,6 @@ class OptionTagBinding extends BasePrimitiveBinding {
       }
       myAccessor.write(context, value);
     }
-    else {
-      List<Object> children = new SmartList<Object>();
-      for (Content child : element.getContent()) {
-        if (!XmlSerializerImpl.isIgnoredNode(child)) {
-          children.add(child);
-        }
-      }
-
-      if (!children.isEmpty()) {
-        assert myBinding != null;
-        Object value = myBinding.deserialize(myAccessor.read(context), ArrayUtil.toObjectArray(children));
-        myAccessor.write(context, value);
-      }
-      else {
-        myAccessor.write(context, null);
-      }
-    }
-
     return context;
   }
 

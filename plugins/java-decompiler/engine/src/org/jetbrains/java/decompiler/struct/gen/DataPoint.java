@@ -73,7 +73,7 @@ public class DataPoint {
       VarType var = md.params[i];
 
       point.setVariable(k++, var);
-      if (var.stack_size == 2) {
+      if (var.stackSize == 2) {
         point.setVariable(k++, new VarType(CodeConstants.TYPE_GROUP2EMPTY));
       }
     }

@@ -1,6 +1,6 @@
 // "Suppress for method" "true"
 class a {
-/** @noinspection UnusedDeclaration*/
+/** @noinspection unused*/
 private void <caret>run() {
 }
 }

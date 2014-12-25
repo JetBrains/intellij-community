@@ -28,20 +28,26 @@ public class ExternalSystemException extends RuntimeException {
   private final String[] myQuickFixes;
 
   public ExternalSystemException() {
-    this(null, null);
+    this(null, (Throwable)null);
   }
 
   public ExternalSystemException(@Nullable String message) {
-    this(message, null);
+    this(message, (Throwable)null);
   }
 
   public ExternalSystemException(@Nullable Throwable cause) {
     this("", cause);
   }
 
+  public ExternalSystemException(@Nullable String message, @NotNull String... quickFixes) {
+    this(message, null, quickFixes);
+  }
+
   public ExternalSystemException(@Nullable String message, @Nullable Throwable cause, @NotNull String... quickFixes) {
     super(extractMessage(message, cause));
-    myQuickFixes = quickFixes;
+    myQuickFixes = mergeArrays(cause instanceof ExternalSystemException
+                               ? ((ExternalSystemException)cause).getQuickFixes()
+                               : new String[0], quickFixes);
     if (cause == null) {
       myOriginalReason = "";
       return;
@@ -57,7 +63,7 @@ public class ExternalSystemException extends RuntimeException {
     }
     myOriginalReason = stringWriter.toString();
   }
-  
+
   /**
    * @return    textual description of the wrapped exception (if any); empty string otherwise
    */
@@ -104,7 +110,16 @@ public class ExternalSystemException extends RuntimeException {
       }
       buffer.append(m);
     }
-    
-    return buffer.toString(); 
+
+    return buffer.toString();
+  }
+
+  private static String[] mergeArrays(@NotNull String[] a1, @NotNull String[] a2) {
+    if (a1.length == 0) return a2;
+    if (a2.length == 0) return a1;
+    String[] result = new String[a1.length + a2.length];
+    System.arraycopy(a1, 0, result, 0, a1.length);
+    System.arraycopy(a2, 0, result, a1.length, a2.length);
+    return result;
   }
 }

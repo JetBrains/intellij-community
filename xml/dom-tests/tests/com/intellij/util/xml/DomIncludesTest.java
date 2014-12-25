@@ -18,7 +18,6 @@ package com.intellij.util.xml;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -26,7 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.Timings;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomManagerImpl;
@@ -39,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author peter
  */
-public class DomIncludesTest extends CodeInsightFixtureTestCase {
+public class DomIncludesTest extends LightCodeInsightFixtureTestCase {
 
   public void testGetChildrenHonorsIncludes() throws Throwable {
     final MyElement rootElement = createDomFile("a.xml", "<root xmlns:xi=\"http://www.w3.org/2001/XInclude\">" +
@@ -218,8 +217,8 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
   }
 
   private PsiFile createFile(final String fileName, final String fileText) throws IOException {
-    final VirtualFile file = myFixture.getTempDirFixture().createFile(fileName);
-    VfsUtil.saveText(file, fileText);
+    final VirtualFile file = myFixture.getTempDirFixture().createFile(fileName, fileText);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     return myFixture.getPsiManager().findFile(file);
   }
 

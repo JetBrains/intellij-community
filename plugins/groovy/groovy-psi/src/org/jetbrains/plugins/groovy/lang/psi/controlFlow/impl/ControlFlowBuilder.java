@@ -252,22 +252,29 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitBreakStatement(GrBreakStatement breakStatement) {
     super.visitBreakStatement(breakStatement);
-    final GrStatement target = breakStatement.findTargetStatement();
-    if (target != null && myHead != null) {
-      addPendingEdge(target, myHead);
+    GrStatement target = breakStatement.resolveLabel();
+    if (target == null) target = breakStatement.findTargetStatement();
+    if (target != null) {
+      if (myHead != null) {
+        addPendingEdge(target, myHead);
+      }
+      readdPendingEdge(target);
     }
-
     interruptFlow();
   }
 
   @Override
   public void visitContinueStatement(GrContinueStatement continueStatement) {
     super.visitContinueStatement(continueStatement);
-    final GrStatement target = continueStatement.findTargetStatement();
-    if (target != null && myHead != null) {
+    GrStatement target = continueStatement.resolveLabel();
+    if (target == null) target = continueStatement.findTargetStatement();
+    if (target != null) {
       final InstructionImpl instruction = findInstruction(target);
       if (instruction != null) {
-        addEdge(myHead, instruction);
+        if (myHead != null) {
+          addEdge(myHead, instruction);
+        }
+        checkPending(continueStatement, instruction);
       }
     }
     interruptFlow();
@@ -761,17 +768,20 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void addForLoopBreakingEdge(GrForStatement forStatement, @Nullable GrForClause clause) {
+    final GroovyPsiElement target = forStatement.getParent() instanceof GrLabeledStatement
+                                    ? (GroovyPsiElement)forStatement.getParent()
+                                    : forStatement;
     if (clause instanceof GrTraditionalForClause) {
       final GrExpression condition = ((GrTraditionalForClause)clause).getCondition();
       if (condition != null) {
         condition.accept(this);
         if (!alwaysTrue(condition)) {
-          addPendingEdge(forStatement, myHead); //break cycle
+          addPendingEdge(target, myHead); //break cycle
         }
       }
     }
     else {
-      addPendingEdge(forStatement, myHead); //break cycle
+      addPendingEdge(target, myHead); //break cycle
     }
   }
 
@@ -813,9 +823,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private void checkPending(@NotNull InstructionImpl instruction) {
     final PsiElement element = instruction.getElement();
-    List<Pair<InstructionImpl, GroovyPsiElement>> target = collectCorrespondingPendingEdges(element);
-    for (Pair<InstructionImpl, GroovyPsiElement> pair : target) {
-      addEdge(pair.getFirst(), instruction);
+    checkPending(element, instruction);
+  }
+
+  private void checkPending(@Nullable PsiElement currentScope, @NotNull InstructionImpl targetInstruction) {
+    final List<Pair<InstructionImpl, GroovyPsiElement>> pendingEdges = collectCorrespondingPendingEdges(currentScope);
+    for (Pair<InstructionImpl, GroovyPsiElement> pair : pendingEdges) {
+      addEdge(pair.getFirst(), targetInstruction);
     }
   }
 
@@ -1224,9 +1238,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Nullable
   private InstructionImpl findInstruction(PsiElement element) {
-    final Iterator<InstructionImpl> iterator = myProcessingStack.descendingIterator();
-    while (iterator.hasNext()) {
-      final InstructionImpl instruction = iterator.next();
+    for (final InstructionImpl instruction : myInstructions) {
       if (element.equals(instruction.getElement())) return instruction;
     }
     return null;

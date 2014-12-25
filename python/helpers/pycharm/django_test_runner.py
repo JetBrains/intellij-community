@@ -27,7 +27,11 @@ def get_test_suite_runner():
     return get_runner(TempSettings)
 
 try:
-  from django.test.simple import DjangoTestSuiteRunner
+  if VERSION[1] >= 6:
+    from django.test.runner import DiscoverRunner as DjangoSuiteRunner
+  else:
+    from django.test.simple import DjangoTestSuiteRunner as DjangoSuiteRunner
+
   from inspect import isfunction
 
   SUITE_RUNNER = get_test_suite_runner()
@@ -38,7 +42,7 @@ try:
       "WARNING: TEST_RUNNER variable is ignored. PyCharm test runner supports "
       "only class-like TEST_RUNNER valiables. Use Tools->run manage.py tasks.\n")
     SUITE_RUNNER = None
-  BaseSuiteRunner = SUITE_RUNNER or DjangoTestSuiteRunner
+  BaseSuiteRunner = SUITE_RUNNER or DjangoSuiteRunner
 
   class BaseRunner(TeamcityTestRunner, BaseSuiteRunner):
     def __init__(self, stream=sys.stdout, **options):

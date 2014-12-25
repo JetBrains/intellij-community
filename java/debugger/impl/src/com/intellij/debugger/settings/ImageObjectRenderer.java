@@ -26,13 +26,14 @@ import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.rt.debugger.ImageSerializer;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,7 +60,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     return new CustomPopupFullValueEvaluator(" (Show image)", evaluationContext) {
       @Override
       protected JComponent createComponent() {
-        return new JBLabel(getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes"));
+        return new JBScrollPane(new JBLabel(getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes")));
       }
     };
   }
@@ -88,7 +89,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     if (cls != null) {
       List<Method> methods = cls.methodsByName(methodName);
       if (!methods.isEmpty()) {
-        return process.invokeMethod(evaluationContext, cls, methods.get(0), Arrays.asList(obj));
+        return process.invokeMethod(evaluationContext, cls, methods.get(0), Collections.singletonList(obj));
       }
     }
     return null;

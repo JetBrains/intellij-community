@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -199,9 +198,13 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           result = myExtensions.toArray(a);
 
           for (int i = result.length - 1; i >= 0; i--) {
-            T t = result[i];
-            if (i > 0 && result[i] == result[i - 1]) {
-              LOG.error("Duplicate extension found: " + t + "; " +
+            T extension = result[i];
+            if (extension == null) {
+              LOG.error(" null extension: " + myExtensions + ";\n" +
+                " getExtensionClass(): " + extensionClass + ";\n" );
+            }
+            if (i > 0 && extension == result[i - 1]) {
+              LOG.error("Duplicate extension found: " + extension + "; " +
                         " Result:      " + Arrays.toString(result) + ";\n" +
                         " extensions: " + myExtensions + ";\n" +
                         " getExtensionClass(): " + extensionClass + ";\n" +
@@ -277,10 +280,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
 
     Object key = adapter.getComponentKey();
-    myOwner.getMutablePicoContainer().unregisterComponent(key);
-    for (MutablePicoContainer pluginContainer : myOwner.getPluginContainers()) {
-      pluginContainer.unregisterComponent(key);
-    }
+    myOwner.getPicoContainer().unregisterComponent(key);
 
     processAdapters();
     unregisterExtension(extension, null);
@@ -430,10 +430,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       }
       if (myLoadedAdapters.contains(adapter)) {
         Object key = adapter.getComponentKey();
-        myOwner.getMutablePicoContainer().unregisterComponent(key);
-        for (MutablePicoContainer pluginContainer : myOwner.getPluginContainers()) {
-          pluginContainer.unregisterComponent(key);
-        }
+        myOwner.getPicoContainer().unregisterComponent(key);
 
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
         unregisterExtension(extension, adapter.getPluginDescriptor());

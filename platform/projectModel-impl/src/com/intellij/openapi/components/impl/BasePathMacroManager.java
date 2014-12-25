@@ -23,6 +23,7 @@ import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,12 +41,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.BasePathMacroManager");
   private static final CompositePathMacroFilter FILTER = new CompositePathMacroFilter(Extensions.getExtensions(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME));
 
   private PathMacrosImpl myPathMacros;
@@ -236,6 +235,8 @@ public class BasePathMacroManager extends PathMacroManager {
       if (unknownMacros.isEmpty()) {
         return;
       }
+      
+      LOG.debug("Registering unknown macros " + new ArrayList<String>(unknownMacros) + " in component " + componentName);
 
       synchronized (myLock) {
         for (String unknownMacro : unknownMacros) {

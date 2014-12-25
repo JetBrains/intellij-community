@@ -374,6 +374,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       LOG.error(new PluginException(message, null, pluginId));
     }
   }
+  private static void reportActionWarning(final PluginId pluginId, @NonNls @NotNull String message) {
+    if (pluginId == null) {
+      LOG.warn(message);
+    }
+    else {
+      LOG.warn(new PluginException(message, null, pluginId).getMessage());
+    }
+  }
 
   @NonNls
   private static String getPluginInfo(@Nullable PluginId id) {
@@ -438,9 +446,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   private void _removeTimerListener(TimerListener listener, boolean transparent) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    LOG.assertTrue(myTimer != null);
-
-    myTimer.removeTimerListener(listener, transparent);
+    if (LOG.assertTrue(myTimer != null)) {
+      myTimer.removeTimerListener(listener, transparent);
+    }
   }
 
   public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
@@ -919,7 +927,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     Keymap keymap = myKeymapManager.getKeymap(keymapName);
     if (keymap == null) {
-      reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
+      reportActionWarning(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
     }
     final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);

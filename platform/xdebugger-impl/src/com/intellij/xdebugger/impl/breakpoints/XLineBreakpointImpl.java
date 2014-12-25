@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     if (markupModel == null) {
       markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), false);
       if (markupModel != null) {
-        // renderersChanged false — we don't change gutter size
+        // renderersChanged false - we don't change gutter size
         markupModel.fireAttributesChanged(highlighter, false);
       }
     }

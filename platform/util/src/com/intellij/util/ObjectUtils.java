@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,15 @@ public class ObjectUtils {
   public static <T> T tryCast(@Nullable Object obj, @NotNull Class<T> clazz) {
     if (clazz.isInstance(obj)) {
       return clazz.cast(obj);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Convertor<T, S> convertor) {
+    if (clazz.isInstance(obj)) {
+      //noinspection unchecked
+      return convertor.convert((T)obj);
     }
     return null;
   }

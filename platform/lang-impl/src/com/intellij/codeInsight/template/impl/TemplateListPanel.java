@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.application.options.ExportSchemeAction;
-import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -27,12 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -53,27 +45,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
 public class TemplateListPanel extends JPanel implements Disposable {
-
   private static final String NO_SELECTION = "NoSelection";
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
   private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("mockTemplate-xxx", "mockTemplateGroup-yyy");
   public static final String ABBREVIATION = "<abbreviation>";
   public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<TemplateImpl>() {
     @Override
-    public int compare(final TemplateImpl o1, final TemplateImpl o2) {
+    public int compare(@NotNull final TemplateImpl o1, @NotNull final TemplateImpl o2) {
       return o1.getKey().compareToIgnoreCase(o2.getKey());
     }
   };
@@ -84,12 +73,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   private CheckboxTree myTree;
   private final List<TemplateGroup> myTemplateGroups = new ArrayList<TemplateGroup>();
-  private JComboBox myExpandByCombo;
-  private HyperlinkLabel myOpenKeymapLabel;
-  private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
-  private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
-  private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
-  private static final String CUSTOM = "Custom";
+  private final TemplateExpandShortcutPanel myExpandByDefaultPanel = new TemplateExpandShortcutPanel(CodeInsightBundle.message("templates.dialog.shortcut.chooser.label"));
 
   private CheckedTreeNode myTreeRoot = new CheckedTreeNode(null);
 
@@ -102,17 +86,19 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private final Map<Integer, TemplateContext> myTemplateContext = ContainerUtil.newLinkedHashMap();
   private final JPanel myDetailsPanel = new JPanel(new CardLayout());
   private LiveTemplateSettingsEditor myCurrentTemplateEditor;
+  private final JLabel myEmptyCardLabel = new JLabel();
 
   public TemplateListPanel() {
     super(new BorderLayout());
 
     myDetailsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    JLabel label = new JLabel("No live template is selected");
-    label.setHorizontalAlignment(SwingConstants.CENTER);
-    myDetailsPanel.add(label, NO_SELECTION);
+
+    myEmptyCardLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    myDetailsPanel.add(myEmptyCardLabel, NO_SELECTION);
+
     createTemplateEditor(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
 
-    add(createExpandByPanel(), BorderLayout.NORTH);
+    add(myExpandByDefaultPanel, BorderLayout.NORTH);
 
     Splitter splitter = new Splitter(true, 0.9f);
     splitter.setFirstComponent(createTable());
@@ -135,20 +121,13 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     Collections.sort(groups, new Comparator<TemplateGroup>() {
       @Override
-      public int compare(final TemplateGroup o1, final TemplateGroup o2) {
+      public int compare(@NotNull TemplateGroup o1, @NotNull TemplateGroup o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
 
     initTemplates(groups, templateSettings.getLastSelectedTemplateGroup(), templateSettings.getLastSelectedTemplateKey());
-
-
-    char shortcutChar = templateSettings.getDefaultShortcutChar();
-    myExpandByCombo.setSelectedItem(shortcutChar == TemplateSettings.CUSTOM_CHAR ? CUSTOM :
-                                    shortcutChar == TemplateSettings.TAB_CHAR ? TAB :
-                                    shortcutChar == TemplateSettings.ENTER_CHAR ? ENTER :
-                                    SPACE);
-
+    myExpandByDefaultPanel.setSelectedChar(templateSettings.getDefaultShortcutChar());
     UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
       @Override
       public void run() {
@@ -189,7 +168,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     templateSettings.setTemplates(templateGroups);
-    templateSettings.setDefaultShortcutChar(getDefaultShortcutChar());
+    templateSettings.setDefaultShortcutChar(myExpandByDefaultPanel.getSelectedChar());
 
     reset();
   }
@@ -197,10 +176,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private final boolean isTest = ApplicationManager.getApplication().isUnitTestMode();
   public boolean isModified() {
     TemplateSettings templateSettings = TemplateSettings.getInstance();
-    if (templateSettings.getDefaultShortcutChar() != getDefaultShortcutChar()) {
+    if (templateSettings.getDefaultShortcutChar() != myExpandByDefaultPanel.getSelectedChar()) {
       if (isTest) {
         //noinspection UseOfSystemOutOrSystemErr
-        System.err.println("LiveTemplatesConfig: templateSettings.getDefaultShortcutChar()="+templateSettings.getDefaultShortcutChar()+"; getDefaultShortcutChar()="+getDefaultShortcutChar());
+        System.err.println("LiveTemplatesConfig: templateSettings.getDefaultShortcutChar()="+templateSettings.getDefaultShortcutChar() 
+                           + "; myExpandByDefaultComponent.getSelectedChar()="+ myExpandByDefaultPanel.getSelectedChar());
       }
       return true;
     }
@@ -241,7 +221,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
     Collections.sort(result, new Comparator<TemplateImpl>(){
       @Override
-      public int compare(final TemplateImpl o1, final TemplateImpl o2) {
+      public int compare(@NotNull final TemplateImpl o1, @NotNull final TemplateImpl o2) {
         final int groupsEqual = o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
         if (groupsEqual != 0) {
           return groupsEqual;
@@ -279,14 +259,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return myTemplateOptions.get(getKey(newTemplate));
   }
 
-  private char getDefaultShortcutChar() {
-    Object selectedItem = myExpandByCombo.getSelectedItem();
-    if (TAB.equals(selectedItem)) return TemplateSettings.TAB_CHAR;
-    if (ENTER.equals(selectedItem)) return TemplateSettings.ENTER_CHAR;
-    if (SPACE.equals(selectedItem)) return TemplateSettings.SPACE_CHAR;
-    else return TemplateSettings.CUSTOM_CHAR;
-  }
-
   private List<TemplateGroup> getTemplateGroups() {
     return myTemplateGroups;
   }
@@ -312,125 +284,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
 
     myDetailsPanel.add(myCurrentTemplateEditor, TEMPLATE_SETTINGS);
-  }
-
-  private Iterable<? extends TemplateImpl> collectAllTemplates() {
-    ArrayList<TemplateImpl> result = new ArrayList<TemplateImpl>();
-    for (TemplateGroup templateGroup : myTemplateGroups) {
-      result.addAll(templateGroup.getElements());
-    }
-    return result;
-  }
-
-  private void exportCurrentGroup() {
-    int selected = getSingleSelectedIndex();
-    if (selected < 0) return;
-
-    ExportSchemeAction.doExport(getGroup(selected), getSchemesManager());
-
-  }
-
-  private static SchemesManager<TemplateGroup, TemplateGroup> getSchemesManager() {
-    return (TemplateSettings.getInstance()).getSchemesManager();
-  }
-
-  private JPanel createExpandByPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.weighty = 0;
-    gbConstraints.weightx = 0;
-    gbConstraints.gridy = 0;
-    panel.add(new JLabel(CodeInsightBundle.message("templates.dialog.shortcut.chooser.label")), gbConstraints);
-
-    gbConstraints.gridx = 1;
-    gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new ComboBox();
-    panel.add(myExpandByCombo, gbConstraints);
-
-    myOpenKeymapLabel = new HyperlinkLabel("Change");
-    gbConstraints.gridx = 2;
-    panel.add(myOpenKeymapLabel, gbConstraints);
-
-    gbConstraints.gridx = 3;
-    gbConstraints.weightx = 1;
-    panel.add(new JPanel(), gbConstraints);
-    panel.setBorder(new EmptyBorder(0, 0, 10, 0));
-
-    myExpandByCombo.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        myOpenKeymapLabel.setVisible(myExpandByCombo.getSelectedItem() == CUSTOM);
-      }
-    });
-    for (String s : ContainerUtil.ar(SPACE, TAB, ENTER, CUSTOM)) {
-      //noinspection unchecked
-      myExpandByCombo.addItem(s);
-    }
-    //noinspection unchecked
-    myExpandByCombo.setRenderer(new ListCellRendererWrapper() {
-      @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value == CUSTOM) {
-          Shortcut[] shortcuts = getCurrentCustomShortcuts();
-          String shortcutText = shortcuts.length == 0 ? "" : KeymapUtil.getShortcutsText(shortcuts);
-          setText(StringUtil.isEmpty(shortcutText) ? "Custom..." : "Custom (" + shortcutText + ")");
-        }
-      }
-
-      private Shortcut[] getCurrentCustomShortcuts() {
-        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel));
-        KeymapPanel keymapPanel = allSettings == null ? null : allSettings.find(KeymapPanel.class);
-        Shortcut[] shortcuts = keymapPanel == null ? null : keymapPanel.getCurrentShortcuts(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
-        if (shortcuts == null) {
-          Shortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
-          shortcuts = shortcut == null ? Shortcut.EMPTY_ARRAY : new Shortcut[]{shortcut};
-        }
-        return shortcuts;
-      }
-    });
-    addPropertyChangeListener(new PropertyChangeListener() {
-      public void propertyChange(final PropertyChangeEvent evt) {
-        if (isConfigurableOpenEvent(evt)) {
-          resizeComboToFitCustomShortcut();
-        }
-      }
-
-      private boolean isConfigurableOpenEvent(PropertyChangeEvent evt) {
-        return evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null;
-      }
-
-    });
-
-    myOpenKeymapLabel.addHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
-        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel));
-        final KeymapPanel keymapPanel = allSettings == null ? new KeymapPanel() : allSettings.find(KeymapPanel.class);
-        if (keymapPanel == null) return;
-
-        Runnable selectAction = new Runnable() {
-          public void run() {
-            keymapPanel.selectAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
-          }
-        };
-        if (allSettings != null) {
-          allSettings.select(keymapPanel).doWhenDone(selectAction);
-        } else {
-          ShowSettingsUtil.getInstance().editConfigurable(myOpenKeymapLabel, keymapPanel, selectAction);
-          resizeComboToFitCustomShortcut();
-        }
-      }
-    });
-
-    return panel;
-  }
-
-  @SuppressWarnings("unchecked")
-  private void resizeComboToFitCustomShortcut() {
-    myExpandByCombo.setPrototypeDisplayValue(null);
-    myExpandByCombo.setPrototypeDisplayValue(CUSTOM);
-    myExpandByCombo.revalidate();
-    myExpandByCombo.repaint();
   }
 
   @Nullable
@@ -644,18 +497,18 @@ public class TemplateListPanel extends JPanel implements Disposable {
     };
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
       @Override
-      public void valueChanged(final TreeSelectionEvent e) {
+      public void valueChanged(@NotNull final TreeSelectionEvent e) {
         TemplateSettings templateSettings = TemplateSettings.getInstance();
         TemplateImpl template = getTemplate(getSingleSelectedIndex());
         if (template != null) {
           templateSettings.setLastSelectedTemplate(template.getGroupName(), template.getKey());
         } else {
           templateSettings.setLastSelectedTemplate(null, null);
-          ((CardLayout) myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
+          showEmptyCard();
         }
         if (myUpdateNeeded) {
           myAlarm.cancelAllRequests();
@@ -671,7 +524,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     myTree.registerKeyboardAction(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent event) {
+      public void actionPerformed(@Nullable ActionEvent event) {
         myCurrentTemplateEditor.focusKey();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
@@ -698,8 +551,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           @SuppressWarnings("unchecked") Set<String> oldGroupNames = getAllGroups((Map<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject());
           TemplateGroup group = getDropGroup(event);
           boolean differentGroup = group != null && !oldGroupNames.contains(group.getName());
-          boolean possible = differentGroup && !getSchemesManager().isShared(group);
-          event.setDropPossible(possible, differentGroup && !possible ? "Cannot modify a shared group" : "");
+          event.setDropPossible(differentGroup, "");
           return true;
         }
       })
@@ -729,6 +581,13 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   }
 
+  private void showEmptyCard() {
+    int[] rows = myTree.getSelectionRows();
+    boolean multiSelection = rows != null && rows.length > 1;
+    myEmptyCardLabel.setText(multiSelection ? "Multiple live templates are selected" : "No live templates are selected");
+    ((CardLayout) myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
+  }
+
   private boolean templatesDiffer(@NotNull TemplateImpl template, @NotNull TemplateImpl defaultTemplate) {
     template.parseSegments();
     defaultTemplate.parseSegments();
@@ -756,7 +615,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       .disableUpAction()
       .addExtraAction(new AnActionButton("Copy", PlatformIcons.COPY_ICON) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           copyRow();
         }
 
@@ -776,50 +635,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
           return super.isEnabled() && !TemplateSettings.getInstance().getDeletedTemplates().isEmpty();
         }
       });
-    if (getSchemesManager().isExportAvailable()) {
-      decorator.addExtraAction(new AnActionButton("Share...", PlatformIcons.EXPORT_ICON) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          exportCurrentGroup();
-        }
-
-        @Override
-        public void updateButton(AnActionEvent e) {
-          TemplateGroup group = getGroup(getSingleSelectedIndex());
-          e.getPresentation().setEnabled(group != null && !getSchemesManager().isShared(group));
-        }
-      });
-    }
-    if (getSchemesManager().isImportAvailable()) {
-      decorator.addExtraAction(new AnActionButton("Import Shared...", PlatformIcons.IMPORT_ICON) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          new SchemesToImportPopup<TemplateGroup, TemplateGroup>(TemplateListPanel.this){
-            @Override
-            protected void onSchemeSelected(final TemplateGroup scheme) {
-              for (TemplateImpl newTemplate : scheme.getElements()) {
-                for (TemplateImpl existingTemplate : collectAllTemplates()) {
-                  if (existingTemplate.getKey().equals(newTemplate.getKey())) {
-                    Messages.showMessageDialog(
-                      TemplateListPanel.this,
-                      CodeInsightBundle
-                        .message("dialog.edit.template.error.already.exists", existingTemplate.getKey(), existingTemplate.getGroupName()),
-                      CodeInsightBundle.message("dialog.edit.template.error.title"),
-                      Messages.getErrorIcon()
-                    );
-                    return;
-                  }
-                }
-              }
-              insertNewGroup(scheme);
-              for (TemplateImpl template : scheme.getElements()) {
-                registerTemplate(template);
-              }
-            }
-          }.show(getSchemesManager(), myTemplateGroups);
-        }
-      });
-    }
     return decorator.setToolbarPosition(ActionToolbarPosition.RIGHT);
   }
 
@@ -827,13 +642,13 @@ public class TemplateListPanel extends JPanel implements Disposable {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new DumbAwareAction("Live Template") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         addTemplate();
       }
     });
     group.add(new DumbAwareAction("Template Group...") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         String newName = Messages
           .showInputDialog(myTree, "Enter the new group name:", "Create New Group", null, "", new TemplateGroupInputValidator(null));
         if (newName != null) {
@@ -858,7 +673,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     final DumbAwareAction rename = new DumbAwareAction("Rename") {
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final int selected = getSingleSelectedIndex();
         final TemplateGroup templateGroup = getGroup(selected);
         boolean enabled = templateGroup != null;
@@ -868,7 +683,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         renameGroup();
       }
     };
@@ -886,14 +701,12 @@ public class TemplateListPanel extends JPanel implements Disposable {
           Set<String> oldGroups = getAllGroups(templates);
 
           removeAll();
-          SchemesManager<TemplateGroup, TemplateGroup> schemesManager = TemplateSettings.getInstance().getSchemesManager();
-
           for (TemplateGroup group : getTemplateGroups()) {
             final String newGroupName = group.getName();
-            if (!oldGroups.contains(newGroupName) && !schemesManager.isShared(group)) {
+            if (!oldGroups.contains(newGroupName)) {
               add(new DumbAwareAction(newGroupName) {
                 @Override
-                public void actionPerformed(AnActionEvent e) {
+                public void actionPerformed(@NotNull AnActionEvent e) {
                   moveTemplates(templates, newGroupName);
                 }
               });
@@ -902,7 +715,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           addSeparator();
           add(new DumbAwareAction("New group...") {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               String newName = Messages.showInputDialog(myTree, "Enter the new group name:", "Move to a New Group", null, "", new TemplateGroupInputValidator(null));
               if (newName != null) {
                 moveTemplates(templates, newName);
@@ -916,14 +729,14 @@ public class TemplateListPanel extends JPanel implements Disposable {
     final DumbAwareAction changeContext = new DumbAwareAction("Change context...") {
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         boolean enabled = !getSelectedTemplates().isEmpty();
         e.getPresentation().setEnabled(enabled);
         super.update(e);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         TemplateContext context = new TemplateContext();
         JPanel contextPanel = LiveTemplateSettingsEditor.createPopupContextPanel(EmptyRunnable.INSTANCE, context);
@@ -943,7 +756,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     final DumbAwareAction revert = new DumbAwareAction("Restore defaults", "Restore default setting for the selected templates", null) {
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         boolean enabled = false;
         Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         for (TemplateImpl template : templates.keySet()) {
@@ -958,7 +771,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         for (TemplateImpl template : templates.keySet()) {
           TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
@@ -1031,7 +844,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     int selected = getSingleSelectedIndex();
     CardLayout layout = (CardLayout)myDetailsPanel.getLayout();
     if (selected < 0 || getTemplate(selected) == null) {
-      layout.show(myDetailsPanel, NO_SELECTION);
+      showEmptyCard();
     }
     else {
       TemplateImpl newTemplate = getTemplate(selected);
@@ -1039,7 +852,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         if (myCurrentTemplateEditor != null) {
           myCurrentTemplateEditor.dispose();
         }
-        createTemplateEditor(newTemplate, (String)myExpandByCombo.getSelectedItem(), getTemplateOptions(newTemplate),
+        createTemplateEditor(newTemplate, myExpandByDefaultPanel.getSelectedString(), getTemplateOptions(newTemplate), 
                              getTemplateContext(newTemplate));
         myCurrentTemplateEditor.resetUi();
         if (focusKey) {

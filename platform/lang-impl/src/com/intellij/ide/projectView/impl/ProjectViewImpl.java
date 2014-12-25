@@ -21,7 +21,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
@@ -86,6 +85,7 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -126,6 +126,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final boolean ourFlattenPackagesDefaults = false;
   private final Map<String, Boolean> myShowMembers = new THashMap<String, Boolean>();
   private static final boolean ourShowMembersDefaults = false;
+  private final Map<String, Boolean> myManualOrder = new THashMap<String, Boolean>();
+  private static final boolean ourManualOrderDefaults = false;
   private final Map<String, Boolean> mySortByType = new THashMap<String, Boolean>();
   private static final boolean ourSortByTypeDefaults = false;
   private final Map<String, Boolean> myShowModules = new THashMap<String, Boolean>();
@@ -499,7 +501,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myViewContentPanel.revalidate();
     myViewContentPanel.repaint();
     createToolbarActions();
-    updateTitleActions();
 
     myAutoScrollToSourceHandler.install(newPane.myTree);
 
@@ -535,26 +536,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
     myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
-  }
-
-  private void updateTitleActions() {
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow("Project");
-    if (!(window instanceof ToolWindowEx)) return;
-    ScrollFromSourceAction scrollAction = null;
-    CollapseAllToolbarAction collapseAction = null;
-    for (AnAction action : myActionGroup.getChildren(null)) {
-      if (action instanceof ScrollFromSourceAction) {
-        scrollAction = (ScrollFromSourceAction)action;
-        myActionGroup.remove(scrollAction);
-      }
-      if (action instanceof CollapseAllToolbarAction) {
-        collapseAction = (CollapseAllToolbarAction)action;
-        collapseAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
-        collapseAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
-        myActionGroup.remove(collapseAction);
-      }
-    }
-    ((ToolWindowEx)window).setTitleActions(scrollAction, collapseAction);
   }
 
   // public for tests
@@ -637,6 +618,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void createToolbarActions() {
+    List<AnAction> titleActions = ContainerUtil.newSmartList();
     myActionGroup.removeAll();
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
       myActionGroup.addAction(new PaneOptionAction(myFlattenPackages, IdeBundle.message("action.flatten.packages"),
@@ -703,11 +685,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     myActionGroup.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
+    myActionGroup.addAction(new ManualOrderAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
     myActionGroup.addAction(new FoldersAlwaysOnTopAction()).setAsSecondary(true);
 
     if (!myAutoScrollFromSourceHandler.isAutoScrollEnabled()) {
-      myActionGroup.addAction(new ScrollFromSourceAction());
+      titleActions.add(new ScrollFromSourceAction());
     }
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       @Override
@@ -734,8 +717,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return true;
       }
     }, getComponent());
-    myActionGroup.add(collapseAllAction);
+    collapseAllAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
+    collapseAllAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
+    titleActions.add(collapseAllAction);
     getCurrentProjectViewPane().addToolbarActions(myActionGroup);
+
+    ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    if (window != null) {
+      window.setTitleActions(titleActions.toArray(new AnAction[titleActions.size()]));
+    }
   }
 
   protected boolean isShowMembersOptionSupported() {
@@ -1722,7 +1712,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }
       createToolbarActions();
-      updateTitleActions();
     }
 
     private class MySelectInContext implements SelectInContext {
@@ -1784,6 +1773,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isManualOrder(String paneId) {
+    return getPaneOptionValue(myManualOrder, paneId, ourManualOrderDefaults);
+  }
+
+  @Override
+  public void setManualOrder(@NotNull String paneId, final boolean enabled) {
+    setPaneOption(myManualOrder, enabled, paneId, false);
+    final AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
+    pane.installComparator();
+  }
+
+  @Override
   public boolean isSortByType(String paneId) {
     return getPaneOptionValue(mySortByType, paneId, ourSortByTypeDefaults);
   }
@@ -1795,7 +1796,31 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     pane.installComparator();
   }
 
-  private class SortByTypeAction extends ToggleAction {
+  private class ManualOrderAction extends ToggleAction implements DumbAware {
+    private ManualOrderAction() {
+      super(IdeBundle.message("action.manual.order"), IdeBundle.message("action.manual.order"), AllIcons.ObjectBrowser.Sorted);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent event) {
+      return isManualOrder(getCurrentViewId());
+    }
+
+    @Override
+    public void setSelected(AnActionEvent event, boolean flag) {
+      setManualOrder(getCurrentViewId(), flag);
+    }
+
+    @Override
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      AbstractProjectViewPane pane = getCurrentProjectViewPane();
+      presentation.setEnabledAndVisible(pane != null && pane.supportsManualOrder());
+    }
+  }
+  
+  private class SortByTypeAction extends ToggleAction implements DumbAware {
     private SortByTypeAction() {
       super(IdeBundle.message("action.sort.by.type"), IdeBundle.message("action.sort.by.type"), AllIcons.ObjectBrowser.SortByType);
     }
@@ -1818,7 +1843,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private class FoldersAlwaysOnTopAction extends ToggleAction {
+  private class FoldersAlwaysOnTopAction extends ToggleAction implements DumbAware {
     private FoldersAlwaysOnTopAction() {
       super("Folders Always on Top");
     }
@@ -1837,7 +1862,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setVisible(getCurrentProjectViewPane() != null);
+      presentation.setEnabledAndVisible(getCurrentProjectViewPane() != null);
     }
   }
 

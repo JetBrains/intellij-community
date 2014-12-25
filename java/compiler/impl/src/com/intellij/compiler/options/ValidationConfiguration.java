@@ -18,6 +18,7 @@ package com.intellij.compiler.options;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -66,7 +67,7 @@ public class ValidationConfiguration implements PersistentStateComponent<Validat
     return ServiceManager.getService(project, ValidationConfiguration.class);
   }
 
-  public static ExcludedEntriesConfiguration getExcludedEntriesConfiguration(Project project) {
+  public static ExcludesConfiguration getExcludedEntriesConfiguration(Project project) {
     return ServiceManager.getService(project, ExcludedFromValidationConfiguration.class);
   }
 

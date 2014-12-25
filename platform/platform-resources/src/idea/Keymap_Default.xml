@@ -121,6 +121,9 @@
   <action id="EditorAddOrRemoveCaret">
     <mouse-shortcut keystroke="alt shift button1"/>
   </action>
+  <action id="EditorAddRectangularSelectionOnMouseDrag">
+    <mouse-shortcut keystroke="ctrl alt shift button1"/>
+  </action>
   <action id="EditorCreateRectangularSelection">
     <mouse-shortcut keystroke="alt shift button2"/>
   </action>
@@ -774,6 +777,9 @@
   <action id="ResizeToolWindowDown">
     <keyboard-shortcut first-keystroke="control shift DOWN"/>
   </action>
+  <action id="MaximizeToolWindow">
+    <keyboard-shortcut first-keystroke="control shift QUOTE"/>
+  </action>
   <action id="HideSideWindows"/>
   <action id="ShowPopupMenu">
     <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
@@ -833,6 +839,7 @@
   </action>
   <action id="ActivateChangesToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
+    <keyboard-shortcut first-keystroke="alt shift 9"/>
   </action>
   <action id="NewElement">
      <keyboard-shortcut first-keystroke="alt INSERT"/>

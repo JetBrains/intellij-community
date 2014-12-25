@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.SizedIcon;
+import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,14 +103,31 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(final AnActionEvent e) {
     Project project = getEventProject(e);
     if (project == null) return;
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
-      windowManager.getToolWindow(myToolWindowId).activate(null);
+    final ToolWindow window = windowManager.getToolWindow(myToolWindowId);
+    InputEvent event = e.getInputEvent();
+    Runnable run = null;
+    if (event instanceof KeyEvent && event.isShiftDown()) {
+      final Content[] contents = window.getContentManager().getContents();
+      if (contents.length > 0 && window.getContentManager().getSelectedContent() != contents[0]) {
+        run = new Runnable() {
+          public void run() {
+            window.getContentManager().setSelectedContent(contents[0], true, true);
+          }
+        };
+      }
     }
-    else {
+
+    if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId()) || run != null) {
+      if (run != null && window.isActive()) {
+        run.run();
+      } else {
+        window.activate(run);
+      }
+    } else {
       windowManager.getToolWindow(myToolWindowId).hide(null);
     }
   }
@@ -121,6 +140,10 @@ public class ActivateToolWindowAction extends DumbAwareAction {
    */
   @NonNls
   public static String getActionIdForToolWindow(String id) {
+    //todo[kb] remove as soon as finish with vcs merging or provide aliasing mechanism
+    if (Registry.is("vcs.merge.toolwindows") && "Version Control".equals(id)) {
+      id = "Changes";
+    }
     return "Activate" + id.replaceAll(" ", "") + "ToolWindow";
   }
 

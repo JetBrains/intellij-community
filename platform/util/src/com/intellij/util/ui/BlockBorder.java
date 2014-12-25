@@ -108,7 +108,7 @@ public class BlockBorder implements Border {
 
   @Override
   public Insets getBorderInsets(Component component) {
-    return myInsets;
+    return (Insets)myInsets.clone();
   }
 
   public static void main(String[] args) {

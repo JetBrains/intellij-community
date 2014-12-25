@@ -18,10 +18,12 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.concurrency.ResultConsumer;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -32,7 +34,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -175,6 +177,12 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
           }
         });
       }
+    }
+  }
+
+  protected static void registerTreeDisposable(Disposable disposable, Tree tree) {
+    if (tree instanceof Disposable) {
+      Disposer.register(disposable, (Disposable)tree);
     }
   }
 }

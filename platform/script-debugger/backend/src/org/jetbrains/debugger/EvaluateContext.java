@@ -1,10 +1,8 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.values.Value;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.Map;
 
@@ -13,16 +11,17 @@ import java.util.Map;
  * of suspended process, but may also be detached from any stack frame
  */
 public interface EvaluateContext {
+
   /**
    * Evaluates an arbitrary {@code expression} in the particular context.
    * Previously loaded {@link org.jetbrains.debugger.values.ObjectValue}s can be addressed from the expression if listed in
    * additionalContext parameter.
    */
   @NotNull
-  AsyncResult<Value> evaluate(@NotNull String expression, @Nullable Map<String, EvaluateContextAdditionalParameter> additionalContext);
+  Promise<EvaluateResult> evaluate(@NotNull String expression, @Nullable Map<String, EvaluateContextAdditionalParameter> additionalContext);
 
   @NotNull
-  AsyncResult<Value> evaluate(@NotNull String expression);
+  Promise<EvaluateResult> evaluate(@NotNull String expression);
 
   /**
    * optional to implement, some protocols, WIP for example, require you to release remote objects
@@ -32,9 +31,10 @@ public interface EvaluateContext {
 
   /**
    * If you evaluate "foo.bar = 4" and want to update Variables view (and all other clients), you can use use this task
+   * @param promise
    */
   @NotNull
-  ActionCallback refreshOnDone(@NotNull ActionCallback result);
+  Promise<?> refreshOnDone(@NotNull Promise<?> promise);
 
   /**
    * call only if withLoader was called before

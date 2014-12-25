@@ -1,10 +1,7 @@
 package org.jetbrains.debugger;
 
 /**
- * Supports targets that refer to a script by a 'regexp' of its name.
- * After {@link Vm#setBreakpoint} is
- * called, breakpoint will be set on every script currently loaded in VM whose name matches.
- * E.g. you can safely set a breakpoint before the script is actually loaded.
+ * Supports targets that refer to a script by a 'regexp' of its name
  */
 public interface ScriptRegExpSupport {
   /**

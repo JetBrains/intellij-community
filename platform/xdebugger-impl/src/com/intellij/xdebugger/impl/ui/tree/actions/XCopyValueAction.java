@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,36 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 
 import java.awt.datatransfer.StringSelection;
+import java.util.List;
 
 /**
  * @author nik
  */
 public class XCopyValueAction extends XFetchValueActionBase {
   @Override
-  protected void handle(final Project project, final String value) {
-    CopyPasteManager.getInstance().setContents(new StringSelection(value));
+  protected void handle(final Project project, final String value, XDebuggerTree tree) {
+    if (tree == null) return;
+    List<? extends WatchNode> watchNodes = XWatchesTreeActionBase.getSelectedNodes(tree, WatchNode.class);
+    if (watchNodes.isEmpty()) {
+      CopyPasteManager.getInstance().setContents(new StringSelection(value));
+    }
+    else {
+      CopyPasteManager.getInstance().setContents(
+        new XWatchTransferable(value, ContainerUtil.map(watchNodes,
+                                                        new Function<WatchNode, XExpression>() {
+                                                          @Override
+                                                          public XExpression fun(WatchNode node) {
+                                                            return node.getExpression();
+                                                          }
+                                                        })));
+    }
   }
 }

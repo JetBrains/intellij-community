@@ -224,6 +224,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
   private final static String ourPropertiesDelimiter = "\n";
 
+  @NotNull
   private static String getPropertyList(@NotNull SvnVcs vcs,
                                         @Nullable final ContentRevision contentRevision,
                                         @Nullable final SVNRevision revision)
@@ -244,11 +245,13 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     return getPropertyList(vcs, target, revision);
   }
 
+  @NotNull
   public static String getPropertyList(@NotNull SvnVcs vcs, @NotNull final SVNURL url, @Nullable final SVNRevision revision)
     throws VcsException {
     return getPropertyList(vcs, SvnTarget.fromURL(url, revision), revision);
   }
 
+  @NotNull
   public static String getPropertyList(@NotNull SvnVcs vcs, @NotNull final File ioFile, @Nullable final SVNRevision revision)
     throws SVNException {
     try {
@@ -259,6 +262,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     }
   }
 
+  @NotNull
   private static String getPropertyList(@NotNull SvnVcs vcs, @NotNull SvnTarget target, @Nullable SVNRevision revision)
     throws VcsException {
     final List<PropertyData> lines = new ArrayList<PropertyData>();
@@ -269,7 +273,8 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     return toSortedStringPresentation(lines);
   }
 
-  private static PropertyConsumer createHandler(SVNRevision revision, final List<PropertyData> lines) {
+  @NotNull
+  private static PropertyConsumer createHandler(SVNRevision revision, @NotNull final List<PropertyData> lines) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
@@ -299,7 +304,8 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     };
   }
 
-  private static String toSortedStringPresentation(List<PropertyData> lines) {
+  @NotNull
+  private static String toSortedStringPresentation(@NotNull List<PropertyData> lines) {
     StringBuilder sb = new StringBuilder();
 
     Collections.sort(lines, new Comparator<PropertyData>() {
@@ -315,7 +321,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     return sb.toString();
   }
 
-  private static void addPropertyPresentation(final PropertyData property, final StringBuilder sb) {
+  private static void addPropertyPresentation(@NotNull PropertyData property, @NotNull StringBuilder sb) {
     if (sb.length() != 0) {
       sb.append(ourPropertiesDelimiter);
     }

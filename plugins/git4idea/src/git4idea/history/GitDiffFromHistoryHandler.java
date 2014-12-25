@@ -57,7 +57,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * {@link DiffFromHistoryHandler#showDiffForTwo(FilePath, VcsFileRevision, VcsFileRevision) "Show Diff" for 2 revision} calls the common code.
+ * {@link DiffFromHistoryHandler#showDiffForTwo(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath, com.intellij.openapi.vcs.history.VcsFileRevision, com.intellij.openapi.vcs.history.VcsFileRevision) "Show Diff" for 2 revision} calls the common code.
  * {@link DiffFromHistoryHandler#showDiffForOne(com.intellij.openapi.actionSystem.AnActionEvent, com.intellij.openapi.vcs.FilePath, com.intellij.openapi.vcs.history.VcsFileRevision, com.intellij.openapi.vcs.history.VcsFileRevision) "Show diff" for 1 revision}
  * behaves differently for merge commits: for them it shown a popup displaying the parents of the selected commit. Selecting a parent
  * from the popup shows the difference with this parent.
@@ -80,13 +80,13 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
 
   @Override
   public void showDiffForOne(@NotNull AnActionEvent e,
-                             @NotNull FilePath filePath,
+                             @NotNull Project project, @NotNull FilePath filePath,
                              @NotNull VcsFileRevision previousRevision,
                              @NotNull VcsFileRevision revision) {
     GitFileRevision rev = (GitFileRevision)revision;
     Collection<String> parents = rev.getParents();
     if (parents.size() < 2) {
-      super.showDiffForOne(e, filePath, previousRevision, revision);
+      super.showDiffForOne(e, project, filePath, previousRevision, revision);
     }
     else { // merge 
       showDiffForMergeCommit(e, filePath, rev, parents);

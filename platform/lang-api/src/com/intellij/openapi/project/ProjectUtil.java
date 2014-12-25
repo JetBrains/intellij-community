@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.InternalFileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -107,24 +107,30 @@ public class ProjectUtil {
   }
 
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
-    return isProjectOrWorkspaceFile(file, file.getFileType());
+    // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
+    return isProjectOrWorkspaceFile(file, FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
   }
 
-  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @NotNull FileType fileType) {
-    return fileType instanceof InternalFileType || file.getPath().contains('/' + ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR + '/');
+  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
+    return ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
   }
 
   @NotNull
-  public static Project guessCurrentProject(JComponent component) {
+  public static Project guessCurrentProject(@Nullable JComponent component) {
     Project project = null;
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length > 0) project = openProjects[0];
-    if (project == null) {
-      DataContext dataContext = component == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(component);
-      project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (component != null) {
+      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component));
     }
     if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      if (openProjects.length > 0) project = openProjects[0];
+      if (project == null) {
+        DataContext dataContext = DataManager.getInstance().getDataContext();
+        project = CommonDataKeys.PROJECT.getData(dataContext);
+      }
+      if (project == null) {
+        project = ProjectManager.getInstance().getDefaultProject();
+      }
     }
     return project;
   }

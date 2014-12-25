@@ -16,14 +16,14 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.actions.CodeCleanupAction;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -55,21 +55,19 @@ class EditCleanupProfileIntentionAction implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
-    final IDEInspectionToolsConfigurable configurable =
-      new IDEInspectionToolsConfigurable(profileManager,
-                                         InspectionProfileManager.getInstance()) {
+    final ProjectInspectionToolsConfigurable configurable =
+      new ProjectInspectionToolsConfigurable(InspectionProfileManager.getInstance(), profileManager) {
         @Override
         protected boolean acceptTool(InspectionToolWrapper entry) {
           return super.acceptTool(entry) && entry.isCleanupTool();
         }
+
+        @Override
+        public String getDisplayName() {
+          return CodeCleanupAction.CODE_CLEANUP_INSPECTIONS_DISPLAY_NAME;
+        }
       };
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      @Override
-      public void run() {
-        configurable.selectProfile(inspectionProfile.getName());
-      }
-    });
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
   }
 
   @Override

@@ -31,7 +31,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.List;
 
 /**
- * {@link com.intellij.openapi.vcs.history.DiffFromHistoryHandler#showDiffForTwo(com.intellij.openapi.vcs.FilePath, com.intellij.openapi.vcs.history.VcsFileRevision, com.intellij.openapi.vcs.history.VcsFileRevision) "Show Diff" for 2 revision} calls the common code.
+ * {@link com.intellij.openapi.vcs.history.DiffFromHistoryHandler#showDiffForTwo(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath, com.intellij.openapi.vcs.history.VcsFileRevision, com.intellij.openapi.vcs.history.VcsFileRevision) "Show Diff" for 2 revision} calls the common code.
  *
  * @author Nadya Zabrodina
  */

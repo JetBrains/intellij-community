@@ -62,7 +62,7 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @Override
   public SourcePosition getSourcePosition(@Nullable Location location) throws NoDataException {
-    throw new NoDataException();
+    throw NoDataException.INSTANCE;
   }
 
   @NotNull
@@ -74,7 +74,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     AccessToken accessToken = ReadAction.start();
     try {
       className = findEnclosingName(classPosition);
-      if (className == null) throw new NoDataException();
+      if (className == null) throw NoDataException.INSTANCE;
 
       line = classPosition.getLine();
     }
@@ -83,7 +83,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     }
 
     List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
-    if (referenceTypes.isEmpty()) throw new NoDataException();
+    if (referenceTypes.isEmpty()) throw NoDataException.INSTANCE;
 
     Set<ReferenceType> res = new HashSet<ReferenceType>();
 
@@ -92,7 +92,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     }
 
     if (res.isEmpty()) {
-      throw new NoDataException();
+      throw NoDataException.INSTANCE;
     }
 
     return new ArrayList<ReferenceType>(res);
@@ -101,7 +101,7 @@ public class SpringLoadedPositionManager implements PositionManager {
   @NotNull
   @Override
   public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
-    throw new NoDataException();
+    throw NoDataException.INSTANCE;
   }
 
   @Nullable
@@ -164,7 +164,7 @@ public class SpringLoadedPositionManager implements PositionManager {
   public ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) throws NoDataException {
     String className = getOuterClassName(position);
     if (className == null) {
-      throw new NoDataException();
+      throw NoDataException.INSTANCE;
     }
 
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(requestor, className + "*");

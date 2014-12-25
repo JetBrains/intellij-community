@@ -16,18 +16,19 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.keyFMap.OneElementFMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
 class UserDataInterner {
-  private static final ConcurrentWeakHashMap<OneElementFMap, OneElementFMap> ourCache = new ConcurrentWeakHashMap<OneElementFMap, OneElementFMap>();
+  private static final ConcurrentMap<OneElementFMap, OneElementFMap> ourCache = ContainerUtil.createConcurrentWeakMap();
 
   static KeyFMap internUserData(@NotNull KeyFMap map) {
     if (map instanceof OneElementFMap && shouldIntern((OneElementFMap)map)) {

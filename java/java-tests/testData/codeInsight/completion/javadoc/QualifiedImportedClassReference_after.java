@@ -1,7 +1,7 @@
 import java.io.*;
 
 /**
- * {@link java.io.FileInputStream<caret>}
+ * {@link FileInputStream<caret>}
  */
 
 class Foo {

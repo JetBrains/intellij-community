@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,9 +87,9 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     }
 
     protected void addPatternFilter() {
-      PackageChooser chooser = new PackageChooserDialog(CodeInsightBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
-      chooser.show();
-      if (chooser.isOK()) {
+      PackageChooser chooser =
+        new PackageChooserDialog(CodeInsightBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
+      if (chooser.showAndGet()) {
         List<PsiPackage> packages = chooser.getSelectedPackages();
         if (!packages.isEmpty()) {
           for (final PsiPackage aPackage : packages) {

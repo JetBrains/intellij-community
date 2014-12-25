@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.collect.Ordering;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,14 +11,9 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.RefGroup;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogRefManager;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogRefreshListener;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -33,10 +27,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
@@ -50,6 +42,7 @@ public class BranchesPanel extends JPanel {
 
   private List<RefGroup> myRefGroups;
   private final RefPainter myRefPainter;
+  @Nullable private Collection<VirtualFile> myRoots = null;
 
   private Map<Integer, RefGroup> myRefPositions = ContainerUtil.newHashMap();
 
@@ -84,11 +77,12 @@ public class BranchesPanel extends JPanel {
       }
     });
 
-    Project project = dataHolder.getProject();
-    project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new VcsLogRefreshListener() {
+    myUI.addLogListener(new VcsLogListener() {
       @Override
-      public void refresh(@NotNull DataPack dataPack) {
-        rebuild(dataPack.getRefsModel());
+      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refresh) {
+        if (refresh) {
+          rebuild(dataPack.getRefs());
+        }
       }
     });
   }
@@ -112,20 +106,23 @@ public class BranchesPanel extends JPanel {
     int paddingX = 0;
     for (RefGroup group : myRefGroups) {
       // TODO it is assumed here that all refs in a single group belong to a single root
-      Color rootIndicatorColor = myUI.getColorManager().getRootColor(group.getRefs().iterator().next().getRoot());
-      Rectangle rectangle = myRefPainter.drawLabel((Graphics2D)g, group.getName(), paddingX, group.getBgColor(), rootIndicatorColor);
-      paddingX += rectangle.width + UIUtil.DEFAULT_HGAP;
-      myRefPositions.put(rectangle.x, group);
+      VirtualFile root = group.getRefs().iterator().next().getRoot();
+      if (myRoots == null || myRoots.contains(root)) {
+        Color rootIndicatorColor = myUI.getColorManager().getRootColor(root);
+        Rectangle rectangle = myRefPainter.drawLabel((Graphics2D)g, group.getName(), paddingX, group.getBgColor(), rootIndicatorColor);
+        paddingX += rectangle.width + UIUtil.DEFAULT_HGAP;
+        myRefPositions.put(rectangle.x, group);
+      }
     }
   }
 
-  public void rebuild(@NotNull RefsModel refsModel) {
+  public void rebuild(@NotNull VcsLogRefs refsModel) {
     myRefGroups = getRefsToDisplayOnPanel(refsModel);
     getParent().repaint();
   }
 
   @NotNull
-  private List<RefGroup> getRefsToDisplayOnPanel(@NotNull RefsModel refsModel) {
+  private List<RefGroup> getRefsToDisplayOnPanel(@NotNull VcsLogRefs refsModel) {
     Collection<VcsRef> allRefs = refsModel.getBranches();
 
     List<RefGroup> groups = ContainerUtil.newArrayList();
@@ -156,6 +153,11 @@ public class BranchesPanel extends JPanel {
       }
     }
     return groups;
+  }
+
+  public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
+    myRoots = VcsLogUtil.getAllVisibleRoots(myDataHolder.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
+    getParent().repaint();
   }
 
   private static class RefPopupComponent extends JPanel {

@@ -101,7 +101,7 @@ public class HgVFSListener extends VcsVFSListener {
           pi.setText(repo.getPresentableUrl());
           try {
             untrackedFiles
-              .addAll(new HgStatusCommand.Builder(false).unknown(true).build(myProject)
+              .addAll(new HgStatusCommand.Builder(false).unknown(true).removed(true).build(myProject)
                         .getHgUntrackedFiles(repo, new ArrayList<VirtualFile>(files)));
           }
           catch (final VcsException ex) {

@@ -35,7 +35,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   private final VirtualFile myBeforeFile;
   private final VirtualFile myAfterFile;
 
-  public TestDataGroupVirtualFile(VirtualFile beforeFile, VirtualFile afterFile) {
+  public TestDataGroupVirtualFile(@NotNull VirtualFile beforeFile, @NotNull VirtualFile afterFile) {
     myBeforeFile = beforeFile;
     myAfterFile = afterFile;
   }
@@ -94,7 +94,6 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   public VirtualFile[] getChildren() {
     return EMPTY_ARRAY;
   }
-
   @NotNull
   @Override
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
@@ -129,5 +128,25 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @Override
   public InputStream getInputStream() throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    TestDataGroupVirtualFile file = (TestDataGroupVirtualFile)o;
+
+    if (!myAfterFile.equals(file.myAfterFile)) return false;
+    if (!myBeforeFile.equals(file.myBeforeFile)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myBeforeFile.hashCode();
+    result = 31 * result + myAfterFile.hashCode();
+    return result;
   }
 }

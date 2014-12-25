@@ -57,7 +57,7 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection {
     if (!(value instanceof  Integer)) {
       return null;
     }
-    final int roundingMode = (Integer)value;
+    final int roundingMode = ((Integer)value).intValue();
     if (roundingMode < 0 || roundingMode > 7) {
       return null;
     }
@@ -127,6 +127,11 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BigDecimalLegacyMethodVisitor();
   }
@@ -136,9 +141,6 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return;
-      }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
       if (!"setScale".equals(name) && !"divide".equals(name)) {

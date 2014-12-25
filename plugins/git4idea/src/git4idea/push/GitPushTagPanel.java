@@ -28,12 +28,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-class GitPushTagPanel extends VcsPushOptionsPanel {
+public class GitPushTagPanel extends VcsPushOptionsPanel {
 
   private final ComboBox myCombobox;
   private final JBCheckBox myCheckBox;
 
-  GitPushTagPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported) {
+  public GitPushTagPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported) {
     String checkboxText = "Push Tags";
     if (followTagsSupported) {
       checkboxText += ": ";

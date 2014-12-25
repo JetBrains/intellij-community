@@ -17,9 +17,11 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
@@ -58,7 +60,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     project = getProject(project);
     final ConfigurableGroup[] filteredGroups = filterEmptyGroups(groups);
     if (Registry.is("ide.new.settings.dialog")) {
-      return ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
+      return Registry.is("ide.new.settings.view")
              ? new SettingsDialog(project, filteredGroups, toSelect, null)
              : new IdeSettingsDialog(project, filteredGroups, toSelect);
     }
@@ -125,21 +127,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
     ConfigurableGroup[] groups = getConfigurableGroups(project, true);
 
-    Configurable config = findByClass(getConfigurables(groups, true), configurableClass);
+    Configurable config = new ConfigurableVisitor.ByType(configurableClass).find(groups);
 
     assert config != null : "Cannot find configurable: " + configurableClass.getName();
 
     getDialog(project, groups, config).show();
-  }
-
-  @Nullable
-  private static Configurable findByClass(Configurable[] configurables, Class configurableClass) {
-    for (Configurable configurable : configurables) {
-      if (configurableClass.isInstance(configurable)) {
-        return configurable;
-      }
-    }
-    return null;
   }
 
   @Override
@@ -166,7 +158,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = id2Select == null ? null : new ConfigurableVisitor.ByID(id2Select).find(group);
 
-    if (ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")) {
+    if (Registry.is("ide.new.settings.view")) {
       new SettingsDialog(getProject(project), group, configurable2Select, filter).show();
       return;
     }
@@ -254,13 +246,13 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                                           boolean showApplyButton) {
     final DialogWrapper editor;
     if (parent == null) {
-      editor = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
-               ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton)
+      editor = Registry.is("ide.new.settings.view")
+               ? new SettingsDialog(project, dimensionKey, configurable, showApplyButton, false)
                : new SingleConfigurableEditor(project, configurable, dimensionKey, showApplyButton);
     }
     else {
-      editor = ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.settings.view")
-               ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton)
+      editor = Registry.is("ide.new.settings.view")
+               ? new SettingsDialog(parent, dimensionKey, configurable, showApplyButton, false)
                : new SingleConfigurableEditor(parent, configurable, dimensionKey, showApplyButton);
     }
     if (advancedInitialization != null) {
@@ -271,8 +263,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
         }
       });
     }
-    editor.show();
-    return editor.isOK();
+    return editor.showAndGet();
   }
 
   @NotNull

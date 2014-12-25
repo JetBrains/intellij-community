@@ -23,15 +23,13 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 @State(
   name = "libraryTable",
@@ -77,24 +75,10 @@ public class ProjectLibraryTable extends LibraryTableBase {
     return true;
   }
 
-  public static class LibraryStateSplitter implements StateSplitter {
+  public final static class LibraryStateSplitter extends StateSplitterEx {
     @Override
-    public List<Pair<Element, String>> splitState(Element e) {
-      final UniqueNameGenerator generator = new UniqueNameGenerator();
-
-      List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-      for (Element library : e.getChildren()) {
-        String name = generator.generateUniqueName(FileUtil.sanitizeFileName(library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR))) + ".xml";
-        result.add(Pair.create(library, name));
-      }
-      return result;
-    }
-
-    @Override
-    public void mergeStatesInto(Element target, Element[] elements) {
-      for (Element e : elements) {
-        target.addContent(e);
-      }
+    public List<Pair<Element, String>> splitState(@NotNull Element state) {
+      return splitState(state, LibraryImpl.LIBRARY_NAME_ATTR);
     }
   }
 }

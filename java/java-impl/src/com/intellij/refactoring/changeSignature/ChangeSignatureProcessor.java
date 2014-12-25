@@ -160,8 +160,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       }
       if (myPrepareSuccessfulSwingThreadCallback != null) {
         ConflictsDialog dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
-        dialog.show();
-        if (!dialog.isOK()) {
+        if (!dialog.showAndGet()) {
           if (dialog.isShowConflicts()) prepareSuccessful();
           return false;
         }
@@ -183,7 +182,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       for (UsageInfo usageInfo : usages) {
         if (usageInfo instanceof OverriderUsageInfo) {
           final OverriderUsageInfo info = (OverriderUsageInfo)usageInfo;
-          PsiMethod overrider = assertNotNull(info.getElement());
+          PsiMethod overrider = assertNotNull(info.getOverridingMethod());
           PsiMethod baseMethod = info.getBaseMethod();
           PsiSubstitutor substitutor = calculateSubstitutor(overrider, baseMethod);
           PsiType type;

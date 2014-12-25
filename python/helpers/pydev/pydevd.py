@@ -19,6 +19,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_GET_COMPLETIONS, \
                          CMD_GET_FRAME, \
                          CMD_GET_VARIABLE, \
+                         CMD_GET_ARRAY, \
                          CMD_LIST_THREADS, \
                          CMD_REMOVE_BREAK, \
                          CMD_RUN, \
@@ -47,6 +48,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalConsoleExec, \
                          InternalGetFrame, \
                          InternalGetVariable, \
+                         InternalGetArray, \
                          InternalTerminateThread, \
                          InternalRunThread, \
                          InternalStepThread, \
@@ -112,13 +114,14 @@ DONT_TRACE = {
               'queue.py':1,
               'socket.py':1,
               'weakref.py':1,
+              '_weakrefset.py':1,
               'linecache.py':1,
               'threading.py':1,
 
               # thirs party libs that we don't want to trace
-              'pluginbase.py':1,
-              'pkgutil_old.py':1,
-              'uuid_old.py':1,
+              '_pydev_pluginbase.py':1,
+              '_pydev_pkgutil_old.py':1,
+              '_pydev_uuid_old.py':1,
 
               #things from pydev that we don't want to trace
               '_pydev_execfile.py':1,
@@ -241,14 +244,22 @@ def killAllPydevThreads():
 
 
 #=======================================================================================================================
-# PyDBCheckAliveThread
+# CheckOutputThread
+# Non-daemonic thread guaranties that all data is written even if program is finished
 #=======================================================================================================================
-class PyDBCheckAliveThread(PyDBDaemonThread):
+class CheckOutputThread(PyDBDaemonThread):
 
     def __init__(self, pyDb):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
         self.setName('pydevd.CheckAliveThread')
+        pyDb.output_checker = self
+
+    def start(self):
+        # it should be non daemon
+        thread = threading.Thread(target=self.run)
+        thread.daemon = False
+        thread.start()
 
     def OnRun(self):
             if self.dontTraceMe:
@@ -266,7 +277,8 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
                     pydevd_tracing.SetTrace(None)  # no debugging on this thread
                     
             while not self.killReceived:
-                if not self.pyDb.haveAliveThreads():
+                if not self.pyDb.haveAliveThreads() and self.pyDb.writer.empty() \
+                        and not has_data_to_redirect():
                     try:
                         pydev_log.debug("No alive threads, finishing debug session")
                         self.pyDb.FinishDebuggingSession()
@@ -275,12 +287,13 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
                         traceback.print_exc()
 
                     self.killReceived = True
-                    return
+
+                self.pyDb.checkOutputRedirect()
 
                 time.sleep(0.3)
 
     def doKillPydevThread(self):
-        pass
+        self.killReceived = True
 
 
 
@@ -307,6 +320,7 @@ class PyDB:
         pydevd_tracing.ReplaceSysSetTraceFunc()
         self.reader = None
         self.writer = None
+        self.output_checker = None
         self.quitting = None
         self.cmdFactory = NetCommandFactory()
         self._cmd_queue = {}  # the hash of Queues. Key is thread id, value is thread
@@ -790,6 +804,23 @@ class PyDB:
                     except:
                         traceback.print_exc()
 
+                elif cmd_id == CMD_GET_ARRAY:
+                    # we received some command to get an array variable
+                    # the text is: thread_id\tframe_id\tFRAME|GLOBAL\tname\ttemp\troffs\tcoffs\trows\tcols\tformat
+                    try:
+                        roffset, coffset, rows, cols, format, thread_id, frame_id, scopeattrs  = text.split('\t', 7)
+
+                        if scopeattrs.find('\t') != -1:  # there are attributes beyond scope
+                            scope, attrs = scopeattrs.split('\t', 1)
+                        else:
+                            scope, attrs = (scopeattrs, None)
+
+                        int_cmd = InternalGetArray(seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs)
+                        self.postInternalCommand(int_cmd, thread_id)
+
+                    except:
+                        traceback.print_exc()
+
                 elif cmd_id == CMD_GET_COMPLETIONS:
                     # we received some command to get a variable
                     # the text is: thread_id\tframe_id\tactivation token
@@ -828,21 +859,16 @@ class PyDB:
                     else:
                         #Note: this else should be removed after PyCharm migrates to setting
                         #breakpoints by id (and ideally also provides func_name).
-                        type, file, line, condition, expression = text.split('\t', 4)
+                        type, file, line, func_name, condition, expression = text.split('\t', 5)
                         # If we don't have an id given for each breakpoint, consider
                         # the id to be the line.
                         breakpoint_id = line = int(line)
-                        if condition.startswith('**FUNC**'):
-                            func_name, condition = condition.split('\t', 1)
 
-                            # We must restore new lines and tabs as done in
-                            # AbstractDebugTarget.breakpointAdded
-                            condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n').\
-                                replace("@_@TAB_CHAR@_@", '\t').strip()
+                        condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n'). \
+                            replace("@_@TAB_CHAR@_@", '\t').strip()
 
-                            func_name = func_name[8:]
-                        else:
-                            func_name = 'None'  # Match anything if not specified.
+                        expression = expression.replace("@_@NEW_LINE_CHAR@_@", '\n'). \
+                            replace("@_@TAB_CHAR@_@", '\t').strip()
 
                     if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                         file = file.encode(file_system_encoding)
@@ -1437,10 +1463,8 @@ class PyDB:
             if self._finishDebuggingSession and not self._terminationEventSent:
                 #that was not working very well because jython gave some socket errors
                 try:
-                    threads = DictKeys(PyDBDaemonThread.created_pydb_daemon_threads)
-                    for t in threads:
-                        if hasattr(t, 'doKillPydevThread'):
-                            t.doKillPydevThread()
+                    if self.output_checker is None:
+                        killAllPydevThreads()
                 except:
                     traceback.print_exc()
                 self._terminationEventSent = True
@@ -1561,7 +1585,9 @@ class PyDB:
 
 
         PyDBCommandThread(self).start()
-        PyDBCheckAliveThread(self).start()
+        if self.signature_factory is not None:
+            # we need all data to be sent to IDE even after program finishes
+            CheckOutputThread(self).start()
 
 
     def patch_threads(self):
@@ -1720,12 +1746,25 @@ def usage(doExit=0):
 def initStdoutRedirect():
     if not getattr(sys, 'stdoutBuf', None):
         sys.stdoutBuf = pydevd_io.IOBuf()
+        sys.stdout_original = sys.stdout
         sys.stdout = pydevd_io.IORedirector(sys.stdout, sys.stdoutBuf) #@UndefinedVariable
 
 def initStderrRedirect():
     if not getattr(sys, 'stderrBuf', None):
         sys.stderrBuf = pydevd_io.IOBuf()
+        sys.stderr_original = sys.stderr
         sys.stderr = pydevd_io.IORedirector(sys.stderr, sys.stderrBuf) #@UndefinedVariable
+
+
+def has_data_to_redirect():
+    if getattr(sys, 'stdoutBuf', None):
+        if not sys.stdoutBuf.empty():
+            return True
+    if getattr(sys, 'stderrBuf', None):
+        if not sys.stderrBuf.empty():
+            return True
+
+    return False
 
 #=======================================================================================================================
 # settrace
@@ -1862,10 +1901,10 @@ def _locked_settrace(
         
         #Suspend as the last thing after all tracing is in place.
         if suspend:
-            debugger.setSuspend(t, CMD_SET_BREAK)
+            debugger.setSuspend(t, CMD_THREAD_SUSPEND)
 
         PyDBCommandThread(debugger).start()
-        PyDBCheckAliveThread(debugger).start()
+        CheckOutputThread(debugger).start()
 
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break
@@ -1888,7 +1927,7 @@ def _locked_settrace(
 
 
         if suspend:
-            debugger.setSuspend(t, CMD_SET_BREAK)
+            debugger.setSuspend(t, CMD_THREAD_SUSPEND)
 
 
 def stoptrace():

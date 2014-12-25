@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -45,7 +46,7 @@ import java.util.List;
 
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final boolean enabled = thereAreUnversionedFiles(e);
     e.getPresentation().setEnabled(enabled);
     final String place = e.getPlace();
@@ -54,11 +55,12 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final List<VirtualFile> unversionedFiles = getUnversionedFiles(e);
     if (unversionedFiles.isEmpty()) {
       return;
     }
+    FileDocumentManager.getInstance().saveAllDocuments();
     final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(e.getData(CommonDataKeys.PROJECT));
     changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles, new Condition<FileStatus>() {
       @Override

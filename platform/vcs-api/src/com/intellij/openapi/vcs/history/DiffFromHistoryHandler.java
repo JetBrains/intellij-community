@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,20 +25,18 @@ import org.jetbrains.annotations.NotNull;
  * or selected one revision and invokes "Show Diff with Local"
  * Default handler is implemented in {@code vcs-impl}.
  * Custom handlers should be returned via {@link VcsHistoryProvider#getHistoryDiffHandler()}.
- *
- * @author Kirill Likhodedov
  */
 public interface DiffFromHistoryHandler {
 
   /**
    * Show diff when a single revision is selected in the file history panel.
-   *
    * @param e                AnActionEvent which happened, when user invoked "Show Diff".
    * @param filePath         the file which history is shown.
-   * @param previousRevision the previous revision in the list displayed file history panel, may be {@link VcsFileRevision#NULL}.
+   * @param previousRevision the previous revision in the list displayed file history panel, may be {@link com.intellij.openapi.vcs.history.VcsFileRevision#NULL}.
    * @param revision         the revision selected in the file history panel.
    */
   void showDiffForOne(@NotNull AnActionEvent e,
+                      @NotNull Project project,
                       @NotNull FilePath filePath,
                       @NotNull VcsFileRevision previousRevision,
                       @NotNull VcsFileRevision revision);
@@ -51,6 +50,9 @@ public interface DiffFromHistoryHandler {
    * @param revision1 one of the selected revisions.
    * @param revision2 another selected revision.
    */
-  void showDiffForTwo(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2);
+  void showDiffForTwo(@NotNull Project project,
+                      @NotNull FilePath filePath,
+                      @NotNull VcsFileRevision revision1,
+                      @NotNull VcsFileRevision revision2);
 
 }

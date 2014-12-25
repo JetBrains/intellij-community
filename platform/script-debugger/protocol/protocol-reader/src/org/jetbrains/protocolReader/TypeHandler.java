@@ -1,9 +1,7 @@
-// Copyright (c) 2009 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jsonProtocol.JsonObjectBased;
 
 import java.lang.reflect.Method;
@@ -16,14 +14,13 @@ class TypeHandler<T> {
 
   private final List<VolatileFieldBinding> volatileFields;
 
-  /** Method implementation for dynamic proxy. */
   private final LinkedHashMap<Method, MethodHandler> methodHandlerMap;
 
   /** Loaders that should read values and save them in field array on parse time. */
   private final List<FieldLoader> fieldLoaders;
 
   /** Subtype aspects of the type or null */
-  private final SubtypeAspect subtypeAspect;
+  private final ExistingSubtypeAspect subtypeAspect;
 
   private final boolean hasLazyFields;
 
@@ -37,29 +34,25 @@ class TypeHandler<T> {
     this.methodHandlerMap = methodHandlerMap;
     this.fieldLoaders = fieldLoaders;
     this.hasLazyFields = hasLazyFields;
-    if (jsonSuperClass == null) {
-      subtypeAspect = new AbsentSubtypeAspect();
-    }
-    else {
-      subtypeAspect = new ExistingSubtypeAspect(jsonSuperClass);
-    }
+    subtypeAspect = jsonSuperClass == null ? null : new ExistingSubtypeAspect(jsonSuperClass);
   }
 
   public Class<T> getTypeClass() {
     return typeClass;
   }
 
-  public SubtypeAspect getSubtypeSupport() {
+  @Nullable
+  public ExistingSubtypeAspect getSubtypeSupport() {
     return subtypeAspect;
   }
 
-  public void writeInstantiateCode(ClassScope scope, TextOutput out) {
+  public void writeInstantiateCode(@NotNull ClassScope scope, @NotNull TextOutput out) {
     writeInstantiateCode(scope, false, out);
   }
 
-  public void writeInstantiateCode(ClassScope scope, boolean deferredReading, TextOutput out) {
+  public void writeInstantiateCode(@NotNull ClassScope scope, boolean deferredReading, @NotNull TextOutput out) {
     String className = scope.getTypeImplReference(this);
-    if (deferredReading) {
+    if (deferredReading || subtypeAspect == null) {
       out.append("new ").append(className);
     }
     else {
@@ -67,10 +60,10 @@ class TypeHandler<T> {
     }
   }
 
-  public void writeStaticClassJava(FileScope fileScope) {
+  public void writeStaticClassJava(@NotNull FileScope fileScope) {
     TextOutput out = fileScope.getOutput();
     String valueImplClassName = fileScope.getTypeImplShortName(this);
-    out.append("public static final class ").append(valueImplClassName);
+    out.append("private static final class ").append(valueImplClassName);
 
     out.append(" implements ").append(getTypeClass().getCanonicalName()).openBlock();
 
@@ -89,21 +82,27 @@ class TypeHandler<T> {
       out.newLine();
     }
 
-    subtypeAspect.writeSuperFieldJava(out);
+    if (subtypeAspect != null) {
+      subtypeAspect.writeSuperFieldJava(out);
+    }
 
     writeConstructorMethod(valueImplClassName, classScope, out);
     out.newLine();
 
-    subtypeAspect.writeParseMethod(valueImplClassName, classScope, out);
+    if (subtypeAspect != null) {
+      subtypeAspect.writeParseMethod(valueImplClassName, classScope, out);
+    }
 
-    for (Map.Entry<Method, MethodHandler> en : methodHandlerMap.entrySet()) {
+    for (Map.Entry<Method, MethodHandler> entry : methodHandlerMap.entrySet()) {
       out.newLine();
-      en.getValue().writeMethodImplementationJava(classScope, en.getKey(), out);
+      entry.getValue().writeMethodImplementationJava(classScope, entry.getKey(), out);
       out.newLine();
     }
 
     writeBaseMethods(out);
-    subtypeAspect.writeGetSuperMethodJava(out);
+    if (subtypeAspect != null) {
+      subtypeAspect.writeGetSuperMethodJava(out);
+    }
     out.indentOut().append('}');
   }
 
@@ -132,27 +131,47 @@ class TypeHandler<T> {
     out.closeBlock();
   }
 
-  private void writeConstructorMethod(String valueImplClassName, ClassScope classScope, TextOutput out) {
-    out.newLine().append("public ").append(valueImplClassName).append("(").append(Util.JSON_READER_PARAMETER_DEF);
-    subtypeAspect.writeSuperConstructorParamJava(out);
+  private void writeConstructorMethod(@NotNull String valueImplClassName, @NotNull ClassScope classScope, @NotNull TextOutput out) {
+    out.newLine().append(valueImplClassName).append('(').append(Util.JSON_READER_PARAMETER_DEF).comma().append("String name");
+    if (subtypeAspect != null) {
+      subtypeAspect.writeSuperConstructorParamJava(out);
+    }
     out.append(')').openBlock();
 
-    subtypeAspect.writeSuperConstructorInitialization(out);
+    if (subtypeAspect != null) {
+      subtypeAspect.writeSuperConstructorInitialization(out);
+    }
 
     if (JsonObjectBased.class.isAssignableFrom(typeClass) || hasLazyFields) {
-      out.append(Util.PENDING_INPUT_READER_NAME).append(" = ").append(Util.READER_NAME).append(".subReader();").newLine();
+      out.append(Util.PENDING_INPUT_READER_NAME).append(" = ").append(Util.READER_NAME).append(".subReader()").semi().newLine();
     }
 
     if (fieldLoaders.isEmpty()) {
       out.append(Util.READER_NAME).append(".skipValue()").semi();
     }
     else {
-      out.append(Util.READER_NAME).append(".beginObject();");
+      out.append("if (name == null)").openBlock();
+      {
+        out.append("reader.beginObject()").semi();
+        out.newLine().append("if (reader.hasNext())").openBlock();
+        {
+          out.append("name = reader.nextName()").semi();
+        }
+        out.closeBlock();
+        out.newLine().append("else").openBlock();
+        {
+          out.append("return").semi();
+        }
+        out.closeBlock();
+      }
+      out.closeBlock();
+      out.newLine();
+
       writeReadFields(out, classScope);
 
       // we don't read all data if we have lazy fields, so, we should not check end of stream
       //if (!hasLazyFields) {
-        out.newLine().append(Util.READER_NAME).append(".endObject();");
+        out.newLine().newLine().append(Util.READER_NAME).append(".endObject()").semi();
       //}
     }
     out.closeBlock();
@@ -166,16 +185,16 @@ class TypeHandler<T> {
       out.newLine().append("int i = 0").semi();
     }
 
-    out.newLine().append("while (reader.hasNext())").openBlock(!hasOnlyOneFieldLoader);
-    if (!hasOnlyOneFieldLoader) {
-      out.append("CharSequence name = reader.nextNameAsCharSequence();");
-    }
-
+    out.newLine().append("do").openBlock();
     boolean isFirst = true;
     String operator = "if";
     for (FieldLoader fieldLoader : fieldLoaders) {
+      if (!isFirst) {
+        out.newLine();
+      }
+
       String fieldName = fieldLoader.getFieldName();
-      out.newLine().append(operator).append(" (").append(hasOnlyOneFieldLoader ? "reader.nextName()" : "name");
+      out.append(operator).append(" (name");
       out.append(".equals(\"").append(fieldName).append("\"))").openBlock();
       {
         assignField(out, fieldName);
@@ -204,6 +223,7 @@ class TypeHandler<T> {
       out.newLine().append("else").openBlock().append("i++").semi().closeBlock();
     }
     out.closeBlock();
+    out.newLine().append("while ((name = reader.nextNameOrNull()) != null)").semi();
   }
 
   private static TextOutput assignField(TextOutput out, String fieldName) {

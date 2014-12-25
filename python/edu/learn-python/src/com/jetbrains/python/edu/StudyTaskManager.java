@@ -1,10 +1,17 @@
 package com.jetbrains.python.edu;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -14,15 +21,18 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.jetbrains.python.edu.actions.StudyNextWindowAction;
-import com.jetbrains.python.edu.actions.StudyPrevWindowAction;
-import com.jetbrains.python.edu.actions.StudyShowHintAction;
+import com.jetbrains.python.edu.actions.*;
 import com.jetbrains.python.edu.course.Course;
 import com.jetbrains.python.edu.course.Lesson;
 import com.jetbrains.python.edu.course.Task;
@@ -34,7 +44,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +68,7 @@ import java.util.Map;
     )}
 )
 public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element>, DumbAware {
+  private static final Logger LOG = Logger.getInstance(StudyTaskManager.class.getName());
   public static final String COURSE_ELEMENT = "courseElement";
   private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private static Map<String, String> myDeletedShortcuts = new HashMap<String, String>();
@@ -99,6 +114,10 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectOpened() {
+    if (myCourse != null && !myCourse.isUpToDate()) {
+      myCourse.setUpToDate(true);
+      updateCourse();
+    }
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
@@ -142,19 +161,80 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               }
               catch (Exception e) {
                 final ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
-                if (toolWindow == null)
+                if (toolWindow == null) {
                   toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.RIGHT, myProject, true);
+                }
               }
 
               final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(toolWindowId);
+              class UrlOpeningListener implements NotificationListener {
+                private final boolean myExpireNotification;
+
+                public UrlOpeningListener(boolean expireNotification) {
+                  myExpireNotification = expireNotification;
+                }
+
+                protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                  URL url = event.getURL();
+                  if (url == null) {
+                    BrowserUtil.browse(event.getDescription());
+                  }
+                  else {
+                    BrowserUtil.browse(url);
+                  }
+                  if (myExpireNotification) {
+                    notification.expire();
+                  }
+                }
+
+                @Override
+                public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                  if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    hyperlinkActivated(notification, event);
+                  }
+                }
+              }
               if (studyToolWindow != null) {
                 StudyUtils.updateStudyToolWindow(myProject);
                 studyToolWindow.show(null);
+                UiNotifyConnector.doWhenFirstShown(studyToolWindow.getComponent(), new Runnable() {
+                  @Override
+                  public void run() {
+                    if (PropertiesComponent.getInstance().getBoolean("StudyShowPopup", true)) {
+                      String content = "<html>If you'd like to learn" +
+                                       " more about PyCharm " +
+                                       "Educational Edition, " +
+                                       "click <a href=\"https://www.jetbrains.com/pycharm-educational/quickstart/\">here</a> to watch a tutorial</html>";
+                      final Notification notification =
+                        new Notification("Watch Tutorials!", "", content, NotificationType.INFORMATION, new UrlOpeningListener(true));
+                      Notifications.Bus.notify(notification);
+                      Balloon balloon = notification.getBalloon();
+                      if (balloon != null) {
+                        balloon.addListener(new JBPopupAdapter() {
+                          @Override
+                          public void onClosed(LightweightWindowEvent event) {
+                            notification.expire();
+                          }
+                        });
+                      }
+                      notification.whenExpired(new Runnable() {
+                        @Override
+                        public void run() {
+                          PropertiesComponent.getInstance().setValue("StudyShowPopup", String.valueOf(false));
+                        }
+                      });
+                    }
+                  }
+                });
               }
-              addShortcut(StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.ACTION_ID);
-              addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID);
-              addShortcut(StudyShowHintAction.SHORTCUT, StudyShowHintAction.ACTION_ID);
-              addShortcut(StudyNextWindowAction.SHORTCUT2, StudyNextWindowAction.ACTION_ID);
+              addShortcut(StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.ACTION_ID, false);
+              addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID, false);
+              addShortcut(StudyShowHintAction.SHORTCUT, StudyShowHintAction.ACTION_ID, false);
+              addShortcut(StudyNextWindowAction.SHORTCUT2, StudyNextWindowAction.ACTION_ID, true);
+              addShortcut(StudyCheckAction.SHORTCUT, StudyCheckAction.ACTION_ID, false);
+              addShortcut(StudyNextStudyTaskAction.SHORTCUT, StudyNextStudyTaskAction.ACTION_ID, false);
+              addShortcut(StudyPreviousStudyTaskAction.SHORTCUT, StudyPreviousStudyTaskAction.ACTION_ID, false);
+              addShortcut(StudyRefreshTaskFileAction.SHORTCUT, StudyRefreshTaskFileAction.ACTION_ID, false);
             }
           }
         });
@@ -162,9 +242,58 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     });
   }
 
+  private void updateCourse() {
+    if (myCourse == null) {
+      return;
+    }
+    File resourceFile = new File(myCourse.getResourcePath());
+    if (!resourceFile.exists()) {
+      return;
+    }
+    final File courseDir = resourceFile.getParentFile();
+    if (!courseDir.exists()) {
+      return;
+    }
+    final File[] files = courseDir.listFiles();
+    if (files == null) return;
+    for (File file : files) {
+      if (file.getName().equals(StudyNames.TEST_HELPER)) {
+        copyFile(file, new File(myProject.getBasePath(), StudyNames.TEST_HELPER));
+      }
+      if (file.getName().startsWith(StudyNames.LESSON)) {
+        final File[] tasks = file.listFiles();
+        if (tasks == null) continue;
+        for (File task : tasks) {
+          final File taskDescr = new File(task, StudyNames.TASK_HTML);
+          final File taskTests = new File(task, StudyNames.TASK_TESTS);
+          copyFile(taskDescr, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), StudyNames.TASK_HTML));
+          copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), StudyNames.TASK_TESTS));
+        }
+      }
+    }
 
-  private static void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString) {
+    final Notification notification =
+      new Notification("Update.course", "Course update", "Current course is synchronized", NotificationType.INFORMATION);
+    notification.notify(myProject);
+  }
+
+  private static void copyFile(@NotNull final File from, @NotNull final File to) {
+    if (from.exists()) {
+      try {
+        FileUtil.copy(from, to);
+      }
+      catch (IOException e) {
+        LOG.warn("Failed to copy " + from.getName());
+      }
+    }
+  }
+
+  private static void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString, boolean isAdditional) {
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    Shortcut[] shortcuts = keymap.getShortcuts(actionIdString);
+    if (shortcuts.length > 0 && !isAdditional) {
+      return;
+    }
     Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
     String[] actionsIds = keymap.getActionIds(studyActionShortcut);
     for (String actionId : actionsIds) {

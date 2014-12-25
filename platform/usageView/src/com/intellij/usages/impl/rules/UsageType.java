@@ -69,6 +69,7 @@ public final class UsageType {
     return BundleBase.format(myName, usageWord);
   }
 
+  @Override
   public String toString() {
     return myName;
   }

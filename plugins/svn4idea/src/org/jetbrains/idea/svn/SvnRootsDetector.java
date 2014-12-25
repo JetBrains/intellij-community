@@ -64,8 +64,8 @@ public class SvnRootsDetector {
 
   public void detectCopyRoots(final VirtualFile[] roots, final boolean clearState, Runnable callback) {
     for (final VirtualFile vcsRoot : roots) {
-      // go into nested = false => only find a working copys below passed roots, but not nested
-      final List<Node> foundRoots = new ForNestedRootChecker(myVcs).getAllNestedWorkingCopies(vcsRoot, false);
+      List<Node> foundRoots = new ForNestedRootChecker(myVcs).getAllNestedWorkingCopies(vcsRoot);
+
       registerLonelyRoots(vcsRoot, foundRoots);
       registerTopRoots(vcsRoot, foundRoots);
     }

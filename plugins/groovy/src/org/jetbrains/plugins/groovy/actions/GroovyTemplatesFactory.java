@@ -82,11 +82,11 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
                                            @NotNull String templateName,
                                            boolean allowReformatting,
                                            @NonNls String... parameters) throws IncorrectOperationException {
-    final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
+    final FileTemplate template = FileTemplateManager.getInstance(directory.getProject()).getInternalTemplate(templateName);
 
     Project project = directory.getProject();
 
-    Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties(project));
+    Properties properties = new Properties(FileTemplateManager.getInstance(project).getDefaultProperties());
     JavaTemplateUtil.setPackageNameAttribute(properties, directory);
     properties.setProperty(NAME_TEMPLATE_PROPERTY, name);
     properties.setProperty(LOW_CASE_NAME_TEMPLATE_PROPERTY, name.substring(0, 1).toLowerCase() + name.substring(1));
@@ -98,7 +98,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
       text = template.getText(properties);
     }
     catch (Exception e) {
-      throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName), e);
+      throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance(project).internalTemplateToSubject(templateName), e);
     }
 
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);

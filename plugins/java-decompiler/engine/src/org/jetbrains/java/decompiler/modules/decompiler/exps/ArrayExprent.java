@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -23,40 +24,37 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Set;
 
 public class ArrayExprent extends Exprent {
 
   private Exprent array;
-
   private Exprent index;
+  private final VarType hardType;
 
-  private VarType hardtype;
-
-  {
-    this.type = EXPRENT_ARRAY;
-  }
-
-  public ArrayExprent(Exprent array, Exprent index, VarType hardtype) {
+  public ArrayExprent(Exprent array, Exprent index, VarType hardType, Set<Integer> bytecodeOffsets) {
+    super(EXPRENT_ARRAY);
     this.array = array;
     this.index = index;
-    this.hardtype = hardtype;
+    this.hardType = hardType;
+
+    addBytecodeOffsets(bytecodeOffsets);
   }
 
+  @Override
   public Exprent copy() {
-    return new ArrayExprent(array.copy(), index.copy(), hardtype);
+    return new ArrayExprent(array.copy(), index.copy(), hardType, bytecode);
   }
 
+  @Override
   public VarType getExprType() {
-    VarType exprType = array.getExprType().copy();
+    VarType exprType = array.getExprType();
     if (exprType.equals(VarType.VARTYPE_NULL)) {
-      exprType = hardtype.copy();
+      return hardType.copy();
     }
     else {
-      exprType.decArrayDim();
+      return exprType.decreaseArrayDim();
     }
-
-    return exprType;
   }
 
   public int getExprentUse() {
@@ -65,10 +63,8 @@ public class ArrayExprent extends Exprent {
 
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
-
     result.addMinTypeExprent(index, VarType.VARTYPE_BYTECHAR);
     result.addMaxTypeExprent(index, VarType.VARTYPE_INT);
-
     return result;
   }
 
@@ -79,28 +75,36 @@ public class ArrayExprent extends Exprent {
     return lst;
   }
 
-
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-    String res = array.toJava(indent, tracer);
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer res = array.toJava(indent, tracer);
 
     if (array.getPrecedence() > getPrecedence()) { // array precedence equals 0
-      res = "(" + res + ")";
+      res.enclose("(", ")");
     }
 
-    VarType arrtype = array.getExprType();
-    if (arrtype.arraydim == 0) {
-      VarType objarr = VarType.VARTYPE_OBJECT.copy();
-      objarr.arraydim = 1; // type family does not change
-
-      res = "((" + ExprProcessor.getCastTypeName(objarr) + ")" + res + ")";
+    VarType arrType = array.getExprType();
+    if (arrType.arrayDim == 0) {
+      VarType objArr = VarType.VARTYPE_OBJECT.resizeArrayDim(1); // type family does not change
+      res.enclose("((" + ExprProcessor.getCastTypeName(objArr) + ")", ")");
     }
 
     tracer.addMapping(bytecode);
 
-    return res + "[" + index.toJava(indent, tracer) + "]";
+    return res.append("[").append(index.toJava(indent, tracer)).append("]");
   }
 
+  @Override
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
+    if (oldExpr == array) {
+      array = newExpr;
+    }
+    if (oldExpr == index) {
+      index = newExpr;
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof ArrayExprent)) return false;
@@ -108,16 +112,6 @@ public class ArrayExprent extends Exprent {
     ArrayExprent arr = (ArrayExprent)o;
     return InterpreterUtil.equalObjects(array, arr.getArray()) &&
            InterpreterUtil.equalObjects(index, arr.getIndex());
-  }
-
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-    if (oldexpr == array) {
-      array = newexpr;
-    }
-
-    if (oldexpr == index) {
-      index = newexpr;
-    }
   }
 
   public Exprent getArray() {

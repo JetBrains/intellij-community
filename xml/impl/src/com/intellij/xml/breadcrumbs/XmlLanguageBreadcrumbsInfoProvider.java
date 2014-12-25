@@ -29,16 +29,13 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.StringTokenizer;
 
 public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
-  @NonNls private static final String CLASS_ATTRIBUTE_NAME = "class";
-  @NonNls private static final String ID_ATTRIBUTE_NAME = "id";
-
   @Override
   public boolean acceptElement(@NotNull final PsiElement e) {
     return e instanceof XmlTag && e.isValid();
@@ -60,12 +57,12 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
     final boolean addHtmlInfo = e.getContainingFile().getLanguage() != XMLLanguage.INSTANCE;
 
     if (addHtmlInfo) {
-      final String id_value = tag.getAttributeValue(ID_ATTRIBUTE_NAME);
+      final String id_value = tag.getAttributeValue(HtmlUtil.ID_ATTRIBUTE_NAME);
       if (null != id_value) {
         sb.append("#").append(id_value);
       }
 
-      final String class_value = tag.getAttributeValue(CLASS_ATTRIBUTE_NAME);
+      final String class_value = tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME);
       if (null != class_value) {
         final StringTokenizer tokenizer = new StringTokenizer(class_value, " ");
         while (tokenizer.hasMoreTokens()) {

@@ -64,17 +64,18 @@ Skeletons should respect [PEP-8](http://www.python.org/dev/peps/pep-0008/) and
 If you need to reference the members of the original module of a skeleton, you
 should import it explicitly. For example, in a skeleton for the `foo` module:
 
-    import foo
+```python
+import foo
 
 
-    class C(foo.B):
-        def bar():
-            """Do bar and return Bar.
+class C(foo.B):
+    def bar():
+        """Do bar and return Bar.
 
-            :rtype: foo.Bar
-            """
-            return foo.Bar()
-
+        :rtype: foo.Bar
+        """
+        return foo.Bar()
+```
 Modules can be referenced in docstring without explicit imports.
 
 The body of a function in a skeleton file should consist of a single `return`
@@ -124,35 +125,39 @@ Python 3 function annotations.
 If you want to create a parameterized class, you should define its parameters
 in the mock return type of a constructor:
 
-    class C(object):
-        """Some collection C that can contain values of T."""
+```python
+class C(object):
+    """Some collection C that can contain values of T."""
 
-        def __init__(self, value):
-            """Initialize C.
+    def __init__(self, value):
+        """Initialize C.
 
-            :type value: T
-            :rtype: C[T]
-            """
-            pass
+        :type value: T
+        :rtype: C[T]
+        """
+        pass
 
-        def get(self):
-            """Return the contained value.
+    def get(self):
+        """Return the contained value.
 
-            :rtype: T
-            """
-            pass
+        :rtype: T
+        """
+        pass
+```
 
 
 ### Versioning
 
 The recommended way of checking the version of Python is:
 
-    import sys
+```python
+import sys
 
 
-    if sys.version_info >= (2, 7) and sys.version_info < (3,):
-        def from_27_until_30():
-            pass
+if sys.version_info >= (2, 7) and sys.version_info < (3,):
+    def from_27_until_30():
+        pass
+```
 
 A skeleton should document the most recently released version of a library. Use
 deprecation warnings for functions that have been removed from the API.
@@ -209,8 +214,10 @@ plugin 3.0.1 for IntelliJ still doesn't include this repository). You
 plugin for IntelliJ installation. If you want to change the skeletons, clone
 the skeletons GitHub repository into your PyCharm/IntelliJ config directory:
 
-    cd <config directory>
-    git clone https://github.com/JetBrains/python-skeletons.git
+```bash
+cd <config directory>
+git clone https://github.com/JetBrains/python-skeletons.git
+```
 
 where `<config directory>` is:
 
@@ -224,7 +231,7 @@ where `<config directory>` is:
     * Windows: `<User home>\.IntelliJIdeaXX\config`
 
 Please send your PyCharm/IntelliJ-related bug reports and feature requests to
-[PyCharm issue tracker](http://youtrack.jetbrains.com/issues/PY).
+[PyCharm issue tracker](https://youtrack.jetbrains.com/issues/PY).
 
 
 Feedback

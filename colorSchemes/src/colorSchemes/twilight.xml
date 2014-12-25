@@ -50,7 +50,7 @@
         <option name="FOREGROUND" value="8F9D6A" />
       </value>
     </option>
-    <option name="CLASS_REFERENCE">
+    <option name="OC.CLASS_REFERENCE">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>
@@ -202,7 +202,7 @@
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
-    <option name="CONDITIONALLY_NOT_COMPILED">
+    <option name="OC.CONDITIONALLY_NOT_COMPILED">
       <value>
         <option name="FOREGROUND" value="5F5A60" />
         <option name="FONT_TYPE" value="2" />
@@ -665,7 +665,7 @@
         <option name="BACKGROUND" value="30322b" />
       </value>
     </option>
-    <option name="ENUM_CONST">
+    <option name="OC.ENUM_CONST">
       <value>
         <option name="FOREGROUND" value="CF6A4C" />
       </value>
@@ -871,7 +871,7 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="IVAR">
+    <option name="OC.IVAR">
       <value>
         <option name="FOREGROUND" value="7587A6" />
       </value>
@@ -962,7 +962,7 @@
         <option name="FOREGROUND" value="E9C062" />
       </value>
     </option>
-    <option name="LABEL">
+    <option name="OC.LABEL">
       <value>
         <option name="FOREGROUND" value="CDA869" />
       </value>
@@ -982,7 +982,7 @@
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
-    <option name="MACRONAME">
+    <option name="OC.MACRONAME">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>
@@ -992,7 +992,7 @@
         <option name="BACKGROUND" value="3a6da0" />
       </value>
     </option>
-    <option name="MESSAGE_ARGUMENT">
+    <option name="OC.MESSAGE_ARGUMENT">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>
@@ -1614,7 +1614,7 @@
         <option name="ERROR_STRIPE_COLOR" value="ff" />
       </value>
     </option>
-    <option name="TYPEDEF">
+    <option name="OC.TYPEDEF">
       <value>
         <option name="FOREGROUND" value="F9EE98" />
       </value>

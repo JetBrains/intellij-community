@@ -28,7 +28,6 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.openapi.wm.impl.status.TextPanel;
-import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
@@ -51,7 +50,7 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        Project project = getProject();
+        final Project project = getProject();
         Editor editor = getEditor();
         final LightVirtualFile selectedFile = getScratchFile();
         if (project == null || editor == null || selectedFile == null) return false;
@@ -59,7 +58,7 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
         ListPopup popup = NewScratchFileAction.buildLanguagePopup(project, selectedFile.getLanguage(), new Consumer<Language>() {
           @Override
           public void consume(Language language) {
-            selectedFile.setLanguage(LanguageSubstitutors.INSTANCE.substituteLanguage(language, selectedFile, myProject));
+            selectedFile.setLanguage(NewScratchFileAction.substitute(project, language));
             FileContentUtilCore.reparseFiles(selectedFile);
             update();
           }

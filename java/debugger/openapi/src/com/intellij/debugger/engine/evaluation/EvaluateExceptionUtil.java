@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jdi.*;
 
 /**
@@ -81,7 +82,12 @@ public class EvaluateExceptionUtil {
       return th.getMessage();
     }
     else {
-      return th.getClass().getName() + " : " + (th.getMessage() != null ? th.getMessage() : "");
+      StringBuilder res = new StringBuilder(th.getClass().getName());
+      String message = th.getMessage();
+      if (!StringUtil.isEmpty(message)) {
+        res.append(" : ").append(message);
+      }
+      return res.toString();
     }
   }
 }

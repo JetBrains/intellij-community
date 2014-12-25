@@ -148,11 +148,10 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
 
     if (super.isEquivalentTo(another)) return true;
     PsiElement element1 = this;
-    PsiElement element2 = another;
 
-    // TODO: seem to be only necessary for tag dirs equivalens checking.
-    if (element1 instanceof XmlTag && element2 instanceof XmlTag) {
-      if (!element1.isPhysical() && !element2.isPhysical()) return element1.getText().equals(element2.getText());
+    // TODO: seem to be only necessary for tag dirs equivalents checking.
+    if (element1 instanceof XmlTag && another instanceof XmlTag) {
+      if (!element1.isPhysical() && !another.isPhysical()) return element1.getText().equals(another.getText());
     }
 
     return false;

@@ -89,17 +89,18 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     }
   }
 
-  @NonNls protected final Options PACKAGE_OPTIONS         = new Options("none", "");
-  @NonNls public Options TOP_LEVEL_CLASS_OPTIONS  = new Options("none", "");
-  @NonNls public Options INNER_CLASS_OPTIONS      = new Options("none", "");
-  @NonNls public Options METHOD_OPTIONS           = new Options("none", "@return@param@throws or @exception");
-  @NonNls public Options FIELD_OPTIONS            = new Options("none", "");
-  public         boolean IGNORE_DEPRECATED        = false;
-  public         boolean IGNORE_JAVADOC_PERIOD    = true;
-  @Deprecated
-  public         boolean IGNORE_DUPLICATED_THROWS = false;
+  @NonNls protected final Options PACKAGE_OPTIONS = new Options("none", "");
+  @NonNls public Options TOP_LEVEL_CLASS_OPTIONS = new Options("none", "");
+  @NonNls public Options INNER_CLASS_OPTIONS = new Options("none", "");
+  @NonNls public Options METHOD_OPTIONS = new Options("none", "@return@param@throws or @exception");
+  @NonNls public Options FIELD_OPTIONS = new Options("none", "");
+  public boolean IGNORE_DEPRECATED = false;
+  public boolean IGNORE_JAVADOC_PERIOD = true;
+  @SuppressWarnings("unused") @Deprecated
+  public boolean IGNORE_DUPLICATED_THROWS = false;
 
-  private        boolean myIgnoreDuplicatedThrows = true;
+  private boolean myIgnoreDuplicatedThrows = true;
+
   public boolean getIgnoreDuplicatedThrows() {
     return myIgnoreDuplicatedThrows;
   }
@@ -108,8 +109,8 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     myIgnoreDuplicatedThrows = ignoreDuplicatedThrows;
   }
 
-  public         boolean IGNORE_POINT_TO_ITSELF   = false;
-  public         String  myAdditionalJavadocTags  = "";
+  public boolean IGNORE_POINT_TO_ITSELF = false;
+  public String myAdditionalJavadocTags = "";
 
   private boolean myIgnoreEmptyDescriptions = false;
   protected boolean myIgnoreSimpleAccessors = false;
@@ -127,8 +128,6 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = modifier;
     PACKAGE_OPTIONS.REQUIRED_TAGS = tags;
   }
-
-
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -251,7 +250,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     final PsiPackageStatement packageStatement = javaFile.getPackageStatement();
     final PsiElement elementToHighlight = packageStatement != null ? packageStatement : file;
 
-    final boolean required = isJavaDocRequired(aPackage);
+    final boolean required = aPackage != null && isJavaDocRequired(aPackage);
     if (docComment != null) {
       if (IGNORE_DEPRECATED && docComment.findTagByName("deprecated") != null) {
         return null;
@@ -436,9 +435,8 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
       if (required) {
         if (superMethods.length > 0) return null;
         ExtensionPoint<Condition<PsiMember>> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.JAVADOC_LOCAL);
-        final Condition<PsiMember>[] addins = point.getExtensions();
-        for (Condition<PsiMember> addin : addins) {
-          if (addin.value(psiMethod)) return null;
+        for (Condition<PsiMember> addIn : point.getExtensions()) {
+          if (addIn.value(psiMethod)) return null;
         }
         if (superMethods.length == 0) {
           final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
@@ -749,16 +747,12 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
           buf.append(token.getText());
         }
       }
-      else if (child instanceof PsiDocTagValue) {
-        buf.append(child.getText());
-      }
-      else if (child instanceof PsiInlineDocTag) {
+      else if (child instanceof PsiDocTagValue || child instanceof PsiInlineDocTag) {
         buf.append(child.getText());
       }
     }
 
-    String s = buf.toString();
-    return s.trim();
+    return buf.toString().trim();
   }
 
   private static String extractThrowsTagDescription(PsiDocTag tag) {
@@ -955,7 +949,8 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     return options.REQUIRED_TAGS.contains(tag);
   }
 
-  private boolean isJavaDocRequired(PsiModifierListOwner psiElement) {
+  private boolean isJavaDocRequired(@NotNull final PsiModifierListOwner element) {
+    PsiModifierListOwner psiElement = element;
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     int actualAccess = getAccessNumber(refUtil.getAccessModifier(psiElement));
     if (psiElement instanceof PsiPackage) {
@@ -1024,21 +1019,19 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
         if (value != null) {
           final PsiElement firstChild = value.getFirstChild();
           if (firstChild != null && firstChild.getFirstChild() instanceof PsiJavaCodeReferenceElement) {
-            PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement) firstChild.getFirstChild();
-            if (refElement != null) {
-              PsiElement element = refElement.resolve();
-              if (element instanceof PsiClass) {
-                String fqName = ((PsiClass)element).getQualifiedName();
-                if (documentedExceptions == null) {
-                  documentedExceptions = new HashSet<String>();
-                }
-                if (documentedExceptions.contains(fqName)) {
-                  problems.add(createDescriptor(tag.getNameElement(),
-                                                InspectionsBundle.message("inspection.javadoc.problem.duplicate.throws", fqName),
-                                                manager, isOnTheFly));
-                }
-                documentedExceptions.add(fqName);
+            PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)firstChild.getFirstChild();
+            PsiElement element = refElement.resolve();
+            if (element instanceof PsiClass) {
+              String fqName = ((PsiClass)element).getQualifiedName();
+              if (documentedExceptions == null) {
+                documentedExceptions = new HashSet<String>();
               }
+              if (documentedExceptions.contains(fqName)) {
+                problems.add(createDescriptor(tag.getNameElement(),
+                                              InspectionsBundle.message("inspection.javadoc.problem.duplicate.throws", fqName),
+                                              manager, isOnTheFly));
+              }
+              documentedExceptions.add(fqName);
             }
           }
         }
@@ -1104,7 +1097,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     @Override
     @NotNull
     public String getName() {
-      return QuickFixBundle.message("add.doctag.to.custom.tags", myTag);
+      return QuickFixBundle.message("add.docTag.to.custom.tags", myTag);
     }
 
     @Override

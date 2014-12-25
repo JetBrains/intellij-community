@@ -34,6 +34,7 @@ public abstract class DeploymentUtil {
     return ServiceManager.getService(DeploymentUtil.class);
   }
 
+  @Deprecated
   public abstract void copyFile(@NotNull File fromFile,
                                 @NotNull File toFile,
                                 @NotNull CompileContext context,
@@ -47,6 +48,7 @@ public abstract class DeploymentUtil {
     return path;
   }
 
+  @Deprecated
   public abstract void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module);
 
   public static String concatPaths(String... paths) {
@@ -119,6 +121,7 @@ public abstract class DeploymentUtil {
     }
   }
 
+  @Deprecated
   public abstract void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module);
 
 }

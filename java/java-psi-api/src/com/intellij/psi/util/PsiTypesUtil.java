@@ -166,10 +166,7 @@ public class PsiTypesUtil {
           qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent.getPsi());
         }
       }
-      PsiElement parent = call.getParent();
-      boolean captureTopLevelWildcards = parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression ||
-                                         parent instanceof PsiExpressionList;
-      return createJavaLangClassType(methodExpression, qualifierType, captureTopLevelWildcards);
+      return createJavaLangClassType(methodExpression, qualifierType, true);
     }
     return null;
   }
@@ -208,19 +205,25 @@ public class PsiTypesUtil {
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
-      if (lambdaExpression != null) {
+      final PsiElement psiElement = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, PsiMethod.class);
+      if (psiElement instanceof PsiLambdaExpression) {
         return null;
       }
-      else {
-        PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-        if (method != null) {
-          return method.getReturnType();
-        }
+      else if (psiElement instanceof PsiMethod){
+        return ((PsiMethod)psiElement).getReturnType();
       }
     }
     else if (PsiUtil.isCondition(methodCall, parent)) {
       return PsiType.BOOLEAN.getBoxedType(parent);
+    } 
+    else if (parent instanceof PsiArrayInitializerExpression) {
+      final PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiNewExpression) {
+        final PsiType type = ((PsiNewExpression)gParent).getType();
+        if (type instanceof PsiArrayType) {
+          return ((PsiArrayType)type).getComponentType();
+        }
+      }
     }
     return null;
   }

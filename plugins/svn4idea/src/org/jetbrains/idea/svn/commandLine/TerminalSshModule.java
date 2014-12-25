@@ -112,13 +112,8 @@ public class TerminalSshModule extends BaseTerminalModule {
   }
 
   private boolean handleAuthPrompt(@NotNull final SimpleCredentialsDialog.Mode mode, @NotNull final String key) {
-    final SVNURL repositoryUrl = myExecutor.getCommand().getRepositoryUrl();
-
-    // TODO: repositoryUrl could be null for some cases, for instance for info command for file is invoked that requires
-    // TODO: authentication (like "svn info <file> -r HEAD"), if it is invoked before all working copy roots are resolved.
-    // TODO: resolving repositoryUrl logic should be updated so that repositoryUrl is not null here.
-    String auth =
-      myRuntime.getAuthenticationService().requestSshCredentials(repositoryUrl != null ? repositoryUrl.toDecodedString() : "", mode, key);
+    SVNURL repositoryUrl = myExecutor.getCommand().requireRepositoryUrl();
+    String auth = myRuntime.getAuthenticationService().requestSshCredentials(repositoryUrl.toDecodedString(), mode, key);
 
     if (!StringUtil.isEmpty(auth)) {
       sendData(auth);

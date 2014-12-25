@@ -22,6 +22,7 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgRunConflictResolverDialog;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
@@ -37,7 +38,7 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalSingleRepoActio
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           new HgConflictResolver(project).resolve(repository.getRoot());
-          markDirtyAndHandleErrors(project, repository.getRoot());
+          HgErrorUtil.markDirtyAndHandleErrors(project, repository.getRoot());
         }
       }.queue();
     }
@@ -47,7 +48,6 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalSingleRepoActio
   private static HgRepository letUserSelectRepository(@NotNull Project project, @NotNull Collection<HgRepository> repositories,
                                                       @Nullable HgRepository selectedRepo) {
     HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project, repositories, selectedRepo);
-    dialog.show();
-    return dialog.isOK() ? dialog.getRepository() : null;
+    return dialog.showAndGet() ? dialog.getRepository() : null;
   }
 }

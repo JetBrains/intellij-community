@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,10 +65,10 @@ public class ToggleLaggingModeAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myLagging) {
-      presentation.setText("Exit lagging mode");
+      presentation.setText("Exit Lagging Mode");
     }
     else {
-      presentation.setText("Enter lagging mode");
+      presentation.setText("Enter Lagging Mode");
     }
   }
 }

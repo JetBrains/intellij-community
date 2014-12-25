@@ -41,6 +41,7 @@ public class FormBuilder {
 
   private int myVerticalGap;
   private int myHorizontalGap;
+  private int myFormLeftIndent;
 
   public FormBuilder() {
     myPanel = new JPanel(new GridBagLayout());
@@ -49,6 +50,7 @@ public class FormBuilder {
     myAlignLabelOnRight = false;
     myVerticalGap = DEFAULT_VGAP;
     myHorizontalGap = DEFAULT_HGAP;
+    myFormLeftIndent = 0;
   }
 
   public static FormBuilder createFormBuilder() {
@@ -143,7 +145,7 @@ public class FormBuilder {
       c.weighty = 0;
       c.fill = NONE;
       c.anchor = getLabelAnchor(component, false);
-      c.insets = new Insets(topInset, myIndent, DEFAULT_VGAP, 0);
+      c.insets = new Insets(topInset, myIndent + myFormLeftIndent, DEFAULT_VGAP, 0);
 
       if (label != null) myPanel.add(label, c);
 
@@ -153,7 +155,7 @@ public class FormBuilder {
       c.weighty = getWeightY(component);
       c.fill = getFill(component);
       c.anchor = WEST;
-      c.insets = new Insets(label == null ? topInset : 0, myIndent, 0, 0);
+      c.insets = new Insets(label == null ? topInset : 0, myIndent + myFormLeftIndent, 0, 0);
 
       myPanel.add(component, c);
 
@@ -167,7 +169,7 @@ public class FormBuilder {
       c.weighty = 0;
       c.fill = NONE;
       c.anchor = getLabelAnchor(component, true);
-      c.insets = new Insets(topInset, myIndent, 0, myHorizontalGap);
+      c.insets = new Insets(topInset, myIndent + myFormLeftIndent, 0, myHorizontalGap);
 
       myPanel.add(label, c);
 
@@ -176,7 +178,7 @@ public class FormBuilder {
       c.weighty = getWeightY(component);
       c.fill = getFill(component);
       c.anchor = WEST;
-      c.insets = new Insets(topInset, 0, 0, 0);
+      c.insets = new Insets(topInset, myIndent, 0, 0);
 
       myPanel.add(component, c);
 
@@ -237,8 +239,17 @@ public class FormBuilder {
     return this;
   }
 
+  /**
+   * @deprecated use {@code setHorizontalGap} or {@code setFormLeftIndent}, to be removed in IDEA 16
+   */
+  @Deprecated
   public FormBuilder setIndent(int indent) {
     myIndent = indent;
+    return this;
+  }
+
+  public FormBuilder setFormLeftIndent(int formLeftIndent) {
+    myFormLeftIndent = formLeftIndent;
     return this;
   }
 }

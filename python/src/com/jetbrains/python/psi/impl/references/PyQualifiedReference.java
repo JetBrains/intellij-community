@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,9 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
     }
 
-    if (qualifierType == null && myContext.allowImplicits() && canQualifyAnImplicitName(qualifier)) {
+    if ((PyTypeChecker.isUnknown(qualifierType) ||
+         (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages())) &&
+        myContext.allowImplicits() && canQualifyAnImplicitName(qualifier)) {
       addImplicitResolveResults(referencedName, ret);
     }
 
@@ -260,13 +262,19 @@ public class PyQualifiedReference extends PyReferenceImpl {
     }
     final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
 
-    final PyType qualifierType = TypeEvalContext.userInitiated(element.getContainingFile()).getType(qualifier);
+    PyType qualifierType = TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()).getType(qualifier);
     ProcessingContext ctx = new ProcessingContext();
     final Set<String> namesAlready = new HashSet<String>();
     ctx.put(PyType.CTX_NAMES, namesAlready);
+    final Collection<Object> variants = new ArrayList<Object>();
     if (qualifierType != null) {
-      Collection<Object> variants = new ArrayList<Object>();
       Collections.addAll(variants, getVariantFromHasAttr(qualifier));
+      if (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages()) {
+        final PyClassType guessedType = guessClassTypeByName();
+        if (guessedType != null) {
+          Collections.addAll(variants, getTypeCompletionVariants(myElement, guessedType));
+        }
+      }
       if (qualifier instanceof PyQualifiedExpression) {
         Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
         for (PyExpression ex : attrs) {
@@ -295,7 +303,16 @@ public class PyQualifiedReference extends PyReferenceImpl {
         return qualifierType.getCompletionVariants(element.getName(), element, ctx);
       }
     }
-    return getUntypedVariants();
+    else {
+      final PyClassType guessedType = guessClassTypeByName();
+      if (guessedType != null) {
+        Collections.addAll(variants, getTypeCompletionVariants(myElement, guessedType));
+      }
+      if (qualifier instanceof PyReferenceExpression) {
+        Collections.addAll(variants, collectSeenMembers(qualifier.getText()));
+      }
+      return variants.toArray();
+    }
   }
 
   private Object[] getVariantFromHasAttr(PyExpression qualifier) {
@@ -315,7 +332,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return variants.toArray();
   }
 
-  private Object[] getUntypedVariants() {
+  @Nullable
+  private PyClassType guessClassTypeByName() {
     final PyExpression qualifierElement = myElement.getQualifier();
     if (qualifierElement instanceof PyReferenceExpression) {
       PyReferenceExpression qualifier = (PyReferenceExpression)qualifierElement;
@@ -324,13 +342,11 @@ public class PyQualifiedReference extends PyReferenceImpl {
         Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
         classes = filterByImports(classes, myElement.getContainingFile());
         if (classes.size() == 1) {
-          final PyClassType classType = new PyClassTypeImpl(classes.iterator().next(), false);
-          return getTypeCompletionVariants(myElement, classType);
+          return new PyClassTypeImpl(classes.iterator().next(), false);
         }
       }
-      return collectSeenMemberVariants(qualifier.getText());
     }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return null;
   }
 
   private static Collection<PyClass> filterByImports(Collection<PyClass> classes, PsiFile containingFile) {
@@ -352,26 +368,25 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return result;
   }
 
-  @NotNull
-  private Object[] collectSeenMemberVariants(@NotNull String qualifier) {
-    final Set<String> members = collectSeenMemberNames(qualifier);
-    final List<LookupElement> results = new ArrayList<LookupElement>(members.size());
-    for (String member : members) {
-      results.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(LookupElementBuilder.create(member)));
-    }
-    return ArrayUtil.toObjectArray(results);
-  }
-
-  @NotNull
-  private Set<String> collectSeenMemberNames(@NotNull final String qualifierName) {
+  private Object[] collectSeenMembers(final String text) {
     final Set<String> members = new HashSet<String>();
     myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
+        visitPyQualifiedExpression(node);
+      }
+
+      @Override
+      public void visitPyTargetExpression(PyTargetExpression node) {
+        super.visitPyTargetExpression(node);
+        visitPyQualifiedExpression(node);
+      }
+
+      private void visitPyQualifiedExpression(PyQualifiedExpression node) {
         if (node != myElement) {
           final PyExpression qualifier = node.getQualifier();
-          if (qualifier != null && qualifier.getText().equals(qualifierName)) {
+          if (qualifier != null && qualifier.getText().equals(text)) {
             final String refName = node.getReferencedName();
             if (refName != null) {
               members.add(refName);
@@ -380,7 +395,11 @@ public class PyQualifiedReference extends PyReferenceImpl {
         }
       }
     });
-    return members;
+    List<LookupElement> results = new ArrayList<LookupElement>(members.size());
+    for (String member : members) {
+      results.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(LookupElementBuilder.create(member)));
+    }
+    return ArrayUtil.toObjectArray(results);
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
@@ -422,7 +441,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (containingFile instanceof StubBasedPsiElement) {
         assert ((StubBasedPsiElement)containingFile).getStub() == null : "Stub origin for type eval context in isReferenceTo()";
       }
-      final TypeEvalContext context = TypeEvalContext.codeAnalysis(containingFile);
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(containingFile.getProject(), containingFile);
       resolveContext = resolveContext.withTypeEvalContext(context);
     }
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
@@ -430,7 +449,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null) {
         final PyType qualifierType = resolveContext.getTypeEvalContext().getType(qualifier);
-        if (qualifierType == null) {
+        if (qualifierType == null ||
+            (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages())) {
           return true;
         }
       }

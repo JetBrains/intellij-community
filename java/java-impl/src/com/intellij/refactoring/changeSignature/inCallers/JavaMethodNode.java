@@ -56,13 +56,16 @@ public class JavaMethodNode extends MethodNodeBase<PsiMethod> {
       if (!(element instanceof PsiReferenceExpression) ||
           !(((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression)) {
         final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
-        if (enclosingContext instanceof PsiMethod &&
+        if (enclosingContext instanceof PsiMethod && !result.contains(enclosingContext) &&
             !myMethod.equals(enclosingContext) && !myCalled.contains(myMethod)) { //do not add recursive methods
           result.add((PsiMethod)enclosingContext);
         }
         else if (element instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)element;
-          result.add(JavaPsiFacade.getElementFactory(myProject).createMethodFromText(aClass.getName() + "(){}", aClass));
+          final PsiMethod method = JavaPsiFacade.getElementFactory(myProject).createMethodFromText(aClass.getName() + "(){}", aClass);
+          if (!result.contains(method)) {
+            result.add(method);
+          }
         }
       }
     }
@@ -71,7 +74,7 @@ public class JavaMethodNode extends MethodNodeBase<PsiMethod> {
 
   @Override
   protected void customizeRendererText(ColoredTreeCellRenderer renderer) {
-    final StringBuffer buffer = new StringBuffer(128);
+    final StringBuilder buffer = new StringBuilder(128);
     final PsiClass containingClass = myMethod.getContainingClass();
     if (containingClass != null) {
       buffer.append(ClassPresentationUtil.getNameForClass(containingClass, false));

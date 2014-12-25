@@ -43,6 +43,19 @@ class RenameSuggestionsTest extends LightCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo")
   }
 
+  public void "test foreach scope"() {
+    def text = """\
+     class Foo {
+        {
+           for (Foo <caret>f : new Foo[] {});
+           for (Foo foo : new Foo[] {});
+        }
+     }
+   """
+
+    doTestSuggestionAvailable(text, "foo")
+  }
+
   public void "test by super parameter name"() {
     def text = """\
      class Test {

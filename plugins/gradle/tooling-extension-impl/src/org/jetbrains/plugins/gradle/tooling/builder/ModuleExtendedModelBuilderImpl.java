@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import groovy.lang.GroovyObject;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.SourceSet;
@@ -25,6 +24,7 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
@@ -132,12 +132,10 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
     final Set<String> ideaSourceDirectories = new HashSet<String>();
     final Set<String> ideaTestDirectories = new HashSet<String>();
-    final Set<String> ideaExtResourceDirectories = new HashSet<String>();
-    final Set<String> ideaExtTestResourceDirectories = new HashSet<String>();
+    final Set<String> ideaGeneratedDirectories = new HashSet<String>();
     final Set<File> excludeDirectories = new HashSet<File>();
 
-    enrichDataFromIdeaPlugin(project, excludeDirectories, ideaSourceDirectories, ideaTestDirectories,
-                             ideaExtResourceDirectories, ideaExtTestResourceDirectories);
+    enrichDataFromIdeaPlugin(project, excludeDirectories, ideaSourceDirectories, ideaTestDirectories, ideaGeneratedDirectories);
 
     if (ideaSourceDirectories.isEmpty()) {
       sourceDirectories.clear();
@@ -154,21 +152,16 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     ideaTestDirectories.removeAll(testResourceDirectories);
     testDirectories.addAll(ideaTestDirectories);
 
-    resourceDirectories.removeAll(ideaExtTestResourceDirectories);
-    resourceDirectories.addAll(ideaExtResourceDirectories);
-    testResourceDirectories.removeAll(ideaExtResourceDirectories);
-    testResourceDirectories.addAll(ideaExtTestResourceDirectories);
-
     // ensure disjoint directories with different type
     resourceDirectories.removeAll(sourceDirectories);
     testDirectories.removeAll(sourceDirectories);
     testResourceDirectories.removeAll(testDirectories);
 
     for (String javaDir : sourceDirectories) {
-      contentRoot.addSourceDirectory(new IdeaSourceDirectoryImpl(new File(javaDir)));
+      contentRoot.addSourceDirectory(new IdeaSourceDirectoryImpl(new File(javaDir), ideaGeneratedDirectories.contains(javaDir)));
     }
     for (String testDir : testDirectories) {
-      contentRoot.addTestDirectory(new IdeaSourceDirectoryImpl(new File(testDir)));
+      contentRoot.addTestDirectory(new IdeaSourceDirectoryImpl(new File(testDir), ideaGeneratedDirectories.contains(testDir)));
     }
     for (String resourceDir : resourceDirectories) {
       contentRoot.addResourceDirectory(new IdeaSourceDirectoryImpl(new File(resourceDir)));
@@ -222,8 +215,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
                                                Set<File> excludeDirectories,
                                                Set<String> javaDirectories,
                                                Set<String> testDirectories,
-                                               Set<String> ideaExtResourceDirectories,
-                                               Set<String> ideaExtTestResourceDirectories) {
+                                               Set<String> ideaGeneratedDirectories) {
 
     IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
     if (ideaPlugin == null) return;
@@ -241,24 +233,10 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
       testDirectories.add(file.getPath());
     }
 
-    ideaExtResourceDirectories.addAll(getExtDirs("resourceDirs", ideaModel.getModule()));
-    ideaExtTestResourceDirectories.addAll(getExtDirs("testResourceDirs", ideaModel.getModule()));
-  }
-
-  private static List<String> getExtDirs(String propertyName, GroovyObject ideaModule) {
-    List<String> directories = new ArrayList<String>();
-    Object resourceDirs = ideaModule.getProperty(propertyName);
-    if (resourceDirs instanceof Iterable) {
-      for (Object o : Iterable.class.cast(resourceDirs)) {
-        if (o instanceof File) {
-          directories.add(File.class.cast(o).getPath());
-        }
-        else if (o instanceof String) {
-          directories.add((String)o);
-        }
+    if(GradleVersion.current().compareTo(GradleVersion.version("2.2")) >=0) {
+      for (File file : ideaModel.getModule().getGeneratedSourceDirs()) {
+        ideaGeneratedDirectories.add(file.getPath());
       }
     }
-
-    return directories;
   }
 }

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -115,6 +116,10 @@ public class TransferToEDTQueue<T> {
     return true;
   }
 
+  public boolean offerIfAbsent(@NotNull T thing) {
+    return offerIfAbsent(thing, Equality.CANONICAL);
+  }
+
   public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<T> equality) {
     synchronized (myQueue) {
       boolean absent = myQueue.process(new Processor<T>() {
@@ -151,6 +156,12 @@ public class TransferToEDTQueue<T> {
   public int size() {
     synchronized (myQueue) {
       return myQueue.size();
+    }
+  }
+
+  public Collection<T> dump() {
+    synchronized (myQueue) {
+      return myQueue.toList();
     }
   }
 

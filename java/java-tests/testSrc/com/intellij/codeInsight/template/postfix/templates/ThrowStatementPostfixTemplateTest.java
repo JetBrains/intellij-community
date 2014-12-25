@@ -37,4 +37,7 @@ public class ThrowStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testSimpleWithSemicolon() {
     doTest();
   }
+  public void testIncompleteExpression() {
+    doTest();
+  }
 }

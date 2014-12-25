@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class XmlInspectionSuppressor implements InspectionSuppressor{
   @Override
-  public boolean isSuppressedFor(@NotNull PsiElement element, String toolId) {
+  public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
     return XmlSuppressionProvider.isSuppressed(element, toolId);
   }
 

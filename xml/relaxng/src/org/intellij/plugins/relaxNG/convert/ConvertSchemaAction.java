@@ -103,8 +103,7 @@ public class ConvertSchemaAction extends AnAction {
 
       final SchemaType type = getInputType(project, files);
       final ConvertSchemaDialog dialog = new ConvertSchemaDialog(project, type, file);
-      dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.showAndGet()) {
         return;
       }
 

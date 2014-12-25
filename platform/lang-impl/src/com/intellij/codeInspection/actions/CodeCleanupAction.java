@@ -28,12 +28,15 @@ import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
 import org.jetbrains.annotations.NotNull;
 
 public class CodeCleanupAction extends CodeInspectionAction {
+
+  public static final String CODE_CLEANUP_INSPECTIONS_DISPLAY_NAME = "Code Cleanup Inspections";
+
   public CodeCleanupAction() {
     super("Code Cleanup", "Code Cleanup");
   }
 
   @Override
-  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+  protected void runInspections(Project project, AnalysisScope scope) {
     final InspectionProfile profile = myExternalProfile != null ? myExternalProfile : InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final InspectionManager managerEx = InspectionManager.getInstance(project);
     final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext(false);
@@ -47,6 +50,11 @@ public class CodeCleanupAction extends CodeInspectionAction {
       @Override
       protected boolean acceptTool(InspectionToolWrapper entry) {
         return super.acceptTool(entry) && entry.isCleanupTool();
+      }
+
+      @Override
+      public String getDisplayName() {
+        return CODE_CLEANUP_INSPECTIONS_DISPLAY_NAME;
       }
     };
   }

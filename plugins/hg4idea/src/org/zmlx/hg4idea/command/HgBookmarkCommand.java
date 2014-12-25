@@ -11,6 +11,7 @@ import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class HgBookmarkCommand {
     myBookmarkResultHandler = new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
+        if(myProject.isDisposed()) return;
         getRepositoryManager(myProject).updateRepository(myRepo);
         if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
           new HgCommandResultNotifier(myProject)
@@ -47,6 +49,18 @@ public class HgBookmarkCommand {
     }
     else {
       executeBookmarkCommand("--inactive");
+    }
+  }
+
+  public static void createBookmark(@NotNull List<HgRepository> repositories, @NotNull String name, boolean isActive) {
+    for (HgRepository repository : repositories) {
+      Project project = repository.getProject();
+      try {
+        new HgBookmarkCommand(project, repository.getRoot(), name).createBookmark(isActive);
+      }
+      catch (HgCommandException exception) {
+        HgErrorUtil.handleException(project, exception);
+      }
     }
   }
 

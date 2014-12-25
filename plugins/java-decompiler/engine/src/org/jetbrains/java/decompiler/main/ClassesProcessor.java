@@ -27,7 +27,7 @@ import org.jetbrains.java.decompiler.main.rels.LambdaProcessor;
 import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
 import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -83,8 +83,8 @@ public class ClassesProcessor {
               }
               else if (simpleName != null && DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
                 IIdentifierRenamer renamer = DecompilerContext.getPoolInterceptor().getHelper();
-                if (renamer.toBeRenamed(IIdentifierRenamer.ELEMENT_CLASS, simpleName, null, null)) {
-                  simpleName = renamer.getNextClassname(innername, simpleName);
+                if (renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
+                  simpleName = renamer.getNextClassName(innername, simpleName);
                   mapNewSimpleNames.put(innername, simpleName);
                 }
               }
@@ -256,9 +256,8 @@ public class ClassesProcessor {
       new NestedMemberAccess().propagateMemberAccess(root);
 
       TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
-      new ClassWriter().classToJava(root, classBuffer, 0);
+      new ClassWriter().classToJava(root, classBuffer, 0, null);
 
-      String lineSeparator = DecompilerContext.getNewLineSeparator();
       int total_offset_lines = 0;
 
       int index = cl.qualifiedName.lastIndexOf("/");
@@ -269,25 +268,30 @@ public class ClassesProcessor {
         buffer.append("package ");
         buffer.append(packageName);
         buffer.append(";");
-        buffer.append(lineSeparator);
-        buffer.append(lineSeparator);
+        buffer.appendLineSeparator();
+        buffer.appendLineSeparator();
       }
 
       int import_lines_written = importCollector.writeImports(buffer);
       if (import_lines_written > 0) {
-        buffer.append(lineSeparator);
+        buffer.appendLineSeparator();
         total_offset_lines += import_lines_written + 1;
       }
       //buffer.append(lineSeparator);
 
+      total_offset_lines = buffer.countLines();
       buffer.append(classBuffer);
 
-      if(DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
+      if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
         BytecodeSourceMapper mapper = DecompilerContext.getBytecodeSourceMapper();
         mapper.addTotalOffset(total_offset_lines);
-
-        buffer.append(lineSeparator);
-        mapper.dumpMapping(buffer);
+        if (DecompilerContext.getOption(IFernflowerPreferences.DUMP_ORIGINAL_LINES)) {
+          buffer.dumpOriginalLineNumbers(mapper.getOriginalLinesMapping());
+        }
+        if (DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE)) {
+          buffer.appendLineSeparator();
+          mapper.dumpMapping(buffer, true);
+        }
       }
     }
     finally {
@@ -347,30 +351,19 @@ public class ClassesProcessor {
     public static final int CLASS_LAMBDA = 8;
 
     public int type;
-
     public int access;
-
     public String simpleName;
-
     public StructClass classStruct;
-
     public ClassWrapper wrapper;
-
     public String enclosingMethod;
-
     public InvocationExprent superInvocation;
-
-    public HashMap<String, VarVersionPaar> mapFieldsToVars = new HashMap<String, VarVersionPaar>();
-
+    public Map<String, VarVersionPair> mapFieldsToVars = new HashMap<String, VarVersionPair>();
     public VarType anonymousClassType;
-
     public List<ClassNode> nested = new ArrayList<ClassNode>();
-
     public Set<String> enclosingClasses = new HashSet<String>();
-
     public ClassNode parent;
-
-    public LambdaInformation lambda_information;
+    public LambdaInformation lambdaInformation;
+    public boolean namelessConstructorStub = false;
 
     public ClassNode(String content_class_name,
                      String content_method_name,
@@ -383,19 +376,19 @@ public class ClassesProcessor {
       this.type = CLASS_LAMBDA;
       this.classStruct = classStruct; // 'parent' class containing the static function
 
-      lambda_information = new LambdaInformation();
+      lambdaInformation = new LambdaInformation();
 
-      lambda_information.class_name = lambda_class_name;
-      lambda_information.method_name = lambda_method_name;
-      lambda_information.method_descriptor = lambda_method_descriptor;
+      lambdaInformation.class_name = lambda_class_name;
+      lambdaInformation.method_name = lambda_method_name;
+      lambdaInformation.method_descriptor = lambda_method_descriptor;
 
-      lambda_information.content_class_name = content_class_name;
-      lambda_information.content_method_name = content_method_name;
-      lambda_information.content_method_descriptor = content_method_descriptor;
-      lambda_information.content_method_invocation_type = content_method_invocation_type;
+      lambdaInformation.content_class_name = content_class_name;
+      lambdaInformation.content_method_name = content_method_name;
+      lambdaInformation.content_method_descriptor = content_method_descriptor;
+      lambdaInformation.content_method_invocation_type = content_method_invocation_type;
 
-      lambda_information.content_method_key =
-        InterpreterUtil.makeUniqueKey(lambda_information.content_method_name, lambda_information.content_method_descriptor);
+      lambdaInformation.content_method_key =
+        InterpreterUtil.makeUniqueKey(lambdaInformation.content_method_name, lambdaInformation.content_method_descriptor);
 
       anonymousClassType = new VarType(lambda_class_name, true);
 
@@ -405,9 +398,9 @@ public class ClassesProcessor {
         is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
       }
 
-      lambda_information.is_method_reference = is_method_reference;
-      lambda_information.is_content_method_static =
-        (lambda_information.content_method_invocation_type == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic); // FIXME: redundant?
+      lambdaInformation.is_method_reference = is_method_reference;
+      lambdaInformation.is_content_method_static =
+        (lambdaInformation.content_method_invocation_type == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic); // FIXME: redundant?
     }
 
     public ClassNode(int type, StructClass classStruct) {
@@ -435,7 +428,6 @@ public class ClassesProcessor {
       public String content_method_name;
       public String content_method_descriptor;
       public int content_method_invocation_type; // values from CONSTANT_MethodHandle_REF_*
-
       public String content_method_key;
 
       public boolean is_method_reference;

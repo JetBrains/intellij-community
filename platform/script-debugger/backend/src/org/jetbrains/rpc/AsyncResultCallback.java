@@ -1,7 +1,10 @@
 package org.jetbrains.rpc;
 
-public interface AsyncResultCallback<SUCCESS_RESPONSE, ERROR_DETAILS> {
-  void onSuccess(SUCCESS_RESPONSE successResponse, ResultReader<SUCCESS_RESPONSE> resultReader);
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-  void onError(String errorMessage, ERROR_DETAILS errorDetails);
+public interface AsyncResultCallback<SUCCESS_RESPONSE, ERROR_DETAILS> {
+  void onSuccess(SUCCESS_RESPONSE successResponse, @NotNull ResultReader<SUCCESS_RESPONSE> resultReader);
+
+  void onError(@NotNull String errorMessage, @Nullable ERROR_DETAILS errorDetails);
 }

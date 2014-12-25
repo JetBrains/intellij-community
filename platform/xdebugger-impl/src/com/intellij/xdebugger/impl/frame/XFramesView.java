@@ -68,6 +68,7 @@ public class XFramesView extends XDebugView {
   private final Wrapper myThreadsPanel;
   private boolean myThreadsCalculated = false;
   private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XFramesView later invocator", 50);
+  private boolean myRefresh = false;
 
   public XFramesView(@NotNull Project project) {
     myMainPanel = new JPanel(new BorderLayout());
@@ -77,7 +78,7 @@ public class XFramesView extends XDebugView {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         if (myListenersEnabled && !e.getValueIsAdjusting() && mySelectedFrameIndex != myFramesList.getSelectedIndex()) {
-          processFrameSelection(getSession(e));
+          processFrameSelection(getSession(e), true);
         }
       }
     });
@@ -87,7 +88,7 @@ public class XFramesView extends XDebugView {
         if (myListenersEnabled) {
           int i = myFramesList.locationToIndex(e.getPoint());
           if (i != -1 && myFramesList.isSelectedIndex(i)) {
-            processFrameSelection(getSession(e));
+            processFrameSelection(getSession(e), true);
           }
         }
       }
@@ -120,6 +121,7 @@ public class XFramesView extends XDebugView {
             XDebugSession session = getSession(e);
             if (session != null) {
               mySelectedFrameIndex = 0;
+              myRefresh = false;
               updateFrames((XExecutionStack)item, session);
             }
           }
@@ -201,6 +203,8 @@ public class XFramesView extends XDebugView {
 
   @Override
   public void processSessionEvent(@NotNull final SessionEvent event) {
+    myRefresh = event == SessionEvent.SETTINGS_CHANGED;
+
     if (event == SessionEvent.BEFORE_RESUME) {
       return;
     }
@@ -297,12 +301,14 @@ public class XFramesView extends XDebugView {
     return myMainPanel;
   }
 
-  private void processFrameSelection(XDebugSession session) {
+  private void processFrameSelection(XDebugSession session, boolean force) {
     mySelectedFrameIndex = myFramesList.getSelectedIndex();
     Object selected = myFramesList.getSelectedValue();
     if (selected instanceof XStackFrame) {
       if (session != null) {
-        session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
+        if (force || (!myRefresh && session.getCurrentStackFrame() != selected)) {
+          session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
+        }
       }
     }
   }
@@ -409,7 +415,7 @@ public class XFramesView extends XDebugView {
           myFramesList.getElementCount() > mySelectedFrameIndex &&
           myFramesList.getModel().get(mySelectedFrameIndex) != null) {
         myFramesList.setSelectedIndex(mySelectedFrameIndex);
-        processFrameSelection(mySession);
+        processFrameSelection(mySession, false);
         myListenersEnabled = true;
       }
     }

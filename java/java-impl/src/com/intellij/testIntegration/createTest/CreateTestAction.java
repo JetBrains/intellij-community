@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.command.CommandProcessor;
@@ -102,7 +101,8 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
     checkForTestRoots(srcModule, testFolders);
     if (testFolders.isEmpty() && !propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT, false)) {
-      if (Messages.showOkCancelDialog(project, "Create test in the same source root?", "No Test Roots Found", Messages.getQuestionIcon()) != Messages.OK) {
+      if (Messages.showOkCancelDialog(project, "Create test in the same source root?", "No Test Roots Found", Messages.getQuestionIcon()) !=
+          Messages.OK) {
         return;
       }
 
@@ -110,8 +110,9 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     }
 
     final CreateTestDialog d = createTestDialog(project, srcModule, srcClass, srcPackage);
-    d.show();
-    if (!d.isOK()) return;
+    if (!d.showAndGet()) {
+      return;
+    }
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override

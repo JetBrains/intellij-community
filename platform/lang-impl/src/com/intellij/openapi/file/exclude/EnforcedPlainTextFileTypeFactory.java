@@ -51,10 +51,7 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
 
       @Override
       public boolean isMyFileType(@NotNull VirtualFile file) {
-        if (isMarkedAsPlainText(file)) {
-          return true;
-        }
-        return false;
+        return isMarkedAsPlainText(file);
       }
 
       @NotNull

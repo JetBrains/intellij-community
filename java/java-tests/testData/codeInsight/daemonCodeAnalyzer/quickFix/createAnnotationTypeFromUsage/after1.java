@@ -1,4 +1,4 @@
-// "Create Annotation 'Smth'" "true"
+// "Create annotation 'Smth'" "true"
 class Test {
   void foo(@Smth String s){}
 }

@@ -426,8 +426,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     else {
       wizard = new NewProjectWizard(myProject, dialogParent, this);
     }
-    wizard.show();
-    if (wizard.isOK()) {
+    if (wizard.showAndGet()) {
       final ProjectBuilder builder = wizard.getProjectBuilder();
       if (builder instanceof ModuleBuilder) {
         final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;

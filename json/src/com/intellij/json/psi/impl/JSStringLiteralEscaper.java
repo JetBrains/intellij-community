@@ -1,6 +1,5 @@
 package com.intellij.json.psi.impl;
 
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
@@ -15,7 +14,6 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
   }
 
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-    ProperTextRange.assertProperRange(rangeInsideHost);
     String subText = rangeInsideHost.substring(myHost.getText());
 
     Ref<int[]> sourceOffsetsRef = new Ref<int[]>();

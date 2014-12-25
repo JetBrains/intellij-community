@@ -289,4 +289,44 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testConstructorLeftBraceWithComment() {
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    doClassTest(
+      "/**\n" +
+      " *\n" +
+      " */\n" +
+      "  public Test() {\n" +
+      "}\n",
+      "/**\n" +
+      " *\n" +
+      " */\n" +
+      "public Test() {\n" +
+      "}\n"
+    );
+  }
+
+  public void testConstructorLeftBraceWithAnnotation() {
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    doClassTest(
+      "   @Deprecated\n" +
+      "public Test() {\n" +
+      "}\n",
+      "@Deprecated\n" +
+      "public Test() {\n" +
+      "}\n"
+    );
+  }
+
+  public void testConstructorLeftBraceWithEndLineComment() {
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    doClassTest(
+      "// comment\n" +
+      "  public Test() {\n" +
+      "}\n",
+      "// comment\n" +
+      "public Test() {\n" +
+      "}\n"
+    );
+  }
 }

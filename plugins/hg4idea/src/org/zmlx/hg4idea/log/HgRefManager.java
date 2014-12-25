@@ -23,10 +23,13 @@ import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 public class HgRefManager implements VcsLogRefManager {
@@ -75,24 +78,25 @@ public class HgRefManager implements VcsLogRefManager {
         return typeComparison;
       }
 
-      //noinspection UnnecessaryLocalVariable
-      VcsRefType type = type1; // common type
-      if (type == BRANCH) {
+      if (type1 == BRANCH) {
         if (ref1.getName().equals(DEFAULT)) {
           return -1;
         }
         if (ref2.getName().equals(DEFAULT)) {
           return 1;
         }
-        return ref1.getName().compareTo(ref2.getName());
       }
-      return ref1.getName().compareTo(ref2.getName());
+      int nameComparison = ref1.getName().compareTo(ref2.getName());
+      if (nameComparison != 0) {
+        return nameComparison;
+      }
+      return VcsLogUtil.compareRoots(ref1.getRoot(), ref2.getRoot());
     }
   };
 
   @NotNull
   @Override
-  public Comparator<VcsRef> getComparator() {
+  public Comparator<VcsRef> getLabelsOrderComparator() {
     return REF_COMPARATOR;
   }
 
@@ -108,8 +112,14 @@ public class HgRefManager implements VcsLogRefManager {
   }
 
   @NotNull
+  @Override
+  public Comparator<VcsRef> getBranchLayoutComparator() {
+    return REF_COMPARATOR;
+  }
+
+  @NotNull
   private Collection<VcsRef> sort(@NotNull Collection<VcsRef> refs) {
-    return ContainerUtil.sorted(refs, getComparator());
+    return ContainerUtil.sorted(refs, getLabelsOrderComparator());
   }
 
   private static class SimpleRefType implements VcsRefType {
