@@ -85,4 +85,10 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
 
     checkFormationAndImportsOptimizationFor(files);
   }
+
+
+
+
+
+
 }

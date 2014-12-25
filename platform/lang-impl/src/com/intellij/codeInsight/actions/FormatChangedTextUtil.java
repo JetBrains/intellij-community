@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.actions;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -53,7 +55,8 @@ import java.util.*;
 
 public class FormatChangedTextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.FormatChangedTextUtil");
-  
+  protected static final Key<List<TextRange>> CHANGED_RANGES = Key.create("changed.ranges.since.last.revision");
+
   private FormatChangedTextUtil() {
   }
 
@@ -229,6 +232,13 @@ public class FormatChangedTextUtil {
 
   @NotNull
   public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      List<TextRange> testData = file.getUserData(CHANGED_RANGES);
+      if (testData != null) {
+        return testData;
+      }
+    }
+
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return ContainerUtil.emptyList();
 

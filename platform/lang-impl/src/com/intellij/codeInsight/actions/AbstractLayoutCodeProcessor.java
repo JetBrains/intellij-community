@@ -581,7 +581,7 @@ public abstract class AbstractLayoutCodeProcessor {
     return true;
   }
 
-  protected static Collection<TextRange> getSelectedRanges(@NotNull SelectionModel selectionModel) {
+  protected static List<TextRange> getSelectedRanges(@NotNull SelectionModel selectionModel) {
     final List<TextRange> ranges = new SmartList<TextRange>();
     if (selectionModel.hasSelection()) {
       TextRange range = TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
