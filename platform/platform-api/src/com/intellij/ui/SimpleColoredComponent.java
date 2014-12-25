@@ -672,6 +672,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         g.drawString(fragment, offset, textBaseline);
       }
 
+      // for some reason strokeState here may be incorrect, resetting the stroke helps
+      g.setStroke(g.getStroke());
+
       // 1. Strikeout effect
       if (attributes.isStrikeout()) {
         final int strikeOutAt = textBaseline + (metrics.getDescent() - metrics.getAscent()) / 2;
