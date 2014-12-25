@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ipnb.configuration;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
@@ -19,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -38,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +112,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
     try {
       long time = System.currentTimeMillis() - startTime;
-      while (time < 5000) {
+      while (time < 50000) {
         final String line = reader.readLine();
         if (line != null && line.contains("The IPython Notebook is running")) {
           break;
@@ -210,9 +213,19 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     final Map<String, String> env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
     try {
+      final Pair<String, String> hostPort = getHostPortFromUrl(url);
       final String ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
-      final GeneralCommandLine commandLine = new GeneralCommandLine(sdk.getHomePath(), ipython, "notebook", "--no-browser").
-        withWorkDirectory(myProject.getBasePath()).withEnvironment(env);
+      final ArrayList<String> parameters = Lists.newArrayList(sdk.getHomePath(), ipython, "notebook", "--no-browser");
+      if (hostPort.getFirst() != null) {
+        parameters.add("--ip");
+        parameters.add(hostPort.getFirst());
+      }
+      if (hostPort.getSecond() != null) {
+        parameters.add("--port");
+        parameters.add(hostPort.getSecond());
+      }
+      final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath()).
+        withEnvironment(env);
 
       myProcessHandler = new KillableColoredProcessHandler(commandLine);
 
@@ -221,6 +234,22 @@ public final class IpnbConnectionManager implements ProjectComponent {
     catch (ExecutionException e) {
       return false;
     }
+  }
+
+  @NotNull
+  public static Pair<String, String> getHostPortFromUrl(@NotNull String url) {
+    String host = null;
+    String port = null;
+    int index = url.indexOf("://");
+    if (index != -1) {
+      url = url.substring(index + 3);
+    }
+    index = url.indexOf(':');
+    if (index != -1) {
+      host = url.substring(0, index);
+      port = url.substring(index + 1);
+    }
+    return Pair.create(host, port);
   }
 
   public static boolean isAvailable(@NotNull final String url) {
