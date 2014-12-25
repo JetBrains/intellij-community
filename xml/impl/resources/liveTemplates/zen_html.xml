@@ -517,6 +517,15 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
+  <template description="&lt;input type=&quot;tel&quot; name=&quot;...&quot; id=&quot;...&quot;/&gt;" name="input:tel"
+            toReformat="true" toShortenFQNames="true"
+            value="&lt;input type=&quot;tel&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
   <template description="&lt;input type=&quot;number&quot; name=&quot;...&quot; id=&quot;...&quot;/&gt;" name="input:number"
             toReformat="true" toShortenFQNames="true"
             value="&lt;input type=&quot;number&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;/&gt;">
@@ -982,6 +991,18 @@
   </template>
   <template description="&lt;progress&gt;...&lt;/progress&gt;" name="prog" toReformat="true" toShortenFQNames="true"
             value="&lt;progress&gt;$END$&lt;/progress&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;main&gt;...&lt;/main&gt;" name="mn" toReformat="true" toShortenFQNames="true"
+            value="&lt;main&gt;$END$&lt;/main&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;template&gt;...&lt;/template&gt;" name="tem" toReformat="true" toShortenFQNames="true"
+            value="&lt;template&gt;$END$&lt;/template&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
