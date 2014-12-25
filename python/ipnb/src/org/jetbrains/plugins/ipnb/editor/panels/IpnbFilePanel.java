@@ -58,9 +58,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   @Nullable private IpnbEditablePanel mySelectedCell;
   boolean switchToEditing = false;
   private IpnbEditablePanel myBufferPanel;
-  private int myIncrement = 10;
   private int myInitialSelection = 0;
-  private int myInitialPosition = 0;
 
   public IpnbFilePanel(@NotNull final Project project, @NotNull final IpnbFileEditor parent, @NotNull final VirtualFile vFile,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
@@ -147,7 +145,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         toSelect.switchToEditing();
         switchToEditing = false;
       }
-      myParent.getScrollPane().getViewport().setViewPosition(new Point(0, myInitialPosition));
     }
     add(createEmptyPanel());
   }
@@ -216,6 +213,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       final IpnbEditableCell cell = selectedCell.getCell();
       myIpnbFile.addCell(cell, index + 1);
       myIpnbPanels.add(index + 1, selectedCell);
+      selectPrev(selectedCell);
       setSelectedCell(selectedCell);
     }
     else {
@@ -412,29 +410,12 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         mySelectedCell.switchToEditing();
         repaint();
       }
-      int index = myIpnbPanels.indexOf(mySelectedCell);
-      final Rectangle rect = getVisibleRect();
-
 
       if (e.getKeyCode() == KeyEvent.VK_UP) {
         selectPrev(mySelectedCell);
-        if (index > 0) {
-          final Rectangle cellBounds = mySelectedCell.getBounds();
-          if (cellBounds.getY() <= rect.getY()) {
-            myIncrement = rect.y - cellBounds.y;
-            getParent().dispatchEvent(e);
-          }
-        }
       }
       else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
         selectNext(mySelectedCell);
-        if (index < myIpnbPanels.size() - 1) {
-          final Rectangle cellBounds = mySelectedCell.getBounds();
-          if (cellBounds.getY() + cellBounds.getHeight() > rect.getY() + rect.getHeight()) {
-            myIncrement = cellBounds.y + cellBounds.height - rect.y - rect.height;
-            getParent().dispatchEvent(e);
-          }
-        }
       }
       else if (e.getKeyCode() == KeyEvent.VK_DELETE) {
         if (!mySelectedCell.isEditing()) {
@@ -514,9 +495,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
   }
 
-  public void setInitialPosition(int index, int position) {
+  public void setInitialPosition(int index) {
     myInitialSelection = index;
-    myInitialPosition = position;
   }
 
   public void setSelectedCell(@NotNull final IpnbEditablePanel ipnbPanel) {
@@ -527,7 +507,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     revalidate();
     UIUtil.requestFocus(this);
     repaint();
-    myListener.selectionChanged(ipnbPanel);
+    if (ipnbPanel.getBounds().getHeight() != 0) {
+      myListener.selectionChanged(ipnbPanel);
+    }
   }
 
   @Nullable
@@ -561,7 +543,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   @Override
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-    return myIncrement;
+    return 10;
 
   }
 
