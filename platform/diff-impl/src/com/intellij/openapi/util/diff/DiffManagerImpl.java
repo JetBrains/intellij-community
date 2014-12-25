@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.util.diff;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.diff.api.DiffTool;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
 import com.intellij.openapi.util.diff.chains.SimpleDiffRequestChain;
+import com.intellij.openapi.util.diff.impl.DiffRequestPanelImpl;
 import com.intellij.openapi.util.diff.impl.DiffWindow;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.binary.BinaryDiffTool;
@@ -30,6 +33,7 @@ import com.intellij.openapi.util.diff.tools.simple.SimpleDiffTool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +65,14 @@ public class DiffManagerImpl extends DiffManagerEx {
   @Override
   public void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints) {
     new DiffWindow(project, requests, hints).show();
+  }
+
+  @NotNull
+  @Override
+  public DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window) {
+    DiffRequestPanelImpl panel = new DiffRequestPanelImpl(project, window);
+    Disposer.register(parent, panel);
+    return panel;
   }
 
   @NotNull

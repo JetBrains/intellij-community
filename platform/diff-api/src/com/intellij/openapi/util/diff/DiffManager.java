@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.diff;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
@@ -22,6 +23,8 @@ import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 public abstract class DiffManager {
   @NotNull
@@ -38,4 +41,7 @@ public abstract class DiffManager {
 
   @CalledInAwt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints);
+
+  @NotNull
+  public abstract DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window);
 }
