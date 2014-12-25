@@ -202,7 +202,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     try {
       final PyPackage ipythonPackage = PyPackageManager.getInstance(sdk).findPackage("ipython", false);
       if (ipythonPackage == null) {
-        showWarning(fileEditor, "Please check ipython installed in Python Interpreter in Settings->Python Interpreter");
+        showWarning(fileEditor, "Add IPython to the interpreter of the current project.");
         return false;
       }
     }
