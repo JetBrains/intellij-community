@@ -276,9 +276,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private void doHandleSelectionChange(KeyType selected, boolean processIfUnfocused) {
-    if (!myEnabled) return;
-
     if (selected == null
+        || !myEnabled
         || !myComponent.isEnabled()
         || !myComponent.isShowing()
         || !myComponent.getVisibleRect().intersects(getVisibleRect(selected))
