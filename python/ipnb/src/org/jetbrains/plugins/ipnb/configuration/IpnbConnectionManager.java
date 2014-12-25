@@ -48,7 +48,6 @@ import java.util.Map;
 public final class IpnbConnectionManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(IpnbConnectionManager.class);
   private final Project myProject;
-  private static final String DEFAULT_URL = "http://127.0.0.1:8888";
   private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
   private KillableColoredProcessHandler myProcessHandler;
@@ -68,32 +67,31 @@ public final class IpnbConnectionManager implements ProjectComponent {
     if (!myKernels.containsKey(path)) {
       String url = IpnbSettings.getInstance(myProject).getURL();
       if (StringUtil.isEmptyOrSpaces(url)) {
-        url = DEFAULT_URL;
-      }
-      if (!isAvailable(url)) {
-        url = showDialogUrl(url);
-        if (url == null) return;
-        final boolean serverStarted = startIpythonServer(url, fileEditor);
-        if (myProcessHandler != null) {
-          waitForIpythonServer();
-          boolean connectionStarted = startConnection(codePanel, path, url);
-          if (connectionStarted && serverStarted) {
-            final Notification notification = new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + url +
-                                                                                      "\">" + url + "</a></html>", NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
-            notification.notify(myProject);
-            IpnbSettings.getInstance(myProject).setURL(url);
-          }
-          return;
-        }
-        else {
-          return;
-        }
-      }
-      if (StringUtil.isEmptyOrSpaces(url)) {
         showWarning(fileEditor, "Please, specify IPython Notebook URL in <a href=\"\">Settings->IPython Notebook</a>");
         return;
       }
-      startConnection(codePanel, path, url);
+      if (startConnection(codePanel, path, url, false)) {
+        return;
+      }
+      url = showDialogUrl(url);
+      if (url == null) return;
+      IpnbSettings.getInstance(myProject).setURL(url);
+      boolean connectionStarted = startConnection(codePanel, path, url, false);
+      if (!connectionStarted) {
+        final boolean serverStarted = startIpythonServer(url, fileEditor);
+        if (!serverStarted) {
+          return;
+        }
+
+        waitForIpythonServer();
+        final Notification notification =
+          new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + url +
+                                                  "\">" + url + "</a></html>", NotificationType.INFORMATION,
+                           NotificationListener.URL_OPENING_LISTENER);
+        notification.notify(myProject);
+        IpnbSettings.getInstance(myProject).setURL(url);
+      }
+      startConnection(codePanel, path, url, true);
     }
     else {
       final IpnbConnection connection = myKernels.get(path);
@@ -153,7 +151,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
     return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
-  private boolean startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String url) {
+  private boolean startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String url,
+                                  boolean showNotification) {
     try {
       final IpnbConnection connection = new IpnbConnection(new URI(url), new IpnbConnectionListenerBase() {
         @Override
@@ -176,11 +175,14 @@ public final class IpnbConnectionManager implements ProjectComponent {
       myKernels.put(path, connection);
     }
     catch (URISyntaxException e) {
-      showWarning(codePanel.getFileEditor(), "Please, check IPython Notebook URL in Settings->IPython Notebook");
+      if (showNotification)
+        showWarning(codePanel.getFileEditor(), "Please, check IPython Notebook URL in Settings->IPython Notebook");
+      LOG.warn("IPython Notebook URI Syntax Error: " + e.getMessage());
       return false;
     }
     catch (IOException e) {
-      showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused");
+      if (showNotification)
+        showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused");
       LOG.warn("IPython Notebook connection refused: " + e.getMessage());
       return false;
     }
@@ -250,17 +252,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
       port = url.substring(index + 1);
     }
     return Pair.create(host, port);
-  }
-
-  public static boolean isAvailable(@NotNull final String url) {
-    try {
-      final URLConnection connection = new URL(url).openConnection();
-      connection.connect();
-      return true;
-    }
-    catch (final MalformedURLException ignored) {}
-    catch (final IOException ignored) {}
-    return false;
   }
 
   public void projectOpened() {}
