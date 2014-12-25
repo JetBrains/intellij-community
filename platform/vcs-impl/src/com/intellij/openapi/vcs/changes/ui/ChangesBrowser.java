@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.diff.DiffDialogHints;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -261,21 +260,23 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     List<Change> changes = myViewer.getSelectedChanges();
 
     if (changes.size() < 2) {
-      final Collection<Change> displayedChanges = getCurrentDisplayedChanges();
-      changes = new ArrayList<Change>(displayedChanges);
+      changes = getCurrentDisplayedChanges();
     }
 
-    int indexInSelection = changes.indexOf(leadSelection);
-    if (indexInSelection >= 0) {
-      Change[] changesArray = changes.toArray(new Change[changes.size()]);
-      showDiffForChanges(changesArray, indexInSelection);
+    changes = sortChanges(changes);
+    Change[] changesArray = changes.toArray(new Change[changes.size()]);
+
+    if (leadSelection != null) {
+      int indexInSelection = changes.indexOf(leadSelection);
+      if (indexInSelection == -1) {
+        showDiffForChanges(new Change[]{leadSelection}, 0);
+      }
+      else {
+        showDiffForChanges(changesArray, indexInSelection);
+      }
     }
-    else if ((leadSelection == null && changes.size() > 0)) {
-      Change[] changesArray = changes.toArray(new Change[changes.size()]);
+    else {
       showDiffForChanges(changesArray, 0);
-    }
-    else if (leadSelection != null) {
-      showDiffForChanges(new Change[]{leadSelection}, 0);
     }
 
     afterDiffRefresh();
