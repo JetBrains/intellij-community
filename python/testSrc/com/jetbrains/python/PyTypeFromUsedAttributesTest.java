@@ -191,8 +191,8 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "class MySortable(object):\n" +
                "    def sort(self):\n" +
                "        pass\n" +
-               "x = undefined()\n" +
-               "x.sort()",
+               "def f(x):\n" +
+               "    x.sort()",
                "list | MySortable | OtherClassA | OtherClassB | unknown");
   }
 
@@ -220,9 +220,8 @@ public class PyTypeFromUsedAttributesTest extends PyTestCase {
                "    pass\n" +
                "class C5(C4):\n" +
                "    attr = 'bottom'\n" +
-               "x = undefined()\n" +
-               "x.attr\n" +
-               "x",
+               "def f(x):\n" +
+               "    x.attr\n",
                "C1 | unknown");
   }
 
