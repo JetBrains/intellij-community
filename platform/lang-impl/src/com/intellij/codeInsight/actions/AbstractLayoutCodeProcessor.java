@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -35,6 +36,7 @@ import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
@@ -43,11 +45,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -571,5 +575,26 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     return true;
+  }
+
+  protected static Collection<TextRange> getSelectedRanges(@Nullable SelectionModel selectionModel) {
+    if (selectionModel == null) {
+      return ContainerUtil.emptyList();
+    }
+
+    final List<TextRange> ranges = new SmartList<TextRange>();
+    if (selectionModel.hasSelection()) {
+      TextRange range = TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      ranges.add(range);
+    }
+    else if (selectionModel.hasBlockSelection()) {
+      int[] starts = selectionModel.getBlockSelectionStarts();
+      int[] ends = selectionModel.getBlockSelectionEnds();
+      for (int i = 0; i < starts.length; i++) {
+        ranges.add(TextRange.create(starts[i], ends[i]));
+      }
+    }
+
+    return ranges;
   }
 }

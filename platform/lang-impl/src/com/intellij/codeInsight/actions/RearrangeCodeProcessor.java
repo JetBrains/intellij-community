@@ -20,18 +20,16 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
@@ -84,19 +82,9 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   public Collection<TextRange> getRangesToFormat(@NotNull PsiFile file) {
-    final List<TextRange> ranges = new SmartList<TextRange>();
-    if (mySelectionModel != null && mySelectionModel.hasSelection()) {
-      ranges.add(TextRange.create(mySelectionModel.getSelectionStart(), mySelectionModel.getSelectionEnd()));
-    }
-    else if (mySelectionModel != null && mySelectionModel.hasBlockSelection()) {
-      int[] starts = mySelectionModel.getBlockSelectionStarts();
-      int[] ends = mySelectionModel.getBlockSelectionEnds();
-      for (int i = 0; i < starts.length; i++) {
-        ranges.add(TextRange.create(starts[i], ends[i]));
-      }
-    }
-    else {
-      ranges.add(TextRange.create(0, file.getTextLength()));
+    Collection<TextRange> ranges = getSelectedRanges(mySelectionModel);
+    if (ranges.isEmpty()) {
+      return ContainerUtil.newSmartList(file.getTextRange());
     }
     return ranges;
   }
