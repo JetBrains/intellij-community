@@ -28,9 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
-  private final static int MAX_BLOCK_SIZE = 200; // specially tailored for 17740ba5899bc13de622808e0e0f4fbf6285e8b5
-  // this high delta is kinda useless (its about like ten cases in idea when a block does not match this), but I really want to collapse 17740ba5899bc13de622808e0e0f4fbf6285e8b5
-  private static final long MAX_DELTA_TIME = 60 * 60 * 24 * 365 * 1000l;
+  private static final int MAX_BLOCK_SIZE = 20;
+  private static final long MAX_DELTA_TIME = 60 * 60 * 24 * 3 * 1000l;
   @NotNull private final WorkingGraph myWorkingGraph;
   @NotNull private final GraphLayout myGraphLayout;
   @NotNull private final List<Integer> myHeads;
