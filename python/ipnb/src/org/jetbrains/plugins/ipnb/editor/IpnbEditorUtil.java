@@ -16,10 +16,10 @@
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -63,7 +63,15 @@ public class IpnbEditorUtil {
     editor.setBackgroundColor(getEditablePanelBackground());
     noScrolling(editor);
     editor.getScrollPane().setBorder(null);
-    ConsoleViewUtil.setupConsoleEditor(editor, false, false);
+    final EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
+    editorSettings.setLineNumbersShown(false);
+    editorSettings.setFoldingOutlineShown(false);
+    editorSettings.setAdditionalPageAtBottom(false);
+    editorSettings.setAdditionalColumnsCount(0);
+    editorSettings.setAdditionalLinesCount(0);
+    editorSettings.setRightMarginShown(false);
   }
 
   public static Color getEditablePanelBackground() {
