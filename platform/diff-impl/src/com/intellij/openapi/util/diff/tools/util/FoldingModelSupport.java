@@ -36,6 +36,7 @@ public class FoldingModelSupport {
 
     public void install(@Nullable List<IntPair> equalLines, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
       if (equalLines == null) return;
+      if (range == -1) return;
       MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
 
       for (IntPair line : equalLines) {
@@ -92,6 +93,7 @@ public class FoldingModelSupport {
 
     public void install(@Nullable LineFragments lineFragments, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
       if (lineFragments == null) return;
+      if (range == -1) return;
       List<? extends LineFragment> fragments = lineFragments.getFragments();
       MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
 
@@ -165,6 +167,7 @@ public class FoldingModelSupport {
     public void install(@Nullable List<MergeLineFragment> fragments, @NotNull UserDataHolder context,
                         boolean defaultExpanded, int range) {
       if (fragments == null) return;
+      if (range == -1) return;
       MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
 
       int last1 = Integer.MIN_VALUE;

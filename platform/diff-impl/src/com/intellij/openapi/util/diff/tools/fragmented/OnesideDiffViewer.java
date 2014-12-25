@@ -3,9 +3,7 @@ package com.intellij.openapi.util.diff.tools.fragmented;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,10 +17,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -38,7 +33,6 @@ import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.tools.fragmented.FragmentedDiffSettingsHolder.FragmentedDiffSettings;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.OnesideFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
@@ -49,9 +43,7 @@ import com.intellij.openapi.util.diff.util.*;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.DiffUtil.DocumentData;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.text.MergingCharSequence;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -60,8 +52,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 class OnesideDiffViewer extends TextDiffViewerBase {
@@ -73,8 +66,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
   @Nullable private final DocumentContent myActualContent1;
   @Nullable private final DocumentContent myActualContent2;
-
-  @NotNull private final FragmentedDiffSettings mySettings;
 
   @NotNull private final MySetEditorSettingsAction myEditorSettingsAction;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
@@ -93,8 +84,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
 
-
-    mySettings = initSettings(context);
 
     DiffContent[] contents = myRequest.getContents();
     myActualContent1 = contents[0] instanceof DocumentContent ? ((DocumentContent)contents[0]) : null;
@@ -151,6 +140,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyContextRangeSettingAction());
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(myEditorSettingsAction);
 
     return group;
@@ -164,9 +154,8 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(new MyIgnorePolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
     group.add(new MyHighlightPolicySettingAction().getPopupGroup());
-    // TODO
-    //group.add(Separator.getInstance());
-    //group.add(new MyContextRangeSettingAction());
+    group.add(Separator.getInstance());
+    group.add(new MyToggleExpandByDefaultAction());
 
     return group;
   }
@@ -370,7 +359,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
         myChangedBlockData = new ChangedBlockData(diffChanges, convertor);
 
-        myFoldingModel.install(equalLines, myRequest, false, mySettings.getContextRange()); // TODO: settings
+        myFoldingModel.install(equalLines, myRequest, getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
 
         myScrollToLineHelper.onRediff();
 
@@ -453,16 +442,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   //
 
   @NotNull
-  private static FragmentedDiffSettings initSettings(@NotNull DiffContext context) {
-    FragmentedDiffSettings settings = context.getUserData(FragmentedDiffSettings.KEY);
-    if (settings == null) {
-      settings = FragmentedDiffSettings.getSettings();
-      context.putUserData(FragmentedDiffSettings.KEY, settings);
-    }
-    return settings;
-  }
-
-  @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
     return new DiffUtil.DiffConfig(getTextSettings().getIgnorePolicy(), getHighlightPolicy());
   }
@@ -494,11 +473,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   @Nullable
   List<OnesideDiffChange> getDiffChanges() {
     return myChangedBlockData == null ? null : myChangedBlockData.getDiffChanges();
-  }
-
-  @NotNull
-  FragmentedDiffSettings getSettings() {
-    return mySettings;
   }
 
   @NotNull
@@ -636,70 +610,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       if (prev == null) prev = diffChanges.get(diffChanges.size() - 1);
 
       DiffUtil.scrollToLineAnimated(myEditor, prev.getLine1());
-    }
-  }
-
-  private class MyContextRangeSettingAction extends DumbAwareAction {
-    private MyContextRangeSettingAction() {
-      super("Context Lines...", "More/Less Lines...", AllIcons.Actions.Expandall);
-      setEnabledInModalContext(true);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      final int[] modes = FragmentedDiffSettings.CONTEXT_RANGE_MODES;
-      String[] modeLabels = FragmentedDiffSettings.CONTEXT_RANGE_MODE_LABELS;
-
-      //noinspection UseOfObsoleteCollectionType
-      Dictionary<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
-      for (int i = 0; i < modes.length; i++) {
-        sliderLabels.put(i, new JLabel(modeLabels[i]));
-      }
-
-      JPanel result = new JPanel(new BorderLayout());
-      JLabel label = new JLabel("Context Lines:");
-      label.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 0));
-      JPanel wrapper = new JPanel(new BorderLayout());
-      wrapper.add(label, BorderLayout.NORTH);
-      result.add(wrapper, BorderLayout.WEST);
-      final JSlider slider = new JSlider(SwingConstants.HORIZONTAL, 0, modes.length - 1, 0);
-      slider.setMinorTickSpacing(1);
-      slider.setPaintTicks(true);
-      slider.setPaintTrack(true);
-      slider.setSnapToTicks(true);
-      UIUtil.setSliderIsFilled(slider, true);
-      slider.setPaintLabels(true);
-      slider.setLabelTable(sliderLabels);
-      result.add(slider, BorderLayout.CENTER);
-
-      for (int i = 0; i < modes.length; i++) {
-        int mark = modes[i];
-        if (mark == mySettings.getContextRange()) {
-          slider.setValue(i);
-        }
-      }
-
-      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(result, slider).createPopup();
-      popup.setFinalRunnable(new Runnable() {
-        @Override
-        public void run() {
-          int value = slider.getModel().getValue();
-          if (mySettings.getContextRange() != modes[value]) {
-            mySettings.setContextRange(modes[value]);
-            rediff();
-          }
-        }
-      });
-      if (e.getInputEvent() instanceof MouseEvent) {
-        MouseEvent inputEvent = ((MouseEvent)e.getInputEvent());
-        int width = result.getPreferredSize().width;
-        Point point = new Point(inputEvent.getX() - width / 2, inputEvent.getY());
-        RelativePoint absPoint = new RelativePoint(inputEvent.getComponent(), point); // TODO: WTF, wrong component - fix positioning
-        popup.show(absPoint);
-      }
-      else {
-        popup.showInBestPositionFor(e.getDataContext());
-      }
     }
   }
 

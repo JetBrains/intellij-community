@@ -95,7 +95,8 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     group.add(new MyIgnorePolicySettingAction());
     //group.add(new MyHighlightPolicySettingAction()); // TODO
-
+    group.add(new MyContextRangeSettingAction());
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
 
@@ -113,6 +114,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     //group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
     group.add(new MyToggleAutoScrollAction());
+    group.add(new MyToggleExpandByDefaultAction());
 
     return group;
   }
@@ -232,7 +234,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
           myDiffChanges.add(new SimpleThreesideDiffChange(fragment, myEditors, comparisonPolicy));
         }
 
-        myFoldingModel.install(fragments, myRequest, false, 4); // TODO: settings
+        myFoldingModel.install(fragments, myRequest, getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
 
         scrollOnRediff();
 

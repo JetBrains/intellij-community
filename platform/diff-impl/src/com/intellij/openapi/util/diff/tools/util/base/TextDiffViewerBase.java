@@ -9,6 +9,9 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
@@ -17,7 +20,9 @@ import com.intellij.openapi.util.diff.util.CalledInAwt;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.ui.ToggleActionButton;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,6 +31,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.List;
 
 public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
@@ -289,6 +296,87 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       getTextSettings().setEnableSyncScroll(state);
+    }
+  }
+
+  protected class MyToggleExpandByDefaultAction extends ToggleActionButton implements DumbAware {
+    public MyToggleExpandByDefaultAction() {
+      super("Collapse unchanged fragments", AllIcons.Actions.Collapseall);
+      setEnabledInModalContext(true);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return !getTextSettings().isExpandByDefault();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      getTextSettings().setExpandByDefault(!state);
+    }
+  }
+
+  protected class MyContextRangeSettingAction extends DumbAwareAction { // TODO: add into 'diff popup'
+    public MyContextRangeSettingAction() {
+      super("Context Lines...", "More/Less Lines...", AllIcons.General.ExpandAll);
+      setEnabledInModalContext(true);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final int[] modes = TextDiffSettings.CONTEXT_RANGE_MODES;
+      String[] modeLabels = TextDiffSettings.CONTEXT_RANGE_MODE_LABELS;
+
+      //noinspection UseOfObsoleteCollectionType
+      Dictionary<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
+      for (int i = 0; i < modes.length; i++) {
+        sliderLabels.put(i, new JLabel(modeLabels[i]));
+      }
+
+      JPanel result = new JPanel(new BorderLayout());
+      JLabel label = new JLabel("Context Lines:");
+      label.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 0));
+      JPanel wrapper = new JPanel(new BorderLayout());
+      wrapper.add(label, BorderLayout.NORTH);
+      result.add(wrapper, BorderLayout.WEST);
+      final JSlider slider = new JSlider(SwingConstants.HORIZONTAL, 0, modes.length - 1, 0);
+      slider.setMinorTickSpacing(1);
+      slider.setPaintTicks(true);
+      slider.setPaintTrack(true);
+      slider.setSnapToTicks(true);
+      UIUtil.setSliderIsFilled(slider, true);
+      slider.setPaintLabels(true);
+      slider.setLabelTable(sliderLabels);
+      result.add(slider, BorderLayout.CENTER);
+
+      for (int i = 0; i < modes.length; i++) {
+        int mark = modes[i];
+        if (mark == getTextSettings().getContextRange()) {
+          slider.setValue(i);
+        }
+      }
+
+      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(result, slider).createPopup();
+      popup.setFinalRunnable(new Runnable() {
+        @Override
+        public void run() {
+          int value = slider.getModel().getValue();
+          if (getTextSettings().getContextRange() != modes[value]) {
+            getTextSettings().setContextRange(modes[value]);
+            rediff(); // TODO: we can just update foldings
+          }
+        }
+      });
+      if (e.getInputEvent() instanceof MouseEvent) {
+        MouseEvent inputEvent = ((MouseEvent)e.getInputEvent());
+        int width = result.getPreferredSize().width;
+        Point point = new Point(inputEvent.getX() - width / 2, inputEvent.getY());
+        RelativePoint absPoint = new RelativePoint(inputEvent.getComponent(), point); // TODO: WTF, wrong component - fix positioning
+        popup.show(absPoint);
+      }
+      else {
+        popup.showInBestPositionFor(e.getDataContext());
+      }
     }
   }
 

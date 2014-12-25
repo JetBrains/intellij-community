@@ -94,6 +94,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
+    group.add(new MyContextRangeSettingAction());
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
 
@@ -111,6 +113,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
     group.add(new MyToggleAutoScrollAction());
+    group.add(new MyToggleExpandByDefaultAction());
 
     return group;
   }
@@ -271,7 +274,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
           }
         }
 
-        if (myFoldingModel != null) myFoldingModel.install(data.getFragments(), myRequest, true, 4); // TODO: settings
+        if (myFoldingModel != null) myFoldingModel.install(data.getFragments(), myRequest,
+                                                           getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
 
         scrollOnRediff();
 
