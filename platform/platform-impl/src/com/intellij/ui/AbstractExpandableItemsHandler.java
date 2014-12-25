@@ -301,10 +301,18 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       hideHint();
     }
     else if (myPopup == null) {
-      showHint(location);
+      myPopup = new OurHeavyWeightPopup(myComponent, myTipComponent, location.x, location.y);
+      Window popupWindow = SwingUtilities.getWindowAncestor(myTipComponent);
+      WindowManagerEx.getInstanceEx().setWindowShadow(popupWindow, WindowManagerEx.WindowShadowMode.DISABLED);
+      myPopup.show();
+      repaintKeyItem();
     }
     else {
-      repaintHint(location);
+      Dimension size = myTipComponent.getPreferredSize();
+      Window popupWindow = SwingUtilities.getWindowAncestor(myTipComponent);
+      popupWindow.setBounds(location.x, location.y, size.width, size.height);
+      myTipComponent.repaint();
+      repaintKeyItem();
     }
   }
 
@@ -339,31 +347,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return myPopup != null;
   }
 
-  private void showHint(Point location) {
-    assert myPopup == null;
-
-    if (!myComponent.isShowing()) {
-      return;
-    }
-
-    SwingUtilities.convertPointToScreen(location, myComponent);
-    myPopup = new OurHeavyWeightPopup(myComponent, myTipComponent, location.x, location.y);
-    WindowManagerEx.getInstanceEx().setWindowShadow(SwingUtilities.getWindowAncestor(myTipComponent),
-                                                    WindowManagerEx.WindowShadowMode.DISABLED);
-    myPopup.show();
-
-    repaintKeyItem();
-  }
-
-  private void repaintHint(Point location) {
-    if (myPopup != null && myKey != null && myComponent.isShowing()) {
-      SwingUtilities.convertPointToScreen(location, myComponent);
-      SwingUtilities.getWindowAncestor(myTipComponent).setBounds(new Rectangle(location, myTipComponent.getPreferredSize()));
-      myTipComponent.repaint();
-      repaintKeyItem();
-    }
-  }
-
   private void repaintKeyItem() {
     if (myKeyItemBounds != null) {
       myComponent.repaint(myKeyItemBounds);
@@ -380,20 +363,29 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myKeyItemBounds = rendererAndBounds.second;
 
-    Point toolTipLocationOnScreen = myKeyItemBounds.getLocation();
-    SwingUtilities.convertPointToScreen(toolTipLocationOnScreen, myComponent);
-    int maximumWidth = Math.max(0, myComponent.getToolkit().getScreenSize().width - toolTipLocationOnScreen.x);
-    myKeyItemBounds.width = Math.min(myKeyItemBounds.width, maximumWidth);
-
     Rectangle cellBounds = myKeyItemBounds;
     Rectangle visibleRect = getVisibleRect(key);
 
-    int width = cellBounds.x + cellBounds.width - (visibleRect.x + visibleRect.width);
+    if (cellBounds.y < visibleRect.y) return null;
+
+    int cellMaxY = cellBounds.y + cellBounds.height;
+    int visMaxY = visibleRect.y + visibleRect.height;
+    if (cellMaxY > visMaxY) return null;
+
+    int cellMaxX = cellBounds.x + cellBounds.width;
+    int visMaxX = visibleRect.x + visibleRect.width;
+
+    Point location = new Point(visMaxX, cellBounds.y);
+    SwingUtilities.convertPointToScreen(location, myComponent);
+
+    Rectangle screen = !Registry.is("ide.expansion.hints.on.all.screens")
+                       ? ScreenUtil.getScreenRectangle(location)
+                       : ScreenUtil.getAllScreensRectangle();
+
+    int width = Math.min(screen.width + screen.x - location.x, cellMaxX - visMaxX);
     int height = cellBounds.height;
 
     if (width <= 0 || height <= 0) return null;
-    if (cellBounds.y < visibleRect.y) return null;
-    if (cellBounds.y + cellBounds.height > visibleRect.y + visibleRect.height) return null;
 
     Dimension size = getImageSize(width, height);
     myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
@@ -401,10 +393,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     Graphics2D g = myImage.createGraphics();
     g.setClip(null);
     doFillBackground(height, width, g);
-    g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
+    g.translate(cellBounds.x - visMaxX, 0);
     doPaintTooltipImage(renderer, cellBounds, g, key);
 
-    Point location = new Point(visibleRect.x + visibleRect.width, cellBounds.y);
     CustomLineBorder border = null;
     if (isPaintBorder()) {
       border = new CustomLineBorder(getBorderColor(), 1, 0, 1, 1);

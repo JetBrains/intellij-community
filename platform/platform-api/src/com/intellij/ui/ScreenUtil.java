@@ -77,6 +77,39 @@ public class ScreenUtil {
     return area;
   }
 
+  /**
+   * Returns the smallest rectangle that encloses a visible area of every screen.
+   *
+   * @return the smallest rectangle that encloses a visible area of every screen
+   */
+  public static Rectangle getAllScreensRectangle() {
+    GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    int minX = 0;
+    int maxX = 0;
+    int minY = 0;
+    int maxY = 0;
+    for (GraphicsDevice device : devices) {
+      Rectangle rectangle = getScreenRectangle(device);
+      int x = rectangle.x;
+      if (minX > x) {
+        minX = x;
+      }
+      x += rectangle.width;
+      if (maxX < x) {
+        maxX = x;
+      }
+      int y = rectangle.y;
+      if (minY > y) {
+        minY = y;
+      }
+      y += rectangle.height;
+      if (maxY < y) {
+        maxY = y;
+      }
+    }
+    return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+  }
+
   public static Rectangle getScreenRectangle(@NotNull Point p) {
     return getScreenRectangle(p.x, p.y);
   }
