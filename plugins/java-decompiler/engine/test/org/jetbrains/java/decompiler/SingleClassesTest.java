@@ -15,9 +15,21 @@
  */
 package org.jetbrains.java.decompiler;
 
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class SingleClassesTest extends SingleClassesTestBase {
+  @Override
+  protected Map<String, Object> getDecompilerOptions() {
+    return new HashMap<String, Object>() {{
+      put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
+      put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
+    }};
+  }
+
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
   @Test public void testClassLoop() { doTest("pkg/TestClassLoop"); }
@@ -39,4 +51,10 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testTryCatchFinally() { doTest("pkg/TestTryCatchFinally"); }
   @Test public void testAmbiguousCall() { doTest("pkg/TestAmbiguousCall"); }
   @Test public void testAmbiguousCallWithDebugInfo() { doTest("pkg/TestAmbiguousCallWithDebugInfo"); }
+  @Test public void testSimpleBytecodeMapping() { doTest("pkg/TestClassSimpleBytecodeMapping"); }
+  @Test public void testSynchronizedMapping() { doTest("pkg/TestSynchronizedMapping"); }
+  @Test public void testAbstractMethods() { doTest("pkg/TestAbstractMethods"); }
+  @Test public void testLocalClass() { doTest("pkg/TestLocalClass"); }
+  @Test public void testAnonymousClass() { doTest("pkg/TestAnonymousClass"); }
+  @Test public void testThrowException() { doTest("pkg/TestThrowException"); }
 }

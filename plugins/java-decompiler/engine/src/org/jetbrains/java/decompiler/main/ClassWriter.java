@@ -161,7 +161,7 @@ public class ClassWriter {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
 
     int startLine = tracer != null ? tracer.getCurrentSourceLine() : 0;
-    BytecodeMappingTracer dummy_tracer = new BytecodeMappingTracer();
+    BytecodeMappingTracer dummy_tracer = new BytecodeMappingTracer(startLine);
 
     try {
       // last minute processing
@@ -184,6 +184,8 @@ public class ClassWriter {
       // fields
       boolean enumFields = false;
 
+      dummy_tracer.incrementCurrentSourceLine(buffer.countLines(start_class_def));
+
       for (StructField fd : cl.getFields()) {
         boolean hide = fd.isSynthetic() && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
                        wrapper.getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
@@ -193,6 +195,7 @@ public class ClassWriter {
         if (isEnum) {
           if (enumFields) {
             buffer.append(',').appendLineSeparator();
+            dummy_tracer.incrementCurrentSourceLine();
           }
           enumFields = true;
         }
@@ -200,6 +203,7 @@ public class ClassWriter {
           buffer.append(';');
           buffer.appendLineSeparator();
           buffer.appendLineSeparator();
+          dummy_tracer.incrementCurrentSourceLine(2);
           enumFields = false;
         }
 
@@ -210,6 +214,7 @@ public class ClassWriter {
 
       if (enumFields) {
         buffer.append(';').appendLineSeparator();
+        dummy_tracer.incrementCurrentSourceLine();
       }
 
       // FIXME: fields don't matter at the moment
@@ -383,6 +388,7 @@ public class ClassWriter {
   }
 
   private void fieldToJava(ClassWrapper wrapper, StructClass cl, StructField fd, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
+    int start = buffer.length();
     boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
     boolean isDeprecated = fd.getAttributes().containsKey("Deprecated");
     boolean isEnum = fd.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
@@ -430,6 +436,8 @@ public class ClassWriter {
 
     buffer.append(fd.getName());
 
+    tracer.incrementCurrentSourceLine(buffer.countLines(start));
+
     Exprent initializer;
     if (fd.hasModifier(CodeConstants.ACC_STATIC)) {
       initializer = wrapper.getStaticFieldInitializers().getWithKey(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
@@ -461,6 +469,7 @@ public class ClassWriter {
 
     if (!isEnum) {
       buffer.append(";").appendLineSeparator();
+      tracer.incrementCurrentSourceLine();
     }
   }
 
@@ -771,6 +780,8 @@ public class ClassWriter {
         }
       }
 
+      tracer.incrementCurrentSourceLine(buffer.countLines(start_index_method));
+
       if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0) { // native or abstract method (explicit or interface)
         if (isAnnotation) {
           StructAnnDefaultAttribute attr = (StructAnnDefaultAttribute)mt.getAttributes().getWithKey("AnnotationDefault");
@@ -794,12 +805,12 @@ public class ClassWriter {
           buffer.setCurrentLine(lineNumberTable.getFirstLine() - 1);
         }
         buffer.append('{').appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
 
         RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
 
         if (root != null && !methodWrapper.decompiledWithErrors) { // check for existence
           try {
-            tracer.incrementCurrentSourceLine(buffer.countLines(start_index_method));
             int startLine = tracer.getCurrentSourceLine();
 
             TextBuffer code = root.toJava(indent + 1, tracer);
