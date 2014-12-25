@@ -322,7 +322,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
                              });
   }
 
-  private void updateScrollPosition(@NotNull final IpnbPanel ipnbPanel) {
+  public void updateScrollPosition(@NotNull final IpnbPanel ipnbPanel) {
     final Rectangle rect = myIpnbFilePanel.getVisibleRect();
 
     final Rectangle cellBounds = ipnbPanel.getBounds();

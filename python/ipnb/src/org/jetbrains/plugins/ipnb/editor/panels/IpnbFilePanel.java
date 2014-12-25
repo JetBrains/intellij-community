@@ -35,10 +35,7 @@ import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -147,6 +144,13 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       }
     }
     add(createEmptyPanel());
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (mySelectedCell != null)
+          myParent.updateScrollPosition(mySelectedCell);
+      }
+    });
   }
 
   private void addCellToPanel(IpnbCell cell) {
@@ -479,7 +483,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (mySelectedCell != null) {
       g.setColor(mySelectedCell.isEditing() ? JBColor.GREEN : JBColor.GRAY);
       g.drawRoundRect(mySelectedCell.getX() - 50, mySelectedCell.getTop() - 1,
-                        mySelectedCell.getWidth() + 145 - IpnbEditorUtil.PROMPT_SIZE.width, mySelectedCell.getHeight() + 2, 5, 5);
+                      mySelectedCell.getWidth() + 145 - IpnbEditorUtil.PROMPT_SIZE.width, mySelectedCell.getHeight() + 2, 5, 5);
     }
   }
 
