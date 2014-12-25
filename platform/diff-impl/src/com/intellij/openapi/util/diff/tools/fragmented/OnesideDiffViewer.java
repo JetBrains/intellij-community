@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -31,14 +32,15 @@ import com.intellij.openapi.util.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.openapi.util.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
+import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.IntPair;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.contents.EmptyContent;
 import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.fragmented.FragmentedDiffSettingsHolder.FragmentedDiffSettings;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
+import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.OnesideFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
@@ -51,6 +53,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.text.MergingCharSequence;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntFunction;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,6 +81,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   @NotNull private final MyStatusPanel myStatusPanel;
 
   @NotNull private final MyScrollToLineHelper myScrollToLineHelper = new MyScrollToLineHelper();
+  @NotNull private final OnesideFoldingModel myFoldingModel;
 
   @NotNull private Side myMasterSide = Side.LEFT;
 
@@ -99,7 +103,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
 
     myDocument = EditorFactory.getInstance().createDocument("");
-    myEditor = DiffUtil.createEditor(myDocument, myProject, true);
+    myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
     List<JComponent> titles = DiffUtil.createTextTitles(myRequest);
 
 
@@ -107,6 +111,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
     myPanel = new OnesideDiffPanel(myProject, contentPanel, myEditor, this, myContext);
 
+    myFoldingModel = new OnesideFoldingModel(myEditor, this);
 
     myEditorSettingsAction = new MySetEditorSettingsAction();
     myEditorSettingsAction.applyDefaults();
@@ -136,6 +141,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
   private void updateContextHints() {
     myScrollToLineHelper.updateContext();
+    myFoldingModel.updateContext(myRequest);
   }
 
   @NotNull
@@ -202,7 +208,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), highlighter,
                                                                content.getContentType(), convertor.createConvertor1(), null);
 
-        return apply(editorData, blocks, convertor, Collections.<Integer>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
       }
 
       if (myActualContent2 == null) {
@@ -226,7 +232,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), highlighter,
                                                                content.getContentType(), convertor.createConvertor2(), null);
 
-        return apply(editorData, blocks, convertor, Collections.<Integer>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
       }
 
       DocumentContent content1 = myActualContent1;
@@ -246,7 +252,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
       indicator.checkCanceled();
       OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2,
-                                                                  mySettings.getContextRange(),
                                                                   getHighlightPolicy().isFineFragments(),
                                                                   myMasterSide);
       builder.exec();
@@ -258,13 +263,13 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       FileType fileType = content2.getContentType() == null ? content1.getContentType() : content2.getContentType();
 
       LineNumberConvertor convertor = builder.getConvertor();
-      List<Integer> separatorLines = builder.getSeparatorLines();
+      List<IntPair> equalLines = builder.getEqualLines();
       boolean isEqual = builder.isEqual();
 
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), highlighter, fileType,
                                                              convertor.createConvertor1(), convertor.createConvertor2());
 
-      return apply(editorData, builder.getBlocks(), convertor, separatorLines, isEqual);
+      return apply(editorData, builder.getBlocks(), convertor, equalLines, isEqual);
     }
     catch (DiffTooBigException ignore) {
       return new Runnable() {
@@ -333,15 +338,19 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   private Runnable apply(@NotNull final CombinedEditorData data,
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor,
-                         @NotNull final List<Integer> separatorLines,
+                         @NotNull final List<IntPair> equalLines,
                          final boolean isEqual) {
     return new Runnable() {
       @Override
       public void run() {
+        myFoldingModel.updateContext(myRequest);
+
         clearDiffPresentation();
         if (isEqual) myPanel.addContentsEqualNotification();
 
-        myEditor.getGutterComponentEx().setLineNumberConvertor(data.getLineConvertor1(), data.getLineConvertor2());
+        TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
+        myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
+                                                               mergeConverters(data.getLineConvertor2(), separatorLines));
 
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
@@ -359,18 +368,26 @@ class OnesideDiffViewer extends TextDiffViewerBase {
           diffChanges.add(new OnesideDiffChange(myEditor, block));
         }
 
-        ArrayList<OnesideDiffSeparator> diffSeparators = new ArrayList<OnesideDiffSeparator>(separatorLines.size());
-        for (Integer line : separatorLines) {
-          diffSeparators.add(new OnesideDiffSeparator(myEditor, line));
-        }
+        myChangedBlockData = new ChangedBlockData(diffChanges, convertor);
 
-        myChangedBlockData = new ChangedBlockData(diffChanges, convertor, diffSeparators);
+        myFoldingModel.install(equalLines, myRequest, false, mySettings.getContextRange()); // TODO: settings
 
         // TODO: remember current in current caret position position on rediff rather than positon in combined file
         myScrollToLineHelper.onRediff();
 
         myStatusPanel.update();
         myPanel.setGoodContent();
+      }
+    };
+  }
+
+  @Contract("!null, _ -> !null")
+  private static TIntFunction mergeConverters(@Nullable final TIntFunction convertor, @NotNull final TIntFunction separatorLines) {
+    if (convertor == null) return null;
+    return new TIntFunction() {
+      @Override
+      public int execute(int value) {
+        return convertor.execute(separatorLines.execute(value));
       }
     };
   }
@@ -428,9 +445,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     for (OnesideDiffChange change : myChangedBlockData.getDiffChanges()) {
       change.destroyHighlighter();
     }
-    for (OnesideDiffSeparator separator : myChangedBlockData.getDiffSeparators()) {
-      separator.destroyHighlighter();
-    }
     myChangedBlockData = null;
     myStatusPanel.update();
   }
@@ -459,6 +473,12 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     HighlightPolicy policy = getTextSettings().getHighlightPolicy();
     if (policy == HighlightPolicy.DO_NOT_HIGHLIGHT) return HighlightPolicy.BY_LINE;
     return policy;
+  }
+
+  @Override
+  protected void onDocumentChange(@NotNull DocumentEvent e) {
+    super.onDocumentChange(e);
+    myFoldingModel.onDocumentChanged(e);
   }
 
   //
@@ -836,14 +856,11 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   private static class ChangedBlockData {
     @NotNull private final List<OnesideDiffChange> myDiffChanges;
     @NotNull private final LineNumberConvertor myLineNumberConvertor;
-    @NotNull private final List<OnesideDiffSeparator> myDiffSeparators;
 
     public ChangedBlockData(@NotNull List<OnesideDiffChange> diffChanges,
-                            @NotNull LineNumberConvertor lineNumberConvertor,
-                            @NotNull List<OnesideDiffSeparator> diffSeparators) {
+                            @NotNull LineNumberConvertor lineNumberConvertor) {
       myDiffChanges = diffChanges;
       myLineNumberConvertor = lineNumberConvertor;
-      myDiffSeparators = diffSeparators;
     }
 
     @NotNull
@@ -854,11 +871,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     @NotNull
     public LineNumberConvertor getLineNumberConvertor() {
       return myLineNumberConvertor;
-    }
-
-    @NotNull
-    public List<OnesideDiffSeparator> getDiffSeparators() {
-      return myDiffSeparators;
     }
   }
 

@@ -1,7 +1,6 @@
 package com.intellij.openapi.util.diff.tools.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -12,6 +11,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.IntPair;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.fragments.MergeLineFragment;
@@ -29,11 +29,65 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FoldingModelSupport {
+  public static class OnesideFoldingModel extends FoldingModelBase {
+    public OnesideFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
+      super(new EditorEx[]{editor}, disposable);
+    }
+
+    public void install(@Nullable List<IntPair> equalLines, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
+      if (equalLines == null) return;
+      MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
+
+      for (IntPair line : equalLines) {
+        addRange(line.val1, line.val2, range, suggester);
+      }
+
+      updateLineNumbers();
+    }
+
+    private void addRange(int start1, int end1, int range, @NotNull MyExpandSuggester suggester) {
+      int count1 = myEditors[0].getDocument().getLineCount();
+
+      start1 = bound(start1 + range, 0, count1);
+      end1 = bound(end1 - range, 0, count1);
+
+      boolean expanded = suggester.getExpanded(start1, end1);
+
+      FoldRegion region1 = addFolding(myEditors[0], start1, end1, expanded);
+      if (region1 == null) return;
+      myFoldings.add(new FoldedBlock(new FoldRegion[]{region1}));
+    }
+
+    private class MyExpandSuggester extends ExpandSuggesterBase {
+      public MyExpandSuggester(@Nullable FoldingCache cache, boolean defaultValue) {
+        super(cache, defaultValue);
+      }
+
+      public boolean getExpanded(int start1, int end1) {
+        Boolean expanded1 = getCachedExpanded(start1, end1, 0);
+
+        if (start1 == end1) return myDefault;
+        if (expanded1 == null) return myDefault;
+        return expanded1;
+      }
+    }
+
+    @NotNull
+    public TIntFunction getLineNumberConvertor() {
+      return getLineConvertor(0);
+    }
+  }
+
   public static class SimpleFoldingModel extends FoldingModelBase {
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
 
     public SimpleFoldingModel(@NotNull EditorEx editor1, @NotNull EditorEx editor2, @NotNull Disposable disposable) {
       super(new EditorEx[]{editor1, editor2}, disposable);
+
+      for (int i = 0; i < myCount; i++) {
+        myEditors[i].getFoldingModel().addListener(new MyListener(i), disposable);
+        myEditors[i].getGutterComponentEx().setLineNumberConvertor(getLineConvertor(i));
+      }
     }
 
     public void install(@Nullable LineFragments lineFragments, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
@@ -101,6 +155,11 @@ public class FoldingModelSupport {
     public SimpleThreesideFoldingModel(@NotNull EditorEx[] editors, @NotNull Disposable disposable) {
       super(editors, disposable);
       assert editors.length == 3;
+
+      for (int i = 0; i < myCount; i++) {
+        myEditors[i].getFoldingModel().addListener(new MyListener(i), disposable);
+        myEditors[i].getGutterComponentEx().setLineNumberConvertor(getLineConvertor(i));
+      }
     }
 
     public void install(@Nullable List<MergeLineFragment> fragments, @NotNull UserDataHolder context,
@@ -193,11 +252,6 @@ public class FoldingModelSupport {
     public FoldingModelBase(@NotNull EditorEx[] editors, @NotNull Disposable disposable) {
       myEditors = editors;
       myCount = myEditors.length;
-
-      for (int i = 0; i < myCount; i++) {
-        if (myCount > 1) myEditors[i].getFoldingModel().addListener(new MyListener(i), disposable);
-        myEditors[i].getGutterComponentEx().setLineNumberConvertor(getLineConvertor(i));
-      }
     }
 
     //

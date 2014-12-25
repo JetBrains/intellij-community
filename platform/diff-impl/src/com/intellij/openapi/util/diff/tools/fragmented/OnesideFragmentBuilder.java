@@ -2,6 +2,7 @@ package com.intellij.openapi.util.diff.tools.fragmented;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.IntPair;
 import com.intellij.openapi.util.diff.fragments.DiffFragment;
 import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
@@ -17,7 +18,6 @@ class OnesideFragmentBuilder {
   @NotNull private final LineFragments myFragments;
   @NotNull private final Document myDocument1;
   @NotNull private final Document myDocument2;
-  private final int myContextRange;
   private final boolean myInlineFragments;
   @NotNull private final Side myMasterSide;
 
@@ -25,29 +25,26 @@ class OnesideFragmentBuilder {
   @NotNull private final List<ChangedBlock> myBlocks = new ArrayList<ChangedBlock>();
   @NotNull private final List<HighlightRange> myRanges = new ArrayList<HighlightRange>();
   @NotNull private final LineNumberConvertor.Builder myConvertor = new LineNumberConvertor.Builder();
-  @NotNull private final List<Integer> mySeparatorLines = new ArrayList<Integer>();
+  @NotNull private final List<IntPair> myEqualLines = new ArrayList<IntPair>();
 
   public OnesideFragmentBuilder(@NotNull LineFragments fragments,
                                 @NotNull Document document1,
                                 @NotNull Document document2,
-                                int contextRange,
                                 boolean inlineFragments,
                                 @NotNull Side masterSide) {
     myFragments = fragments;
     myDocument1 = document1;
     myDocument2 = document2;
-    myContextRange = contextRange;
     myInlineFragments = inlineFragments;
     myMasterSide = masterSide;
   }
 
   private boolean myEqual = false;
 
-  private int lastProcessedLine1 = -2;
-  private int lastProcessedLine2 = -2;
+  private int lastProcessedLine1 = -1;
+  private int lastProcessedLine2 = -1;
   private int totalLines = 0;
 
-  // assert: lastProcessedLine1 == -2 ^ lastProcessedLine2 == -2
   public void exec() {
     if (myFragments.getFragments().isEmpty()) {
       myEqual = true;
@@ -56,47 +53,20 @@ class OnesideFragmentBuilder {
     }
 
     for (LineFragment fragment : myFragments.getFragments()) {
-      if (isConnectedToLast(fragment)) {
-        connectToPrevious(fragment);
-
-        processBody(fragment);
-      }
-      else {
-        flushLast();
-
-        processPrefix(fragment);
-        processBody(fragment);
-      }
+      processEquals(fragment.getStartLine1() - 1, fragment.getStartLine2() - 1);
+      processChanged(fragment);
     }
-    flushLast();
+    processEquals(getLineCount(myDocument1) - 1, getLineCount(myDocument1) - 2);
   }
 
-  private void processPrefix(@NotNull LineFragment fragment) {
-    if (myBuilder.length() > 0) {
-      mySeparatorLines.add(totalLines);
-      appendText("\n", 1);
-    }
-
-    int startLine1 = myContextRange == -1 ? 0 : Math.max(fragment.getStartLine1() - myContextRange, 0);
-    int startLine2 = myContextRange == -1 ? 0 : Math.max(fragment.getStartLine2() - myContextRange, 0);
-    int endLine1 = fragment.getStartLine1() - 1;
-    int endLine2 = fragment.getStartLine2() - 1;
-
-    appendTextMaster(startLine1, startLine2, endLine1, endLine2);
-  }
-
-  private void connectToPrevious(@NotNull LineFragment fragment) {
-    assert lastProcessedLine1 != -2;
-
+  private void processEquals(int endLine1, int endLine2) {
     int startLine1 = lastProcessedLine1 + 1;
     int startLine2 = lastProcessedLine2 + 1;
-    int endLine1 = fragment.getStartLine1() - 1;
-    int endLine2 = fragment.getStartLine2() - 1;
 
     appendTextMaster(startLine1, startLine2, endLine1, endLine2);
   }
 
-  private void processBody(@NotNull LineFragment fragment) {
+  private void processChanged(@NotNull LineFragment fragment) {
     int startLine1 = fragment.getStartLine1();
     int endLine1 = fragment.getEndLine1() - 1;
     int lines1 = endLine1 - startLine1;
@@ -113,37 +83,23 @@ class OnesideFragmentBuilder {
     int linesBefore = totalLines;
     int linesAfter;
 
+    blockStartOffset1 = myBuilder.length();
     if (lines1 >= 0) {
       int startOffset = myDocument1.getLineStartOffset(startLine1);
       int endOffset = myDocument1.getLineEndOffset(endLine1);
 
-      int start = myBuilder.length();
-      appendText(Side.LEFT, startOffset, endOffset, lines1, startLine1, -2);
-      int end = myBuilder.length();
-
-      blockStartOffset1 = start;
-      blockEndOffset1 = end;
+      appendText(Side.LEFT, startOffset, endOffset, lines1, startLine1, -1);
     }
-    else {
-      blockStartOffset1 = myBuilder.length();
-      blockEndOffset1 = myBuilder.length();
-    }
+    blockEndOffset1 = myBuilder.length();
 
+    blockStartOffset2 = myBuilder.length();
     if (lines2 >= 0) {
       int startOffset = myDocument2.getLineStartOffset(startLine2);
       int endOffset = myDocument2.getLineEndOffset(endLine2);
 
-      int start = myBuilder.length();
-      appendText(Side.RIGHT, startOffset, endOffset, lines2, -2, startLine2);
-      int end = myBuilder.length();
-
-      blockStartOffset2 = start;
-      blockEndOffset2 = end;
+      appendText(Side.RIGHT, startOffset, endOffset, lines2, -1, startLine2);
     }
-    else {
-      blockStartOffset2 = myBuilder.length();
-      blockEndOffset2 = myBuilder.length();
-    }
+    blockEndOffset2 = myBuilder.length();
 
     linesAfter = totalLines;
 
@@ -159,32 +115,6 @@ class OnesideFragmentBuilder {
     lastProcessedLine2 = endLine2;
   }
 
-  private void flushLast() {
-    if (lastProcessedLine1 == -2) return;
-
-    int startLine1 = lastProcessedLine1 + 1;
-    int startLine2 = lastProcessedLine2 + 1;
-    int endLine1 = myContextRange == -1 ? getLineCount(myDocument1) - 1 :
-                   Math.min(lastProcessedLine1 + myContextRange, getLineCount(myDocument1) - 1);
-    int endLine2 = myContextRange == -1 ? getLineCount(myDocument2) - 1 :
-                   Math.min(lastProcessedLine2 + myContextRange, getLineCount(myDocument2) - 1);
-
-    appendTextMaster(startLine1, startLine2, endLine1, endLine2);
-
-    lastProcessedLine1 = -2;
-    lastProcessedLine2 = -2;
-  }
-
-  private boolean isConnectedToLast(@NotNull LineFragment fragment) {
-    if (lastProcessedLine1 == -2) return false;
-
-    if (myContextRange == -1) return true;
-    if (lastProcessedLine1 + 2 * myContextRange + 1 >= fragment.getStartLine1()) return true;
-    if (lastProcessedLine2 + 2 * myContextRange + 1 >= fragment.getStartLine2()) return true; // TODO: do we need this check ?
-
-    return false;
-  }
-
   private void appendTextMaster(int startLine1, int startLine2, int endLine1, int endLine2) {
     int lines = myMasterSide.isLeft() ? endLine1 - startLine1 : endLine2 - startLine2;
 
@@ -192,7 +122,11 @@ class OnesideFragmentBuilder {
       int startOffset = myMasterSide.isLeft() ? myDocument1.getLineStartOffset(startLine1) : myDocument2.getLineStartOffset(startLine2);
       int endOffset = myMasterSide.isLeft() ? myDocument1.getLineEndOffset(endLine1) : myDocument2.getLineEndOffset(endLine2);
 
+      int linesBefore = totalLines;
       appendText(myMasterSide, startOffset, endOffset, lines, startLine1, startLine2);
+      int linesAfter = totalLines;
+
+      myEqualLines.add(new IntPair(linesBefore, linesAfter));
     }
   }
 
@@ -205,22 +139,16 @@ class OnesideFragmentBuilder {
     myRanges.add(new HighlightRange(side, base, changed));
 
     myBuilder.append(document.getCharsSequence().subSequence(offset1, offset2));
-    appendText("\n", 0);
+    myBuilder.append('\n');
 
-    if (startLine1 != -2) {
+    if (startLine1 != -1) {
       myConvertor.put1(totalLines, startLine1, lines + 1);
     }
-    if (startLine2 != -2) {
+    if (startLine2 != -1) {
       myConvertor.put2(totalLines, startLine2, lines + 1);
     }
 
     totalLines += lines + 1;
-  }
-
-  private void appendText(@NotNull CharSequence text, int lines) {
-    myBuilder.append(text);
-
-    totalLines += lines;
   }
 
   private static int getLineCount(@NotNull Document document) {
@@ -257,7 +185,7 @@ class OnesideFragmentBuilder {
   }
 
   @NotNull
-  public List<Integer> getSeparatorLines() {
-    return mySeparatorLines;
+  public List<IntPair> getEqualLines() {
+    return myEqualLines;
   }
 }
