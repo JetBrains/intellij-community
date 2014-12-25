@@ -276,7 +276,10 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private void doHandleSelectionChange(KeyType selected, boolean processIfUnfocused) {
+    Window window = SwingUtilities.getWindowAncestor(myComponent);
     if (selected == null
+        || window == null
+        || !window.isActive()
         || !myEnabled
         || !myComponent.isEnabled()
         || !myComponent.isShowing()
