@@ -25,6 +25,8 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
+import static com.intellij.codeInsight.actions.TextRangeType.*;
+
 public class MultiActionCodeProcessorTest extends LightPlatformCodeInsightFixtureTestCase {
 
   @Override
@@ -47,7 +49,7 @@ public class MultiActionCodeProcessorTest extends LightPlatformCodeInsightFixtur
     myFixture.configureByFile(getTestDataPath() + getTestName(true) + "_before.java");
     CodeProcessor processor = new CodeProcessor(myFixture.getFile(), myFixture.getEditor(), options);
 
-    if (options.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT) {
+    if (options.getTextRangeType() == VCS_CHANGED_TEXT) {
       CaretModel model = myFixture.getEditor().getCaretModel();
       List<TextRange> ranges = ContainerUtil.mapNotNull(model.getAllCarets(), new Function<Caret, TextRange>() {
         @Override
@@ -66,16 +68,26 @@ public class MultiActionCodeProcessorTest extends LightPlatformCodeInsightFixtur
   }
 
   public void testSelectionReformat() {
-    doTest(new ReformatCodeRunOptions(TextRangeType.SELECTED_TEXT));
+    doTest(new ReformatCodeRunOptions(SELECTED_TEXT));
   }
 
   public void testWholeFileReformat() {
-    doTest(new ReformatCodeRunOptions(TextRangeType.WHOLE_FILE));
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE));
   }
 
   public void testVcsChangedTextReformat() {
-    doTest(new ReformatCodeRunOptions(TextRangeType.VCS_CHANGED_TEXT));
+    doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT));
   }
 
+  public void testWholeFileReformatAndOptimize() {
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true));
+  }
 
+  public void testSelectedTextAndOptimizeImports() {
+    doTest(new ReformatCodeRunOptions(SELECTED_TEXT).setOptimizeImports(true));
+  }
+
+  //public void testVcsChangedTextReformatAndOptimize() {
+  //  doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true));
+  //}
 }

@@ -39,12 +39,14 @@ public class ReformatCodeRunOptions implements LayoutCodeOptions {
     return myRearrangeCode;
   }
 
-  public void setRearrangeCode(boolean rearrangeCode) {
+  public ReformatCodeRunOptions setRearrangeCode(boolean rearrangeCode) {
     myRearrangeCode = rearrangeCode;
+    return this;
   }
 
-  public void setOptimizeImports(boolean optimizeImports) {
+  public ReformatCodeRunOptions setOptimizeImports(boolean optimizeImports) {
     myOptimizeImports = optimizeImports;
+    return this;
   }
 
   @Override
