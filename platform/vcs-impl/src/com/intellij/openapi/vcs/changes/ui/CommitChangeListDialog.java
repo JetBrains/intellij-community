@@ -1347,29 +1347,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
-    private boolean outDuringModification;
-
     public DiffCommitMessageEditor(final CommitChangeListDialog dialog) {
       super(dialog.getProject());
-      getEditorField().setText(dialog.getCommitMessage());
-
-      addListener(getEditorField(), dialog.myCommitMessageArea.getEditorField());
-      addListener(dialog.myCommitMessageArea.getEditorField(), getEditorField());
-    }
-
-    private void addListener(@NotNull final EditorTextField field, @NotNull final EditorTextField dependentField) {
-      field.addDocumentListener(new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          if (outDuringModification) return;
-          outDuringModification = true;
-          try {
-            dependentField.setText(field.getText());
-          } finally {
-            outDuringModification = false;
-          }
-        }
-      });
+      getEditorField().setDocument(dialog.myCommitMessageArea.getEditorField().getDocument());
     }
 
     @Override
