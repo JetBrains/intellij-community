@@ -17,9 +17,10 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class LastRunReformatCodeOptionsProvider implements LayoutCodeOptions {
+public class LastRunReformatCodeOptionsProvider {
 
   private static final String OPTIMIZE_IMPORTS_KEY     = "LayoutCode.optimizeImports";
   private static final String REARRANGE_ENTRIES_KEY    = "LayoutCode.rearrangeEntries";
@@ -29,6 +30,16 @@ public class LastRunReformatCodeOptionsProvider implements LayoutCodeOptions {
 
   public LastRunReformatCodeOptionsProvider(@NotNull PropertiesComponent propertiesComponent) {
     myPropertiesComponent = propertiesComponent;
+  }
+
+  public ReformatCodeRunOptions getLastRunOptions(@NotNull PsiFile file) {
+    Language language = file.getLanguage();
+
+    ReformatCodeRunOptions settings = new ReformatCodeRunOptions(getLastTextRangeType());
+    settings.setOptimizeImports(getLastOptimizeImports());
+    settings.setRearrangeCode(isRearrangeCode(language));
+
+    return settings;
   }
 
   public void saveRearrangeState(@NotNull Language language, boolean value) {
@@ -41,13 +52,11 @@ public class LastRunReformatCodeOptionsProvider implements LayoutCodeOptions {
     myPropertiesComponent.setValue(OPTIMIZE_IMPORTS_KEY, optimizeImports);
   }
 
-  @Override
-  public boolean isOptimizeImports() {
+  public boolean getLastOptimizeImports() {
     return myPropertiesComponent.getBoolean(OPTIMIZE_IMPORTS_KEY, false);
   }
 
-  @Override
-  public TextRangeType getTextRangeType() {
+  public TextRangeType getLastTextRangeType() {
     return myPropertiesComponent.getBoolean(PROCESS_CHANGED_TEXT_KEY, false) ? TextRangeType.VCS_CHANGED_TEXT : TextRangeType.WHOLE_FILE;
   }
 
@@ -60,8 +69,7 @@ public class LastRunReformatCodeOptionsProvider implements LayoutCodeOptions {
     myPropertiesComponent.setValue(REARRANGE_ENTRIES_KEY, Boolean.toString(value));
   }
 
-  @Override
-  public boolean isRearrangeCode() {
+  public boolean getLastRearrangeCode() {
     return myPropertiesComponent.getBoolean(REARRANGE_ENTRIES_KEY, false);
   }
 

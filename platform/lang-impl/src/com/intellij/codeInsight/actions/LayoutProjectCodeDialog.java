@@ -102,11 +102,11 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   }
 
   private void restoreCbsStates() {
-    myCbOptimizeImports.setSelected(myLastRunOptions.isOptimizeImports());
-    myCbRearrangeEntries.setSelected(myLastRunOptions.isRearrangeCode());
+    myCbOptimizeImports.setSelected(myLastRunOptions.getLastOptimizeImports());
+    myCbRearrangeEntries.setSelected(myLastRunOptions.getLastRearrangeCode());
     myCbOnlyVcsChangedRegions.setEnabled(myEnableOnlyVCSChangedTextCb);
     myCbOnlyVcsChangedRegions.setSelected(
-      myEnableOnlyVCSChangedTextCb && myLastRunOptions.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT
+      myEnableOnlyVCSChangedTextCb && myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT
     );
   }
 

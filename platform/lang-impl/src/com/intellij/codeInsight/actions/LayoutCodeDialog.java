@@ -112,7 +112,7 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
       mySelectedTextRadioButton.setSelected(true);
     }
     else {
-      boolean lastRunProcessedChangedText = myLastRunOptions.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
+      boolean lastRunProcessedChangedText = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
       if (lastRunProcessedChangedText && fileHasChanges) {
         myOnlyVCSChangedTextRb.setSelected(true);
       }
@@ -126,7 +126,7 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
     boolean canOptimizeImports = !LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty();
     myOptimizeImportsCb.setVisible(canOptimizeImports);
     if (canOptimizeImports) {
-      myOptimizeImportsCb.setSelected(myLastRunOptions.isOptimizeImports());
+      myOptimizeImportsCb.setSelected(myLastRunOptions.getLastOptimizeImports());
     }
 
     boolean canRearrangeCode = Rearranger.EXTENSION.forLanguage(myFile.getLanguage()) != null;

@@ -43,9 +43,9 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
 
     boolean canTargetVcsChanges = FormatChangedTextUtil.hasChanges(files, project);
     myOnlyChangedText.setEnabled(canTargetVcsChanges);
-    myOnlyChangedText.setSelected(canTargetVcsChanges && myLastRunSettings.getTextRangeType() == VCS_CHANGED_TEXT);
-    myOptimizeImports.setSelected(myLastRunSettings.isOptimizeImports());
-    myRearrangeEntriesCb.setSelected(myLastRunSettings.isRearrangeCode());
+    myOnlyChangedText.setSelected(canTargetVcsChanges && myLastRunSettings.getLastTextRangeType() == VCS_CHANGED_TEXT);
+    myOptimizeImports.setSelected(myLastRunSettings.getLastOptimizeImports());
+    myRearrangeEntriesCb.setSelected(myLastRunSettings.getLastRearrangeCode());
 
     setTitle(CodeInsightBundle.message("dialog.reformat.files.title"));
     init();

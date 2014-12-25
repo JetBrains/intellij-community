@@ -34,7 +34,9 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
 
   public void testReformatAndOptimizeMultipleFiles() throws IOException {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
-    injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
+
+    //todo mock this guy
+    //LastRunReformatCodeOptionsProvider provider = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
 
     performReformatActionOnSelectedFiles(files);
     checkFormationAndImportsOptimizationFor(files);

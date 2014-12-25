@@ -68,26 +68,9 @@ public class FormatChangedTextUtil {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
       final Change change = ChangeListManager.getInstance(project).getChange(virtualFile);
-      if (change != null && change.getType() == Change.Type.NEW) {
-        return true;
-      }
+      return change != null;
     }
-
-    final LineStatusTrackerManagerI manager = LineStatusTrackerManager.getInstance(project);
-    if (manager == null) {
-      return false;
-    }
-    
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) {
-      return false;
-    }
-    final LineStatusTracker lineStatusTracker = manager.getLineStatusTracker(document);
-    if (lineStatusTracker == null) {
-      return false;
-    }
-    final List<Range> ranges = lineStatusTracker.getRanges();
-    return !ranges.isEmpty();
+    return false;
   }
 
   /**
