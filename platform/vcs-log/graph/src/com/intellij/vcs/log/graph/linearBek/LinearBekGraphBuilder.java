@@ -94,9 +94,13 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       Integer next = nextEdge.getDownNodeIndex();
       if (next == null) return; // well, what do you do
 
-      if (next == firstChildIndex || next < currentNodeIndex + k) {
+      if (next == firstChildIndex) {
         // found first child
+        tails.add(nextEdge.getUpNodeIndex());
+      }
+      else if (next < currentNodeIndex + k) {
         // or we were here before
+        // so doing nothing?
       }
       else if (next == currentNodeIndex + k) {
         // all is fine, continuing
@@ -160,6 +164,12 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       if (!myWorkingGraph.getDownNodes(tail).contains(firstChildIndex)) {
         myWorkingGraph.addEdge(tail, firstChildIndex);
       }
+      else if (mergeWithOldCommit) {
+        myWorkingGraph.removeEdge(tail, firstChildIndex);
+        myWorkingGraph.addEdge(tail, firstChildIndex);
+        // todo I think we should pass something to the working graph so it would remember what are we adding/removing on each iteration
+        // to be able to expand dotted edges later
+      }
     }
 
     if (!tails.isEmpty() || mergeWithOldCommit) {
@@ -208,14 +218,16 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     }
 
     public void apply() {
-      for (GraphEdge e : myToAdd) {
-        myDottedEdges.createEdge(e);
-      }
       for (GraphEdge e : myToRemove) {
         myHiddenEdges.createEdge(e);
       }
       for (GraphEdge e : myDottedToRemove) {
         myDottedEdges.removeEdge(e);
+      }
+      // TODO if we start with adding edges instead of removing we will break merge with old commit test
+      // that's really bad
+      for (GraphEdge e : myToAdd) {
+        myDottedEdges.createEdge(e);
       }
 
       clear();

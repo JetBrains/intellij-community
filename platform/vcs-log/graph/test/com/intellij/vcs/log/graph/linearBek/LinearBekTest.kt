@@ -30,10 +30,11 @@ class LinearBekTest {
     val beforeLinearBekLayout = GraphLayoutBuilder.build(beforeLinearBek, {(nodeIndex1, nodeIndex2) -> nodeIndex1 - nodeIndex2 })
 
     val afterLinearBekExpected = graph(afterLinearBekBuilder)
-    val afterLinearBek = LinearBekController.compileGraph(beforeLinearBek, beforeLinearBekLayout, object: TimestampGetter {
+    val afterLinearBek = LinearBekController.compileGraph(beforeLinearBek, beforeLinearBekLayout, object : TimestampGetter {
       override fun getTimestamp(index: Int): Long {
         return 0
       }
+
       override fun size(): Int {
         return beforeLinearBek.nodesCount();
       }
@@ -178,7 +179,7 @@ class LinearBekTest {
     3()
   }, {
     0(1)
-    1(2)
+    1(2.dot)
     2(3)
     3()
   })
@@ -257,7 +258,7 @@ class LinearBekTest {
     0(1)
     1(2)
     2(3)
-    3(4)
+    3(4.dot)
     4(5)
     5(6.dot)
     6(7)
@@ -429,7 +430,7 @@ class LinearBekTest {
     1(2)
     2(3)
     3(4)
-    4(5)
+    4(5.dot)
     5(6)
     6(7)
     7()
@@ -458,7 +459,7 @@ class LinearBekTest {
     1(4)
     2(3)
     3(4)
-    4(5)
+    4(5.dot)
     5()
   })
 
@@ -485,7 +486,7 @@ class LinearBekTest {
     1(2)
     2(3)
     3(4)
-    4(5)
+    4(5.dot)
     5()
   })
 
@@ -505,7 +506,7 @@ class LinearBekTest {
   }, {
     0(1)
     1(2)
-    2(3)
+    2(3.dot)
     3()
   })
 
@@ -526,5 +527,22 @@ class LinearBekTest {
     1(2)
     2()
     3()
+  })
+
+  /*
+    0
+    |\
+    | 1
+    |/
+    2
+     */
+  Test fun testTriangle() = runTest({
+    0(2, 1)
+    1(2)
+    2()
+  }, {
+    0(1)
+    1(2.dot)
+    2()
   })
 }
