@@ -138,20 +138,20 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     LastRunReformatCodeOptionsProvider provider = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
     ReformatCodeRunOptions currentRunOptions = provider.getLastRunOptions(file);
 
-    TextRangeType processingType = currentRunOptions.getTextRangeType();
+    TextRangeType processingScope = currentRunOptions.getTextRangeType();
     if (hasSelection) {
-      processingType = TextRangeType.SELECTED_TEXT;
+      processingScope = TextRangeType.SELECTED_TEXT;
     }
-    else if (processingType == TextRangeType.VCS_CHANGED_TEXT) {
+    else if (processingScope == TextRangeType.VCS_CHANGED_TEXT) {
       if (isChangeNotTrackedForFile(project, file)) {
-        processingType = TextRangeType.WHOLE_FILE;
+        processingScope = TextRangeType.WHOLE_FILE;
       }
     }
     else {
-      processingType = TextRangeType.WHOLE_FILE;
+      processingScope = TextRangeType.WHOLE_FILE;
     }
-    currentRunOptions.setProcessingScope(processingType);
 
+    currentRunOptions.setProcessingScope(processingScope);
     new CodeProcessor(file, editor, currentRunOptions).processCode();
   }
 

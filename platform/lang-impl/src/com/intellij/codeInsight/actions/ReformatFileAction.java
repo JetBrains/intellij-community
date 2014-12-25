@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.actions;
 
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -43,9 +44,9 @@ public class ReformatFileAction extends AnAction implements DumbAware {
       return;
     }
 
-    //todo if we can do something with it then
-
-    presentation.setEnabled(true);
+    if (LanguageFormatting.INSTANCE.forContext(file) != null) {
+      presentation.setEnabled(true);
+    }
   }
 
   @Override
@@ -69,13 +70,8 @@ public class ReformatFileAction extends AnAction implements DumbAware {
     LayoutCodeDialog dialog = new LayoutCodeDialog(project, file, hasSelection, HELP_ID);
     dialog.show();
 
-    if (!dialog.isOK()) return;
-
-    //new LayoutCodeProcessorBuilder(project, editor, file)
-    //  .setReformatCode(dialog.isReformatCode())
-    //  .setOptimizeImports(dialog.isOptimizeImports())
-    //  .setRearrangeCode(dialog.isRearrangeCode())
-    //  .setTextRangeType(dialog.getTextRangeType())
-    //  .processCode();
+    if (dialog.isOK()) {
+      new CodeProcessor(file, editor, dialog.getRunOptions()).processCode();
+    }
   }
 }

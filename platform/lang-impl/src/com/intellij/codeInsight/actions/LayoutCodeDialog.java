@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions {
+public class LayoutCodeDialog extends DialogWrapper {
   @NotNull  private final Project myProject;
   @NotNull private final PsiFile myFile;
 
@@ -52,6 +52,8 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
   private JPanel myActionsPanel;
   private JPanel myScopePanel;
 
+  private LayoutCodeOptions myRunOptions;
+
   public LayoutCodeDialog(@NotNull Project project,
                           @NotNull PsiFile file,
                           boolean textSelected,
@@ -63,6 +65,7 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
     myHelpId = helpId;
 
     myLastRunOptions = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
+    myRunOptions = createOptionsBundledOnDialog();
 
     setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
     setTitle("Reformat File: " + file.getName());
@@ -77,16 +80,6 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
     setUpTextRangeMode();
   }
 
-  @Override
-  public TextRangeType getTextRangeType() {
-    if (myOnlyVCSChangedTextRb.isSelected()) {
-      return TextRangeType.VCS_CHANGED_TEXT;
-    }
-    if (mySelectedTextRadioButton.isSelected()) {
-      return TextRangeType.SELECTED_TEXT;
-    }
-    return TextRangeType.WHOLE_FILE;
-  }
 
   private void setUpTextRangeMode() {
     mySelectedTextRadioButton.setEnabled(myTextSelected);
@@ -149,15 +142,41 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
 
   private void saveCurrentConfiguration() {
     if (myOptimizeImportsCb.isEnabled()) {
-      myLastRunOptions.saveOptimizeImportsState(isOptimizeImports());
+      myLastRunOptions.saveOptimizeImportsState(myRunOptions.isOptimizeImports());
     }
     if (myRearrangeCodeCb.isEnabled()) {
-      myLastRunOptions.saveRearrangeState(myFile.getLanguage(), isRearrangeCode());
+      myLastRunOptions.saveRearrangeState(myFile.getLanguage(), myRunOptions.isRearrangeCode());
     }
 
     if (!mySelectedTextRadioButton.isSelected()) {
       myLastRunOptions.saveProcessVcsChangedTextState(myOnlyVCSChangedTextRb.isSelected());
     }
+  }
+
+  @NotNull
+  private LayoutCodeOptions createOptionsBundledOnDialog() {
+    return new LayoutCodeOptions() {
+      @Override
+      public TextRangeType getTextRangeType() {
+        if (myOnlyVCSChangedTextRb.isSelected()) {
+          return TextRangeType.VCS_CHANGED_TEXT;
+        }
+        if (mySelectedTextRadioButton.isSelected()) {
+          return TextRangeType.SELECTED_TEXT;
+        }
+        return TextRangeType.WHOLE_FILE;
+      }
+
+      @Override
+      public boolean isRearrangeCode() {
+        return myRearrangeCodeCb.isEnabled() && myRearrangeCodeCb.isSelected();
+      }
+
+      @Override
+      public boolean isOptimizeImports() {
+        return myOptimizeImportsCb.isEnabled() && myOptimizeImportsCb.isSelected();
+      }
+    };
   }
 
   @Nullable
@@ -178,18 +197,13 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
   }
 
   @Override
-  public boolean isRearrangeCode() {
-    return myRearrangeCodeCb.isEnabled() && myRearrangeCodeCb.isSelected();
-  }
-
-  @Override
-  public boolean isOptimizeImports() {
-    return myOptimizeImportsCb.isEnabled() && myOptimizeImportsCb.isSelected();
-  }
-
-  @Override
   protected void doOKAction() {
     super.doOKAction();
     saveCurrentConfiguration();
   }
+
+  public LayoutCodeOptions getRunOptions() {
+    return myRunOptions;
+  }
+
 }

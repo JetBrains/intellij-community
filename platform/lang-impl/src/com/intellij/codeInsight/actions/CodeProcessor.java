@@ -51,18 +51,18 @@ class CodeProcessor {
 
   public CodeProcessor(PsiFile file,
                        Editor editor,
-                       ReformatCodeRunOptions reformatCodeRunOptions)
+                       LayoutCodeOptions runOptions)
   {
     myFile = file;
     myProject = file.getProject();
     myEditor = editor;
 
-    myProcessingType = reformatCodeRunOptions.getTextRangeType();
+    myProcessingType = runOptions.getTextRangeType();
 
-    myShouldOptimizeImports = reformatCodeRunOptions.isOptimizeImports();
-    myShouldRearrangeCode = reformatCodeRunOptions.isRearrangeCode();
-    myProcessSelectedText = reformatCodeRunOptions.getTextRangeType() == SELECTED_TEXT;
-    myProcessChangesTextOnly = reformatCodeRunOptions.getTextRangeType() == VCS_CHANGED_TEXT;
+    myShouldOptimizeImports = runOptions.isOptimizeImports();
+    myShouldRearrangeCode = runOptions.isRearrangeCode();
+    myProcessSelectedText = runOptions.getTextRangeType() == SELECTED_TEXT;
+    myProcessChangesTextOnly = runOptions.getTextRangeType() == VCS_CHANGED_TEXT;
 
     myShouldNotify = editor != null && !myProcessSelectedText;
   }
