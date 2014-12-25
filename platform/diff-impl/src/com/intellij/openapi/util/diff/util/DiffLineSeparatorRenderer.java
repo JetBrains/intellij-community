@@ -180,21 +180,41 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
                                  int deltaY) {
     assert pointsX.size() == pointsY.size();
 
+    int halfHeight = lineHeight / 2;
+    int maxPointNumber = Math.min((x2 - x1) / (TornLine.ourMinDeltaX) + 3, pointsX.size());
+
+    int[] xPoints = new int[maxPointNumber];
+    int[] yPoints1 = new int[maxPointNumber];
+    int[] yPoints2 = new int[maxPointNumber];
+    int n = 0;
+
     int lastX = pointsX.get(0) + shiftX;
     int lastY = pointsY.get(0) + shiftY;
     for (int i = 1; i < pointsX.size(); i++) {
       int newX = pointsX.get(i) + shiftX;
       int newY = pointsY.get(i) + shiftY;
 
-      if (lastX > x2) break;
       if (newX >= x1) {
-        UIUtil.drawLine(g, lastX, lastY - deltaY + lineHeight / 2, newX, newY - deltaY + lineHeight / 2);
-        UIUtil.drawLine(g, lastX, lastY + deltaY + lineHeight / 2, newX, newY + deltaY + lineHeight / 2);
+        xPoints[n] = lastX;
+        yPoints1[n] = lastY - deltaY + halfHeight;
+        yPoints2[n] = lastY + deltaY + halfHeight;
+        n++;
       }
+      if (lastX > x2) break;
 
       lastX = newX;
       lastY = newY;
+
+      if (i == pointsX.size() - 1) {
+        xPoints[n] = lastX;
+        yPoints1[n] = lastY - deltaY + halfHeight;
+        yPoints2[n] = lastY + deltaY + halfHeight;
+        n++;
+      }
     }
+
+    g.drawPolyline(xPoints, yPoints1, n);
+    g.drawPolyline(xPoints, yPoints2, n);
   }
 
   public static class TornLine {
