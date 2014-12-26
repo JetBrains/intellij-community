@@ -382,7 +382,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
                        ? ScreenUtil.getScreenRectangle(location)
                        : ScreenUtil.getAllScreensRectangle();
 
-    int width = Math.min(screen.width + screen.x - location.x, cellMaxX - visMaxX);
+    int borderWidth = isPaintBorder() ? 1 : 0;
+    int width = Math.min(screen.width + screen.x - location.x - borderWidth, cellMaxX - visMaxX);
     int height = cellBounds.height;
 
     if (width <= 0 || height <= 0) return null;
@@ -397,11 +398,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     doPaintTooltipImage(renderer, cellBounds, g, key);
 
     CustomLineBorder border = null;
-    if (isPaintBorder()) {
-      border = new CustomLineBorder(getBorderColor(), 1, 0, 1, 1);
-      location.y -= 1;
-      size.width += 1;
-      size.height += 2;
+    if (borderWidth > 0) {
+      border = new CustomLineBorder(getBorderColor(), borderWidth, 0, borderWidth, borderWidth);
+      location.y -= borderWidth;
+      size.width += borderWidth;
+      size.height += borderWidth + borderWidth;
     }
 
     g.dispose();
