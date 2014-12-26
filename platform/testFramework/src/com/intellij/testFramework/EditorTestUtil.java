@@ -195,6 +195,9 @@ public class EditorTestUtil {
       public boolean canUse() {
         return true;
       }
+
+      @Override
+      public void reinit() {}
     });
     model.reinitSettings();
 
@@ -223,7 +226,7 @@ public class EditorTestUtil {
   /**
    * Equivalent to <code>extractCaretAndSelectionMarkers(document, true)</code>.
    *
-   * @see #extractCaretAndSelectionMarkers(com.intellij.openapi.editor.Document, boolean)
+   * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
   public static CaretAndSelectionState extractCaretAndSelectionMarkers(Document document) {
     return extractCaretAndSelectionMarkers(document, true);
