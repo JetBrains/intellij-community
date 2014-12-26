@@ -17,8 +17,15 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +40,20 @@ public class ReformatCodeActionInEditorTest extends LightCodeInsightFixtureTestC
 
   public void doTest(@NotNull ReformatFilesOptions options) {
     setOptions(options);
+
+    String before = null;
+    if (options.isProcessOnlyChangedText()) {
+      myFixture.configureByFile(getTestDataPath() + getTestName(true) + "_revision.java");
+      PsiFile file = myFixture.getFile();
+      Document document = myFixture.getDocument(file);
+      before = document.getText();
+    }
+
     myFixture.configureByFile(getTestDataPath() + getTestName(true) + "_before.java");
+
+    if (before != null) {
+      myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, before);
+    }
 
     final String actionId = IdeActions.ACTION_EDITOR_REFORMAT;
     AnAction action = ActionManager.getInstance().getAction(actionId);
@@ -42,6 +62,12 @@ public class ReformatCodeActionInEditorTest extends LightCodeInsightFixtureTestC
 
     action.actionPerformed(event);
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
+    super.tearDown();
   }
 
   protected AnActionEvent createEventFor(@NotNull AnAction action, @NotNull final Project project, @NotNull final Editor editor) {
@@ -80,7 +106,16 @@ public class ReformatCodeActionInEditorTest extends LightCodeInsightFixtureTestC
     doTest(new MockReformatFileSettings().setProcessWholeFile(false).setRearrange(true));
   }
 
+  public void testFormatVcsChanges() {
+    doTest(new MockReformatFileSettings().setProcessOnlyChangedText(true));
+  }
 
-  //todo add tests on vcs changes
+  public void testFormatOptimizeVcsChanges() {
+    doTest(new MockReformatFileSettings().setProcessOnlyChangedText(true).setOptimizeImports(true));
+  }
+
+  public void testFormatOptimizeRearrangeVcsChanges() {
+    doTest(new MockReformatFileSettings().setProcessOnlyChangedText(true).setOptimizeImports(true).setRearrange(true));
+  }
 
 }

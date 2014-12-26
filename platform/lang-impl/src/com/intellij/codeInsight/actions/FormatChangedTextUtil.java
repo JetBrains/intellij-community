@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.actions;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -51,8 +53,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FormatChangedTextUtil {
+  public static final Key<String> TEST_REVISION_CONTENT = Key.create("test.revision.content");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.FormatChangedTextUtil");
-  
+
   private FormatChangedTextUtil() {
   }
 
@@ -243,6 +246,13 @@ public class FormatChangedTextUtil {
 
   @NotNull
   public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      String testContent = file.getUserData(TEST_REVISION_CONTENT);
+      if (testContent != null) {
+        return calculateChangedTextRanges(file.getProject(), file, testContent);
+      }
+    }
+
     Change change = ChangeListManager.getInstance(project).getChange(file.getVirtualFile());
     if (change == null) {
       return ContainerUtilRt.emptyList();
