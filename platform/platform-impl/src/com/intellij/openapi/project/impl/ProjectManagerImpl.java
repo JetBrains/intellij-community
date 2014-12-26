@@ -257,6 +257,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       }
     }
 
+    File projectFile = new File(filePath);
+    if (projectFile.isFile()) {
+      FileUtil.delete(projectFile);
+    }
+    else {
+      File[] files = new File(projectFile, Project.DIRECTORY_STORE_FOLDER).listFiles();
+      if (files != null) {
+        for (File file : files) {
+          FileUtil.delete(file);
+        }
+      }
+    }
     ProjectImpl project = createProject(projectName, filePath, false, optimiseTestLoadSpeed);
     try {
       initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null);
