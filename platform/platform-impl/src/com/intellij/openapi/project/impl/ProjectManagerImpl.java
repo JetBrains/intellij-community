@@ -377,7 +377,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
           try {
             myDefaultProject = createProject(null, "", true, ApplicationManager.getApplication().isUnitTestMode());
             initProject(myDefaultProject, null);
-            myDefaultProjectRootElement = null;
           }
           catch (Throwable t) {
             PluginManager.processException(t);
