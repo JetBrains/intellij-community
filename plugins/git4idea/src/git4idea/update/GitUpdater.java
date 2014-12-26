@@ -156,6 +156,11 @@ public abstract class GitUpdater {
   @NotNull
   protected abstract GitUpdateResult doUpdate();
 
+  @NotNull
+  GitBranchPair getSourceAndTarget() {
+    return myTrackedBranches.get(myRoot);
+  }
+
   protected void markStart(VirtualFile root) throws VcsException {
     // remember the current position
     myBefore = GitRevisionNumber.resolve(myProject, root, "HEAD");

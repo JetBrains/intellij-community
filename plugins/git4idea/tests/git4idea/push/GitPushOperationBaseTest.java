@@ -16,11 +16,16 @@
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushSpec;
+import com.intellij.dvcs.push.PushSupport;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -43,6 +48,7 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
 
   private TempDirTestFixture myOutside;
   protected String myExternalPath;
+  protected GitPushSupport myPushSupport;
 
   @Override
   protected void setUp() throws Exception {
@@ -52,6 +58,7 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
       myOutside = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
       myOutside.setUp();
       myExternalPath = myOutside.getTempDirPath();
+      myPushSupport = findGitPushSupport();
     }
     catch (Exception e) {
       super.tearDown();
@@ -160,4 +167,15 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
     assertEquals(message, updateResult, actualResult.getUpdateResult());
   }
 
+
+  @NotNull
+  private GitPushSupport findGitPushSupport() {
+    return (GitPushSupport)ObjectUtils.assertNotNull(ContainerUtil.find(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, myProject),
+                                                                        new Condition<PushSupport<?, ?, ?>>() {
+                                                                          @Override
+                                                                          public boolean value(PushSupport<?, ?, ?> support) {
+                                                                            return support instanceof GitPushSupport;
+                                                                          }
+                                                                        }));
+  }
 }

@@ -46,7 +46,7 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
   public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                    @Nullable VcsPushOptionValue optionValue, boolean force) {
     GitPushTagMode pushTagMode = (GitPushTagMode)optionValue;
-    GitPushResult result = new GitPushOperation(myProject, pushSpecs, pushTagMode, force).execute();
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force).execute();
     GitPushResultNotification notification = GitPushResultNotification.create(myProject, result, myRepositoryManager.moreThanOneRoot());
     notification.notify(myProject);
     mySettings.setPushTagMode(pushTagMode);
