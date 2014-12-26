@@ -2938,6 +2938,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  Runnable r = System.out::println;" +
                     "  Runnable s = this::hashCode;" +
                     "  Runnable t = this::new;" +
+                    "  Runnable u = @AA A::new;" +
                     "  static {" +
                     "    System.out.println();" +
                     "  }" +
@@ -2950,7 +2951,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should find method reference 2", 2, findMatchesCount(source, pattern2));
 
     String pattern3 = "'_a::'_b";
-    assertEquals("should find all method references", 3, findMatchesCount(source, pattern3));
+    assertEquals("should find all method references", 4, findMatchesCount(source, pattern3));
+
+    String pattern4 = "@AA A::new";
+    assertEquals("should find annotated method references", 1, findMatchesCount(source, pattern4));
   }
 
   public void testNoUnexpectedException() {

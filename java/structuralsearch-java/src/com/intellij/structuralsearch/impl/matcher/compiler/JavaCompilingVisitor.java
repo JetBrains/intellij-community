@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
@@ -211,7 +212,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
           }
           currentReference = (PsiReferenceExpression)qualifier;
         }
-        if (!hasNoNestedSubstitutionHandlers) {
+        if (!hasNoNestedSubstitutionHandlers && PsiTreeUtil.getChildOfType(reference, PsiAnnotation.class) == null) {
           createAndSetSubstitutionHandlerFromReference(
             reference,
             resolve != null ? ((PsiClass)resolve).getQualifiedName() : reference.getText(),
