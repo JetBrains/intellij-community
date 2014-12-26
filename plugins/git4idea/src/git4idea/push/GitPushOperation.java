@@ -298,13 +298,6 @@ public class GitPushOperation {
     });
   }
 
-  @NotNull
-  private static <T> List<T> without(@NotNull List<T> collection, @NotNull T toRemove) {
-    List<T> result = ContainerUtil.newArrayList(collection);
-    result.remove(toRemove);
-    return result;
-  }
-
   private int collectNumberOfPushedCommits(@NotNull VirtualFile root, @NotNull GitPushNativeResult result) {
     if (result.getType() != GitPushNativeResult.Type.SUCCESS) {
       return -1;
