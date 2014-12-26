@@ -193,7 +193,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       }
     });
 
-    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<LogEntry>() {
+    getCommittedChangesImpl(settings, SvnTarget.fromURL(svnLocation.toSvnUrl()), maxCount, new Consumer<LogEntry>() {
       public void consume(final LogEntry svnLogEntry) {
         try {
           mergeSourceTracker.consume(svnLogEntry);
@@ -228,12 +228,22 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                        @NotNull Consumer<LogEntry> resultConsumer,
                                        boolean includeMergedRevisions,
                                        boolean filterOutByDate) throws VcsException {
-    setCollectingChangesProgress(location);
+    SvnTarget target = SvnTarget.fromURL(location.toSvnUrl(), createBeforeRevision(settings));
+
+    getCommittedChangesImpl(settings, target, maxCount, resultConsumer, includeMergedRevisions, filterOutByDate);
+  }
+
+  private void getCommittedChangesImpl(@NotNull ChangeBrowserSettings settings,
+                                       @NotNull SvnTarget target,
+                                       int maxCount,
+                                       @NotNull Consumer<LogEntry> resultConsumer,
+                                       boolean includeMergedRevisions,
+                                       boolean filterOutByDate) throws VcsException {
+    setCollectingChangesProgress(target.getPathOrUrlString());
 
     String author = settings.getUserFilter();
     SVNRevision revisionBefore = createBeforeRevision(settings);
     SVNRevision revisionAfter = createAfterRevision(settings);
-    SvnTarget target = SvnTarget.fromURL(location.toSvnUrl(), revisionBefore);
 
     myVcs.getFactory(target).createHistoryClient()
       .doLog(target, revisionBefore, revisionAfter, settings.STOP_ON_COPY, true, includeMergedRevisions, maxCount, null,
