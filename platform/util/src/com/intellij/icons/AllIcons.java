@@ -1185,6 +1185,9 @@ public class AllIcons {
     public static final Icon OpenProject = IconLoader.getIcon("/welcome/openProject.png"); // 16x16
     public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
 
+    public static final Icon RemoveRecentProject = IconLoader.getIcon("/welcome/project/remove.png"); // 10x10
+    public static final Icon RemoveRecentProjectHover = IconLoader.getIcon("/welcome/project/remove-hover.png"); // 10x10
+
   }
   
   public static class Xml {

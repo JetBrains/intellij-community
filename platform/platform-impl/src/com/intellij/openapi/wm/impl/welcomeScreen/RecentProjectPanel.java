@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
@@ -58,18 +57,37 @@ public class RecentProjectPanel extends JPanel {
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
   protected AnAction removeRecentProjectAction;
   private int myHoverIndex = -1;
+  private static final int closeButtonInset = 7;
+  private Icon currentIcon = AllIcons.Welcome.RemoveRecentProject;
 
   private final JPanel myCloseButtonForEditor = new JPanel() {
     {
-      setPreferredSize(new Dimension(AllIcons.General.BalloonClose.getIconWidth(), AllIcons.General.BalloonClose.getIconHeight()));
+      setPreferredSize(new Dimension(currentIcon.getIconWidth(), currentIcon.getIconHeight()));
       setOpaque(true);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      AllIcons.General.BalloonClose.paintIcon(this, g, 0, 0);
+      currentIcon.paintIcon(this, g, 0, 0);
     }
   };
+
+
+  private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
+
+    int realCloseButtonInset = (UIUtil.isRetina(myList.getGraphicsConfiguration().getDevice())) ?
+                           closeButtonInset * 2 : closeButtonInset;
+
+    Rectangle closeButtonRect = new Rectangle(myCloseButtonForEditor.getX() - realCloseButtonInset,
+                                              myCloseButtonForEditor.getY() - realCloseButtonInset,
+                                              myCloseButtonForEditor.getWidth() + realCloseButtonInset * 2,
+                                              myCloseButtonForEditor.getHeight() + realCloseButtonInset * 2);
+
+    Rectangle rectInListCoordinates = new Rectangle(new Point(closeButtonRect.x + listCellBounds.x,
+                                                              closeButtonRect.y + listCellBounds.y),
+                                                    closeButtonRect.getSize());
+    return rectInListCoordinates.contains(p);
+  }
 
   public RecentProjectPanel(WelcomeScreen screen) {
     super(new BorderLayout());
@@ -93,12 +111,7 @@ public class RecentProjectPanel extends JPanel {
           Rectangle cellBounds = myList.getCellBounds(selectedIndex, selectedIndex);
           if (cellBounds.contains(event.getPoint())) {
             Object selection = myList.getSelectedValue();
-
-            Rectangle closeButtonRect = myCloseButtonForEditor.getBounds();
-
-            Rectangle rectInListCoordinates = new Rectangle(new Point(closeButtonRect.x + cellBounds.x, closeButtonRect.y + cellBounds.y), closeButtonRect.getSize());
-
-            if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinates.contains(event.getPoint())) {
+            if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
               removeRecentProjectAction.actionPerformed(null);
             } else if (selection != null) {
               ((AnAction)selection).actionPerformed(
@@ -203,11 +216,16 @@ public class RecentProjectPanel extends JPanel {
           int index = myList.locationToIndex(point);
           myList.setSelectedIndex(index);
 
-          final Rectangle bounds = myList.getCellBounds(index, index);
-          if (bounds != null && bounds.contains(point)) {
+          final Rectangle cellBounds = myList.getCellBounds(index, index);
+          if (cellBounds != null && cellBounds.contains(point)) {
             myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            if (rectInListCoordinatesContains(cellBounds, point)) {
+              currentIcon = AllIcons.Welcome.RemoveRecentProjectHover;
+            } else {
+              currentIcon = AllIcons.Welcome.RemoveRecentProject;
+            }
             myHoverIndex = index;
-            myList.repaint(bounds);
+            myList.repaint(cellBounds);
           }
           else {
             myList.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -223,6 +241,7 @@ public class RecentProjectPanel extends JPanel {
       @Override
       public void mouseExited(MouseEvent e) {
         myHoverIndex = -1;
+        currentIcon = AllIcons.Welcome.RemoveRecentProject;
         myList.repaint();
       }
     };
@@ -261,7 +280,7 @@ public class RecentProjectPanel extends JPanel {
   private static class MyList extends JBList {
     private final Dimension mySize;
 
-    private MyList(Dimension size, @NotNull Object... listData) {
+    private MyList(Dimension size, @NotNull Object ... listData) {
       super(listData);
       mySize = size;
       setEmptyText("  No Project Open Yet  ");

@@ -385,6 +385,14 @@ public class UIUtil {
     }
   }
 
+  public static boolean isRetina (GraphicsDevice device) {
+    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
+      return DetectRetinaKit.isOracleMacRetinaDevice(device);
+    } else {
+      return isRetina();
+    }
+  }
+
   //public static boolean isMacRetina(Graphics2D g) {
   //  return DetectRetinaKit.isMacRetina(g);
   //}
