@@ -244,7 +244,7 @@ public class EditorModificationUtil {
   }
 
   @Nullable
-  private static String getStringContent(@NotNull Transferable content) {
+  public static String getStringContent(@NotNull Transferable content) {
     RawText raw = RawText.fromTransferable(content);
     if (raw != null) return raw.rawText;
 

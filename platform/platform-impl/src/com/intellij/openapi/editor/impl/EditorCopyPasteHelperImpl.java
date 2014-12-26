@@ -85,7 +85,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   @Nullable
   @Override
   public TextRange[] pasteTransferable(final @NotNull Editor editor, @NotNull Transferable content) {
-    String text = getStringContent(content);
+    String text = EditorModificationUtil.getStringContent(content);
     if (text == null) return null;
 
     if (editor.getCaretModel().supportsMultipleCarets()) {
@@ -130,19 +130,5 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
       return new TextRange[]{new TextRange(caretOffset, caretOffset + text.length())};
     }
-  }
-
-  @Nullable
-  private static String getStringContent(@NotNull Transferable content) {
-    RawText raw = RawText.fromTransferable(content);
-    if (raw != null) return raw.rawText;
-
-    try {
-      return (String)content.getTransferData(DataFlavor.stringFlavor);
-    }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
-
-    return null;
   }
 }
