@@ -31,9 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-//todo: extends from base store class
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
-  @Nullable private final Element myElement;
   private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
@@ -41,7 +39,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     super(project, pathMacroManager);
 
     myProjectManager = projectManager;
-    myElement = projectManager.getDefaultProjectRootElement();
   }
 
   @Nullable
@@ -53,20 +50,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    Element _d = null;
-
-    if (myElement != null) {
-      myElement.detach();
-      _d = myElement;
-    }
-
-    final Element element = _d;
     final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, myPathMacroManager.createTrackingSubstitutor(),
                                                             ROOT_TAG_NAME, null) {
       @Override
       @Nullable
       protected Element loadLocalData() {
-        return element;
+        return myProjectManager.getDefaultProjectRootElement();
       }
 
       @Override
@@ -175,9 +164,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  public void load() throws IOException, StateStorageException {
-    if (myElement == null) return;
-    super.load();
+  public void load() throws IOException {
+    if (myProjectManager.getDefaultProjectRootElement() != null) {
+      super.load();
+    }
   }
 
   private static class MyExternalizationSession implements StateStorageManager.ExternalizationSession {
