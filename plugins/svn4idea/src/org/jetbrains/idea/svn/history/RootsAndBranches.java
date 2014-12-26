@@ -39,9 +39,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.AbstractIntegrateChangesAction;
-import org.jetbrains.idea.svn.integrate.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.actions.ShowSvnMapAction;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
+import org.jetbrains.idea.svn.integrate.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SelectedChangeListsChecker;
 import org.jetbrains.idea.svn.integrate.SelectedCommittedStuffChecker;
@@ -99,8 +99,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
     return myMergePanels.get(key.endsWith(File.separator) ? key.substring(0, key.length() - 1) : key + File.separator);
   }
-  
-  public RootsAndBranches(final Project project, final DecoratorManager manager, final RepositoryLocation location) {
+
+  public RootsAndBranches(final Project project, @NotNull DecoratorManager manager, final RepositoryLocation location) {
     myProject = project;
     myManager = manager;
     myLocation = location;
