@@ -16,6 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +38,18 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
                                   ? "checkbox.enable.ctrl.mousewheel.changes.font.size.macos"
                                   : "checkbox.enable.ctrl.mousewheel.changes.font.size"), "IS_WHEEL_FONTCHANGE_ENABLED"),
     editor("Mouse: " + messageApp("checkbox.enable.drag.n.drop.functionality.in.editor"), "IS_DND_ENABLED"),
-    editor("Virtual Space: " + messageApp("checkbox.show.all.softwraps"), "IS_ALL_SOFTWRAPS_SHOWN"),
+    new EditorOptionDescription(null, messageApp("checkbox.show.softwraps.only.for.caret.line.action.text"), "preferences.editor") {
+      @Override
+      public boolean isOptionEnabled() {
+        return !EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown();
+      }
+
+      @Override
+      public void setOptionState(boolean enabled) {
+        EditorSettingsExternalizable.getInstance().setAllSoftwrapsShown(!enabled);
+        fireUpdated();
+      }
+    },
     editor("Virtual Space: " + messageApp("checkbox.allow.placement.of.caret.after.end.of.line"), "IS_VIRTUAL_SPACE"),
     editor("Virtual Space: " + messageApp("checkbox.allow.placement.of.caret.inside.tabs"), "IS_CARET_INSIDE_TABS"),
     editor("Virtual Space: " + messageApp("checkbox.show.virtual.space.at.file.bottom"), "ADDITIONAL_PAGE_AT_BOTTOM"),
