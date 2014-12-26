@@ -516,7 +516,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       setFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
     }
 
-    myGutterComponent.setLineNumberAreaWidth(myLineNumberAreaWidthFunction);
+    myGutterComponent.setLineNumberAreaWidthFunction(myLineNumberAreaWidthFunction);
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
     myEditorComponent.setSize(preferredSize);
@@ -1871,7 +1871,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myPreferredSize = dim;
 
-      myGutterComponent.setLineNumberAreaWidth(myLineNumberAreaWidthFunction);
       myGutterComponent.updateSize();
 
       myEditorComponent.setSize(dim);
