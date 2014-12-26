@@ -27,7 +27,7 @@ public class TestClassVar {
 
       while(var1 < 10) {// 47
          int var2;
-         for(var2 = var1; var1 < 10 && var1 == 0; ++var1) {// 51
+         for(var2 = var1; var1 < 10 && var1 == 0; ++var1) {// 49
             ;
          }
 
