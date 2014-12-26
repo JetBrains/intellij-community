@@ -39,7 +39,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.util.Map;
 
-public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
+public class OneRecursiveShotMergeInfoWorker {
 
   @NotNull private final MergeContext myMergeContext;
 
