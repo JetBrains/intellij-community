@@ -2408,6 +2408,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find anno parameter value",0,findMatchesCount(s11,s12_5));
     assertEquals("Find anno parameter value",4,findMatchesCount(s11,s12_6));
     assertEquals("Find anno parameter value",4,findMatchesCount(s11,s12_7));
+
+    String source1 = "class A {" +
+                     "  void m() {" +
+                     "    new @B Object();" +
+                     "  }" +
+                     "}";
+    assertEquals("Find annotated new expression", 1, findMatchesCount(source1, "new Object()"));
+    assertEquals("Find annotated new expression", 1, findMatchesCount(source1, "new @B Object()"));
+    assertEquals("Find annotated new expression", 0, findMatchesCount(source1, "new @C Object()"));
   }
 
   public void testBoxingAndUnboxing() {
