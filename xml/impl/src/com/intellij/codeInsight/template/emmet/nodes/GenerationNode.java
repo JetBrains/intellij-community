@@ -411,6 +411,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private void setAttributeValues(@NotNull XmlTag tag, @NotNull final Map<String, String> attributes, CustomTemplateCallback callback) {
+    // default and implied attributes
     final String defaultAttributeValue = attributes.get(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
     if (defaultAttributeValue != null) {
       attributes.remove(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
@@ -446,6 +447,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
     }
     
+    // boolean attributes
     for (XmlAttribute xmlAttribute : tag.getAttributes()) {
       final String attributeName = xmlAttribute.getName();
       final XmlAttributeValue xmlAttributeValueElement = xmlAttribute.getValueElement();
@@ -458,7 +460,7 @@ public class GenerationNode extends UserDataHolderBase {
         myContainsSurroundedTextMarker = true;
       }
 
-      if (isBooleanAttribute(attributeValue, xmlAttribute, ZenCodingUtil.isHtml(callback))) {
+      if (isBooleanAttribute(attributeValue, xmlAttribute, callback)) {
         if (HtmlUtil.isShortNotationOfBooleanAttributePreferred()) {
           if (xmlAttributeValueElement != null) {
             final PsiElement prevSibling = xmlAttributeValueElement.getPrevSibling();
@@ -493,13 +495,15 @@ public class GenerationNode extends UserDataHolderBase {
     }
   }
 
-  private static boolean isBooleanAttribute(@Nullable String attributeValue, @NotNull XmlAttribute xmlAttribute, boolean isHtml) {
+  private static boolean isBooleanAttribute(@Nullable String attributeValue, 
+                                            @NotNull XmlAttribute xmlAttribute, 
+                                            @NotNull CustomTemplateCallback callback) {
     if (XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE.equals(attributeValue)) {
       return true;
     }
-    if (isHtml) {
+    if (ZenCodingUtil.isHtml(callback)) {
       final XmlAttributeDescriptor descriptor = xmlAttribute.getDescriptor();
-      return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, xmlAttribute);
+      return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, callback.getContext());
     }
     return false;
   }

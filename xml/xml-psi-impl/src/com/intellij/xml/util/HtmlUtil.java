@@ -252,7 +252,7 @@ public class HtmlUtil {
     });
   }
 
-  public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor, @Nullable XmlElement context) {
+  public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor, @Nullable PsiElement context) {
     if (descriptor instanceof HtmlAttributeDescriptorImpl && descriptor.isEnumerated()) {
       final String[] values = descriptor.getEnumeratedValues();
       if (values == null) {
@@ -269,7 +269,7 @@ public class HtmlUtil {
     return context != null && isCustomBooleanAttribute(descriptor.getName(), context);
   }
 
-  public static boolean isCustomBooleanAttribute(@NotNull String attributeName, @NotNull XmlElement context) {
+  public static boolean isCustomBooleanAttribute(@NotNull String attributeName, @NotNull PsiElement context) {
     final String entitiesString = getEntitiesString(context, XmlEntitiesInspection.BOOLEAN_ATTRIBUTE_SHORT_NAME);
     if (entitiesString != null) {
       StringTokenizer tokenizer = new StringTokenizer(entitiesString, ",");

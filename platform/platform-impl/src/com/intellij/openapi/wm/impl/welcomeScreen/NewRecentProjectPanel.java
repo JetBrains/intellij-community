@@ -109,9 +109,11 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
         closeButtonCell.gridx = 1;
         closeButtonCell.gridy = 0;
+        closeButtonCell.anchor = GridBagConstraints.FIRST_LINE_END;
+        closeButtonCell.insets = new Insets(7, 7, 7, 7);
         closeButtonCell.gridheight = 2;
 
-        closeButtonCell.anchor = GridBagConstraints.WEST;
+        //closeButtonCell.anchor = GridBagConstraints.WEST;
       }
 
       @Override

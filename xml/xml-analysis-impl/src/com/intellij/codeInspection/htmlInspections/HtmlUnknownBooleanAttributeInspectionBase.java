@@ -33,10 +33,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElementInspection {
+public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> BOOLEAN_ATTRIBUTE_KEY = Key.create(BOOLEAN_ATTRIBUTE_SHORT_NAME);
   private static final Logger LOG = Logger.getInstance(HtmlUnknownBooleanAttributeInspectionBase.class);
 
+  public HtmlUnknownBooleanAttributeInspectionBase() {
+    this("");
+  }
+  
   public HtmlUnknownBooleanAttributeInspectionBase(String defaultValues) {
     super(defaultValues);
   }

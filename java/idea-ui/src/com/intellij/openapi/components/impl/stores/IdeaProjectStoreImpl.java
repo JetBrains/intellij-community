@@ -26,14 +26,14 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
-  public IdeaProjectStoreImpl(@NotNull ProjectImpl project) {
-    super(project);
+  public IdeaProjectStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
+    super(project, pathMacroManager);
   }
 
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject) {
+    return new ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject) {
       @Override
       public StorageData createIprStorageData(@NotNull String filePath) {
         return new IdeaIprStorageData(ROOT_TAG_NAME, myProject, filePath);

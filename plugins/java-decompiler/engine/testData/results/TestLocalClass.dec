@@ -1,0 +1,61 @@
+package pkg;
+
+public abstract class TestLocalClass {
+   void foo() {
+      boolean var1 = true;// 8
+      class Local {
+         void foo() {
+            boolean var1 = true;// 11
+            boolean var2 = true;// 12
+         }
+      }
+
+      Local var2 = new Local();// 15
+      var2.foo();// 16
+   }
+
+   void boo() {
+      boolean var1 = true;// 20
+   }
+
+   void zoo() {
+      boolean var1 = true;// 24
+   }
+}
+
+class 'pkg/TestLocalClass$1Local' {
+   method 'foo ()V' {
+      0      7
+      1      7
+      2      8
+      3      8
+   }
+}
+
+class 'pkg/TestLocalClass' {
+   method 'foo ()V' {
+      0      4
+      1      4
+      a      12
+      c      13
+   }
+
+   method 'boo ()V' {
+      0      17
+      1      17
+   }
+
+   method 'zoo ()V' {
+      0      21
+      1      21
+   }
+}
+
+Lines mapping:
+8 <-> 5
+11 <-> 8
+12 <-> 9
+15 <-> 13
+16 <-> 14
+20 <-> 18
+24 <-> 22

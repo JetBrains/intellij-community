@@ -33,7 +33,6 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
@@ -118,9 +117,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
       @NotNull
       @Override
       public String getTemplatesDir() {
-        VirtualFile file = project.getProjectFile();
-        assert file != null;
-        return new File(file.getParent().getCanonicalPath(), TEMPLATES_DIR).getPath();
+        return new File(project.getBasePath(), Project.DIRECTORY_STORE_FOLDER + "/" + TEMPLATES_DIR).getPath();
       }
     };
   }

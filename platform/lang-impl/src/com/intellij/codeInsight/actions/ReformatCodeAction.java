@@ -192,8 +192,13 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processor = new ReformatCodeProcessor(project, file, range, !processSelectedText && processChangedTextOnly);
     }
 
-    if (rearrangeEntries && editor != null) {
-      processor = new RearrangeCodeProcessor(processor);
+    if (rearrangeEntries) {
+      if (processSelectedText && editor != null) {
+        processor = new RearrangeCodeProcessor(processor, editor.getSelectionModel());
+      }
+      else {
+        processor = new RearrangeCodeProcessor(processor);
+      }
     }
 
     processor.run();

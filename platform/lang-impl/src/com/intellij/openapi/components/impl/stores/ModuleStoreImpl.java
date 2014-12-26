@@ -17,7 +17,6 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -47,8 +46,9 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   private final ModuleImpl myModule;
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public ModuleStoreImpl(@NotNull ComponentManagerImpl componentManager, @NotNull ModuleImpl module) {
-    super(componentManager);
+  public ModuleStoreImpl(@NotNull ModuleImpl module, @NotNull PathMacroManager pathMacroManager) {
+    super(pathMacroManager);
+
     myModule = module;
   }
 
@@ -252,6 +252,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    return new ModuleStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myModule);
+    return new ModuleStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myModule);
   }
 }

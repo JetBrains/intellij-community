@@ -120,11 +120,11 @@ public class HighlightDisplayLevel {
 
   @NotNull
   public static Icon createIconByMask(final Color renderColor) {
-    return new TheColorIcon(getEmptyIconDim(), renderColor);
+    return new MyColorIcon(getEmptyIconDim(), renderColor);
   }
 
-  public static class TheColorIcon extends ColorIcon implements ColoredIcon {
-    public TheColorIcon(int size, @NotNull Color color) {
+  private static class MyColorIcon extends ColorIcon implements ColoredIcon {
+    public MyColorIcon(int size, @NotNull Color color) {
       super(size, color);
     }
 
@@ -132,12 +132,12 @@ public class HighlightDisplayLevel {
     public Color getColor() {
       return getIconColor();
     }
-  } 
-  
+  }
+
   public interface ColoredIcon {
     Color getColor();
   }
-  
+
   public static class SingleColorIcon implements Icon, ColoredIcon {
     private final TextAttributesKey myKey;
 

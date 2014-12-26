@@ -21,10 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class HtmlUnknownAttributeInspection extends HtmlUnknownAttributeInspectionBase {
-  public HtmlUnknownAttributeInspection() {
-    super("");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {

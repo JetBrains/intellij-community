@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
- * @see com.intellij.psi.LanguageSubstitutors
+ * @see LanguageSubstitutors
  */
 public abstract class LanguageSubstitutor {
 
