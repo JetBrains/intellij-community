@@ -755,11 +755,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     if (list != null && list.getTypeParameterElements().length > 0) {
-      boolean result = typeparams != null &&
-                       myMatchingVisitor.matchInAnyOrder(
-                         list.getTypeParameterElements(),
-                         typeparams
-                       );
+      boolean result = typeparams != null && myMatchingVisitor.matchSequentially(list.getTypeParameterElements(), typeparams);
 
       if (!result) return false;
       el = ((PsiJavaCodeReferenceElement)el).getReferenceNameElement();

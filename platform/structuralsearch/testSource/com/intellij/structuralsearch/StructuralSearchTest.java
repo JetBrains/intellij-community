@@ -1320,8 +1320,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s82_8 = "'T<'_Subst+>";
     assertEquals(
       "typed symbol",
-      findMatchesCount(s81_4,s82_8),
-      6
+      8,
+      findMatchesCount(s81_4,s82_8)
     );
 
     String s81_5 = "class A { HashMap<String, Integer> variable = new HashMap<String, Integer>(\"aaa\");}";
@@ -1335,6 +1335,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       "no exception on searching for diamond operator",
       findMatchesCount(s81_5, "new 'Type<>('_Param)"),
       0
+    );
+    assertEquals(
+      "order of parameters matters",
+      0,
+      findMatchesCount(s81_5, "HashMap<Integer, String>")
+    );
+    assertEquals(
+      "order of parameters matters 2",
+      2,
+      findMatchesCount(s81_5, "HashMap<String, Integer>")
     );
 
     String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; }";
