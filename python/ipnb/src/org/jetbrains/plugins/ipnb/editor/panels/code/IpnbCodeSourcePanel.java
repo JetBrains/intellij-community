@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
+import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -47,7 +48,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
   @NotNull private final String mySource;
 
   public IpnbCodeSourcePanel(@NotNull final Project project, @NotNull final IpnbCodePanel parent, @NotNull final IpnbCodeCell cell) {
-    super(cell, new BorderLayout());
+    super(cell, new HorizontalLayout(5));
     myProject = project;
     myParent = parent;
     mySource = cell.getSourceAsString();
