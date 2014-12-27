@@ -40,15 +40,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   private void addEditablePanel() {
     myEditablePanel = createEditablePanel();
     final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.gridx = 0;
-    c.gridy = 0;
-    c.gridwidth = 1;
 
     panel.setName(EDITABLE_PANEL);
     panel.setBackground(IpnbEditorUtil.getBackground());
-    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myEditablePanel, c);
+    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myEditablePanel);
 
     add(panel, EDITABLE_PANEL);
   }
@@ -69,20 +64,20 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     myViewPanel.setName(VIEW_PANEL);
 
     final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.gridx = 0;
-    c.gridy = 0;
-    c.gridwidth = 1;
-    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myViewPanel, c);
+    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myViewPanel);
     panel.setBackground(IpnbEditorUtil.getBackground());
     add(panel, VIEW_PANEL);
   }
 
   public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
                              @NotNull final IpnbEditorUtil.PromptType promptType,
-                             @NotNull final JComponent component, @NotNull final GridBagConstraints c) {
+                             @NotNull final JComponent component) {
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
+    c.gridy = 0;
+    c.gridwidth = 1;
+
     c.weightx = 0;
     c.anchor = GridBagConstraints.NORTHWEST;
     final JComponent promptComponent = IpnbEditorUtil.createPromptComponent(promptNumber, promptType);
