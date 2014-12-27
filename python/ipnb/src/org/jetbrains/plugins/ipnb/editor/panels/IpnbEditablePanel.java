@@ -9,8 +9,6 @@ import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbEditableCell;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Utilities;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -164,22 +162,6 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       }
     });
     return textArea;
-  }
-
-  public int getLineCount(@NotNull final JTextArea textArea) {
-    int totalCharacters = textArea.getText().length();
-    int lineCount = 1;
-
-    try {
-      int offset = totalCharacters;
-      while (offset > 0) {
-        offset = Utilities.getRowStart(textArea, offset) - 1;
-        lineCount++;
-      }
-    } catch (BadLocationException e) {
-      return 1;
-    }
-    return lineCount;
   }
 
   public boolean contains(int y) {
