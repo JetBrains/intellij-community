@@ -474,7 +474,7 @@ public class PyQuickFixTest extends PyTestCase {
   public void testRemoveUnicodePrefixFromGluedStringNodesWithSlash() {
     runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
       public void run() {
-        myFixture.configureByFiles(getTestDataPath() + getTestName(false) + ".py");
+        myFixture.configureByFile(getTestName(false) + ".py");
         myFixture.checkHighlighting(true, false, false);
         final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
         assertNotNull(intentionAction);
@@ -488,7 +488,7 @@ public class PyQuickFixTest extends PyTestCase {
   public void testRemoveUnicodePrefixFromGluedStringNodesInParenthesis() {
     runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
       public void run() {
-        myFixture.configureByFiles(getTestDataPath() + getTestName(false) + ".py");
+        myFixture.configureByFile(getTestName(false) + ".py");
         myFixture.checkHighlighting(true, false, false);
         final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
         assertNotNull(intentionAction);

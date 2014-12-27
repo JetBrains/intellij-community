@@ -35,7 +35,7 @@ public class PyClassMROTest extends PyTestCase {
 
   // TypeError in Python
   public void testMROConflict() {
-    assertMRO(getClass("C"));
+    assertMRO(getClass("C"), "unknown");
   }
 
   public void testCircularInheritance() {
@@ -43,7 +43,7 @@ public class PyClassMROTest extends PyTestCase {
     myFixture.configureByFiles(getPath(testName), getPath(testName + "2"));
     final PyClass cls = myFixture.findElementByText("Foo", PyClass.class);
     assertNotNull(cls);
-    assertMRO(cls);
+    assertMRO(cls, "unknown");
   }
 
   public void testExampleFromDoc1() {
@@ -55,7 +55,7 @@ public class PyClassMROTest extends PyTestCase {
   }
 
   public void testExampleFromDoc3() {
-    assertMRO(getClass("G"));
+    assertMRO(getClass("G"), "unknown");
   }
 
   public void testExampleFromDoc4() {
@@ -69,6 +69,13 @@ public class PyClassMROTest extends PyTestCase {
   // PY-4183
   public void testComplicatedDiamond() {
     assertMRO(getClass("H"), "E", "F", "B", "G", "C", "D", "A", "object");
+  }
+
+  // PY-11401
+  public void testUnresolvedClassesImpossibleToBuildMRO() {
+    assertMRO(getClass("ObjectManager"),
+              "CopyContainer", "unknown", "Navigation", "unknown", "Tabs", "unknown", "unknown", "unknown", "Collection", "Resource",
+              "LockableItem", "EtagSupport", "Traversable", "object", "unknown");
   }
 
   public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {

@@ -602,8 +602,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (baseDirectory != null) {
       //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
       // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
+      String stringToReplace = "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$";
+      String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.getAbsolutePath());
       for (String s : cached) {
-        options.add(StringUtil.replace(s, "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$", baseDirectory.getAbsolutePath()));
+        options.add(StringUtil.replace(s, stringToReplace, moduleDirPath));
       }
     }
     else {

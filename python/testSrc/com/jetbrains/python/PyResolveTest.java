@@ -567,4 +567,9 @@ public class PyResolveTest extends PyResolveTestCase {
     PyTargetExpression xyzzy = assertResolvesTo(PyTargetExpression.class, "xyzzy");
     assertEquals("__init__", PsiTreeUtil.getParentOfType(xyzzy, PyFunction.class).getName());
   }
+
+  // PY-11401
+  public void testResolveAttributesUsingOldStyleMROWhenUnresolvedAncestorsAndC3Fails() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
 }

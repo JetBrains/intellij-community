@@ -265,8 +265,6 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
 
-    <applicationService serviceInterface="com.intellij.util.io.HttpRequests" serviceImplementation="com.intellij.util.io.HttpRequestsImpl"/>
-
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
@@ -335,8 +333,6 @@
     <httpRequestHandler implementation="com.intellij.platform.ProjectSetRequestHandler"/>
     <postStartupActivity implementation="org.jetbrains.ide.BuiltInServerManagerImpl$MyPostStartupActivity"/>
 
-    <applicationService serviceImplementation="com.intellij.notification.impl.GotItStateKeeper"/>
-      
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>

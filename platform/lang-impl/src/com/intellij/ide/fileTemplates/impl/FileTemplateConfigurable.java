@@ -149,7 +149,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("title.file.templates");
+    return IdeBundle.message("title.edit.file.template");
   }
 
   @Override

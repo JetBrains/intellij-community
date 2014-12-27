@@ -94,16 +94,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       myRendererColors.put(severity.getName(), renderColor);
     }
     myOrderMap = null;
-
-    final TextAttributes attributes = info.getAttributes();
-    Color color = attributes.getErrorStripeColor();
-    if (color == null) {
-      color = attributes.getEffectColor();
-    }
-    if (color == null) {
-      color = JBColor.GRAY;
-    }
-    new HighlightDisplayLevel(severity, new HighlightDisplayLevel.TheColorIcon(HighlightDisplayLevel.getEmptyIconDim(), color));
+    HighlightDisplayLevel.registerSeverity(severity, getHighlightInfoTypeBySeverity(severity).getAttributesKey());
     severitiesChanged();
   }
 

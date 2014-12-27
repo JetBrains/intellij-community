@@ -28,7 +28,6 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import junit.framework.Assert;
 
@@ -104,21 +103,10 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
     assertEquals(2, itemsToShow.length);
     assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
     final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler, -1);
-    final Boolean [] enabled = new Boolean[itemsToShow.length];
-    final MockUpdateParameterInfoContext updateParameterInfoContext = new MockUpdateParameterInfoContext(myEditor, myFile){
-      @Override
-      public Object[] getObjectsToView() {
-        return itemsToShow;
-      }
-
-      @Override
-      public void setUIComponentEnabled(int index, boolean b) {
-        enabled[index] = b;
-      }
-    };
+    final MockUpdateParameterInfoContext updateParameterInfoContext = new MockUpdateParameterInfoContext(myEditor, myFile, itemsToShow);
     updateParameterInfoContext.setParameterOwner(list);
     handler.updateParameterInfo(list, updateParameterInfoContext);
-    assertTrue(ArrayUtilRt.find(enabled, Boolean.TRUE) > -1);
+    assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) || updateParameterInfoContext.isUIComponentEnabled(1));
   }
 
   public void testAfterGenericsInsideCall() throws Exception {

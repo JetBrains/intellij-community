@@ -68,7 +68,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class LightPlatformCodeInsightTestCase extends LightPlatformLangTestCase {
+public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.LightCodeInsightTestCase");
 
   protected static Editor myEditor;

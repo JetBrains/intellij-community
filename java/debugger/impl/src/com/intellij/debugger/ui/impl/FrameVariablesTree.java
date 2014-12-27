@@ -241,7 +241,7 @@ public class FrameVariablesTree extends DebuggerTree {
       }
       final byte[] bytecodes = method.bytecodes();
       if (bytecodes != null && bytecodes.length > 0) {
-        final int firstLocalVariableSlot = argumentCount + (method.isStatic()? 0 : 1);
+        final int firstLocalVariableSlot = ArgumentValueDescriptorImpl.getFirstLocalsSlot(method);
         final long instructionIndex = location.codeIndex();
         final TIntObjectHashMap<DecompiledLocalVariable> usedVars = new TIntObjectHashMap<DecompiledLocalVariable>();
         new InstructionParser(bytecodes, instructionIndex) {

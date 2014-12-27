@@ -94,7 +94,7 @@ public class EditorOptionsPanel {
   private JCheckBox    myCbUseSoftWrapsAtConsole;
   private JCheckBox    myCbUseCustomSoftWrapIndent;
   private JTextField   myCustomSoftWrapIndent;
-  private JCheckBox    myCbShowAllSoftWraps;
+  private JCheckBox    myCbShowSoftWrapsOnlyOnCaretLine;
   private JCheckBox    myPreselectCheckBox;
   private JBCheckBox   myCbShowQuickDocOnMouseMove;
   private JBLabel      myQuickDocDelayLabel;
@@ -177,7 +177,7 @@ public class EditorOptionsPanel {
     myCbUseSoftWrapsAtConsole.setSelected(editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
     myCbUseCustomSoftWrapIndent.setSelected(editorSettings.isUseCustomSoftWrapIndent());
     myCustomSoftWrapIndent.setText(Integer.toString(editorSettings.getCustomSoftWrapIndent()));
-    myCbShowAllSoftWraps.setSelected(editorSettings.isAllSoftWrapsShown());
+    myCbShowSoftWrapsOnlyOnCaretLine.setSelected(!editorSettings.isAllSoftWrapsShown());
     updateSoftWrapSettingsRepresentation();
 
     myCbVirtualSpace.setSelected(editorSettings.isVirtualSpace());
@@ -282,7 +282,7 @@ public class EditorOptionsPanel {
     editorSettings.setUseSoftWraps(myCbUseSoftWrapsAtConsole.isSelected(), SoftWrapAppliancePlaces.CONSOLE);
     editorSettings.setUseCustomSoftWrapIndent(myCbUseCustomSoftWrapIndent.isSelected());
     editorSettings.setCustomSoftWrapIndent(getCustomSoftWrapIndent());
-    editorSettings.setAllSoftwrapsShown(myCbShowAllSoftWraps.isSelected());
+    editorSettings.setAllSoftwrapsShown(!myCbShowSoftWrapsOnlyOnCaretLine.isSelected());
     editorSettings.setVirtualSpace(myCbVirtualSpace.isSelected());
     editorSettings.setCaretInsideTabs(myCbCaretInsideTabs.isSelected());
     editorSettings.setAdditionalPageAtBottom(myCbVirtualPageAtBottom.isSelected());
@@ -443,7 +443,7 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbUseSoftWrapsAtConsole, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
     isModified |= isModified(myCbUseCustomSoftWrapIndent, editorSettings.isUseCustomSoftWrapIndent());
     isModified |= editorSettings.getCustomSoftWrapIndent() != getCustomSoftWrapIndent();
-    isModified |= isModified(myCbShowAllSoftWraps, editorSettings.isAllSoftWrapsShown());
+    isModified |= isModified(myCbShowSoftWrapsOnlyOnCaretLine, !editorSettings.isAllSoftWrapsShown());
     isModified |= isModified(myCbVirtualSpace, editorSettings.isVirtualSpace());
     isModified |= isModified(myCbCaretInsideTabs, editorSettings.isCaretInsideTabs());
     isModified |= isModified(myCbVirtualPageAtBottom, editorSettings.isAdditionalPageAtBottom());
@@ -555,8 +555,10 @@ public class EditorOptionsPanel {
   }
 
   private void updateSoftWrapSettingsRepresentation() {
-    myCbUseCustomSoftWrapIndent.setEnabled(myCbUseSoftWrapsAtEditor.isSelected() || myCbUseSoftWrapsAtConsole.isSelected());
+    boolean softWrapsEnabled = myCbUseSoftWrapsAtEditor.isSelected() || myCbUseSoftWrapsAtConsole.isSelected();
+    myCbUseCustomSoftWrapIndent.setEnabled(softWrapsEnabled);
     myCustomSoftWrapIndent.setEnabled(myCbUseCustomSoftWrapIndent.isEnabled() && myCbUseCustomSoftWrapIndent.isSelected());
+    myCbShowSoftWrapsOnlyOnCaretLine.setEnabled(softWrapsEnabled);
   }
 
   public JComponent getComponent() {

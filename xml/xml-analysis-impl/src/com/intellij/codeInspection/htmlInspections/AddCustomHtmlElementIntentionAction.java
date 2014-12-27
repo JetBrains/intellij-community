@@ -27,15 +27,12 @@ import com.intellij.util.Consumer;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
-public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
+public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
   private final String myName;
   private final String myText;
-  @NotNull private final Key<HtmlUnknownTagInspectionBase> myInspectionKey;
+  @NotNull private final Key<HtmlUnknownElementInspection> myInspectionKey;
 
-  public AddCustomTagOrAttributeIntentionAction(@NotNull Key<HtmlUnknownTagInspectionBase> inspectionKey, String name, String text) {
+  public AddCustomHtmlElementIntentionAction(@NotNull Key<HtmlUnknownElementInspection> inspectionKey, String name, String text) {
     myInspectionKey = inspectionKey;
     myName = name;
     myText = text;
@@ -58,9 +55,9 @@ public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
     final PsiElement element = descriptor.getPsiElement();
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    profile.modifyToolSettings(myInspectionKey, element, new Consumer<HtmlUnknownTagInspectionBase>() {
+    profile.modifyToolSettings(myInspectionKey, element, new Consumer<HtmlUnknownElementInspection>() {
       @Override
-      public void consume(HtmlUnknownTagInspectionBase tool) {
+      public void consume(HtmlUnknownElementInspection tool) {
         tool.addEntry(myName);
       }
     });

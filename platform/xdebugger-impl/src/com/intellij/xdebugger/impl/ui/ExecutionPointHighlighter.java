@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -194,7 +195,7 @@ public class ExecutionPointHighlighter {
     if (myRangeHighlighter != null) return;
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    myRangeHighlighter = myEditor.getMarkupModel().addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
+    myRangeHighlighter = DocumentMarkupModel.forDocument(document, myProject, true).addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
                                                                       myNotTopFrame
                                                                       ? scheme.getAttributes(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES)
                                                                       : scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES));

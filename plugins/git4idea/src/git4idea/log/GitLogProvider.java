@@ -55,15 +55,15 @@ public class GitLogProvider implements VcsLogProvider {
       return ref.getType() == GitRefManager.TAG ? ref.getName() : null;
     }
   };
-  public static final TObjectHashingStrategy<VcsRef> REF_ONLY_NAME_STRATEGY = new TObjectHashingStrategy<VcsRef>() {
+  public static final TObjectHashingStrategy<VcsRef> DONT_CONSIDER_SHA = new TObjectHashingStrategy<VcsRef>() {
     @Override
     public int computeHashCode(@NotNull VcsRef ref) {
-      return ref.getName().hashCode();
+      return 31 * ref.getName().hashCode() + ref.getType().hashCode();
     }
 
     @Override
     public boolean equals(@NotNull VcsRef ref1, @NotNull VcsRef ref2) {
-      return ref1.getName().equals(ref2.getName());
+      return ref1.getName().equals(ref2.getName()) && ref1.getType().equals(ref2.getType());
     }
   };
 
@@ -104,7 +104,7 @@ public class GitLogProvider implements VcsLogProvider {
     DetailedLogData data = GitHistoryUtils.loadMetadata(myProject, root, true, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
-    Set<VcsRef> allRefs = new OpenTHashSet<VcsRef>(safeRefs, REF_ONLY_NAME_STRATEGY);
+    Set<VcsRef> allRefs = new OpenTHashSet<VcsRef>(safeRefs, DONT_CONSIDER_SHA);
     Set<VcsRef> branches = readBranches(repository);
     addNewElements(allRefs, branches);
 

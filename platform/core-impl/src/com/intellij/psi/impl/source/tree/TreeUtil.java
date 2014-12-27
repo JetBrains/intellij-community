@@ -449,7 +449,9 @@ public class TreeUtil {
     FileElement tree = file.getTreeElement();
     assert tree != null : file;
 
-    final StubBuilder builder = ((IStubFileElementType)file.getContentElementType()).getBuilder();
+    final IStubFileElementType type = file.getElementTypeForStubBuilder();
+    assert type != null;
+    final StubBuilder builder = type.getBuilder();
     tree.acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
       protected void visitNode(TreeElement node) {

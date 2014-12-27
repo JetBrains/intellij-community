@@ -28,7 +28,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,15 +89,18 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
     if (!getSettings().isFlattenPackages()) {
 
-      final PsiPackage[] subpackages = PackageUtil.getSubpackages(aPackage, module, myProject, isLibraryElement());
+      final PsiPackage[] subpackages = PackageUtil.getSubpackages(aPackage, module, isLibraryElement());
       for (PsiPackage subpackage : subpackages) {
         PackageUtil.addPackageAsChild(children, subpackage, module, getSettings(), isLibraryElement());
       }
     }
     // process only files in package's directories
-    final PsiDirectory[] dirs = PackageUtil.getDirectories(aPackage, myProject, module, isLibraryElement());
-    for (final PsiDirectory dir : dirs) {
-      children.addAll(ProjectViewDirectoryHelper.getInstance(myProject).getDirectoryChildren(dir, getSettings(), false));
+    final GlobalSearchScope scopeToShow = PackageUtil.getScopeToShow(aPackage.getProject(), module, isLibraryElement());
+    PsiFile[] packageChildren = aPackage.getFiles(scopeToShow);
+    for (PsiFile file : packageChildren) {
+      if (file.getVirtualFile() != null) {
+        children.add(new PsiFileNode(getProject(), file, getSettings()));
+      }
     }
     return children;
   }
@@ -163,7 +168,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     if (value == null) {
       return VirtualFile.EMPTY_ARRAY;
     }
-    final PsiDirectory[] directories = PackageUtil.getDirectories(value.getPackage(), getProject(), value.getModule(), isLibraryElement());
+    final PsiDirectory[] directories = PackageUtil.getDirectories(value.getPackage(), value.getModule(), isLibraryElement());
     final VirtualFile[] result = new VirtualFile[directories.length];
     for (int i = 0; i < directories.length; i++) {
       PsiDirectory directory = directories[i];

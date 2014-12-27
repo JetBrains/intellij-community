@@ -13,61 +13,161 @@ public class TestClassLambda {
    public int field = 0;
 
    public void testLambda() {
-      List var1 = Arrays.asList(new Integer[]{Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3), Integer.valueOf(4), Integer.valueOf(5), Integer.valueOf(6), Integer.valueOf(7)});
-      int var2 = (int)Math.random();
-      var1.forEach((var2x) -> {
+      List var1 = Arrays.asList(new Integer[]{Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3), Integer.valueOf(4), Integer.valueOf(5), Integer.valueOf(6), Integer.valueOf(7)});// 27
+      int var2 = (int)Math.random();// 28
+      var1.forEach((var2x) -> {// 30
          int var3 = 2 * var2x.intValue();
          System.out.println(var3 + var2 + this.field);
       });
    }
 
    public void testLambda1() {
-      int var1 = (int)Math.random();
+      int var1 = (int)Math.random();// 37
       Runnable var2 = () -> {
          System.out.println("hello1" + var1);
-      };
+      };// 38
       Runnable var3 = () -> {
          System.out.println("hello2" + var1);
-      };
+      };// 39
    }
 
    public void testLambda2() {
-      reduce((var0, var1) -> {
+      reduce((var0, var1) -> {// 43
          return Math.max(var0, var1);
       });
    }
 
    public void testLambda3() {
-      reduce(Math::max);
+      reduce(Math::max);// 47
    }
 
    public void testLambda4() {
-      reduce(TestClassLambda::localMax);
+      reduce(TestClassLambda::localMax);// 51
    }
 
    public void testLambda5() {
-      String var1 = "abcd";
-      function(var1::toString);
+      String var1 = "abcd";// 55
+      function(var1::toString);// 56
    }
 
    public void testLambda6() {
-      ArrayList var1 = new ArrayList();
-      int var2 = var1.size() * 2;
-      int var3 = var1.size() * 5;
-      var1.removeIf((var2x) -> {
+      ArrayList var1 = new ArrayList();// 60
+      int var2 = var1.size() * 2;// 61
+      int var3 = var1.size() * 5;// 62
+      var1.removeIf((var2x) -> {// 63
          return var2 >= var2x.length() && var2x.length() <= var3;
       });
    }
 
    public static OptionalInt reduce(IntBinaryOperator var0) {
-      return null;
+      return null;// 67
    }
 
    public static String function(Supplier<String> var0) {
-      return (String)var0.get();
+      return (String)var0.get();// 71
    }
 
    public static int localMax(int var0, int var1) {
-      return 0;
+      return 0;// 75
    }
 }
+
+class 'pkg/TestClassLambda' {
+   method 'testLambda ()V' {
+      7      15
+      8      15
+      e      15
+      f      15
+      15      15
+      16      15
+      1c      15
+      1d      15
+      23      15
+      24      15
+      2a      15
+      2c      15
+      33      15
+      35      15
+      39      15
+      3c      15
+      3d      16
+      40      16
+      41      16
+      4a      17
+   }
+
+   method 'testLambda1 ()V' {
+      0      24
+      3      24
+      4      24
+      b      27
+      12      30
+   }
+
+   method 'testLambda2 ()V' {
+      5      34
+   }
+
+   method 'testLambda3 ()V' {
+      5      40
+   }
+
+   method 'testLambda4 ()V' {
+      5      44
+   }
+
+   method 'testLambda5 ()V' {
+      0      48
+      2      48
+      e      49
+   }
+
+   method 'testLambda6 ()V' {
+      7      53
+      9      54
+      e      54
+      f      54
+      10      54
+      12      55
+      17      55
+      18      55
+      19      55
+      22      56
+   }
+
+   method 'reduce (Ljava/util/function/IntBinaryOperator;)Ljava/util/OptionalInt;' {
+      0      62
+      1      62
+   }
+
+   method 'function (Ljava/util/function/Supplier;)Ljava/lang/String;' {
+      1      66
+      6      66
+      9      66
+   }
+
+   method 'localMax (II)I' {
+      0      70
+      1      70
+   }
+}
+
+Lines mapping:
+27 <-> 16
+28 <-> 17
+30 <-> 18
+37 <-> 25
+38 <-> 28
+39 <-> 31
+43 <-> 35
+47 <-> 41
+51 <-> 45
+55 <-> 49
+56 <-> 50
+60 <-> 54
+61 <-> 55
+62 <-> 56
+63 <-> 57
+67 <-> 63
+71 <-> 67
+75 <-> 71

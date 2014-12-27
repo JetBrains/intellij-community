@@ -1106,6 +1106,17 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     verifySoftWrapPositions();
   }
   
+  public void testFoldRegionPreventsLaterWrapping() throws Exception {
+    initText("unbreakableText.txt");
+    configureSoftWraps(10);
+    verifySoftWrapPositions(15);
+    
+    addCollapsedFoldRegion(12, 13, ".");
+
+    verifySoftWrapPositions(12);
+    assertEquals(1, myEditor.offsetToVisualPosition(19).line);
+  }
+  
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {
     init(visibleWidthInColumns, 7, fileText);
   }

@@ -163,6 +163,7 @@ public class ProjectSdksModel implements SdkModel {
           LOG.assertTrue(projectJdk != null);
           if (ArrayUtilRt.find(allJdks, projectJdk) == -1) {
             jdkTable.addJdk(projectJdk);
+            jdkTable.updateJdk(projectJdk, myProjectSdks.get(projectJdk));
           }
         }
       }

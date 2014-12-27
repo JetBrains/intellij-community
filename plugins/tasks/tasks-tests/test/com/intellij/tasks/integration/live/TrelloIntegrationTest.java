@@ -156,6 +156,15 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     assertEquals(EnumSet.of(SKY, LIME, PINK, BLACK), card.getColors());
   }
 
+  public void testTestConnection() throws Exception {
+    assertNull(myRepository.createCancellableConnection().call());
+
+    myRepository.setPassword("illegal password");
+    final Exception error = myRepository.createCancellableConnection().call();
+    assertNotNull(error);
+    assertTrue(error.getMessage().contains("Unauthorized"));
+  }
+
   static void assertObjectsNamed(@NotNull String message, @NotNull Collection<? extends TrelloModel> objects, @NotNull String... names) {
     assertEquals(message, ContainerUtil.newHashSet(names), ContainerUtil.map2Set(objects, new Function<TrelloModel, String>() {
       @Override

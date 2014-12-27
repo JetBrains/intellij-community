@@ -376,7 +376,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    return new HttpTestConnection(new HttpGet(getRestApiUrl("me", "cards") + "?limit=1"));
+    return new HttpTestConnection(new HttpGet(getRestApiUrl("members", "me", "cards") + "?limit=1"));
   }
 
   /**
