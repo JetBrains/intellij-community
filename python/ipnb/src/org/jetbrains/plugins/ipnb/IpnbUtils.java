@@ -76,8 +76,8 @@ public class IpnbUtils {
     editorPane.setBackground(IpnbEditorUtil.getBackground());
     editorPane.setContentType(new HTMLEditorKit().getContentType());
     editorPane.setEditorKit(new HTMLEditorKit());
-
-    final StyleSheet sheet = ((HTMLDocument)editorPane.getDocument()).getStyleSheet();
+    final HTMLDocument document = (HTMLDocument)editorPane.getDocument();
+    final StyleSheet sheet = document.getStyleSheet();
     sheet.addRule(ourBodyRule);
     sheet.addRule(ourCodeRule);
     sheet.addRule(ourAlertRule);
@@ -86,7 +86,7 @@ public class IpnbUtils {
 
     editorPane.setEditable(false);
 
-    final String html = convertToHtml(source, editorPane);
+    final String html = convertToHtml(source, document);
     editorPane.setText("<html><body>" + html + "</body></html>");
 
     editorPane.addMouseListener(new MouseAdapter() {
@@ -103,7 +103,8 @@ public class IpnbUtils {
     return editorPane;
   }
 
-  private static String convertToHtml(@NotNull final String source, @NotNull final JEditorPane editorPane) {
+
+  private static String convertToHtml(@NotNull final String source, @NotNull final HTMLDocument document) {
     final StringBuilder result = new StringBuilder();
     StringBuilder markdown = new StringBuilder();
     StringBuilder formula = new StringBuilder();
@@ -162,7 +163,7 @@ public class IpnbUtils {
           markdown.append(charAt);
         }
         if (formula.length() != 0) {
-          addFormula(formula.toString(), editorPane, imageIndex, result);
+          addFormula(formula.toString(), document, imageIndex, result);
 
           imageIndex += 1;
           formula = new StringBuilder();
@@ -176,7 +177,7 @@ public class IpnbUtils {
 
     }
     if (formula.length() != 0) {
-      addFormula(formula.toString(), editorPane, imageIndex, result);
+      addFormula(formula.toString(), document, imageIndex, result);
     }
     if (markdown.length() != 0) {
       result.append(markdown.toString());
@@ -184,7 +185,7 @@ public class IpnbUtils {
     return markdown2Html(result.toString());
   }
 
-  private static void addFormula(@NotNull final String formulaText, JEditorPane editorPane, int imageIndex, StringBuilder result) {
+  private static void addFormula(@NotNull final String formulaText, @NotNull final HTMLDocument editorDocument, int imageIndex, StringBuilder result) {
     final SnuggleEngine engine = new SnuggleEngine();
     engine.getPackages().add(0, IpnbTexPackageDefinitions.getPackage());
 
@@ -209,11 +210,11 @@ public class IpnbUtils {
 
       try {
         @SuppressWarnings("unchecked")
-        Dictionary<URL, BufferedImage> cache = (Dictionary<URL, BufferedImage>)editorPane.getDocument().getProperty("imageCache");
+        Dictionary<URL, BufferedImage> cache = (Dictionary<URL, BufferedImage>)editorDocument.getProperty("imageCache");
         if (cache == null) {
           //noinspection UseOfObsoleteCollectionType
           cache = new Hashtable<URL, BufferedImage>();
-          editorPane.getDocument().putProperty("imageCache", cache);
+          editorDocument.putProperty("imageCache", cache);
         }
 
         final URL u = new URL(ourImagePrefix + imageIndex + ".jpg");
