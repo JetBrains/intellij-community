@@ -72,12 +72,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBackground(UIUtil.isUnderDarcula() ? IpnbEditorUtil.getBackground() : Gray._247);
 
-    if (mySource.startsWith("%")) {
-      myEditor = IpnbEditorUtil.createPlainCodeEditor(myProject, mySource);
-    }
-    else {
-      myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, this);
-    }
+    myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, this);
     Disposer.register(myParent.getFileEditor(), new Disposable() {
       @Override
       public void dispose() {
