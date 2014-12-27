@@ -103,10 +103,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     new IpnbHeading6CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 6")), myIpnbFilePanel);
   }
 
-  public JScrollPane getScrollPane() {
-    return myScrollPane;
-  }
-
   private JPanel createControlPanel() {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
