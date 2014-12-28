@@ -153,6 +153,7 @@ public abstract class GitUpdater {
   /**
    * Performs update (via rebase or merge - depending on the implementing classes).
    */
+  @NotNull
   protected abstract GitUpdateResult doUpdate();
 
   protected void markStart(VirtualFile root) throws VcsException {
