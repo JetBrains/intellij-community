@@ -285,14 +285,26 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         return;
       }
     }
+    else if (firstChild instanceof PsiModifierList) {
+      final PsiModifierList modifierList = (PsiModifierList)firstChild;
+      final PsiAnnotation[] annotations = modifierList.getAnnotations();
+      if (annotations.length != 1) {
+        throw new UnsupportedPatternException("Pattern is malformed");
+      }
+      for (String modifier : PsiModifier.MODIFIERS) {
+        if (modifierList.hasExplicitModifier(modifier)) {
+          throw new UnsupportedPatternException("Pattern is malformed");
+        }
+      }
+      myCompilingVisitor.setHandler(psiDeclarationStatement, new AnnotationHandler());
+      final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiDeclarationStatement);
+      handler.setFilter(AnnotationFilter.getInstance());
+      return;
+    }
 
     final MatchingHandler handler = new DeclarationStatementHandler();
     myCompilingVisitor.getContext().getPattern().setHandler(psiDeclarationStatement, handler);
-    PsiElement previousNonWhiteSpace = psiDeclarationStatement.getPrevSibling();
-
-    while (previousNonWhiteSpace instanceof PsiWhiteSpace) {
-      previousNonWhiteSpace = previousNonWhiteSpace.getPrevSibling();
-    }
+    final PsiElement previousNonWhiteSpace = PsiTreeUtil.skipSiblingsBackward(psiDeclarationStatement, PsiWhiteSpace.class);
 
     if (previousNonWhiteSpace instanceof PsiComment) {
       ((DeclarationStatementHandler)handler)
@@ -460,6 +472,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private static void handleReferenceText(String refname, CompileContext compileContext) {
+    System.out.println("JavaCompilingVisitor" + ".handleReferenceText(" + refname + ", " + compileContext + ")");
     if (refname == null) return;
 
     if (compileContext.getPattern().isTypedVar(refname)) {

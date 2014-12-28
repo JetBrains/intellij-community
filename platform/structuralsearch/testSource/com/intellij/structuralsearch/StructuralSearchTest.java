@@ -2427,6 +2427,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find annotated new expression", 1, findMatchesCount(source1, "new Object()"));
     assertEquals("Find annotated new expression", 1, findMatchesCount(source1, "new @B Object()"));
     assertEquals("Find annotated new expression", 0, findMatchesCount(source1, "new @C Object()"));
+
+    String source2 = "@X\n" +
+                     "class A {\n" +
+                     "  @Y int value;" +
+                     "  @Y int void m(@Z int i) {\n" +
+                     "    return 1;\n" +
+                     "  }\n" +
+                     "}\n";
+    assertEquals("Find all annotations", 4, findMatchesCount(source2, "@'_Annotation"));
   }
 
   public void testBoxingAndUnboxing() {
