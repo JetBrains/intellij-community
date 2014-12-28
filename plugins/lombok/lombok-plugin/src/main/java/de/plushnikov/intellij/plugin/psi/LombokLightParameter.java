@@ -57,4 +57,23 @@ public class LombokLightParameter extends LightParameter {
     ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class, modifierList);
     return this;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    LombokLightParameter that = (LombokLightParameter) o;
+
+    return getType().equals(that.getType());
+  }
+
+  @Override
+  public int hashCode() {
+    return getType().hashCode();
+  }
 }

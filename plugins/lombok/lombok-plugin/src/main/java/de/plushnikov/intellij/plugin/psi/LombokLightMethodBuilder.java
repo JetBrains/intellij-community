@@ -19,12 +19,11 @@ import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
-import com.intellij.psi.impl.light.LightParameterListBuilder;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import de.plushnikov.intellij.plugin.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,17 +32,14 @@ import org.jetbrains.annotations.Nullable;
  * @author Plushnikov Michail
  */
 public class LombokLightMethodBuilder extends LightMethodBuilder {
-  private final LightIdentifier myNameIdentifier;
   private final LombokLightReferenceListBuilder myThrowsList;
   private ASTNode myASTNode;
-  private String myName;
   private PsiCodeBlock myBodyCodeBlock;
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
-        new LightParameterListBuilder(manager, JavaLanguage.INSTANCE), new LombokLightModifierList(manager, JavaLanguage.INSTANCE));
-    myName = name;
-    myNameIdentifier = new LombokLightIdentifier(manager, name);
+        new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
+        new LombokLightModifierList(manager, JavaLanguage.INSTANCE));
     myThrowsList = new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST);
   }
 
@@ -124,7 +120,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
 
   @Override
   public PsiIdentifier getNameIdentifier() {
-    return myNameIdentifier;
+    return new LombokLightIdentifier(myManager, getName());
   }
 
   @Override
@@ -223,16 +219,53 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getName() {
-    return myName;
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    ReflectionUtil.setFinalFieldPerReflection(LightMethodBuilder.class, this, String.class, name);
+    return this;
   }
 
   @Override
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    myName = name;
-    return this;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    LombokLightMethodBuilder that = (LombokLightMethodBuilder) o;
+
+    if (!getName().equals(that.getName())) {
+      return false;
+    }
+    if (isConstructor() != that.isConstructor()) {
+      return false;
+    }
+    final PsiClass containingClass = getContainingClass();
+    final PsiClass thatContainingClass = that.getContainingClass();
+    if (containingClass != null ? !containingClass.equals(thatContainingClass) : thatContainingClass != null) {
+      return false;
+    }
+    if (!getModifierList().equals(that.getModifierList())) {
+      return false;
+    }
+    if (!getParameterList().equals(that.getParameterList())) {
+      return false;
+    }
+    final PsiType returnType = getReturnType();
+    final PsiType thatReturnType = that.getReturnType();
+    if (returnType != null ? !returnType.equals(thatReturnType) : thatReturnType != null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    // should be constant because of RenameJavaMethodProcessor#renameElement and fixNameCollisionsWithInnerClassMethod(...)
+    return 1;
   }
 
   @Override

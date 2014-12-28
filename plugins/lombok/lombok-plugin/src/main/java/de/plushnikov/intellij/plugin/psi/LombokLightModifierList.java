@@ -101,4 +101,27 @@ public class LombokLightModifierList extends LightModifierList {
   public String toString() {
     return "LombokLightModifierList";
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    LombokLightModifierList that = (LombokLightModifierList) o;
+
+    if (!myAnnotations.equals(that.myAnnotations)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myAnnotations.hashCode();
+  }
 }
