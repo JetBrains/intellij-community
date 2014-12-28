@@ -1521,7 +1521,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitTypeElement(final PsiTypeElement typeElement) {
-    myMatchingVisitor.setResult(matchType(typeElement, myMatchingVisitor.getElement()));
+    final PsiElement other = myMatchingVisitor.getElement(); // might not be a PsiTypeElement
+
+    final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(typeElement, PsiAnnotation.class);
+    // also can't use AnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
+    final PsiAnnotation[] annotations2 = PsiTreeUtil.getChildrenOfType(other, PsiAnnotation.class);
+    if (annotations != null) {
+      myMatchingVisitor.setResult(annotations2 != null && myMatchingVisitor.matchInAnyOrder(annotations, annotations2));
+      if (!myMatchingVisitor.getResult()) return;
+    }
+    myMatchingVisitor.setResult(matchType(typeElement, other));
   }
 
   @Override

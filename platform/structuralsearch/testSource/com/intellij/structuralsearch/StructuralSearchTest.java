@@ -2444,6 +2444,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  }\n" +
                      "}\n";
     assertEquals("Find all annotations", 4, findMatchesCount(source2, "@'_Annotation"));
+
+    String source3 = "class A {\n" +
+                     "  @HH final String s = (@HH String) new Object();\n" +
+                     "  final String t = (String) new Object();\n" +
+                     "}\n";
+    assertEquals("Find annotated casts", 1, findMatchesCount(source3, "(@'_A 'Cast) '_Expression"));
   }
 
   public void testBoxingAndUnboxing() {
