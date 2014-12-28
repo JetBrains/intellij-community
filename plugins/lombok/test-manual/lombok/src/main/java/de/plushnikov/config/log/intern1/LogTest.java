@@ -1,4 +1,4 @@
-package de.plushnikov.config.log;
+package de.plushnikov.config.log.intern1;
 
 import lombok.extern.slf4j.Slf4j;
 

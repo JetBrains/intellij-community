@@ -12,6 +12,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
@@ -30,7 +32,6 @@ import java.util.List;
  */
 public abstract class AbstractLogProcessor extends AbstractClassProcessor {
 
-  private final static String loggerName = "log";
   private final String loggerType;
   private final String loggerInitializer;
   private final String loggerCategory;
@@ -42,10 +43,16 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     this.loggerCategory = loggerCategory;
   }
 
-  public static String getLoggerName() {
-    return loggerName;
+  @NotNull
+  public static String getLoggerName(@NotNull PsiClass psiClass) {
+    return ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKeys.LOG_FIELDNAME, psiClass);
   }
 
+  public static boolean isLoggerStatic(@NotNull PsiClass psiClass) {
+    return ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.LOG_FIELD_IS_STATIC, psiClass);
+  }
+
+  @NotNull
   public String getLoggerType() {
     return loggerType;
   }
@@ -57,9 +64,12 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
       builder.addError("@Log is legal only on classes and enums");
       result = false;
     }
-    if (result && hasFieldByName(psiClass, loggerName)) {
-      builder.addError("Not generating field %s: A field with same name already exists", loggerName);
-      result = false;
+    if (result) {
+      final String loggerName = getLoggerName(psiClass);
+      if (hasFieldByName(psiClass, loggerName)) {
+        builder.addError("Not generating field %s: A field with same name already exists", loggerName);
+        result = false;
+      }
     }
     return result;
   }
@@ -74,10 +84,14 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
     PsiType psiLoggerType = psiElementFactory.createTypeFromText(loggerType, psiClass);
-    LombokLightFieldBuilder loggerField = new LombokLightFieldBuilder(manager, loggerName, psiLoggerType)
+    LombokLightFieldBuilder loggerField = new LombokLightFieldBuilder(manager, getLoggerName(psiClass), psiLoggerType)
         .withContainingClass(psiClass)
-        .withModifier(PsiModifier.FINAL).withModifier(PsiModifier.STATIC).withModifier(PsiModifier.PRIVATE)
+        .withModifier(PsiModifier.FINAL)
+        .withModifier(PsiModifier.PRIVATE)
         .withNavigationElement(psiAnnotation);
+    if (isLoggerStatic(psiClass)) {
+      loggerField.withModifier(PsiModifier.STATIC);
+    }
 
     final String loggerInitializerParameter = createLoggerInitializeParameter(psiClass, psiAnnotation);
     final PsiExpression initializer = psiElementFactory.createExpressionFromText(String.format(loggerInitializer, loggerInitializerParameter), psiClass);

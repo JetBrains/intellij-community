@@ -20,25 +20,26 @@ import java.util.Collection;
 
 public class LombokLoggerHandler extends BaseLombokHandler {
 
-  private static final String LOMBOK_LOGGER_NAME = AbstractLogProcessor.getLoggerName();
-
   protected void processClass(@NotNull PsiClass psiClass) {
     final Collection<AbstractLogProcessor> logProcessors = Arrays.asList(
         new CommonsLogProcessor(), new Log4jProcessor(), new Log4j2Processor(),
         new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor());
 
+    final String lombokLoggerName = AbstractLogProcessor.getLoggerName(psiClass);
+    final boolean lombokLoggerIsStatic = AbstractLogProcessor.isLoggerStatic(psiClass);
+
     for (AbstractLogProcessor logProcessor : logProcessors) {
       for (PsiField psiField : psiClass.getFields()) {
-        if (psiField.getType().equalsToText(logProcessor.getLoggerType()) && checkLoggerField(psiField)) {
-          processLoggerField(psiField, psiClass, logProcessor);
+        if (psiField.getType().equalsToText(logProcessor.getLoggerType()) && checkLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
+          processLoggerField(psiField, psiClass, logProcessor, lombokLoggerName);
         }
       }
     }
   }
 
-  private void processLoggerField(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull AbstractLogProcessor logProcessor) {
-    if (!LOMBOK_LOGGER_NAME.equals(psiField.getName())) {
-      RenameProcessor processor = new RenameProcessor(psiField.getProject(), psiField, LOMBOK_LOGGER_NAME, false, false);
+  private void processLoggerField(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull AbstractLogProcessor logProcessor, @NotNull String lombokLoggerName) {
+    if (!lombokLoggerName.equals(psiField.getName())) {
+      RenameProcessor processor = new RenameProcessor(psiField.getProject(), psiField, lombokLoggerName, false, false);
       processor.doRun();
     }
 
@@ -47,21 +48,22 @@ public class LombokLoggerHandler extends BaseLombokHandler {
     psiField.delete();
   }
 
-  private boolean checkLoggerField(@NotNull PsiField psiField) {
-    if (!isValidLoggerField(psiField)) {
+  private boolean checkLoggerField(@NotNull PsiField psiField, @NotNull String lombokLoggerName, boolean lombokLoggerIsStatic) {
+    if (!isValidLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
       int result = Messages.showOkCancelDialog(
-          String.format("Logger field: \"%s\" Is not private static final field named \"log\". Refactor anyway?", psiField.getName()),
+          String.format("Logger field: \"%s\" Is not private %s final field named \"%s\". Refactor anyway?",
+              psiField.getName(), lombokLoggerIsStatic ? "static" : "", lombokLoggerName),
           "Attention!", Messages.getQuestionIcon());
       return DialogWrapper.OK_EXIT_CODE == result;
     }
     return true;
   }
 
-  private boolean isValidLoggerField(@NotNull PsiField psiField) {
+  private boolean isValidLoggerField(@NotNull PsiField psiField, @NotNull String lombokLoggerName, boolean lombokLoggerIsStatic) {
     boolean isPrivate = psiField.hasModifierProperty(PsiModifier.PRIVATE);
-    boolean isStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
+    boolean isStatic = lombokLoggerIsStatic == psiField.hasModifierProperty(PsiModifier.STATIC);
     boolean isFinal = psiField.hasModifierProperty(PsiModifier.FINAL);
-    boolean isProperlyNamed = LOMBOK_LOGGER_NAME.equals(psiField.getName());
+    boolean isProperlyNamed = lombokLoggerName.equals(psiField.getName());
 
     return isPrivate & isStatic & isFinal & isProperlyNamed;
   }
