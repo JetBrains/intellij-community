@@ -1527,31 +1527,22 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitTypeParameter(PsiTypeParameter psiTypeParameter) {
     final PsiTypeParameter parameter = (PsiTypeParameter)myMatchingVisitor.getElement();
-    final PsiElement[] children = psiTypeParameter.getChildren();
-    final PsiElement[] children2 = parameter.getChildren();
+    final PsiIdentifier identifier = psiTypeParameter.getNameIdentifier();
+    final PsiIdentifier identifier2 = parameter.getNameIdentifier();
 
-    final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(children[0]);
-
+    final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
     if (handler instanceof SubstitutionHandler) {
-      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(children2[0], myMatchingVisitor.getMatchContext()));
+      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(identifier2, myMatchingVisitor.getMatchContext()));
     }
     else {
-      myMatchingVisitor.setResult(children[0].textMatches(children2[0]));
+      myMatchingVisitor.setResult(identifier.textMatches(identifier2));
     }
 
-    if (myMatchingVisitor.getResult() && children.length > 2) {
-      // constraint present
-      if (children2.length == 2) {
-        myMatchingVisitor.setResult(false);
-        return;
-      }
-
-      if (!children[2].getFirstChild().textMatches(children2[2].getFirstChild())) {
-        // constraint type (extends)
-        myMatchingVisitor.setResult(false);
-        return;
-      }
-      myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(children[2].getChildren(), children2[2].getChildren()));
+    if (myMatchingVisitor.getResult()) {
+      myMatchingVisitor.setResult(matchInAnyOrder(psiTypeParameter.getExtendsList(), parameter.getExtendsList(), myMatchingVisitor));
+    }
+    if (myMatchingVisitor.getResult()) {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(psiTypeParameter.getAnnotations(), parameter.getAnnotations()));
     }
   }
 

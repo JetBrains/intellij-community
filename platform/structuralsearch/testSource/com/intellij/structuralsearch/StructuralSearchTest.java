@@ -1362,6 +1362,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(source1, target2)
     );
 
+    String source2 = "class A<@Q T> {}\n" +
+                     "class B<T> {}";
+    assertEquals(
+      "find annotated type parameter",
+      1,
+      findMatchesCount(source2, "class $A$<@Q $T$> {}")
+    );
+
     // @todo typed vars constrains (super),
     // @todo generic method invocation
 
