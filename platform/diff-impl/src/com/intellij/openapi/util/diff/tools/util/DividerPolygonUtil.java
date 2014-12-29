@@ -152,7 +152,6 @@ public class DividerPolygonUtil {
       @Override
       public int transform(int line) {
         int yOffset = editor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
-        yOffset--; // hack: we need this shift, because top line of Editor is not visible.
 
         final JComponent header = editor.getHeaderComponent();
         int headerOffset = header == null ? 0 : header.getHeight();
@@ -226,11 +225,12 @@ public class DividerPolygonUtil {
     }
 
     private void paint(Graphics2D g, int width) {
-      DiffDrawUtil.drawCurveTrapezium(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myColor);
+      // we need this shift, because editor background highlight is painted in range "Y(line) - 1 .. Y(line + 1) - 1"
+      DiffDrawUtil.drawCurveTrapezium(g, 0, width, myStart1 - 1, myEnd1 - 1, myStart2 - 1, myEnd2 - 1, myColor);
     }
 
     private void paintSimple(Graphics2D g, int width) {
-      DiffDrawUtil.drawTrapezium(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myColor);
+      DiffDrawUtil.drawTrapezium(g, 0, width, myStart1 - 1, myEnd1 - 1, myStart2 - 1, myEnd2 - 1, myColor);
     }
 
     private void paintOnScrollbar(Graphics2D g, int width) {

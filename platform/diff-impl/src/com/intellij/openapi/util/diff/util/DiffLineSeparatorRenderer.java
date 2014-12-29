@@ -150,6 +150,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
   public void drawLine(Graphics g, int x1, int x2, int y) {
     if (!myCondition.get()) return;
 
+    y++; // we want y to be line's top position
+
     GraphicsUtil.setupAAPainting(g);
 
     Rectangle clip = g.getClipBounds();
