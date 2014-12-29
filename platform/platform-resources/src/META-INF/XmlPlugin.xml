@@ -14,6 +14,9 @@
     <component>
       <implementation-class>com.intellij.javaee.DefaultHtmlDoctypeInitialConfigurator</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer</implementation-class>
+    </component>
   </application-components>
 
   <extensionPoints>

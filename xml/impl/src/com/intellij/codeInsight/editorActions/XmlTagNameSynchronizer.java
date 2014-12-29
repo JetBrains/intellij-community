@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
@@ -26,10 +27,7 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -110,6 +108,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
   @Nullable
   public TagNameSynchronizer findSynchronizer(CommandEvent event) {
+    if (!WebEditorOptions.getInstance().isSyncTagEditing()) return null;
     final Document document = event.getDocument();
     return document != null ? document.getUserData(SYNCHRONIZER_KEY) : null;
   }
@@ -122,7 +121,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     }
   }
 
-  private static class TagNameSynchronizer implements DocumentListener {
+  private static class TagNameSynchronizer extends DocumentAdapter {
     private PsiDocumentManager myDocumentManager;
 
     private enum State {INITIAL, TRACKING, APPLYING}
@@ -142,6 +141,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
     @Override
     public void beforeDocumentChange(DocumentEvent event) {
+      if (!WebEditorOptions.getInstance().isSyncTagEditing()) return;
+
       if (myState == State.APPLYING) return;
 
       if (myState == State.INITIAL) {
@@ -247,9 +248,6 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     private static boolean isValidTagNameChar(char c) {
       return Character.isJavaIdentifierPart(c) || c == ':';
     }
-
-    @Override
-    public void documentChanged(DocumentEvent event) {}
 
     public void commandStarted() {
       myState = State.INITIAL;
