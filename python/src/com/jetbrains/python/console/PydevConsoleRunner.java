@@ -407,7 +407,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
       @Override
       public Map<String, String> getAdditionalEnvs() {
-        return addDefaultEnvironments(sdk, environmentVariables, getProject());
+        return addDefaultEnvironments(sdk, environmentVariables);
       }
     };
   }
