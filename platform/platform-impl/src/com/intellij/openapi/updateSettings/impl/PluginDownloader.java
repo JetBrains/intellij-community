@@ -249,11 +249,8 @@ public class PluginDownloader {
           fileOut.close();
         }
 
-        if (myFileName == null) {
-          myFileName = guessFileName(connection, file);
-        }
-
-        File newFile = new File(file.getParentFile(), myFileName);
+        String fileName = guessFileName(connection, file);
+        File newFile = new File(file.getParentFile(), fileName);
         FileUtil.rename(file, newFile);
         return newFile;
       }
