@@ -244,7 +244,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
                 children.add(new CoverageListNode(myProject, aClass, mySuitesBundle, myStateBean));
               }
             }
-            else {
+            else if (file instanceof PsiClassOwner) {
               children.add(new CoverageListNode(myProject, file, mySuitesBundle, myStateBean));
             }
           }
