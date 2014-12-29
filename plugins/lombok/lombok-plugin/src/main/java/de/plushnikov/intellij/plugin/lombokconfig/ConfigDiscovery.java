@@ -25,13 +25,19 @@ public class ConfigDiscovery {
     final PsiFile psiFile = psiClass.getContainingFile();
     if (psiFile instanceof PsiJavaFile) {
       final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+      final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(psiClass.getProject());
 
       String packageName = ((PsiJavaFile) psiFile).getPackageName();
       while (null != packageName) {
-        final ConfigIndexKey configIndexKey = new ConfigIndexKey(packageName, configKey.getConfigKey());
-        final List<String> values = fileBasedIndex.getValues(LombokConfigIndex.NAME, configIndexKey, GlobalSearchScope.projectScope(psiClass.getProject()));
-        if (!values.isEmpty()) {
-          return values.iterator().next();
+
+        final String property = readProperty(fileBasedIndex, searchScope, packageName, configKey);
+        if (null == property) {
+          final String stopBublingProperty = readProperty(fileBasedIndex, searchScope, packageName, ConfigKeys.CONFIG_STOP_BUBBLING);
+          if (Boolean.parseBoolean(stopBublingProperty)) {
+            break;
+          }
+        } else {
+          return property;
         }
 
         if (!packageName.isEmpty()) {
@@ -42,6 +48,15 @@ public class ConfigDiscovery {
       }
     }
     return configKey.getConfigDefaultValue();
+  }
+
+  private String readProperty(FileBasedIndex fileBasedIndex, GlobalSearchScope searchScope, String packageName, ConfigKeys configKey) {
+    final ConfigIndexKey configIndexKey = new ConfigIndexKey(packageName, configKey.getConfigKey());
+    final List<String> values = fileBasedIndex.getValues(LombokConfigIndex.NAME, configIndexKey, searchScope);
+    if (!values.isEmpty()) {
+      return values.iterator().next();
+    }
+    return null;
   }
 
   public boolean getBooleanLombokConfigProperty(@NotNull ConfigKeys configKey, @NotNull PsiClass psiClass) {

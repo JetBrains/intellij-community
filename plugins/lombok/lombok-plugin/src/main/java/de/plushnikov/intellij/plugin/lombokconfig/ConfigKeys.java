@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public enum ConfigKeys {
+
+  CONFIG_STOP_BUBBLING("config.stopBubbling", "false"),
+
   LOG_FIELDNAME("lombok.log.fieldName", "log"),
   LOG_FIELD_IS_STATIC("lombok.log.fieldIsStatic", "true"),
 

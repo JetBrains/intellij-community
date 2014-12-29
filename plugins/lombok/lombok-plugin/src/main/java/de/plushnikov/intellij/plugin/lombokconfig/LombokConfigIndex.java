@@ -52,19 +52,12 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
           if (null != directoryPackage) {
             final LombokConfigProperty[] configProperties = LombokConfigUtil.getLombokConfigProperties((LombokConfigFile) inputData.getPsiFile());
             for (LombokConfigProperty configProperty : configProperties) {
-              addSubPackageMapping(result, directoryPackage, configProperty);
+              result.put(new ConfigIndexKey(directoryPackage.getQualifiedName(), configProperty.getKey()), configProperty.getValue());
             }
           }
         }
 
         return result;
-      }
-
-      private void addSubPackageMapping(Map<ConfigIndexKey, String> result, PsiPackage directoryPackage, LombokConfigProperty configProperty) {
-        result.put(new ConfigIndexKey(directoryPackage.getQualifiedName(), configProperty.getKey()), configProperty.getValue());
-        for (PsiPackage subPackage : directoryPackage.getSubPackages()) {
-          addSubPackageMapping(result, subPackage, configProperty);
-        }
       }
     };
   }
@@ -115,6 +108,6 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
 
   @Override
   public int getVersion() {
-    return 3;
+    return 1;
   }
 }

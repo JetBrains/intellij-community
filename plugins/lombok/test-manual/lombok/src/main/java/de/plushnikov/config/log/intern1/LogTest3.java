@@ -1,9 +1,9 @@
-package de.plushnikov.config.log;
+package de.plushnikov.config.log.intern1;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LogTest {
+public class LogTest3 {
 
     public void logSomething(){
         LOGGER1.info("Hello World!");
@@ -11,6 +11,6 @@ public class LogTest {
 
     public static void main(String[] args) {
         LOGGER1.info("Test");
-        new LogTest().logSomething();
+        new LogTest3().logSomething();
     }
 }
