@@ -159,6 +159,9 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     if (arg instanceof PsiMethodCallExpression) {
       PsiMethod psiMethod = ((PsiMethodCallExpression)arg).resolveMethod();
       PsiExpression returnValue = PropertyUtil.getGetterReturnExpression(psiMethod);
+      if (arg == returnValue) {
+        return null;
+      }
       if (returnValue != null) {
         return getTitleValue(returnValue);
       }
