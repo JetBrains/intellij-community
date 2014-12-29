@@ -62,6 +62,10 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("<div<caret>></div>", " ", "<div ></div>");
   }
 
+  public void testRecommence() {
+    doTest("<divv<caret>></div>", "\bd", "<divd></divd>");
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
