@@ -105,6 +105,7 @@ public class ByWord {
                                                   @NotNull List<InlineChunk> words2,
                                                   @NotNull FairDiffIterable iterable,
                                                   @NotNull ProgressIndicator indicator) {
+    // TODO: "A X C" - "A Y C \n M C" - do not match with last 'C'
     List<Range> newRanges = new ArrayList<Range>();
 
     for (Range range : iterable.iterateUnchanged()) {
