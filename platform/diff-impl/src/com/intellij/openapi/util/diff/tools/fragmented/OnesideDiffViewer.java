@@ -434,6 +434,9 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       change.destroyHighlighter();
     }
     myChangedBlockData = null;
+
+    myFoldingModel.destroy();
+
     myStatusPanel.update();
   }
 
