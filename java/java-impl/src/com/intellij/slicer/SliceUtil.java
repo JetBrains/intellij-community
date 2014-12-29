@@ -165,7 +165,7 @@ public class SliceUtil {
       PsiVariable variable = (PsiVariable)expression;
       Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(variable, original);
       if (values == null) {
-        SliceUsage stopUsage = createTooComplexDFAUsage(expression, parent, parentSubstitutor);
+        final SliceUsage stopUsage = new SliceTooComplexDFAUsage(simplify(expression), parent);
         return processor.process(stopUsage);
       }
       final Set<PsiExpression> expressions = new THashSet<PsiExpression>(values);
@@ -398,13 +398,6 @@ public class SliceUtil {
     usage.putUserData(KEY_SUBSTITUTOR, substitutor);
     usage.putUserData(KEY_INDEX_NESTING, indexNesting);
     usage.putUserData(KEY_SYNTHETIC_FIELD, syntheticField);
-    return usage;
-  }
-
-  @NotNull
-  public static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
-    final SliceTooComplexDFAUsage usage = new SliceTooComplexDFAUsage(simplify(element), parent);
-    usage.putUserData(KEY_SUBSTITUTOR, substitutor);
     return usage;
   }
 
