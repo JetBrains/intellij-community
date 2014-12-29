@@ -45,22 +45,18 @@ public class SliceUsage extends UsageInfo2UsageAdapter implements UserDataHolder
   private Map<Object, Object> myUserData = null;
 
   public SliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
-    super(new UsageInfo(element));
-    myParent = parent;
-    params = parent.params;
-    assert params != null;
+    this(element, parent, parent.params);
   }
 
-  // root usage
-  private SliceUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
+  private SliceUsage(@NotNull PsiElement element, @Nullable SliceUsage parent, @NotNull SliceAnalysisParams params) {
     super(new UsageInfo(element));
-    myParent = null;
+    myParent = parent;
     this.params = params;
   }
 
   @NotNull
   public static SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
-    return new SliceUsage(element, params);
+    return new SliceUsage(element, null, params);
   }
 
   public void processChildren(@NotNull final Processor<SliceUsage> processor) {
