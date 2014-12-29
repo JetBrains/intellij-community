@@ -35,9 +35,9 @@ public class DiffContentFactory {
 
   @NotNull
   public static DocumentContent create(@NotNull String text, @Nullable FileType type) {
-    Document document = EditorFactory.getInstance().createDocument(text);
-    document.setReadOnly(true);
-    return new DocumentContentImpl(document, type, null, null, null);
+    Pair<Document, LineSeparator> pair = buildDocument(text);
+    pair.first.setReadOnly(true);
+    return new DocumentContentImpl(pair.first, type, null, null, null);
   }
 
   @NotNull
