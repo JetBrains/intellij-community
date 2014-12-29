@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -57,5 +58,15 @@ public class PyUnusedImportTest extends PyTestCase {
     myFixture.copyDirectoryToProject("inspections/unusedImport/" + getTestName(true), "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.testHighlighting(true, false, false, filename);
+  }
+
+  // PY-14806
+  public void testSubmoduleOfNamespacePackageIsNotReportedAsUnused() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doTest("a.py");
+      }
+    });
   }
 }

@@ -15,12 +15,11 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
@@ -28,17 +27,13 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.resolve.PointInImport;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author yole
@@ -62,17 +57,17 @@ public class PyImportedModuleType implements PyType {
       return new PyModuleType(file, myImportedModule).resolveMember(name, location, direction, resolveContext);
     }
     else if (resolved instanceof PsiDirectory) {
-      List<PsiElement> elements = Collections.singletonList(ResolveImportUtil.resolveChild(resolved, name, null, true, true));
+      final PsiElement element = ResolveImportUtil.resolveChild(resolved, name, null, true, true);
       if (location != null && ResolveImportUtil.getPointInImport(location) == PointInImport.NONE) {
-        final Set<PsiElement> imported = Sets.newHashSet(PyModuleType.collectImportedSubmodules((PsiDirectory)resolved, location));
-        elements = ContainerUtil.filter(elements, new Condition<PsiElement>() {
+        final List<ImportedResolveResult> imported = PyModuleType.collectImportedSubmodules((PsiDirectory)resolved, location);
+        return ContainerUtil.mapNotNull(imported, new Function<ImportedResolveResult, RatedResolveResult>() {
           @Override
-          public boolean value(PsiElement element) {
-            return imported.contains(element);
+          public RatedResolveResult fun(ImportedResolveResult result) {
+            return result.getElement() == element ? result : null;
           }
         });
       }
-      return ResolveImportUtil.rateResults(elements);
+      return ResolveImportUtil.rateResults(Collections.singletonList(element));
     }
     return null;
   }

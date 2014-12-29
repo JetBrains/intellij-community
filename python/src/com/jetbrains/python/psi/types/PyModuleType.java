@@ -373,9 +373,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                               @Nullable final Set<String> existingNames) {
 
     return ContainerUtil.mapNotNull(collectImportedSubmodules(pyPackage, location),
-                                    new Function<PsiElement, LookupElement>() {
+                                    new Function<ImportedResolveResult, LookupElement>() {
                                       @Override
-                                      public LookupElement fun(PsiElement element) {
+                                      public LookupElement fun(ImportedResolveResult result) {
+                                        final PsiElement element = result.getElement();
                                         if (element instanceof PsiFileSystemItem) {
                                           return buildFileLookupElement((PsiFileSystemItem)element, existingNames);
                                         }
@@ -388,7 +389,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @NotNull
-  public static List<PsiElement> collectImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location) {
+  public static List<ImportedResolveResult> collectImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location) {
     final PsiElement parentAnchor;
     if (pyPackage instanceof PyFile && PyUtil.isPackage(((PyFile)pyPackage))) {
       parentAnchor = ((PyFile)pyPackage).getContainingDirectory();
@@ -404,7 +405,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     if (scopeOwner == null) {
       return Collections.emptyList();
     }
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<ImportedResolveResult> result = new ArrayList<ImportedResolveResult>();
     nextImportElement:
     for (PyImportElement importElement : getVisibleImports(scopeOwner)) {
       PsiElement resolvedChild = PyUtil.turnInitIntoDir(importElement.resolve());
@@ -420,7 +421,11 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         importedQName = importedQName.removeTail(1);
         resolvedChild = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveImportElement(importElement, importedQName));
       }
-      ContainerUtil.addIfNotNull(result, resolvedChild);
+      if (resolvedChild != null) {
+        result.add(new ImportedResolveResult(resolvedChild,
+                                             RatedResolveResult.RATE_NORMAL,
+                                             Collections.<PsiElement>singletonList(importElement)));
+      }
     }
     return result;
   }
