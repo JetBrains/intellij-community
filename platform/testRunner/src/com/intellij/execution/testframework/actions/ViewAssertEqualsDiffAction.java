@@ -24,7 +24,6 @@ import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +117,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
       myProviders = providers;
       if (hyperlink != null) {
         for (DiffHyperlink viewProvider : providers) {
-          if (Comparing.equal(hyperlink, viewProvider)) {
+          if (hyperlink.equals(viewProvider)) {
             provider = viewProvider;
             break;
           }
