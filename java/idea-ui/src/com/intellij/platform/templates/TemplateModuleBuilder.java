@@ -214,7 +214,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       };
 
       final File dir = new File(path);
-      myTemplate.getStream(new ArchivedProjectTemplate.StreamConsumer<Void>() {
+      myTemplate.processStream(new ArchivedProjectTemplate.StreamProcessor<Void>() {
         @Override
         public Void consume(@NotNull ZipInputStream stream) throws IOException {
           ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, stream, pathConvertor, new ZipUtil.ContentProcessor() {

@@ -44,7 +44,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * author: lesya
@@ -66,7 +67,7 @@ public class IgnoreFileAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final MultiMap<VirtualFile, VirtualFile> parentToSelectedChildren = MultiMap.createSmartList();
+    final MultiMap<VirtualFile, VirtualFile> parentToSelectedChildren = MultiMap.createSmart();
     final CvsContext context = CvsContextWrapper.createCachedInstance(e);
     final VirtualFile[] selectedFiles = context.getSelectedFiles();
     for (VirtualFile selectedFile : selectedFiles) {

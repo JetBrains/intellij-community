@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -116,21 +117,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
         private void backup(final VirtualFile projectDir, final VirtualFile vile) throws IOException {
           final String oldName = vile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + vile.getExtension();
-          final VirtualFile oldFile = projectDir.findOrCreateChildData(this, oldName);
-          assert oldFile != null : projectDir + ", " + oldName;
-          VfsUtil.saveText(oldFile, VfsUtilCore.loadText(vile));
+          VfsUtil.saveText(projectDir.findOrCreateChildData(this, oldName), VfsUtilCore.loadText(vile));
         }
       });
     }
 
-    if (originalVersion > ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-      String message =
-        ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName());
-
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
-    }
-
-    return true;
+    return originalVersion <= ProjectManagerImpl.CURRENT_FORMAT_VERSION ||
+           MessageDialogBuilder.yesNo(CommonBundle.getWarningTitle(),
+                                      ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName()))
+             .icon(Messages.getWarningIcon())
+             .project(myProject).is();
   }
 
   @Override

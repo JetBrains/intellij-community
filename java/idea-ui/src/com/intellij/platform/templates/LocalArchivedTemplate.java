@@ -87,7 +87,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   @Nullable
   String readEntry(@NotNull final String endsWith) {
     try {
-      getStream(new StreamConsumer<String>() {
+      return processStream(new StreamProcessor<String>() {
         @Override
         public String consume(@NotNull ZipInputStream stream) throws IOException {
           ZipEntry entry;
@@ -101,8 +101,8 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
       });
     }
     catch (IOException ignored) {
+      return null;
     }
-    return null;
   }
 
   @NotNull
@@ -125,8 +125,8 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   @Override
-  public <T> void getStream(@NotNull StreamConsumer<T> consumer) throws IOException {
-    consumeZipStream(consumer, new ZipInputStream(myArchivePath.openStream()));
+  public <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException {
+    return consumeZipStream(consumer, new ZipInputStream(myArchivePath.openStream()));
   }
 
   public URL getArchivePath() {
