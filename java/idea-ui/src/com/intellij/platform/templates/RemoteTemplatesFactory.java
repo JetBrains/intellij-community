@@ -92,9 +92,9 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(@NotNull String group, WizardContext context) {
+  public ProjectTemplate[] createTemplates(@Nullable String group, WizardContext context) {
     Collection<ArchivedProjectTemplate> templates = myTemplates.getValue().get(group);
-    return templates.toArray(new ProjectTemplate[templates.size()]);
+    return templates.isEmpty() ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(new ProjectTemplate[templates.size()]);
   }
 
   @NotNull

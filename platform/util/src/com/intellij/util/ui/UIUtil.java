@@ -1691,10 +1691,37 @@ public class UIUtil {
     }
   }
 
+  private static int THEME_BASED_TEXT_LCD_CONTRAST = 0;
+  private static int BEST_DARK_LCD_CONTRAST = 100;
+  private static int BEST_LIGHT_LCD_CONTRAST = 250;
+
+
   public static void setHintingForLCDText(Graphics2D g2d) {
     if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, Registry.intValue("lcd.contrast.value"));
+
+      // According to JavaDoc we can set values form 100 to 250
+      // So we can use 0 as a special flag
+      int registryLcdContrastValue = Registry.intValue("lcd.contrast.value");
+      if (registryLcdContrastValue == THEME_BASED_TEXT_LCD_CONTRAST) {
+          if (isUnderDarcula()) {
+            registryLcdContrastValue = BEST_DARK_LCD_CONTRAST;
+          } else {
+            registryLcdContrastValue = BEST_LIGHT_LCD_CONTRAST;
+          }
+      }
+
+      // Wrong values prevent IDE from start
+      // So we have to be careful
+      if (registryLcdContrastValue < 140) {
+        LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
+        registryLcdContrastValue = 140;
+      } else if (registryLcdContrastValue > 250) {
+        LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
+        registryLcdContrastValue = 250;
+      }
+
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, registryLcdContrastValue);
     }
   }
 

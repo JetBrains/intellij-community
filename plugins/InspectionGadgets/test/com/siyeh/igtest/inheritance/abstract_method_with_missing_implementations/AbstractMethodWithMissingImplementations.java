@@ -6,4 +6,12 @@ class WithDefaultMethods {
       }
   
       class B implements A {}
+
+      interface C {
+          void foo();
+      }
+      interface D extends C {
+          default void foo(){}
+      }
+      class E implements C, D {}
 }

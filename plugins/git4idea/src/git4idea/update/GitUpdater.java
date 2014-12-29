@@ -153,7 +153,13 @@ public abstract class GitUpdater {
   /**
    * Performs update (via rebase or merge - depending on the implementing classes).
    */
+  @NotNull
   protected abstract GitUpdateResult doUpdate();
+
+  @NotNull
+  GitBranchPair getSourceAndTarget() {
+    return myTrackedBranches.get(myRoot);
+  }
 
   protected void markStart(VirtualFile root) throws VcsException {
     // remember the current position

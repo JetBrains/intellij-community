@@ -472,7 +472,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private static void handleReferenceText(String refname, CompileContext compileContext) {
-    System.out.println("JavaCompilingVisitor" + ".handleReferenceText(" + refname + ", " + compileContext + ")");
     if (refname == null) return;
 
     if (compileContext.getPattern().isTypedVar(refname)) {

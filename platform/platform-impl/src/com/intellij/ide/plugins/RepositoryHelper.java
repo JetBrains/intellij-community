@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,7 +69,7 @@ public class RepositoryHelper {
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber buildnumber,
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
-    boolean forceHttps = repositoryUrl == null && UpdateSettings.getInstance().SECURE_CONNECTION;
+    boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().SECURE_CONNECTION;
     return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
   }
 
@@ -171,21 +172,22 @@ public class RepositoryHelper {
 
   private static List<IdeaPluginDescriptor> process(@Nullable String repositoryUrl, List<IdeaPluginDescriptor> list) {
     for (Iterator<IdeaPluginDescriptor> i = list.iterator(); i.hasNext(); ) {
-      IdeaPluginDescriptor descriptor = i.next();
-      if (descriptor.getPluginId() == null || descriptor.getUrl() == null) {
-        LOG.warn("Malformed plugin record at " + repositoryUrl);
+      PluginNode node = (PluginNode)i.next();
+
+      if (node.getPluginId() == null || repositoryUrl != null && node.getDownloadUrl() == null) {
+        LOG.warn("Malformed plugin record (id:" + node.getPluginId() + " repository:" + repositoryUrl + ")");
         i.remove();
+        continue;
       }
-      else if (descriptor instanceof PluginNode) {
-        PluginNode node = (PluginNode)descriptor;
-        if (repositoryUrl != null) {
-          node.setRepositoryName(repositoryUrl);
-        }
-        if (node.getName() == null) {
-          String url = node.getUrl();
-          String name = FileUtil.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1));
-          ((PluginNode)descriptor).setName(name);
-        }
+
+      if (repositoryUrl != null) {
+        node.setRepositoryName(repositoryUrl);
+      }
+
+      if (node.getName() == null) {
+        String url = node.getDownloadUrl();
+        String name = FileUtil.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1));
+        node.setName(name);
       }
     }
 
