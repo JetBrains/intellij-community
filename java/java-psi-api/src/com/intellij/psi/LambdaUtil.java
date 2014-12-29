@@ -448,15 +448,28 @@ public class LambdaUtil {
   public static boolean isValidQualifier4InterfaceStaticMethodCall(@NotNull PsiMethod method,
                                                                    @NotNull PsiReferenceExpression methodReferenceExpression,
                                                                    @Nullable PsiElement scope, @NotNull LanguageLevel languageLevel) {
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-      final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
-        return qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true))||
-               qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == containingClass;
+    return getInvalidQualifier4StaticInterfaceMethodMessage(method, methodReferenceExpression, scope, languageLevel) == null;
+  }
+
+  @Nullable
+  public static String getInvalidQualifier4StaticInterfaceMethodMessage(@NotNull PsiMethod method,
+                                                                        @NotNull PsiReferenceExpression methodReferenceExpression,
+                                                                        @Nullable PsiElement scope, @NotNull LanguageLevel languageLevel) {
+    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        return "Static interface method invocations are not supported at this language level";
       }
+
+      if (qualifierExpression == null && 
+          (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true)) || 
+          qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == containingClass) {
+        return null;
+      }
+      return "Static method may be invoked on containing interface class only";
     }
-    return true;
+    return null;
   }
 
   //JLS 14.8 Expression Statements
