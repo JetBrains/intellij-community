@@ -95,7 +95,6 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     group.add(new IgnorePolicySettingAction());
     //group.add(new MyHighlightPolicySettingAction()); // TODO
-    group.add(new ContextRangeSettingAction());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new ToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
