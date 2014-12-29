@@ -99,7 +99,7 @@ public class PluginInstaller {
         IdeaPluginDescriptor descriptor = allPlugins.get(node.getPluginId());
         if (descriptor != null) {
           node.setRepositoryName(((PluginNode)descriptor).getRepositoryName());
-          node.setUrl(descriptor.getUrl());
+          node.setDownloadUrl(((PluginNode)descriptor).getDownloadUrl());
         }
         else {
           node.setRepositoryName(null);

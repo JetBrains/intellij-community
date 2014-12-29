@@ -313,7 +313,7 @@ public class PluginDownloader {
                                                   @Nullable BuildNumber buildNumber) throws IOException {
     try {
       PluginId id = descriptor.getPluginId();
-      String url = host != null ? getHostUrl(host, descriptor.getUrl()) : getRepositoryUrl(id, buildNumber);
+      String url = getUrl(descriptor, host, buildNumber, id);
       PluginDownloader downloader = new PluginDownloader(id.getIdString(), url, descriptor.getVersion(), null, descriptor.getName(), null);
       downloader.setDescriptor(descriptor);
       downloader.setDescription(descriptor.getDescription());
@@ -326,32 +326,31 @@ public class PluginDownloader {
   }
 
   @NotNull
-  private static String getHostUrl(@NotNull String host, @NotNull String pluginUrl) throws URISyntaxException, MalformedURLException {
-    if (new URI(pluginUrl).isAbsolute()) {
-      return pluginUrl;
+  private static String getUrl(@NotNull IdeaPluginDescriptor descriptor,
+                               @Nullable String host,
+                               @Nullable BuildNumber buildNumber,
+                               PluginId id) throws URISyntaxException, MalformedURLException {
+    if (host != null && descriptor instanceof PluginNode) {
+      String url = ((PluginNode)descriptor).getDownloadUrl();
+      return new URI(url).isAbsolute() ? url : new URL(new URL(host), url).toExternalForm();
     }
     else {
-      return new URL(new URL(host), pluginUrl).toExternalForm();
+      Application app = ApplicationManager.getApplication();
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+
+      String buildNumberAsString = buildNumber != null ? buildNumber.asString() :
+                                   app != null ? ApplicationInfo.getInstance().getApiVersion() :
+                                   appInfo.getBuild().asString();
+
+      String uuid = app != null ? UpdateChecker.getInstallationUID(PropertiesComponent.getInstance()) : UUID.randomUUID().toString();
+
+      URIBuilder uriBuilder = new URIBuilder(appInfo.getPluginsDownloadUrl());
+      uriBuilder.addParameter("action", "download");
+      uriBuilder.addParameter("id", id.getIdString());
+      uriBuilder.addParameter("build", buildNumberAsString);
+      uriBuilder.addParameter("uuid", uuid);
+      return uriBuilder.toString();
     }
-  }
-
-  @NotNull
-  private static String getRepositoryUrl(@NotNull PluginId pluginId, @Nullable BuildNumber buildNumber) throws URISyntaxException {
-    Application app = ApplicationManager.getApplication();
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-
-    String buildNumberAsString = buildNumber != null ? buildNumber.asString() :
-                                 app != null ? ApplicationInfo.getInstance().getApiVersion() :
-                                 appInfo.getBuild().asString();
-
-    String uuid = app != null ? UpdateChecker.getInstallationUID(PropertiesComponent.getInstance()) : UUID.randomUUID().toString();
-
-    URIBuilder uriBuilder = new URIBuilder(appInfo.getPluginsDownloadUrl());
-    uriBuilder.addParameter("action", "download");
-    uriBuilder.addParameter("id", pluginId.getIdString());
-    uriBuilder.addParameter("build", buildNumberAsString);
-    uriBuilder.addParameter("uuid", uuid);
-    return uriBuilder.toString();
   }
 
   @Nullable

@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -180,9 +179,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
             public void run() {
               try {
                 indicator.start();
-                PluginNode node = new PluginNode(descriptor.getPluginId());
-                node.setUrl(descriptor.getUrl());
-                PluginDownloader downloader = PluginDownloader.createDownloader(node);
+                PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
                 downloader.prepareToInstall(indicator);
                 downloader.install();
                 indicator.processFinish();
