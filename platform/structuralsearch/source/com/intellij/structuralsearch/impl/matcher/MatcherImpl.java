@@ -145,7 +145,10 @@ public class MatcherImpl {
       visitor.matchContext(matchedNodes);
     } finally {
       matchedNodes.reset();
-      matchContext.getOptions().setScope(null);
+      final MatchOptions options = matchContext.getOptions();
+      if (options != null) {
+        options.setScope(null);
+      }
     }
   }
 

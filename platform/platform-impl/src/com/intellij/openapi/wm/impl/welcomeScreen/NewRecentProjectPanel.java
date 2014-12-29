@@ -142,9 +142,13 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         if (Registry.is("removable.welcome.screen.projects")) {
           if (myHovered) {
             add(myCloseThisItem, closeButtonCell);
+            list.revalidate();
+            list.repaint();
           }
           else {
             remove(myCloseThisItem);
+            list.revalidate();
+            list.repaint();
           }
         }
 

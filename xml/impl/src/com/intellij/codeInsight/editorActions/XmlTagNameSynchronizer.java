@@ -152,7 +152,6 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
         if (file == null) return;
 
-
         final SmartList<RangeMarker> leaders = new SmartList<RangeMarker>();
         for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
           final RangeMarker leader = createTagNameMarker(caret);
@@ -277,7 +276,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     private static RangeMarker findSupport(RangeMarker leader, PsiFile file, Document document) {
       final PsiElement element = file.findElementAt(leader.getStartOffset());
       PsiElement support = RenameTagBeginOrEndIntentionAction.findOtherSide(element, false);
-      support = support == null ? RenameTagBeginOrEndIntentionAction.findOtherSide(element, true) : support;
+      support = support == null || element == support ? RenameTagBeginOrEndIntentionAction.findOtherSide(element, true) : support;
       final TextRange range = support != null ? support.getTextRange() : null;
       return range != null ? document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true) : null;
     }

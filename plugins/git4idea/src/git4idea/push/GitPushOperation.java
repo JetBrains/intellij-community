@@ -50,6 +50,7 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.settings.GitPushSettings;
+import git4idea.update.GitRebaseOverMergeProblem;
 import git4idea.update.GitUpdateProcess;
 import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +73,7 @@ public class GitPushOperation {
   private static final int MAX_PUSH_ATTEMPTS = 10;
 
   private final Project myProject;
+  @NotNull private final GitPushSupport myPushSupport;
   private final Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> myPushSpecs;
   @Nullable private final GitPushTagMode myTagMode;
   private final boolean myForce;
@@ -83,10 +85,12 @@ public class GitPushOperation {
   private final GitRepositoryManager myRepositoryManager;
 
   public GitPushOperation(@NotNull Project project,
+                          @NotNull GitPushSupport pushSupport,
                           @NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                           @Nullable GitPushTagMode tagMode,
                           boolean force) {
     myProject = project;
+    myPushSupport = pushSupport;
     myPushSpecs = pushSpecs;
     myTagMode = tagMode;
     myForce = force;
@@ -116,6 +120,7 @@ public class GitPushOperation {
     Label beforePushLabel = null;
     Label afterPushLabel = null;
     Map<GitRepository, String> preUpdatePositions = updateRootInfoAndRememberPositions();
+    Boolean rebaseOverMergeProblemDetected = null;
 
     final Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
     Map<GitRepository, GitUpdateResult> updatedRoots = ContainerUtil.newHashMap();
@@ -142,7 +147,12 @@ public class GitPushOperation {
             shouldUpdate = false;
           }
           else if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
-            updateSettings = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings);
+            // the dialog will be shown => check for rebase-over-merge problem in advance to avoid showing several dialogs in a row
+            rebaseOverMergeProblemDetected = !findRootsWithMergeCommits(getRootsToUpdate(updateSettings,
+                                                                                         result.rejected.keySet())).isEmpty();
+
+            updateSettings = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings,
+                                                      rebaseOverMergeProblemDetected.booleanValue());
             if (updateSettings != null) {
               savePushUpdateSettings(updateSettings);
             }
@@ -158,10 +168,8 @@ public class GitPushOperation {
           if (beforePushLabel == null) { // put the label only before the very first update
             beforePushLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before push");
           }
-          Collection<GitRepository> rootsToUpdate = updateSettings.shouldUpdateAllRoots() ?
-                                                    myRepositoryManager.getRepositories() :
-                                                    result.rejected.keySet();
-          GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod());
+          Collection<GitRepository> rootsToUpdate = getRootsToUpdate(updateSettings, result.rejected.keySet());
+          GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod(), rebaseOverMergeProblemDetected == null);
           for (GitRepository repository : rootsToUpdate) {
             updatedRoots.put(repository, updateResult); // TODO update result in GitUpdateProcess is a single for several roots
           }
@@ -181,6 +189,33 @@ public class GitPushOperation {
       }
     }
     return prepareCombinedResult(results, updatedRoots, preUpdatePositions, beforePushLabel, afterPushLabel);
+  }
+
+  @NotNull
+  private Collection<GitRepository> getRootsToUpdate(@NotNull PushUpdateSettings updateSettings,
+                                                     @NotNull Set<GitRepository> rejectedRepositories) {
+    return updateSettings.shouldUpdateAllRoots() ? myRepositoryManager.getRepositories() : rejectedRepositories;
+  }
+
+  @NotNull
+  private Collection<VirtualFile> findRootsWithMergeCommits(@NotNull Collection<GitRepository> rootsToSearch) {
+    return ContainerUtil.mapNotNull(rootsToSearch, new Function<GitRepository, VirtualFile>() {
+      @Override
+      public VirtualFile fun(GitRepository repo) {
+        PushSpec<GitPushSource, GitPushTarget> pushSpec = myPushSpecs.get(repo);
+        if (pushSpec == null) { // repository is not selected to be pushed, but can be rebased
+          GitPushSource source = myPushSupport.getSource(repo);
+          GitPushTarget target = myPushSupport.getDefaultTarget(repo);
+          if (target == null) {
+            return null;
+          }
+          pushSpec = new PushSpec<GitPushSource, GitPushTarget>(source, target);
+        }
+        String baseRef = pushSpec.getTarget().getBranch().getFullName();
+        String currentRef = pushSpec.getSource().getBranch().getFullName();
+        return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo.getRoot() : null;
+      }
+    });
   }
 
   private static boolean pushingToNotTrackedBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
@@ -298,13 +333,6 @@ public class GitPushOperation {
     });
   }
 
-  @NotNull
-  private static <T> List<T> without(@NotNull List<T> collection, @NotNull T toRemove) {
-    List<T> result = ContainerUtil.newArrayList(collection);
-    result.remove(toRemove);
-    return result;
-  }
-
   private int collectNumberOfPushedCommits(@NotNull VirtualFile root, @NotNull GitPushNativeResult result) {
     if (result.getType() != GitPushNativeResult.Type.SUCCESS) {
       return -1;
@@ -370,12 +398,14 @@ public class GitPushOperation {
 
   @Nullable
   private PushUpdateSettings showDialogAndGetExitCode(@NotNull final Set<GitRepository> repositories,
-                                                      @NotNull final PushUpdateSettings initialSettings) {
+                                                      @NotNull final PushUpdateSettings initialSettings,
+                                                      final boolean rebaseOverMergeProblemDetected) {
     final Ref<PushUpdateSettings> updateSettings = Ref.create();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, repositories, initialSettings);
+        GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, repositories, initialSettings,
+                                                                             rebaseOverMergeProblemDetected);
         DialogManager.show(dialog);
         int exitCode = dialog.getExitCode();
         if (exitCode != DialogWrapper.CANCEL_EXIT_CODE) {
@@ -397,12 +427,15 @@ public class GitPushOperation {
   }
 
   @NotNull
-  protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
+  protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate,
+                                   @NotNull UpdateMethod updateMethod,
+                                   boolean checkForRebaseOverMergeProblem) {
     GitUpdateProcess.UpdateMethod um = updateMethod == UpdateMethod.MERGE ?
                                        GitUpdateProcess.UpdateMethod.MERGE :
                                        GitUpdateProcess.UpdateMethod.REBASE;
     GitUpdateResult updateResult = new GitUpdateProcess(myProject, myPlatformFacade, myProgressIndicator,
-                                                        new HashSet<GitRepository>(rootsToUpdate), UpdatedFiles.create()).update(um);
+                                                        new HashSet<GitRepository>(rootsToUpdate), UpdatedFiles.create(),
+                                                        checkForRebaseOverMergeProblem).update(um);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);
       repository.update();
