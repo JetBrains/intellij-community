@@ -595,8 +595,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
           myTemplatesList.setPaintBusy(true);
           chooseTemplateStep.getTemplateList().setPaintBusy(true);
           RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
-          String[] groups = factory.getGroups();
-          for (String group : groups) {
+          for (String group : factory.getGroups()) {
             ProjectTemplate[] templates = factory.createTemplates(group, myContext);
             for (ProjectTemplate template : templates) {
               String id = ((ArchivedProjectTemplate)template).getCategory();
