@@ -79,7 +79,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     PsiFile file = null;
-    final PsiDirectory dir;
+    PsiDirectory dir = null;
     boolean hasSelection = false;
 
     if (editor != null){
@@ -109,6 +109,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         processor.run();
       }
       return;
+    }
+    else if (files != null && files.length == 1) {
+      file = PsiManager.getInstance(project).findFile(files[0]);
     }
     else {
       Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
@@ -144,14 +147,16 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     final boolean showDialog = EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
 
-    if (file == null && dir != null) {
+    if (file == null && dir == null) return;
+    if (file == null) {
       DirectoryFormattingOptions options = getDirectoryFormattingOptions(project, dir);
       if (options != null) {
         reformatDirectory(project, dir, options);
       }
       return;
     }
-    else if (showDialog) {
+
+    if (showDialog) {
       LayoutCodeOptions selectedFlags = getLayoutCodeOptions(project, file, dir, hasSelection);
       if (selectedFlags == null)
         return;
@@ -167,8 +172,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         return;
       }
     }
-
-    if (file == null) return;
 
     if (!showDialog && processChangedTextOnly && isChangeNotTrackedForFile(project, file)) {
       processChangedTextOnly = false;
