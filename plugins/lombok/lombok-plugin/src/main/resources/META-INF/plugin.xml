@@ -185,9 +185,16 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+			<li>0.9.0
+				<ol>
+				    <li>Issue #53: Basic Support for Lombok configuration keys</li>
+				    <li>Fixed #57: Incorrect constructors appear in "Structure" when `@Value` and `@Builder`</li>
+				    <li>Fixed #70: Conflict resolution failed on renaming field together with its accessors in IntelliJ 14</li>
+				</ol>
+			</li>
 		  <li>0.8.9
 				<ol>
-				    <li>Updates and Improvements</li>
+				    <li>Fixed #67: Updates and Improvements for IntelliJ 14, fixed incompatibility</li>
 				</ol>
 			</li>
 			<li>0.8.8
