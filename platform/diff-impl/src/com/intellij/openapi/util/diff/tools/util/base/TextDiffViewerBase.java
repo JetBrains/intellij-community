@@ -160,10 +160,9 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
   }
 
-
   protected class MySetEditorSettingsAction extends SetEditorSettingsAction {
-    public MySetEditorSettingsAction(@NotNull TextDiffSettings settings) {
-      super(settings);
+    public MySetEditorSettingsAction() {
+      super(myTextSettings);
     }
 
     @NotNull
@@ -299,7 +298,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
   }
 
-  protected class ToggleExpandByDefaultAction extends ToggleActionButton implements DumbAware {
+  protected abstract class ToggleExpandByDefaultAction extends ToggleActionButton implements DumbAware {
     public ToggleExpandByDefaultAction() {
       super("Collapse unchanged fragments", AllIcons.Actions.Collapseall);
       setEnabledInModalContext(true);
@@ -312,8 +311,13 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      getTextSettings().setExpandByDefault(!state);
+      boolean expand = !state;
+      if (getTextSettings().isExpandByDefault() == expand) return;
+      getTextSettings().setExpandByDefault(expand);
+      expandAll(expand);
     }
+
+    protected abstract void expandAll(boolean expand);
   }
 
   protected class ContextRangeSettingAction extends DumbAwareAction { // TODO: add into 'diff popup'

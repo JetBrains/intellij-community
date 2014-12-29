@@ -96,7 +96,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     group.add(new IgnorePolicySettingAction());
     //group.add(new MyHighlightPolicySettingAction()); // TODO
     group.add(new ContextRangeSettingAction());
-    group.add(new ToggleExpandByDefaultAction());
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(new ToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
 
@@ -114,7 +114,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     //group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
     group.add(new ToggleAutoScrollAction());
-    group.add(new ToggleExpandByDefaultAction());
+    group.add(new MyToggleExpandByDefaultAction());
 
     return group;
   }
@@ -468,6 +468,13 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       assert prev != null;
 
       DiffUtil.scrollToLineAnimated(editor, getCurrentStartLine(prev));
+    }
+  }
+
+  private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
+    @Override
+    protected void expandAll(boolean expand) {
+      myFoldingModel.expandAll(expand);
     }
   }
 

@@ -95,7 +95,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new IgnorePolicySettingAction());
     group.add(new HighlightPolicySettingAction());
     group.add(new ContextRangeSettingAction());
-    group.add(new ToggleExpandByDefaultAction());
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(new ToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
 
@@ -113,7 +113,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new HighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
     group.add(new ToggleAutoScrollAction());
-    group.add(new ToggleExpandByDefaultAction());
+    group.add(new MyToggleExpandByDefaultAction());
 
     return group;
   }
@@ -611,6 +611,19 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (change.isSelectedByLine(line, side)) return true;
       }
       return false;
+    }
+  }
+
+  private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
+    @Override
+    public boolean isEnabled() {
+      return myFoldingModel != null;
+    }
+
+    @Override
+    protected void expandAll(boolean expand) {
+      assert myFoldingModel != null;
+      myFoldingModel.expandAll(expand);
     }
   }
 

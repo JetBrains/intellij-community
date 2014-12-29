@@ -345,6 +345,29 @@ public class FoldingModelSupport {
     // Synchronized toggling of ranges
     //
 
+    public void expandAll(final boolean expanded) {
+      if (myDuringSynchronize) return;
+      myDuringSynchronize = true;
+      try {
+        for (int i = 0; i < myCount; i++) {
+          final int index = i;
+          final FoldingModelEx model = myEditors[index].getFoldingModel();
+          model.runBatchFoldingOperation(new Runnable() {
+            @Override
+            public void run() {
+              for (FoldedBlock folding : myFoldings) {
+                FoldRegion region = folding.getRegion(index);
+                if (region != null) region.setExpanded(expanded);
+              }
+            }
+          });
+        }
+      }
+      finally {
+        myDuringSynchronize = false;
+      }
+    }
+
     private void updatePairedRegion(@NotNull FoldRegion region, int index, int pairedIndex) {
       FoldRegion pairedRegion = null;
       for (FoldedBlock folding : myFoldings) {

@@ -53,7 +53,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener1 = new MyVisibleAreaListener(Side.LEFT);
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener2 = new MyVisibleAreaListener(Side.RIGHT);
 
-  @NotNull protected final TextDiffViewerBase.MySetEditorSettingsAction myEditorSettingsAction;
+  @NotNull protected final MySetEditorSettingsAction myEditorSettingsAction;
 
   @NotNull private final MyScrollToLineHelper myScrollToLineHelper = new MyScrollToLineHelper();
 
@@ -80,7 +80,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
     //new MyFocusOppositePaneAction().setupAction(myPanel, this); // FIXME
 
-    myEditorSettingsAction = new MySetEditorSettingsAction(getTextSettings());
+    myEditorSettingsAction = new MySetEditorSettingsAction();
     myEditorSettingsAction.applyDefaults();
   }
 

@@ -85,7 +85,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
     new MyFocusOppositePaneAction().setupAction(myPanel, this);
 
-    myEditorSettingsAction = new MySetEditorSettingsAction(getTextSettings());
+    myEditorSettingsAction = new MySetEditorSettingsAction();
     myEditorSettingsAction.applyDefaults();
 
     new MyOpenInEditorWithMouseAction().register(getEditors());

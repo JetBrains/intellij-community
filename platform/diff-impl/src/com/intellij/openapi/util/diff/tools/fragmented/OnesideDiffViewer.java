@@ -140,7 +140,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(new IgnorePolicySettingAction());
     group.add(new HighlightPolicySettingAction());
     group.add(new ContextRangeSettingAction());
-    group.add(new ToggleExpandByDefaultAction());
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(myEditorSettingsAction);
 
     return group;
@@ -155,7 +155,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(Separator.getInstance());
     group.add(new HighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
-    group.add(new ToggleExpandByDefaultAction());
+    group.add(new MyToggleExpandByDefaultAction());
 
     return group;
   }
@@ -616,24 +616,19 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     }
   }
 
-  private class MySetEditorSettingsAction extends SetEditorSettingsAction {
-    public MySetEditorSettingsAction() {
-      super(getTextSettings());
-    }
-
-    @NotNull
-    @Override
-    public List<? extends Editor> getEditors() {
-      return OnesideDiffViewer.this.getEditors();
-    }
-  }
-
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
     @Override
     protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
       if (editor != myEditor) return null;
 
       return getOpenFileDescriptor(myEditor.logicalPositionToOffset(new LogicalPosition(line, 0)));
+    }
+  }
+
+  private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
+    @Override
+    protected void expandAll(boolean expand) {
+      myFoldingModel.expandAll(expand);
     }
   }
 
