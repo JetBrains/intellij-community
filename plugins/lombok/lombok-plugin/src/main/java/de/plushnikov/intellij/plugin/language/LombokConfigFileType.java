@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.language;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,6 @@ public class LombokConfigFileType extends LanguageFileType {
   @Nullable
   @Override
   public Icon getIcon() {
-    return LombokConfigIcons.FILE;
+    return LombokIcons.CONFIG_FILE_ICON;
   }
 }

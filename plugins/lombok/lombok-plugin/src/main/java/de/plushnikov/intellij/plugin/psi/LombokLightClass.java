@@ -8,8 +8,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
-import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightClass;
+import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,10 +26,12 @@ public class LombokLightClass extends LightClass {
   private PsiClass myContainingClass;
   private PsiTypeParameterList myTypeParameterList;
   private PsiTypeParameter[] myTypeParameters = new PsiTypeParameter[0];
+  private final Icon myBaseIcon;
 
   public LombokLightClass(@NotNull PsiClass delegate) {
     super(delegate);
     myModifierList = new LombokLightModifierList(delegate.getManager(), JavaLanguage.INSTANCE);
+    myBaseIcon = LombokIcons.CLASS_ICON;
   }
 
   @Nullable
@@ -135,7 +137,7 @@ public class LombokLightClass extends LightClass {
 
   @Override
   public Icon getElementIcon(final int flags) {
-    return PsiClassImplUtil.getClassIcon(flags, this);
+    return myBaseIcon;
   }
 
   @Override

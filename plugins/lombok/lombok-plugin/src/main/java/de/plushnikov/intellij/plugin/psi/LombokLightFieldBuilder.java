@@ -11,6 +11,7 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.util.IncorrectOperationException;
+import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder {
     super(manager, name, type);
     myName = name;
     myNameIdentifier = new LombokLightIdentifier(manager, name);
+    setBaseIcon(LombokIcons.FIELD_ICON);
   }
 
   public LombokLightFieldBuilder withContainingClass(PsiClass psiClass) {

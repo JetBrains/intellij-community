@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ public class LombokConfigColorSettingsPage implements ColorSettingsPage {
   @Nullable
   @Override
   public Icon getIcon() {
-    return LombokConfigIcons.FILE;
+    return LombokIcons.CONFIG_FILE_ICON;
   }
 
   @NotNull

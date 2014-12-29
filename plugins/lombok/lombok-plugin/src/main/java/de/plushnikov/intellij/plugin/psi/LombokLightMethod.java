@@ -8,9 +8,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
+import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author Plushnikov Michail
@@ -18,10 +23,12 @@ import org.jetbrains.annotations.NotNull;
 public class LombokLightMethod extends LightMethod {
 
   private final PsiMethod myMethod;
+  private final Icon myBaseIcon;
 
   public LombokLightMethod(@NotNull PsiManager manager, @NotNull PsiMethod valuesMethod, @NotNull PsiClass psiClass) {
     super(manager, valuesMethod, psiClass);
     myMethod = valuesMethod;
+    myBaseIcon = LombokIcons.METHOD_ICON;
   }
 
   public PsiElement getParent() {
@@ -68,5 +75,11 @@ public class LombokLightMethod extends LightMethod {
   @Override
   public void checkDelete() throws IncorrectOperationException {
     // simple do nothing
+  }
+
+  @Override
+  public Icon getElementIcon(int flags) {
+    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(myBaseIcon, this, false);
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 }
