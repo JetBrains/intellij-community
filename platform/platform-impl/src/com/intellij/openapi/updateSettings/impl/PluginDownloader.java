@@ -179,7 +179,8 @@ public class PluginDownloader {
 
     IdeaPluginDescriptorImpl actualDescriptor = loadDescriptionFromJar(myFile);
     if (actualDescriptor != null) {
-      if (InstalledPluginsState.getInstance().wasUpdated(actualDescriptor.getPluginId())) {
+      InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
+      if (state != null && state.wasUpdated(actualDescriptor.getPluginId())) {
         return false; //already updated
       }
 
@@ -237,7 +238,10 @@ public class PluginDownloader {
       StartupActionScriptManager.addActionCommand(deleteOld);
     }
     PluginInstaller.install(myFile, getPluginName(), true);
-    InstalledPluginsState.getInstance().onPluginInstall(myDescriptor);
+    InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
+    if (state != null) {
+      state.onPluginInstall(myDescriptor);
+    }
   }
 
   @NotNull
