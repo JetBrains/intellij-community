@@ -166,7 +166,11 @@ final class HEquation {
     return result1;
   }
 }
-class Bytes {
+
+/**
+ * Bytes of primary HKey of a method.
+ */
+final class Bytes {
   @NotNull
   final byte[] bytes;
   Bytes(@NotNull byte[] bytes) {
@@ -177,12 +181,7 @@ class Bytes {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
-    Bytes bytes1 = (Bytes)o;
-
-    if (!Arrays.equals(bytes, bytes1.bytes)) return false;
-
-    return true;
+    return Arrays.equals(bytes, ((Bytes)o).bytes);
   }
 
   @Override

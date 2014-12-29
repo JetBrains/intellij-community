@@ -95,12 +95,18 @@ class NewArrayInstanceEvaluator implements Evaluator {
         int length = arrayReference.length();
         for (int idx = 0; idx < length; idx++) {
           ArrayReference componentArray = (ArrayReference)arrayReference.getValue(idx);
-          Object[] componentArrayValues = (Object[])values[idx];
-          if (componentArray == null) {
-            componentArray = debugProcess.newInstance(componentType, componentArrayValues.length);
-            arrayReference.setValue(idx, componentArray);
+          Object value = values[idx];
+          if (value instanceof Value) {
+            arrayReference.setValue(idx, (Value)value);
           }
-          setInitialValues(componentArray, componentArrayValues, context);
+          else {
+            Object[] componentArrayValues = (Object[])value;
+            if (componentArray == null) {
+              componentArray = debugProcess.newInstance(componentType, componentArrayValues.length);
+              arrayReference.setValue(idx, componentArray);
+            }
+            setInitialValues(componentArray, componentArrayValues, context);
+          }
         }
       }
       else {

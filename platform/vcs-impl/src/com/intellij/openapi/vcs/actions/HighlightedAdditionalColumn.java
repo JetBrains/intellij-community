@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.HighlightAnnotationsActions;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
@@ -35,7 +36,7 @@ class HighlightedAdditionalColumn extends AnnotationFieldGutter {
                               LineAnnotationAspect aspect,
                               TextAnnotationPresentation presentation,
                               final HighlightAnnotationsActions highlighting,
-                              Map<String, Color> colorScheme) {
+                              Couple<Map<String, Color>> colorScheme) {
     super(annotation, editor, aspect, presentation, colorScheme);
     myHighlighting = highlighting;
   }

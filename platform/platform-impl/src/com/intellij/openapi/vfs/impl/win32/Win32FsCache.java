@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
@@ -27,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,16 +58,16 @@ class Win32FsCache {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    if (!path.endsWith("/")) path += "/";
-    List<String> names = new ArrayList<String>(fileInfo.length);
+    if (!StringUtil.endsWithChar(path, '/')) path += "/";
+    String[] names = new String[fileInfo.length];
     Map<String, FileAttributes> map = getMap();
-    for (FileInfo info : fileInfo) {
+    for (int i = 0, length = fileInfo.length; i < length; i++) {
+      FileInfo info = fileInfo[i];
       String name = info.getName();
       map.put(path + name, info.toFileAttributes());
-      names.add(name);
+      names[i] = name;
     }
-
-    return ArrayUtil.toStringArray(names);
+    return names;
   }
 
   @Nullable

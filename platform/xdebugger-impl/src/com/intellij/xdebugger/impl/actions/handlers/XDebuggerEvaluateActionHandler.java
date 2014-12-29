@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -53,9 +54,14 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
+    EvaluationMode mode = EvaluationMode.EXPRESSION;
     String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
     if (selectedText != null) {
       selectedText = evaluator.formatTextForEvaluation(selectedText);
+      mode = evaluator.getEvaluationMode(selectedText,
+                                         editor.getSelectionModel().getSelectionStart(),
+                                         editor.getSelectionModel().getSelectionEnd(),
+                                         CommonDataKeys.PSI_FILE.getData(dataContext));
     }
     String text = selectedText;
 
@@ -83,7 +89,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
         language = XDebuggerEditorBase.getFileTypeLanguage(file.getFileType());
       }
     }
-    XExpression expression = new XExpressionImpl(StringUtil.notNullize(text), language, null);
+    XExpression expression = new XExpressionImpl(StringUtil.notNullize(text), language, null, mode);
     new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression, stackFrame == null ? null : stackFrame.getSourcePosition()).show();
   }
 

@@ -22,6 +22,11 @@ public class ExpandOneLineLambda2CodeBlockIntentionTest extends IPPTestCase {
   public void testSimple() {
     doTest();
   }
+
+  public void testVoidCompatibleInExpr() {
+    doTest();
+  }
+
   @Override
   protected String getIntentionName() {
     return "Expand lambda expression body to {...}";

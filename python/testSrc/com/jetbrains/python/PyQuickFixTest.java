@@ -50,6 +50,16 @@ public class PyQuickFixTest extends PyTestCase {
                      PyUnresolvedReferencesInspection.class, "Import 'importFromModule.foo.baz'", true, true);
   }
 
+  // PY-14365
+  public void testObjectBaseIsNotShownInAutoImportQuickfix() {
+    myFixture.copyDirectoryToProject("objectBaseIsNotShownInAutoImportQuickfix", "");
+    myFixture.configureByFile("main.py");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    final IntentionAction intention = myFixture.findSingleIntention("Import");
+    assertNotNull(intention);
+    assertEquals("Import 'module.MyOldStyleClass'", intention.getText());
+  }
+
   public void testImportFromModuleStar() {  // PY-6302
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.copyDirectoryToProject("importFromModuleStar", "");
@@ -241,42 +251,35 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
+  // PY-14002
+  public void testChainedComparisonWithCommonBinaryExpression() {
+    doInspectionTest("ChainedComparisonWithCommonBinaryExpression.py", PyChainedComparisonsInspection.class,
+                     PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
   public void testStatementEffect() {  // PY-1362, PY-2585
     doInspectionTest("StatementEffect.py", PyStatementEffectInspection.class,
-                          PyBundle.message("QFIX.statement.effect"), true, true);
+                     PyBundle.message("QFIX.statement.effect"), true, true);
   }
 
   public void testStatementEffectIntroduceVariable() {  // PY-1265
     doInspectionTest("StatementEffectIntroduceVariable.py", PyStatementEffectInspection.class,
-                          PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
-  }
-
-  public void testReplacePrintEnd() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest("ReplacePrintEnd.py", PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
-      }});
-  }
-
-  public void testReplacePrintComment() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest("ReplacePrintComment.py", PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true,
-                         true);
-      }});
+                     PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
   }
 
   public void testUnresolvedWith() {  // PY-2083
-    setLanguageLevel(LanguageLevel.PYTHON25);
-    doInspectionTest("UnresolvedWith.py", PyUnresolvedReferencesInspection.class,
-                          PyBundle.message("QFIX.unresolved.reference.add.future"), true, true);
+    runWithLanguageLevel(LanguageLevel.PYTHON25, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest("UnresolvedWith.py", PyUnresolvedReferencesInspection.class,
+                         PyBundle.message("QFIX.unresolved.reference.add.future"), true, true);
+      }
+    });
   }
 
   public void testUnresolvedRefCreateFunction() {  // PY-2092
     doInspectionTest("UnresolvedRefCreateFunction.py", PyUnresolvedReferencesInspection.class,
-                          PyBundle.message("QFIX.unresolved.reference.create.function.$0", "ref"), true, true);
+                     PyBundle.message("QFIX.unresolved.reference.create.function.$0", "ref"), true, true);
   }
 
   public void testUnresolvedRefNoCreateFunction() {
@@ -333,24 +336,20 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.add.super"), true, true);
   }
 
-  public void testAddCallSuperAnnotations() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest("AddCallSuperAnnotations.py",
-                         PyMissingConstructorInspection.class,
-                         PyBundle.message("QFIX.add.super"), true, true);
-      }
-    });
-  }
-
   public void testAddCallSuperPass() {                      //PY-8654
     doInspectionTest("AddCallSuperPass.py", PyMissingConstructorInspection.class,
                      PyBundle.message("QFIX.add.super"), true, true);
   }
 
-  public void testAddEncoding() {                      //PY-491
+  //PY-491, PY-13297
+  public void testAddEncoding() {
     doInspectionTest("AddEncoding.py", PyMandatoryEncodingInspection.class,
+                     PyBundle.message("QFIX.add.encoding"), true, true);
+  }
+
+  // PY-13297
+  public void testAddEncodingAtLastLine() {
+    doInspectionTest("AddEncodingAtLastLine.py", PyMandatoryEncodingInspection.class,
                      PyBundle.message("QFIX.add.encoding"), true, true);
   }
 
@@ -370,9 +369,13 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testSetFunctionToLiteral() {                      //PY-3120
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doInspectionTest("SetFunctionToLiteral.py", PySetFunctionToLiteralInspection.class,
-                     PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest("SetFunctionToLiteral.py", PySetFunctionToLiteralInspection.class,
+                         PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
+      }
+    });
   }
 
   public void testDictComprehensionToCall() {
@@ -465,6 +468,34 @@ public class PyQuickFixTest extends PyTestCase {
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"));
+  }
+
+  // PY-8991
+  public void testRemoveUnicodePrefixFromGluedStringNodesWithSlash() {
+    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
+      public void run() {
+        myFixture.configureByFile(getTestName(false) + ".py");
+        myFixture.checkHighlighting(true, false, false);
+        final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+        assertNotNull(intentionAction);
+        myFixture.launchAction(intentionAction);
+        myFixture.checkResultByFile(getTestName(false) + "_after.py");
+      }
+    });
+  }
+
+  // PY-8990
+  public void testRemoveUnicodePrefixFromGluedStringNodesInParenthesis() {
+    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
+      public void run() {
+        myFixture.configureByFile(getTestName(false) + ".py");
+        myFixture.checkHighlighting(true, false, false);
+        final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+        assertNotNull(intentionAction);
+        myFixture.launchAction(intentionAction);
+        myFixture.checkResultByFile(getTestName(false) + "_after.py");
+      }
+    });
   }
 
   @Override

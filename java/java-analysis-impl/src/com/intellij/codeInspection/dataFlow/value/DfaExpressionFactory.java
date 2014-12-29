@@ -94,7 +94,7 @@ public class DfaExpressionFactory {
       return myFactory.createLiteralValue((PsiLiteralExpression)expression);
     }
 
-    if (expression instanceof PsiNewExpression) {
+    if (expression instanceof PsiNewExpression || expression instanceof PsiLambdaExpression) {
       return myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL);
     }
 
@@ -116,7 +116,7 @@ public class DfaExpressionFactory {
       return null;
     }
 
-    if (!var.hasModifierProperty(PsiModifier.VOLATILE) && !var.hasModifierProperty(PsiModifier.TRANSIENT)) {
+    if (!var.hasModifierProperty(PsiModifier.VOLATILE)) {
       if (var instanceof PsiVariable && var.hasModifierProperty(PsiModifier.FINAL)) {
         DfaValue constValue = myFactory.getConstFactory().create((PsiVariable)var);
         if (constValue != null) return constValue;

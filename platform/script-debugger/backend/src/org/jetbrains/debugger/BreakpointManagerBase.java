@@ -1,47 +1,64 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> implements BreakpointManager {
-  protected final Set<T> breakpoints = new ConcurrentHashSet<T>();
-  protected final ConcurrentHashMap<T, T> breakpointDuplicationByTarget = new ConcurrentHashMap<T, T>(new TObjectHashingStrategy<T>() {
-    @Override
-    public int computeHashCode(T b) {
-      int result = b.getLine();
-      result = 31 * result + b.getColumn();
-      if (b.getCondition() != null) {
-        result = 31 * result + b.getCondition().hashCode();
+  protected final Set<T> breakpoints = ContainerUtil.newConcurrentSet();
+  protected final ConcurrentMap<T, T> breakpointDuplicationByTarget =
+    ContainerUtil.newConcurrentMap(new TObjectHashingStrategy<T>() {
+      @Override
+      public int computeHashCode(T b) {
+        int result = b.getLine();
+        result = 31 * result + b.getColumn();
+        if (b.getCondition() != null) {
+          result = 31 * result + b.getCondition().hashCode();
+        }
+        result = 31 * result + b.getTarget().hashCode();
+        return result;
       }
-      result = 31 * result + b.getTarget().hashCode();
-      return result;
-    }
 
-    @Override
-    public boolean equals(T b1, T b2) {
-      return b1.getTarget().getClass() == b2.getTarget().getClass() &&
-             b1.getTarget().equals(b2.getTarget()) &&
-             b1.getLine() == b2.getLine() &&
-             b1.getColumn() == b2.getColumn() &&
-             StringUtil.equals(b1.getCondition(), b2.getCondition());
-    }
-  });
+      @Override
+      public boolean equals(T b1, T b2) {
+        return b1.getTarget().getClass() == b2.getTarget().getClass() &&
+               b1.getTarget().equals(b2.getTarget()) &&
+               b1.getLine() == b2.getLine() &&
+               b1.getColumn() == b2.getColumn() &&
+               StringUtil.equals(b1.getCondition(), b2.getCondition());
+      }
+    });
 
   protected final EventDispatcher<BreakpointListener> dispatcher = EventDispatcher.create(BreakpointListener.class);
 
   protected abstract T createBreakpoint(@NotNull BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled);
 
-  protected abstract AsyncResult<Breakpoint> doSetBreakpoint(BreakpointTarget target, T breakpoint);
+  protected abstract Promise<Breakpoint> doSetBreakpoint(@NotNull BreakpointTarget target, @NotNull T breakpoint);
 
   @Override
   public Breakpoint setBreakpoint(@NotNull final BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled) {
@@ -53,7 +70,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
 
     breakpoints.add(breakpoint);
     if (enabled) {
-      doSetBreakpoint(target, breakpoint).doWhenRejected(new Consumer<String>() {
+      doSetBreakpoint(target, breakpoint).rejected(new Consumer<String>() {
         @Override
         public void consume(@Nullable String errorMessage) {
           dispatcher.getMulticaster().errorOccurred(breakpoint, errorMessage);
@@ -64,33 +81,33 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
   }
 
   @Override
-  public ActionCallback remove(@NotNull Breakpoint breakpoint) {
+  public Promise<Void> remove(@NotNull Breakpoint breakpoint) {
     @SuppressWarnings("unchecked")
     T b = (T)breakpoint;
     boolean existed = breakpoints.remove(b);
     if (existed) {
       breakpointDuplicationByTarget.remove(b);
     }
-    return !existed || !b.isVmRegistered() ? ActionCallback.DONE : doClearBreakpoint(b);
+    return !existed || !b.isVmRegistered() ? Promise.DONE : doClearBreakpoint(b);
   }
 
   @NotNull
   @Override
-  public ActionCallback removeAll() {
+  public Promise<Void> removeAll() {
     BreakpointBase[] list = breakpoints.toArray(new BreakpointBase[breakpoints.size()]);
     breakpoints.clear();
     breakpointDuplicationByTarget.clear();
-    ActionCallback.Chunk chunk = new ActionCallback.Chunk();
+    List<Promise<?>> promises = new SmartList<Promise<?>>();
     for (BreakpointBase b : list) {
       if (b.isVmRegistered()) {
         //noinspection unchecked
-        chunk.add(doClearBreakpoint((T)b));
+        promises.add(doClearBreakpoint((T)b));
       }
     }
-    return chunk.create();
+    return Promise.all(promises);
   }
 
-  protected abstract ActionCallback doClearBreakpoint(@NotNull T breakpoint);
+  protected abstract Promise<Void> doClearBreakpoint(@NotNull T breakpoint);
 
   @Override
   public void addBreakpointListener(@NotNull BreakpointListener listener) {
@@ -106,5 +123,11 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
     if (breakpoint.isResolved()) {
       dispatcher.getMulticaster().resolved(breakpoint);
     }
+  }
+
+  @Nullable
+  @Override
+  public FunctionSupport getFunctionSupport() {
+    return null;
   }
 }

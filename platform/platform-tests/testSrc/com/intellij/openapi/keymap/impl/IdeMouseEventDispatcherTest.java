@@ -23,9 +23,11 @@ import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 import static org.junit.Assume.assumeFalse;
@@ -34,7 +36,9 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
   private static final String OUR_KEYMAP_NAME = "IdeMouseEventDispatcherTestKeymap";
   private static final String OUR_TEST_ACTION = "IdeMouseEventDispatcherTestAction";
   private static final MouseShortcut OUR_SHORTCUT = new MouseShortcut(MouseEvent.BUTTON2, 0, 1);
+  private static final MouseShortcut OUR_SHORTCUT_WITH_MODIFIER = new MouseShortcut(MouseEvent.BUTTON1, InputEvent.CTRL_MASK, 1);
 
+  private IdeMouseEventDispatcher myDispatcher = new IdeMouseEventDispatcher();
   private KeymapImpl keymap;
   private Keymap mySavedKeymap;
   private JFrame myEventSource;
@@ -50,6 +54,7 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     keymap = new KeymapImpl();
     keymap.setName(OUR_KEYMAP_NAME);
     keymap.addShortcut(OUR_TEST_ACTION, OUR_SHORTCUT);
+    keymap.addShortcut(OUR_TEST_ACTION, OUR_SHORTCUT_WITH_MODIFIER);
     KeymapManagerEx.getInstanceEx().getSchemesManager().addNewScheme(keymap, false);
     mySavedKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
     KeymapManagerEx.getInstanceEx().setActiveKeymap(keymap);
@@ -68,22 +73,24 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
   }
 
   public void testActionTriggering() throws Exception {
-    IdeMouseEventDispatcher dispatcher = new IdeMouseEventDispatcher();
-
-    assertFalse(dispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
-    assertTrue(dispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
-    assertFalse(dispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
+    assertTrue(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
     assertEquals(1, myActionExecutionCount);
   }
 
   public void testActionBlocking() throws Exception {
-    IdeMouseEventDispatcher dispatcher = new IdeMouseEventDispatcher();
-
-    assertFalse(dispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
     MouseEvent dragEvent = new MouseEvent(myEventSource, MouseEvent.MOUSE_DRAGGED, 0, 0, 0, 0, 0, false, MouseEvent.BUTTON2);
-    assertFalse(dispatcher.dispatchMouseEvent(dragEvent));
-    dispatcher.blockNextEvents(dragEvent, IdeEventQueue.BlockMode.ACTIONS);
-    assertFalse(dispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
+    assertFalse(myDispatcher.dispatchMouseEvent(dragEvent));
+    myDispatcher.blockNextEvents(dragEvent, IdeEventQueue.BlockMode.ACTIONS);
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
+    assertEquals(0, myActionExecutionCount);
+  }
+
+  public void testModifiersArePickedAtMousePressed() throws Exception {
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON1)));
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, InputEvent.CTRL_MASK, 0, 0, 1, false, MouseEvent.BUTTON1)));
     assertEquals(0, myActionExecutionCount);
   }
 
@@ -93,7 +100,7 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e){
+    public void actionPerformed(@NotNull AnActionEvent e){
       myActionExecutionCount++;
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.lang.LighterAST;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +29,7 @@ public class IndexingDataKeys {
   public static final Key<Project> PROJECT = new Key<Project>("Context project");
   public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");
   public static final Key<CharSequence> FILE_TEXT_CONTENT_KEY = Key.create("file text content cached by stub indexer");
+  public static final Key<LighterAST> LIGHTER_AST_NODE_KEY = Key.create("lighter.ast.node");
 
   private IndexingDataKeys() {
   }

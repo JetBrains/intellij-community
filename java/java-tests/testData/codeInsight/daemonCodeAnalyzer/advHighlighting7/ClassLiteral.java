@@ -11,3 +11,18 @@ class Example {
       return getClass() == obj.getClass();
     }
 }
+
+class Foo<T> {
+
+    public static Class<? extends Foo<?>> fFoo(final Foo<?> foo) {
+        <error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends Foo>>', required: 'java.lang.Class<? extends Foo<?>>'">Class<? extends Foo<?>> fooClass = foo.getClass();</error>
+        <error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends Foo>>', required: 'java.lang.Class<? extends Foo<?>>'">fooClass = foo.getClass()</error>;
+        <error descr="Incompatible types. Found: 'java.lang.Class<? extends Foo>', required: 'java.lang.Class<? extends Foo<?>>'">return foo.getClass();</error>
+    }
+
+    public static Class<? extends Foo<? extends String>> fFoo1(final Foo<? extends String> foo) {
+        <error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends Foo>>', required: 'java.lang.Class<? extends Foo<? extends java.lang.String>>'">Class<? extends Foo<? extends String>> fooClass = foo.getClass();</error>
+        <error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends Foo>>', required: 'java.lang.Class<? extends Foo<? extends java.lang.String>>'">fooClass = foo.getClass()</error>;
+        <error descr="Incompatible types. Found: 'java.lang.Class<? extends Foo>', required: 'java.lang.Class<? extends Foo<? extends java.lang.String>>'">return foo.getClass();</error>
+    }
+}

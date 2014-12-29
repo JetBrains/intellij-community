@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
@@ -41,7 +42,7 @@ public abstract class XFetchValueActionBase extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     TreePath[] paths = getSelectedNodes(e.getDataContext());
     if (paths != null) {
       for (TreePath path : paths) {
@@ -62,19 +63,19 @@ public abstract class XFetchValueActionBase extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     TreePath[] paths = getSelectedNodes(e.getDataContext());
     if (paths == null) {
       return;
     }
 
-    ValueCollector valueCollector = new ValueCollector();
+    ValueCollector valueCollector = new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       if (node instanceof XValueNodeImpl) {
         XValueNodeImpl valueNode = (XValueNodeImpl)node;
         XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
-        if (fullValueEvaluator == null) {
+        if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
           String rawValue;
           if (valueNode.getValueContainer() instanceof XValueTextProvider) {
             rawValue = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
@@ -98,7 +99,12 @@ public abstract class XFetchValueActionBase extends AnAction {
 
   private final class ValueCollector {
     private final List<String> values = new SmartList<String>();
+    private final XDebuggerTree myTree;
     private volatile boolean processed;
+
+    public ValueCollector(XDebuggerTree tree) {
+      myTree = tree;
+    }
 
     public void add(@NotNull String value) {
       values.add(value);
@@ -106,7 +112,7 @@ public abstract class XFetchValueActionBase extends AnAction {
 
     public void finish(Project project) {
       if (processed && !values.contains(null) && !project.isDisposed()) {
-        handle(project, StringUtil.join(values, "\n"));
+        handle(project, StringUtil.join(values, "\n"), myTree);
       }
     }
 
@@ -116,13 +122,18 @@ public abstract class XFetchValueActionBase extends AnAction {
       return index;
     }
 
-    public void evaluationComplete(int index, @NotNull String value, Project project) {
-      values.set(index, value);
-      finish(project);
+    public void evaluationComplete(final int index, @NotNull final String value, final Project project) {
+      AppUIUtil.invokeOnEdt(new Runnable() {
+        @Override
+        public void run() {
+          values.set(index, value);
+          finish(project);
+        }
+      });
     }
   }
 
-  protected abstract void handle(final Project project, final String value);
+  protected abstract void handle(final Project project, final String value, XDebuggerTree tree);
 
   private static final class CopyValueEvaluationCallback extends HeadlessValueEvaluationCallback {
     private final int myValueIndex;

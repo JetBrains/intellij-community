@@ -27,13 +27,24 @@ import java.io.Serializable;
 public class IdeaSourceDirectoryImpl implements IdeaSourceDirectory, Serializable {
 
   private final File myDirectory;
+  private final boolean myGenerated;
 
   public IdeaSourceDirectoryImpl(File directory) {
+    this(directory, false);
+  }
+
+  public IdeaSourceDirectoryImpl(File directory, boolean generated) {
     myDirectory = directory;
+    myGenerated = generated;
   }
 
   @Override
   public File getDirectory() {
     return myDirectory;
+  }
+
+  @Override
+  public boolean isGenerated() {
+    return myGenerated;
   }
 }

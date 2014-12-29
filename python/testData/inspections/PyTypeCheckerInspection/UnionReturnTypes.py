@@ -1,4 +1,4 @@
-def test():
+def test(c):
     def f1(c):
         if c < 0:
             return []
@@ -15,7 +15,7 @@ def test():
         """
         :type x: int
         """
-    x1 = f1(42)
+    x1 = f1(c)
     f2(x1)  # Weaker union types
     f3(<warning descr="Expected type 'int', got 'list | str | None' instead">x1</warning>)
 

@@ -21,7 +21,10 @@ import org.jetbrains.jps.model.JpsModel;
 import java.util.List;
 
 /**
+ * The type of a build target. For example, there is a build target type for Java production and another for Java tests.
+ *
  * @author nik
+ * @see org.jetbrains.jps.incremental.BuilderService#getTargetTypes()
  */
 public abstract class BuildTargetType<T extends BuildTarget<?>> {
   private final String myTypeId;
@@ -44,6 +47,11 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
     return myTypeId.hashCode();
   }
 
+  /**
+   * Finds all targets of the given type that exist in the given project.
+   * @param model the model instance representing a project.
+   * @return the list of targets.
+   */
   @NotNull
   public abstract List<T> computeAllTargets(@NotNull JpsModel model);
 

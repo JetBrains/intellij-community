@@ -23,7 +23,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextAccessor;
-import com.intellij.ui.TextComponentUndoProvider;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,10 +42,10 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public TextFieldWithBrowseButton(JTextField field, @Nullable ActionListener browseActionListener) {
     super(field, browseActionListener);
-    if (ApplicationManager.getApplication() != null) {
-      installPathCompletion(FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
-      new TextComponentUndoProvider(getTextField());
+    if (!(field instanceof JBTextField)) {
+      UIUtil.addUndoRedoActions(field);
     }
+    installPathCompletion(FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {

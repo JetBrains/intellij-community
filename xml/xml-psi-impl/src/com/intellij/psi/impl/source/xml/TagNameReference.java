@@ -96,10 +96,12 @@ public class TagNameReference implements PsiReference {
     final XmlTag tag = getTagElement();
     final XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor():null;
 
-    LOG.debug("Descriptor for tag " +
-              (tag != null ? tag.getName() : "NULL") +
-              " is " +
-              (descriptor != null ? (descriptor.toString() + ": " + descriptor.getClass().getCanonicalName()) : "NULL"));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Descriptor for tag " +
+                (tag != null ? tag.getName() : "NULL") +
+                " is " +
+                (descriptor != null ? (descriptor.toString() + ": " + descriptor.getClass().getCanonicalName()) : "NULL"));
+    }
 
     if (descriptor != null){
       return descriptor instanceof AnyXmlElementDescriptor ? tag : descriptor.getDeclaration();

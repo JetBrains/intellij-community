@@ -45,6 +45,7 @@ import javax.script.ScriptEngineManager;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 /**
@@ -54,7 +55,7 @@ import java.util.*;
 public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
   public static final Logger LOG = Logger.getInstance("#" + JavaFxInjectPageLanguageIntention.class.getName());
 
-  private static Set<String> getAvailableLanguages(Project project) {
+  public static Set<String> getAvailableLanguages(Project project) {
     final List<ScriptEngineFactory> engineFactories = new ScriptEngineManager(composeUserClassLoader(project)).getEngineFactories();
 
     if (engineFactories != null) {
@@ -69,9 +70,9 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     return null;
   }
 
-  private static UrlClassLoader composeUserClassLoader(Project project) {
+  private static ClassLoader composeUserClassLoader(Project project) {
     final List<URL> urls = new ArrayList<URL>();
-    final List<String> list = OrderEnumerator.orderEntries(project).recursively().runtimeOnly().getPathsList().getPathList();
+    final List<String> list = OrderEnumerator.orderEntries(project).recursively().librariesOnly().runtimeOnly().getPathsList().getPathList();
     for (String path : list) {
       try {
         urls.add(new File(FileUtil.toSystemIndependentName(path)).toURI().toURL());
@@ -80,16 +81,17 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
         LOG.info(e1);
       }
     }
-
-    return UrlClassLoader.build().urls(urls).get();
+    return new URLClassLoader(urls.toArray(new URL[urls.size()]));
   }
 
   @Override
   public void invoke(@NotNull final Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlFile containingFile = (XmlFile)element.getContainingFile();
-
     final Set<String> availableLanguages = getAvailableLanguages(project);
+
+    LOG.assertTrue(availableLanguages != null);
+
     if (availableLanguages.size() == 1) {
       registerPageLanguage(project, containingFile, availableLanguages.iterator().next());
     } else {
@@ -104,7 +106,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     }
   }
 
-  private void registerPageLanguage(final Project project, final XmlFile containingFile, final String languageName) {
+  public void registerPageLanguage(final Project project, final XmlFile containingFile, final String languageName) {
     new WriteCommandAction.Simple(project, getFamilyName()) {
       @Override
       protected void run() {

@@ -1,5 +1,6 @@
 package com.intellij.tasks.integration;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManagerTestCase;
@@ -7,6 +8,10 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.redmine.RedmineRepository;
 import com.intellij.tasks.redmine.RedmineRepositoryType;
+import com.intellij.tasks.redmine.model.RedmineProject;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -21,11 +26,11 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
 
     // with closed issues
     Task[] found = myRepository.getIssues(null, 0, 25, true);
-    assertEquals(5, found.length);
+    assertEquals(6, found.length);
 
     // without closed issues
     found = myRepository.getIssues(null, 0, 25, false);
-    assertEquals(4, found.length);
+    assertEquals(5, found.length);
 
     // unique summary
     //found = myRepository.getIssues("baz", 0, 25, true);
@@ -79,6 +84,22 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     assertNotNull(issue);
     assertNull(issue.getDescription());
     assertEquals(issue.getSummary(), "Artificial issue with no description created via REST API. Do not update it!");
+  }
+
+  public void testProjectFiltering() throws Exception {
+    final List<RedmineProject> allProjects = myRepository.fetchProjects();
+    final RedmineProject project = ContainerUtil.find(allProjects, new Condition<RedmineProject>() {
+      @Override
+      public boolean value(RedmineProject project) {
+        return project.getName().equals("With-Minus");
+      }
+    });
+    assertNotNull(project);
+    myRepository.setCurrentProject(project);
+    final Task[] issues = myRepository.getIssues("", 0, 10, false);
+    assertNotNull(issues);
+    assertEquals(1, issues.length);
+    assertEquals(issues[0].getSummary(), "This issue was created for project filtering tests. Do not change it.");
   }
 
   @Override

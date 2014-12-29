@@ -29,7 +29,6 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
-import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +39,6 @@ import java.awt.*;
  */
 public abstract class DebuggerSupport {
   private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.debuggerSupport");
-
-  @SuppressWarnings("deprecation")
-  private static final DebuggerSettingsPanelProvider EMPTY_SETTINGS_PANEL_PROVIDER = new DebuggerSettingsPanelProvider() {
-  };
 
   protected static final class DisabledActionHandler extends DebuggerActionHandler {
     public static final DisabledActionHandler INSTANCE = new DisabledActionHandler();
@@ -65,16 +60,6 @@ public abstract class DebuggerSupport {
 
   @NotNull
   public abstract BreakpointPanelProvider<?> getBreakpointPanelProvider();
-
-  /**
-   * @deprecated Use {@link com.intellij.xdebugger.settings.DebuggerConfigurableProvider}
-   */
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  @NotNull
-  public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
-    return EMPTY_SETTINGS_PANEL_PROVIDER;
-  }
 
   @NotNull
   public abstract DebuggerActionHandler getStepOverHandler();

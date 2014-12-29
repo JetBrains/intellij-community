@@ -57,13 +57,18 @@ public class LowLevelSearchUtil {
     return Boolean.TRUE;
   }
 
-  private static boolean processTreeUp(@NotNull Project project,
+  /**
+   * @return null to stop or last found TreeElement
+   * to be reused via <code>lastElement<code/> param in subsequent calls to avoid full tree rescan (n^2->n).
+   */
+  private static TreeElement processTreeUp(@NotNull Project project,
                                        @NotNull TextOccurenceProcessor processor,
                                        @NotNull PsiElement scope,
                                        @NotNull StringSearcher searcher,
                                        final int offset,
                                        final boolean processInjectedPsi,
-                                       ProgressIndicator progress) {
+                                       ProgressIndicator progress,
+                                       TreeElement lastElement) {
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
     final int patternLength = searcher.getPatternLength();
     ASTNode scopeNode = scope.getNode();
@@ -74,8 +79,8 @@ public class LowLevelSearchUtil {
     TreeElement leafNode = null;
     PsiElement leafElement = null;
     if (useTree) {
-      leafNode = (LeafElement)scopeNode.findLeafElementAt(offset);
-      if (leafNode == null) return true;
+      leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
+      if (leafNode == null) return lastElement;
       start = offset - leafNode.getStartOffset() + scopeStartOffset;
     }
     else {
@@ -85,7 +90,7 @@ public class LowLevelSearchUtil {
       else {
         leafElement = scope.findElementAt(offset);
       }
-      if (leafElement == null) return true;
+      if (leafElement == null) return lastElement;
       assert leafElement.isValid();
       start = offset - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
     }
@@ -97,6 +102,7 @@ public class LowLevelSearchUtil {
     TreeElement prevNode = null;
     PsiElement run = null;
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
+    lastElement = leafNode;
     while (run != scope) {
       if (progress != null) progress.checkCanceled();
       if (useTree) {
@@ -114,11 +120,11 @@ public class LowLevelSearchUtil {
         if (processInjectedPsi) {
           Boolean result = processInjectedFile(run, processor, searcher, progress, injectedLanguageManager);
           if (result != null) {
-            return result.booleanValue();
+            return result.booleanValue() ? lastElement : null;
           }
         }
         if (!processor.execute(run, start)) {
-          return false;
+          return null;
         }
       }
       if (useTree) {
@@ -132,8 +138,32 @@ public class LowLevelSearchUtil {
     }
     assert run == scope: "Malbuilt PSI: scopeNode="+scope+"; leafNode="+run+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, run, false);
 
-    return true;
+    return lastElement;
   }
+
+  private static TreeElement findNextLeafElementAt(ASTNode scopeNode, TreeElement last, int offset) {
+    TreeElement leafNode;
+    int offsetR = offset;
+    if (last !=null) {
+      offsetR -= (last.getStartOffset() - scopeNode.getStartOffset()) + last.getTextLength();
+      out:
+      while (offsetR >= 0) {
+        TreeElement next = last.getTreeNext();
+        if (next == null) {
+          last = last.getTreeParent();
+          continue out;
+        }
+        int length = next.getTextLength();
+        offsetR -= length;
+        last = next;
+      }
+      scopeNode = last;
+      offsetR += scopeNode.getTextLength();
+    }
+    leafNode = (LeafElement)scopeNode.findLeafElementAt(offsetR);
+    return leafNode;
+  }
+
   //@RequiresReadAction
   public static boolean processElementsContainingWordInElement(@NotNull TextOccurenceProcessor processor,
                                                                @NotNull final PsiElement scope,
@@ -160,13 +190,15 @@ public class LowLevelSearchUtil {
     final char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
 
     Project project = file.getProject();
+    TreeElement lastElement = null;
     do {
       if (progress != null) progress.checkCanceled();
       startOffset  = searchWord(buffer, bufferArray, startOffset, endOffset, searcher, progress);
       if (startOffset < 0) {
         return true;
       }
-      if (!processTreeUp(project, processor, scope, searcher, startOffset - scopeStart, processInjectedPsi, progress)) return false;
+      lastElement = processTreeUp(project, processor, scope, searcher, startOffset - scopeStart, processInjectedPsi, progress, lastElement);
+      if (lastElement==null) return false;
 
       startOffset++;
     }

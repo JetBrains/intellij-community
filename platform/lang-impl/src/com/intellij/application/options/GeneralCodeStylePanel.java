@@ -37,9 +37,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JPanel myAdditionalSettingsPanel;
   private JCheckBox myAutodetectIndentsBox;
   private final SmartIndentOptionsEditor myIndentOptionsEditor;
-  private final JBScrollPane myScrollPane;
+  private final JScrollPane myScrollPane;
 
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
@@ -106,9 +107,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       ApplicationBundle.message("settings.code.style.general.formatter.marker.title"), true));
     myMarkerOptionsPanel.setBorder(
       IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.formatter.marker.options.title"), true));
-    myScrollPane = new JBScrollPane(myPanel,
-                                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    myScrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
+    myPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    myScrollPane = ScrollPaneFactory.createScrollPane(null, true);
+    myScrollPane.setViewport(new GradientViewport(myPanel, 5, 0, 0, 0, true));
+    myScrollPane.getVerticalScrollBar().setUnitIncrement(10);
 
     myAdditionalSettingsPanel.setLayout(new VerticalFlowLayout(true, true));
     myAdditionalSettingsPanel.removeAll();

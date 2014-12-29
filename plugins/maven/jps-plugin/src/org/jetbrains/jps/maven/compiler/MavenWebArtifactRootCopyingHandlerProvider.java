@@ -51,10 +51,9 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
                                                 @NotNull BuildDataPaths buildDataPaths) {
     if (contextElement instanceof JpsModuleOutputPackagingElement) return null;
 
-    JpsMavenExtensionService mavenExtensionService = JpsMavenExtensionService.getInstance();
-    if (!mavenExtensionService.hasMavenProjectConfiguration(buildDataPaths)) return null;
+    MavenProjectConfiguration projectConfiguration = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(buildDataPaths);
+    if (projectConfiguration == null) return null;
 
-    MavenProjectConfiguration projectConfiguration = mavenExtensionService.getMavenProjectConfiguration(buildDataPaths);
     MavenWebArtifactConfiguration artifactResourceConfiguration = projectConfiguration.webArtifactConfigs.get(artifact.getName());
     if (artifactResourceConfiguration == null) return null;
 

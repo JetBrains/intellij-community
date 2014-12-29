@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -15,6 +14,7 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class RemoteServerListConfigurable extends MasterDetailsComponent implements OptionalConfigurable, SearchableConfigurable {
+public class RemoteServerListConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
   private final RemoteServersManager myServersManager;
   @Nullable private final ServerType<?> myServerType;
   private RemoteServer<?> myLastSelectedServer;
@@ -138,13 +138,13 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   }
 
   @Override
-  public boolean needDisplay() {
-    return ServerType.EP_NAME.getExtensions().length > 0;
+  protected boolean wasObjectStored(Object editableObject) {
+    return true;
   }
 
   @Override
-  protected boolean wasObjectStored(Object editableObject) {
-    return true;
+  public String getHelpTopic() {
+    return ObjectUtils.notNull(super.getHelpTopic(), "reference.settings.clouds");
   }
 
   @Override

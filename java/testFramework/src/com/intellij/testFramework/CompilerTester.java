@@ -39,6 +39,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
@@ -117,29 +118,29 @@ public class CompilerTester {
     path.getChildren();
     assert path != null;
     path.refresh(false, true);
-    return path.findChild(className.replace('.', '/') + ".class");
+    return path.findFileByRelativePath(className.replace('.', '/') + ".class");
   }
 
-  public void touch(VirtualFile file) throws IOException {
-    file.setBinaryContent(file.contentsToByteArray(), -1, file.getTimeStamp() + 1);
-    File ioFile = VfsUtil.virtualToIoFile(file);
-    assert ioFile.setLastModified(ioFile.lastModified() - 100000);
-    file.refresh(false, false);
+  public void touch(final VirtualFile file) throws IOException {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        file.setBinaryContent(file.contentsToByteArray(), -1, file.getTimeStamp() + 1);
+        File ioFile = VfsUtil.virtualToIoFile(file);
+        assert ioFile.setLastModified(ioFile.lastModified() - 100000);
+        file.refresh(false, false);
+      }
+    }.execute().throwException();
   }
 
   public void setFileText(final PsiFile file, final String text) throws IOException {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    new WriteAction() {
       @Override
-      public void run() {
-        try {
-          final VirtualFile virtualFile = file.getVirtualFile();
-          VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), text);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+      protected void run(@NotNull Result result) throws Throwable {
+        final VirtualFile virtualFile = file.getVirtualFile();
+        VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), text);
       }
-    });
+    }.execute().throwException();
     touch(file.getVirtualFile());
   }
 

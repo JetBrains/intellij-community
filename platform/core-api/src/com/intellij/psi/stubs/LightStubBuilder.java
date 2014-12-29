@@ -25,6 +25,7 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
@@ -33,21 +34,34 @@ import java.util.List;
 
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.LightStubBuilder");
+  public static final ThreadLocal<LighterAST> FORCED_AST = new ThreadLocal<LighterAST>();
 
   @Override
   public StubElement buildStubTree(@NotNull PsiFile file) {
-    FileType fileType = file.getFileType();
-    if (!(fileType instanceof LanguageFileType)) {
-      LOG.error("File is not of LanguageFileType: " + fileType + ", " + file);
-      return null;
+    LighterAST tree = FORCED_AST.get();
+    if (tree == null) {
+      FileType fileType = file.getFileType();
+      if (!(fileType instanceof LanguageFileType)) {
+        LOG.error("File is not of LanguageFileType: " + fileType + ", " + file);
+        return null;
+      }
+      Language language = ((LanguageFileType)fileType).getLanguage();
+      final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
+      if (!(contentType instanceof IStubFileElementType)) {
+        LOG.error("File is not of IStubFileElementType: " + contentType + ", " + file);
+        return null;
+      }
+
+      final FileASTNode node = file.getNode();
+      if (contentType instanceof ILightStubFileElementType) {
+        tree = node.getLighterAST();
+      }
+      else {
+        tree = new TreeBackedLighterAST(node);
+      }
+    } else {
+      FORCED_AST.set(null);
     }
-    Language language = ((LanguageFileType)fileType).getLanguage();
-    final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
-    if (!(contentType instanceof ILightStubFileElementType)) {
-      LOG.error("File is not of ILightStubFileElementType: " + contentType + ", " + file);
-      return null;
-    }
-    final LighterAST tree = LighterAST.getLighterASTFromFileAST(file.getNode(), language);
     if (tree == null) return null;
 
     final StubElement rootStub = createStubForFile(file, tree);

@@ -24,7 +24,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -376,7 +375,7 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope;
     final Instruction[] flow;
     final AtomicReference<List<TypeDfaState>> varTypes;
-    final ConcurrentHashSet<Instruction> tooComplex = new ConcurrentHashSet<Instruction>();
+    final Set<Instruction> tooComplex = ContainerUtil.newConcurrentSet();
 
     InferenceCache(final GrControlFlowOwner scope) {
       this.scope = scope;

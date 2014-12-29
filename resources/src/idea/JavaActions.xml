@@ -138,7 +138,7 @@
     </action>
 
     <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
-            text="Generate Hierarchy Visitor">
+            text="Generate Hierarchy Visitor...">
       <add-to-group group-id="Internal"/>
     </action>
 

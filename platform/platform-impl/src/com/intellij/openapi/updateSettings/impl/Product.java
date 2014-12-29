@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,19 +33,17 @@ public class Product {
   private final Set<String> myCodes;
   private final List<UpdateChannel> myChannels;
 
-  public Product(Element node) {
+  public Product(@NotNull Element node) {
     myName = node.getAttributeValue("name");
     myCodes = new LinkedHashSet<String>();
     myChannels = new ArrayList<UpdateChannel>();
 
-    List codes = node.getChildren("code");
-    for (Object code : codes) {
-      myCodes.add(((Element)code).getValue());
+    for (Element code : node.getChildren("code")) {
+      myCodes.add(code.getValue());
     }
 
-    List channels = node.getChildren("channel");
-    for (Object channel : channels) {
-      myChannels.add(new UpdateChannel((Element)channel));
+    for (Element channel : node.getChildren("channel")) {
+      myChannels.add(new UpdateChannel(channel));
     }
   }
 
@@ -56,7 +54,9 @@ public class Product {
   @Nullable
   public UpdateChannel findUpdateChannelById(String id) {
     for (UpdateChannel channel : myChannels) {
-      if (id.equals(channel.getId())) return channel;
+      if (id.equals(channel.getId())) {
+        return channel;
+      }
     }
     return null;
   }

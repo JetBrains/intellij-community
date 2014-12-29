@@ -18,22 +18,21 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.testFramework.EditorTestUtil;
 
-import java.io.IOException;
-
 public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() throws Exception {
-    init("some\u2044text");
+    initText("some\u2044text");
     VisualPosition pos = new VisualPosition(0, 6);
     VisualPosition recalculatedPos = myEditor.xyToVisualPosition(myEditor.visualPositionToXY(pos));
     assertEquals(pos, recalculatedPos);
   }
 
   public void testPositionCalculationOnEmptyLine() throws Exception {
-    init("text with\n" +
+    initText("text with\n" +
          "\n" +
          "empty line");
     VisualPosition pos = new VisualPosition(1, 0);
@@ -42,7 +41,7 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testShiftDragAddsToSelection() throws Exception {
-    init("A quick brown fox");
+    initText("A quick brown fox");
     EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // enable drag testing
     mouse().clickAt(0, 1);
     mouse().shift().clickAt(0, 2).dragTo(0, 3).release();
@@ -68,7 +67,7 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testCorrectVisibleLineCountCalculation() throws Exception {
-    init("line containing FOLDED_REGION\n" +
+    initText("line containing FOLDED_REGION\n" +
          "next <caret>line\n" +
          "last line");
     foldOccurrences("FOLDED_REGION", "...");
@@ -82,7 +81,7 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testInsertingFirstTab() throws Exception {
-    init(" <caret>space-indented line");
+    initText(" <caret>space-indented line");
     EditorTestUtil.configureSoftWraps(myEditor, 100);
     myEditor.getSettings().setUseTabCharacter(true);
 
@@ -91,7 +90,7 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testNoExceptionDuringBulkModeDocumentUpdate() throws Exception {
-    init("something");
+    initText("something");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
     document.setInBulkUpdate(true);
     try {
@@ -103,7 +102,21 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("something\telse");
   }
 
-  private void init(String text) throws IOException {
-    configureFromFileText(getTestName(false) + ".txt", text);
+  public void testPositionCalculationForOneCharacterFolds() throws Exception {
+    initText("something");
+    addCollapsedFoldRegion(1, 2, "...");
+    addCollapsedFoldRegion(3, 4, "...");
+
+    assertEquals(new VisualPosition(0, 5), myEditor.logicalToVisualPosition(new LogicalPosition(0, 3)));
+  }
+  
+  public void testNavigationIntoFoldedRegionWithSoftWrapsEnabled() throws Exception {
+    initText("something");
+    addCollapsedFoldRegion(4, 8, "...");
+    EditorTestUtil.configureSoftWraps(myEditor, 1000);
+    
+    myEditor.getCaretModel().moveToOffset(5);
+    
+    assertEquals(new VisualPosition(0, 5), myEditor.getCaretModel().getVisualPosition());
   }
 }

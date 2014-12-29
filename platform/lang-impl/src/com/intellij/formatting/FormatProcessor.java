@@ -683,7 +683,7 @@ class FormatProcessor {
 
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
       myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
-      getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption)
+      getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption), myRightMargin
     );
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
@@ -907,7 +907,7 @@ class FormatProcessor {
   }
 
   @Nullable
-  public LeafBlockWrapper getBlockAfter(final int startOffset) {
+  public LeafBlockWrapper getBlockAtOrAfter(final int startOffset) {
     int current = startOffset;
     LeafBlockWrapper result = null;
     while (current < myLastWhiteSpace.getStartOffset()) {

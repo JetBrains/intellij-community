@@ -33,8 +33,6 @@ import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.WalkingState;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -170,7 +168,7 @@ public class SliceLeafAnalyzer {
           if (leaves == null) return;  //cancelled
 
           if (leaves.isEmpty()) {
-            Messages.showErrorDialog("Unable to find leaf expressions to group by", "Cannot group");
+            Messages.showErrorDialog("Unable to find leaf expressions to group by", "Cannot Group");
             return;
           }
 
@@ -187,12 +185,12 @@ public class SliceLeafAnalyzer {
     return new FactoryMap<SliceNode, Collection<PsiElement>>() {
       @Override
       protected Map<SliceNode, Collection<PsiElement>> createMap() {
-        return new ConcurrentHashMap<SliceNode, Collection<PsiElement>>(ContainerUtil.<SliceNode>identityStrategy());
+        return ContainerUtil.newConcurrentMap(ContainerUtil.<SliceNode>identityStrategy());
       }
 
       @Override
       protected Collection<PsiElement> create(SliceNode key) {
-        return new ConcurrentHashSet<PsiElement>(LEAF_ELEMENT_EQUALITY);
+        return ContainerUtil.newConcurrentSet(LEAF_ELEMENT_EQUALITY);
       }
     };
   }

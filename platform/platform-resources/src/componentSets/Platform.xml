@@ -1,11 +1,6 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.openapi.application.ApplicationInfo</interface-class>
-      <implementation-class>com.intellij.openapi.application.impl.ApplicationInfoImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
     </component>
@@ -127,7 +122,11 @@
     <component>
       <implementation-class>com.intellij.util.net.HttpConfigurable</implementation-class>
     </component>
-
+    
+    <component>
+      <implementation-class>com.intellij.util.net.ssl.CertificateManager</implementation-class>
+    </component>
+    
     <component>
       <implementation-class>com.intellij.ide.SystemHealthMonitor</implementation-class>
       <headless-implementation-class/>

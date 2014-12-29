@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,6 @@ import java.util.Locale;
  * @author max
  */
 public class ResourceUtil {
-  @NonNls private static final String ENCODING_UTF_8 = "UTF-8";
 
   private ResourceUtil() {
   }
@@ -113,7 +113,7 @@ public class ResourceUtil {
   public static String loadText(@NotNull URL url) throws IOException {
     InputStream inputStream = new BufferedInputStream(URLUtil.openStream(url));
 
-    InputStreamReader reader = new InputStreamReader(inputStream, ENCODING_UTF_8);
+    InputStreamReader reader = new InputStreamReader(inputStream, CharsetToolkit.UTF8_CHARSET);
     try {
       StringBuilder text = new StringBuilder();
       char[] buf = new char[5000];

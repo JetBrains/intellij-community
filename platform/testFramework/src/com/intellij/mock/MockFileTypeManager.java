@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,21 +29,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class MockFileTypeManager extends FileTypeManagerEx {
-
-  private FileType fileType;
+  private final FileType fileType;
 
   public MockFileTypeManager(FileType fileType) {
     this.fileType = fileType;
   }
 
   @Override
-  public void registerFileType(FileType fileType) {
+  public void registerFileType(@NotNull FileType fileType) {
   }
 
   @Override
-  public void unregisterFileType(FileType fileType) {
+  public void unregisterFileType(@NotNull FileType fileType) {
   }
 
   @Override
@@ -57,7 +57,7 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  public boolean isIgnoredFilesListEqualToCurrent(String list) {
+  public boolean isIgnoredFilesListEqualToCurrent(@NotNull String list) {
     return false;
   }
 
@@ -66,7 +66,7 @@ public class MockFileTypeManager extends FileTypeManagerEx {
 
   @Override
   @NotNull
-  public String getExtension(String fileName) {
+  public String getExtension(@NotNull String fileName) {
     return "";
   }
 
@@ -175,11 +175,12 @@ public class MockFileTypeManager extends FileTypeManagerEx {
     try {
       return (FileType)Class.forName(className).getField("INSTANCE").get(null);
     }
-    catch (Exception e) {
-      return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase());
+    catch (Exception ignored) {
+      return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase(Locale.ENGLISH));
     }
   }
 
+  @NotNull
   @Override
   public SchemesManager<FileType, AbstractFileType> getSchemesManager() {
     return SchemesManager.EMPTY;

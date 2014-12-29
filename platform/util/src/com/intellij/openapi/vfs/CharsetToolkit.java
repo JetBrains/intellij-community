@@ -88,6 +88,7 @@ public class CharsetToolkit {
   private static final int BINARY_THRESHOLD = 9; // characters with codes below this considered to be binary
 
   private final byte[] buffer;
+  @NotNull
   private final Charset defaultCharset;
   private boolean enforce8Bit = false;
 
@@ -122,9 +123,9 @@ public class CharsetToolkit {
    * @param buffer the byte buffer of which we want to know the encoding.
    * @param defaultCharset the default Charset to use in case an 8-bit charset is recognized.
    */
-  public CharsetToolkit(@NotNull byte[] buffer, Charset defaultCharset) {
+  public CharsetToolkit(@NotNull byte[] buffer, @NotNull Charset defaultCharset) {
     this.buffer = buffer;
-    this.defaultCharset = defaultCharset == null ? getDefaultSystemCharset() : defaultCharset;
+    this.defaultCharset = defaultCharset;
   }
 
   @NotNull
@@ -240,6 +241,7 @@ public class CharsetToolkit {
   /**
    * Retrieves the default Charset
    */
+  @NotNull
   public Charset getDefaultCharset() {
     return defaultCharset;
   }
@@ -268,7 +270,7 @@ public class CharsetToolkit {
    *
    * @return the Charset recognized.
    */
-  public Charset guessEncoding(int guess_length, Charset defaultCharset) {
+  public Charset guessEncoding(int guess_length, @NotNull Charset defaultCharset) {
     // if the file has a Byte Order Marker, we can assume the file is in UTF-xx
     // otherwise, the file would not be human readable
     Charset charset = guessFromBOM();
@@ -436,7 +438,7 @@ public class CharsetToolkit {
     return guessEncoding(guess_length, defaultCharset);
   }
 
-  public static Charset guessEncoding(@NotNull File f, int bufferLength, Charset defaultCharset) throws IOException {
+  public static Charset guessEncoding(@NotNull File f, int bufferLength, @NotNull Charset defaultCharset) throws IOException {
     byte[] buffer = new byte[bufferLength];
     int read;
     FileInputStream fis = new FileInputStream(f);
@@ -515,16 +517,9 @@ public class CharsetToolkit {
    *
    * @return the default <code>Charset</code>.
    */
-  @Nullable
+  @NotNull
   public static Charset getDefaultSystemCharset() {
-    Charset charset = null;
-    try {
-      charset = Charset.forName(System.getProperty(FILE_ENCODING_PROPERTY));
-    } catch (Exception ignored) {
-      // Null is OK here.
-    }
-
-    return charset;
+    return Charset.defaultCharset();
   }
 
   /**
@@ -587,8 +582,8 @@ public class CharsetToolkit {
     }
   }
 
-  public static int getBOMLength(@NotNull byte[] content, Charset charset) {
-    if (charset != null && charset.name().contains(UTF8) && hasUTF8Bom(content)) {
+  public static int getBOMLength(@NotNull byte[] content, @NotNull Charset charset) {
+    if (charset.name().contains(UTF8) && hasUTF8Bom(content)) {
       return UTF8_BOM.length;
     }
     if (hasUTF32BEBom(content)) {
@@ -604,14 +599,6 @@ public class CharsetToolkit {
       return UTF16BE_BOM.length;
     }
     return 0;
-  }
-
-  /**
-   * @deprecated use {@link CharsetToolkit#getMandatoryBom(java.nio.charset.Charset)}
-   */
-  @Nullable
-  public static byte[] getBom(@NotNull Charset charset) {
-    return getMandatoryBom(charset);
   }
 
   /**

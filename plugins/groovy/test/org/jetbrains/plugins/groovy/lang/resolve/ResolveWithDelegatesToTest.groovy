@@ -286,7 +286,8 @@ public @interface DelegatesTo {
         ''', 'Foo'
   }
 
-  void testInConstructor() {
+  @SuppressWarnings("GroovyUnusedDeclaration")
+  void ignoreTestInConstructor() {
     assertScript '''
         class Foo {
           def foo() {}
@@ -529,7 +530,8 @@ class Abc{
         ''', 'Foo'
   }
 
-  void testInConstructorInJava() {
+  @SuppressWarnings("GroovyUnusedDeclaration")
+  void ignoreTestInConstructorInJava() {
     myFixture.configureByText("Abc.java", '''
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;

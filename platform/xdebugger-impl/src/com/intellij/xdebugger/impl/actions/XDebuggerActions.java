@@ -41,6 +41,7 @@ public interface XDebuggerActions {
   @NonNls String JUMP_TO_TYPE_SOURCE = "XDebugger.JumpToTypeSource";
 
   @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
+  @NonNls String QUICK_EVALUATE_EXPRESSION = "QuickEvaluateExpression";
 
   @NonNls String TOOL_WINDOW_TOP_TOOLBAR_GROUP = "XDebugger.ToolWindow.TopToolbar";
   @NonNls String TOOL_WINDOW_LEFT_TOOLBAR_GROUP = "XDebugger.ToolWindow.LeftToolbar";
@@ -58,6 +59,7 @@ public interface XDebuggerActions {
   @NonNls String XNEW_WATCH = "XDebugger.NewWatch";
   @NonNls String XREMOVE_WATCH = "XDebugger.RemoveWatch";
   @NonNls String XEDIT_WATCH = "XDebugger.EditWatch";
+  @NonNls String XCOPY_WATCH = "XDebugger.CopyWatch";
 
   @NonNls String COPY_VALUE = "XDebugger.CopyValue";
   @NonNls String SET_VALUE = "XDebugger.SetValue";

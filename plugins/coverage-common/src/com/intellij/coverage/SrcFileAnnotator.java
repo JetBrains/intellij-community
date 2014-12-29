@@ -34,6 +34,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftReference;
@@ -46,11 +53,13 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -194,11 +203,16 @@ public class SrcFileAnnotator implements Disposable {
     synchronized (LOCK) {
       if (myOldContent == null) {
         if (ApplicationManager.getApplication().isDispatchThread()) return null;
-        final byte[] byteContent = LocalHistory.getInstance().getByteContent(f, new FileRevisionTimestampComparator() {
+        final LocalHistory localHistory = LocalHistory.getInstance();
+        byte[] byteContent = localHistory.getByteContent(f, new FileRevisionTimestampComparator() {
           public boolean isSuitable(long revisionTimestamp) {
             return revisionTimestamp < date;
           }
         });
+
+        if (byteContent == null && f.getTimeStamp() > date) {
+          byteContent = loadFromVersionControl(date, f);
+        } 
         myOldContent = new SoftReference<byte[]>(byteContent);
       }
       oldContent = myOldContent.get();
@@ -211,7 +225,7 @@ public class SrcFileAnnotator implements Disposable {
     String[] oldLines = oldToNew ? coveredLines : currentLines;
     String[] newLines = oldToNew ? currentLines : coveredLines;
 
-    Diff.Change change = null;
+    Diff.Change change;
     try {
       change = Diff.buildChanges(oldLines, newLines);
     }
@@ -220,6 +234,41 @@ public class SrcFileAnnotator implements Disposable {
       return null;
     }
     return new SoftReference<TIntIntHashMap>(getCoverageVersionToCurrentLineMapping(change, oldLines.length));
+  }
+
+  @Nullable
+  private byte[] loadFromVersionControl(long date, VirtualFile f) {
+    try {
+      final AbstractVcs vcs = VcsUtil.getVcsFor(myProject, f);
+      if (vcs == null) return null;
+
+      final VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
+      if (historyProvider == null) return null;
+
+      final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(f);
+      final VcsHistorySession session = historyProvider.createSessionFor(filePath);
+      if (session == null) return null;
+
+      final List<VcsFileRevision> list = session.getRevisionList();
+
+      if (list != null) {
+        for (VcsFileRevision revision : list) {
+          final Date revisionDate = revision.getRevisionDate();
+          if (revisionDate == null) {
+            return null;
+          }
+
+          if (revisionDate.getTime() < date) {
+            return revision.loadContent();
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.info(e);
+      return null;
+    }
+    return null;
   }
 
   public void showCoverageInformation(final CoverageSuitesBundle suite) {

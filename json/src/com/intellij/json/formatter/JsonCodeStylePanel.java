@@ -23,13 +23,16 @@ import java.awt.event.ItemListener;
  * @author Mikhail Golubev
  */
 public class JsonCodeStylePanel extends CodeStyleAbstractPanel {
-  public static final String SAMPLE = "{\n" +
-                                      "  \"longKeyName\": true,\n" +
-                                      "  \"short\": false,\n" +
-                                      "\n" +
-                                      "  \"group2-longKeyName\": null,\n" +
-                                      "  \"group2-short\": 42\n" +
-                                      "}";
+  public static final String ALIGNMENT_SAMPLE = "{\n" +
+                                                "    \"foo\": {\n" +
+                                                "        \"bar\": true,\n" +
+                                                "        \"baz\": false\n" +
+                                                "    },\n" +
+                                                "    \"quux\": [\n" +
+                                                "        1, 2.0, 3e0, 4.0e0\n" +
+                                                "    ],\n" +
+                                                "    \"longPropertyName\": null\n" +
+                                                "}";
 
   private JComboBox myPropertiesAlignmentCombo;
   private JPanel myPreviewPanel;
@@ -59,7 +62,6 @@ public class JsonCodeStylePanel extends CodeStyleAbstractPanel {
         }
       }
     });
-
   }
 
   @Override
@@ -82,17 +84,17 @@ public class JsonCodeStylePanel extends CodeStyleAbstractPanel {
   @Nullable
   @Override
   protected String getPreviewText() {
-    return SAMPLE;
+    return ALIGNMENT_SAMPLE;
   }
 
   @Override
   public void apply(CodeStyleSettings settings) throws ConfigurationException {
-    getCustomSettings(settings).PROPERTY_ALIGNMENT = getSelectedAlignmentType();
+    getCustomSettings(settings).PROPERTY_ALIGNMENT = getSelectedAlignmentType().getId();
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    return getCustomSettings(settings).PROPERTY_ALIGNMENT != getSelectedAlignmentType();
+    return getCustomSettings(settings).PROPERTY_ALIGNMENT != getSelectedAlignmentType().getId();
   }
 
   @Nullable
@@ -104,7 +106,7 @@ public class JsonCodeStylePanel extends CodeStyleAbstractPanel {
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
     for (int i = 0; i < myPropertiesAlignmentCombo.getItemCount(); i++) {
-      if (myPropertiesAlignmentCombo.getItemAt(i) == getCustomSettings(settings).PROPERTY_ALIGNMENT) {
+      if (((PropertyAlignment)myPropertiesAlignmentCombo.getItemAt(i)).getId() == getCustomSettings(settings).PROPERTY_ALIGNMENT) {
         myPropertiesAlignmentCombo.setSelectedIndex(i);
         break;
       }

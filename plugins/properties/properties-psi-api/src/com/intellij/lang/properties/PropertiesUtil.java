@@ -80,6 +80,11 @@ public class PropertiesUtil {
   @NotNull
   public static String getDefaultBaseName(@NotNull final VirtualFile file) {
     final String name = file.getName();
+
+    if (!StringUtil.containsChar(name, '_')) {
+      return FileUtil.getNameWithoutExtension(name);
+    }
+
     final Matcher matcher = LOCALE_PATTERN.matcher(name);
     final String baseNameWithExtension;
     if (matcher.find()) {

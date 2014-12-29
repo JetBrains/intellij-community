@@ -203,26 +203,29 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     @Override public void visitClass(PsiClass aClass) {
       // Don't go into classes (anonymous, locals).
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        final LanguageLevel effectiveLanguageLevel = getEffectiveLanguageLevel(ModuleUtilCore.findModuleForPsiElement(aClass));
-        if (!effectiveLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) && 
-            JavaVersionService.getInstance().getJavaSdkVersion(aClass).isAtLeast(JavaSdkVersion.JDK_1_8)) {
-          final List<PsiMethod> methods = new ArrayList<PsiMethod>();
-          for (HierarchicalMethodSignature methodSignature : aClass.getVisibleSignatures()) {
-            final PsiMethod method = methodSignature.getMethod();
-            if (ourDefaultMethods.contains(getSignature(method))) {
-              methods.add(method);
+        final Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
+        final LanguageLevel effectiveLanguageLevel = module != null ? getEffectiveLanguageLevel(module) : null;
+        if (effectiveLanguageLevel != null && !effectiveLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+          final JavaSdkVersion version = JavaVersionService.getInstance().getJavaSdkVersion(aClass);
+          if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
+            final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+            for (HierarchicalMethodSignature methodSignature : aClass.getVisibleSignatures()) {
+              final PsiMethod method = methodSignature.getMethod();
+              if (ourDefaultMethods.contains(getSignature(method))) {
+                methods.add(method);
+              }
             }
-          }
-
-          if (!methods.isEmpty()) {
-            PsiElement element2Highlight = aClass.getNameIdentifier();
-            if (element2Highlight == null) {
-              element2Highlight = aClass;
+  
+            if (!methods.isEmpty()) {
+              PsiElement element2Highlight = aClass.getNameIdentifier();
+              if (element2Highlight == null) {
+                element2Highlight = aClass;
+              }
+              myHolder.registerProblem(element2Highlight,
+                                       methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel)) 
+                                                           : InspectionsBundle.message("inspection.1.8.problem.descriptor", methods.size(), getJdkName(effectiveLanguageLevel)),
+                                       QuickFixFactory.getInstance().createImplementMethodsFix(aClass));
             }
-            myHolder.registerProblem(element2Highlight,
-                                     methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel)) 
-                                                         : InspectionsBundle.message("inspection.1.8.problem.descriptor", methods.size(), getJdkName(effectiveLanguageLevel)),
-                                     QuickFixFactory.getInstance().createImplementMethodsFix(aClass));
           }
         }
       }
@@ -351,30 +354,35 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     return nextForbiddenApi != null && isForbiddenSignature(signature, nextLanguageLevel, nextForbiddenApi);
   }
 
+  /**
+   * please leave public for {@link #com.intellij.codeInspection.JavaAPIUsagesInspectionTest#testCollectSinceApiUsages}
+   */
   @Nullable
-  public static String getSignature(PsiMember member) {
+  public static String getSignature(@Nullable PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
     }
     if (member instanceof PsiField) {
-      return getSignature(member.getContainingClass()) + "#" + member.getName();
+      String containingClass = getSignature(member.getContainingClass());
+      return containingClass == null ? null : containingClass + "#" + member.getName();
     }
     if (member instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)member;
+      String containingClass = getSignature(member.getContainingClass());
+      if (containingClass == null) return null;
+
       StringBuilder buf = new StringBuilder();
-      buf.append(getSignature(method.getContainingClass()));
+      buf.append(containingClass);
       buf.append('#');
       buf.append(method.getName());
       buf.append('(');
-      final PsiType[] params = method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes();
-      for (PsiType type : params) {
+      for (PsiType type : method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes()) {
         buf.append(type.getCanonicalText());
         buf.append(";");
       }
       buf.append(')');
       return buf.toString();
     }
-    assert false;
     return null;
   }
 }

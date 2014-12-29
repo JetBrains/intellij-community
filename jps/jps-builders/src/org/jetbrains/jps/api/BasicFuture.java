@@ -15,14 +15,17 @@
  */
 package org.jetbrains.jps.api;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 5/3/12
  */
-public class BasicFuture<T> implements Future<T> {
+public class BasicFuture<T> implements TaskFuture<T> {
   protected final Semaphore mySemaphore = new Semaphore(1);
   private final AtomicBoolean myDone = new AtomicBoolean(false);
   private final AtomicBoolean myCanceledState = new AtomicBoolean(false);

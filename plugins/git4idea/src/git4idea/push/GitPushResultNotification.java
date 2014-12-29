@@ -16,7 +16,6 @@
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.history.Label;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
@@ -120,7 +119,7 @@ class GitPushResultNotification extends Notification {
           if (compareResultTypes != 0) {
             return compareResultTypes;
           }
-          return RepositoryUtil.REPOSITORY_COMPARATOR.compare(o1.getKey(), o2.getKey());
+          return DvcsUtil.REPOSITORY_COMPARATOR.compare(o1.getKey(), o2.getKey());
         }
       });
 

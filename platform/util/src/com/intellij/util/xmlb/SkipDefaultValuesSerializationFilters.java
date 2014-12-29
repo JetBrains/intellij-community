@@ -18,6 +18,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.ReflectionUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -25,18 +26,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class SkipDefaultValuesSerializationFilters implements SerializationFilter {
+public class SkipDefaultValuesSerializationFilters extends SerializationFilterBase {
   private final Map<Class<?>, Object> myDefaultBeans = new THashMap<Class<?>, Object>();
 
   @Override
-  public boolean accepts(final Accessor accessor, @Nullable Object bean) {
-    if (bean == null) {
-      return true;
-    }
-    Object defaultBean = getDefaultBean(bean);
-
-    final Object defValue = accessor.read(defaultBean);
-    final Object beanValue = accessor.read(bean);
+  protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
+    final Object defValue = accessor.read(getDefaultBean(bean));
     if (defValue instanceof Element && beanValue instanceof Element) {
       return !JDOMUtil.areElementsEqual((Element)beanValue, (Element)defValue);
     }
@@ -49,7 +44,7 @@ public class SkipDefaultValuesSerializationFilters implements SerializationFilte
     Class<?> c = bean.getClass();
     Object o = myDefaultBeans.get(c);
     if (o == null) {
-      o = XmlSerializerImpl.newInstance(c);
+      o = ReflectionUtil.newInstance(c);
       configure(o);
 
       myDefaultBeans.put(c, o);

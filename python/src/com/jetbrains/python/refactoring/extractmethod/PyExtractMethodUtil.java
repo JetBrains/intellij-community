@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ public class PyExtractMethodUtil {
       scope.add(owner);
       final PyClass containingClass = ((PyFunction)owner).getContainingClass();
       if (containingClass != null) {
-        for (PyFunction function : containingClass.getMethods()) {
+        for (PyFunction function : containingClass.getMethods(false)) {
           if (!function.equals(owner) && !function.equals(generatedMethod))
             scope.add(function);
         }

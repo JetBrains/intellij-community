@@ -19,13 +19,12 @@ import com.apple.eawt.*;
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -48,9 +47,6 @@ import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
@@ -76,8 +72,9 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     synchronized void runOrEnqueue (final T runnable) {
       if (waitingForAppKit) {
         enqueue(runnable);
-      } else {
-        LaterInvocator.invokeLater(runnable);
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(runnable);
         waitingForAppKit = true;
       }
     }

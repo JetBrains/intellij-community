@@ -18,8 +18,18 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Allows to store custom user data within a model object. This might be preferred to an explicit Map with model objects as keys and
+ * custom data in values because this allows the data to be garbage-collected together with the values.
+ */
 public interface UserDataHolder {
+  /**
+   * @return a user data value associated with this object. Doesn't require read action.
+   */
   @Nullable <T> T getUserData(@NotNull Key<T> key);
 
+  /**
+   * Add a new user data value to this object. Doesn't require write action.
+   */
   <T> void putUserData(@NotNull Key<T> key, @Nullable T value);
 }

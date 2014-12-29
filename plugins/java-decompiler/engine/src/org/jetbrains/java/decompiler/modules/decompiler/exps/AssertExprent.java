@@ -15,28 +15,27 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.List;
-
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+
+import java.util.List;
 
 public class AssertExprent extends Exprent {
 
-  private List<Exprent> parameters;
-
-  {
-    this.type = EXPRENT_ASSERT;
-  }
+  private final List<Exprent> parameters;
 
   public AssertExprent(List<Exprent> parameters) {
+    super(EXPRENT_ASSERT);
     this.parameters = parameters;
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-
-    StringBuilder buffer = new StringBuilder();
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buffer = new TextBuffer();
 
     buffer.append("assert ");
+
+    tracer.addMapping(bytecode);
 
     if (parameters.get(0) == null) {
       buffer.append("false");
@@ -44,11 +43,12 @@ public class AssertExprent extends Exprent {
     else {
       buffer.append(parameters.get(0).toJava(indent, tracer));
     }
+
     if (parameters.size() > 1) {
       buffer.append(" : ");
       buffer.append(parameters.get(1).toJava(indent, tracer));
     }
 
-    return buffer.toString();
+    return buffer;
   }
 }

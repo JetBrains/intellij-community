@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   private static final Logger LOG = Logger.getInstance("#" + ByteCodeViewerManager.class.getName());
 
-  public static final String TOOLWINDOW_ID = "Byte Code Viewer";
+  private static final String TOOLWINDOW_ID = "Byte Code Viewer";
   private static final String SHOW_BYTECODE_IN_TOOL_WINDOW = "BYTE_CODE_TOOL_WINDOW";
   private static final String BYTECODE_AUTO_UPDATE_ENABLED = "BYTE_CODE_AUTO_UPDATE_ENABLED";
 
@@ -84,17 +84,17 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   @Override
   protected String getAutoUpdateTitle() {
-    return "Auto Show Byte Code for Selected Element";
+    return "Auto Show Bytecode for Selected Element";
   }
 
   @Override
   protected String getAutoUpdateDescription() {
-    return "Show byte code for current element automatically";
+    return "Show bytecode for current element automatically";
   }
 
   @Override
   protected String getRestorePopupDescription() {
-    return "Restore byte code popup behavior";
+    return "Restore bytecode popup behavior";
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,39 +17,54 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * User: anna
  * Date: 03-Jul-2006
  */
-public class EditScopesDialog extends SingleConfigurableEditor {
+public class EditScopesDialog extends SettingsDialog {
   private NamedScope mySelectedScope;
+  private final Project myProject;
+  private final ScopeChooserConfigurable myConfigurable;
   private final boolean myCheckShared;
 
   public EditScopesDialog(final Project project,
                           final ScopeChooserConfigurable configurable,
                           final boolean checkShared) {
-    super(project, configurable, "scopes");
+    super(project, "scopes", configurable, true, false);
+    myProject = project;
+    myConfigurable = configurable;
     myCheckShared = checkShared;
   }
 
   @Override
-  protected void doOKAction() {
-    final Object selectedObject = ((ScopeChooserConfigurable)getConfigurable()).getSelectedObject();
-    if (selectedObject instanceof NamedScope){
-      mySelectedScope = (NamedScope)selectedObject;
+  protected JComponent createCenterPanel() {
+    JComponent component = super.createCenterPanel();
+    if (!Registry.is("ide.new.settings.view")) {
+      component.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
+    return component;
+  }
+
+  @Override
+  public void doOKAction() {
+    Object selectedObject = myConfigurable.getSelectedObject();
+    mySelectedScope = selectedObject instanceof NamedScope ? (NamedScope)selectedObject : null;
+
     super.doOKAction();
     if (myCheckShared && mySelectedScope != null) {
-      final Project project = getProject();
+      final Project project = myProject;
       final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
       NamedScope scope = manager.getScope(mySelectedScope.getName());
       if (scope == null) {

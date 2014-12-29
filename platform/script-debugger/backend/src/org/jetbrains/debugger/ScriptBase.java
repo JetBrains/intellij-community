@@ -1,15 +1,15 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.sourcemap.SourceMap;
 
 public abstract class ScriptBase extends UserDataHolderBase implements Script {
   @SuppressWarnings("UnusedDeclaration")
-  private volatile AsyncResult<String> source;
+  private volatile Promise<String> source;
 
   private final Url url;
   protected final int line;
@@ -20,7 +20,7 @@ public abstract class ScriptBase extends UserDataHolderBase implements Script {
 
   private SourceMap sourceMap;
 
-  protected ScriptBase(Type type, @NotNull Url url, int line, int column, int endLine) {
+  protected ScriptBase(@NotNull Type type, @NotNull Url url, int line, int column, int endLine) {
     this.type = type;
     this.url = url;
     this.line = line;

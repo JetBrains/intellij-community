@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,9 +73,8 @@ public class XmlRefCountHolder {
   private final Set<String> myUsedNamespaces = new HashSet<String>();
 
   @Nullable
-  public static XmlRefCountHolder getRefCountHolder(final XmlElement element) {
-    PsiFile file = element.getContainingFile();
-    return file instanceof XmlFile ? CACHE.get(xmlRefCountHolderKey, (XmlFile)file, null).getValue() : null;
+  public static XmlRefCountHolder getRefCountHolder(@NotNull XmlFile file) {
+    return CACHE.get(xmlRefCountHolderKey, file, null).getValue();
   }
 
   private XmlRefCountHolder() {

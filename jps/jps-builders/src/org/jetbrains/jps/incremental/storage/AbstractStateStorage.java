@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
@@ -35,7 +34,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   private final DataExternalizer<T> myStateExternalizer;
   protected final Object myDataLock = new Object();
 
-  public AbstractStateStorage(@NonNls File storePath, KeyDescriptor<Key> keyDescriptor, DataExternalizer<T> stateExternalizer) throws IOException {
+  public AbstractStateStorage(File storePath, KeyDescriptor<Key> keyDescriptor, DataExternalizer<T> stateExternalizer) throws IOException {
     myBaseFile = storePath;
     myKeyDescriptor = keyDescriptor;
     myStateExternalizer = stateExternalizer;

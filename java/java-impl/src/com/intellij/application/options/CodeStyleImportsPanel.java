@@ -31,7 +31,6 @@ import java.awt.event.ActionListener;
 
 public class CodeStyleImportsPanel extends JPanel {
   private JCheckBox myCbUseFQClassNames;
-  private JCheckBox myCbUseFQClassNamesInJavaDoc;
   private JCheckBox myCbUseSingleClassImports;
   private JCheckBox myCbInsertInnerClassImports;
   private JTextField myClassCountField;
@@ -49,11 +48,11 @@ public class CodeStyleImportsPanel extends JPanel {
   private JPanel myImportsLayoutPanel;
   private JPanel myWholePanel;
   private ImportLayoutPanel myImportLayoutPanel;
+  private FullyQualifiedNamesInJavadocOptionProvider myFqnInJavadocOption;
 
   public CodeStyleImportsPanel(CodeStyleSettings settings) {
     mySettings = settings;
     setLayout(new BorderLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
     add(myWholePanel, BorderLayout.CENTER);
 
     myGeneralPanel.add(createGeneralOptionsPanel(), BorderLayout.CENTER);
@@ -130,9 +129,9 @@ public class CodeStyleImportsPanel extends JPanel {
     myCbInsertInnerClassImports = new JCheckBox(ApplicationBundle.message("checkbox.insert.imports.for.inner.classes"));
     group.add(myCbInsertInnerClassImports);
 
-    myCbUseFQClassNamesInJavaDoc = new JCheckBox(ApplicationBundle.message("checkbox.use.fully.qualified.class.names.in.javadoc"));
-    group.add(myCbUseFQClassNamesInJavaDoc);
-
+    myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider(mySettings);
+    group.add(myFqnInJavadocOption.getPanel());
+    
     myClassCountField = new JTextField(3);
     myNamesCountField = new JTextField(3);
     final JPanel panel = new JPanel(new GridBagLayout());
@@ -162,7 +161,6 @@ public class CodeStyleImportsPanel extends JPanel {
 
   public void reset(CodeStyleSettings settings) {
     myCbUseFQClassNames.setSelected(settings.USE_FQ_CLASS_NAMES);
-    myCbUseFQClassNamesInJavaDoc.setSelected(settings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
     myCbUseSingleClassImports.setSelected(settings.USE_SINGLE_CLASS_IMPORTS);
     myCbInsertInnerClassImports.setSelected(settings.INSERT_INNER_CLASS_IMPORTS);
     myClassCountField.setText(Integer.toString(settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND));
@@ -170,6 +168,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
     myImportLayoutPanel.getImportLayoutList().copyFrom(settings.IMPORT_LAYOUT_TABLE);
     myPackageList.copyFrom(settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    myFqnInJavadocOption.reset(settings);
 
     myImportLayoutPanel.getCbLayoutStaticImportsSeparately().setSelected(settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
 
@@ -204,7 +203,6 @@ public class CodeStyleImportsPanel extends JPanel {
 
     settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = myImportLayoutPanel.areStaticImportsEnabled();
     settings.USE_FQ_CLASS_NAMES = myCbUseFQClassNames.isSelected();
-    settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = myCbUseFQClassNamesInJavaDoc.isSelected();
     settings.USE_SINGLE_CLASS_IMPORTS = myCbUseSingleClassImports.isSelected();
     settings.INSERT_INNER_CLASS_IMPORTS = myCbInsertInnerClassImports.isSelected();
     try {
@@ -228,6 +226,8 @@ public class CodeStyleImportsPanel extends JPanel {
     settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(myPackageList);
 
     settings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = myJspImportCommaSeparated.isSelected();
+    
+    myFqnInJavadocOption.apply(settings);
   }
 
   public void apply() {
@@ -242,7 +242,7 @@ public class CodeStyleImportsPanel extends JPanel {
   public boolean isModified(CodeStyleSettings settings) {
     boolean isModified = isModified(myImportLayoutPanel.getCbLayoutStaticImportsSeparately(), settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
     isModified |= isModified(myCbUseFQClassNames, settings.USE_FQ_CLASS_NAMES);
-    isModified |= isModified(myCbUseFQClassNamesInJavaDoc, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
+    isModified |= myFqnInJavadocOption.isModified(settings);
     isModified |= isModified(myCbUseSingleClassImports, settings.USE_SINGLE_CLASS_IMPORTS);
     isModified |= isModified(myCbInsertInnerClassImports, settings.INSERT_INNER_CLASS_IMPORTS);
     isModified |= isModified(myClassCountField, settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND);

@@ -55,5 +55,10 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary unboxing</problem_class>
     <description>Unnecessary unboxing &lt;code&gt;b.byteValue()&lt;/code&gt; #loc</description>
   </problem>
-
+  <problem>
+    <file>UnnecessaryUnboxing.java</file>
+    <line>57</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary unboxing</problem_class>
+    <description>Unnecessary unboxing &lt;code&gt;((Double) o).doubleValue()&lt;/code&gt; #loc</description>
+  </problem>
 </problems>

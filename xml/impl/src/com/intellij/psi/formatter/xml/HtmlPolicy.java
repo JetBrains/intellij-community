@@ -74,7 +74,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   private int getLines(final XmlTag parentTag) {
     final TextRange textRange = parentTag.getTextRange();
-    return myDocumentModel.getLineNumber(textRange.getEndOffset()) - myDocumentModel.getLineNumber(textRange.getStartOffset());
+    return myDocumentModel.getLineNumber(textRange.getEndOffset()) - myDocumentModel.getLineNumber(textRange.getStartOffset()) + 1;
   }
 
   @Override

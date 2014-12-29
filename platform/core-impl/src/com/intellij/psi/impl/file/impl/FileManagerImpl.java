@@ -43,8 +43,6 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentSoftValueHashMap;
-import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -62,8 +60,8 @@ public class FileManagerImpl implements FileManager {
   private final PsiManagerImpl myManager;
   private final FileIndexFacade myFileIndex;
 
-  private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentSoftValueHashMap<VirtualFile, PsiDirectory>();
-  private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
+  private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = ContainerUtil.createConcurrentSoftValueMap();
+  private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = ContainerUtil.createConcurrentWeakValueMap();
 
   private boolean myInitialized = false;
   private boolean myDisposed = false;
@@ -128,8 +126,22 @@ public class FileManagerImpl implements FileManager {
           }
         }
         removeInvalidFilesAndDirs(false);
+        checkLanguageChange();
       }
     });
+  }
+
+  private void checkLanguageChange() {
+    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    myVFileToViewProviderMap.clear();
+    for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
+      VirtualFile vFile = iterator.next();
+      Language language = getLanguage(vFile);
+      if (language != null && language != fileToPsiFileMap.get(vFile).getBaseLanguage()) {
+        iterator.remove();
+      }
+    }
+    myVFileToViewProviderMap.putAll(fileToPsiFileMap);
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
@@ -233,6 +245,11 @@ public class FileManagerImpl implements FileManager {
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, boolean eventSystemEnabled) {
     Language language = getLanguage(file);
+    return createFileViewProvider(file, eventSystemEnabled, language);
+  }
+
+  @NotNull
+  private FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled, Language language) {
     final FileViewProviderFactory factory = language == null
                                             ? FileTypeFileViewProviders.INSTANCE.forFileType(file.getFileType())
                                             : LanguageFileViewProviders.INSTANCE.forLanguage(language);
@@ -422,7 +439,7 @@ public class FileManagerImpl implements FileManager {
     return ConcurrencyUtil.cacheOrGet(myVFileToPsiDirMap, vFile, psiDir);
   }
 
-  PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile) {
+  public PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile) {
     return myVFileToPsiDirMap.get(vFile);
   }
 

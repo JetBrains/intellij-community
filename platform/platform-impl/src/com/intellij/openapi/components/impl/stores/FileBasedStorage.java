@@ -21,7 +21,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,7 +30,6 @@ import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.LineSeparator;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +41,6 @@ import java.util.Collections;
 import java.util.Set;
 
 public class FileBasedStorage extends XmlElementStorage {
-  private static final Logger LOG = Logger.getInstance(FileBasedStorage.class);
-
   private final String myFilePath;
   private final File myFile;
   private volatile VirtualFile myCachedVirtualFile;
@@ -57,9 +53,8 @@ public class FileBasedStorage extends XmlElementStorage {
                           @NotNull String rootElementName,
                           @NotNull Disposable parentDisposable,
                           @Nullable final Listener listener,
-                          @Nullable StreamProvider streamProvider,
-                          ComponentVersionProvider componentVersionProvider) {
-    super(fileSpec, roamingType, pathMacroManager, parentDisposable, rootElementName, streamProvider, componentVersionProvider);
+                          @Nullable StreamProvider streamProvider) {
+    super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider);
 
     myFilePath = filePath;
     myFile = new File(filePath);
@@ -85,12 +80,9 @@ public class FileBasedStorage extends XmlElementStorage {
 
           @Override
           public void contentsChanged(@NotNull final VirtualFileEvent event) {
-            if (!isDisposed()) {
-              assert listener != null;
-              listener.storageFileChanged(event, FileBasedStorage.this);
-            }
+            listener.storageFileChanged(event, FileBasedStorage.this);
           }
-        }, false, this);
+        }, false, parentDisposable);
       }
     }
   }
@@ -104,11 +96,18 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   @Override
-  protected MySaveSession createSaveSession(@NotNull StorageData storageData) {
+  protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
     return new FileSaveSession(storageData);
   }
 
-  private class FileSaveSession extends MySaveSession {
+  public void forceSave() {
+    XmlElementStorageSaveSession externalizationSession = startExternalization();
+    if (externalizationSession != null) {
+      externalizationSession.forceSave();
+    }
+  }
+
+  private class FileSaveSession extends XmlElementStorageSaveSession {
     protected FileSaveSession(@NotNull StorageData storageData) {
       super(storageData);
     }
@@ -134,6 +133,10 @@ public class FileBasedStorage extends XmlElementStorage {
         LOG.error(e);
       }
 
+      if (LOG.isDebugEnabled() && myFileSpec.equals(StoragePathMacros.MODULE_FILE)) {
+        LOG.debug("doSave " + getFilePath());
+      }
+
       if (content == null) {
         StorageUtil.deleteFile(myFile, this, getVirtualFile());
         myCachedVirtualFile = null;
@@ -152,32 +155,7 @@ public class FileBasedStorage extends XmlElementStorage {
   @Override
   @NotNull
   protected StorageData createStorageData() {
-    FileStorageData data = new FileStorageData(myRootElementName);
-    data.myFilePath = myFilePath;
-    return data;
-  }
-
-  public static class FileStorageData extends StorageData {
-    String myFilePath;
-
-    public FileStorageData(final String rootElementName) {
-      super(rootElementName);
-    }
-
-    protected FileStorageData(FileStorageData storageData) {
-      super(storageData);
-      myFilePath = storageData.myFilePath;
-    }
-
-    @Override
-    public StorageData clone() {
-      return new FileStorageData(this);
-    }
-
-    @NonNls
-    public String toString() {
-      return "FileStorageData[" + myFilePath + "]";
-    }
+    return new StorageData(myRootElementName);
   }
 
   @Nullable
@@ -259,7 +237,10 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   public void updatedFromStreamProvider(@NotNull Set<String> changedComponentNames, boolean deleted) {
-    resetProviderCache();
+    if (myRoamingType == RoamingType.DISABLED) {
+      // storage roaming was changed to DISABLED, but settings repository has old state
+      return;
+    }
 
     try {
       Element newElement = deleted ? null : loadDataFromStreamProvider();
@@ -300,5 +281,10 @@ public class FileBasedStorage extends XmlElementStorage {
     File file = new File(myFile.getAbsolutePath());
     FileUtil.writeToFile(file, out.getInternalBuffer(), 0, out.size());
     return file;
+  }
+
+  @Override
+  public String toString() {
+    return getFilePath();
   }
 }

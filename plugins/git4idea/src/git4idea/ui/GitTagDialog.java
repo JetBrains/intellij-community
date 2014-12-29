@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  */
 package git4idea.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitUtil;
@@ -28,7 +31,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +49,9 @@ import java.util.Set;
  * The tag dialog for the git
  */
 public class GitTagDialog extends DialogWrapper {
+
+  private static final Logger LOG = Logger.getInstance(GitTagDialog.class);
+
   /**
    * Root panel
    */
@@ -101,7 +107,7 @@ public class GitTagDialog extends DialogWrapper {
   /**
    * Encoding for the message file
    */
-  @NonNls private static final String MESSAGE_FILE_ENCODING = "UTF-8";
+  @NonNls private static final String MESSAGE_FILE_ENCODING = CharsetToolkit.UTF8;
 
   /**
    * A constructor
@@ -199,11 +205,16 @@ public class GitTagDialog extends DialogWrapper {
         GitHandlerUtil.doSynchronously(h, GitBundle.getString("tagging.title"), h.printableCommandLine());
         VcsNotifier.getInstance(myProject).notifySuccess(myTagNameTextField.getText(),
                                                          "Created tag " + myTagNameTextField.getText() + " successfully.");
+        GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
+        if (repository != null) {
+          VfsUtil.markDirtyAndRefresh(true, true, false, repository.getGitDir());
+        }
+        else {
+          LOG.error("No repository registered for root: " + getGitRoot());
+        }
       }
       finally {
         exceptions.addAll(h.errors());
-        GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
-        manager.updateRepository(getGitRoot());
       }
     }
     finally {

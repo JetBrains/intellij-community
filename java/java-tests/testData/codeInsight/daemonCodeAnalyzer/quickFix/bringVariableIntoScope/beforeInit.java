@@ -1,4 +1,4 @@
-// "Bring 'String con' into Scope" "true"
+// "Bring 'String con' into scope" "true"
 class a {
     private void ffff(String c){
         try { String con = null;  }

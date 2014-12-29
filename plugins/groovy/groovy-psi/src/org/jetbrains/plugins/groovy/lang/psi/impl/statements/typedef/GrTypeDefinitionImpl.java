@@ -674,7 +674,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Nullable
   @Override
   public PsiElement getOriginalElement() {
-    return org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getOriginalElement(this, getContainingFile());
+    return JavaPsiImplementationHelper.getInstance(getProject()).getOriginalClass(this);
   }
 
   @Override

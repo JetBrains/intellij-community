@@ -1,6 +1,7 @@
 package org.jetbrains.rpc;
 
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class AsyncResultCallbackBase<SUCCESS_RESPONSE, C extends ActionCallback, ERROR_DETAILS> implements AsyncResultCallback<SUCCESS_RESPONSE, ERROR_DETAILS> {
@@ -13,7 +14,7 @@ abstract class AsyncResultCallbackBase<SUCCESS_RESPONSE, C extends ActionCallbac
   }
 
   @Override
-  public final void onError(String errorMessage, ERROR_DETAILS errorDetails) {
+  public final void onError(@NotNull String errorMessage, ERROR_DETAILS errorDetails) {
     try {
       if (errorConsumer == null) {
         callback.reject(errorMessage);
@@ -27,13 +28,13 @@ abstract class AsyncResultCallbackBase<SUCCESS_RESPONSE, C extends ActionCallbac
             callback.reject(e.getMessage());
           }
           finally {
-            MessageManager.LOG.error(e);
+            CommandProcessor.LOG.error(e);
           }
         }
       }
     }
     catch (Throwable e) {
-      MessageManager.LOG.error(e);
+      CommandProcessor.LOG.error(e);
     }
   }
 }

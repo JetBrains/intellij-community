@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -94,7 +95,9 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaBatchLocalInspec
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiDiamondTypeUtil.replaceExplicitWithDiamond(descriptor.getPsiElement());
+      final PsiElement element = descriptor.getPsiElement();
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+      PsiDiamondTypeUtil.replaceExplicitWithDiamond(element);
     }
   }
 }

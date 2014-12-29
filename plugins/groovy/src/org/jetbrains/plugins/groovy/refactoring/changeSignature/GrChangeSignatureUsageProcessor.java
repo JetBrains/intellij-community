@@ -154,15 +154,17 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                 ((ParameterInfoImpl)parameter).setDefaultValue("");
                 if (!ApplicationManager.getApplication().isUnitTestMode()) {
                   final PsiType type = ((ParameterInfoImpl)parameter).getTypeWrapper().getType(element, element.getManager());
-                  final DefaultValueChooser chooser = new DefaultValueChooser(project, parameter.getName(), PsiTypesUtil.getDefaultValueOfType(type));
-                  chooser.show();
-                  if (chooser.isOK()) {
+                  final DefaultValueChooser chooser =
+                    new DefaultValueChooser(project, parameter.getName(), PsiTypesUtil.getDefaultValueOfType(type));
+                  if (chooser.showAndGet()) {
                     if (chooser.feelLucky()) {
                       parameter.setUseAnySingleVariable(true);
-                    } else {
+                    }
+                    else {
                       ((ParameterInfoImpl)parameter).setDefaultValue(chooser.getDefaultValue());
                     }
-                  } else {
+                  }
+                  else {
                     return false;
                   }
                 }
@@ -412,7 +414,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     if (beforeMethodChange) {
       if (usageInfo instanceof OverriderUsageInfo) {
-        processPrimaryMethodInner(((JavaChangeInfo)changeInfo), (GrMethod)((OverriderUsageInfo)usageInfo).getElement(),
+        processPrimaryMethodInner(((JavaChangeInfo)changeInfo), (GrMethod)((OverriderUsageInfo)usageInfo).getOverridingMethod(),
                                   ((OverriderUsageInfo)usageInfo).getBaseMethod());
       }
     }

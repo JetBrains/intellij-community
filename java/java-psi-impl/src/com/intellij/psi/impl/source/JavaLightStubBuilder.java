@@ -57,7 +57,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
     if (checkByTypes(parentType, nodeType)) return true;
 
-    if (nodeType == JavaElementType.CODE_BLOCK && node instanceof TreeElement) {
+    if (nodeType == JavaElementType.CODE_BLOCK) {
       CodeBlockVisitor visitor = new CodeBlockVisitor();
       ((TreeElement)node).acceptTree(visitor);
       return visitor.result;
@@ -73,7 +73,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
     if (checkByTypes(parentType, nodeType)) return true;
 
-    if (nodeType == JavaElementType.CODE_BLOCK && node instanceof LighterLazyParseableNode) {
+    if (nodeType == JavaElementType.CODE_BLOCK) {
       CodeBlockVisitor visitor = new CodeBlockVisitor();
       ((LighterLazyParseableNode)node).accept(visitor);
       return visitor.result;

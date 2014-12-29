@@ -43,10 +43,9 @@ public class MavenEjbArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
                                                 @NotNull JpsPackagingElement contextElement,
                                                 @NotNull JpsModel model,
                                                 @NotNull BuildDataPaths buildDataPaths) {
-    JpsMavenExtensionService mavenExtensionService = JpsMavenExtensionService.getInstance();
-    if (!mavenExtensionService.hasMavenProjectConfiguration(buildDataPaths)) return null;
+    MavenProjectConfiguration projectConfiguration = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(buildDataPaths);
+    if (projectConfiguration == null) return null;
 
-    MavenProjectConfiguration projectConfiguration = mavenExtensionService.getMavenProjectConfiguration(buildDataPaths);
     MavenEjbClientConfiguration ejbCfg = projectConfiguration.ejbClientArtifactConfigs.get(artifact.getName());
     if (ejbCfg == null) return null;
 

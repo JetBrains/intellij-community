@@ -39,6 +39,5 @@ public interface ProfileManager {
   @NotNull
   String[] getAvailableProfileNames();
 
-  void deleteProfile(String name);
-
+  void deleteProfile(@NotNull String name);
 }

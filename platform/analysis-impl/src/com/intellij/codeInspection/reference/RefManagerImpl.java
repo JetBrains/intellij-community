@@ -450,8 +450,13 @@ public class RefManagerImpl extends RefManager {
 
   @Nullable
   public RefElement getReference(final PsiElement elem, final boolean ignoreScope) {
-    if (elem == null || !elem.isValid() ||
-        elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope)) {
+    if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return elem == null || !elem.isValid() ||
+               elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope);
+      }
+    })) {
       return null;
     }
 

@@ -55,14 +55,14 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
     return true;
   }
 
-  public void setHtml5OutlineMode(boolean enabled) throws Exception {
+  public void setHtml5OutlineMode(boolean enabled) {
     myPopup.setTreeActionState(Html5SectionsNodeProvider.class, enabled);
     update();
   }
 
-  public void testEmpty() throws Exception {checkTree();}
-  public void testSimple() throws Exception {checkTree();}
-  public void testNoSectioningRoot() throws Exception {checkTree();}
-  public void testImplicitSections() throws Exception {checkTree();}
-  public void testMultipleRootTags() throws Exception {checkTree();}
+  public void testEmpty() {checkTree();}
+  public void testSimple() {checkTree();}
+  public void testNoSectioningRoot() {checkTree();}
+  public void testImplicitSections() {checkTree();}
+  public void testMultipleRootTags() {checkTree();}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +39,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -282,17 +284,22 @@ public abstract class AbstractFileProcessor {
 
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
 
-    for (VirtualFile root : roots) {
-      idx.iterateContentUnderDirectory(root, new ContentIterator() {
+    for (final VirtualFile root : roots) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
-        public boolean processFile(final VirtualFile dir) {
-          if (dir.isDirectory()) {
-            final PsiDirectory psiDir = PsiManager.getInstance(module.getProject()).findDirectory(dir);
-            if (psiDir != null) {
-              findFiles(files, psiDir, false);
+        public void run() {
+          idx.iterateContentUnderDirectory(root, new ContentIterator() {
+            @Override
+            public boolean processFile(final VirtualFile dir) {
+              if (dir.isDirectory()) {
+                final PsiDirectory psiDir = PsiManager.getInstance(module.getProject()).findDirectory(dir);
+                if (psiDir != null) {
+                  findFiles(files, psiDir, false);
+                }
+              }
+              return true;
             }
-          }
-          return true;
+          });
         }
       });
     }
@@ -348,12 +355,17 @@ public abstract class AbstractFileProcessor {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        readAction.run();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            readAction.run();
+          }
+        });
       }
     }, title, true, myProject);
     new WriteCommandAction(myProject, title) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         writeAction.run();
       }
     }.execute();

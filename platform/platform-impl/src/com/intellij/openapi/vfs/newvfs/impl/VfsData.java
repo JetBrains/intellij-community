@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
@@ -33,8 +34,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -146,8 +149,9 @@ public class VfsData {
 
     segment.setNameId(id, nameId);
 
-    if (segment.myObjectArray.get(offset) != null) {
-      throw new AssertionError("File already created");
+    Object existingData = segment.myObjectArray.get(offset);
+    if (existingData != null) {
+      throw new AssertionError("File already created: " + existingData + "; parentId=" + FSRecords.getParent(id));
     }
     segment.myObjectArray.set(offset, data);
   }
@@ -194,7 +198,7 @@ public class VfsData {
       myIntArray.set(getOffset(fileId) * 2, nameId);
     }
 
-    void setUserMap(int fileId, KeyFMap map) {
+    void setUserMap(int fileId, @NotNull KeyFMap map) {
       myObjectArray.set(getOffset(fileId), map);
     }
 
@@ -247,9 +251,9 @@ public class VfsData {
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
   public static class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
-    volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
-    int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY;
-    private THashSet<String> myAdoptedNames;
+    @NotNull volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
+    @NotNull int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY;
+    private Set<String> myAdoptedNames;
 
     VirtualFileSystemEntry[] getFileChildren(int fileId, VirtualDirectoryImpl parent) {
       assert fileId > 0;
@@ -286,6 +290,15 @@ public class VfsData {
 
     List<String> getAdoptedNames() {
       return myAdoptedNames == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(myAdoptedNames);
+    }
+
+    @Override
+    public String toString() {
+      return "DirectoryData{" +
+             "myUserMap=" + myUserMap +
+             ", myChildrenIds=" + Arrays.toString(myChildrenIds) +
+             ", myAdoptedNames=" + myAdoptedNames +
+             '}';
     }
   }
 

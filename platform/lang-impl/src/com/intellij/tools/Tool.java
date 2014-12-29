@@ -254,6 +254,7 @@ public class Tool implements SchemeElement {
       Comparing.equal(myOutputFilters, source.myOutputFilters);
   }
 
+  @NotNull
   public String getActionId() {
     StringBuilder name = new StringBuilder(getActionIdPrefix());
     name.append(myGroup);

@@ -553,7 +553,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   private static boolean reportConflicts(final MultiMap<PsiElement, String> conflicts, final Project project) {
     if (conflicts.isEmpty()) return true;
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
-    conflictsDialog.show();
-    return conflictsDialog.isOK();
+    return conflictsDialog.showAndGet();
   }
 }

@@ -1,7 +1,8 @@
 package org.jetbrains.protocolReader;
 
-import org.jetbrains.io.JsonReaderEx;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.jsonProtocol.JsonParseMethod;
 
 import java.lang.reflect.Method;
@@ -32,7 +33,7 @@ class ReaderRoot<R> {
     Method[] methods = clazz.getMethods();
     Arrays.sort(methods, new Comparator<Method>() {
       @Override
-      public int compare(Method o1, Method o2) {
+      public int compare(@NotNull Method o1, @NotNull Method o2) {
         return o1.getName().compareTo(o2.getName());
       }
     });
@@ -68,12 +69,12 @@ class ReaderRoot<R> {
       }
 
       Type[] arguments = m.getGenericParameterTypes();
-      if (arguments.length != 1) {
+      if (arguments.length > 2) {
         throw new JsonProtocolModelParseException("Exactly one argument is expected in " + m);
       }
       Type argument = arguments[0];
       if (argument == JsonReaderEx.class || argument == Object.class) {
-        methodMap.put(m, new ReadDelegate(typeHandler, isList));
+        methodMap.put(m, new ReadDelegate(typeHandler, isList, arguments.length != 1));
       }
       else {
         throw new JsonProtocolModelParseException("Unrecognized argument type in " + m);
@@ -93,11 +94,11 @@ class ReaderRoot<R> {
     return rootClass;
   }
 
-  public void writeStaticMethodJava(ClassScope scope) {
+  public void writeStaticMethodJava(@NotNull ClassScope scope) {
     TextOutput out = scope.getOutput();
-    for (Map.Entry<Method, ReadDelegate> en : methodMap.entrySet()) {
+    for (Map.Entry<Method, ReadDelegate> entry : methodMap.entrySet()) {
       out.newLine();
-      en.getValue().write(scope, en.getKey(), out);
+      entry.getValue().write(scope, entry.getKey(), out);
       out.newLine();
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.inspector;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.spellchecker.inspections.*;
 import com.intellij.util.Consumer;
 import junit.framework.Assert;
@@ -273,12 +274,12 @@ public class SplitterTest extends TestCase {
   }
 
   public void testUrl() {
-    String text = "http://www.jetbrains.com/idea";
+    String text = "https://www.jetbrains.com/idea";
     correctListToCheck(PlainTextSplitter.getInstance(), text);
   }
 
   public void testUrlThenSpaces() {
-    String text = "http://www.jetbrains.com/idea asdasdasd sdfsdf";
+    String text = "https://www.jetbrains.com/idea asdasdasd sdfsdf";
     correctListToCheck(PlainTextSplitter.getInstance(), text, "asdasdasd", "sdfsdf");
   }
 
@@ -388,7 +389,7 @@ public class SplitterTest extends TestCase {
       String line;
 
       try {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is, CharsetToolkit.UTF8_CHARSET));
         while ((line = reader.readLine()) != null) {
           sb.append(line).append("\n");
         }

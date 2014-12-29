@@ -14,6 +14,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 
 import java.awt.*;
@@ -30,7 +31,7 @@ public class ExtraFieldGutter extends AnnotationFieldGutter  {
   public ExtraFieldGutter(FileAnnotation fileAnnotation,
                           Editor editor,
                           AnnotationPresentation presentation,
-                          Map<String, Color> bgColorMap, AnnotateActionGroup actionGroup) {
+                          Couple<Map<String, Color>> bgColorMap, AnnotateActionGroup actionGroup) {
     super(fileAnnotation, editor, null, presentation, bgColorMap);
     myActionGroup = actionGroup;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,27 +41,28 @@ public class LayeredIcon implements Icon {
     myVShifts = new int[layerCount];
   }
 
-  public LayeredIcon(Icon... icons) {
+  public LayeredIcon(@NotNull Icon... icons) {
     this(icons.length);
     for (int i = 0; i < icons.length; i++) {
       setIcon(icons[i], i);
     }
   }
 
-  public static LayeredIcon createHorizontalIcon(Icon... icons) {
-    LayeredIcon icon = new LayeredIcon(icons.length);
-    int hShift = 0;
+  public static LayeredIcon createHorizontalIcon(@NotNull Icon... icons) {
+    LayeredIcon result = new LayeredIcon(icons.length);
     int maxHeight = 0;
-    for (int i = 0; i < icons.length; i++) {
-      maxHeight = Math.max(maxHeight, icons[i].getIconHeight());
+    for (Icon icon : icons) {
+      maxHeight = Math.max(maxHeight, icon.getIconHeight());
     }
+    int hShift = 0;
     for (int i = 0; i < icons.length; i++) {
-      icon.setIcon(icons[i], i, hShift, (maxHeight - icons[i].getIconHeight()) / 2);
+      result.setIcon(icons[i], i, hShift, (maxHeight - icons[i].getIconHeight()) / 2);
       hShift +=icons[i].getIconWidth() + 1;
     }
-    return icon;
+    return result;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof LayeredIcon)) return false;
@@ -78,6 +80,7 @@ public class LayeredIcon implements Icon {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return 0;
   }
@@ -104,7 +107,7 @@ public class LayeredIcon implements Icon {
     recalculateSize();
   }
 
-  private void checkIHaventIconInsideMe(final Icon icon) {
+  private void checkIHaventIconInsideMe(Icon icon) {
     LOG.assertTrue(icon != this);
     for (Icon child : myIcons) {
       if (child instanceof LayeredIcon) ((LayeredIcon)child).checkIHaventIconInsideMe(icon);

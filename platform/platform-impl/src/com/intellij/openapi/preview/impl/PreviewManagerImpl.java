@@ -19,7 +19,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.preview.PreviewInfo;
@@ -28,6 +31,7 @@ import com.intellij.openapi.preview.PreviewPanelProvider;
 import com.intellij.openapi.preview.PreviewProviderId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -42,6 +46,7 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +54,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-
-public class PreviewManagerImpl implements PreviewManager {
+@State(
+  name = "PreviewManager",
+  storages = {
+  @Storage(
+    file = StoragePathMacros.WORKSPACE_FILE
+  )}
+)
+public class PreviewManagerImpl implements PreviewManager, PersistentStateComponent<PreviewManagerState> {
   private static final Key<PreviewInfo> INFO_KEY = Key.create("preview_info");
   private static final int HISTORY_LIMIT = 10;
 
@@ -69,10 +80,12 @@ public class PreviewManagerImpl implements PreviewManager {
   private TreeSet<PreviewPanelProvider> myProviders = new TreeSet<PreviewPanelProvider>(new Comparator<PreviewPanelProvider>() {
     @Override
     public int compare(PreviewPanelProvider o1, PreviewPanelProvider o2) {
-      return Float.compare(o1.getMenuOrder(), o2.getMenuOrder());
+      int result = Float.compare(o1.getMenuOrder(), o2.getMenuOrder());
+      return result != 0 ? result : o1.toString().compareTo(o2.toString());
     }
   });
   private Set<PreviewProviderId> myActiveProviderIds = new HashSet<PreviewProviderId>();
+  private Set<PreviewProviderId> myLockedProviderIds = new HashSet<PreviewProviderId>();
   private boolean myInnerSelectionChange;
 
   private static boolean isAvailable() {
@@ -86,10 +99,8 @@ public class PreviewManagerImpl implements PreviewManager {
     PreviewPanelProvider[] providers = PreviewPanelProvider.EP_NAME.getExtensions(project);
     for (PreviewPanelProvider provider : providers) {
       myProviders.add(provider);
-      if (provider.shouldBeEnabledByDefault()) {
-        myActiveProviderIds.add(provider.getId());
-      }
-      //todo make it all externalizable to store/restore enabled/disabled state
+      myActiveProviderIds.add(provider.getId());
+      Disposer.register(project, provider);
     }
 
     UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
@@ -103,7 +114,34 @@ public class PreviewManagerImpl implements PreviewManager {
   }
 
   @Nullable
-  public <V, C> PreviewPanelProvider<V, C> findProvider(@NotNull PreviewProviderId<V, C> id) {
+  @Override
+  public PreviewManagerState getState() {
+    PreviewManagerState state = new PreviewManagerState();
+    state.myArtifactFilesMap = new HashMap<String, Boolean>();
+    for (PreviewPanelProvider provider : myProviders) {
+      state.myArtifactFilesMap.put(provider.toString(), myActiveProviderIds.contains(provider.getId()));
+    }
+    return state;
+  }
+
+  @Override
+  public void loadState(PreviewManagerState state) {
+    if (state == null) return;
+    for (Map.Entry<String, Boolean> entry : state.myArtifactFilesMap.entrySet()) {
+      if (!entry.getValue()) {
+        for (Iterator<PreviewProviderId> iterator = myActiveProviderIds.iterator(); iterator.hasNext(); ) {
+          PreviewProviderId id = iterator.next();
+          if (id.getVisualName().equals(entry.getKey())) {
+            iterator.remove();
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private <V, C> PreviewPanelProvider<V, C> findProvider(@NotNull PreviewProviderId<V, C> id) {
     for (PreviewPanelProvider provider : myProviders) {
       if (id == provider.getId()) return provider;
     }
@@ -123,21 +161,22 @@ public class PreviewManagerImpl implements PreviewManager {
       myToolWindow = (ToolWindowImpl)toolWindowManager
         .registerToolWindow(ToolWindowId.PREVIEW, myEmptyStatePanel, ToolWindowAnchor.RIGHT, myProject, false);
       myContentManager = myToolWindow.getContentManager();
-      myToolWindow.setIcon(AllIcons.Actions.PreviewDetails);
+      myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPreview);
       myToolWindow.setContentUiType(ToolWindowContentUiType.COMBO, null);
       myToolWindow.setAutoHide(true);
       myEmptyStateContent = myContentManager.getContent(0);
+      final MoveToStandardViewAction moveToStandardViewAction = new MoveToStandardViewAction();
       myContentManager.addContentManagerListener(new ContentManagerAdapter() {
         @Override
         public void selectionChanged(ContentManagerEvent event) {
           if (myInnerSelectionChange || event.getOperation() != ContentManagerEvent.ContentOperation.add) return;
           PreviewInfo previewInfo = event.getContent().getUserData(INFO_KEY);
           if (previewInfo != null) {
-            preview(previewInfo, true);
+            preview(previewInfo, false);
+            myToolWindow.setTitleActions(previewInfo.supportsStandardPlace() ? moveToStandardViewAction : null);
           }
         }
       });
-      MoveToStandardViewAction moveToStandardViewAction = new MoveToStandardViewAction();
 
       moveToStandardViewAction.registerCustomShortcutSet(new ShortcutSet() {
         @NotNull
@@ -154,7 +193,12 @@ public class PreviewManagerImpl implements PreviewManager {
         myGearActions.add(new ContentTypeToggleAction(provider));
       }
       myToolWindow.setAdditionalGearActions(new DefaultActionGroup("Preview", myGearActions));
-      //myToolWindow.hide(null);
+      myToolWindow.activate(new Runnable() {
+        @Override
+        public void run() {
+          myToolWindow.activate(null);
+        }
+      });
     }
   }
 
@@ -162,14 +206,6 @@ public class PreviewManagerImpl implements PreviewManager {
     if (myContentManager.getContents().length == 0) {
       myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "false");
       myContentManager.addContent(myEmptyStateContent);
-      //ApplicationManager.getApplication().invokeLater(new Runnable() {
-      //  @Override
-      //  public void run() {
-      //    if (myContentManager.getIndexOfContent(myEmptyStateContent) != -1) {
-      //      toggleToolWindow(false);
-      //    }
-      //  }
-      //});
     }
     else if (myContentManager.getContents().length > 1) {
       myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
@@ -180,9 +216,8 @@ public class PreviewManagerImpl implements PreviewManager {
   @Nullable
   private Content getContent(@NotNull PreviewInfo info) {
     for (Content content : myContentManager.getContents()) {
-      if (info.equals(content.getUserData(INFO_KEY))) {
-        return content;
-      }
+      PreviewInfo eachInfo = content.getUserData(INFO_KEY);
+      if (info.equals(eachInfo)) return content;
     }
     return null;
   }
@@ -191,27 +226,30 @@ public class PreviewManagerImpl implements PreviewManager {
   private Content addContent(PreviewInfo info) {
     myHistory.add(info);
     while (myHistory.size() > HISTORY_LIMIT) {
-      PreviewInfo previewInfo = myHistory.remove(0);
-      close(previewInfo);
+      close(myHistory.remove(0));
     }
 
     Content content = myContentManager.getFactory().createContent(info.getComponent(), info.getTitle(), false);
-    content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-    content.putUserData(INFO_KEY, info);
-    content.setIcon(info.getIcon());
-    content.setPopupIcon(info.getIcon());
 
     myContentManager.addContent(content, 0);
     checkEmptyState();
     return content;
   }
 
+  private static void updateContentWithInfo(Content content, PreviewInfo info) {
+    content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    content.putUserData(INFO_KEY, info);
+    content.setIcon(info.getIcon());
+    content.setPopupIcon(info.getIcon());
+  }
+
   private void close(@NotNull PreviewInfo info) {
     Content content = getContent(info);
     if (content != null) {
       myContentManager.removeContent(content, false);
+      info.release();
       if (myContentManager.getContents().length == 0) {
-        toggleToolWindow(false);
+        toggleToolWindow(false, null);
       }
       checkEmptyState();
     }
@@ -219,37 +257,56 @@ public class PreviewManagerImpl implements PreviewManager {
 
   @Override
   public <V, C> C preview(@NotNull PreviewProviderId<V, C> id, V data, boolean requestFocus) {
+    if (!myActiveProviderIds.contains(id) || myLockedProviderIds.contains(id)) {
+      return null;
+    }
     PreviewPanelProvider<V, C> provider = findProvider(id);
-    if (provider == null || !myActiveProviderIds.contains(id)) return null;
+    if (provider == null) {
+      return null;
+    }
     return preview(PreviewInfo.create(provider, data), requestFocus);
   }
 
-  public <V, C> C preview(@NotNull PreviewInfo<V, C> info, boolean requestFocus) {
-    toggleToolWindow(true);
+  private <V, C> C preview(@NotNull final PreviewInfo<V, C> info, boolean requestFocus) {
+    toggleToolWindow(true, null);
     Content content = getContent(info);
-    if (myContentManager.getSelectedContent() != content) {
+    Content selectedContent = myContentManager.getSelectedContent();
+    if (selectedContent != content) {
       myInnerSelectionChange = true;
       try {
+        PreviewInfo selectedInfo = selectedContent != null ? selectedContent.getUserData(INFO_KEY) : null;
+        if (selectedInfo != null && selectedInfo.isModified(selectedInfo.getId() == info.getId())) {
+          moveToStandardPlaceImpl(selectedInfo.getId(), selectedInfo.getData());
+        }
         if (content == null) {
           content = addContent(info);
         }
-        myContentManager.setSelectedContent(content);
       }
       finally {
         myInnerSelectionChange = false;
       }
     }
     if (content != null) {
-      myContentManager.addContent(content, 0);
+      myContentManager.addContent(content, 0);//Adjust usage order
     }
-    return info.initComponent(requestFocus);
+    myInnerSelectionChange = true;
+    try {
+      if (content != null) {
+        updateContentWithInfo(content, info);
+        myContentManager.setSelectedContent(content, requestFocus);
+      }
+      return info.initComponent(requestFocus);
+    }
+    finally {
+      myInnerSelectionChange = false;
+    }
   }
 
   @Override
   public <V, C> void close(@NotNull PreviewProviderId<V, C> id, V data) {
     for (Content content : myContentManager.getContents()) {
       PreviewInfo info = content.getUserData(INFO_KEY);
-      if (info != null && info.getId() == id && info.getData() == data) {
+      if (info != null && info.getId() == id && info.getProvider().contentsAreEqual(info.getData(),data)) {
         close(info);
         break;
       }
@@ -257,25 +314,23 @@ public class PreviewManagerImpl implements PreviewManager {
   }
 
   @Override
-  public <V, C> boolean moveToStandardPlace(@NotNull PreviewProviderId<V, C> id, V data) {
+  public <V, C> void moveToStandardPlaceImpl(@NotNull PreviewProviderId<V, C> id, V data) {
     PreviewPanelProvider<V, C> provider = findProvider(id);
-    if (provider != null && provider.moveContentToStandardView(data)) {
-      close(id, data);
-      return true;
+    if (provider == null) return;
+    myLockedProviderIds.add(id);
+    try {
+      provider.showInStandardPlace(data);
+    } finally {
+      myLockedProviderIds.remove(id);
     }
-    return false;
+    close(id, data);
   }
 
-  private void toggleToolWindow(boolean activate) {
+  private void toggleToolWindow(boolean activate, Runnable runnable) {
     final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW);
     if (toolWindow != null && activate != toolWindow.isActive()) {
       if (activate) {
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            toolWindow.activate(null, false);
-          }
-        }, 75, ModalityState.stateForComponent(myEmptyStatePanel));
+        toolWindow.activate(runnable, true);
       }
       else {
         if (!myAlarm.isEmpty()) {
@@ -288,7 +343,7 @@ public class PreviewManagerImpl implements PreviewManager {
   private class MoveToStandardViewAction extends AnAction {
 
     public MoveToStandardViewAction() {
-      super("Move to standard view", "Move to standard view", AllIcons.Duplicates.SendToTheLeftGrayed);
+      super("Move to standard view", "Move to standard view", AllIcons.Actions.MoveToStandardPlace);
     }
 
     @Override
@@ -297,8 +352,8 @@ public class PreviewManagerImpl implements PreviewManager {
       if (selectedContent == null) return;
       PreviewInfo previewInfo = selectedContent.getUserData(INFO_KEY);
       if (previewInfo != null) {
-        moveToStandardPlace(previewInfo.getId(), previewInfo.getData());
-        toggleToolWindow(false);
+        moveToStandardPlaceImpl(previewInfo.getId(), previewInfo.getData());
+        toggleToolWindow(false, null);
       }
     }
   }
@@ -349,7 +404,7 @@ public class PreviewManagerImpl implements PreviewManager {
       UIUtil.applyRenderingHints(g);
       GraphicsUtil.setupAntialiasing(g, true, false);
       g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._80, Gray._160));
-      g.setFont(UIUtil.getLabelFont().deriveFont(isDarkBackground ? 24f : 20f));
+      g.setFont(JBUI.Fonts.label(isDarkBackground ? 24f : 20f));
 
       UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
       painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(255)));

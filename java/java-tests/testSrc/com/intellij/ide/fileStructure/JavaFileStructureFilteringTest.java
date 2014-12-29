@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,20 +24,20 @@ public class JavaFileStructureFilteringTest extends JavaFileStructureTestCase {
     return "filtering";
   }
 
-  public void testSimple()            throws Exception {checkTree("f");}
-  public void testReturnValue()       throws Exception {checkTree("point");}
-  public void testAnonymousType()     throws Exception {checkTree("point");}
-  public void testCamel()             throws Exception {checkTree("sohe");}
-  public void testCamel2()            throws Exception {checkTree("soHe");}
-  public void testSelectLeafFirst()   throws Exception {checkTree("clear");}
-  public void testSelectLeafFirst2()  throws Exception {checkTree("clear");}
-  public void testSelectLeafFirst3()  throws Exception {checkTree("clear");}
-  public void testSelectLeafFirst4()  throws Exception {checkTree("clear");}
+  public void testSimple()            {checkTree("f");}
+  public void testReturnValue()       {checkTree("point");}
+  public void testAnonymousType()     {checkTree("point");}
+  public void testCamel()             {checkTree("sohe");}
+  public void testCamel2()            {checkTree("soHe");}
+  public void testSelectLeafFirst()   {checkTree("clear");}
+  public void testSelectLeafFirst2()  {checkTree("clear");}
+  public void testSelectLeafFirst3()  {checkTree("clear");}
+  public void testSelectLeafFirst4()  {checkTree("clear");}
 
-  public void testMatcher()           throws Exception {checkTree("dis");}
+  public void testMatcher()           {checkTree("dis");}
 
-  public void testMatcher1()          throws Exception {checkTree("ico");}
-  public void testMatcher2()          throws Exception {checkTree("ico");}
+  public void testMatcher1()          {checkTree("ico");}
+  public void testMatcher2()          {checkTree("ico");}
   
-  public void _testAnonymousMatcher2() throws Exception {checkTree("ico");} //http://youtrack.jetbrains.com/issue/IDEABKL-6906
+  public void _testAnonymousMatcher2() {checkTree("ico");} //https://youtrack.jetbrains.com/issue/IDEABKL-6906
 }

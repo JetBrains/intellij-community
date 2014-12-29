@@ -28,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ArrangementSettingsToken implements Comparable<ArrangementSettingsToken> {
 
-  @NotNull private final String myId;
-  @NotNull private final String myRepresentationName;
+  @NotNull protected String myId;
+  @NotNull protected String myRepresentationName;
 
   public ArrangementSettingsToken(@NotNull String id, @NotNull String name) {
     myId = id;

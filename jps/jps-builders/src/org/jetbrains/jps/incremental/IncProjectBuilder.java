@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.MappingFailedException;
@@ -49,6 +49,7 @@ import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
@@ -72,6 +73,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -84,7 +86,7 @@ public class IncProjectBuilder {
 
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
-  private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", "false"));
+  private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", SystemInfo.isWindows ? "true" : "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
   public static final int MAX_BUILDER_THREADS;
   static {
@@ -118,6 +120,7 @@ public class IncProjectBuilder {
   private final int myTotalModuleLevelBuilderCount;
   private final List<Future> myAsyncTasks = Collections.synchronizedList(new ArrayList<Future>());
   private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = ContainerUtil.newConcurrentMap();
 
   public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs,
                            @Nullable Callbacks.ConstantAffectionResolver constantSearch, final boolean isTestMode) {
@@ -371,7 +374,9 @@ public class IncProjectBuilder {
 
   private void sendElapsedTimeMessages(CompileContext context) {
     for (Map.Entry<Builder, AtomicLong> entry : myElapsedTimeNanosByBuilder.entrySet()) {
-      context.processMessage(new BuilderStatisticsMessage(entry.getKey().getPresentableName(), entry.getValue().get()/1000000));
+      AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
+      int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
+      context.processMessage(new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1000000));
     }
   }
 
@@ -853,7 +858,7 @@ public class IncProjectBuilder {
       BuildOutputConsumerImpl outputConsumer = new BuildOutputConsumerImpl(target, context);
       long start = System.nanoTime();
       ((TargetBuilder<R, T>)builder).build(target, holder, outputConsumer, context);
-      incBuilderElapsedTime(builder, System.nanoTime() - start);
+      storeBuilderStatistics(builder, System.nanoTime() - start, outputConsumer.getNumberOfProcessedSources());
       outputConsumer.fireFileGeneratedEvent();
       context.checkCanceled();
     }
@@ -1048,7 +1053,7 @@ public class IncProjectBuilder {
               for (String formPath : boundForms) {
                 final File formFile = new File(formPath);
                 if (formFile.exists()) {
-                  FSOperations.markDirty(context, formFile);
+                  FSOperations.markDirty(context, CompilationRound.CURRENT, formFile);
                 }
               }
               sourceToFormMap.remove(deletedSource);
@@ -1134,55 +1139,65 @@ public class IncProjectBuilder {
             continue;
           }
 
-          for (ModuleLevelBuilder builder : builders) {
-            processDeletedPaths(context, chunk.getTargets());
-            long start = System.nanoTime();
-            final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
-            incBuilderElapsedTime(builder, System.nanoTime() - start);
-
-            doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
-
-            if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-              throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
-            }
-            context.checkCanceled();
-            if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
-              if (!nextPassRequired) {
-                // recalculate basis
-                myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-                stageCount += myTotalModuleLevelBuilderCount;
-                myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
+          try {
+            for (ModuleLevelBuilder builder : builders) {
+              processDeletedPaths(context, chunk.getTargets());
+              long start = System.nanoTime();
+              int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
+              final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
+              storeBuilderStatistics(builder, System.nanoTime() - start,
+                                     outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
+  
+              doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
+  
+              if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
+                throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
               }
+              context.checkCanceled();
+              if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+                nextPassRequired = true;
+              }
+              else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
+                if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
+                  LOG.info("Builder " + builder.getPresentableName() + " requested rebuild of module chunk " + chunk.getName());
+                  // allow rebuild from scratch only once per chunk
+                  rebuildFromScratchRequested = true;
+                  try {
+                    // forcibly mark all files in the chunk dirty
+                    context.getProjectDescriptor().fsState.clearContextRoundData(context);
+                    FSOperations.markDirty(context, CompilationRound.NEXT, chunk, null);
+                    // reverting to the beginning
+                    myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+                    stageCount = myTotalModuleLevelBuilderCount;
+                    buildersPassed = 0;
+                    nextPassRequired = true;
+                    outputConsumer.clear();
+                    break BUILDER_CATEGORY_LOOP;
+                  }
+                  catch (Exception e) {
+                    throw new ProjectBuildException(e);
+                  }
+                }
+                else {
+                  LOG.debug("Builder " + builder.getPresentableName() + " requested second chunk rebuild");
+                }
+              }
+  
+              buildersPassed++;
+              updateDoneFraction(context, modulesInChunk / (stageCount));
+            }
+          }
+          finally {
+            final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
+            if (moreToCompile) {
               nextPassRequired = true;
             }
-            else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-              if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-                LOG.info("Builder " + builder.getPresentableName() + " requested rebuild of module chunk " + chunk.getName());
-                // allow rebuild from scratch only once per chunk
-                rebuildFromScratchRequested = true;
-                try {
-                  // forcibly mark all files in the chunk dirty
-                  context.getProjectDescriptor().fsState.clearContextRoundData(context);
-                  FSOperations.markDirty(context, chunk, null);
-                  // reverting to the beginning
-                  myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-                  stageCount = myTotalModuleLevelBuilderCount;
-                  buildersPassed = 0;
-                  nextPassRequired = true;
-                  outputConsumer.clear();
-                  break BUILDER_CATEGORY_LOOP;
-                }
-                catch (Exception e) {
-                  throw new ProjectBuildException(e);
-                }
-              }
-              else {
-                LOG.debug("Builder " + builder.getPresentableName() + " requested second chunk rebuild");
-              }
+            if (nextPassRequired && !rebuildFromScratchRequested) {
+              // recalculate basis
+              myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+              stageCount += myTotalModuleLevelBuilderCount;
+              myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
             }
-
-            buildersPassed++;
-            updateDoneFraction(context, modulesInChunk / (stageCount));
           }
         }
       }
@@ -1202,11 +1217,16 @@ public class IncProjectBuilder {
     return doneSomething;
   }
 
-  private void incBuilderElapsedTime(Builder builder, long timeNanos) {
+  private void storeBuilderStatistics(Builder builder, long elapsedTime, int processedFiles) {
     if (!myElapsedTimeNanosByBuilder.containsKey(builder)) {
       myElapsedTimeNanosByBuilder.putIfAbsent(builder, new AtomicLong());
     }
-    myElapsedTimeNanosByBuilder.get(builder).addAndGet(timeNanos);
+    myElapsedTimeNanosByBuilder.get(builder).addAndGet(elapsedTime);
+
+    if (!myNumberOfSourcesProcessedByBuilder.containsKey(builder)) {
+      myNumberOfSourcesProcessedByBuilder.putIfAbsent(builder, new AtomicInteger());
+    }
+    myNumberOfSourcesProcessedByBuilder.get(builder).addAndGet(processedFiles);
   }
 
   private static void saveInstrumentedClasses(ChunkBuildOutputConsumerImpl outputConsumer) throws IOException {
@@ -1229,7 +1249,7 @@ public class IncProjectBuilder {
   private static CompileContext createContextWrapper(final CompileContext delegate) {
     final ClassLoader loader = delegate.getClass().getClassLoader();
     final UserDataHolderBase localDataHolder = new UserDataHolderBase();
-    final Set<Object> deletedKeysSet = new ConcurrentHashSet<Object>();
+    final Set<Object> deletedKeysSet = ContainerUtil.newConcurrentSet();
     final Class<UserDataHolder> dataHolderInterface = UserDataHolder.class;
     final Class<MessageHandler> messageHandlerInterface = MessageHandler.class;
     return (CompileContext)Proxy.newProxyInstance(loader, new Class[]{CompileContext.class}, new InvocationHandler() {

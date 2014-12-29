@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,11 @@ public class CommitHelper {
   }
 
   public boolean doCommit() {
-    return doCommit(new CommitProcessor());
+    return doCommit((AbstractVcs)null);
+  }
+
+  public boolean doCommit(@Nullable AbstractVcs vcs) {
+    return doCommit(new CommitProcessor(vcs));
   }
 
   public boolean doAlienCommit(final AbstractVcs vcs) {
@@ -374,8 +378,10 @@ public class CommitHelper {
     private LocalHistoryAction myAction;
     private ChangeListsModificationAfterCommit myAfterVcsRefreshModification;
     private boolean myCommitSuccess;
+    @Nullable private final AbstractVcs myVcs;
 
-    private CommitProcessor() {
+    private CommitProcessor(@Nullable AbstractVcs vcs) {
+      myVcs = vcs;
       myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.NOTHING;
       if (myChangeList instanceof LocalChangeList) {
         final LocalChangeList localList = (LocalChangeList) myChangeList;
@@ -391,6 +397,9 @@ public class CommitHelper {
     }
 
     public void callSelf() {
+      if (myVcs != null && myIncludedChanges.isEmpty()) {
+        process(myVcs, myIncludedChanges);
+      }
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, this);
     }
 
@@ -473,8 +482,7 @@ public class CommitHelper {
                     }
                   } else if (ChangeListsModificationAfterCommit.MOVE_OTHERS.equals(myAfterVcsRefreshModification)) {
                     ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
-                    dialog.show();
-                    if (dialog.isOK()) {
+                    if (dialog.showAndGet()) {
                       final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
                       MoveChangesToAnotherListAction.askAndMove(myProject, changes, null);
                     }

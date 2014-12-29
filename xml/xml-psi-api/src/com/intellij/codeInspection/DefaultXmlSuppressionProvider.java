@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -136,12 +137,12 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
 
   protected String getSuppressionText(String inspectionId, @Nullable String originalText) {
     if (originalText == null) {
-      return getPrefix() + inspectionId + getSuffix();
+      return getPrefix() + inspectionId + getSuffix() + "\n";
     } else if (inspectionId.equals(XmlSuppressableInspectionTool.ALL)) {
       final int pos = originalText.indexOf(getPrefix());
-      return originalText.substring(0, pos) + getPrefix() + inspectionId + getSuffix();
+      return originalText.substring(0, pos) + getPrefix() + inspectionId + getSuffix() + "\n";
     }
-    return originalText.replace(getSuffix(), ", " + inspectionId + getSuffix());
+    return StringUtil.replace(originalText, getSuffix(), ", " + inspectionId + getSuffix());
   }
 
   @NonNls
@@ -153,6 +154,6 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
 
   @NonNls
   protected String getSuffix() {
-    return " -->\n";
+    return " -->";
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,155 +18,177 @@ package com.intellij.ide.plugins;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.net.HttpConfigurable;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.io.HttpRequests;
+import com.intellij.util.io.RequestBuilder;
+import com.intellij.util.io.URLUtil;
+import org.apache.http.client.utils.URIBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URISyntaxException;
+import java.net.URLConnection;
+import java.util.Iterator;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
 
 /**
  * @author stathik
  * @since Mar 28, 2003
  */
 public class RepositoryHelper {
-  @NonNls public static final String PLUGIN_LIST_FILE = "availables.xml";
+  private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
+  @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
 
-  public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable ProgressIndicator indicator) throws Exception {
-    return loadPluginsFromRepository(indicator, null);
+  /**
+   * Loads list of plugins, compatible with a current build, from a main plugin repository.
+   */
+  @NotNull
+  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable ProgressIndicator indicator) throws IOException {
+    return loadPlugins(null, null, indicator);
   }
 
-  public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable ProgressIndicator indicator,
-                                                                     BuildNumber buildnumber) throws Exception {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-
-    String url = appInfo.getPluginsListUrl() + "?build=" + (buildnumber != null ? buildnumber.asString() : appInfo.getApiVersion());
-
-    if (indicator != null) {
-      indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", appInfo.getPluginManagerUrl()));
-    }
-
-    File pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
-    if (pluginListFile.length() > 0) {
-      try {
-        url = url + "&crc32=" + Files.hash(pluginListFile, Hashing.crc32()).toString();
-      }
-      catch (NoSuchMethodError e) {
-        String guavaPath = PathUtil.getJarPathForClass(Hashing.class);
-        throw new RuntimeException(guavaPath, e);
-      }
-    }
-
-    HttpURLConnection connection = ApplicationManager.getApplication() != null ?
-                                   HttpConfigurable.getInstance().openHttpConnection(url) :
-                                   (HttpURLConnection)new URL(url).openConnection();
-    connection.setRequestProperty("Accept-Encoding", "gzip");
-    connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-    connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
-
-    if (indicator != null) {
-      indicator.setText2(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", appInfo.getPluginManagerUrl()));
-    }
-
-    connection.connect();
-    try {
-      if (indicator != null) {
-        indicator.checkCanceled();
-      }
-
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
-        return loadPluginList(pluginListFile);
-      }
-
-      String encoding = connection.getContentEncoding();
-      InputStream is = connection.getInputStream();
-      try {
-        if ("gzip".equalsIgnoreCase(encoding)) {
-          is = new GZIPInputStream(is);
-        }
-
-        if (indicator != null) {
-          indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins"));
-        }
-
-        return readPluginsStream(is, indicator, PLUGIN_LIST_FILE);
-      }
-      finally {
-        is.close();
-      }
-    }
-    finally {
-      connection.disconnect();
-    }
+  /**
+   * Loads list of plugins, compatible with a given build, from a given plugin repository (main repository if null).
+   */
+  @NotNull
+  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
+                                                       @Nullable BuildNumber buildnumber,
+                                                       @Nullable final ProgressIndicator indicator) throws IOException {
+    boolean forceHttps = repositoryUrl == null && UpdateSettings.getInstance().SECURE_CONNECTION;
+    return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
   }
 
-  private synchronized static List<IdeaPluginDescriptor> readPluginsStream(InputStream is,
-                                                                           ProgressIndicator indicator,
-                                                                           String file) throws Exception {
-    File temp = createLocalPluginsDescriptions(file);
-
-    OutputStream os = new FileOutputStream(temp, false);
+  @NotNull
+  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
+                                                       @Nullable BuildNumber buildnumber,
+                                                       boolean forceHttps,
+                                                       @Nullable final ProgressIndicator indicator) throws IOException {
+    final URIBuilder uriBuilder;
+    final File pluginListFile;
     try {
-      byte[] buffer = new byte[1024];
-      int size;
-      while ((size = is.read(buffer)) > 0) {
-        os.write(buffer, 0, size);
+      if (repositoryUrl == null) {
+        uriBuilder = new URIBuilder(ApplicationInfoImpl.getShadowInstance().getPluginsListUrl());
+        pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
+        if (pluginListFile.length() > 0) {
+          uriBuilder.addParameter("crc32", Files.hash(pluginListFile, Hashing.crc32()).toString());
+        }
+      }
+      else {
+        uriBuilder = new URIBuilder(repositoryUrl);
+        pluginListFile = null;
+      }
+    }
+    catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
+    if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
+      uriBuilder.addParameter("build", (buildnumber != null ? buildnumber.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+    }
+
+    if (indicator != null) {
+      indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", uriBuilder.getHost()));
+    }
+
+    RequestBuilder request = HttpRequests.request(uriBuilder.toString()).forceHttps(forceHttps);
+    return process(repositoryUrl, request.connect(new HttpRequests.RequestProcessor<List<IdeaPluginDescriptor>>() {
+      @Override
+      public List<IdeaPluginDescriptor> process(@NotNull HttpRequests.Request request) throws IOException {
         if (indicator != null) {
           indicator.checkCanceled();
         }
+
+        URLConnection connection = request.getConnection();
+        if (pluginListFile != null &&
+            pluginListFile.length() > 0 &&
+            connection instanceof HttpURLConnection &&
+            ((HttpURLConnection)connection).getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+          return loadPluginList(pluginListFile);
+        }
+
+        if (indicator != null) {
+          indicator.checkCanceled();
+          indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins", uriBuilder.getHost()));
+        }
+
+        if (pluginListFile != null) {
+          synchronized (RepositoryHelper.class) {
+            FileUtil.ensureExists(pluginListFile.getParentFile());
+            request.saveToFile(pluginListFile, indicator);
+            return loadPluginList(pluginListFile);
+          }
+        }
+        else {
+          return parsePluginList(request.getReader());
+        }
+      }
+    }));
+  }
+
+  /**
+   * Reads cached plugin descriptors from a file. Returns null if cache file does not exist.
+   */
+  @Nullable
+  public static List<IdeaPluginDescriptor> loadCachedPlugins() throws IOException {
+    File file = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
+    return file.length() == 0 ? null : loadPluginList(file);
+  }
+
+  private static List<IdeaPluginDescriptor> loadPluginList(@NotNull File file) throws IOException {
+    return parsePluginList(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8_CHARSET));
+  }
+
+  private static List<IdeaPluginDescriptor> parsePluginList(@NotNull Reader reader) throws IOException {
+    try {
+      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+      RepositoryContentHandler handler = new RepositoryContentHandler();
+      parser.parse(new InputSource(reader), handler);
+      return handler.getPluginsList();
+    }
+    catch (ParserConfigurationException e) {
+      throw new IOException(e);
+    }
+    catch (SAXException e) {
+      throw new IOException(e);
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  private static List<IdeaPluginDescriptor> process(@Nullable String repositoryUrl, List<IdeaPluginDescriptor> list) {
+    for (Iterator<IdeaPluginDescriptor> i = list.iterator(); i.hasNext(); ) {
+      IdeaPluginDescriptor descriptor = i.next();
+      if (descriptor.getPluginId() == null || descriptor.getUrl() == null) {
+        LOG.warn("Malformed plugin record at " + repositoryUrl);
+        i.remove();
+      }
+      else if (descriptor instanceof PluginNode) {
+        PluginNode node = (PluginNode)descriptor;
+        if (repositoryUrl != null) {
+          node.setRepositoryName(repositoryUrl);
+        }
+        if (node.getName() == null) {
+          String url = node.getUrl();
+          String name = FileUtil.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1));
+          ((PluginNode)descriptor).setName(name);
+        }
       }
     }
-    finally {
-      os.close();
-    }
 
-    return loadPluginList(temp);
-  }
-
-  private static List<IdeaPluginDescriptor> loadPluginList(File file) throws Exception {
-    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-    RepositoryContentHandler handler = new RepositoryContentHandler();
-    parser.parse(file, handler);
-    return handler.getPluginsList();
-  }
-
-  private static File createLocalPluginsDescriptions(String file) throws IOException {
-    File basePath = new File(PathManager.getPluginsPath());
-    if (!basePath.isDirectory() && !basePath.mkdirs()) {
-      throw new IOException("Cannot create directory: " + basePath);
-    }
-
-    File temp = new File(basePath, file);
-    if (temp.exists()) {
-      FileUtil.delete(temp);
-    }
-    FileUtil.createIfDoesntExist(temp);
-    return temp;
-  }
-
-  public static List<IdeaPluginDescriptor> loadPluginsFromDescription(InputStream is, ProgressIndicator indicator) throws Exception {
-    try {
-      return readPluginsStream(is, indicator, "host.xml");
-    }
-    finally {
-      is.close();
-    }
-  }
-
-  public static String getDownloadUrl() {
-    return ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl() + "?action=download&id=";
+    return list;
   }
 }

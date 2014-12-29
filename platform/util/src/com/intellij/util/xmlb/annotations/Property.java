@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb.annotations;
 
-import com.intellij.util.xmlb.DefaultSerializationFilter;
 import com.intellij.util.xmlb.SerializationFilter;
 
 import java.lang.annotation.ElementType;
@@ -31,5 +29,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.TYPE, ElementType.METHOD})
 public @interface Property {
   boolean surroundWithTag() default true;
-  Class<? extends SerializationFilter> filter() default DefaultSerializationFilter.class;
+
+  Class<? extends SerializationFilter> filter() default SerializationFilter.class;
 }

@@ -54,7 +54,9 @@ import java.util.List;
  *         author: lesya
  */
 public class LineStatusTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
+  public enum Mode {DEFAULT, SMART}
+
+  public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private static final Key<CanNotCalculateDiffPanel> PANEL_KEY =
     new Key<CanNotCalculateDiffPanel>("LineStatusTracker.CanNotCalculateDiffPanel");
 
@@ -77,6 +79,8 @@ public class LineStatusTracker {
   private boolean myBulkUpdate;
   private boolean myAnathemaThrown;
   private boolean myReleased;
+
+  @NotNull private Mode myMode = Registry.is("diff.status.tracker.smart") ? Mode.SMART : Mode.DEFAULT;
 
   @NotNull private List<Range> myRanges;
 
@@ -129,7 +133,7 @@ public class LineStatusTracker {
       removeAnathema();
       removeHighlightersFromMarkupModel();
       try {
-        myRanges = new RangesBuilder(myDocument, myVcsDocument).getRanges();
+        myRanges = new RangesBuilder(myDocument, myVcsDocument, myMode).getRanges();
       }
       catch (FilesTooBigForDiffException e) {
         installAnathema();
@@ -167,6 +171,13 @@ public class LineStatusTracker {
     }
   }
 
+  public void setMode(@NotNull Mode mode) {
+    synchronized (myLock) {
+      myMode = mode;
+      reinstallRanges();
+    }
+  }
+
   @NotNull
   private RangeHighlighter createHighlighter(@NotNull Range range) {
     myApplication.assertIsDispatchThread();
@@ -179,11 +190,10 @@ public class LineStatusTracker {
     int second =
       range.getLine2() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine2());
 
-    final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
-      .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, null, HighlighterTargetArea.LINES_IN_RANGE);
-
     final TextAttributes attr = LineStatusTrackerDrawing.getAttributesFor(range);
-    highlighter.setErrorStripeMarkColor(attr.getErrorStripeColor());
+    final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
+      .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, attr, HighlighterTargetArea.LINES_IN_RANGE);
+
     highlighter.setThinErrorStripeMark(true);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
@@ -518,7 +528,7 @@ public class LineStatusTracker {
     List<String> lines = new DocumentWrapper(myDocument).getLines(changedLine1, changedLine2 - 1);
     List<String> vcsLines = new DocumentWrapper(myVcsDocument).getLines(vcsLine1, vcsLine2 - 1);
 
-    return new RangesBuilder(lines, vcsLines, changedLine1, vcsLine1).getRanges();
+    return new RangesBuilder(lines, vcsLines, changedLine1, vcsLine1, myMode).getRanges();
   }
 
   private void replaceRanges(@NotNull List<Range> rangesInChange, @NotNull List<Range> newRangesInChange) {

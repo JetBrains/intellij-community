@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider;
@@ -66,6 +67,7 @@ public class ErrorHighlightingPanel {
     for (ErrorOptionsProvider optionsProvider : myExtensions) {
       optionsProvider.apply();
     }
+    UISettings.getInstance().fireUISettingsChanged();
   }
 
   public JPanel getPanel(){

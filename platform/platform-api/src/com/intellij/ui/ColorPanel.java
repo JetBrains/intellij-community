@@ -15,71 +15,78 @@
  */
 package com.intellij.ui;
 
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
+import java.awt.event.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import static java.beans.EventHandler.create;
 
 public class ColorPanel extends JComponent {
-  private static final Dimension SIZE = new Dimension(25, 15);
-
-  private boolean isFiringEvent = false;
-  private boolean isEditable = true;
   private final List<ActionListener> myListeners = new CopyOnWriteArrayList<ActionListener>();
-  @Nullable private Color myColor = null;
+  private boolean myEditable;
+  private ActionEvent myEvent;
+  private Color myColor;
 
   public ColorPanel() {
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        if (!isEnabled() || !isEditable) return;
-        Color color = ColorChooser.chooseColor(ColorPanel.this, UIBundle.message("color.panel.select.color.dialog.description"), myColor);
-        if (color != null) {
-          setSelectedColor(color);
-          fireActionEvent();
+    setEditable(true);
+    setMinimumSize(new Dimension(10, 10));
+    addMouseListener(create(MouseListener.class, this, "onPressed", null, "mousePressed"));
+    addKeyListener(create(KeyListener.class, this, "onPressed", "keyCode", "keyPressed"));
+    addFocusListener(create(FocusListener.class, this, "repaint"));
+  }
+
+  public void onPressed(int keyCode) {
+    if (keyCode == KeyEvent.VK_SPACE) {
+      onPressed();
+    }
+  }
+
+  public void onPressed() {
+    if (myEditable && isEnabled()) {
+      Color color = ColorChooser.chooseColor(this, UIBundle.message("color.panel.select.color.dialog.description"), myColor);
+      if (color != null) {
+        setSelectedColor(color);
+        if (!myListeners.isEmpty() && (myEvent == null)) {
+          try {
+            myEvent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
+            for (ActionListener listener : myListeners) {
+              listener.actionPerformed(myEvent);
+            }
+          }
+          finally {
+            myEvent = null;
+          }
         }
       }
-    });
+    }
   }
 
   @Override
-  public void paint(Graphics g) {
-    Graphics2D g2d = (Graphics2D)g.create();
-    try {
-      if (myColor != null && isEnabled()) {
-        g2d.setColor(myColor);
-        g2d.fillRect(0, 0, getWidth(), getHeight());
-        g2d.setColor(ColorUtil.darker(myColor, 2));
-        g2d.draw(new Rectangle2D.Double(0.5, 0.5, getWidth()-1, getHeight()-1));
-      }
-      g2d.setColor(UIUtil.getBorderColor());
-      g2d.draw(new Rectangle2D.Double(1.5, 1.5, getWidth() - 3, getHeight() - 3));
-    } finally {
-      g2d.dispose();
+  protected void paintComponent(Graphics g) {
+    g.setColor(hasFocus() ? JBColor.BLACK : JBColor.border());
+    g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+    if (myColor != null && isEnabled()) {
+      g.setColor(myColor);
+      g.fillRect(2, 2, getWidth() - 4, getHeight() - 4);
     }
   }
 
   @Override
   public Dimension getPreferredSize() {
-    return SIZE;
-  }
-
-  @Override
-  public Dimension getMaximumSize() {
-    return SIZE;
-  }
-
-  @Override
-  public Dimension getMinimumSize() {
-    return SIZE;
+    if (isPreferredSizeSet()) {
+      return super.getPreferredSize();
+    }
+    Font font = getFont();
+    if (font != null) {
+      int size = font.getSize();
+      if (size > 6) {
+        return new Dimension(4 + 2 * size, 4 + size);
+      }
+    }
+    return getMinimumSize();
   }
 
   @Override
@@ -88,26 +95,10 @@ public class ColorPanel extends JComponent {
       return null;
     }
     StringBuilder buffer = new StringBuilder("0x").append(ColorUtil.toHex(myColor).toUpperCase());
-    if (isEnabled() && isEditable) {
+    if (myEditable && isEnabled()) {
       buffer.append(" (Click to customize)");
     }
     return buffer.toString();
-  }
-
-  private void fireActionEvent() {
-    if (!isEditable) return;
-    if (!isFiringEvent) {
-      try {
-        isFiringEvent = true;
-        ActionEvent event = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
-        for (ActionListener listener : myListeners) {
-          listener.actionPerformed(event);
-        }
-      }
-      finally {
-        isFiringEvent = false;
-      }
-    }
   }
 
   public void removeActionListener(ActionListener actionlistener) {
@@ -128,7 +119,9 @@ public class ColorPanel extends JComponent {
     repaint();
   }
 
-  public void setEditable(boolean isEditable) {
-    this.isEditable = isEditable;
+  public void setEditable(boolean editable) {
+    myEditable = editable;
+    setFocusable(editable);
+    repaint();
   }
 }

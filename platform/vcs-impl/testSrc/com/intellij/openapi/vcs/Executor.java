@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,6 +68,10 @@ public class Executor {
 
   private static void cdRel(String relativePath) {
     cdAbs(ourCurrentDir + "/" + relativePath);
+  }
+
+  public static void cd(@NotNull File dir) {
+    cdAbs(dir.getAbsolutePath());
   }
 
   public static void cd(String relativeOrAbsolutePath) {
@@ -119,6 +124,10 @@ public class Executor {
     }
   }
 
+  public static void overwrite(@NotNull String fileName, @NotNull String content) throws IOException {
+    overwrite(child(fileName), content);
+  }
+
   public static void overwrite(@NotNull File file, @NotNull String content) throws IOException {
     FileUtil.writeToFile(file, content.getBytes(), false);
   }
@@ -137,6 +146,7 @@ public class Executor {
     boolean dirMade = file.mkdir();
     assert dirMade;
     debug("# mkdir " + dirName);
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     return file;
   }
 

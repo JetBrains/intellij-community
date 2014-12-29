@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ public abstract class DesignerEditorPanel extends JPanel
   private final static String ERROR_STACK_CARD = "stack";
   private final static String ERROR_NO_STACK_CARD = "no_stack";
 
+  @NotNull
   private final DesignerEditor myEditor;
   private final Project myProject;
   private Module myModule;
@@ -521,6 +522,8 @@ public abstract class DesignerEditorPanel extends JPanel
     return ModuleUtilCore.findModuleForFile(file, project);
   }
 
+
+  @NotNull
   public final DesignerEditor getEditor() {
     return myEditor;
   }

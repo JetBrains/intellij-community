@@ -61,7 +61,7 @@ public class DefaultJDOMExternalizer {
 
       field.setAccessible(true); // class might be non-public
       Class type = field.getType();
-      if (filter != null && !filter.isAccept(field)) {
+      if (filter != null && !filter.isAccept(field) || field.getDeclaringClass().getAnnotation(Transient.class) != null) {
         continue;
       }
       String value = null;

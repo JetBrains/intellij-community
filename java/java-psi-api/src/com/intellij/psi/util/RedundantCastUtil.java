@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -341,6 +342,47 @@ public class RedundantCastUtil {
               }
             }
           }
+          else if (arg instanceof PsiLambdaExpression) {
+            final PsiType interfaceType = ((PsiLambdaExpression)arg).getFunctionalInterfaceType();
+            if (interfaceType != null) {
+              List<PsiExpression> expressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
+              for (int returnExprIdx = 0; returnExprIdx < expressions.size(); returnExprIdx++) {
+                PsiExpression returnExpression = deparenthesizeExpression(expressions.get(returnExprIdx));
+                if (returnExpression instanceof PsiTypeCastExpression) {
+                  processLambdaReturnExpression(expression, i, interfaceType, (PsiTypeCastExpression)returnExpression, returnExprIdx,
+                                                    new Function<PsiExpression, PsiTypeCastExpression>() {
+                                                      @Override
+                                                      public PsiTypeCastExpression fun(PsiExpression expression) {
+                                                        return (PsiTypeCastExpression)expression;
+                                                      }
+                                                    });
+                }
+                else if (returnExpression instanceof PsiConditionalExpression) {
+                  final PsiExpression thenExpression = ((PsiConditionalExpression)returnExpression).getThenExpression();
+                  if (thenExpression instanceof PsiTypeCastExpression) {
+                    processLambdaReturnExpression(expression, i, interfaceType, (PsiTypeCastExpression)thenExpression,
+                                                  returnExprIdx, new Function<PsiExpression, PsiTypeCastExpression>() {
+                                                    @Override
+                                                    public PsiTypeCastExpression fun(PsiExpression expression) {
+                                                      return (PsiTypeCastExpression)((PsiConditionalExpression)expression).getThenExpression();
+                                                    }
+                                                  });
+                  }
+
+                  final PsiExpression elseExpression = ((PsiConditionalExpression)returnExpression).getElseExpression();
+                  if (elseExpression instanceof PsiTypeCastExpression) {
+                    processLambdaReturnExpression(expression, i, interfaceType, (PsiTypeCastExpression)elseExpression,
+                                                  returnExprIdx, new Function<PsiExpression, PsiTypeCastExpression>() {
+                                                    @Override
+                                                    public PsiTypeCastExpression fun(PsiExpression expression) {
+                                                      return (PsiTypeCastExpression)((PsiConditionalExpression)expression).getElseExpression();
+                                                    }
+                                                  });
+                  }
+                }
+              }
+            }
+          }
         }
       }
       catch (IncorrectOperationException e) {
@@ -357,6 +399,29 @@ public class RedundantCastUtil {
         else {
           arg.accept(this);
         }
+      }
+    }
+
+    private void processLambdaReturnExpression(PsiCall expression,
+                                               int i,
+                                               PsiType interfaceType,
+                                               PsiTypeCastExpression returnExpression,
+                                               int returnExprIdx,
+                                               Function<PsiExpression, PsiTypeCastExpression> computeCastExpression) {
+      final PsiCall newCall = (PsiCall)expression.copy();
+      final PsiExpressionList newArgsList = newCall.getArgumentList();
+      LOG.assertTrue(newArgsList != null);
+      final PsiExpression[] newArgs = newArgsList.getExpressions();
+      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)deparenthesizeExpression(newArgs[i]);
+      LOG.assertTrue(lambdaExpression != null, newCall);
+      final PsiExpression newReturnExpression = deparenthesizeExpression(LambdaUtil.getReturnExpressions(lambdaExpression).get(returnExprIdx));
+      PsiTypeCastExpression castExpression = computeCastExpression.fun(newReturnExpression);
+      PsiExpression castOperand = castExpression.getOperand();
+      if (castOperand == null) return;
+      castExpression.replace(castOperand);
+      final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+      if (interfaceType.equals(functionalInterfaceType)) {
+        addToResults(returnExpression);
       }
     }
 
@@ -404,7 +469,7 @@ public class RedundantCastUtil {
             return;
           }
 
-          final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(typeCast, true);
+          final PsiType functionalInterfaceType = PsiTypesUtil.getExpectedTypeByParent(typeCast);
           if (topCastType != null && functionalInterfaceType != null && !TypeConversionUtil.isAssignable(topCastType, functionalInterfaceType, false)) return;
         }
         processAlreadyHasTypeCast(typeCast);
@@ -455,6 +520,15 @@ public class RedundantCastUtil {
       if (parent instanceof PsiExpressionList) return; // do not replace in arg lists - should be handled by parent
       if (parent instanceof PsiReturnStatement) return;
       if (parent instanceof PsiTypeCastExpression) return;
+
+      if (parent instanceof PsiLambdaExpression) return;
+
+      if (parent instanceof PsiConditionalExpression) {
+        PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+        if (gParent instanceof PsiLambdaExpression) return;
+        if (gParent instanceof PsiReturnStatement && 
+            PsiTreeUtil.getParentOfType(gParent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression) return;
+      }
 
       if (isTypeCastSemantic(typeCast)) return;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,8 +24,8 @@ import javax.swing.*;
  * An action which has a selected state, and which toggles its selected state when performed.
  * Can be used to represent a menu item with a checkbox, or a toolbar button which keeps its pressed state.
  */
+@SuppressWarnings("StaticInheritance")
 public abstract class ToggleAction extends AnAction implements Toggleable {
-
   public ToggleAction(){
   }
 
@@ -37,7 +38,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   }
 
   @Override
-  public final void actionPerformed(final AnActionEvent e){
+  public final void actionPerformed(@NotNull final AnActionEvent e){
     final boolean state = !isSelected(e);
     setSelected(e, state);
     final Boolean selected = state ? Boolean.TRUE : Boolean.FALSE;
@@ -60,8 +61,8 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   public abstract void setSelected(AnActionEvent e, boolean state);
 
   @Override
-  public void update(final AnActionEvent e){
-    final Boolean selected = isSelected(e) ? Boolean.TRUE : Boolean.FALSE;
+  public void update(@NotNull final AnActionEvent e){
+    boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(SELECTED_PROPERTY, selected);
   }

@@ -106,7 +106,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
   }
 
   private PsiGenerationInfo<PsiMethod> generateDelegatePrototype(PsiMethodMember methodCandidate, PsiElement target) throws IncorrectOperationException {
-    PsiMethod method = GenerateMembersUtil.substituteGenericMethod(methodCandidate.getElement(), methodCandidate.getSubstitutor());
+    PsiMethod method = GenerateMembersUtil.substituteGenericMethod(methodCandidate.getElement(), methodCandidate.getSubstitutor(), target);
     clearMethod(method);
 
     clearModifiers(method);

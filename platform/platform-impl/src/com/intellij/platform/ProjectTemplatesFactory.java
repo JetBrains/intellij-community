@@ -36,7 +36,7 @@ public abstract class ProjectTemplatesFactory {
   public abstract String[] getGroups();
 
   @NotNull
-  public abstract ProjectTemplate[] createTemplates(String group, WizardContext context);
+  public abstract ProjectTemplate[] createTemplates(@NotNull String group, WizardContext context);
 
   public Icon getGroupIcon(String group) {
     return null;

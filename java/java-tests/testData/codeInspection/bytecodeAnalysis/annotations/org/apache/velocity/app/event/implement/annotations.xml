@@ -6,6 +6,9 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.EscapeHtmlReference java.lang.String getMatchAttribute()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.EscapeJavaScriptReference java.lang.String escape(java.lang.Object) 0">
@@ -15,11 +18,19 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.EscapeJavaScriptReference java.lang.String getMatchAttribute()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.EscapeReference java.lang.Object referenceInsert(java.lang.String, java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.EscapeReference org.apache.velocity.runtime.RuntimeServices getRuntimeServices()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.app.event.implement.EscapeReference void setRuntimeServices(org.apache.velocity.runtime.RuntimeServices) 0">
@@ -32,6 +43,9 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.EscapeSqlReference java.lang.String getMatchAttribute()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.EscapeXmlReference java.lang.String escape(java.lang.Object) 0">
@@ -41,6 +55,9 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.EscapeXmlReference java.lang.String getMatchAttribute()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.IncludeNotFound java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String) 1">
@@ -55,6 +72,11 @@
   <item name="org.apache.velocity.app.event.implement.IncludeNotFound void setRuntimeServices(org.apache.velocity.runtime.RuntimeServices) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.app.event.implement.IncludeRelativePath IncludeRelativePath()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.app.event.implement.IncludeRelativePath java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -68,6 +90,11 @@
   </item>
   <item name="org.apache.velocity.app.event.implement.InvalidReferenceInfo InvalidReferenceInfo(java.lang.String, org.apache.velocity.util.introspection.Info) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.InvalidReferenceInfo java.lang.String getInvalidReference()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.app.event.implement.InvalidReferenceInfo java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -136,6 +163,11 @@
       <val val="&quot;!null,_,_,_,_-&gt;null;_,!null,_,_,_-&gt;null;_,_,!null,_,_-&gt;null;_,_,_,!null,_-&gt;null;_,_,_,_,!null-&gt;null;_,_,_,_,null-&gt;null;_,_,_,null,_-&gt;null;_,_,null,_,_-&gt;null;_,null,_,_,_-&gt;null;null,_,_,_,_-&gt;null&quot;"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences java.util.List getInvalidReferences()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences void reportInvalidReference(java.lang.String, org.apache.velocity.util.introspection.Info) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>

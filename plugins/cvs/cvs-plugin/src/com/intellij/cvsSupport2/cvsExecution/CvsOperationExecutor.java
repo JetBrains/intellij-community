@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -211,10 +207,7 @@ public class CvsOperationExecutor {
       Messages.showErrorDialog(errorMessage, "CVS Error");
       return;
     }
-    if (errors.isEmpty()) {
-      tabbedWindow.hideErrors();
-    }
-    else {
+    if (!errors.isEmpty()) {
       ErrorTreeView errorTreeView = tabbedWindow.getErrorsTreeView();
       for (final VcsException exception : errors) {
         final String groupName = DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ' ' + handler.getTitle();
@@ -226,21 +219,7 @@ public class CvsOperationExecutor {
                                    null, null, exception);
         }
       }
-      tabbedWindow.ensureVisible(myProject);
     }
-  }
-
-  @NotNull private static Editor createView(Project project) {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Document document = editorFactory.createDocument("");
-    Editor result = editorFactory.createViewer(document, project);
-
-    EditorSettings editorSettings = result.getSettings();
-    editorSettings.setLineMarkerAreaShown(false);
-    editorSettings.setLineNumbersShown(false);
-    editorSettings.setIndentGuidesShown(false);
-    editorSettings.setFoldingOutlineShown(false);
-    return result;
   }
 
   private static String getStatusMessage(final CvsHandler handler) {
@@ -276,13 +255,7 @@ public class CvsOperationExecutor {
   }
 
   private void connectToOutput(CvsHandler output) {
-    CvsTabbedWindow tabbedWindow = CvsTabbedWindow.getInstance(myProject);
-    Editor editor = tabbedWindow.getOutput();
-    if (editor == null) {
-      output.connectToOutputView(tabbedWindow.addOutput(createView(myProject)), myProject);
-    } else {
-      output.connectToOutputView(editor, myProject);
-    }
+    output.connectToOutputView(CvsTabbedWindow.getInstance(myProject).getOutput(), myProject);
   }
 
   public VcsException getFirstError() {

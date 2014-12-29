@@ -69,10 +69,14 @@ public class XsltCommandLineState extends CommandLineState {
         super(environment);
 
         myXsltRunConfiguration = xsltRunConfiguration;
-        myIsDebugger = "Debug".equals(environment.getRunner().getRunnerId());
+        myIsDebugger = "Debug".equals(environment.getExecutor().getId());
     }
 
-    @Override
+    public boolean isDebugger() {
+      return myIsDebugger;
+    }
+
+  @Override
     @NotNull
     protected OSProcessHandler startProcess() throws ExecutionException {
         final OSProcessHandler osProcessHandler = createJavaParameters().createOSProcessHandler();

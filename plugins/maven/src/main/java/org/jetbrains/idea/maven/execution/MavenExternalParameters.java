@@ -156,7 +156,7 @@ public class MavenExternalParameters {
 
     params.setMainClass(MAVEN_LAUNCHER_CLASS);
     EncodingManager encodingManager = project == null
-                                      ? EncodingProjectManager.getInstance()
+                                      ? EncodingManager.getInstance()
                                       : EncodingProjectManager.getInstance(project);
     params.setCharset(encodingManager.getDefaultCharset());
 

@@ -9,6 +9,7 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.StopBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -36,6 +37,11 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
   public void build(@NotNull final MavenResourcesTarget target, @NotNull final DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, @NotNull final BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException, IOException {
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
+    if (projectConfig == null) {
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Maven project configuration required for module '" + target.getModule().getName() + "' isn't available. Compilation of Maven projects is supported only if external build is started from an IDE."));
+      throw new StopBuildException();
+    }
+
     final MavenModuleResourceConfiguration config = target.getModuleResourcesConfiguration(dataPaths);
     if (config == null) {
       return;
@@ -92,7 +98,8 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         if (relPath == null) {
           continue;
         }
-        final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration(), config.outputDirectory);
+        final String outputDirectory = target.isTests() ? config.testOutputDirectory : config.outputDirectory;
+        final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration(), outputDirectory);
         if (outputDir == null) {
           continue;
         }

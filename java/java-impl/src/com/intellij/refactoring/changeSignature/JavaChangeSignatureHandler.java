@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
@@ -89,7 +90,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
 
     final PsiClass containingClass = method.getContainingClass();
     final PsiReferenceExpression refExpr = editor != null ? TargetElementUtil.findReferenceExpression(editor) : null;
-    final boolean allowDelegation = containingClass != null && !containingClass.isInterface();
+    final boolean allowDelegation = containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(containingClass));
     final DialogWrapper dialog = new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr == null ? method : refExpr);
     dialog.show();
   }

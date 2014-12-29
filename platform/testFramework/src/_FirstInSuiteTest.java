@@ -14,15 +14,41 @@
  * limitations under the License.
  */
 
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
+import junit.framework.TestCase;
+
+import javax.swing.*;
 
 /**
  * This is should be first test in all tests so we can measure how long tests are starting up.
  * @author max
  */
 @SuppressWarnings("JUnitTestClassNamingConvention")
-public class _FirstInSuiteTest extends LightPlatformTestCase {
-  public void testNothing() throws Exception {
+public class _FirstInSuiteTest extends TestCase {
+  public static long suiteStarted = 0L;
 
+  public void testNothing() throws Exception {
+    suiteStarted = System.nanoTime();
+    SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        System.out.println("EDT is "+Thread.currentThread());
+      }
+    });
+    // in tests EDT inexplicably shuts down sometimes during the first access,
+    // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.
+    // so we try to forcibly terminate EDT here to urge JVM to re-spawn new shiny permanent EDT-1
+    UsefulTestCase.replaceIdeEventQueueSafely();
+    SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        System.out.println("EDT is "+Thread.currentThread());
+      }
+    });
+  }
+
+  // performance tests
+  public void testNothingPerformance() throws Exception {
+    testNothing();
   }
 }

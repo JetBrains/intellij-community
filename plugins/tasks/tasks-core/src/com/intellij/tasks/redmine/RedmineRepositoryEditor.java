@@ -3,6 +3,7 @@ package com.intellij.tasks.redmine;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.redmine.model.RedmineProject;
@@ -106,16 +107,11 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
             //if (value.myLevel == 0 && value.myProject != RedmineRepository.UNSPECIFIED_PROJECT) {
               //setFont(UIUtil.getListFont().deriveFont(Font.BOLD));
             //}
-            StringBuilder builder = new StringBuilder();
-            if (value.myLevel != 0) {
-              for (int i = 0; i < value.myLevel; i++) {
-                builder.append("   ");
-              }
-            }
-            setText(builder.append(value.myProject.getIdentifier()).toString());
+            setText(StringUtil.repeat("   ", value.myLevel) + value.myProject.getName());
           }
           else {
-            setText(value.myProject.getIdentifier());
+            // Do not indent selected project
+            setText(value.myProject.getName());
           }
         }
       }

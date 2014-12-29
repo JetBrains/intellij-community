@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author peter
  */
@@ -436,16 +437,6 @@ s.do<caret>Smth()
     assertEquals "doSmth", ((PsiMethod) findReference().resolve()).name
   }
 
-  public void testBaseConstructorCallInMapLiteras() throws Exception {
-    configureScript """
-@Typed File foo() { <warning descr="Constructor 'File' in 'java.io.File' cannot be applied to '(['super':[java.lang.String]])'">['super':['a']]</warning> }
-@Typed File goo() { <warning descr="Constructor 'File' in 'java.io.File' cannot be applied to '([:])'">[:]</warning> }
-File bar() { <warning descr="Constructor 'File' in 'java.io.File' cannot be applied to '([:])'">[:]</warning> }
-"""
-    myFixture.enableInspections new GroovyAssignabilityCheckInspection()
-    myFixture.checkHighlighting(true, false, false)
-  }
-
   public void testNestedLiteralConstructors() throws Exception {
     configureGppScript """
     class Foo {
@@ -521,7 +512,7 @@ class Bar {
 }
 println new Bar().zzz
 '''
-    myFixture.enableInspections(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
+    myFixture.enableInspections(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspectionBase(true))
     myFixture.checkHighlighting(true, false, false)
   }
 

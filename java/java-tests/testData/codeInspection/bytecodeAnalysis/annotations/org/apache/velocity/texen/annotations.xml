@@ -32,6 +32,11 @@
   <item name="org.apache.velocity.texen.Generator org.apache.velocity.Template getTemplate(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.velocity.texen.Generator org.apache.velocity.texen.Generator getInstance()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.texen.Generator void fillContextDefaults(org.apache.velocity.context.Context) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

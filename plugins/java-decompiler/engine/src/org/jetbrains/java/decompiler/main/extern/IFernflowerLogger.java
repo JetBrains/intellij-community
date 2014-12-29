@@ -18,7 +18,13 @@ package org.jetbrains.java.decompiler.main.extern;
 public abstract class IFernflowerLogger {
 
   public enum Severity {
-    TRACE, INFO, WARN, ERROR
+    TRACE("TRACE: "), INFO("INFO:  "), WARN("WARN:  "), ERROR("ERROR: ");
+
+    public final String prefix;
+
+    Severity(String prefix) {
+      this.prefix = prefix;
+    }
   }
 
   private Severity severity = Severity.INFO;
@@ -35,15 +41,19 @@ public abstract class IFernflowerLogger {
 
   public abstract void writeMessage(String message, Throwable t);
 
+  public void startReadingClass(String className) { }
+
+  public void endReadingClass() { }
+
   public void startClass(String className) { }
 
   public void endClass() { }
 
-  public void startWriteClass(String className) { }
-
-  public void endWriteClass() { }
-
   public void startMethod(String methodName) { }
 
   public void endMethod() { }
+
+  public void startWriteClass(String className) { }
+
+  public void endWriteClass() { }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,66 +28,59 @@ public class GenericType {
   public static final int WILDCARD_UNBOUND = 3;
   public static final int WILDCARD_NO = 4;
 
-  public int type;
+  public final int type;
+  public final int arrayDim;
+  public final String value;
 
-  public int arraydim;
+  private final List<GenericType> enclosingClasses = new ArrayList<GenericType>();
+  private final List<GenericType> arguments = new ArrayList<GenericType>();
+  private final List<Integer> wildcards = new ArrayList<Integer>();
 
-  public String value;
-
-
-  private List<GenericType> enclosingClasses = new ArrayList<GenericType>();
-
-  private List<GenericType> arguments = new ArrayList<GenericType>();
-
-  private List<Integer> wildcards = new ArrayList<Integer>();
-
-
-  public GenericType(int type, int arraydim, String value) {
+  public GenericType(int type, int arrayDim, String value) {
     this.type = type;
-    this.arraydim = arraydim;
+    this.arrayDim = arrayDim;
     this.value = value;
   }
 
-
-  public GenericType(String strtype) {
-
-    parseSignature(strtype);
-  }
-
-  private void parseSignature(String sig) {
+  public GenericType(String signature) {
+    int type = 0;
+    int arrayDim = 0;
+    String value = null;
 
     int index = 0;
-    while (index < sig.length()) {
-
-      switch (sig.charAt(index)) {
+    loop:
+    while (index < signature.length()) {
+      switch (signature.charAt(index)) {
         case '[':
-          arraydim++;
+          arrayDim++;
           break;
+
         case 'T':
           type = CodeConstants.TYPE_GENVAR;
-          value = sig.substring(index + 1, sig.length() - 1);
-          return;
+          value = signature.substring(index + 1, signature.length() - 1);
+          break loop;
+
         case 'L':
           type = CodeConstants.TYPE_OBJECT;
-          sig = sig.substring(index + 1, sig.length() - 1);
+          signature = signature.substring(index + 1, signature.length() - 1);
 
           while (true) {
-            String cl = getNextClassSignature(sig);
+            String cl = getNextClassSignature(signature);
 
             String name = cl;
             String args = null;
 
-            int argfrom = cl.indexOf("<");
-            if (argfrom >= 0) {
-              name = cl.substring(0, argfrom);
-              args = cl.substring(argfrom + 1, cl.length() - 1);
+            int argStart = cl.indexOf("<");
+            if (argStart >= 0) {
+              name = cl.substring(0, argStart);
+              args = cl.substring(argStart + 1, cl.length() - 1);
             }
 
-            if (cl.length() < sig.length()) {
-              sig = sig.substring(cl.length() + 1); // skip '.'
-              GenericType type = new GenericType(CodeConstants.TYPE_OBJECT, 0, name);
-              parseArgumentsList(args, type);
-              enclosingClasses.add(type);
+            if (cl.length() < signature.length()) {
+              signature = signature.substring(cl.length() + 1); // skip '.'
+              GenericType type11 = new GenericType(CodeConstants.TYPE_OBJECT, 0, name);
+              parseArgumentsList(args, type11);
+              enclosingClasses.add(type11);
             }
             else {
               value = name;
@@ -95,18 +89,22 @@ public class GenericType {
             }
           }
 
-          return;
+          break loop;
+
         default:
-          value = sig.substring(index, index + 1);
-          type = getType(value.charAt(0));
+          value = signature.substring(index, index + 1);
+          type = VarType.getType(value.charAt(0));
       }
 
       index++;
     }
+
+    this.type = type;
+    this.arrayDim = arrayDim;
+    this.value = value;
   }
 
   private static String getNextClassSignature(String value) {
-
     int counter = 0;
     int index = 0;
 
@@ -132,18 +130,16 @@ public class GenericType {
   }
 
   private static void parseArgumentsList(String value, GenericType type) {
-
     if (value == null) {
       return;
     }
 
     while (value.length() > 0) {
-
-      String tstr = getNextType(value);
-      int len = tstr.length();
+      String typeStr = getNextType(value);
+      int len = typeStr.length();
       int wildcard = WILDCARD_NO;
 
-      switch (tstr.charAt(0)) {
+      switch (typeStr.charAt(0)) {
         case '*':
           wildcard = WILDCARD_UNBOUND;
           break;
@@ -158,41 +154,40 @@ public class GenericType {
       type.getWildcards().add(wildcard);
 
       if (wildcard != WILDCARD_NO) {
-        tstr = tstr.substring(1);
+        typeStr = typeStr.substring(1);
       }
 
-      type.getArguments().add(tstr.length() == 0 ? null : new GenericType(tstr));
+      type.getArguments().add(typeStr.length() == 0 ? null : new GenericType(typeStr));
 
       value = value.substring(len);
     }
   }
 
   public static String getNextType(String value) {
-
     int counter = 0;
     int index = 0;
 
-    boolean contmode = false;
+    boolean contMode = false;
 
     loop:
     while (index < value.length()) {
       switch (value.charAt(index)) {
         case '*':
-          if (!contmode) {
+          if (!contMode) {
             break loop;
           }
           break;
         case 'L':
         case 'T':
-          if (!contmode) {
-            contmode = true;
+          if (!contMode) {
+            contMode = true;
           }
         case '[':
         case '+':
         case '-':
           break;
         default:
-          if (!contmode) {
+          if (!contMode) {
             break loop;
           }
           break;
@@ -214,53 +209,18 @@ public class GenericType {
     return value.substring(0, index + 1);
   }
 
-  private static int getType(char c) {
-    switch (c) {
-      case 'B':
-        return CodeConstants.TYPE_BYTE;
-      case 'C':
-        return CodeConstants.TYPE_CHAR;
-      case 'D':
-        return CodeConstants.TYPE_DOUBLE;
-      case 'F':
-        return CodeConstants.TYPE_FLOAT;
-      case 'I':
-        return CodeConstants.TYPE_INT;
-      case 'J':
-        return CodeConstants.TYPE_LONG;
-      case 'S':
-        return CodeConstants.TYPE_SHORT;
-      case 'Z':
-        return CodeConstants.TYPE_BOOLEAN;
-      case 'V':
-        return CodeConstants.TYPE_VOID;
-      case 'G':
-        return CodeConstants.TYPE_GROUP2EMPTY;
-      case 'N':
-        return CodeConstants.TYPE_NOTINITIALIZED;
-      case 'A':
-        return CodeConstants.TYPE_ADDRESS;
-      case 'X':
-        return CodeConstants.TYPE_BYTECHAR;
-      case 'Y':
-        return CodeConstants.TYPE_SHORTCHAR;
-      case 'U':
-        return CodeConstants.TYPE_UNKNOWN;
-      default:
-        throw new RuntimeException("Invalid type");
-    }
+  public GenericType decreaseArrayDim() {
+    assert arrayDim > 0 : this;
+    return new GenericType(type, arrayDim - 1, value);
   }
-
 
   public List<GenericType> getArguments() {
     return arguments;
   }
 
-
   public List<GenericType> getEnclosingClasses() {
     return enclosingClasses;
   }
-
 
   public List<Integer> getWildcards() {
     return wildcards;

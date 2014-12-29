@@ -28,28 +28,29 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   @Override
   public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile psiFile) {
     final VirtualFile file = psiFile.getVirtualFile();
-    if (file == null || !file.isInLocalFileSystem()) return null;
+    if (file == null) return null;
 
     final Project project = psiFile.getProject();
     if (!Utils.isEnabled(settings)) return null;
 
     // Get editorconfig settings
-    final String filePath = file.getCanonicalPath();
+    final String filePath = Utils.getFilePath(project, file);
     final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
     final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(project, filePath);
     // Apply editorconfig settings for the current editor
-    return applyCodeStyleSettings(project, outPairs, file);
+    return applyCodeStyleSettings(project, outPairs, file, settings);
   }
 
   private static CommonCodeStyleSettings.IndentOptions applyCodeStyleSettings(Project project,
                                                                               final List<EditorConfig.OutPair> outPairs,
-                                                                              final VirtualFile file) {
+                                                                              final VirtualFile file,
+                                                                              final CodeStyleSettings settings) {
     // Apply indent options
     final String indentSize = Utils.configValueForKey(outPairs, indentSizeKey);
     final String continuationIndentSize = Utils.configValueForKey(outPairs, continuationSizeKey);
     final String tabWidth = Utils.configValueForKey(outPairs, tabWidthKey);
     final String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
-    final CommonCodeStyleSettings.IndentOptions indentOptions = new CommonCodeStyleSettings.IndentOptions();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = (CommonCodeStyleSettings.IndentOptions)settings.getIndentOptions(file.getFileType()).clone();
     if (applyIndentOptions(project, indentOptions, indentSize, continuationIndentSize, tabWidth, indentStyle, file.getCanonicalPath())) {
       return indentOptions;
     }
@@ -65,7 +66,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     final String calculatedTabWidth = calculateTabWidth(tabWidth, indentSize);
     if (!calculatedIndentSize.isEmpty()) {
       if (applyIndentSize(indentOptions, calculatedIndentSize)) {
-        Utils.appliedConfigMessage(project, calculatedIndentSize, indentSizeKey, filePath);
         changed = true;
       } else {
         Utils.invalidConfigMessage(project, calculatedIndentSize, indentSizeKey, filePath);
@@ -73,7 +73,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     }
     if (!calculatedContinuationSize.isEmpty()) {
       if (applyContinuationIndentSize(indentOptions, calculatedContinuationSize)) {
-        Utils.appliedConfigMessage(project, calculatedContinuationSize, continuationSizeKey, filePath);
         changed = true;
       }
       else {
@@ -82,7 +81,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     }
     if (!calculatedTabWidth.isEmpty()) {
       if (applyTabWidth(indentOptions, calculatedTabWidth)) {
-        Utils.appliedConfigMessage(project, calculatedTabWidth, tabWidthKey, filePath);
         changed = true;
       }
       else {
@@ -91,7 +89,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     }
     if (!indentStyle.isEmpty()) {
       if (applyIndentStyle(indentOptions, indentStyle)) {
-        Utils.appliedConfigMessage(project, indentStyle, indentStyleKey, filePath);
         changed = true;
       }
       else {

@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
 
@@ -84,6 +85,10 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
                 ui.showSearchPopup();
                 break;
               case CLEAR:
+                Object listener = c.getClientProperty("JTextField.Search.CancelAction");
+                if (listener instanceof ActionListener) {
+                  ((ActionListener)listener).actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
+                }
                 ((JTextField)c).setText("");
                 break;
             }
@@ -96,22 +101,25 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
   }
 
   protected void showSearchPopup() {
-    final Object value = getComponent().getClientProperty("JTextField.Search.FindPopup");
+    final Object value = myTextField.getClientProperty("JTextField.Search.FindPopup");
     if (value instanceof JPopupMenu) {
       final JPopupMenu popup = (JPopupMenu)value;
       popup.show(getComponent(), getSearchIconCoord().x, getComponent().getHeight());
     }
   }
 
+  private boolean hasText() {
+    JTextComponent component = getComponent();
+    return (component != null) && !StringUtil.isEmpty(component.getText());
+  }
+
   private SearchAction getActionUnder(MouseEvent e) {
-    final Point cPoint = getClearIconCoord();
-    final Point sPoint = getSearchIconCoord();
-    cPoint.x+=8;
-    cPoint.y+=8;
-    sPoint.x+=8;
-    sPoint.y+=8;
-    final Point ePoint = e.getPoint();
-    return cPoint.distance(ePoint) <= 8 ? SearchAction.CLEAR : sPoint.distance(ePoint) <= 8 ? SearchAction.POPUP : null;
+    Point point = new Point(e.getX() - 8, e.getY() - 8);
+    return point.distance(getSearchIconCoord()) <= 8
+           ? SearchAction.POPUP
+           : hasText() && point.distance(getClearIconCoord()) <= 8
+             ? SearchAction.CLEAR
+             : null;
   }
 
   protected Rectangle getDrawingRect() {
@@ -164,12 +172,12 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
         }
       }
       Point p = getSearchIconCoord();
-      Icon searchIcon = getComponent().getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu ? UIManager.getIcon("TextField.darcula.searchWithHistory.icon") : UIManager.getIcon("TextField.darcula.search.icon");
+      Icon searchIcon = myTextField.getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu ? UIManager.getIcon("TextField.darcula.searchWithHistory.icon") : UIManager.getIcon("TextField.darcula.search.icon");
       if (searchIcon == null) {
         searchIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true);
       }
       searchIcon.paintIcon(null, g, p.x, p.y);
-      if (getComponent().hasFocus() && getComponent().getText().length() > 0) {
+      if (hasText()) {
         p = getClearIconCoord();
         Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
         if (clearIcon == null) {

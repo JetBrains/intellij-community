@@ -70,31 +70,31 @@ class Bar extends Foo {
   Foo(int, int)
   foo(int, int): Object
   getClass(): Class<? extends Object>
-  clone(): Object
-  equals(Object): boolean
   hashCode(): int
+  equals(Object): boolean
+  clone(): Object
+  toString(): String
+  notify(): void
+  notifyAll(): void
   wait(long): void
   wait(long, int): void
   wait(): void
-  notify(): void
   finalize(): void
-  toString(): String
-  notifyAll(): void
   prop: int
  -Bar
   bar(int): Object
-  getClass(): Class<? extends Object>
-  clone(): Object
-  equals(Object): boolean
-  hashCode(): int
   foo(int, int): Object
+  getClass(): Class<? extends Object>
+  hashCode(): int
+  equals(Object): boolean
+  clone(): Object
+  toString(): String
+  notify(): void
+  notifyAll(): void
   wait(long): void
   wait(long, int): void
   wait(): void
-  notify(): void
   finalize(): void
-  toString(): String
-  notifyAll(): void
   prop: int
 """);
       }

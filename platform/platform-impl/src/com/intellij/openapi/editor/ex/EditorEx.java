@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -176,6 +177,8 @@ public interface EditorEx extends Editor {
   @NotNull
   VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
 
+  int logicalPositionToOffset(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
+
   /**
    * Creates color scheme delegate which is bound to current editor. E.g. all schema changes will update editor state.
    * @param customGlobalScheme
@@ -195,14 +198,23 @@ public interface EditorEx extends Editor {
 
   /**
    * Allows to define <code>'placeholder text'</code> for the current editor, i.e. virtual text that will be represented until
-   * any user data is entered and current editor is not focused.
-   * <p/>
+   * any user data is entered.
+   *
    * Feel free to see the detailed feature
    * definition <a href="http://dev.w3.org/html5/spec/Overview.html#the-placeholder-attribute">here</a>.
    *
    * @param text    virtual text to show until user data is entered or the editor is focused
    */
   void setPlaceholder(@Nullable CharSequence text);
+
+  /**
+   * Controls whether <code>'placeholder text'</code> is visible when editor is focused.
+   *
+   * @param show   flag indicating whether placeholder is visible when editor is focused.
+   *
+   * @see EditorEx#setPlaceholder(CharSequence)
+   */
+  void setShowPlaceholderWhenFocused(boolean show);
 
   /**
    * Allows to answer if 'sticky selection' is active for the current editor.
@@ -262,10 +274,5 @@ public interface EditorEx extends Editor {
    * @param callback  callback which will be called from the {@link javax.swing.JComponent#paint(java.awt.Graphics)} method of
    *                  the editor vertical scrollbar.
    */
-  void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback);
-
-  interface RepaintCallback {
-    void call(Graphics g);
-  }
-
+  void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback);
 }

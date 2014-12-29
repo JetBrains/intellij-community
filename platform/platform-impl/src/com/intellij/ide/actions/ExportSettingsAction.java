@@ -33,6 +33,8 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -40,6 +42,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ZipUtil;
@@ -55,12 +58,13 @@ import java.util.*;
 import java.util.jar.JarOutputStream;
 
 public class ExportSettingsAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(ExportSettingsAction.class);
+
   @Override
   public void actionPerformed(@Nullable AnActionEvent e) {
     ApplicationManager.getApplication().saveSettings();
 
-    MultiMap<File, ExportableComponent> fileToComponents = getExportableComponentsMap(true);
-    ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(fileToComponents, true,
+    ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(getExportableComponentsMap(true, true), true,
                                                                                IdeBundle.message("title.select.components.to.export"),
                                                                                IdeBundle.message(
                                                                                  "prompt.please.check.all.components.to.export"));
@@ -74,7 +78,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     }
 
     Set<File> exportFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    for (final ExportableComponent markedComponent : markedComponents) {
+    for (ExportableComponent markedComponent : markedComponents) {
       ContainerUtil.addAll(exportFiles, markedComponent.getExportFiles());
     }
 
@@ -125,7 +129,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
       }
     }
     if (!oldPlugins.isEmpty()) {
-      final File tempFile = File.createTempFile("installed", "plugins");
+      File tempFile = FileUtil.createTempFile("installed", "plugins");
       tempFile.deleteOnExit();
       PluginManagerCore.savePluginsList(oldPlugins, false, tempFile);
       ZipUtil.addDirToZipRecursively(output, saveFile, tempFile, "/" + PluginManager.INSTALLED_TXT, null, writtenItemRelativePaths);
@@ -133,10 +137,11 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static MultiMap<File, ExportableComponent> getExportableComponentsMap(final boolean onlyExisting) {
+  public static MultiMap<File, ExportableComponent> getExportableComponentsMap(final boolean onlyExisting, final boolean computePresentableNames) {
+    @SuppressWarnings("deprecation")
     ExportableApplicationComponent[] components1 = ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class);
     List<ExportableComponent> components2 = ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent.class);
-    final MultiMap<File, ExportableComponent> result = MultiMap.createSet();
+    final MultiMap<File, ExportableComponent> result = MultiMap.createLinkedSet();
     for (ExportableComponent component : ContainerUtil.concat(Arrays.asList(components1), components2)) {
       for (File exportFile : component.getExportFiles()) {
         result.putValue(exportFile, component);
@@ -156,7 +161,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     ServiceManagerImpl.processAllImplementationClasses(application, new PairProcessor<Class<?>, PluginDescriptor>() {
       @Override
       public boolean process(@NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
-        State stateAnnotation = aClass.getAnnotation(State.class);
+        State stateAnnotation = StoreUtil.getStateSpec(aClass);
         if (stateAnnotation != null && !StringUtil.isEmpty(stateAnnotation.name())) {
           if (ExportableComponent.class.isAssignableFrom(aClass)) {
             return true;
@@ -164,11 +169,8 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
           int storageIndex;
           Storage[] storages = stateAnnotation.storages();
-          if (storages.length == 1) {
+          if (storages.length == 1 || (storages.length > 1 && stateAnnotation.storageChooser() == StateStorageChooser.class)) {
             storageIndex = 0;
-          }
-          else if (storages.length > 1 && stateAnnotation.storageChooser() == LastStorageChooserForWrite.class) {
-            storageIndex = storages.length - 1;
           }
           else {
             return true;
@@ -181,8 +183,33 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
               !StringUtil.isEmpty(storage.file()) &&
               storage.file().startsWith(StoragePathMacros.APP_CONFIG)) {
             File file = new File(storageManager.expandMacros(storage.file()));
-            if (!onlyExisting || file.exists()) {
-              result.putValue(file, new MyExportableComponent(file, getExportableComponentPresentableName(stateAnnotation.name(), aClass, pluginDescriptor)));
+
+            File additionalExportFile = null;
+            if (!StringUtil.isEmpty(stateAnnotation.additionalExportFile())) {
+              additionalExportFile = new File(storageManager.expandMacros(stateAnnotation.additionalExportFile()));
+              if (onlyExisting && !additionalExportFile.exists()) {
+                additionalExportFile = null;
+              }
+            }
+
+            boolean fileExists = !onlyExisting || file.exists();
+            if (fileExists || additionalExportFile != null) {
+              File[] files;
+              if (additionalExportFile == null) {
+                files = new File[]{file};
+              }
+              else {
+                files = fileExists ? new File[]{file, additionalExportFile} : new File[]{additionalExportFile};
+              }
+              ExportableComponentItem item = new ExportableComponentItem(files,
+                                                                         computePresentableNames
+                                                                         ? getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor)
+                                                                         : "",
+                                                                         storage.roamingType());
+              result.putValue(file, item);
+              if (additionalExportFile != null) {
+                result.putValue(additionalExportFile, item);
+              }
             }
           }
         }
@@ -193,7 +220,17 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static String getExportableComponentPresentableName(@NotNull String defaultName, @NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
+  private static String getComponentPresentableName(@NotNull State state, @NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
+    if (state.presentableName() != State.NameGetter.class) {
+      try {
+        return ReflectionUtil.newInstance(state.presentableName()).get();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    String defaultName = state.name();
     String resourceBundleName;
     if (pluginDescriptor != null && pluginDescriptor instanceof IdeaPluginDescriptor && !"com.intellij".equals(pluginDescriptor.getPluginId().getIdString())) {
       resourceBundleName = ((IdeaPluginDescriptor)pluginDescriptor).getResourceBundleBaseName();
@@ -217,25 +254,32 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     return defaultName;
   }
 
-  private static final class MyExportableComponent implements ExportableComponent {
-    private final File file;
+  public static final class ExportableComponentItem implements ExportableComponent {
+    private final File[] files;
     private final String name;
+    private final RoamingType roamingType;
 
-    public MyExportableComponent(@NotNull File file, @NotNull String name) {
-      this.file = file;
+    public ExportableComponentItem(@NotNull File[] files, @NotNull String name, @NotNull RoamingType roamingType) {
+      this.files = files;
       this.name = name;
+      this.roamingType = roamingType;
     }
 
     @NotNull
     @Override
     public File[] getExportFiles() {
-      return new File[]{file};
+      return files;
     }
 
     @NotNull
     @Override
     public String getPresentableName() {
       return name;
+    }
+
+    @NotNull
+    public RoamingType getRoamingType() {
+      return roamingType;
     }
   }
 }

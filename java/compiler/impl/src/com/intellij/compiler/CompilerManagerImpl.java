@@ -15,11 +15,14 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.compiler.impl.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
+import com.intellij.openapi.compiler.util.InspectionValidator;
+import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -30,6 +33,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +74,9 @@ public class CompilerManagerImpl extends CompilerManager {
       }
     }
 
+    for (InspectionValidator validator : Extensions.getExtensions(InspectionValidator.EP_NAME, myProject)) {
+      addCompiler(new InspectionValidatorWrapper(this, InspectionManager.getInstance(project), InspectionProjectProfileManager.getInstance(project), PsiDocumentManager.getInstance(project), PsiManager.getInstance(project), validator));
+    }
     addCompilableFileType(StdFileTypes.JAVA);
     
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);

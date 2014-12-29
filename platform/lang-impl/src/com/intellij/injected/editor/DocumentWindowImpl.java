@@ -137,7 +137,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         int found = countNewLinesIn(shred.getPrefix(), pos, line);
         if (found != -1) return found;
 
-        String text = hostText.substring(hostRange.getStartOffset(), hostRange.getEndOffset());
+        CharSequence text = hostText.subSequence(hostRange.getStartOffset(), hostRange.getEndOffset());
         found = countNewLinesIn(text, pos, line);
         if (found != -1) return found;
 
@@ -150,9 +150,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   // returns startOffset found, or -1 if need to continue searching
-  private static int countNewLinesIn(String text, int[] pos, int line) {
+  private static int countNewLinesIn(CharSequence text, int[] pos, int line) {
     int offsetInside = 0;
-    for (int i = text.indexOf('\n'); i != -1; i = text.indexOf('\n', offsetInside)) {
+    for (int i = StringUtil.indexOf(text, '\n'); i != -1; i = StringUtil.indexOf(text,'\n', offsetInside)) {
       int curLine = ++pos[0];
       int lineLength = i + 1 - offsetInside;
       int offset = pos[1] += lineLength;
@@ -256,9 +256,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         Segment currentRange = shred.getHostRangeMarker();
         if (currentRange == null) continue;
         int rangeLength = currentRange.getEndOffset() - currentRange.getStartOffset();
-        String rangeText = hostText.substring(currentRange.getStartOffset(), currentRange.getEndOffset());
+        CharSequence rangeText = hostText.subSequence(currentRange.getStartOffset(), currentRange.getEndOffset());
 
-        lineNumber += StringUtil.getLineBreakCount(rangeText.substring(0, Math.min(offset, rangeLength)));
+        lineNumber += StringUtil.getLineBreakCount(rangeText.subSequence(0, Math.min(offset, rangeLength)));
         if (offset < rangeLength) {
           return lineNumber;
         }
@@ -646,7 +646,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return myDelegate;
   }
 
-  //todo use escaper?
   @Override
   public int hostToInjected(int hostOffset) {
     synchronized (myLock) {
@@ -663,6 +662,33 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
           return offset + hostOffset - currentRange.getStartOffset();
         }
         offset += currentRange.getEndOffset() - currentRange.getStartOffset();
+        offset += myShreds.get(i).getSuffix().length();
+      }
+      return getTextLength() - myShreds.get(myShreds.size() - 1).getSuffix().length();
+    }
+  }
+
+  public int hostToInjectedUnescaped(int hostOffset) {
+    synchronized (myLock) {
+      Segment hostRangeMarker = myShreds.get(0).getHostRangeMarker();
+      if (hostRangeMarker == null || hostOffset < hostRangeMarker.getStartOffset()) return myShreds.get(0).getPrefix().length();
+      int offset = 0;
+      for (int i = 0; i < myShreds.size(); i++) {
+        offset += myShreds.get(i).getPrefix().length();
+        Segment currentRange = myShreds.get(i).getHostRangeMarker();
+        if (currentRange == null) continue;
+        Segment nextRange = i == myShreds.size() - 1 ? null : myShreds.get(i + 1).getHostRangeMarker();
+        if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
+          if (hostOffset >= currentRange.getEndOffset()) {
+            offset += myShreds.get(i).getRange().getLength();
+          }
+          else {
+            //todo use escaper to convert host-range delta into injected space
+            offset += hostOffset - currentRange.getStartOffset();
+          }
+          return offset;
+        }
+        offset += myShreds.get(i).getRange().getLength();
         offset += myShreds.get(i).getSuffix().length();
       }
       return getTextLength() - myShreds.get(myShreds.size() - 1).getSuffix().length();
@@ -720,7 +746,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @Override
   @NotNull
   public ProperTextRange injectedToHost(@NotNull TextRange injected) {
-    ProperTextRange.assertProperRange(injected);
     int start = injectedToHost(injected.getStartOffset(), false);
     int end = injectedToHost(injected.getEndOffset(), true);
     if (end < start) {

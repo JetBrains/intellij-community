@@ -29,17 +29,9 @@ public class FoldingUtil {
   private FoldingUtil() {}
 
   @Nullable
-  public static FoldRegion findFoldRegion(Editor editor, int startOffset, int endOffset) {
-    FoldRegion[] foldRegions = editor.getFoldingModel().getAllFoldRegions();
-    for (FoldRegion region : foldRegions) {
-      if (region.isValid() &&
-          region.getStartOffset() == startOffset
-          && region.getEndOffset() == endOffset) {
-        return region;
-      }
-    }
-
-    return null;
+  public static FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
+    FoldRegion region = editor.getFoldingModel().getFoldRegion(startOffset, endOffset);
+    return region != null && region.isValid() ? region : null;
   }
 
   @Nullable

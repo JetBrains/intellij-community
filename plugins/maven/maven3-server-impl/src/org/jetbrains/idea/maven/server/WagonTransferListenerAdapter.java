@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 
@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class WagonTransferListenerAdapter implements TransferListener {
   protected final MavenServerProgressIndicator myIndicator;
-  private final Map<String, DownloadData> myDownloads = new ConcurrentHashMap<String, DownloadData>();
+  private final Map<String, DownloadData> myDownloads = ContainerUtil.newConcurrentMap();
 
   public WagonTransferListenerAdapter(MavenServerProgressIndicator indicator) {
     myIndicator = indicator;

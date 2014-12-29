@@ -40,15 +40,15 @@ public class TasksIcons {
   public static final Icon Github = load("/icons/github.png"); // 16x16
   public static final Icon Gitlab = load("/icons/gitlab.png"); // 16x16
   public static final Icon Jira = load("/icons/jira.png"); // 16x16
-  public static final Icon Lighthouse = load("/icons/lighthouse.gif"); // 16x16
+  public static final Icon Lighthouse = load("/icons/lighthouse.png"); // 16x16
   public static final Icon Mantis = load("/icons/mantis.png"); // 16x16
   public static final Icon Other = load("/icons/other.png"); // 16x16
   
   public static class Pivotal {
-    public static final Icon Bug = load("/icons/pivotal/bug.png"); // 14x14
-    public static final Icon Chore = load("/icons/pivotal/chore.png"); // 14x14
-    public static final Icon Feature = load("/icons/pivotal/feature.png"); // 14x14
-    public static final Icon Release = load("/icons/pivotal/release.png"); // 14x14
+    public static final Icon Bug = load("/icons/pivotal/bug.png"); // 16x16
+    public static final Icon Chore = load("/icons/pivotal/chore.png"); // 16x16
+    public static final Icon Feature = load("/icons/pivotal/feature.png"); // 16x16
+    public static final Icon Release = load("/icons/pivotal/release.png"); // 16x16
 
   }
   public static final Icon Pivotal = load("/icons/pivotal.png"); // 16x16

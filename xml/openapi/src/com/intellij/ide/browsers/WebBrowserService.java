@@ -31,7 +31,9 @@ public abstract class WebBrowserService {
   @NotNull
   public abstract Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 
+  @SuppressWarnings("unused")
   @NotNull
+  @Deprecated
   public Collection<Url> getUrlsToOpen(@NotNull final PsiElement element, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
     OpenInBrowserRequest request = OpenInBrowserRequest.create(element);
     return request == null ? Collections.<Url>emptyList() : getUrlsToOpen(request, preferLocalUrl);

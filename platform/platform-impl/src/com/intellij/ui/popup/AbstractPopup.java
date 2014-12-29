@@ -747,7 +747,7 @@ public class AbstractPopup implements JBPopup {
 
     Point xy = new Point(aScreenX, aScreenY);
     boolean adjustXY = true;
-    if (myDimensionServiceKey != null) {
+    if (myUseDimServiceForXYLocation && myDimensionServiceKey != null) {
       final Point storedLocation = DimensionService.getInstance().getLocation(myDimensionServiceKey, myProject);
       if (storedLocation != null) {
         xy = storedLocation;
@@ -773,16 +773,10 @@ public class AbstractPopup implements JBPopup {
     }
 
     Rectangle targetBounds = new Rectangle(xy, myContent.getPreferredSize());
-    Insets insets = myPopupBorder.getBorderInsets(myContent);
-    if (insets != null) {
-      targetBounds.x += insets.left;
-      targetBounds.y += insets.top;
-    }
-
     Rectangle original = new Rectangle(targetBounds);
     if (myLocateWithinScreen) {
       if (myMovable) {
-        ScreenUtil.moveRectangleToFitTheScreen(targetBounds);
+        ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX, aScreenY), null);
       }
     }
 
@@ -1674,17 +1668,11 @@ public class AbstractPopup implements JBPopup {
 
     if (owner == null) return false;
 
-    Window wnd;
-    if (owner instanceof Window) {
-      wnd = (Window)owner;
-    }
-    else {
-      wnd = SwingUtilities.getWindowAncestor(owner);
-    }
+    Window wnd = UIUtil.getWindow(owner);
 
     for (Component each : components) {
       if (each != null && SwingUtilities.isDescendingFrom(owner, each)) {
-        Window eachWindow = each instanceof Window ? (Window)each : SwingUtilities.getWindowAncestor(each);
+        Window eachWindow = UIUtil.getWindow(each);
         if (eachWindow == wnd) {
           return true;
         }

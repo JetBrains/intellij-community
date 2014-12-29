@@ -1,5 +1,6 @@
 <foo>
-  <id>foo</id>
+  <id>  foo
+  </id>
   <bar string="xxx" int="666"></bar>
   <bar></bar>
 </foo>

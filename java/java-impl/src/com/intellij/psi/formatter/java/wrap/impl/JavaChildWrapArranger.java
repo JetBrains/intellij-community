@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.formatter.java.JavaFormatterUtil;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
@@ -70,7 +71,7 @@ public class JavaChildWrapArranger {
                       ASTNode parent,
                       CommonCodeStyleSettings settings,
                       Wrap suggestedWrap,
-                      ReservedWrapsProvider reservedWrapsProvider) {
+                      AbstractJavaBlock reservedWrapsProvider) {
     final JavaCodeStyleSettings javaSettings = settings.getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
     ASTNode directParent = child.getTreeParent();
     int role = ((CompositeElement)directParent).getChildRole(child);
@@ -188,8 +189,9 @@ public class JavaChildWrapArranger {
         if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isFieldModifierListWithSingleAnnotation(parent)) {
           return Wrap.createWrap(WrapType.NONE, false);
         }
-
-        return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
+        Wrap wrap = Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
+        putPreferredWrapInParentBlock(reservedWrapsProvider, wrap);
+        return wrap;
       }
 
       return null;
@@ -261,6 +263,13 @@ public class JavaChildWrapArranger {
     }
 
     return suggestedWrap;
+  }
+
+  private static void putPreferredWrapInParentBlock(@NotNull AbstractJavaBlock block, @NotNull Wrap preferredWrap) {
+    AbstractJavaBlock parentBlock = block.getParentBlock();
+    if (parentBlock != null) {
+      parentBlock.setReservedWrap(preferredWrap, JavaElementType.MODIFIER_LIST);
+    }
   }
 
   private static boolean isFieldModifierListWithSingleAnnotation(@NotNull ASTNode elem) {

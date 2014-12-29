@@ -197,7 +197,7 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  private static boolean relayoutScrollbars(@NotNull JComponent container, @NotNull ScrollPaneLayout layout, boolean forceRelayout) {
+  private boolean relayoutScrollbars(@NotNull JComponent container, @NotNull ScrollPaneLayout layout, boolean forceRelayout) {
     JViewport viewport = layout.getViewport();
     if (viewport == null) return false;
     
@@ -262,12 +262,12 @@ public class JBScrollPane extends JScrollPane {
     return hasOverlayScrollbars;
   }
 
-  private static boolean shouldExtendViewportUnderScrollbar(@Nullable JScrollBar scrollbar) {
+  private boolean shouldExtendViewportUnderScrollbar(@Nullable JScrollBar scrollbar) {
     if (scrollbar == null || !scrollbar.isVisible()) return false;
     return isOverlaidScrollbar(scrollbar);
   }
 
-  private static boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
+  protected boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
     if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return false;
     
     ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
@@ -323,10 +323,10 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(ButtonlessScrollBarUI.getTrackBackground());
+      g.setColor(ButtonlessScrollBarUI.getTrackBackgroundDefault());
       g.fillRect(0, 0, getWidth(), getHeight());
 
-      g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
+      g.setColor(ButtonlessScrollBarUI.getTrackBorderColorDefault());
 
       int x2 = getWidth() - 1;
       int y2 = getHeight() - 1;

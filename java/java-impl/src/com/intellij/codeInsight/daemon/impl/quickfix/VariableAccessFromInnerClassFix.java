@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +132,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @NotNull
   private Collection<PsiVariable> getVariablesToFix() {
     Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
-    if (vars == null) myContext.putUserData(VARS[myFixType], vars = new ConcurrentWeakHashMap<PsiVariable, Boolean>(1));
+    if (vars == null) myContext.putUserData(VARS[myFixType], vars = ContainerUtil.createConcurrentWeakMap());
     final Map<PsiVariable, Boolean> finalVars = vars;
     return new AbstractCollection<PsiVariable>() {
       @Override
@@ -282,7 +282,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     });
   }
 
-  private static int getQuickFixType(PsiVariable variable) {
+  private static int getQuickFixType(@NotNull PsiVariable variable) {
     PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
     if (outerCodeBlock == null) return -1;
     List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
@@ -310,7 +310,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     return type;
   }
 
-  private static boolean canBeFinal(PsiVariable variable, List<PsiReferenceExpression> references) {
+  private static boolean canBeFinal(@NotNull PsiVariable variable, @NotNull List<PsiReferenceExpression> references) {
     // if there is at least one assignment to this variable, it cannot be final
     Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();

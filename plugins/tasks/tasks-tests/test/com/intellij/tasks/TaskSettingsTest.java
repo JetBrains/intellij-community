@@ -42,8 +42,8 @@ public class TaskSettingsTest extends TaskManagerTestCase {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     JDOMUtil.writeDocument(new Document(element), stream, "\n");
 
-    Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(stream.toByteArray()));
-    TaskManagerImpl.Config deserialize = XmlSerializer.deserialize(document, TaskManagerImpl.Config.class);
+    Element element1 = JDOMUtil.load(new ByteArrayInputStream(stream.toByteArray()));
+    TaskManagerImpl.Config deserialize = XmlSerializer.deserialize(element1, TaskManagerImpl.Config.class);
     myTaskManager.loadState(deserialize);
 
     TaskRepository[] repositories = myTaskManager.getAllRepositories();

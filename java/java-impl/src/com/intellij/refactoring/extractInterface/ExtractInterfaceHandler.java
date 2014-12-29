@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,8 +85,9 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
 
     final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(myProject, myClass);
-    dialog.show();
-    if (!dialog.isOK() || !dialog.isExtractSuperclass()) return;
+    if (!dialog.showAndGet() || !dialog.isExtractSuperclass()) {
+      return;
+    }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     ExtractSuperClassUtil.checkSuperAccessible(dialog.getTargetDirectory(), conflicts, myClass);
     if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
@@ -108,7 +109,6 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
         });
       }
     }, REFACTORING_NAME, null);
-
   }
 
 

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -49,7 +50,7 @@ public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
     return result == null ? Collections.<MavenArtifact>emptyList() : result;
   }
 
-  protected void perform(MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
+  protected void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
     manager.scheduleArtifactsDownloading(mavenProjects, getDependencies(e), mySources, myDocs, null);
   }
 }

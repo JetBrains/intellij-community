@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
@@ -27,6 +28,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -86,12 +88,10 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     final List<AnAction> createActions = new ArrayList<AnAction>();
     for (final TaskRepositoryType repositoryType : groups) {
       for (final TaskRepositorySubtype subtype : (List<TaskRepositorySubtype>)repositoryType.getAvailableSubtypes()) {
-        String description = "New " + subtype.getName() + " server";
-        createActions.add(new IconWithTextAction(subtype.getName(), description, subtype.getIcon()) {
+        createActions.add(new AddServerAction(subtype) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
-            TaskRepository repository = repositoryType.createRepository(subtype);
-            addRepository(repository);
+          protected TaskRepository getRepository() {
+            return repositoryType.createRepository(subtype);
           }
         });
       }
@@ -111,10 +111,10 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
         if (!repositories.isEmpty()) {
           group.add(Separator.getInstance());
           for (final TaskRepository repository : repositories) {
-            group.add(new IconWithTextAction(repository.getUrl(), repository.getUrl(), repository.getIcon()) {
+            group.add(new AddServerAction(repository) {
               @Override
-              public void actionPerformed(AnActionEvent e) {
-                addRepository(repository);
+              protected TaskRepository getRepository() {
+                return repository;
               }
             });
           }
@@ -122,7 +122,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
         JBPopupFactory.getInstance()
           .createActionGroupPopup("Add server", group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
-                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false).show(
+                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(
           anActionButton.getPreferredPopupPoint());
       }
     });
@@ -151,7 +151,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     myServersPanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
 
     myRepositoriesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         TaskRepository repository = getSelectedRepository();
         if (repository != null) {
           String name = myRepoNames.get(repository);
@@ -182,21 +182,17 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   private void addRepository(TaskRepository repository) {
     myRepositories.add(repository);
     ((CollectionListModel)myRepositoriesList.getModel()).add(repository);
-    addRepositoryEditor(repository, true);
+    addRepositoryEditor(repository);
     myRepositoriesList.setSelectedIndex(myRepositoriesList.getModel().getSize() - 1);
   }
 
-  private void addRepositoryEditor(TaskRepository repository, boolean requestFocus) {
+  private void addRepositoryEditor(TaskRepository repository) {
     TaskRepositoryEditor editor = repository.getRepositoryType().createEditor(repository, myProject, myChangeListener);
     myEditors.add(editor);
     JComponent component = editor.createComponent();
     String name = myRepoNames.get(repository);
     myRepositoryEditor.add(component, name);
     myRepositoryEditor.doLayout();
-    JComponent preferred = editor.getPreferredFocusedComponent();
-    if (preferred != null && requestFocus) {
-//      IdeFocusManager.getInstance(myProject).requestFocus(preferred, false);
-    }
   }
 
   @Nullable
@@ -255,7 +251,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     myRepositoriesList.setModel(listModel);
 
     for (TaskRepository clone : myRepositories) {
-      addRepositoryEditor(clone, false);
+      addRepositoryEditor(clone);
     }
     
     if (!myRepositories.isEmpty()) {
@@ -270,6 +266,24 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   public void disposeUIResources() {
     for (TaskRepositoryEditor editor : myEditors) {
       Disposer.dispose(editor);
+    }
+  }
+
+  private abstract class AddServerAction extends IconWithTextAction implements DumbAware {
+
+    public AddServerAction(TaskRepositorySubtype subtype) {
+      super(subtype.getName(), "New " + subtype.getName() + " server", subtype.getIcon());
+    }
+
+    public AddServerAction(TaskRepository repository) {
+      super(repository.getUrl(), repository.getUrl(), repository.getIcon());
+    }
+
+    protected abstract TaskRepository getRepository();
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      addRepository(getRepository());
     }
   }
 }

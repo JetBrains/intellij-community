@@ -58,6 +58,9 @@ public final class IdeMouseEventDispatcher {
   private final ArrayList<AnAction> myActions = new ArrayList<AnAction>(1);
   private final Map<Container, BlockState> myRootPane2BlockedId = new HashMap<Container, BlockState>();
   private int myLastHorScrolledComponentHash = 0;
+  private boolean myPressedModifiersStored;
+  private int myModifiers;
+  private int myModifiersEx;
 
   // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
   // then mouse_pressed(501), mouse_released(502) etc. Here, mouse events sorted so we can compare
@@ -157,6 +160,21 @@ public final class IdeMouseEventDispatcher {
       ignore = true;
     }
 
+    int modifiers = e.getModifiers();
+    int modifiersEx = e.getModifiersEx();
+    if (e.getID() == MOUSE_PRESSED) {
+      myPressedModifiersStored = true;
+      myModifiers = modifiers;
+      myModifiersEx = modifiersEx;
+    }
+    else if (e.getID() == MOUSE_RELEASED) {
+      if (myPressedModifiersStored) {
+        myPressedModifiersStored = false;
+        modifiers = myModifiers;
+        modifiersEx = myModifiersEx;
+      }
+    }
+
     final JRootPane root = findRoot(e);
     if (root != null) {
       BlockState blockState = myRootPane2BlockedId.get(root);
@@ -200,7 +218,7 @@ public final class IdeMouseEventDispatcher {
       return false;
     }
 
-    final MouseShortcut shortcut = new MouseShortcut(e.getButton(), e.getModifiersEx(), e.getClickCount());
+    final MouseShortcut shortcut = new MouseShortcut(e.getButton(), modifiersEx, e.getClickCount());
     fillActionsList(c, shortcut, IdeKeyEventDispatcher.isModalContext(c));
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (actionManager != null) {
@@ -210,7 +228,7 @@ public final class IdeMouseEventDispatcher {
         Presentation presentation = myPresentationFactory.getPresentation(action);
         AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation,
                                                       ActionManager.getInstance(),
-                                                      e.getModifiers());
+                                                      modifiers);
         action.beforeActionPerformedUpdate(actionEvent);
 
         if (presentation.isEnabled()) {

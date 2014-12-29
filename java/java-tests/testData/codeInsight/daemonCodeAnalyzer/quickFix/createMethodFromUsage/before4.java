@@ -1,4 +1,4 @@
-// "Create Method 'test'" "true"
+// "Create method 'test'" "true"
 public class Test {
     public Test() {
         test();<caret>

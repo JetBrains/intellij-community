@@ -38,7 +38,7 @@ public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUs
   protected boolean isAvailableImpl(int offset) {
     boolean available = super.isAvailableImpl(offset);
     if (available) {
-      setText("Create Property");
+      setText("Create property");
     }
     return available;
   }

@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.configurations;
 
-import com.google.common.collect.Maps;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
@@ -24,11 +23,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * A flavor of GeneralCommandLine to start processes with Pseudo-Terminal (PTY).
+ *
+ * Warning: PtyCommandLine works with ProcessHandler only in blocking read mode.
+ * Please make sure that you use appropriate ProcessHandler implementation.
  *
  * Note: this works only on Unix, on Windows regular processes are used instead.
  */
@@ -54,7 +57,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   @NotNull
   public Process startProcessWithPty(@NotNull List<String> commands, boolean console) throws IOException {
-    Map<String, String> env = Maps.newHashMap();
+    Map<String, String> env = new HashMap<String, String>();
     setupEnvironment(env);
 
     if (isRedirectErrorStream()) {

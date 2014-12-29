@@ -1,7 +1,7 @@
 package com.jetbrains.python.edu;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.PathManager;
@@ -19,10 +19,9 @@ import java.io.IOException;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
 public class StudyInitialConfigurator {
-  private static final Logger LOG = Logger.getInstance(StudyInitialConfigurator.class.getName()
-  );
-  @NonNls private static final String CONFIGURED = "StudyPyCharm.InitialConfiguration";
-
+  private static final Logger LOG = Logger.getInstance(StudyInitialConfigurator.class.getName());
+  @NonNls private static final String CONFIGURED_V1 = "StudyPyCharm.InitialConfiguration";
+  @NonNls private static final String CONFIGURED_V11 = "StudyPyCharm.InitialConfiguration1.1";
 
   /**
    * @noinspection UnusedParameters
@@ -33,22 +32,39 @@ public class StudyInitialConfigurator {
                                   final PropertiesComponent propertiesComponent,
                                   FileTypeManager fileTypeManager,
                                   final ProjectManagerEx projectManager,
-                                  RecentProjectsManagerBase recentProjectsManager) {
-    if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
-      final File file = new File(getCoursesRoot(), "introduction_course.zip");
+                                  RecentProjectsManager recentProjectsManager) {
+    final File file = new File(getCoursesRoot(), "introduction_course.zip");
+    if (!propertiesComponent.getBoolean(CONFIGURED_V1, false)) {
       final File newCourses = new File(PathManager.getConfigPath(), "courses");
       try {
         FileUtil.createDirectory(newCourses);
-        String fileName = file.getName();
-        String unzippedName = fileName.substring(0, fileName.indexOf("."));
-        File courseDir = new File(newCourses, unzippedName);
-        ZipUtil.unzip(null, courseDir, file, null, null, true);
+        copyCourse(file, newCourses);
+        propertiesComponent.setValue(CONFIGURED_V1, "true");
 
       }
       catch (IOException e) {
         LOG.warn("Couldn't copy bundled courses " + e);
       }
     }
+    if (!propertiesComponent.getBoolean(CONFIGURED_V11, false)) {
+      final File newCourses = new File(PathManager.getConfigPath(), "courses");
+      if (newCourses.exists()) {
+        try {
+          copyCourse(file, newCourses);
+          propertiesComponent.setValue(CONFIGURED_V11, "true");
+        }
+        catch (IOException e) {
+          LOG.warn("Couldn't copy bundled courses " + e);
+        }
+      }
+    }
+  }
+
+  private static void copyCourse(File bundledCourse, File userCourseDir) throws IOException {
+    String fileName = bundledCourse.getName();
+    String unzippedName = fileName.substring(0, fileName.indexOf("."));
+    File courseDir = new File(userCourseDir, unzippedName);
+    ZipUtil.unzip(null, courseDir, bundledCourse, null, null, true);
   }
 
   public static File getCoursesRoot() {

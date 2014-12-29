@@ -12,11 +12,12 @@
   <option name="EDITOR_FONT_SIZE" value="12" linux="14"/>
   <option name="EDITOR_FONT_NAME" value="Menlo" linux="Source Code Pro"/>
   <colors>
-    <option name="ADDED_LINES_COLOR" value="295622" />
+    <option name="ADDED_LINES_COLOR" value="384C38" />
     <option name="ANNOTATIONS_COLOR" value="8b999f" />
     <option name="CARET_COLOR" value="bbbbbb" />
     <option name="CARET_ROW_COLOR" value="323232" />
     <option name="CONSOLE_BACKGROUND_KEY" value="2B2B2B" />
+    <option name="DELETED_LINES_COLOR" value="656e76"/>
     <option name="FILESTATUS_ADDED" value="629755" />
     <option name="FILESTATUS_DELETED" value="6c6c6c" />
     <option name="FILESTATUS_IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM" value="6c6c6c" />
@@ -37,7 +38,7 @@
     <option name="INDENT_GUIDE" value="373737" />
     <option name="LINE_NUMBERS_COLOR" value="888888" />
     <option name="METHOD_SEPARATORS_COLOR" value="4d4d4d" />
-    <option name="MODIFIED_LINES_COLOR" value="415f69" />
+    <option name="MODIFIED_LINES_COLOR" value="374752" />
     <option name="NOTIFICATION_BACKGROUND" value="5c5c42" />
     <option name="READONLY_FRAGMENT_BACKGROUND" value="" />
     <option name="RECURSIVE_CALL_ATTRIBUTES" value="574300" />
@@ -48,6 +49,7 @@
     <option name="SELECTION_FOREGROUND" value="" />
     <option name="TEARLINE_COLOR" value="555555" />
     <option name="WHITESPACES" value="505050" />
+    <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="2d4249"/>
   </colors>
   <attributes>
     <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
@@ -124,7 +126,7 @@
         <option name="ERROR_STRIPE_COLOR" value="ff0000" />
       </value>
     </option>
-    <option name="CLASS_REFERENCE">
+    <option name="OC.CLASS_REFERENCE">
       <value>
         <option name="FOREGROUND" value="769aa5" />
         <option name="EFFECT_TYPE" value="-1" />
@@ -159,7 +161,7 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
-    <option name="CONDITIONALLY_NOT_COMPILED">
+    <option name="OC.CONDITIONALLY_NOT_COMPILED">
       <value>
         <option name="FOREGROUND" value="536c46" />
         <option name="EFFECT_TYPE" value="-1" />
@@ -417,9 +419,7 @@
       <value />
     </option>
     <option name="DEFAULT_FUNCTION_CALL">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-      </value>
+      <value/>
     </option>
     <option name="DEFAULT_FUNCTION_DECLARATION">
       <value>
@@ -545,7 +545,7 @@
         <option name="BACKGROUND" value="5e5339" />
       </value>
     </option>
-    <option name="ENUM_CONST">
+    <option name="OC.ENUM_CONST">
       <value>
         <option name="FOREGROUND" value="9373a5" />
         <option name="EFFECT_TYPE" value="-1" />
@@ -555,12 +555,17 @@
       <value>
         <option name="EFFECT_COLOR" value="bc3f3c" />
         <option name="EFFECT_TYPE" value="2" />
-        <option name="ERROR_STRIPE_COLOR" value="bc3f3c" />
+        <option name="ERROR_STRIPE_COLOR" value="9e2927" />
       </value>
     </option>
     <option name="EXECUTIONPOINT_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="2d6099" />
+      </value>
+    </option>
+    <option name="NOT_TOP_FRAME_ATTRIBUTES">
+      <value>
+        <option name="BACKGROUND" value="243040"/>
       </value>
     </option>
     <option name="FOLDED_TEXT_ATTRIBUTES">
@@ -580,7 +585,7 @@
       <value>
         <option name="EFFECT_COLOR" value="f49810" />
         <option name="EFFECT_TYPE" value="1" />
-        <option name="ERROR_STRIPE_COLOR" value="f49810" />
+        <option name="ERROR_STRIPE_COLOR" value="B06100" />
       </value>
     </option>
     <option name="GRADLE_CHANGE_CONFLICT">
@@ -703,7 +708,7 @@
     <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="344134" />
-        <option name="ERROR_STRIPE_COLOR" value="5d8e48" />
+        <option name="ERROR_STRIPE_COLOR" value="036b13" />
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
@@ -724,7 +729,7 @@
       <value>
         <option name="EFFECT_COLOR" value="aeae80" />
         <option name="EFFECT_TYPE" value="2" />
-        <option name="ERROR_STRIPE_COLOR" value="aeae80" />
+        <option name="ERROR_STRIPE_COLOR" value="756D56" />
       </value>
     </option>
     <option name="INJECTED_LANGUAGE_FRAGMENT">
@@ -747,7 +752,7 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
-    <option name="IVAR">
+    <option name="OC.IVAR">
       <value>
         <option name="FOREGROUND" value="9373a5" />
         <option name="EFFECT_TYPE" value="-1" />
@@ -937,7 +942,7 @@
         <option name="FOREGROUND" value="cc7832" />
       </value>
     </option>
-    <option name="LABEL">
+    <option name="OC.LABEL">
       <value>
         <option name="FONT_TYPE" value="2" />
         <option name="EFFECT_TYPE" value="-1" />
@@ -977,13 +982,13 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="MACRONAME">
+    <option name="OC.MACRONAME">
       <value>
         <option name="FOREGROUND" value="908b25" />
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
-    <option name="MACRO_PARAMETER">
+    <option name="OC.MACRO_PARAMETER">
       <value>
         <option name="EFFECT_TYPE" value="-1" />
       </value>
@@ -995,7 +1000,7 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="MESSAGE_ARGUMENT">
+    <option name="OC.MESSAGE_ARGUMENT">
       <value>
         <option name="FOREGROUND" value="c4b3a3" />
         <option name="EFFECT_TYPE" value="-1" />
@@ -1360,7 +1365,6 @@
     <option name="SEARCH_RESULT_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="155221" />
-        <option name="ERROR_STRIPE_COLOR" value="246e00" />
       </value>
     </option>
     <option name="SPY-JS.FUNCTION_SCOPE">
@@ -1479,19 +1483,19 @@
     </option>
     <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="425f44" />
-        <option name="EFFECT_COLOR" value="56ac48" />
-        <option name="ERROR_STRIPE_COLOR" value="425f44" />
+        <option name="BACKGROUND" value="32593D" />
+        <option name="EFFECT_COLOR" value="3C704B" />
+        <option name="ERROR_STRIPE_COLOR" value="61936f" />
       </value>
     </option>
     <option name="TODO_DEFAULT_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="a8c023" />
+        <option name="FOREGROUND" value="A8C023" />
         <option name="FONT_TYPE" value="2" />
-        <option name="ERROR_STRIPE_COLOR" value="a74c0" />
+        <option name="ERROR_STRIPE_COLOR" value="0977ab" />
       </value>
     </option>
-    <option name="TYPEDEF">
+    <option name="OC.TYPEDEF">
       <value>
         <option name="FOREGROUND" value="c7c8f5" />
         <option name="EFFECT_TYPE" value="-1" />
@@ -1504,8 +1508,18 @@
     </option>
     <option name="TYPO">
       <value>
-        <option name="EFFECT_COLOR" value="867f27" />
+        <option name="EFFECT_COLOR" value="659C6B" />
         <option name="EFFECT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="NO_ANALYSIS">
+      <value>
+        <option name="ERROR_STRIPE_COLOR" value="666666" /> 
+      </value>
+    </option>
+    <option name="DO_NOT_SHOW">
+      <value>
+        <option name="ERROR_STRIPE_COLOR" value="266109" /> 
       </value>
     </option>
     <option name="Type parameter">
@@ -1567,20 +1581,19 @@
       <value>
         <option name="BACKGROUND" value="52503a" />
         <option name="EFFECT_TYPE" value="2" />
-        <option name="ERROR_STRIPE_COLOR" value="8c8c00" />
+        <option name="ERROR_STRIPE_COLOR" value="be9117" />
       </value>
     </option>
     <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="40332b" />
-        <option name="ERROR_STRIPE_COLOR" value="cc7832" />
+        <option name="ERROR_STRIPE_COLOR" value="b56277" />
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
     <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="532b2e" />
-        <option name="ERROR_STRIPE_COLOR" value="c55450" />
       </value>
     </option>
     <option name="WRONG_REFERENCES_ATTRIBUTES">

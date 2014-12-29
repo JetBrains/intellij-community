@@ -69,7 +69,7 @@ public class FocusTrackback {
   private boolean myForcedRestore;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
-    this(requestor, parent == null || parent instanceof Window ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
+    this(requestor, parent == null ? null : UIUtil.getWindow(parent), mustBeShown);
   }
 
   public FocusTrackback(@NotNull Object requestor, Window parent, boolean mustBeShown) {
@@ -263,7 +263,7 @@ public class FocusTrackback {
       }
 
       if (myParentWindow != null) {
-        final Window to = toFocus instanceof Window ? (Window) toFocus : SwingUtilities.getWindowAncestor(toFocus);
+        final Window to = UIUtil.getWindow(toFocus);
         if (to != null && UIUtil.findUltimateParent(to) == UIUtil.findUltimateParent(myParentWindow)) {  // IDEADEV-34537
           toFocus.requestFocus();
           result.setDone();
@@ -490,7 +490,7 @@ public class FocusTrackback {
   public static List<JBPopup> getChildPopups(@NotNull final Component component) {
     List<JBPopup> result = new ArrayList<JBPopup>();
 
-    final Window window = component instanceof Window ? (Window)component: SwingUtilities.windowForComponent(component);
+    final Window window = UIUtil.getWindow(component);
     if (window == null) return result;
 
     final List<FocusTrackback> stack = getCleanStackForRoot(findUtlimateParent(window));

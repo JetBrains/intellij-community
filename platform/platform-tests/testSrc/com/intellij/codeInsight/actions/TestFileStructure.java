@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -89,6 +90,7 @@ public class TestFileStructure {
 
         final VirtualFile vFile = vDir.createChildData(vDir, fileName);
         VfsUtil.saveText(vFile, text);
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         final PsiFile file = PsiManager.getInstance(myProject).findFile(vFile);
         assert (file != null);
         result.setResult(file);

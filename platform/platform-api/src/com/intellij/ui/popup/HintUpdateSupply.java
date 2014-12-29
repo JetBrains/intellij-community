@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.popup;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -55,12 +57,40 @@ public abstract class HintUpdateSupply {
     if (supply != null) supply.hideHint();
   }
 
+  public static void installSimpleHintUpdateSupply(@NotNull final JComponent component) {
+    HintUpdateSupply supply = new HintUpdateSupply(component) {
+      @Nullable
+      @Override
+      protected PsiElement getPsiElementForHint(@Nullable Object selectedValue) {
+        return selectedValue instanceof PsiElement ? (PsiElement)selectedValue :
+               CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(component));
+      }
+    };
+    if (component instanceof JList) supply.installListListener((JList)component);
+    if (component instanceof JTree) supply.installTreeListener((JTree)component);
+    if (component instanceof JTable) supply.installTableListener((JTable)component);
+  }
+
   protected HintUpdateSupply(@NotNull JComponent component) {
     installSupply(component);
   }
 
-  public HintUpdateSupply(@NotNull final JBTable table) {
+  public HintUpdateSupply(@NotNull JBTable table) {
     installSupply(table);
+    installTableListener(table);
+  }
+
+  public HintUpdateSupply(@NotNull Tree tree) {
+    installSupply(tree);
+    installTreeListener(tree);
+  }
+
+  public HintUpdateSupply(@NotNull JBList list) {
+    installSupply(list);
+    installListListener(list);
+  }
+
+  protected void installTableListener(@NotNull final JTable table) {
     ListSelectionListener listener = new ListSelectionListener() {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
@@ -80,8 +110,7 @@ public abstract class HintUpdateSupply {
     table.getColumnModel().getSelectionModel().addListSelectionListener(listener);
   }
 
-  public HintUpdateSupply(@NotNull final Tree tree) {
-    installSupply(tree);
+  protected void installTreeListener(@NotNull final JTree tree) {
     tree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(final TreeSelectionEvent e) {
@@ -98,8 +127,7 @@ public abstract class HintUpdateSupply {
     });
   }
 
-  public HintUpdateSupply(@NotNull final JBList list) {
-    installSupply(list);
+  protected void installListListener(@NotNull final JList list) {
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(final ListSelectionEvent e) {

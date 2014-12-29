@@ -582,7 +582,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
                                                        GenericDebuggerRunnerSettings settings,
                                                        boolean checkValidity)
     throws ExecutionException {
-    return createDebugParameters(parameters, settings.LOCAL, settings.getTransport(), settings.DEBUG_PORT, checkValidity);
+    return createDebugParameters(parameters, settings.LOCAL, settings.getTransport(), settings.getDebugPort(), checkValidity);
   }
 
   private static class MyDebuggerStateManager extends DebuggerStateManager {

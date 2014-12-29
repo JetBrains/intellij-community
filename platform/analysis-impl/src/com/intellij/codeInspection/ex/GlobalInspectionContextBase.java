@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   private final StdJobDescriptors myStdJobDescriptors = new StdJobDescriptors();
   protected ProgressIndicator myProgressIndicator;
 
-  private InspectionProfile myExternalProfile = null;
+  private InspectionProfile myExternalProfile;
 
   protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<Key, GlobalInspectionContextExtension>();
 
@@ -87,8 +87,6 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   public GlobalInspectionContextBase(@NotNull Project project) {
     myProject = project;
 
-    myRefManager = null;
-    myCurrentScope = null;
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final GlobalInspectionContextExtension extension = factory.createGlobalInspectionContextExtension();
       myExtensions.put(extension.getID(), extension);
@@ -107,6 +105,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @Override
   public <T> T getExtension(final Key<T> key) {
+    //noinspection unchecked
     return (T)myExtensions.get(key);
   }
 
@@ -141,7 +140,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   @Override
-  public boolean isSuppressed(@NotNull PsiElement element, String id) {
+  public boolean isSuppressed(@NotNull PsiElement element, @NotNull String id) {
     final RefManagerImpl refManager = (RefManagerImpl)getRefManager();
     if (refManager.isDeclarationsFound()) {
       final RefElement refElement = refManager.getReference(element);
@@ -190,20 +189,13 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
     cleanupTools();
 
-    Runnable runnable = new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         myCurrentScope = scope;
         launchInspections(scope);
       }
-    };
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    }, ApplicationManager.getApplication().getDisposed());
   }
 
 
@@ -273,7 +265,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected void notifyInspectionsFinished() {
   }
 
-  protected void performInspectionsWithProgress(@NotNull final AnalysisScope scope, final boolean runGlobalToolsOnly) {
+  public void performInspectionsWithProgress(@NotNull final AnalysisScope scope, final boolean runGlobalToolsOnly) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     myProgressIndicator = getProgressIndicator();
     //init manager in read action
@@ -394,6 +386,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
+  @NotNull
   public Map<String, Tools> getTools() {
     return myTools;
   }
@@ -425,6 +418,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
 
     Runnable cleanupRunnable = new Runnable() {
+      @Override
       public void run() {
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
         for (SmartPsiElementPointer<PsiElement> element : elements) {
@@ -441,10 +435,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     };
 
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || !application.isWriteAccessAllowed()) {
-      cleanupRunnable.run();
-    } else {
+    if (application.isWriteAccessAllowed()) {
       application.invokeLater(cleanupRunnable);
+    }
+    else {
+      cleanupRunnable.run();
     }
   }
 

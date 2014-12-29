@@ -16,31 +16,24 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.VcsPushOptionsPanel;
-import com.intellij.openapi.ui.ComboBox;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 public class HgPushOptionsPanel extends VcsPushOptionsPanel {
 
-  private final ComboBox myReferenceStrategyCombobox;
+  private final JBCheckBox myPushBookmarkCheckBox;
 
   public HgPushOptionsPanel() {
     setLayout(new BorderLayout());
-    myReferenceStrategyCombobox = new ComboBox();
-    HgVcsPushOptionValue[] values = HgVcsPushOptionValue.values();
-    DefaultComboBoxModel comboModel = new DefaultComboBoxModel(values);
-    myReferenceStrategyCombobox.setModel(comboModel);
-    JLabel referenceStrategyLabel = new JLabel("Export Bookmarks: ");
-    add(referenceStrategyLabel, BorderLayout.WEST);
-    add(myReferenceStrategyCombobox, BorderLayout.CENTER);
+    myPushBookmarkCheckBox = new JBCheckBox("Export Active Bookmarks");
+    add(myPushBookmarkCheckBox, BorderLayout.WEST);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public HgVcsPushOptionValue getValue() {
-    return (HgVcsPushOptionValue)myReferenceStrategyCombobox.getSelectedItem();
+    return myPushBookmarkCheckBox.isSelected() ? HgVcsPushOptionValue.Current : null;
   }
-
 }

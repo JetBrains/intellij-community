@@ -1,3 +1,18 @@
+<!--
+  ~ Copyright 2000-2014 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
 <idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>com.intellij</id>
   <name>IDEA CORE</name>
@@ -12,8 +27,12 @@
   <xi:include href="/META-INF/structuralsearch.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/structuralsearch-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/IntentionPowerPack.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/structuralsearch-java.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/IntentionPowerPack.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/InspectionGadgets.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ManifestSupport.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
@@ -33,16 +52,12 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder</implementation-class>
     </component>
 
     <component>
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
-      <implementation-class>com.intellij.psi.RefResolveServiceImpl</implementation-class>
+      <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
   </project-components>
 
@@ -115,6 +130,21 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="debugger.jvmSmartStepIntoHandler"
                     interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler"/>
+
+    <extensionPoint name="debugger.frameExtraVarsProvider"
+                    interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
+
+    <extensionPoint name="debugger.sourcePositionProvider"
+                    interface="com.intellij.debugger.engine.SourcePositionProvider"/>
+
+    <extensionPoint name="debugger.simpleGetterProvider"
+                    interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
+
+    <extensionPoint name="debugger.syntheticProvider"
+                    interface="com.intellij.debugger.engine.SyntheticTypeComponentProvider"/>
+
+    <extensionPoint name="debugger.extraSteppingFilter"
+                    interface="com.intellij.debugger.engine.ExtraSteppingFilter"/>
 
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
@@ -192,6 +222,8 @@
     <extensionPoint name="codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper"/>
     </extensionPoint>
+
+    <extensionPoint name="generation.toStringClassFilter" interface="org.jetbrains.generate.tostring.GenerateToStringClassFilter"/>
 
     <extensionPoint name="getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
 
@@ -313,8 +345,8 @@
                            id="excludeFromCompletion" order="last"/>
 
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier" id="javaNameIdentifier"/>
-    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.FocusInJavadoc" id="javadoc" order="before javaComments"/>
-    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="javaComments"/>
+    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavadocCompletionConfidence" id="javadoc" order="before javaComments"/>
+    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence" id="javaReflection" />
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
@@ -504,8 +536,9 @@
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
 
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
 
-    <globalInspection shortName="UnusedDeclaration" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
+    <globalInspection language="JAVA" shortName="unused" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"
                      presentation="com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation"/>
@@ -515,27 +548,27 @@
     <globalInspection shortName="InconsistentLanguageLevel" displayName="Inconsistent language level settings"
                      groupName="Modularization issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.inconsistentLanguageLevel.InconsistentLanguageLevelInspection"/>
-    <globalInspection shortName="WeakerAccess" displayName="Declaration access can be weaker" groupName="Declaration redundancy"
+    <globalInspection language="JAVA" shortName="WeakerAccess" displayName="Declaration access can be weaker" groupName="Declaration redundancy"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.visibility.VisibilityInspection"/>
-    <globalInspection shortName="CanBeFinal" displayName="Declaration can have final modifier" groupName="Declaration redundancy"
+    <globalInspection language="JAVA" shortName="CanBeFinal" displayName="Declaration can have final modifier" groupName="Declaration redundancy"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.canBeFinal.CanBeFinalInspection"/>
-    <globalInspection shortName="UnusedParameters" bundle="messages.InspectionsBundle" key="inspection.unused.parameter.display.name"
+    <globalInspection language="JAVA" shortName="UnusedParameters" bundle="messages.InspectionsBundle" key="inspection.unused.parameter.display.name"
                       groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedParameters.UnusedParametersInspection"/>
-    <globalInspection shortName="SameParameterValue" bundle="messages.InspectionsBundle" key="inspection.same.parameter.display.name"
+    <globalInspection language="JAVA" shortName="SameParameterValue" bundle="messages.InspectionsBundle" key="inspection.same.parameter.display.name"
                       groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection"/>
-    <globalInspection shortName="UnusedReturnValue" bundle="messages.InspectionsBundle" key="inspection.unused.return.value.display.name"
+    <globalInspection language="JAVA" shortName="UnusedReturnValue" bundle="messages.InspectionsBundle" key="inspection.unused.return.value.display.name"
                       groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue"/>
-    <globalInspection shortName="SameReturnValue" bundle="messages.InspectionsBundle" key="inspection.same.return.value.display.name"
+    <globalInspection language="JAVA" shortName="SameReturnValue" bundle="messages.InspectionsBundle" key="inspection.same.return.value.display.name"
                       groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection"/>
-    <globalInspection shortName="EmptyMethod" displayName="Empty method" groupName="Declaration redundancy" enabledByDefault="true"
+    <globalInspection language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupName="Declaration redundancy" enabledByDefault="true"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
-    <globalInspection shortName="RedundantThrows" displayName="Redundant throws clause" groupName="Declaration redundancy"
+    <globalInspection language="JAVA" shortName="RedundantThrows" displayName="Redundant throws clause" groupName="Declaration redundancy"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrows"/>
     <localInspection language="JAVA" shortName="ConstantConditions" bundle="messages.InspectionsBundle" key="inspection.data.flow.display.name"
@@ -619,9 +652,6 @@
                       groupName="Declaration redundancy" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
 
-    <localInspection language="JAVA" suppressId="UnusedDeclaration" alternativeId="unused" shortName="UNUSED_SYMBOL" displayName="Unused symbol"
-                     groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection" unfair="true"/>
     <localInspection language="JAVA" shortName="UNUSED_IMPORT" displayName="Unused import (editor light)" groupName="Imports" enabledByDefault="true"
                      level="WARNING" implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection" unfair="true"/>
 
@@ -744,6 +774,10 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SwapIfStatementsIntentionAction</className>
+      <category>Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
       <category>Control Flow</category>
     </intentionAction>
 
@@ -1063,7 +1097,10 @@
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavadocTypedHandler" id="javadoc"/>
-    <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider"/>
+    <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider"
+                                 id="editor.preferences.javadocOptions"
+                                 key="javadoc.generate.message.title"
+                                 bundle="messages.JavadocBundle"/>
 
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.LiteralJoinLinesHandler"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler"/>
@@ -1237,6 +1274,9 @@
     <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
                         serviceImplementation="com.intellij.packageDependencies.JavaDependenciesVisitorFactory"/>
 
+    <exceptionFilter implementation="com.intellij.execution.filters.ExceptionBaseFilterFactory"/>
+    <exceptionFilter implementation="com.intellij.execution.filters.ExceptionExFilterFactory"/>
+    <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
 
     <internalFileTemplate name="Class"/>
     <internalFileTemplate name="Interface"/>
@@ -1336,6 +1376,7 @@
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticInheritorRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticTestRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.ConstructorParameterOnFieldRenameRenamerFactory"/>
+    <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticOverloadsRenamerFactory"/>
 
     <nameSuggestionProvider implementation="com.intellij.refactoring.rename.JavaNameSuggestionProvider" id="java"/>
 
@@ -1377,7 +1418,6 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaStaticMemberTypeIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
-    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
 
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
@@ -1452,6 +1492,9 @@
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType"/>
     <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler"/>
+    <debugger.simpleGetterProvider implementation="com.intellij.debugger.engine.JavaSimpleGetterProvider"/>
+    <debugger.syntheticProvider implementation="com.intellij.debugger.engine.DefaultSyntheticProvider"/>
+    <debugger.sourcePositionProvider implementation="com.intellij.debugger.engine.DefaultSourcePositionProvider" order="last"/>
 
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>
@@ -1481,6 +1524,7 @@
     <treeCopyHandler implementation="com.intellij.psi.impl.source.tree.JavaTreeCopyHandler"/>
     <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
 
+    <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PackagePrefixElementFinder"/>
     <java.elementFinder implementation="com.intellij.psi.impl.migration.MigrationElementFinder"/>
 
@@ -1519,6 +1563,8 @@
 
     <applicationService serviceInterface="org.jetbrains.generate.tostring.template.TemplatesManager"
                         serviceImplementation="org.jetbrains.generate.tostring.template.TemplatesManager"/>
+    <applicationService serviceInterface="org.jetbrains.generate.tostring.GenerateToStringActionHandler"
+                        serviceImplementation="org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl"/>
     <applicationService serviceInterface="org.jetbrains.generate.tostring.GenerateToStringContext"
                         serviceImplementation="org.jetbrains.generate.tostring.GenerateToStringContext"/>
 
@@ -1528,6 +1574,7 @@
     <localInspection language="JAVA" shortName="FieldNotUsedInToString" displayName="Field not used in 'toString()' method" groupName="toString() issues"
                      enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
+    <generation.toStringClassFilter implementation="org.jetbrains.generate.tostring.GenerateToStringInterfaceFilter" order="last"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
 

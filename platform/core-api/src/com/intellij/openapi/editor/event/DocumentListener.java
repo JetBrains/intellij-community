@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.util.EventListener;
 
 /**
  * Allows to receive notifications about changes in edited documents.
+ * Implementations shouldn't modify the document, for which event is emitted, in listener methods.
  *
  * @see com.intellij.openapi.editor.Document#addDocumentListener(DocumentListener)
  * @see EditorEventMulticaster#addDocumentListener(DocumentListener)

@@ -85,8 +85,7 @@ class PrintManager {
 
     PrintDialog printDialog = new PrintDialog(shortFileName[0], directoryName[0], text, project);
     printDialog.reset();
-    printDialog.show();
-    if (!printDialog.isOK()) {
+    if (!printDialog.showAndGet()) {
       return;
     }
     printDialog.apply();
@@ -97,7 +96,8 @@ class PrintManager {
     PrintSettings printSettings = PrintSettings.getInstance();
     if (printSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
       if (psiFile == null && editor == null) return;
-      TextPainter textPainter = psiFile != null ? initTextPainter(psiFile, editor) : initTextPainter((DocumentEx)editor.getDocument(), project);
+      TextPainter textPainter =
+        psiFile != null ? initTextPainter(psiFile, editor) : initTextPainter((DocumentEx)editor.getDocument(), project);
       if (textPainter == null) return;
 
       if (printSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT &&
@@ -114,26 +114,8 @@ class PrintManager {
       painter = new MultiFilePainter(filesList);
     }
 
-    Pageable document = new Pageable() {
-      @Override
-      public int getNumberOfPages() {
-        return Pageable.UNKNOWN_NUMBER_OF_PAGES;
-      }
-
-      @Override
-      public PageFormat getPageFormat(int pageIndex) throws IndexOutOfBoundsException {
-        return pageFormat;
-      }
-
-      @Override
-      public Printable getPrintable(int pageIndex) throws IndexOutOfBoundsException {
-        return painter;
-      }
-    };
-
     final PrinterJob printerJob = PrinterJob.getPrinterJob();
     try {
-      printerJob.setPageable(document);
       printerJob.setPrintable(painter, pageFormat);
       if (!printerJob.printDialog()) {
         return;
@@ -230,7 +212,8 @@ class PrintManager {
     if (doc == null) return null;
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(psiFile.getProject(), virtualFile);
     highlighter.setText(doc.getCharsSequence());
-    return new TextPainter(doc, highlighter, virtualFile.getPresentableUrl(), psiFile, psiFile.getFileType(), editor);
+    return new TextPainter(doc, highlighter, virtualFile.getPresentableUrl(), virtualFile.getPresentableName(), 
+                           psiFile, psiFile.getFileType(), editor);
   }
 
   private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final Project project) {
@@ -249,6 +232,6 @@ class PrintManager {
   private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, Project project) {
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, "unknown");
     highlighter.setText(doc.getCharsSequence());
-    return new TextPainter(doc, highlighter, "unknown", project, FileTypes.PLAIN_TEXT, null);
+    return new TextPainter(doc, highlighter, "unknown", "unknown", project, FileTypes.PLAIN_TEXT, null);
   }
 }

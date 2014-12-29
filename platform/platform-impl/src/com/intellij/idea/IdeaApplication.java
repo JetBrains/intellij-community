@@ -37,12 +37,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.Arrays;
 
 public class IdeaApplication {
@@ -83,12 +90,15 @@ public class IdeaApplication {
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
 
     boolean headless = Main.isHeadless();
-    if (!headless) {
-      patchSystem();
-    }
+    patchSystem(headless);
 
     if (Main.isCommandLine()) {
-      new CommandLineApplication(isInternal, isUnitTest, headless);
+      if (CommandLineApplication.ourInstance == null) {
+        new CommandLineApplication(isInternal, isUnitTest, headless);
+      }
+      if (isUnitTest) {
+        myLoaded = true;
+      }
     }
     else {
       Splash splash = null;
@@ -114,10 +124,12 @@ public class IdeaApplication {
     myStarter.premain(args);
   }
 
-  private static void patchSystem() {
+  private static void patchSystem(boolean headless) {
     System.setProperty("sun.awt.noerasebackground", "true");
 
-    Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+    IdeEventQueue.getInstance(); // replace system event queue
+    
+    if (headless) return;
 
     if (Patches.SUN_BUG_ID_6209673) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
@@ -238,6 +250,37 @@ public class IdeaApplication {
     }
 
     @Override
+    public boolean canProcessExternalCommandLine() {
+      return true;
+    }
+
+    @Override
+    public void processExternalCommandLine(String[] args, @Nullable String currentDirectory) {
+      LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","));
+
+      if (args.length > 0) {
+        String filename = args[0];
+        File file = new File(currentDirectory, filename);
+
+        if(file.exists()) {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          if (virtualFile != null) {
+            int line = -1;
+            if (args.length > 2 && CustomProtocolHandler.LINE_NUMBER_ARG_NAME.equals(args[1])) {
+              try {
+                line = Integer.parseInt(args[2]);
+              } catch (NumberFormatException ex) {
+                LOG.error("Wrong line number:" + args[2]);
+              }
+            }
+            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
+          }
+        }
+        throw new IncorrectOperationException("Can't find file:" + file);
+      }
+    }
+
+    @Override
     public void main(String[] args) {
       SystemDock.updateMenu();
 
@@ -276,9 +319,13 @@ public class IdeaApplication {
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
+          Project projectFromCommandLine = null;
           if (myPerformProjectLoad) {
-            loadProject();
+            projectFromCommandLine = loadProjectFromExternalCommandLine();
           }
+
+          final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+          bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
@@ -295,15 +342,13 @@ public class IdeaApplication {
     }
   }
 
-  private void loadProject() {
+  private Project loadProjectFromExternalCommandLine() {
     Project project = null;
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
       LOG.info("IdeaApplication.loadProject");
       project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
     }
-
-    final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-    bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project);
+    return project;
   }
 
   public String[] getCommandLineArguments() {

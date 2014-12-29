@@ -95,7 +95,7 @@ public class PyClassicPropertyTest extends PyTestCase {
     accessor = p.getGetter();
     assertFalse(accessor.isDefined());
 
-    final PyType codeInsightType = p.getType(TypeEvalContext.codeInsightFallback());
+    final PyType codeInsightType = p.getType(TypeEvalContext.codeInsightFallback(myClass.getProject()));
     assertNull(codeInsightType);
 
     accessor = p.getSetter();

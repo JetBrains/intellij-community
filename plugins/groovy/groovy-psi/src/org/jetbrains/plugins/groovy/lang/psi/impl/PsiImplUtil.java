@@ -19,18 +19,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.MethodSignature;
@@ -393,48 +387,6 @@ public class PsiImplUtil {
 
   public static boolean isExtendsSignature(MethodSignature superSignatureCandidate, MethodSignature subSignature) {
     return MethodSignatureUtil.isSubsignature(superSignatureCandidate, subSignature);
-  }
-
-  @Nullable
-  public static PsiElement getOriginalElement(PsiClass clazz, PsiFile containingFile) {
-    VirtualFile vFile = containingFile.getVirtualFile();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(clazz.getProject());
-    final ProjectFileIndex idx = ProjectRootManager.getInstance(facade.getProject()).getFileIndex();
-
-    if (vFile == null || !idx.isInLibrarySource(vFile)) return clazz;
-    final String qName = clazz.getQualifiedName();
-    if (qName == null) return null;
-    final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
-    PsiClass original = facade.findClass(qName, new GlobalSearchScope(facade.getProject()) {
-      @Override
-      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-        return 0;
-      }
-
-      @Override
-      public boolean contains(@NotNull VirtualFile file) {
-        // order for file and vFile has non empty intersection.
-        List<OrderEntry> entries = idx.getOrderEntriesForFile(file);
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0; i < entries.size(); i++) {
-          final OrderEntry entry = entries.get(i);
-          if (orderEntries.contains(entry)) return true;
-        }
-        return false;
-      }
-
-      @Override
-      public boolean isSearchInModuleContent(@NotNull Module aModule) {
-        return false;
-      }
-
-      @Override
-      public boolean isSearchInLibraries() {
-        return true;
-      }
-    });
-
-    return original != null ? original : clazz;
   }
 
   @Nullable
@@ -945,7 +897,7 @@ public class PsiImplUtil {
     }
   }
 
-  public static boolean isSpreadAssignment(GrExpression lValue) {
+  public static boolean isSpreadAssignment(@Nullable GrExpression lValue) {
     if (lValue instanceof GrReferenceExpression) {
       GrReferenceExpression expression = (GrReferenceExpression)lValue;
       final PsiElement dot = expression.getDotToken();

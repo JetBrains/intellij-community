@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -58,7 +59,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -440,7 +440,7 @@ public class BraceHighlightingHandler {
             if (myProject.isDisposed() || myEditor.isDisposed()) return;
             Color color = attributes.getBackgroundColor();
             if (color == null) return;
-            color = UIUtil.isUnderDarcula() ? ColorUtil.shift(color, 1.1d) : color.darker();
+            color = ColorUtil.isDark(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()) ? ColorUtil.shift(color, 1.5d) : color.darker();
             lineMarkFragment(startLine, endLine, color);
           }
         };
@@ -560,8 +560,8 @@ public class BraceHighlightingHandler {
   }
 
   private static class MyLineMarkerRenderer implements LineMarkerRenderer {
-    private static final int DEEPNESS = 2;
-    private static final int THICKNESS = 2;
+    private static final int DEEPNESS = 0;
+    private static final int THICKNESS = 1;
     private final Color myColor;
 
     private MyLineMarkerRenderer(@NotNull Color color) {
@@ -572,9 +572,10 @@ public class BraceHighlightingHandler {
     public void paint(Editor editor, Graphics g, Rectangle r) {
       int height = r.height + editor.getLineHeight();
       g.setColor(myColor);
-      g.fillRect(r.x, r.y, THICKNESS, height);
-      g.fillRect(r.x + THICKNESS, r.y, DEEPNESS, THICKNESS);
-      g.fillRect(r.x + THICKNESS, r.y + height - THICKNESS, DEEPNESS, THICKNESS);
+      int x = r.x + 1; // because of THICKNESS = 1
+      g.fillRect(x, r.y, THICKNESS, height);
+      g.fillRect(x + THICKNESS, r.y, DEEPNESS, THICKNESS);
+      g.fillRect(x + THICKNESS, r.y + height - THICKNESS, DEEPNESS, THICKNESS);
     }
   }
 }

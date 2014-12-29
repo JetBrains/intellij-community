@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,28 +34,26 @@ public final class ObjectTree<T> {
   private final List<ObjectTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
-  private final Set<T> myRootObjects = ContainerUtil.newIdentityTroveSet();
-  private final Map<T, ObjectNode<T>> myObject2NodeMap = ContainerUtil.newIdentityTroveMap();
+  private final Set<T> myRootObjects = ContainerUtil.newIdentityTroveSet(); // guarded by treeLock
+  private final Map<T, ObjectNode<T>> myObject2NodeMap = ContainerUtil.newIdentityTroveMap(); // guarded by treeLock
 
-  private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
-  private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>();
+  private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>(); // guarded by myExecutedNodes
+  private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>(); // guarded by myExecutedUnregisteredNodes
 
   final Object treeLock = new Object();
 
-  private AtomicLong myModification = new AtomicLong(0);
+  private final AtomicLong myModification = new AtomicLong(0);
 
-  public ObjectNode<T> getNode(@NotNull T object) {
-    synchronized (treeLock) {
-      return myObject2NodeMap.get(object);
-    }
-  }
-  public ObjectNode<T> putNode(@NotNull T object, @Nullable("null means remove") ObjectNode<T> node) {
-    synchronized (treeLock) {
-      return node == null ? myObject2NodeMap.remove(object) : myObject2NodeMap.put(object, node);
-    }
+  ObjectNode<T> getNode(@NotNull T object) {
+    return myObject2NodeMap.get(object);
   }
 
-  public final List<ObjectNode<T>> getNodesInExecution() {
+  ObjectNode<T> putNode(@NotNull T object, @Nullable("null means remove") ObjectNode<T> node) {
+    return node == null ? myObject2NodeMap.remove(object) : myObject2NodeMap.put(object, node);
+  }
+
+  @NotNull
+  final List<ObjectNode<T>> getNodesInExecution() {
     return myExecutedNodes;
   }
 
@@ -105,8 +103,7 @@ public final class ObjectTree<T> {
 
   @NotNull
   private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode, @Nullable final Throwable trace) {
-    final ObjectNode<T> newNode = new ObjectNode<T>(this, parentNode, object, getNextModification(),
-                                                    trace);
+    final ObjectNode<T> newNode = new ObjectNode<T>(this, parentNode, object, getNextModification(), trace);
     if (parentNode == null) {
       myRootObjects.add(object);
     }
@@ -114,12 +111,15 @@ public final class ObjectTree<T> {
     return newNode;
   }
 
-  public long getNextModification() {
+  private long getNextModification() {
     return myModification.incrementAndGet();
   }
 
   public final boolean executeAll(@NotNull T object, boolean disposeTree, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
-    ObjectNode<T> node = getNode(object);
+    ObjectNode<T> node;
+    synchronized (treeLock) {
+      node = getNode(object);
+    }
     if (node == null) {
       if (processUnregistered) {
         executeUnregistered(object, action);
@@ -147,7 +147,7 @@ public final class ObjectTree<T> {
     }
     finally {
       synchronized (recursiveGuard) {
-        int i = ArrayUtil.indexOf(recursiveGuard, object, Equality.IDENTITY);
+        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, Equality.IDENTITY);
         assert i != -1;
         recursiveGuard.remove(i);
       }
@@ -159,11 +159,12 @@ public final class ObjectTree<T> {
   }
 
   public final void executeChildAndReplace(@NotNull T toExecute, @NotNull T toReplace, boolean disposeTree, @NotNull ObjectTreeAction<T> action) {
-    final ObjectNode<T> toExecuteNode = getNode(toExecute);
-    assert toExecuteNode != null : "Object " + toExecute + " wasn't registered or already disposed";
-
+    final ObjectNode<T> toExecuteNode;
     T parentObject;
     synchronized (treeLock) {
+      toExecuteNode = getNode(toExecute);
+      assert toExecuteNode != null : "Object " + toExecute + " wasn't registered or already disposed";
+
       final ObjectNode<T> parent = toExecuteNode.getParent();
       assert parent != null : "Object " + toExecute + " is not connected to the tree - doesn't have parent";
       parentObject = parent.getObject();
@@ -174,10 +175,13 @@ public final class ObjectTree<T> {
   }
 
   public boolean containsKey(@NotNull T object) {
-    return getNode(object) != null;
+    synchronized (treeLock) {
+      return getNode(object) != null;
+    }
   }
 
   @TestOnly
+  // public for Upsource
   public void assertNoReferenceKeptInTree(@NotNull T disposable) {
     synchronized (treeLock) {
       Collection<ObjectNode<T>> nodes = myObject2NodeMap.values();
@@ -187,57 +191,55 @@ public final class ObjectTree<T> {
     }
   }
 
-  public void removeRootObject(@NotNull T object) {
-    synchronized (treeLock) {
-      myRootObjects.remove(object);
-    }
+  void removeRootObject(@NotNull T object) {
+    myRootObjects.remove(object);
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
   public void assertIsEmpty(boolean throwError) {
-    for (T object : myRootObjects) {
-      if (object == null) continue;
-      final ObjectNode<T> objectNode = getNode(object);
-      if (objectNode == null) continue;
-
-      final Throwable trace = objectNode.getTrace();
-      RuntimeException exception = new RuntimeException("Memory leak detected: " + object + " of class " + object.getClass()
-                                                        + "\nSee the cause for the corresponding Disposer.register() stacktrace:\n",
-                                                        trace);
-      if (throwError) {
-        throw exception;
+    synchronized (treeLock) {
+      for (T object : myRootObjects) {
+        if (object == null) continue;
+        ObjectNode<T> objectNode = getNode(object);
+        if (objectNode == null) continue;
+        while (objectNode.getParent() != null) {
+          objectNode = objectNode.getParent();
+        }
+        final Throwable trace = objectNode.getTrace();
+        RuntimeException exception = new RuntimeException("Memory leak detected: " + object + " of class " + object.getClass()
+                                                          + "\nSee the cause for the corresponding Disposer.register() stacktrace:\n",
+                                                          trace);
+        if (throwError) {
+          throw exception;
+        }
+        LOG.error(exception);
       }
-      LOG.error(exception);
     }
   }
   
   @TestOnly
   public boolean isEmpty() {
-    return myRootObjects.isEmpty();
-  }
-
-  @TestOnly
-  public void clearAll() {
-    myRootObjects.clear();
-    myExecutedNodes.clear();
-    myExecutedUnregisteredNodes.clear();
-    myObject2NodeMap.clear();
+    synchronized (treeLock) {
+      return myRootObjects.isEmpty();
+    }
   }
 
   @NotNull
-  public Set<T> getRootObjects() {
-    return myRootObjects;
+  Set<T> getRootObjects() {
+    synchronized (treeLock) {
+      return myRootObjects;
+    }
   }
 
-  public void addListener(@NotNull ObjectTreeListener listener) {
+  void addListener(@NotNull ObjectTreeListener listener) {
     myListeners.add(listener);
   }
 
-  public void removeListener(@NotNull ObjectTreeListener listener) {
+  void removeListener(@NotNull ObjectTreeListener listener) {
     myListeners.remove(listener);
   }
 
-  void fireRegistered(@NotNull Object object) {
+  private void fireRegistered(@NotNull Object object) {
     for (ObjectTreeListener each : myListeners) {
       each.objectRegistered(object);
     }
@@ -249,8 +251,10 @@ public final class ObjectTree<T> {
     }
   }
 
-  public int size() {
-    return myObject2NodeMap.size();
+  int size() {
+    synchronized (treeLock) {
+      return myObject2NodeMap.size();
+    }
   }
 
   @Nullable
@@ -262,7 +266,7 @@ public final class ObjectTree<T> {
     }
   }
 
-  public long getModification() {
+  long getModification() {
     return myModification.get();
   }
 }

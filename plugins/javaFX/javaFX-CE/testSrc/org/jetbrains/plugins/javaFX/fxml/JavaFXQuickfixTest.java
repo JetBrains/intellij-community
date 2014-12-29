@@ -18,23 +18,25 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection;
+import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
+
+import java.util.Set;
 
 public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_WITH_GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
        public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
        PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
-       PsiTestUtil.addLibrary(module, model, "groovy", PluginPathManager.getPluginHomePath("groovy") + "/testdata/mockGroovyLib1.8", "groovy-1.8.0-beta-2.jar");
+       PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
        super.configureModule(module, model, contentEntry);
      }
    };
@@ -46,21 +48,21 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCreateControllerMethod() throws Exception {
-    doTest("Create Method 'void bar(ActionEvent)'", ".java");
+    doTest("Create method 'void bar(ActionEvent)'", ".java");
   }
 
   public void testCreateControllerMethodInGroovy() throws Exception {
-    doTest("Create Method 'void bar(ActionEvent)'", ".groovy");
+    doTest("Create method 'void bar(ActionEvent)'", ".groovy");
   }
 
   public void testCreateField() throws Exception {
-    doTest("Create Field 'btn'", ".java");
+    doTest("Create field 'btn'", ".java");
   }
 
   public void testCreateFieldEmptyName() throws Exception {
     String path = getTestName(true) + ".fxml";
     final IntentionAction intention =
-      myFixture.getAvailableIntention("Create Field 'btn'", path, getTestName(false) + ".java");
+      myFixture.getAvailableIntention("Create field 'btn'", path, getTestName(false) + ".java");
     assertNull(intention);
   }
 
@@ -68,7 +70,10 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(true) + ".fxml");
     final IntentionAction intention = myFixture.findSingleIntention("Specify page language");
     assertNotNull(intention);
-    myFixture.launchAction(intention);
+    Set<String> languages = JavaFxInjectPageLanguageIntention.getAvailableLanguages(getProject());
+    assertContainsElements(languages, "groovy");
+    JavaFxInjectPageLanguageIntention languageIntention = (JavaFxInjectPageLanguageIntention)intention;
+    languageIntention.registerPageLanguage(getProject(), (XmlFile)myFixture.getFile(), "groovy");
     myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
   }
 

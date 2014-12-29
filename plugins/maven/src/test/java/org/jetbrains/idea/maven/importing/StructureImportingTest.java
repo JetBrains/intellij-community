@@ -21,7 +21,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -834,7 +834,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   private LanguageLevel getLanguageLevelForModule() {
-    return LanguageLevelModuleExtension.getInstance(getModule("project")).getLanguageLevel();
+    return LanguageLevelModuleExtensionImpl.getInstance(getModule("project")).getLanguageLevel();
   }
 
   public void testSettingTargetLevel() throws Exception {

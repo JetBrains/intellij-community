@@ -17,8 +17,9 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
-import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.StructField;
@@ -27,68 +28,64 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Set;
 
 public class AssignmentExprent extends Exprent {
 
   public static final int CONDITION_NONE = -1;
 
-  private static final String[] funceq = new String[]{
-    " += ",        //  FUNCTION_ADD
-    " -= ",        //	FUNCTION_SUB
-    " *= ",        //	FUNCTION_MUL
-    " /= ",        //	FUNCTION_DIV
-    " &= ",        //	FUNCTION_AND
-    " |= ",        //	FUNCTION_OR
-    " ^= ",        //	FUNCTION_XOR
-    " %= ",        //	FUNCTION_REM
-    " <<= ",        //	FUNCTION_SHL
-    " >>= ",        //	FUNCTION_SHR
-    " >>>= "        //	FUNCTION_USHR
+  private static final String[] OPERATORS = {
+    " += ",   // FUNCTION_ADD
+    " -= ",   // FUNCTION_SUB
+    " *= ",   // FUNCTION_MUL
+    " /= ",   // FUNCTION_DIV
+    " &= ",   // FUNCTION_AND
+    " |= ",   // FUNCTION_OR
+    " ^= ",   // FUNCTION_XOR
+    " %= ",   // FUNCTION_REM
+    " <<= ",  // FUNCTION_SHL
+    " >>= ",  // FUNCTION_SHR
+    " >>>= "  // FUNCTION_USHR
   };
 
-
   private Exprent left;
-
   private Exprent right;
+  private int condType = CONDITION_NONE;
 
-  private int condtype = CONDITION_NONE;
-
-  {
-    this.type = EXPRENT_ASSIGNMENT;
-  }
-
-
-  public AssignmentExprent(Exprent left, Exprent right) {
+  public AssignmentExprent(Exprent left, Exprent right, Set<Integer> bytecodeOffsets) {
+    super(EXPRENT_ASSIGNMENT);
     this.left = left;
     this.right = right;
+
+    addBytecodeOffsets(bytecodeOffsets);
   }
 
-
+  @Override
   public VarType getExprType() {
     return left.getExprType();
   }
 
-
+  @Override
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
 
-    VarType typeleft = left.getExprType();
-    VarType typeright = right.getExprType();
+    VarType typeLeft = left.getExprType();
+    VarType typeRight = right.getExprType();
 
-    if (typeleft.type_family > typeright.type_family) {
-      result.addMinTypeExprent(right, VarType.getMinTypeInFamily(typeleft.type_family));
+    if (typeLeft.typeFamily > typeRight.typeFamily) {
+      result.addMinTypeExprent(right, VarType.getMinTypeInFamily(typeLeft.typeFamily));
     }
-    else if (typeleft.type_family < typeright.type_family) {
-      result.addMinTypeExprent(left, typeright);
+    else if (typeLeft.typeFamily < typeRight.typeFamily) {
+      result.addMinTypeExprent(left, typeRight);
     }
     else {
-      result.addMinTypeExprent(left, VarType.getCommonSupertype(typeleft, typeright));
+      result.addMinTypeExprent(left, VarType.getCommonSupertype(typeLeft, typeRight));
     }
 
     return result;
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<Exprent>();
     lst.add(left);
@@ -96,16 +93,18 @@ public class AssignmentExprent extends Exprent {
     return lst;
   }
 
+  @Override
   public Exprent copy() {
-    return new AssignmentExprent(left.copy(), right.copy());
+    return new AssignmentExprent(left.copy(), right.copy(), bytecode);
   }
 
+  @Override
   public int getPrecedence() {
     return 13;
   }
 
   @Override
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     VarType leftType = left.getExprType();
     VarType rightType = right.getExprType();
 
@@ -127,10 +126,10 @@ public class AssignmentExprent extends Exprent {
     }
 
     if (hiddenField) {
-      return "";
+      return new TextBuffer();
     }
 
-    StringBuilder buffer = new StringBuilder();
+    TextBuffer buffer = new TextBuffer();
 
     if (fieldInClassInit) {
       buffer.append(((FieldExprent)left).getName());
@@ -139,23 +138,36 @@ public class AssignmentExprent extends Exprent {
       buffer.append(left.toJava(indent, tracer));
     }
 
-    String res = right.toJava(indent, tracer);
+    TextBuffer res = right.toJava(indent, tracer);
 
-    if (condtype == CONDITION_NONE &&
+    if (condType == CONDITION_NONE &&
         !leftType.isSuperset(rightType) &&
         (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) {
       if (right.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-        res = "(" + res + ")";
+        res.enclose("(", ")");
       }
 
-      res = "(" + ExprProcessor.getCastTypeName(leftType) + ")" + res;
+      res.prepend("(" + ExprProcessor.getCastTypeName(leftType) + ")");
     }
 
-    buffer.append(condtype == CONDITION_NONE ? " = " : funceq[condtype]).append(res);
+    buffer.append(condType == CONDITION_NONE ? " = " : OPERATORS[condType]).append(res);
 
-    return buffer.toString();
+    tracer.addMapping(bytecode);
+
+    return buffer;
   }
 
+  @Override
+  public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
+    if (oldExpr == left) {
+      left = newExpr;
+    }
+    if (oldExpr == right) {
+      right = newExpr;
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null || !(o instanceof AssignmentExprent)) return false;
@@ -163,17 +175,7 @@ public class AssignmentExprent extends Exprent {
     AssignmentExprent as = (AssignmentExprent)o;
     return InterpreterUtil.equalObjects(left, as.getLeft()) &&
            InterpreterUtil.equalObjects(right, as.getRight()) &&
-           condtype == as.getCondtype();
-  }
-
-  public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-    if (oldexpr == left) {
-      left = newexpr;
-    }
-
-    if (oldexpr == right) {
-      right = newexpr;
-    }
+           condType == as.getCondType();
   }
 
   // *****************************************************************************
@@ -196,11 +198,11 @@ public class AssignmentExprent extends Exprent {
     this.right = right;
   }
 
-  public int getCondtype() {
-    return condtype;
+  public int getCondType() {
+    return condType;
   }
 
-  public void setCondtype(int condtype) {
-    this.condtype = condtype;
+  public void setCondType(int condType) {
+    this.condType = condType;
   }
 }

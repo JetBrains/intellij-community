@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
+@Deprecated
 public class JDOMExternalizableStringList extends ArrayList<String> implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.JDOMExternalizableStringList");
 
@@ -50,42 +51,38 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
     clear();
 
     Class callerClass = null;
-    for (final Object o : element.getChildren()) {
-      Element listElement = (Element)o;
-      if (ATTR_LIST.equals(listElement.getName())) {
-        if (callerClass == null) {
-          callerClass = ReflectionUtil.findCallerClass(2);
-          assert callerClass != null;
+    for (Element listElement : element.getChildren(ATTR_LIST)) {
+      if (callerClass == null) {
+        callerClass = ReflectionUtil.findCallerClass(2);
+        assert callerClass != null;
+      }
+      final ClassLoader classLoader = callerClass.getClassLoader();
+      for (Element listItemElement : listElement.getChildren(ATTR_ITEM)) {
+        if (!ATTR_ITEM.equals(listItemElement.getName())) {
+          throw new InvalidDataException(
+            "Unable to read list item. Unknown element found: " + listItemElement.getName());
         }
-        final ClassLoader classLoader = callerClass.getClassLoader();
-        for (final Object o1 : listElement.getChildren()) {
-          Element listItemElement = (Element)o1;
-          if (!ATTR_ITEM.equals(listItemElement.getName())) {
-            throw new InvalidDataException(
-              "Unable to read list item. Unknown element found: " + listItemElement.getName());
-          }
-          String itemClassString = listItemElement.getAttributeValue(ATTR_CLASS);
-          Class itemClass;
-          try {
-            itemClass = Class.forName(itemClassString, true, classLoader);
-          }
-          catch (ClassNotFoundException ex) {
-            throw new InvalidDataException(
-              "Unable to read list item: unable to load class: " + itemClassString + " \n" + ex.getMessage());
-          }
-
-          String listItem = listItemElement.getAttributeValue(ATTR_VALUE);
-
-          LOG.assertTrue(String.class.equals(itemClass));
-
-          add(listItem);
+        String itemClassString = listItemElement.getAttributeValue(ATTR_CLASS);
+        Class itemClass;
+        try {
+          itemClass = Class.forName(itemClassString, true, classLoader);
         }
+        catch (ClassNotFoundException ex) {
+          throw new InvalidDataException(
+            "Unable to read list item: unable to load class: " + itemClassString + " \n" + ex.getMessage());
+        }
+
+        String listItem = listItemElement.getAttributeValue(ATTR_VALUE);
+
+        LOG.assertTrue(String.class.equals(itemClass));
+
+        add(listItem);
       }
     }
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     int listSize = size();
     Element listElement = new Element(ATTR_LIST);
     listElement.setAttribute(ATTR_LISTSIZE, Integer.toString(listSize));

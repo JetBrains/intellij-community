@@ -1,13 +1,18 @@
 package com.jetbrains.python.edu.course;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -195,19 +200,19 @@ public class TaskWindow implements Comparable, Stateful {
                          @NotNull final Document usersDocument) {
 
     try {
-      VirtualFile windowCopy =
-        answerFile.copy(this, answerFile.getParent(), answerFile.getNameWithoutExtension() + WINDOW_POSTFIX);
+      final VirtualFile windowCopy =
+        answerFile.copy(this, answerFile.getParent(), answerFile.getNameWithoutExtension() + myIndex + WINDOW_POSTFIX);
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document windowDocument = documentManager.getDocument(windowCopy);
       if (windowDocument != null) {
-        File resourceFile = StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
-        TaskFile windowTaskFile = new TaskFile();
+        final File resourceFile = StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
+        final TaskFile windowTaskFile = new TaskFile();
         TaskFile.copy(answerTaskFile, windowTaskFile);
         StudyDocumentListener listener = new StudyDocumentListener(windowTaskFile);
         windowDocument.addDocumentListener(listener);
         int start = getRealStartOffset(windowDocument);
         int end = start + getLength();
-        TaskWindow userTaskWindow = usersTaskFile.getTaskWindows().get(getIndex());
+        final TaskWindow userTaskWindow = usersTaskFile.getTaskWindows().get(getIndex());
         int userStart = userTaskWindow.getRealStartOffset(usersDocument);
         int userEnd = userStart + userTaskWindow.getLength();
         String text = usersDocument.getText(new TextRange(userStart, userEnd));
@@ -219,8 +224,10 @@ public class TaskWindow implements Comparable, Stateful {
           }
         });
         VirtualFile fileWindows = StudyUtils.flushWindows(windowTaskFile, windowCopy);
-        Process smartTestProcess = testRunner.launchTests(project, windowCopy.getPath());
-        boolean res = testRunner.getPassedTests(smartTestProcess).equals(StudyTestRunner.TEST_OK);
+        Process smartTestProcess = testRunner.createCheckProcess(project, windowCopy.getPath());
+        final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess);
+        final ProcessOutput output = handler.runProcess();
+        boolean res = testRunner.getTestsOutput(output).equals(StudyTestRunner.TEST_OK);
         userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed, StudyStatus.Unchecked);
         StudyUtils.deleteFile(windowCopy);
         StudyUtils.deleteFile(fileWindows);

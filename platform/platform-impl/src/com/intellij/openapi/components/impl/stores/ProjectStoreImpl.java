@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
-import com.intellij.openapi.components.store.ComponentSaveSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -31,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -39,7 +39,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -48,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,34 +58,30 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
 
-  static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
   private static int originalVersion = -1;
 
   protected ProjectImpl myProject;
   private StorageScheme myScheme = StorageScheme.DEFAULT;
   private String myPresentableUrl;
 
-  ProjectStoreImpl(@NotNull ProjectImpl project) {
-    super(project);
+  ProjectStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
+    super(pathMacroManager);
 
     myProject = project;
   }
 
   @Override
   public boolean checkVersion() {
-    final ApplicationNamesInfo appNamesInfo = ApplicationNamesInfo.getInstance();
     if (originalVersion >= 0 && originalVersion < ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
       final VirtualFile projectFile = getProjectFile();
       LOG.assertTrue(projectFile != null);
-      String name = projectFile.getNameWithoutExtension();
-
       String message = ProjectBundle.message("project.convert.old.prompt", projectFile.getName(),
-                                             appNamesInfo.getProductName(),
-                                             name + OLD_PROJECT_SUFFIX + projectFile.getExtension());
+                                             ApplicationNamesInfo.getInstance().getProductName(),
+                                             projectFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + projectFile.getExtension());
       if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
 
       List<String> conversionProblems = getConversionProblemsStorage();
-      if (conversionProblems != null && !conversionProblems.isEmpty()) {
+      if (!ContainerUtil.isEmpty(conversionProblems)) {
         StringBuilder buffer = new StringBuilder();
         buffer.append(ProjectBundle.message("project.convert.problems.detected"));
         for (String s : conversionProblems) {
@@ -93,10 +89,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           buffer.append(s);
         }
         buffer.append(ProjectBundle.message("project.convert.problems.help"));
-        final int result = Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
+        if (Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
                                                ProjectBundle.message("project.convert.problems.help.button"),
-                                                 CommonBundle.getCloseButtonText(), Messages.getWarningIcon());
-        if (result == Messages.OK) {
+                                                 CommonBundle.getCloseButtonText(), Messages.getWarningIcon()) == Messages.OK) {
           HelpManager.getInstance().invokeHelp("project.migrationProblems");
         }
       }
@@ -122,21 +117,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
         private void backup(final VirtualFile projectDir, final VirtualFile vile) throws IOException {
           final String oldName = vile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + vile.getExtension();
-          final VirtualFile oldFile = projectDir.findOrCreateChildData(this, oldName);
-          assert oldFile != null : projectDir + ", " + oldName;
-          VfsUtil.saveText(oldFile, VfsUtilCore.loadText(vile));
+          VfsUtil.saveText(projectDir.findOrCreateChildData(this, oldName), VfsUtilCore.loadText(vile));
         }
       });
     }
 
-    if (originalVersion > ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-      String message =
-        ProjectBundle.message("project.load.new.version.warning", myProject.getName(), appNamesInfo.getProductName());
-
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
-    }
-
-    return true;
+    return originalVersion <= ProjectManagerImpl.CURRENT_FORMAT_VERSION ||
+           MessageDialogBuilder.yesNo(CommonBundle.getWarningTitle(),
+                                      ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName()))
+             .icon(Messages.getWarningIcon())
+             .project(myProject).is();
   }
 
   @Override
@@ -287,7 +277,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         final VirtualFile nameFile = ideaDir.findChild(ProjectImpl.NAME_FILE);
         if (nameFile != null && nameFile.isValid()) {
           try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(nameFile.getInputStream(), "UTF-8"));
+            BufferedReader in = new BufferedReader(new InputStreamReader(nameFile.getInputStream(), CharsetToolkit.UTF8_CHARSET));
             try {
               final String name = in.readLine();
               if (name != null && name.length() > 0) {
@@ -365,16 +355,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  public void loadProjectFromTemplate(@NotNull final ProjectImpl defaultProject) {
-    XmlElementStorage stateStorage = getProjectFileStorage();
-
+  public void loadProjectFromTemplate(@NotNull ProjectImpl defaultProject) {
     defaultProject.save();
-    final IProjectStore projectStore = defaultProject.getStateStore();
-    assert projectStore instanceof DefaultProjectStoreImpl;
-    DefaultProjectStoreImpl defaultProjectStore = (DefaultProjectStoreImpl)projectStore;
-    final Element element = defaultProjectStore.getStateCopy();
+
+    Element element = ((DefaultProjectStoreImpl)defaultProject.getStateStore()).getStateCopy();
     if (element != null) {
-      stateStorage.setDefaultState(element);
+      getProjectFileStorage().setDefaultState(element);
     }
   }
 
@@ -384,6 +370,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return myProject.isDefault() ? "" : ((FileBasedStorage)getProjectFileStorage()).getFilePath();
   }
 
+  @NotNull
   @Override
   protected XmlElementStorage getMainStorage() {
     return getProjectFileStorage();
@@ -392,7 +379,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject);
+    return new ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject);
   }
 
   static class  ProjectStorageData extends BaseStorageData {
@@ -461,76 +448,67 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  protected SaveSessionImpl createSaveSession() {
-    return new ProjectSaveSession();
-  }
+  protected final void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    ProjectImpl.UnableToSaveProjectNotification[] notifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
+    if (notifications.length > 0) {
+      throw new SaveCancelledException();
+    }
 
-  protected class ProjectSaveSession extends SaveSessionImpl {
-    @NotNull
-    @Override
-    public ComponentSaveSession save(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      ProjectImpl.UnableToSaveProjectNotification[] notifications =
-        NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
-      if (notifications.length > 0) {
+    beforeSave(readonlyFiles);
+
+    super.doSave(saveSessions, readonlyFiles);
+
+    if (!readonlyFiles.isEmpty()) {
+      ReadonlyStatusHandler.OperationStatus status;
+      AccessToken token = ReadAction.start();
+      try {
+        status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(getFilesList(readonlyFiles));
+      }
+      finally {
+        token.finish();
+      }
+
+      if (status.hasReadonlyFiles()) {
+        ProjectImpl.dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles());
         throw new SaveCancelledException();
       }
-
-      beforeSave(readonlyFiles);
-
-      super.save(readonlyFiles);
-
-      if (!readonlyFiles.isEmpty()) {
-        ReadonlyStatusHandler.OperationStatus status;
-        AccessToken token = ReadAction.start();
-        try {
-          status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(getFilesList(readonlyFiles));
-        }
-        finally {
-          token.finish();
+      else {
+        List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
+        readonlyFiles.clear();
+        for (Pair<SaveSession, VirtualFile> entry : oldList) {
+          executeSave(entry.first, readonlyFiles);
         }
 
-        if (status.hasReadonlyFiles()) {
-          ProjectImpl.dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles());
+        if (!readonlyFiles.isEmpty()) {
+          ProjectImpl.dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
           throw new SaveCancelledException();
         }
-        else {
-          readonlyFiles.clear();
-          for (Pair<SaveSession, VirtualFile> entry : readonlyFiles) {
-            executeSave(entry.first, readonlyFiles);
-          }
-
-          if (!readonlyFiles.isEmpty()) {
-            ProjectImpl.dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
-            throw new SaveCancelledException();
-          }
-        }
       }
-
-      return this;
     }
+  }
 
-    @NotNull
-    private VirtualFile[] getFilesList(List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
-      final VirtualFile[] files = new VirtualFile[readonlyFiles.size()];
-      for (int i = 0, size = readonlyFiles.size(); i < size; i++) {
-        files[i] = readonlyFiles.get(i).second;
-      }
-      return files;
-    }
+  protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+  }
 
-    protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+  @NotNull
+  private static VirtualFile[] getFilesList(List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+    final VirtualFile[] files = new VirtualFile[readonlyFiles.size()];
+    for (int i = 0, size = readonlyFiles.size(); i < size; i++) {
+      files[i] = readonlyFiles.get(i).second;
     }
+    return files;
   }
 
   private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {
     @Override
-    public Storage[] selectStorages(final Storage[] storages, final PersistentStateComponent<?> component, final StateStorageOperation operation) {
+    public Storage[] selectStorages(@NotNull Storage[] storages, @NotNull PersistentStateComponent<?> component, @NotNull StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
-        OrderedSet<Storage> result = new OrderedSet<Storage>();
-
-        for (Storage storage : storages) {
+        List<Storage> result = new SmartList<Storage>();
+        for (int i = storages.length - 1; i >= 0; i--) {
+          Storage storage = storages[i];
           if (storage.scheme() == myScheme) {
-            result.add(0, storage);
+            result.add(storage);
           }
         }
 
@@ -543,14 +521,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         return result.toArray(new Storage[result.size()]);
       }
       else if (operation == StateStorageOperation.WRITE) {
-        List<Storage> result = new ArrayList<Storage>();
+        List<Storage> result = new SmartList<Storage>();
         for (Storage storage : storages) {
           if (storage.scheme() == myScheme) {
             result.add(storage);
           }
         }
 
-        if (!result.isEmpty()) return result.toArray(new Storage[result.size()]);
+        if (!result.isEmpty()) {
+          return result.toArray(new Storage[result.size()]);
+        }
 
         for (Storage storage : storages) {
           if (storage.scheme() == StorageScheme.DEFAULT) {
@@ -560,74 +540,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
         return result.toArray(new Storage[result.size()]);
       }
-
-      return new Storage[]{};
+      else {
+        return new Storage[]{};
+      }
     }
   };
 
   @Override
   protected StateStorageChooser<PersistentStateComponent<?>> getDefaultStateStorageChooser() {
     return myStateStorageChooser;
-  }
-
-  @NotNull
-  @Override
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
-                                                   final StateStorageOperation operation) throws StateStorageException {
-    Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, operation);
-
-    if (operation == StateStorageOperation.READ) {
-      Storage[] upd = new Storage[result.length + 1];
-      System.arraycopy(result, 0, upd, 0, result.length);
-      upd[result.length] = DEFAULT_STORAGE_ANNOTATION;
-      result = upd;
-    }
-
-    return result;
-  }
-
-  @SuppressWarnings("ClassExplicitlyAnnotation")
-  private static class MyStorage implements Storage {
-    @Override
-    public String id() {
-      return "___Default___";
-    }
-
-    @Override
-    public boolean isDefault() {
-      return true;
-    }
-
-    @Override
-    public String file() {
-      return StoragePathMacros.PROJECT_FILE;
-    }
-
-    @Override
-    public StorageScheme scheme() {
-      return  StorageScheme.DEFAULT;
-    }
-
-    @Override
-    public RoamingType roamingType() {
-      return RoamingType.PER_USER;
-    }
-
-    @Override
-    public Class<? extends StateStorage> storageClass() {
-      return StateStorage.class;
-    }
-
-    @Override
-    public Class<? extends StateSplitter> stateSplitter() {
-      return StateSplitter.class;
-    }
-
-    @NotNull
-    @Override
-    public Class<? extends Annotation> annotationType() {
-      throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
-    }
   }
 
   @NotNull

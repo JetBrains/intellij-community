@@ -20,10 +20,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,20 +38,23 @@ import java.util.Set;
  * Base class for a configuration that is associated with a specific module. For example, Java run configurations use the selected module
  * to determine the run classpath.
  */
-public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule> extends RuntimeConfiguration {
+public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule> extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ModuleBasedConfiguration");
+
+  @Property(surroundWithTag = false)
   private final ConfigurationModule myModule;
+
   @NonNls
   protected static final String TO_CLONE_ELEMENT_NAME = "toClone";
 
   public ModuleBasedConfiguration(final String name,
-                                  final ConfigurationModule configurationModule, final ConfigurationFactory factory) {
-    super(name, configurationModule.getProject(), factory);
+                                  @NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
+    super(configurationModule.getProject(), factory, name);
     myModule = configurationModule;
   }
 
   public ModuleBasedConfiguration(final ConfigurationModule configurationModule, final ConfigurationFactory factory) {
-    super("", configurationModule.getProject(), factory);
+    super(configurationModule.getProject(), factory, "");
     myModule = configurationModule;
   }
 
@@ -62,15 +66,6 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
 
   public void setModule(final Module module) {
     myModule.setModule(module);
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException{
-    super.readExternal(element);
-  }
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException{
-    super.writeExternal(element);
   }
 
   protected void readModule(final Element element) throws InvalidDataException {
@@ -129,7 +124,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     final Module[] classModules = getModules();
     final Set<Module> modules = new HashSet<Module>();
     for (Module classModule : classModules) {
-      ModuleUtil.collectModulesDependsOn(classModule, modules);
+      ModuleUtilCore.collectModulesDependsOn(classModule, modules);
     }
     if (modules.contains(originalModule)) setModule(originalModule);
   }

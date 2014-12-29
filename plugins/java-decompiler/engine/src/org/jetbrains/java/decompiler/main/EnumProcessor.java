@@ -21,7 +21,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -101,9 +101,9 @@ public class EnumProcessor {
     if (inv.getFunctype() == InvocationExprent.TYP_INIT) {
       if (inv.getInstance().type == Exprent.EXPRENT_VAR) {
         VarExprent instvar = (VarExprent)inv.getInstance();
-        VarVersionPaar varpaar = new VarVersionPaar(instvar);
+        VarVersionPair varpaar = new VarVersionPair(instvar);
 
-        String classname = meth.varproc.getThisvars().get(varpaar);
+        String classname = meth.varproc.getThisVars().get(varpaar);
 
         if (classname != null) { // any this instance. TODO: Restrict to current class?
           if (!wrapper.getClassStruct().qualifiedName.equals(inv.getClassname())) {

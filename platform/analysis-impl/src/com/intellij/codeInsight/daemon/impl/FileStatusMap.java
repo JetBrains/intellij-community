@@ -74,15 +74,13 @@ public class FileStatusMap implements Disposable {
     return documentRange.intersection(dirtyScope);
   }
 
-  public void setErrorFoundFlag(@NotNull Document document, boolean errorFound) {
+  public void setErrorFoundFlag(@NotNull Project project, @NotNull Document document, boolean errorFound) {
     //GHP has found error. Flag is used by ExternalToolPass to decide whether to run or not
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         if (!errorFound) return;
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        assert file != null : document;
-        status = new FileStatus(file.getProject());
+        status = new FileStatus(project);
         myDocumentToStatusMap.put(document, status);
       }
       status.errorFound = errorFound;
@@ -96,15 +94,8 @@ public class FileStatusMap implements Disposable {
     }
   }
 
-  public boolean isMarkedDirtyDefensively(@NotNull Document document) {
-    synchronized(myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.get(document);
-      return status != null && status.defensivelyMarked;
-    }
-  }
-
   private static class FileStatus {
-    public boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
+    private boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinished;
     // if contains the special value "WHOLE_FILE_MARKER" then the corresponding range is (0, document length)
     private final TIntObjectHashMap<RangeMarker> dirtyScopes = new TIntObjectHashMap<RangeMarker>();
@@ -115,28 +106,30 @@ public class FileStatusMap implements Disposable {
     }
 
     private void markWholeFileDirty(@NotNull Project project) {
-      dirtyScopes.put(Pass.UPDATE_ALL, WHOLE_FILE_DIRTY_MARKER);
-      dirtyScopes.put(Pass.EXTERNAL_TOOLS, WHOLE_FILE_DIRTY_MARKER);
-      dirtyScopes.put(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.UPDATE_ALL, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.EXTERNAL_TOOLS, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
       TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
-        dirtyScopes.put(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
+        setDirtyScope(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
       }
     }
 
-    public boolean allDirtyScopesAreNull() {
+    private boolean allDirtyScopesAreNull() {
       for (Object o : dirtyScopes.getValues()) {
         if (o != null) return false;
       }
       return true;
     }
 
-    public void combineScopesWith(@NotNull final TextRange scope, final int fileLength, @NotNull final Document document) {
+    private void combineScopesWith(@NotNull final TextRange scope, final int fileLength, @NotNull final Document document) {
       dirtyScopes.transformValues(new TObjectFunction<RangeMarker, RangeMarker>() {
         @Override
         public RangeMarker execute(RangeMarker oldScope) {
           RangeMarker newScope = combineScopes(oldScope, scope, fileLength, document);
-          if (newScope != oldScope && oldScope != null) oldScope.dispose();
+          if (newScope != oldScope && oldScope != null) {
+            oldScope.dispose();
+          }
           return newScope;
         }
       });
@@ -158,6 +151,16 @@ public class FileStatusMap implements Disposable {
       });
       s.append(")");
       return s.toString();
+    }
+
+    private void setDirtyScope(int passId, RangeMarker scope) {
+      RangeMarker marker = dirtyScopes.get(passId);
+      if (marker != scope) {
+        if (marker != null) {
+          marker.dispose();
+        }
+        dirtyScopes.put(passId, scope);
+      }
     }
   }
 
@@ -190,11 +193,7 @@ public class FileStatusMap implements Disposable {
         status.wolfPassFinished = true;
       }
       else if (status.dirtyScopes.containsKey(passId)) {
-        RangeMarker marker = status.dirtyScopes.get(passId);
-        if (marker != null) {
-          marker.dispose();
-          status.dirtyScopes.put(passId, null);
-        }
+        status.setDirtyScope(passId, null);
       }
     }
   }
@@ -218,27 +217,6 @@ public class FileStatusMap implements Disposable {
       LOG.assertTrue(status.dirtyScopes.containsKey(passId), "Unknown pass " + passId);
       RangeMarker marker = status.dirtyScopes.get(passId);
       return marker == null ? null : marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
-    }
-  }
-
-  public void markFileScopeDirty(@NotNull Document document, int passId) {
-    assertAllowModifications();
-    synchronized(myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.get(document);
-      if (status == null){
-        return;
-      }
-      if (passId == Pass.WOLF) {
-        status.wolfPassFinished = false;
-      }
-      else {
-        LOG.assertTrue(status.dirtyScopes.containsKey(passId));
-        RangeMarker marker = status.dirtyScopes.get(passId);
-        if (marker != null) {
-          marker.dispose();
-        }
-        status.dirtyScopes.put(passId, WHOLE_FILE_DIRTY_MARKER);
-      }
     }
   }
 
@@ -311,7 +289,7 @@ public class FileStatusMap implements Disposable {
   }
 
   @TestOnly
-  public void allowDirt(boolean allow) {
+  void allowDirt(boolean allow) {
     myAllowDirt = allow;
   }
 
@@ -364,7 +342,7 @@ public class FileStatusMap implements Disposable {
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      throw new UnsupportedOperationException();
+      throw null;
     }
 
     @Override
@@ -380,7 +358,7 @@ public class FileStatusMap implements Disposable {
   }
   private static final StringBuffer log = new StringBuffer();
   private static final boolean IN_TESTS = ApplicationManager.getApplication().isUnitTestMode();
-  static void log(@NonNls Object... info) {
+  public static void log(@NonNls @NotNull Object... info) {
     if (IN_TESTS) {
       if (log.length() > 10000) {
         log.replace(0, log.length()-5000, "");
@@ -390,10 +368,9 @@ public class FileStatusMap implements Disposable {
     }
   }
   @NotNull
-  public static String getAndClearLog() {
+  static String getAndClearLog() {
     String l = log.toString();
     log.setLength(0);
     return l;
   }
-
 }

@@ -79,7 +79,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     myBalloonLayout = new BalloonLayoutImpl(rootPane, new Insets(8, 8, 8, 8));
 
     myScreen = screen;
-    setupCloseAction();
+    setupCloseAction(this);
     new MnemonicHelper().register(this);
     myScreen.setupFrame(this);
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
@@ -102,8 +102,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
     Disposer.dispose(myScreen);
 
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourInstance = null;
+    resetInstance();
   }
 
   private static void saveLocation(Rectangle location) {
@@ -111,12 +110,12 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     DimensionService.getInstance().setLocation(DIMENSION_KEY, middle, null);
   }
 
-  private void setupCloseAction() {
-    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    addWindowListener(
+  static void setupCloseAction(final JFrame frame) {
+    frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    frame.addWindowListener(
       new WindowAdapter() {
         public void windowClosing(final WindowEvent e) {
-          dispose();
+          frame.dispose();
 
           final Application app = ApplicationManager.getApplication();
           app.invokeLater(new DumbAwareRunnable() {
@@ -158,11 +157,21 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     }
     return screen;
   }
-
+  
+  public static void resetInstance() {
+    ourInstance = null;
+  }
 
   public static void showNow() {
     if (ourInstance == null) {
-      IdeFrame frame = EP.getExtensions().length == 0 ? new WelcomeFrame() : EP.getExtensions()[0].createFrame();
+      IdeFrame frame = null;
+      for (WelcomeFrameProvider provider : EP.getExtensions()) {
+        frame = provider.createFrame();
+        if (frame != null) break;
+      }
+      if (frame == null) {
+        frame = new WelcomeFrame();
+      }
       IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
       ((JFrame)frame).setVisible(true);
       ourInstance = frame;

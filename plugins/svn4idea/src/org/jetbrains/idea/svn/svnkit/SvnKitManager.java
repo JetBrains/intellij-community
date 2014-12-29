@@ -139,7 +139,7 @@ public class SvnKitManager {
 
   @NotNull
   public ISVNOptions getSvnOptions() {
-    return myConfiguration.getOptions(myProject);
+    return myConfiguration.getOptions();
   }
 
   @NotNull

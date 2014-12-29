@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,9 +40,18 @@ public class RollbackLineStatusAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
+    if (DiffUtil.isDiffEditor(editor)) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
     if (tracker == null) {
       e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    if (!isSomeChangeSelected(editor, tracker)) {
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(false);
       return;
     }
     e.getPresentation().setEnabledAndVisible(true);
@@ -55,6 +65,14 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     assert tracker != null;
 
     rollback(tracker, editor, null);
+  }
+
+  protected static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTracker tracker) {
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    if (carets.size() != 1) return true;
+    Caret caret = carets.get(0);
+    if (caret.hasSelection()) return true;
+    return tracker.getRangeForLine(caret.getLogicalPosition().line) != null;
   }
 
   protected static void rollback(@NotNull LineStatusTracker tracker, @Nullable Editor editor, @Nullable Range range) {

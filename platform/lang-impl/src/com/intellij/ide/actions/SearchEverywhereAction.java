@@ -68,6 +68,7 @@ import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -274,7 +275,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public Dimension getPreferredSize() {
         final Dimension size = super.getPreferredSize();
-        return new Dimension(Math.min(size.width - 2, POPUP_MAX_WIDTH), size.height);
+        return new Dimension(Math.max(myBalloon.getSize().width, Math.min(size.width - 2, POPUP_MAX_WIDTH)), myList.isEmpty() ? 60 : size.height);
       }
 
       @Override
@@ -443,7 +444,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private ActionCallback onFocusLost() {
     final ActionCallback result = new ActionCallback();
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         try {
@@ -464,7 +465,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               ActionToolbarImpl.updateAllToolbarsImmediately();
             }
           });
-        } finally {
+        }
+        finally {
           result.setDone();
         }
       }
@@ -655,6 +657,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusOwner), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
     }
     if (e == null) return;
+    final Project project = e.getProject();
+    if (project == null) return;
 
     updateComponents();
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
@@ -713,7 +717,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     topPanel.add(title, BorderLayout.WEST);
     final JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
-    final JLabel settings = new JLabel(AllIcons.General.WebSettings);
+    final JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
     new ClickListener(){
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -745,10 +749,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       })
       .createPopup();
     myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
-    final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
+    final Window window = WindowManager.getInstance().suggestParentWindow(project);
 
-    //noinspection ConstantConditions
-    e.getProject().getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+    project.getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
       }
@@ -760,7 +763,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     });
 
     Component parent = UIUtil.findUltimateParent(window);
-    registerDataProvider(panel, e.getProject());
+    registerDataProvider(panel, project);
     final RelativePoint showPoint;
     if (me != null) {
       final Component label = me.getComponent();
@@ -781,7 +784,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myList.setFont(UIUtil.getListFont());
     myBalloon.show(showPoint);
     initSearchActions(myBalloon, myPopupField);
-    IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
+    IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
     focusManager.requestFocus(editor, true);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
   }
@@ -789,7 +792,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private void showSettings() {
     myPopupField.setText("");
     final SearchListModel model = new SearchListModel();
-    model.addElement(new SEOption("Show current file structure elements", "search.everywhere.structure"));
+    //model.addElement(new SEOption("Show current file structure elements", "search.everywhere.structure"));
     model.addElement(new SEOption("Show files", "search.everywhere.files"));
     model.addElement(new SEOption("Show symbols", "search.everywhere.symbols"));
     model.addElement(new SEOption("Show tool windows", "search.everywhere.toolwindows"));
@@ -1987,8 +1990,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
+            JBScrollPane content = new JBScrollPane(myList);
+            content.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
-              .createComponentPopupBuilder(new JBScrollPane(myList), null);
+              .createComponentPopupBuilder(content, null);
             myPopup = builder
               .setRequestFocus(false)
               .setCancelKeyEnabled(false)
@@ -1999,6 +2004,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 }
               })
               .createPopup();
+            myPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             myPopup.getContent().setBorder(new EmptyBorder(0, 0, 0, 0));
             Disposer.register(myPopup, new Disposable() {
               @Override
@@ -2020,7 +2026,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               }
             });
             myPopup.show(new RelativePoint(getField().getParent(), new Point(0, getField().getParent().getHeight())));
-            updatePopupBounds();
+            //updatePopupBounds();
 
             ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
               @Override
@@ -2177,7 +2183,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       size.width = parent.getWidth();
     }
     if (myList.getItemsCount() == 0) {
-      size.height = 70;
+      size.height = 30;
     }
     Dimension sz = new Dimension(size.width, myList.getPreferredSize().height);
     if (sz.width > POPUP_MAX_WIDTH || sz.height > POPUP_MAX_WIDTH) {
@@ -2222,7 +2228,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
     if (popupRect != null) {
-      myPopup.setLocation(new Point(r.x, r.y));
+      myPopup.setLocation(new Point(r.x-1, r.y));
     }
     else {
       if (r.y + d.height > screen.y + screen.height) {
@@ -2313,7 +2319,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       String gotoAction = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoAction"));
       gotoActionTitle = StringUtil.isEmpty(gotoAction) ? "Actions" : "Actions (" + gotoAction + ")";
       String gotoSettings = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ShowSettings"));
-      gotoSettingsTitle = StringUtil.isEmpty(gotoAction) ? "Preferences" : "Preferences (" + gotoSettings + ")";
+      gotoSettingsTitle = StringUtil.isEmpty(gotoAction) ? ShowSettingsUtil.getSettingsMenuName() : ShowSettingsUtil.getSettingsMenuName() + " (" + gotoSettings + ")";
       String gotoRecentFiles = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("RecentFiles"));
       gotoRecentFilesTitle = StringUtil.isEmpty(gotoRecentFiles) ? "Recent Files" : "Recent Files (" + gotoRecentFiles + ")";
       String gotoSymbol = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoSymbol"));

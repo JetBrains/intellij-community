@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.NotNullFunction;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class ChangesViewContentEP {
+public class ChangesViewContentEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP");
 
   public static final ExtensionPointName<ChangesViewContentEP> EP_NAME = new ExtensionPointName<ChangesViewContentEP>("com.intellij.changesViewContent");

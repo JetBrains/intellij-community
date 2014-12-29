@@ -2,19 +2,21 @@ package org.jetbrains.builtInWebServer;
 
 import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
+import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.HtmlUtil;
-import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,16 +65,30 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
 
   @Override
   public boolean canHandleElement(@NotNull OpenInBrowserRequest request) {
-    return request.getFile().getViewProvider().isPhysical() && !(request.getVirtualFile() instanceof LightVirtualFile) && isMyLanguage(request.getFile());
+    if (request.getVirtualFile() instanceof HttpVirtualFile) {
+      return true;
+    }
+
+    // we must use base language because we serve file - not part of file, but the whole file
+    // handlebars, for example, contains HTML and HBS psi trees, so, regardless of context, we should not handle such file
+    FileViewProvider viewProvider = request.getFile().getViewProvider();
+    return viewProvider.isPhysical() &&
+           !(request.getVirtualFile() instanceof LightVirtualFile) &&
+           isMyLanguage(viewProvider.getBaseLanguage());
   }
 
-  protected boolean isMyLanguage(PsiFile psiFile) {
-    return HtmlUtil.isHtmlFile(psiFile);
+  protected boolean isMyLanguage(@NotNull Language language) {
+    return WebBrowserServiceImpl.isHtmlOrXmlFile(language);
   }
 
   @Nullable
   @Override
-  protected Url getUrl(@NotNull OpenInBrowserRequest request, @NotNull VirtualFile virtualFile) throws BrowserException {
-    return ContainerUtil.getFirstItem(getUrls(virtualFile, request.getProject(), null));
+  protected Url getUrl(@NotNull OpenInBrowserRequest request, @NotNull VirtualFile file) throws BrowserException {
+    if (file instanceof HttpVirtualFile) {
+      return Urls.newFromVirtualFile(file);
+    }
+    else {
+      return ContainerUtil.getFirstItem(getUrls(file, request.getProject(), null));
+    }
   }
 }

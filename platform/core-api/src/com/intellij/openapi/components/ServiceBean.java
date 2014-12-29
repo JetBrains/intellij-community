@@ -38,8 +38,7 @@ public class ServiceBean implements PluginAware {
 
   public static <T> List<T> loadServicesFromBeans(final ExtensionPointName<ServiceBean> epName, Class<T> componentClass) {
     final List<T> components = new ArrayList<T>();
-    final ServiceBean[] exportableBeans = Extensions.getExtensions(epName);
-    for (ServiceBean exportableBean : exportableBeans) {
+    for (ServiceBean exportableBean : Extensions.getExtensions(epName)) {
       final String serviceClass = exportableBean.serviceInterface;
       if (serviceClass == null) {
         LOG.error("Service interface not specified in " + epName);
@@ -66,6 +65,7 @@ public class ServiceBean implements PluginAware {
     return components;
   }
 
+  @Override
   public void setPluginDescriptor(final PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }

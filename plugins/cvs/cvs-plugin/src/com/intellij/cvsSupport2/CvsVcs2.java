@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
 
-  public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
+  public CvsVcs2(@NotNull Project project, CvsStorageComponent cvsStorageComponent) {
     super(project, NAME);
     myCvsHistoryProvider = new CvsHistoryProvider(project);
     myCvsCheckinEnvironment = new CvsCheckinEnvironment(getProject());
@@ -223,8 +223,9 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   public void editFiles(final VirtualFile[] files) {
     if (getEditOptions().getValue()) {
       EditOptionsDialog editOptionsDialog = new EditOptionsDialog(myProject);
-      editOptionsDialog.show();
-      if (!editOptionsDialog.isOK()) return;
+      if (!editOptionsDialog.showAndGet()) {
+        return;
+      }
     }
 
     final CvsHandler editHandler = CommandCvsHandler.createEditHandler(files, CvsConfiguration.getInstance(myProject).RESERVED_EDIT);
@@ -354,7 +355,8 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   @Override
   public RootsConvertor getCustomConvertor() {
     return new RootsConvertor() {
-      public List<VirtualFile> convertRoots(List<VirtualFile> result) {
+      @NotNull
+      public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
         return FindAllRootsHelper.findVersionedUnder(result);
       }
     };

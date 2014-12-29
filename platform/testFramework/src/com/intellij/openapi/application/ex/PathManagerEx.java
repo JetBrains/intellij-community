@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
 import org.jdom.Element;
@@ -65,9 +65,12 @@ public class PathManagerEx {
     ULTIMATE, COMMUNITY
   }
 
-  /** Caches test data lookup strategy by class. */
-  private static final ConcurrentMap<Class, TestDataLookupStrategy> CLASS_STRATEGY_CACHE = new ConcurrentHashMap<Class, TestDataLookupStrategy>();
-  private static final ConcurrentMap<String, Class> CLASS_CACHE = new ConcurrentHashMap<String, Class>();
+  /**
+   * Caches test data lookup strategy by class.
+   */
+  private static final ConcurrentMap<Class, TestDataLookupStrategy> CLASS_STRATEGY_CACHE =
+    ContainerUtil.newConcurrentMap();
+  private static final ConcurrentMap<String, Class> CLASS_CACHE = ContainerUtil.newConcurrentMap();
   private static Set<String> ourCommunityModules;
 
   private PathManagerEx() {

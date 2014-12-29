@@ -18,7 +18,6 @@ package git4idea.push;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -40,14 +39,13 @@ import java.util.Collection;
 
 public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, GitPushTarget> {
 
-  private static final Logger LOG = Logger.getInstance(GitPushSupport.class);
-
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitVcs myVcs;
   @NotNull private final Pusher<GitRepository, GitPushSource, GitPushTarget> myPusher;
   @NotNull private final OutgoingCommitsProvider<GitRepository, GitPushSource, GitPushTarget> myOutgoingCommitsProvider;
   @NotNull private final GitVcsSettings mySettings;
   private final GitSharedSettings mySharedSettings;
+  @NotNull private final PushSettings myCommonPushSettings;
 
   // instantiated from plugin.xml
   @SuppressWarnings("UnusedDeclaration")
@@ -55,9 +53,10 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     myRepositoryManager = repositoryManager;
     myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
     mySettings = GitVcsSettings.getInstance(project);
-    myPusher = new GitPusher(project, mySettings);
+    myPusher = new GitPusher(project, mySettings, this);
     myOutgoingCommitsProvider = new GitOutgoingCommitsProvider(project);
     mySharedSettings = ServiceManager.getService(project, GitSharedSettings.class);
+    myCommonPushSettings = ServiceManager.getService(project, PushSettings.class);
   }
 
   @NotNull
@@ -81,15 +80,30 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Nullable
   @Override
   public GitPushTarget getDefaultTarget(@NotNull GitRepository repository) {
+    if (repository.isFresh()) {
+      return null;
+    }
     GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
       return null;
     }
+
+    GitPushTarget persistedTarget = getPersistedTarget(repository, currentBranch);
+    if (persistedTarget != null) {
+      return persistedTarget;
+    }
+
     GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
     if (trackInfo != null) {
       return new GitPushTarget(trackInfo.getRemoteBranch(), false);
     }
     return proposeTargetForNewBranch(repository, currentBranch);
+  }
+
+  @Nullable
+  private GitPushTarget getPersistedTarget(@NotNull GitRepository repository, @NotNull GitLocalBranch branch) {
+    GitRemoteBranch target = mySettings.getPushTarget(repository, branch.getName());
+    return target == null ? null : new GitPushTarget(target, !repository.getBranches().getRemoteBranches().contains(target));
   }
 
   private static GitPushTarget proposeTargetForNewBranch(GitRepository repository, GitLocalBranch currentBranch) {
@@ -113,7 +127,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   private static GitPushTarget makeTargetForNewBranch(@NotNull GitRepository repository,
                                                       @NotNull GitRemote remote,
                                                       @NotNull GitLocalBranch currentBranch) {
-    GitRemoteBranch existingRemoteBranch = GitPushTarget.findRemoteBranch(repository, remote, currentBranch.getName());
+    GitRemoteBranch existingRemoteBranch = GitUtil.findRemoteBranch(repository, remote, currentBranch.getName());
     if (existingRemoteBranch != null) {
       return new GitPushTarget(existingRemoteBranch, false);
     }
@@ -123,7 +137,10 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @NotNull
   @Override
   public GitPushSource getSource(@NotNull GitRepository repository) {
-    return new GitPushSource(repository.getCurrentBranch()); // TODO assert: detached head => not possible to push
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
+    return currentBranch != null
+           ? GitPushSource.create(currentBranch)
+           : GitPushSource.create(ObjectUtils.assertNotNull(repository.getCurrentRevision())); // fresh repository is on branch
   }
 
   @NotNull
@@ -158,5 +175,16 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Override
   public VcsPushOptionsPanel createOptionsPanel() {
     return new GitPushTagPanel(mySettings.getPushTagMode(), GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs.getVersion()));
+  }
+
+  @Override
+  public boolean isSilentForcePushAllowed(@NotNull GitPushTarget target) {
+    return myCommonPushSettings.containsForcePushTarget(target.getBranch().getRemote().getName(),
+                                                        target.getBranch().getNameForRemoteOperations());
+  }
+
+  @Override
+  public void saveSilentForcePushTarget(@NotNull GitPushTarget target) {
+    myCommonPushSettings.addForcePushTarget(target.getBranch().getRemote().getName(), target.getBranch().getNameForRemoteOperations());
   }
 }

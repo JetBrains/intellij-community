@@ -17,15 +17,11 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
@@ -37,18 +33,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownTagInspectionBase {
-  public static final Key<HtmlUnknownTagInspectionBase> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
+public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
+  private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection");
+
+  public HtmlUnknownAttributeInspectionBase() {
+    this("");
+  }
 
   public HtmlUnknownAttributeInspectionBase(String defaultValues) {
     super(defaultValues);
   }
-
-  public HtmlUnknownAttributeInspectionBase() {
-    super();
-  }
-
+  
   @Override
   @Nls
   @NotNull
@@ -68,6 +64,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownTagInspection
     return XmlBundle.message("html.inspections.unknown.tag.attribute.checkbox.title");
   }
 
+  @NotNull
   @Override
   protected String getPanelTitle() {
     return XmlBundle.message("html.inspections.unknown.tag.attribute.title");
@@ -77,11 +74,6 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownTagInspection
   @NotNull
   protected Logger getLogger() {
     return LOG;
-  }
-
-  @Override
-  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    // does nothing! this method should be overridden empty!
   }
 
   @Override
@@ -96,26 +88,19 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownTagInspection
 
       XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
 
-      final String name = attribute.getName();
-
       if (attributeDescriptor == null && !attribute.isNamespaceDeclaration()) {
-        if (!XmlUtil.attributeFromTemplateFramework(name, tag) &&
-            (!isCustomValuesEnabled() || !isCustomValue(name))) {
-          final ASTNode node = attribute.getNode();
-          assert node != null;
-          final PsiElement nameElement = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node).getPsi();
-
+        final String name = attribute.getName();
+        if (!XmlUtil.attributeFromTemplateFramework(name, tag) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
           boolean maySwitchToHtml5 = HtmlUtil.isCustomHtml5Attribute(name) && !HtmlUtil.hasNonHtml5Doctype(tag);
           LocalQuickFix[] quickfixes = new LocalQuickFix[maySwitchToHtml5 ? 3 : 2];
-          quickfixes[0] = new AddCustomTagOrAttributeIntentionAction(ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.attribute", name));
+          quickfixes[0] = new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.attribute", name));
           quickfixes[1] = new RemoveAttributeIntentionAction(name);
           if (maySwitchToHtml5) {
             quickfixes[2] = new SwitchToHtml5WithHighPriorityAction();
           }
 
-          if (nameElement.getTextLength() > 0)
-            holder.registerProblem(nameElement, XmlErrorMessages.message("attribute.is.not.allowed.here", name),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickfixes);
+          registerProblemOnAttributeName(attribute, XmlErrorMessages.message("attribute.is.not.allowed.here", attribute.getName()), holder,
+                                         quickfixes);
         }
       }
     }

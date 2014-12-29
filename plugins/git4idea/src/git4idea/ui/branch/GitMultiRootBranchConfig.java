@@ -103,7 +103,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
 
   @Nullable
   private static GitRemoteBranch getTrackedBranch(@NotNull GitRepository repository, @NotNull String branchName) {
-    GitLocalBranch branch = GitBranchUtil.findLocalBranchByName(repository, branchName);
+    GitLocalBranch branch = repository.getBranches().findLocalBranch(branchName);
     return branch == null ? null : branch.findTrackedBranch(repository);
   }
 

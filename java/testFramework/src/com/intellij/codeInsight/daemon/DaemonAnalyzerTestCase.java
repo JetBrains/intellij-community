@@ -191,9 +191,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    ((StartupManagerImpl)StartupManager.getInstance(getProject())).checkCleared();
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
-    super.tearDown();
+    try {
+      final Project project = getProject();
+      if (project != null) {
+        ((StartupManagerImpl)StartupManager.getInstance(project)).checkCleared();
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+      }
+    }
+    finally {
+      super.tearDown();
+    }
     //((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 
@@ -277,7 +284,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  protected void doTest(boolean checkWarnings, boolean checkInfos, String ... files) throws Exception {
+  protected void doTest(boolean checkWarnings, boolean checkInfos, @NotNull String ... files) throws Exception {
     configureByFiles(null, files);
     doDoTest(checkWarnings, checkInfos);
   }
@@ -339,10 +346,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
   }
 
-  public void allowTreeAccessForFile(@NotNull VirtualFile file) {
+  protected void allowTreeAccessForFile(@NotNull VirtualFile file) {
     myFileTreeAccessFilter.allowTreeAccessForFile(file);
   }
-  public void allowTreeAccessForAllFiles() {
+
+  protected void allowTreeAccessForAllFiles() {
     myFileTreeAccessFilter.allowTreeAccessForAllFiles();
   }
 
@@ -375,7 +383,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       toIgnore.add(Pass.LOCAL_INSPECTIONS);
       toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);
-      toIgnore.add(Pass.POST_UPDATE_ALL);
       toIgnore.add(Pass.UPDATE_ALL);
       toIgnore.add(Pass.UPDATE_OVERRIDEN_MARKERS);
       toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
@@ -402,7 +409,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  public static List<HighlightInfo> filter(@NotNull List<HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
+  protected static List<HighlightInfo> filter(@NotNull List<HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
     ArrayList<HighlightInfo> result = new ArrayList<HighlightInfo>();
     for (final HighlightInfo info : infos) {
       if (info.getSeverity().compareTo(minSeverity) >= 0) result.add(info);
@@ -468,7 +475,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected PsiClass createClass(final Module module, final String text) throws IOException {
     return new WriteCommandAction<PsiClass>(getProject()) {
       @Override
-      protected void run(Result<PsiClass> result) throws Throwable {
+      protected void run(@NotNull Result<PsiClass> result) throws Throwable {
         final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
         final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, text);
         final String qname = javaFile.getClasses()[0].getQualifiedName();

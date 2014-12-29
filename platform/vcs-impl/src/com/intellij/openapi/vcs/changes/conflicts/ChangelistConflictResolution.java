@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,7 @@ public enum ChangelistConflictResolution {
         return true;
       }
       MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, "Move Changes to Active Changelist");
-      dialog.show();
-      if (dialog.isOK()) {
+      if (dialog.showAndGet()) {
         manager.moveChangesTo(manager.getDefaultChangeList(), dialog.getIncludedChanges().toArray(new Change[changes.size()]));
         return true;
       }

@@ -20,9 +20,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -131,6 +133,112 @@ public class PyMoveTest extends PyTestCase {
   // PY-6571
   public void testStarImportUsage() {
     doMoveSymbolTest("g", "c.py");
+  }
+
+  // PY-13870
+  public void testConditionalImport() {
+    doMoveFileTest("mod2.py", "pkg1");
+  }
+
+  // PY-13870
+  public void testConditionalImportFromPackage() {
+    doMoveFileTest("pkg1/mod2.py", "");
+  }
+
+  // PY-14439
+  public void testConditionalImportFromPackageToPackage() {
+    doMoveFileTest("pkg1", "pkg2");
+  }
+
+  // PY-7378
+  public void testMoveNamespacePackage1() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg", "");
+      }
+    });
+  }
+
+  // PY-7378
+  public void testMoveNamespacePackage2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg/a.py", "");
+      }
+    });
+  }
+
+  // PY-7378
+  public void testMoveNamespacePackage3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg/a.py", "nspkg");
+      }
+    });
+  }
+
+  // PY-14384
+  public void testRelativeImportInsideNamespacePackage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveFileTest("nspkg/nssubpkg", "");
+      }
+    });
+  }
+
+  // PY-14384
+  public void testRelativeImportInsideNormalPackage() {
+    doMoveFileTest("nspkg/nssubpkg", "");
+  }
+
+  // PY-14432
+  public void testRelativeImportsInsideMovedModule() {
+    doMoveFileTest("pkg1/subpkg1", "");
+  }
+
+
+  // PY-14432
+  public void testRelativeImportSourceWithSpacesInsideMovedModule() {
+    doMoveFileTest("pkg/subpkg1/a.py", "");
+  }
+
+  // PY-14595
+  public void testNamespacePackageUsedInMovedFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveSymbolTest("func", "b.py");
+      }
+    });
+  }
+
+  // PY-14599
+  public void testMoveFunctionFromUnimportableModule() {
+    doMoveSymbolTest("func", "dst.py");
+  }
+
+  // PY-14599
+  public void testMoveUnreferencedFunctionToUnimportableModule() {
+    doMoveSymbolTest("func", "dst-unimportable.py");
+  }
+
+  // PY-14599
+  public void testMoveReferencedFunctionToUnimportableModule() {
+    try {
+      doMoveSymbolTest("func", "dst-unimportable.py");
+      fail();
+    }
+    catch (IncorrectOperationException e) {
+      assertEquals("Cannot use module name 'dst-unimportable.py' in imports", e.getMessage());
+    }
+  }
+
+  public void testRelativeImportOfNameFromInitPy() {
+    doMoveFileTest("pkg/subpkg2", "");
   }
 
   private void doMoveFileTest(String fileName, String toDirName)  {

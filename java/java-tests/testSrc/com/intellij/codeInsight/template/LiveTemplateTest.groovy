@@ -67,9 +67,9 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTestTemplateWithArg(@NotNull String templateName,
-                                   @NotNull String templateText,
-                                   @NotNull String fileText,
-                                   @NotNull String expected) throws IOException {
+                                     @NotNull String templateText,
+                                     @NotNull String fileText,
+                                     @NotNull String expected) throws IOException {
     configureFromFileText("dummy.java", fileText);
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     String group = "user";
@@ -83,11 +83,11 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     UIUtil.dispatchAllInvocationEvents()
     checkResultByText(expected);
   }
-  
+
   public void testTemplateWithSegmentsAtTheSamePosition_1() {
     doTestTemplateWithThreeVariables("", "", "", "class A { void test() { for(TestValue1TestValue2TestValue3) {} } }")
   }
-  
+
   public void testTemplateWithSegmentsAtTheSamePosition_2() {
     doTestTemplateWithThreeVariables("Def1", "Def2", "DefaultValue", "class A { void test() { for(Def1Def2DefaultValue) {} } }")
   }
@@ -142,7 +142,6 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
     startTemplate(template);
     checkResultByText("");
-
   }
 
   public void testTemplateWithEnd() throws Exception {
@@ -276,6 +275,11 @@ class Foo {
     state.gotoEnd();
     checkResult();
   }
+  
+  def startTemplate(String name, char expandKey) {
+    myFixture.type(name)
+    myFixture.type(expandKey)
+  }
 
   def startTemplate(String name, String group) {
     startTemplate(TemplateSettings.getInstance().getTemplate(name, group));
@@ -381,6 +385,13 @@ class Foo {
     checkResult();
   }
 
+  public void testIterParameterizedInnerInMethod() {
+    configure();
+    startTemplate("iter", "iterations")
+    stripTrailingSpaces();
+    checkResult();
+  }
+
   public void testAsListToar() {
     configure();
     startTemplate("toar", "other")
@@ -448,10 +459,14 @@ class Foo {
 
   public void testOtherContext() throws IOException {
     configureFromFileText("a.java", "class Foo { <caret>xxx }");
-    assertInstanceOf(assertOneElement(TemplateManagerImpl.getApplicableContextTypes(myFixture.getFile(), getEditor().getCaretModel().getOffset())), JavaCodeContextType.Declaration.class);
+    assertInstanceOf(
+      assertOneElement(TemplateManagerImpl.getApplicableContextTypes(myFixture.getFile(), getEditor().getCaretModel().getOffset())),
+      JavaCodeContextType.Declaration.class);
 
     configureFromFileText("a.txt", "class Foo { <caret>xxx }");
-    assertInstanceOf(assertOneElement(TemplateManagerImpl.getApplicableContextTypes(myFixture.getFile(), getEditor().getCaretModel().getOffset())), EverywhereContextType.class);
+    assertInstanceOf(
+      assertOneElement(TemplateManagerImpl.getApplicableContextTypes(myFixture.getFile(), getEditor().getCaretModel().getOffset())),
+      EverywhereContextType.class);
   }
 
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
@@ -461,7 +476,7 @@ class Foo {
 
   @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
-    if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar", 
+    if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar",
                  "test escape string characters in soutv", "test do not replace macro value with empty result"]) {
       runnable.run();
       return;
@@ -661,12 +676,12 @@ class Foo {
   }
 }
 '''
-    
+
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("result", "user", '$T$ result;');
     template.addVariable('T', new MacroCallNode(new MethodReturnTypeMacro()), new EmptyNode(), false)
     template.toReformat = true
-    
+
     startTemplate(template);
     assert myFixture.editor.document.text.contains('List<Map.Entry<String, Integer>> result;')
   }
@@ -708,11 +723,11 @@ class Foo {
 
   public void "test stop at SELECTION when invoked surround template by tab"() {
     myFixture.configureByText "a.txt", "<caret>"
-    
+
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("xxx", "user", 'foo $ARG$ bar $END$ goo $SELECTION$ after');
     template.addVariable("ARG", "", "", true);
-    
+
     startTemplate(template);
     myFixture.type('arg')
     state.nextTab()
@@ -749,7 +764,6 @@ class Foo {
   }
 }
 """
-
   }
 
   public void "test snakeCase should convert hyphens to underscores"() {
@@ -838,7 +852,7 @@ class Foo {
     template.addVariable("VAR2", new MacroCallNode(new FileNameMacro()), new ConstantNode("default"), true)
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
     addTemplate(template, testRootDisposable)
-    
+
     startTemplate(template);
     myFixture.checkResult """\
 class Foo {
@@ -848,7 +862,7 @@ class Foo {
 }
 """
     myFixture.type 'test'
-    
+
     myFixture.checkResult """\
 class Foo {
   {
@@ -856,5 +870,96 @@ class Foo {
   }
 }
 """
+  }
+
+  public void "test multicaret expanding with space"() {
+    myFixture.configureByText "a.java", """\
+class Foo {
+  {
+    <caret>
+    <caret>
+    <caret>
+  }
+}
+"""
+    def defaultShortcutChar = TemplateSettings.instance.defaultShortcutChar
+    try {
+      TemplateSettings.instance.defaultShortcutChar = TemplateSettings.SPACE_CHAR
+      startTemplate("sout", TemplateSettings.SPACE_CHAR)
+    }
+    finally {
+      TemplateSettings.instance.defaultShortcutChar = defaultShortcutChar
+    }
+    myFixture.checkResult("""\
+class Foo {
+  {
+      System.out.println();
+    sout 
+      System.out.println();
+  }
+}
+""")
+    
+  }
+  
+    public void "test multicaret expanding with enter"() {
+    myFixture.configureByText "a.java", """\
+class Foo {
+  {
+    <caret>
+    <caret>
+    <caret>
+  }
+}
+"""
+    def defaultShortcutChar = TemplateSettings.instance.defaultShortcutChar
+    try {
+      TemplateSettings.instance.defaultShortcutChar = TemplateSettings.ENTER_CHAR
+      startTemplate("sout", TemplateSettings.ENTER_CHAR)
+    }
+    finally {
+      TemplateSettings.instance.defaultShortcutChar = defaultShortcutChar
+    }
+    myFixture.checkResult("""\
+class Foo {
+  {
+      System.out.println();
+    sout
+            
+      System.out.println();
+  }
+}
+""")
+    
+  }
+  
+    public void "test multicaret expanding with tab"() {
+    myFixture.configureByText "a.java", """\
+class Foo {
+  {
+    <caret>
+    <caret>
+    <caret>
+  }
+}
+"""
+    def defaultShortcutChar = TemplateSettings.instance.defaultShortcutChar
+    try {
+      TemplateSettings.instance.defaultShortcutChar = TemplateSettings.TAB_CHAR
+      startTemplate("sout", TemplateSettings.TAB_CHAR)
+    }
+    finally {
+      TemplateSettings.instance.defaultShortcutChar = defaultShortcutChar
+    }
+      
+    myFixture.checkResult("""\
+class Foo {
+  {
+      System.out.println();
+    sout
+      System.out.println();
+  }
+}
+""")
   }
 }

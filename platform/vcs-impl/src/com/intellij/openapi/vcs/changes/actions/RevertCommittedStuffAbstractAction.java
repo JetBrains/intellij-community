@@ -72,9 +72,10 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     }
 
     final ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(), null,
-                                                      "Select Target Changelist", defaultName);
-    chooser.show();
-    if (!chooser.isOK()) return;
+                                                            "Select Target Changelist", defaultName);
+    if (!chooser.showAndGet()) {
+      return;
+    }
 
     final List<FilePatch> patches = new ArrayList<FilePatch>();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("revert.changes.title"), true,

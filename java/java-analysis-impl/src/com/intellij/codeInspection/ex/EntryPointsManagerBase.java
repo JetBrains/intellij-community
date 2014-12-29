@@ -17,6 +17,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -26,7 +27,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
@@ -80,7 +84,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   protected final Project myProject;
   private long myLastModificationCount = -1;
 
-  public EntryPointsManagerBase(Project project) {
+  public EntryPointsManagerBase(final Project project) {
     myProject = project;
     myTemporaryEntryPoints = new HashSet<RefElement>();
     myPersistentEntryPoints = new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
@@ -104,6 +108,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
             }
           });
         }
+        DaemonCodeAnalyzer.getInstance(project).restart(); // annotations changed
       }
     }, false, this);
   }
@@ -160,11 +165,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
     element.addContent(entryPointsElement);
     if (!additional_annotations.isEmpty()) {
-      try {
-        additional_annotations.writeExternal(element);
-      }
-      catch (WriteExternalException ignored) {
-      }
+      additional_annotations.writeExternal(element);
     }
   }
 
@@ -212,15 +213,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       List<RefMethod> refConstructors = refClass.getConstructors();
       if (refConstructors.size() == 1) {
         addEntryPoint(refConstructors.get(0), isPersistent);
-        return;
       }
       else if (refConstructors.size() > 1) {
         // Many constructors here. Need to ask user which ones are used
         for (int i = 0; i < refConstructors.size(); i++) {
           addEntryPoint(refConstructors.get(i), isPersistent);
         }
-
-        return;
       }
     }
 

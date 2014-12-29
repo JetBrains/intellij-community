@@ -112,7 +112,7 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
     myLoaded = true;
   }
 
-  public void doLoad(Element element) {
+  private void doLoad(Element element) {
     for (final FTManager manager : getAllManagers()) {
       final Element templatesGroup = element.getChild(getXmlElementGroupName(manager));
       if (templatesGroup == null) {
@@ -138,7 +138,7 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
   }
 
   private static String getXmlElementGroupName(FTManager manager) {
-    return manager.getName().toLowerCase(Locale.US) + "_" + "templates";
+    return manager.getName().toLowerCase(Locale.US) + "_templates";
   }
 
   public boolean isLoaded() {

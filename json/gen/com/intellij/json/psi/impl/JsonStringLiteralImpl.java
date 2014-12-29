@@ -23,25 +23,14 @@ public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements Jso
     else super.accept(visitor);
   }
 
-  @Override
-  @Nullable
-  public PsiElement getDoubleQuotedString() {
-    return findChildByType(DOUBLE_QUOTED_STRING);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSingleQuotedString() {
-    return findChildByType(SINGLE_QUOTED_STRING);
-  }
-
-  public boolean isQuotedString() {
-    return JsonPsiImplUtils.isQuotedString(this);
-  }
-
   @NotNull
   public List<Pair<TextRange, String>> getTextFragments() {
     return JsonPsiImplUtils.getTextFragments(this);
+  }
+
+  @NotNull
+  public String getValue() {
+    return JsonPsiImplUtils.getValue(this);
   }
 
 }

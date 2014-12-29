@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,12 +71,12 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
       }
 
       @Override
-      public void doBuildFromStream(String surl, Reader input, StringBuffer data, boolean search4Encoding) throws IOException {
-        super.doBuildFromStream(surl, input, data, search4Encoding);
+      public void doBuildFromStream(String url, Reader input, StringBuilder data, boolean searchForEncoding) throws IOException {
+        super.doBuildFromStream(url, input, data, searchForEncoding);
       }
     }
     JavadocExternalTestFilter filter = new JavadocExternalTestFilter(getProject());
-    final StringBuffer extractedData = new StringBuffer();
+    StringBuilder extractedData = new StringBuilder();
     filter.doBuildFromStream(url, new StringReader(LoadTextUtil.loadText(pageTextFile).toString()), extractedData, false);
     assertEquals(LoadTextUtil.loadText(expectedTextFile).toString(), extractedData.toString());
   }

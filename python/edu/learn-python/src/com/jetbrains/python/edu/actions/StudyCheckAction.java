@@ -1,6 +1,8 @@
 package com.jetbrains.python.edu.actions;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,15 +14,25 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyState;
 import com.jetbrains.python.edu.StudyTestRunner;
@@ -33,14 +45,19 @@ import com.jetbrains.python.edu.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class StudyCheckAction extends DumbAwareAction {
 
   private static final Logger LOG = Logger.getInstance(StudyCheckAction.class.getName());
   private static final String ANSWERS_POSTFIX = "_answers.py";
+  public static final String ACTION_ID = "CheckAction";
+  public static final String SHORTCUT = "ctrl alt pressed ENTER";
 
 
   private static void flushWindows(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
@@ -63,9 +80,14 @@ public class StudyCheckAction extends DumbAwareAction {
         continue;
       }
       String windowsFileName = virtualFile.getNameWithoutExtension() + "_windows";
-      VirtualFile windowsFile = taskDir.findChild(windowsFileName);
+      final VirtualFile windowsFile = taskDir.findChild(windowsFileName);
       if (windowsFile != null) {
-        StudyUtils.deleteFile(windowsFile);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            StudyUtils.deleteFile(windowsFile);
+          }
+        });
       }
     }
   }
@@ -95,20 +117,32 @@ public class StudyCheckAction extends DumbAwareAction {
           @Override
           public void run() {
             final StudyEditor selectedEditor = StudyEditor.getSelectedStudyEditor(project);
+            if (selectedEditor == null) return;
             final StudyState studyState = new StudyState(selectedEditor);
             if (!studyState.isValid()) {
               LOG.error("StudyCheckAction was invokes outside study editor");
               return;
             }
-            Task task = studyState.getTask();
-            StudyStatus oldStatus = task.getStatus();
-            Map<String, TaskFile> taskFiles = task.getTaskFiles();
-            VirtualFile taskDir = studyState.getTaskDir();
-            flushWindows(task, taskDir);
-            StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
-            if (runAction != null && taskFiles.size() == 1) {
-              runAction.run(project);
+            final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
+            final StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
+            if (statusBar != null) {
+              final List<Pair<TaskInfo, ProgressIndicator>> processes = statusBar.getBackgroundProcesses();
+              if (!processes.isEmpty()) return;
             }
+
+            final Task task = studyState.getTask();
+            final VirtualFile taskDir = studyState.getTaskDir();
+            flushWindows(task, taskDir);
+            Sdk sdk = StudyUtils.findPythonSdk(project);
+            if (sdk == null) {
+              createNoPythonInterpreterPopUp(project);
+              return;
+            }
+            final StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
+            if (runAction == null) {
+              return;
+            }
+            runAction.run(project, sdk);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
@@ -118,7 +152,9 @@ public class StudyCheckAction extends DumbAwareAction {
             final StudyTestRunner testRunner = new StudyTestRunner(task, taskDir);
             Process testProcess = null;
             try {
-              testProcess = testRunner.launchTests(project, studyState.getVirtualFile().getPath());
+              final VirtualFile executablePath = getTaskVirtualFile(studyState, task, taskDir);
+
+              testProcess = testRunner.createCheckProcess(project, executablePath.getPath());
             }
             catch (ExecutionException e) {
               LOG.error(e);
@@ -126,33 +162,137 @@ public class StudyCheckAction extends DumbAwareAction {
             if (testProcess == null) {
               return;
             }
-            String failedMessage = testRunner.getPassedTests(testProcess);
-            if (failedMessage.equals(StudyTestRunner.TEST_OK)) {
-              task.setStatus(StudyStatus.Solved, oldStatus);
-              createTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), project);
+            selectedEditor.getCheckButton().setEnabled(false);
+            ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, project, selectedEditor));
+          }
+        });
+      }
+
+      private VirtualFile getTaskVirtualFile(@NotNull final StudyState studyState,
+                                             @NotNull final Task task,
+                                             @NotNull final VirtualFile taskDir) {
+        VirtualFile taskVirtualFile = studyState.getVirtualFile();
+        for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+          String name = entry.getKey();
+          TaskFile taskFile = entry.getValue();
+          VirtualFile virtualFile = taskDir.findChild(name);
+          if (virtualFile != null) {
+            if (!taskFile.getTaskWindows().isEmpty()) {
+              taskVirtualFile = virtualFile;
             }
-            else {
-              task.setStatus(StudyStatus.Failed, oldStatus);
+          }
+        }
+        return taskVirtualFile;
+      }
+    });
+  }
+
+  @NotNull
+  private com.intellij.openapi.progress.Task.Backgroundable getCheckTask(final StudyState studyState,
+                                                                         final StudyTestRunner testRunner,
+                                                                         final Process testProcess,
+                                                                         @NotNull final Project project,
+                                                                         final StudyEditor selectedEditor) {
+    final Task task = studyState.getTask();
+    final VirtualFile taskDir = studyState.getTaskDir();
+    final StudyStatus statusBeforeCheck = task.getStatus();
+    return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
+      @Override
+      public void onSuccess() {
+        StudyUtils.updateStudyToolWindow(project);
+        drawAllTaskWindows(project, task, taskDir);
+        ProjectView.getInstance(project).refresh();
+        deleteWindowDescriptions(task, taskDir);
+        selectedEditor.getCheckButton().setEnabled(true);
+      }
+
+      @Override
+      public void onCancel() {
+        StudyStatus currentStatus = task.getStatus();
+        task.setStatus(statusBeforeCheck, currentStatus);
+        deleteWindowDescriptions(task, taskDir);
+        selectedEditor.getCheckButton().setEnabled(true);
+      }
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final Map<String, TaskFile> taskFiles = task.getTaskFiles();
+        final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess);
+        final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
+        if (indicator.isCanceled()) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              showTestResultPopUp("Tests check cancelled.", MessageType.WARNING.getPopupBackground(), project);
+            }
+          });
+          return;
+        }
+        final String failedMessage = testRunner.getTestsOutput(output);
+        if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
+          task.setStatus(StudyStatus.Solved, statusBeforeCheck);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), project);
+            }
+          });
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (taskDir == null) return;
+              task.setStatus(StudyStatus.Failed, statusBeforeCheck);
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
-                String name = entry.getKey();
-                TaskFile taskFile = entry.getValue();
+                final String name = entry.getKey();
+                final TaskFile taskFile = entry.getValue();
                 if (taskFile.getTaskWindows().size() < 2) {
                   taskFile.setStatus(StudyStatus.Failed, StudyStatus.Unchecked);
                   continue;
                 }
-                runSmartTestProcess(taskDir, testRunner, name, taskFile, project);
+                CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                      @Override
+                      public void run() {
+                        runSmartTestProcess(taskDir, testRunner, name, taskFile, project);
+                      }
+                    });
+                  }
+                });
               }
-              createTestResultPopUp(failedMessage, MessageType.ERROR.getPopupBackground(), project);
+              showTestResultPopUp(failedMessage, MessageType.ERROR.getPopupBackground(), project);
               navigateToFailedTaskWindow(studyState, task, taskDir, project);
             }
-            StudyUtils.updateStudyToolWindow(project);
-            drawAllTaskWindows(project, task, taskDir);
-            ProjectView.getInstance(project).refresh();
-            deleteWindowDescriptions(task, taskDir);
+          });
+        }
+      }
+    };
+  }
+
+  private static void createNoPythonInterpreterPopUp(@NotNull final Project project) {
+    String text = "<html>No Python interpreter configured for the project<br><a href=\"\">Configure interpreter</a></html>";
+    BalloonBuilder balloonBuilder =
+      JBPopupFactory.getInstance()
+        .createHtmlTextBalloonBuilder(text, null, MessageType.WARNING.getPopupBackground(), new HyperlinkListener() {
+          @Override
+          public void hyperlinkUpdate(HyperlinkEvent event) {
+            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  ShowSettingsUtil.getInstance()
+                    .showSettingsDialog(project, "Project Interpreter");
+                }
+              });
+            }
           }
         });
-      }
-    });
+    balloonBuilder.setHideOnLinkClick(true);
+    final Balloon balloon = balloonBuilder.createBalloon();
+    showCheckPopUp(project, balloon);
   }
 
   private static void navigateToFailedTaskWindow(@NotNull final StudyState studyState,
@@ -199,14 +339,14 @@ public class StudyCheckAction extends DumbAwareAction {
                                    final String taskFileName,
                                    @NotNull final TaskFile taskFile,
                                    @NotNull final Project project) {
-    TaskFile answerTaskFile = new TaskFile();
-    VirtualFile virtualFile = taskDir.findChild(taskFileName);
+    final TaskFile answerTaskFile = new TaskFile();
+    final VirtualFile virtualFile = taskDir.findChild(taskFileName);
     if (virtualFile == null) {
       return;
     }
-    VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
-    for (TaskWindow taskWindow : answerTaskFile.getTaskWindows()) {
-      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    final VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
+    for (final TaskWindow taskWindow : answerTaskFile.getTaskWindows()) {
+      final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) {
         continue;
       }
@@ -255,10 +395,17 @@ public class StudyCheckAction extends DumbAwareAction {
     return copy;
   }
 
-  private static void createTestResultPopUp(final String text, Color color, @NotNull final Project project) {
+  private static void showTestResultPopUp(final String text, Color color, @NotNull final Project project) {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, color, null);
     final Balloon balloon = balloonBuilder.createBalloon();
+    showCheckPopUp(project, balloon);
+  }
+
+  /**
+   * shows pop up in the center of "check task" button in study editor
+   */
+  private static void showCheckPopUp(@NotNull final Project project, @NotNull final Balloon balloon) {
     StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
     assert studyEditor != null;
     JButton checkButton = studyEditor.getCheckButton();

@@ -24,7 +24,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -46,27 +46,24 @@ public class ClassWrapper {
   private VBStyleCollection<Exprent, String> dynamicFieldInitializers = new VBStyleCollection<Exprent, String>();
   private VBStyleCollection<MethodWrapper, String> methods = new VBStyleCollection<MethodWrapper, String>();
 
-
   public ClassWrapper(StructClass classStruct) {
     this.classStruct = classStruct;
   }
 
   public void init() throws IOException {
-
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
-
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
 
     // collect field names
-    HashSet<String> setFieldNames = new HashSet<String>();
+    Set<String> setFieldNames = new HashSet<String>();
     for (StructField fd : classStruct.getFields()) {
       setFieldNames.add(fd.getName());
     }
 
-    int maxsec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
+    int maxSec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
+    boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
 
     for (StructMethod mt : classStruct.getMethods()) {
-
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
       VarNamesCollector vc = new VarNamesCollector();
@@ -78,8 +75,8 @@ public class ClassWrapper {
       DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD, mt);
       DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR, MethodDescriptor.parseDescriptor(mt.getDescriptor()));
 
-      VarProcessor varproc = new VarProcessor();
-      DecompilerContext.setProperty(DecompilerContext.CURRENT_VAR_PROCESSOR, varproc);
+      VarProcessor varProc = new VarProcessor();
+      DecompilerContext.setProperty(DecompilerContext.CURRENT_VAR_PROCESSOR, varProc);
 
       RootStatement root = null;
 
@@ -87,62 +84,67 @@ public class ClassWrapper {
 
       try {
         if (mt.containsCode()) {
-
-          if (maxsec == 0) { // blocking wait
-            root = MethodProcessorThread.codeToJava(mt, varproc);
+          if (maxSec == 0 || testMode) {
+            root = MethodProcessorRunnable.codeToJava(mt, varProc);
           }
           else {
-            MethodProcessorThread mtproc = new MethodProcessorThread(mt, varproc, DecompilerContext.getCurrentContext());
-            Thread mtthread = new Thread(mtproc);
-            long stopAt = System.currentTimeMillis() + maxsec * 1000;
+            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, varProc, DecompilerContext.getCurrentContext());
 
-            mtthread.start();
+            Thread mtThread = new Thread(mtProc);
+            long stopAt = System.currentTimeMillis() + maxSec * 1000;
 
-            while (mtthread.isAlive()) {
+            mtThread.start();
 
-              synchronized (mtproc.lock) {
-                mtproc.lock.wait(100);
+            while (!mtProc.isFinished()) {
+              try {
+                synchronized (mtProc.lock) {
+                  mtProc.lock.wait(200);
+                }
+              }
+              catch (InterruptedException e) {
+                killThread(mtThread);
+                throw e;
               }
 
               if (System.currentTimeMillis() >= stopAt) {
                 String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
                 DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
-                killThread(mtthread);
+                killThread(mtThread);
                 isError = true;
                 break;
               }
             }
 
             if (!isError) {
-              root = mtproc.getResult();
+              root = mtProc.getResult();
             }
           }
         }
         else {
-          boolean thisvar = !mt.hasModifier(CodeConstants.ACC_STATIC);
+          boolean thisVar = !mt.hasModifier(CodeConstants.ACC_STATIC);
           MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
-          int paramcount = 0;
-          if (thisvar) {
-            varproc.getThisvars().put(new VarVersionPaar(0, 0), classStruct.qualifiedName);
-            paramcount = 1;
+          int paramCount = 0;
+          if (thisVar) {
+            varProc.getThisVars().put(new VarVersionPair(0, 0), classStruct.qualifiedName);
+            paramCount = 1;
           }
-          paramcount += md.params.length;
+          paramCount += md.params.length;
 
-          int varindex = 0;
-          for (int i = 0; i < paramcount; i++) {
-            varproc.setVarName(new VarVersionPaar(varindex, 0), vc.getFreeName(varindex));
+          int varIndex = 0;
+          for (int i = 0; i < paramCount; i++) {
+            varProc.setVarName(new VarVersionPair(varIndex, 0), vc.getFreeName(varIndex));
 
-            if (thisvar) {
+            if (thisVar) {
               if (i == 0) {
-                varindex++;
+                varIndex++;
               }
               else {
-                varindex += md.params[i - 1].stack_size;
+                varIndex += md.params[i - 1].stackSize;
               }
             }
             else {
-              varindex += md.params[i].stack_size;
+              varIndex += md.params[i].stackSize;
             }
           }
         }
@@ -152,13 +154,13 @@ public class ClassWrapper {
         isError = true;
       }
 
-      MethodWrapper meth = new MethodWrapper(root, varproc, mt, counter);
-      meth.decompiledWithErrors = isError;
+      MethodWrapper methodWrapper = new MethodWrapper(root, varProc, mt, counter);
+      methodWrapper.decompiledWithErrors = isError;
 
-      methods.addWithKey(meth, InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()));
+      methods.addWithKey(methodWrapper, InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()));
 
       // rename vars so that no one has the same name as a field
-      varproc.refreshVarNames(new VarNamesCollector(setFieldNames));
+      varProc.refreshVarNames(new VarNamesCollector(setFieldNames));
 
       // if debug information present and should be used
       if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
@@ -166,7 +168,7 @@ public class ClassWrapper {
           StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
 
         if (attr != null) {
-          varproc.setDebugVarNames(attr.getMapVarNames());
+          varProc.setDebugVarNames(attr.getMapVarNames());
         }
       }
 

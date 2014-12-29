@@ -126,7 +126,7 @@ public class TemplateState implements Disposable {
 
       @Override
       public void beforeCommandFinished(CommandEvent event) {
-        if (started) {
+        if (started && !isDisposed()) {
           Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -293,11 +293,14 @@ public class TemplateState implements Disposable {
                     @Nullable Map<String, String> predefinedVarValues) {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
-    myTemplate = template;
+
+    final PsiFile file = getPsiFile();
+    myTemplate = substituteTemplate(file, myEditor.getCaretModel().getOffset(), template);
+
     myProcessor = processor;
 
-    DocumentReference[] refs = myDocument != null 
-                               ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)} 
+    DocumentReference[] refs = myDocument != null
+                               ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)}
                                : null;
     UndoManager.getInstance(myProject).undoableActionPerformed(new BasicUndoableAction(refs) {
       @Override
@@ -325,12 +328,11 @@ public class TemplateState implements Disposable {
     //myArgument = argument;
     myPredefinedVariableValues = predefinedVarValues;
 
-    if (template.isInline()) {
+    if (myTemplate.isInline()) {
       int caretOffset = myEditor.getCaretModel().getOffset();
-      myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + template.getTemplateText().length());
+      myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + myTemplate.getTemplateText().length());
     }
     else {
-      PsiFile file = getPsiFile();
       preprocessTemplate(file, myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
       int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
@@ -338,7 +340,7 @@ public class TemplateState implements Disposable {
     myTemplateRange.setGreedyToLeft(true);
     myTemplateRange.setGreedyToRight(true);
 
-    processAllExpressions(template);
+    processAllExpressions(myTemplate);
   }
 
   private void fireTemplateCancelled() {
@@ -347,6 +349,17 @@ public class TemplateState implements Disposable {
     for (TemplateEditingListener listener : myListeners) {
       listener.templateCancelled(myTemplate);
     }
+  }
+
+  private static TemplateImpl substituteTemplate(final PsiFile file, int caretOffset, TemplateImpl template) {
+    for (TemplateSubstitutor substitutor : Extensions.getExtensions(TemplateSubstitutor.EP_NAME)) {
+      final TemplateImpl substituted = substitutor.substituteTemplate(file, caretOffset, template);
+      if (substituted != null) {
+        template = substituted;
+      }
+
+    }
+    return template;
   }
 
   private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
@@ -390,7 +403,7 @@ public class TemplateState implements Disposable {
           if (isMultiCaretMode()) {
             finishTemplateEditing(false);
           }
-        } 
+        }
       }
     });
   }
@@ -413,7 +426,7 @@ public class TemplateState implements Disposable {
       public void run() {
         IntArrayList indices = initEmptyVariables();
         mySegments.setSegmentsGreedy(false);
-        LOG.assertTrue(myTemplateRange.isValid(), 
+        LOG.assertTrue(myTemplateRange.isValid(),
                        "template key: " + myTemplate.getKey() + "; " +
                        "template text" + myTemplate.getTemplateText() + "; " +
                        "variable number: " + getCurrentVariableNumber());
@@ -1099,7 +1112,7 @@ public class TemplateState implements Disposable {
       // and reformat wouldn't be able to fix them
       if (myTemplate.isToIndent()) {
         if (!myTemplateIndented) {
-          LOG.assertTrue(myTemplateRange.isValid());
+          LOG.assertTrue(myTemplateRange.isValid(), presentTemplate(myTemplate));
           smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           myTemplateIndented = true;
         }

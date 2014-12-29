@@ -16,50 +16,55 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.StateSplitter;
+import com.intellij.openapi.components.MainConfigurationStateSplitter;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
  * Date: 30-Nov-2005
  */
-public abstract class DefaultProjectProfileManager extends ProjectProfileManager implements JDOMExternalizable {
+public abstract class DefaultProjectProfileManager extends ProjectProfileManager implements PersistentStateComponent<Element> {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProjectProfileManager");
 
-  @NonNls protected static final String PROFILES = "profiles";
   @NonNls public static final String SCOPES = "scopes";
   @NonNls protected static final String SCOPE = "scope";
   @NonNls public static final String PROFILE = "profile";
   @NonNls protected static final String NAME = "name";
-
 
   private static final String VERSION = "1.0";
 
   @NotNull
   protected final Project myProject;
 
-  /** This field is used for serialization. Do not rename it or make access weaker */
-  public String PROJECT_PROFILE;
+  protected String myProjectProfile;
   /** This field is used for serialization. Do not rename it or make access weaker */
   public boolean USE_PROJECT_PROFILE = true;
 
   private final ApplicationProfileManager myApplicationProfileManager;
 
-  private final Map<String, Profile> myProfiles = new HashMap<String, Profile>();
+  private final Map<String, Profile> myProfiles = new THashMap<String, Profile>();
   protected final DependencyValidationManager myHolder;
   private final List<ProfileChangeAdapter> myProfilesListener = ContainerUtil.createLockFreeCopyOnWriteList();
   @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
@@ -90,81 +95,82 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     }
   }
 
+  @Nullable
   @Override
-  public synchronized void readExternal(Element element) throws InvalidDataException {
-    myProfiles.clear();
-    DefaultJDOMExternalizer.readExternal(this, element);
-    final Element profilesElement = element.getChild(PROFILES);
-    if (profilesElement != null) {
-      for (Object o : profilesElement.getChildren(PROFILE)) {
-        final Profile profile = myApplicationProfileManager.createProfile();
-        profile.setProfileManager(this);
-        profile.readExternal((Element)o);
-        final String name = profile.getName();
-        if (myApplicationProfileManager.getProfile(name) != null) { //override ide profile
-          // myApplicationProfileManager.deleteProfile(name);
-        }
-        myProfiles.put(name, profile);
-      }
-    }
-    if (element.getChild("version") == null || !Comparing.strEqual(element.getChild("version").getAttributeValue("value"), VERSION)) {
-      boolean toConvert = true;
-      for (Object o : element.getChildren("option")) {
-        if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "USE_PROJECT_LEVEL_SETTINGS")) {
-          toConvert = Boolean.parseBoolean(((Element)o).getAttributeValue("value"));
-          break;
-        }
-      }
-      if (toConvert) {
-        convert(element);
-      }
-    }
-  }
+  public synchronized Element getState() {
+    Element state = new Element("settings");
 
-  protected void convert(Element element) throws InvalidDataException {
-  }
-
-  @Override
-  public synchronized void writeExternal(Element element) throws WriteExternalException {
-
-    final List<String> sortedProfiles = new ArrayList<String>(myProfiles.keySet());
-    Collections.sort(sortedProfiles);
-    Element profiles = null;
+    String[] sortedProfiles = myProfiles.keySet().toArray(new String[myProfiles.size()]);
+    Arrays.sort(sortedProfiles);
     for (String profile : sortedProfiles) {
       final Profile projectProfile = myProfiles.get(profile);
       if (projectProfile != null) {
-        final Element profileElement = new Element(PROFILE);
-        projectProfile.writeExternal(profileElement);
-        boolean hasSmthToSave = sortedProfiles.size() > 1 || isDefaultProfileUsed();
+        Element profileElement = new Element(PROFILE);
+        try {
+          projectProfile.writeExternal(profileElement);
+        }
+        catch (WriteExternalException e) {
+          LOG.error(e);
+        }
+        boolean hasSmthToSave = sortedProfiles.length > 1 || isDefaultProfileUsed();
         if (!hasSmthToSave) {
-          for (Object child : profileElement.getChildren()) {
-            if (!((Element)child).getName().equals("option")) {
+          for (Element child : profileElement.getChildren()) {
+            if (!child.getName().equals("option")) {
               hasSmthToSave = true;
               break;
             }
           }
         }
-        if (!hasSmthToSave) continue;
-
-        if (profiles == null) {
-          profiles = new Element(PROFILES);
-          element.addContent(profiles);
+        if (!hasSmthToSave) {
+          continue;
         }
 
-        profiles.addContent(profileElement);
+        state.addContent(profileElement);
       }
     }
 
-    if (profiles != null || isDefaultProfileUsed()) {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-      final Element version = new Element("version");
-      version.setAttribute("value", VERSION);
-      element.addContent(version);
+    if (!state.getChildren().isEmpty() || isDefaultProfileUsed()) {
+      XmlSerializer.serializeInto(this, state);
+      state.addContent(new Element("version").setAttribute("value", VERSION));
+    }
+    return state;
+  }
+
+  @Override
+  public synchronized void loadState(Element state) {
+    myProfiles.clear();
+    XmlSerializer.deserializeInto(this, state);
+    for (Element o : state.getChildren(PROFILE)) {
+      Profile profile = myApplicationProfileManager.createProfile();
+      profile.setProfileManager(this);
+      try {
+        profile.readExternal(o);
+      }
+      catch (InvalidDataException e) {
+        LOG.error(e);
+      }
+      profile.setProjectLevel(true);
+      myProfiles.put(profile.getName(), profile);
+    }
+    if (state.getChild("version") == null || !Comparing.strEqual(state.getChild("version").getAttributeValue("value"), VERSION)) {
+      boolean toConvert = true;
+      for (Element o : state.getChildren("option")) {
+        if (Comparing.strEqual(o.getAttributeValue("name"), "USE_PROJECT_LEVEL_SETTINGS")) {
+          toConvert = Boolean.parseBoolean(o.getAttributeValue("value"));
+          break;
+        }
+      }
+      if (toConvert) {
+        convert(state);
+      }
     }
   }
 
+  protected void convert(Element element) {
+  }
+
   private boolean isDefaultProfileUsed() {
-    return PROJECT_PROFILE != null && !Comparing.strEqual(PROJECT_PROFILE, PROJECT_DEFAULT_PROFILE_NAME);
+    return myProjectProfile != null && !Comparing.strEqual(myProjectProfile, PROJECT_DEFAULT_PROFILE_NAME);
   }
 
   @NotNull
@@ -187,19 +193,24 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   }
 
   @Override
-  public synchronized void deleteProfile(String name) {
+  public synchronized void deleteProfile(@NotNull String name) {
     myProfiles.remove(name);
   }
 
   @Override
+  @OptionTag("PROJECT_PROFILE")
   public synchronized String getProjectProfile() {
-    return PROJECT_PROFILE;
+    return myProjectProfile;
   }
 
   @Override
-  public synchronized void setProjectProfile(@Nullable final String newProfile) {
-    final String oldProfile = PROJECT_PROFILE;
-    PROJECT_PROFILE = newProfile;
+  public synchronized void setProjectProfile(@Nullable String newProfile) {
+    if (Comparing.strEqual(newProfile, myProjectProfile)) {
+      return;
+    }
+
+    String oldProfile = myProjectProfile;
+    myProjectProfile = newProfile;
     USE_PROJECT_PROFILE = newProfile != null;
     if (oldProfile != null) {
       for (ProfileChangeAdapter adapter : myProfilesListener) {
@@ -210,20 +221,21 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   @NotNull
   public synchronized Profile getProjectProfileImpl(){
-    if (!USE_PROJECT_PROFILE) return myApplicationProfileManager.getRootProfile();
-    if (PROJECT_PROFILE == null || myProfiles.isEmpty()){
+    if (!USE_PROJECT_PROFILE) {
+      return myApplicationProfileManager.getRootProfile();
+    }
+    if (myProjectProfile == null || myProfiles.isEmpty()){
       setProjectProfile(PROJECT_DEFAULT_PROFILE_NAME);
       final Profile projectProfile = myApplicationProfileManager.createProfile();
       projectProfile.copyFrom(myApplicationProfileManager.getRootProfile());
-      projectProfile.setLocal(false);
+      projectProfile.setProjectLevel(true);
       projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME);
       myProfiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile);
     }
-    else if (!myProfiles.containsKey(PROJECT_PROFILE)){
-      final String projectProfileAttempt = myProfiles.keySet().iterator().next();
-      setProjectProfile(projectProfileAttempt);
+    else if (!myProfiles.containsKey(myProjectProfile)){
+      setProjectProfile(myProfiles.keySet().iterator().next());
     }
-    final Profile profile = myProfiles.get(PROJECT_PROFILE);
+    final Profile profile = myProfiles.get(myProjectProfile);
     profile.setProfileManager(this);
     return profile;
   }
@@ -242,61 +254,28 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     myProfilesListener.remove(profilesListener);
   }
 
-  public static class ProfileStateSplitter implements StateSplitter {
-
+  public static class ProfileStateSplitter extends MainConfigurationStateSplitter {
+    @NotNull
     @Override
-    public List<Pair<Element, String>> splitState(final Element e) {
-      final UniqueNameGenerator generator = new UniqueNameGenerator();
-      List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-
-      final Element[] elements = JDOMUtil.getElements(e);
-      for (Element element : elements) {
-        if (element.getName().equals("profiles")) {
-          element.detach();
-
-          final Element[] profiles = JDOMUtil.getElements(element);
-          for (Element profile : profiles) {
-            String profileName = null;
-
-            final Element[] options = JDOMUtil.getElements(profile);
-            for (Element option : options) {
-              if (option.getName().equals("option") && option.getAttributeValue("name").equals("myName")) {
-                profileName = option.getAttributeValue("value");
-              }
-            }
-
-            assert profileName != null;
-
-            final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(profileName)) + ".xml";
-            result.add(Pair.create(profile, name));
-          }
+    protected String getSubStateFileName(@NotNull Element element) {
+      for (Element option : element.getChildren("option")) {
+        if (option.getAttributeValue("name").equals("myName")) {
+          return option.getAttributeValue("value");
         }
       }
-
-
-      if (!e.getContent().isEmpty()) result.add(Pair.create(e, generator.generateUniqueName("profiles_settings") + ".xml"));
-
-      return result;
+      throw new IllegalStateException();
     }
 
+    @NotNull
     @Override
-    public void mergeStatesInto(final Element target, final Element[] elements) {
-      Element profiles = new Element("profiles");
-      target.addContent(profiles);
+    protected String getComponentStateFileName() {
+      return "profiles_settings";
+    }
 
-        for (Element element : elements) {
-        if (element.getName().equals("profile")) {
-          element.detach();
-          profiles.addContent(element);
-        }
-        else {
-          final Element[] states = JDOMUtil.getElements(element);
-          for (Element state : states) {
-            state.detach();
-            target.addContent(state);
-          }
-        }
-      }
+    @NotNull
+    @Override
+    protected String getSubStateTagName() {
+      return PROFILE;
     }
   }
 

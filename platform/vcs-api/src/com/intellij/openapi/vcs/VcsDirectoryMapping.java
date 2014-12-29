@@ -33,15 +33,15 @@ public class VcsDirectoryMapping {
   private VcsRootSettings myRootSettings;
 
   public VcsDirectoryMapping() {
+    this(null, null, null);
   }
 
   public VcsDirectoryMapping(@NotNull final String directory, final String vcs) {
-    setDirectory(directory);
-    myVcs = vcs;
+    this(directory, vcs, null);
   }
 
-  public VcsDirectoryMapping(final String directory, final String vcs, final VcsRootSettings rootSettings) {
-    setDirectory(directory);
+  public VcsDirectoryMapping(@Nullable String directory, @Nullable String vcs, @Nullable VcsRootSettings rootSettings) {
+    if (directory != null) setDirectory(directory);
     myVcs = vcs;
     myRootSettings = rootSettings;
   }

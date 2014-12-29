@@ -24,6 +24,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.branch.HgBranchPopupActions;
+import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.Collections;
@@ -42,7 +43,7 @@ public class HgCreateNewBranchFromLogAction extends HgLogSingleCommitAction {
       new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.progress.updatingTo", shortHash)) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          if (HgUpdateToAction.updateTo(project, repository.getRoot(), revisionHash.asString(), false)) {
+          if (HgUpdateCommand.updateRepoToInCurrentThread(project, repository.getRoot(), revisionHash.asString(), false)) {
             new HgBranchPopupActions.HgNewBranchAction(project, Collections.singletonList(repository), repository)
               .createNewBranch(name);
           }

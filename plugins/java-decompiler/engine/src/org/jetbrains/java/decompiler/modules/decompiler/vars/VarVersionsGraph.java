@@ -27,17 +27,17 @@ public class VarVersionsGraph {
 
   public int counter = 0;
 
-  public VBStyleCollection<VarVersionNode, VarVersionPaar> nodes = new VBStyleCollection<VarVersionNode, VarVersionPaar>();
+  public VBStyleCollection<VarVersionNode, VarVersionPair> nodes = new VBStyleCollection<VarVersionNode, VarVersionPair>();
 
   private GenericDominatorEngine engine;
 
-  public VarVersionNode createNode(VarVersionPaar ver) {
+  public VarVersionNode createNode(VarVersionPair ver) {
     VarVersionNode node;
     nodes.addWithKey(node = new VarVersionNode(ver.var, ver.version), ver);
     return node;
   }
 
-  public void addNodes(Collection<VarVersionNode> colnodes, Collection<VarVersionPaar> colpaars) {
+  public void addNodes(Collection<VarVersionNode> colnodes, Collection<VarVersionPair> colpaars) {
     nodes.addAllWithKey(colnodes, colpaars);
   }
 

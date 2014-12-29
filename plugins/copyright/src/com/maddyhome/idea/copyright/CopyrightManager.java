@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -40,14 +39,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.UniqueNameGenerator;
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import com.maddyhome.idea.copyright.util.NewFileTracker;
-import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +60,7 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
   @Nullable
   private CopyrightProfile myDefaultCopyright = null;
   private final LinkedHashMap<String, String> myModuleToCopyrights = new LinkedHashMap<String, String>();
-  private final Map<String, CopyrightProfile> myCopyrights = new HashMap<String, CopyrightProfile>();
+  private final Map<String, CopyrightProfile> myCopyrights = new TreeMap<String, CopyrightProfile>();
   private final Options myOptions = new Options();
 
   public CopyrightManager(@NotNull Project project,
@@ -97,13 +93,13 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
               if (module == null) return;
               if (!newFileTracker.poll(virtualFile)) return;
               if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
-              final PsiFile file = psiManager.findFile(virtualFile);
-              if (file == null) return;
+              if (psiManager.findFile(virtualFile) == null) return;
               application.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                  if (myProject.isDisposed()) return;
-                  if (file.isValid() && file.isWritable()) {
+                  if (!virtualFile.isValid()) return;
+                  final PsiFile file = psiManager.findFile(virtualFile);
+                  if (file != null && file.isWritable()) {
                     final CopyrightProfile opts = getCopyrightOptions(file);
                     if (opts != null) {
                       new UpdateCopyrightProcessor(myProject, module, file).run();
@@ -148,9 +144,11 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
     try {
       if (!myCopyrights.isEmpty()) {
         for (CopyrightProfile copyright : myCopyrights.values()) {
-          final Element copyrightElement = new Element(COPYRIGHT);
+          Element copyrightElement = new Element(COPYRIGHT);
           copyright.writeExternal(copyrightElement);
-          state.addContent(copyrightElement);
+          if (!JDOMUtil.isEmpty(copyrightElement)) {
+            state.addContent(copyrightElement);
+          }
         }
       }
 
@@ -175,7 +173,7 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
     if (myDefaultCopyright != null) {
       state.setAttribute(DEFAULT, myDefaultCopyright.getName());
     }
-    else {
+    else if (!myProject.isDefault()) {
       // todo we still add empty attribute to avoid annoying change (idea 12 - attribute exists, idea 13 - attribute doesn't exists)
       // CR-IC-3403#CFR-62470, idea <= 12 compatibility
       state.setAttribute(DEFAULT, "");
@@ -292,53 +290,28 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
     addCopyright(copyrightProfile);
   }
 
-  public static class CopyrightStateSplitter implements StateSplitter {
+  static final class CopyrightStateSplitter extends MainConfigurationStateSplitter {
+    @NotNull
     @Override
-    public List<Pair<Element, String>> splitState(Element e) {
-      final UniqueNameGenerator generator = new UniqueNameGenerator();
-      final List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-
-      final Element[] elements = JDOMUtil.getElements(e);
-      for (Element element : elements) {
-        if (element.getName().equals("copyright")) {
-          element.detach();
-
-          String profileName = null;
-          final Element[] options = JDOMUtil.getElements(element);
-          for (Element option : options) {
-            if (option.getName().equals("option") && option.getAttributeValue("name").equals("myName")) {
-              profileName = option.getAttributeValue("value");
-            }
-          }
-
-          assert profileName != null;
-
-          final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(profileName)) + ".xml";
-          result.add(Pair.create(element, name));
+    protected String getSubStateFileName(@NotNull Element element) {
+      for (Element option : element.getChildren("option")) {
+        if (option.getAttributeValue("name").equals("myName")) {
+          return option.getAttributeValue("value");
         }
       }
-      result.add(Pair.create(e, generator.generateUniqueName("profiles_settings") + ".xml"));
-      return result;
+      throw new IllegalStateException();
     }
 
+    @NotNull
     @Override
-    public void mergeStatesInto(Element target, Element[] elements) {
-      for (Element element : elements) {
-        if (element.getName().equals("copyright")) {
-          element.detach();
-          target.addContent(element);
-        }
-        else {
-          final Element[] states = JDOMUtil.getElements(element);
-          for (Element state : states) {
-            state.detach();
-            target.addContent(state);
-          }
-          for (Object attr : element.getAttributes()) {
-            target.setAttribute(((Attribute)attr).clone());
-          }
-        }
-      }
+    protected String getComponentStateFileName() {
+      return "profiles_settings";
+    }
+
+    @NotNull
+    @Override
+    protected String getSubStateTagName() {
+      return "copyright";
     }
   }
 }

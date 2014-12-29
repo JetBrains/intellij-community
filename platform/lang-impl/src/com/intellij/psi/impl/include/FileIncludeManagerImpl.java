@@ -32,7 +32,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -73,6 +76,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
       return VfsUtilCore.toVirtualFileArray(files);
     }
   };
+  private final Map<String, FileIncludeProvider> myProviderMap;
 
   public void processIncludes(PsiFile file, Processor<FileIncludeInfo> processor) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
@@ -126,9 +130,9 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     myPsiFileFactory = psiFileFactory;
 
     FileIncludeProvider[] providers = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
-    Map<String, FileIncludeProvider> providerMap = new HashMap<String, FileIncludeProvider>(providers.length);
+    myProviderMap = new HashMap<String, FileIncludeProvider>(providers.length);
     for (FileIncludeProvider provider : providers) {
-      FileIncludeProvider old = providerMap.put(provider.getId(), provider);
+      FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);
       assert old == null;
     }
     myCachedValuesManager = cachedValuesManager;
@@ -155,12 +159,21 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   }
 
   @Override
-  public PsiFileSystemItem resolveFileInclude(final FileIncludeInfo info, final PsiFile context) {
+  public PsiFileSystemItem resolveFileInclude(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {
     return doResolve(info, context);
   }
 
   @Nullable
-  private PsiFileSystemItem doResolve(FileIncludeInfo info, PsiFile context) {
+  private PsiFileSystemItem doResolve(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {
+    if (info instanceof FileIncludeInfoImpl) {
+      String id = ((FileIncludeInfoImpl)info).providerId;
+      FileIncludeProvider provider = id == null ? null : myProviderMap.get(id);
+      final PsiFileSystemItem resolvedByProvider = provider == null ? null : provider.resolveIncludedFile(info, context);
+      if (resolvedByProvider != null) {
+        return resolvedByProvider;
+      }
+    }
+
     PsiFileImpl psiFile = (PsiFileImpl)myPsiFileFactory.createFileFromText("dummy.txt", FileTypes.PLAIN_TEXT, info.path);
     psiFile.setOriginalFile(context);
     return new FileReferenceSet(psiFile) {

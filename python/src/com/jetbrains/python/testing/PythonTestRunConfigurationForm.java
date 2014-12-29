@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,23 +139,23 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   }
 
   @Override
-  public boolean addContentRoots() {
-    return myCommonOptionsForm.addContentRoots();
+  public boolean shouldAddContentRoots() {
+    return myCommonOptionsForm.shouldAddContentRoots();
   }
 
   @Override
-  public boolean addSourceRoots() {
-    return myCommonOptionsForm.addSourceRoots();
+  public boolean shouldAddSourceRoots() {
+    return myCommonOptionsForm.shouldAddSourceRoots();
   }
 
   @Override
-  public void addContentRoots(boolean addContentRoots) {
-    myCommonOptionsForm.addContentRoots(addContentRoots);
+  public void setAddContentRoots(boolean addContentRoots) {
+    myCommonOptionsForm.setAddContentRoots(addContentRoots);
   }
 
   @Override
-  public void addSourceRoots(boolean addSourceRoots) {
-    myCommonOptionsForm.addSourceRoots(addSourceRoots);
+  public void setAddSourceRoots(boolean addSourceRoots) {
+    myCommonOptionsForm.setAddSourceRoots(addSourceRoots);
   }
 
   public String getFolderName() {

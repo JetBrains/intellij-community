@@ -1,10 +1,24 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.containers.MultiMap;
@@ -78,10 +92,10 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
   @Override
   public boolean showConflictsDialog(@NotNull final MultiMap<PyClass, PyMemberInfo<?>> duplicatesConflict,
                                      @NotNull final Collection<PyMemberInfo<?>> dependenciesConflicts) {
-    Preconditions.checkArgument(!(duplicatesConflict.isEmpty() && dependenciesConflicts.isEmpty()), "Can't show dialog for empty conflicts");
+    Preconditions
+      .checkArgument(!(duplicatesConflict.isEmpty() && dependenciesConflicts.isEmpty()), "Can't show dialog for empty conflicts");
     final DialogWrapper conflictsDialog = new MembersConflictDialog(myProject, duplicatesConflict, dependenciesConflicts);
-    conflictsDialog.show();
-    return conflictsDialog.isOK();
+    return conflictsDialog.showAndGet();
   }
 
   @Override

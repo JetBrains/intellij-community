@@ -27,41 +27,26 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Dec 26, 2003
- * Time: 3:51:58 PM
- * To change this template use Options | File Templates.
+ * @author stathik
+ * @since Dec 26, 2003
  */
 public class AvailablePluginsTableModel extends PluginTableModel {
-
   public static final String ALL = "All";
-  private String myCategory = ALL;
-  private TreeSet<String> myAvailableCategories = new TreeSet<String>();
-
-  protected static final String STATUS = "Status";
-
   public static final String JETBRAINS_REPO = "JetBrains Plugin Repository";
   public static final String BUILTIN_REPO = "Built-in Plugin Repository";
+
+  private String myCategory = ALL;
+  private TreeSet<String> myAvailableCategories = new TreeSet<String>();
   private String myRepository = ALL;
   private String myVendor = null;
 
   public AvailablePluginsTableModel() {
-    super.columns = new ColumnInfo[] {
-      new AvailablePluginColumnInfo(this),
-      //new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS, this),
-      //new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_RATE, this),
-      //new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE, this)
-      /*,
-      new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_CATEGORY, this)*/};
-
+    columns = new ColumnInfo[]{new AvailablePluginColumnInfo(this)};
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
-    view = new ArrayList<IdeaPluginDescriptor>();
   }
 
   public String getCategory() {
@@ -156,17 +141,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     fireTableDataChanged();
   }
 
-  @Override
-  public void filter(final List<IdeaPluginDescriptor> filtered) {
-    view.clear();
-    for (IdeaPluginDescriptor descriptor : filtered) {
-      view.add(descriptor);
-    }
-    super.filter(filtered);
-  }
-
   public int getNameColumn() {
     return 0;
   }
-
 }

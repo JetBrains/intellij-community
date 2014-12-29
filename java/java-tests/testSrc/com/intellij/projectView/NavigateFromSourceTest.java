@@ -115,7 +115,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
     pane.select(psiClass, psiClass.getContainingFile().getVirtualFile(), true);
 
-    assertEquals(9, tree.getSelectionCount());
+    assertEquals(8, tree.getSelectionCount());
   }
 
   private static void changeClassTextAndTryToNavigate(final String newClassString,
@@ -125,7 +125,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     PsiClass psiClass = psiFile.getClasses()[0];
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
     final JTree tree = pane.getTree();
-    virtualFile.setBinaryContent(newClassString.getBytes(CharsetToolkit.UTF8_CHARSET));
+    setBinaryContent(virtualFile, newClassString.getBytes(CharsetToolkit.UTF8_CHARSET));
 
     PlatformTestUtil.waitForAlarm(600);
 

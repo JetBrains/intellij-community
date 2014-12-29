@@ -175,11 +175,16 @@ public class TreeChangeImpl implements TreeChange {
   }
 
   private static boolean isAfter(final ASTNode what, final ASTNode afterWhat) {
-    ASTNode current = afterWhat.getTreeNext();
+    ASTNode previous = afterWhat;
+    ASTNode current = previous.getTreeNext();
 
     while(current != null){
-      if(current == what) return true;
-      current = current.getTreeNext();
+      if(current == what) {
+        // afterWhat can be replaced during reparse and in old tree it can reference 'what' so check they are in same tree
+        return what.getTreePrev() == previous;
+      }
+      previous = current;
+      current = previous.getTreeNext();
       if(current != null && current.getTextLength() != 0) break;
     }
     return false;

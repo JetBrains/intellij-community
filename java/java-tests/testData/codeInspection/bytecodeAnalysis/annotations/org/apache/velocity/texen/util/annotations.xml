@@ -1,4 +1,9 @@
 <root>
+  <item name="org.apache.velocity.texen.util.FileUtil FileUtil()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.texen.util.FileUtil java.io.File file(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -13,6 +18,11 @@
   </item>
   <item name="org.apache.velocity.texen.util.FileUtil java.io.File file(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.texen.util.PropertiesUtil PropertiesUtil()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.texen.util.PropertiesUtil java.util.Properties loadFromClassPath(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

@@ -35,6 +35,11 @@ public class JsonHighlightingTest extends JsonTestCase {
     doTestHighlighting(false, true, true);
   }
 
+  // WEB-13600
+  public void testIncompleteFloatingPointLiteralsWithExponent() {
+    doTestHighlighting(false, false, false);
+  }
+
   // Moved from JavaScript
 
   public void testJSON_with_comment() throws Exception {

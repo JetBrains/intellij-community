@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
@@ -143,13 +142,15 @@ public class RegistryUi implements Disposable {
       public void keyPressed(@NotNull KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           int row = myTable.getSelectedRow();
-          RegistryValue rv = myModel.getRegistryValue(row);
-          if (rv.isBoolean()) {
-            rv.setValue(!rv.asBoolean());
-            keyChanged(rv.getKey());
-            for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
-            revaliateActions();
-            if (search.isPopupActive()) search.hidePopup();
+          if (row != -1) {
+            RegistryValue rv = myModel.getRegistryValue(row);
+            if (rv.isBoolean()) {
+              rv.setValue(!rv.asBoolean());
+              keyChanged(rv.getKey());
+              for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
+              revaliateActions();
+              if (search.isPopupActive()) search.hidePopup();
+            }
           }
         }
       }
@@ -370,10 +371,10 @@ public class RegistryUi implements Disposable {
 
 
       if (r == Messages.OK) {
-        LaterInvocator.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-              app.restart(true);
+            app.restart(true);
           }
         }, ModalityState.NON_MODAL);
       }

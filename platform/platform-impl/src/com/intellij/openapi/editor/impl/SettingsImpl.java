@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -47,7 +48,7 @@ public class SettingsImpl implements EditorSettings {
   private SoftWrapAppliancePlaces mySoftWrapAppliancePlace        = SoftWrapAppliancePlaces.MAIN_EDITOR;
   private int                     myAdditionalLinesCount          = 5;
   private int                     myAdditionalColumnsCount        = 3;
-  private int                     myLineCursorWidth               = 2;
+  private int                     myLineCursorWidth               = Registry.intValue("editor.caret.width", 2);
   private boolean                 myLineMarkerAreaShown           = true;
   private boolean                 myAllowSingleLogicalLineFolding = false;
 
@@ -543,6 +544,10 @@ public class SettingsImpl implements EditorSettings {
     if (newValue.equals(myUseSoftWraps)) return;
     myUseSoftWraps = newValue;
     fireEditorRefresh();
+  }
+  
+  public void setUseSoftWrapsQuiet() {
+    myUseSoftWraps = Boolean.TRUE;
   }
 
   @Override

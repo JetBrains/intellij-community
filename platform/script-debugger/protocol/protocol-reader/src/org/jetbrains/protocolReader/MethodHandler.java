@@ -4,19 +4,22 @@
 
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.List;
 
 abstract class MethodHandler {
   abstract void writeMethodImplementationJava(ClassScope classScope, Method m, TextOutput out);
 
-  protected static void appendMethodSignatureJava(Method m, Iterable<String> paramNames, TextOutput out) {
-    out.append(m.getName()).append('(');
+  protected static void appendMethodSignatureJava(@NotNull Method method, @NotNull List<String> paramNames, @NotNull TextOutput out) {
+    out.append(method.getName()).append('(');
     boolean firstArg = true;
-    Iterator<String> namesIt = paramNames.iterator();
-    for (Type arg : m.getGenericParameterTypes()) {
+    Type[] types = method.getGenericParameterTypes();
+    for (int i = 0, length = types.length; i < length; i++) {
+      Type arg = types[i];
       if (firstArg) {
         firstArg = false;
       }
@@ -24,19 +27,19 @@ abstract class MethodHandler {
         out.comma();
       }
       Util.writeJavaTypeName(arg, out);
-      out.append(' ').append(namesIt.next());
+      out.space().append(paramNames.get(i));
     }
     out.append(')');
   }
 
-  protected static void writeMethodDeclarationJava(TextOutput out, Method m) {
-    writeMethodDeclarationJava(out, m, Collections.<String>emptyList());
+  protected static void writeMethodDeclarationJava(TextOutput out, Method method) {
+    writeMethodDeclarationJava(out, method, Collections.<String>emptyList());
   }
 
-  protected static void writeMethodDeclarationJava(TextOutput out, Method m, Iterable<String> paramNames) {
+  protected static void writeMethodDeclarationJava(@NotNull TextOutput out, @NotNull Method m, @NotNull List<String> paramNames) {
     out.append("@Override").newLine().append("public ");
     Util.writeJavaTypeName(m.getGenericReturnType(), out);
-    out.append(' ');
+    out.space();
     appendMethodSignatureJava(m, paramNames, out);
   }
 }

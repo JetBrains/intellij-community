@@ -403,7 +403,7 @@ public class TestAll implements Test {
     else {
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
         JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
-        if (!hasPerformance(testCaseClass.getSimpleName()) || !isPerformanceTestsRun()) {
+        if (!isPerformanceTest(testCaseClass) || !isPerformanceTestsRun()) {
           try {
             adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
           }
@@ -423,7 +423,7 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (isPerformanceTestsRun() ^ (hasPerformance(name) || hasPerformance(testCaseClass.getSimpleName())))
+            if (isPerformanceTestsRun() ^ (hasPerformance(name) || isPerformanceTest(testCaseClass)))
               return;
 
             Method method = findTestMethod((TestCase)test);
@@ -444,6 +444,11 @@ public class TestAll implements Test {
     }
 
     return null;
+  }
+
+
+  public static boolean isPerformanceTest(Class aClass) {
+    return hasPerformance(aClass.getSimpleName());
   }
 
   private static boolean hasPerformance(String name) {

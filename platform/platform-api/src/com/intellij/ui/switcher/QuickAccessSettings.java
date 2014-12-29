@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,14 +50,17 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
   @NonNls public static final String SWITCH_APPLY = "SwitchApply";
   private RegistryValue myModifiersValue;
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "QuickAccess";
   }
 
+  @Override
   public void initComponent() {
     myModifiersValue = Registry.get("actionSystem.quickAccessModifiers");
     myModifiersValue.addListener(new RegistryValueListener.Adapter() {
+      @Override
       public void afterValueChanged(RegistryValue value) {
         applyModifiersFromRegistry();
       }
@@ -70,18 +73,20 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
 
     applyModifiersFromRegistry();
   }
-      
+
+  @Override
   public void disposeComponent() {
     KeymapManager.getInstance().removeKeymapManagerListener(this);
     Disposer.dispose(this);
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public void activeKeymapChanged(Keymap keymap) {
-    KeymapManager mgr = KeymapManager.getInstance();
-    myKeymap = mgr.getActiveKeymap();
+    myKeymap = KeymapManager.getInstance().getActiveKeymap();
   }
 
   Keymap getKeymap() {
@@ -89,7 +94,7 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
   }
 
   void saveModifiersToRegistry(Set<String> codeTexts) {
-    StringBuffer value = new StringBuffer();
+    StringBuilder value = new StringBuilder();
     for (String each : codeTexts) {
       if (value.length() > 0) {
         value.append(" ");
@@ -109,7 +114,7 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
     HashSet<String> vksSet = new HashSet<String>();
     ContainerUtil.addAll(vksSet, vks);
     myModifierVks.clear();
-    int mask = getModiferMask(vksSet);
+    int mask = getModifierMask(vksSet);
     myModifierVks.addAll(getModifiersVKs(mask));
 
     reassignActionShortcut(SWITCH_UP, mask, KeyEvent.VK_UP);
@@ -125,7 +130,8 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
 
     if (SystemInfo.isMac) {
       return "control alt";
-    } else {
+    }
+    else {
       return "shift alt";
     }
   }
@@ -141,22 +147,25 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
     Shortcut[] shortcuts = myKeymap.getShortcuts(actionId);
     for (Shortcut each : shortcuts) {
       if (each instanceof KeyboardShortcut) {
-          myKeymap.removeShortcut(actionId, each);
+        myKeymap.removeShortcut(actionId, each);
       }
     }
   }
 
   @JdkConstants.InputEventMask
-  int getModiferMask(Set<String> codeTexts) {
+  int getModifierMask(Set<String> codeTexts) {
     int mask = 0;
     for (String each : codeTexts) {
       if ("control".equals(each)) {
         mask |= InputEvent.CTRL_MASK;
-      } else if ("shift".equals(each)) {
+      }
+      else if ("shift".equals(each)) {
         mask |= InputEvent.SHIFT_MASK;
-      } else if ("alt".equals(each)) {
+      }
+      else if ("alt".equals(each)) {
         mask |= InputEvent.ALT_MASK;
-      } else if ("meta".equals(each)) {
+      }
+      else if ("meta".equals(each)) {
         mask |= InputEvent.META_MASK;
       }
     }

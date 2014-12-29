@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,7 +32,7 @@ public class ReloadProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null) {
-      ((ProjectManagerImpl)ProjectManager.getInstance()).reloadProjectImpl(project, null);
+      ProjectManager.getInstance().reloadProject(project);
     }
   }
 }

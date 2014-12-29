@@ -33,7 +33,7 @@ public class VcsLimitHistoryConfigurable extends VcsCheckBoxWithSpinnerConfigura
   private final VcsConfiguration myConfiguration;
 
   public VcsLimitHistoryConfigurable(Project project) {
-    super(project, "Limit history by: ", "rows");
+    super(project, "Limit history to: ", "rows");
     myConfiguration = VcsConfiguration.getInstance(myProject);
   }
 

@@ -338,7 +338,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   @NotNull
   public PsiReference[] getReferences() {
     final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this);
-    if (referencesFromProviders == null) return new PsiReference[]{new XmlAttributeReference(this)};
     PsiReference[] refs;
     if (isNamespaceDeclaration()) {
       refs = new PsiReference[referencesFromProviders.length + 1];

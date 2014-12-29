@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.folding;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 /**
  * @author yole
  */
 @State(
-  name="CodeFoldingSettings",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml"
-    )}
+  name = "CodeFoldingSettings",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml")
 )
-public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements PersistentStateComponent<CodeFoldingSettings>, ExportableComponent {
-
+public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements PersistentStateComponent<CodeFoldingSettings> {
   @Override
   public CodeFoldingSettings getState() {
     return this;
@@ -44,17 +37,5 @@ public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Pers
   @Override
   public void loadState(final CodeFoldingSettings state) {
     XmlSerializerUtil.copyBean(state, this);
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[] { PathManager.getOptionsFile("editor.codeinsight") };
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return IdeBundle.message("code.folding.settings");
   }
 }

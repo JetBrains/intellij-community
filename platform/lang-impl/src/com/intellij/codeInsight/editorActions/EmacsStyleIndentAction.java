@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
@@ -76,17 +75,12 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
       final Document document = editor.getDocument();
       final int startOffset = editor.getCaretModel().getOffset();
       final int line = editor.offsetToLogicalPosition(startOffset).line;
-      final int col = editor.getCaretModel().getLogicalPosition().column;
       final int lineStart = document.getLineStartOffset(line);
-      final int initLineEnd = document.getLineEndOffset(line);
       try{
         final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
         final int newPos = codeStyleManager.adjustLineIndent(file, lineStart);
-        final int newCol = newPos - lineStart;
-        final int lineInc = document.getLineEndOffset(line) - initLineEnd;
-        if (newCol >= col + lineInc && newCol >= 0) {
-          final LogicalPosition pos = new LogicalPosition(line, newCol);
-          editor.getCaretModel().moveToLogicalPosition(pos);
+        if (editor.getCaretModel().getOffset() < newPos) {
+          editor.getCaretModel().moveToOffset(newPos);
           editor.getSelectionModel().removeSelection();
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         }

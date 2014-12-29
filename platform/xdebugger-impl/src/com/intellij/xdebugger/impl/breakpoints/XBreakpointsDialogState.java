@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +30,9 @@ import java.util.Set;
 public class XBreakpointsDialogState {
   private Set<String> mySelectedGroupingRules = new HashSet<String>();
 
+  @Transient // Not saved for now
+  private TreeState myTreeState = null;
+
   @Tag("selected-grouping-rules")
   @AbstractCollection(surroundWithTag = false, elementTag = "grouping-rule", elementValueAttribute = "id")
   public Set<String> getSelectedGroupingRules() {
@@ -36,5 +41,14 @@ public class XBreakpointsDialogState {
 
   public void setSelectedGroupingRules(final Set<String> selectedGroupingRules) {
     mySelectedGroupingRules = selectedGroupingRules;
+  }
+
+  @Transient // Not saved for now
+  public TreeState getTreeState() {
+    return myTreeState;
+  }
+
+  public void setTreeState(TreeState treeState) {
+    myTreeState = treeState;
   }
 }

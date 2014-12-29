@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,8 +149,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       int occurrencesCount = refsToInlineList.size();
       if (refExpr != null && occurrencesCount > 1  || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
         final InlineLocalDialog inlineLocalDialog = new InlineLocalDialog(project, local, refExpr, occurrencesCount);
-        inlineLocalDialog.show();
-        if (!inlineLocalDialog.isOK()){
+        if (!inlineLocalDialog.showAndGet()) {
           WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
           return;
         }

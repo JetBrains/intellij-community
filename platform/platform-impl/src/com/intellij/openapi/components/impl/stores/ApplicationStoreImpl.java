@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,15 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StateStorageOperation;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,13 +36,11 @@ import java.io.IOException;
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
   private static final Logger LOG = Logger.getInstance(ApplicationStoreImpl.class);
 
-  private static final String XML_EXTENSION = ".xml";
-  private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
+  private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + DirectoryStorageData.DEFAULT_EXT;
   private static final String ROOT_ELEMENT_NAME = "application";
 
   private final ApplicationImpl myApplication;
   private final StateStorageManager myStateStorageManager;
-  private final DefaultsStateStorage myDefaultsStateStorage;
 
   private String myConfigPath;
 
@@ -49,15 +52,15 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       private boolean myConfigDirectoryRefreshed;
 
       @Override
-      protected StorageData createStorageData(@NotNull String storageSpec) {
-        return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
+      protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
+        return new StorageData(ROOT_ELEMENT_NAME);
       }
 
       @Nullable
       @Override
       protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
         if (component instanceof NamedJDOMExternalizable) {
-          return StoragePathMacros.APP_CONFIG + "/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
+          return StoragePathMacros.APP_CONFIG + '/' + ((NamedJDOMExternalizable)component).getExternalFileName() + DirectoryStorageData.DEFAULT_EXT;
         }
         else {
           return DEFAULT_STORAGE_SPEC;
@@ -65,13 +68,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       }
 
       @Override
-      protected String getVersionsFilePath() {
-        return getConfigPath() + "/options/appComponentVersions.xml";
-      }
-
-      @Override
       protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
-        if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
+        if (fileSpec.equals(StoragePathMacros.APP_CONFIG + '/' + PathMacrosImpl.EXT_FILE_NAME + DirectoryStorageData.DEFAULT_EXT)) return null;
         return super.getMacroSubstitutor(fileSpec);
       }
 
@@ -86,13 +84,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
           try {
             VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(getConfigPath());
             if (configDir != null) {
-              VfsUtilCore.visitChildrenRecursively(configDir, new VirtualFileVisitor() {
-                @Override
-                public boolean visitFile(@NotNull VirtualFile file) {
-                  return !"componentVersions".equals(file.getName());
-                }
-              });
-              VfsUtil.markDirtyAndRefresh(false, true, false, configDir);
+              VfsUtil.markDirtyAndRefresh(false, true, true, configDir);
             }
           }
           finally {
@@ -101,7 +93,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
         }
       }
     };
-    myDefaultsStateStorage = new DefaultsStateStorage(null);
   }
 
   @Override
@@ -148,7 +139,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   @Nullable
   @Override
-  protected StateStorage getDefaultsStorage() {
-    return myDefaultsStateStorage;
+  protected PathMacroManager getPathMacroManagerForDefaults() {
+    return null;
   }
 }

@@ -1,0 +1,22 @@
+for (def i in arr) {
+    switch (i) {
+        case a: break
+        case b: break
+        default: i; break
+    }
+    continue
+    println()
+}
+-----
+0(1) element: null
+1(2) READ arr
+2(3,11) element: For statement
+3(4) WRITE i
+4(5) element: Block statement
+5(6) READ i
+6(7,8,9) element: Switch statement
+7(2) READ a
+8(2) READ b
+9(2) READ i
+10(2) READ println
+11() element: null

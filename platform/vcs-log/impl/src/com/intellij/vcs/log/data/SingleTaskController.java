@@ -18,6 +18,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -82,10 +83,13 @@ public abstract class SingleTaskController<Request, Result> {
 
   /**
    * The underlying currently active task should use this method to inform that it has completed the execution. <br/>
-   * The result is immediately passed to the result handler specified in the constructor.
+   * If the result is not null, it is immediately passed to the result handler specified in the constructor.
+   * Otherwise result handler is not called, the task just completes.
    */
-  protected final void taskCompleted(@NotNull Result result) {
-    myResultHandler.consume(result);
+  protected final void taskCompleted(@Nullable Result result) {
+    if (result != null) {
+      myResultHandler.consume(result);
+    }
     synchronized (LOCK) {
       if (myAwaitingRequests.isEmpty()) {
         myActive = false;

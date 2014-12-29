@@ -18,10 +18,25 @@ public enum TestEnum {
    }
 
    private TestEnum() {
-      this((String)"?");
+      this("?");// 34
    }
 
    private TestEnum(@Deprecated String var3) {
-      this.s = var3;
+      this.s = var3;// 35
    }
 }
+
+class 'pkg/TestEnum' {
+   method '<init> (Ljava/lang/String;I)V' {
+      3      20
+      5      20
+   }
+
+   method '<init> (Ljava/lang/String;ILjava/lang/String;)V' {
+      8      24
+   }
+}
+
+Lines mapping:
+34 <-> 21
+35 <-> 25

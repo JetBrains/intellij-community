@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.intellij.spellchecker.compress;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public final class Alphabet {
-
   private final char[] letters;
-  private int lastIndexUsed = 0;
+  private int lastIndexUsed;
   private static final int MAX_INDEX = UnitBitSet.MAX_UNIT_VALUE;
 
   public char getLetter(int position) {
@@ -57,7 +57,7 @@ public final class Alphabet {
     return lastIndexUsed;
   }
 
-  public int add(char c) {
+  private int add(char c) {
     if(lastIndexUsed>=letters.length-1) return -1;
     lastIndexUsed++;
     letters[lastIndexUsed] = c;
@@ -75,8 +75,10 @@ public final class Alphabet {
   }
 
   // TODO: this should be ONLY way to create it to sped up getIndex
+  @TestOnly
   Alphabet(@NotNull CharSequence alphabet) {
     this(alphabet.length() + 1);
+    assert alphabet.length() != 0;
     for (int i = 0; i < alphabet.length(); i++) {
       add(alphabet.charAt(i));
     }

@@ -33,7 +33,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
@@ -641,7 +640,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
           public void run() {
             fix.invoke(project, editor, file);
           }
-        }, file, editor);
+        }, file);
       }
 
       @Override
@@ -659,14 +658,14 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       (UnusedParametersInspection)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME, parameter);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedParametersInspection != null);
     List<IntentionAction> options = new ArrayList<IntentionAction>();
-    HighlightDisplayKey myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME);
+    HighlightDisplayKey myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspectionBase.SHORT_NAME);
     options.addAll(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, parameter));
     if (unusedParametersInspection != null) {
       SuppressQuickFix[] batchSuppressActions = unusedParametersInspection.getBatchSuppressActions(parameter);
       Collections.addAll(options, SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions));
     }
     //need suppress from Unused Parameters but settings from Unused Symbol
-    QuickFixAction.registerQuickFixAction((HighlightInfo)highlightInfo, new RemoveUnusedParameterFix(parameter),
+    QuickFixAction.registerQuickFixAction((HighlightInfo)highlightInfo, new SafeDeleteFix(parameter),
                                           options, HighlightDisplayKey.getDisplayNameByKey(myUnusedSymbolKey));
   }
 
@@ -720,22 +719,23 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return OrderEntryFix.registerFixes(registrar, reference);
   }
 
-  public static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable,
-                                                   @NotNull final PsiFile file,
-                                                   @NotNull final Editor editor) {
-    final long stamp = editor.getDocument().getModificationStamp();
+  private static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable, @NotNull final PsiFile file) {
+    final Project project = file.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return;
+    final long stamp = document.getModificationStamp();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (file.getProject().isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
+        if (project.isDisposed() || document.getModificationStamp() != stamp) return;
         //no need to optimize imports on the fly during undo/redo
-        final UndoManager undoManager = UndoManager.getInstance(editor.getProject());
+        final UndoManager undoManager = UndoManager.getInstance(project);
         if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
-        PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
         String beforeText = file.getText();
-        final long oldStamp = editor.getDocument().getModificationStamp();
+        final long oldStamp = document.getModificationStamp();
         DocumentUtil.writeInRunUndoTransparentAction(runnable);
-        if (oldStamp != editor.getDocument().getModificationStamp()) {
+        if (oldStamp != document.getModificationStamp()) {
           String afterText = file.getText();
           if (Comparing.strEqual(beforeText, afterText)) {
             LOG.error(

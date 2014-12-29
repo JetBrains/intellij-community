@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
 
@@ -34,12 +35,15 @@ public class PyCommentBreakerEnterProcessor implements EnterProcessor {
       return false;
     }
     final CaretModel caretModel = editor.getCaretModel();
-    final PsiElement atCaret = psiElement.getContainingFile().findElementAt(caretModel.getOffset());
+    PsiElement atCaret = psiElement.getContainingFile().findElementAt(caretModel.getOffset());
+    if (atCaret instanceof PsiWhiteSpace) {
+      atCaret = atCaret.getPrevSibling();
+    }
     final PsiElement comment = PsiTreeUtil.getParentOfType(atCaret, PsiComment.class, false);
     if (comment != null) {
       SmartEnterUtil.plainEnter(editor);
-      editor.getDocument().insertString(caretModel.getOffset(), "#");
-      caretModel.moveToOffset(caretModel.getOffset() + 1);
+      editor.getDocument().insertString(caretModel.getOffset(), "# ");
+      caretModel.moveToOffset(caretModel.getOffset() + 2);
       return true;
     }
     return false;

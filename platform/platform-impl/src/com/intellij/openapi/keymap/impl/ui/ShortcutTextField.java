@@ -22,6 +22,8 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.openapi.util.registry.Registry;
+
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 
@@ -61,5 +63,10 @@ public class ShortcutTextField extends JTextField {
 
   public KeyStroke getKeyStroke() {
     return myKeyStroke;
+  }
+
+  @Override
+  public void enableInputMethods(boolean enable) {
+    super.enableInputMethods(enable && Registry.is("ide.settings.keymap.input.method.enabled"));
   }
 }

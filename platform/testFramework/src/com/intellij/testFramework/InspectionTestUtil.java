@@ -18,15 +18,15 @@ package com.intellij.testFramework;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import org.junit.Assert;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.CharArrayReader;
 import java.io.File;
@@ -152,8 +152,7 @@ expected:
 
   public static void runTool(@NotNull InspectionToolWrapper toolWrapper,
                              @NotNull final AnalysisScope scope,
-                             @NotNull final GlobalInspectionContextImpl globalContext,
-                             @NotNull final InspectionManagerEx inspectionManager) {
+                             @NotNull final GlobalInspectionContextImpl globalContext) {
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
@@ -161,5 +160,6 @@ expected:
     }
 
     globalContext.doInspections(scope);
+    UIUtil.dispatchAllInvocationEvents();
   }
 }

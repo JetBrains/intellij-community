@@ -5,6 +5,7 @@ import com.intellij.openapi.options.*;
 import org.jetbrains.annotations.NotNull;
 
 public class MockSchemesManagerFactory extends SchemesManagerFactory {
+  @NotNull
   @Override
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
                                                                                                       @NotNull SchemeProcessor<E> processor,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,12 +216,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           return typeOfProperty.get();
         }
       }
-      ResolveResult[] targets = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context)).multiResolve(false);
-      if (targets.length == 0) {
+      final PsiPolyVariantReference reference = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
+      final List<PsiElement> targets = PyUtil.multiResolveTopPriority(reference);
+      if (targets.isEmpty()) {
         return getQualifiedReferenceTypeByControlFlow(context);
       }
-      for (ResolveResult resolveResult : targets) {
-        PsiElement target = resolveResult.getElement();
+
+      final List<PyType> members = new ArrayList<PyType>();
+      for (PsiElement target : targets) {
         if (target == this || target == null) {
           continue;
         }
@@ -229,12 +231,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           LOG.error("Reference " + this + " resolved to invalid element " + target + " (text=" + target.getText() + ")");
           continue;
         }
-        type = getTypeFromTarget(target, context, this);
-        if (type != null) {
-          return type;
-        }
+        members.add(getTypeFromTarget(target, context, this));
       }
-      return null;
+
+      return PyUnionType.union(members);
     }
     finally {
       TypeEvalStack.evaluated(this);
@@ -374,9 +374,20 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return context.getType((PyTypedElement)target);
     }
     if (target instanceof PsiDirectory) {
-      PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
+      final PsiDirectory dir = (PsiDirectory)target;
+      PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
       if (file != null) {
         return getTypeFromTarget(file, context, anchor);
+      }
+      if (PyUtil.isPackage(dir, anchor)) {
+        final PsiFile containingFile = anchor.getContainingFile();
+        if (containingFile instanceof PyFile) {
+          final QualifiedName qualifiedName = QualifiedNameFinder.findShortestImportableQName(dir);
+          if (qualifiedName != null) {
+            final PyImportedModule module = new PyImportedModule(null, (PyFile)containingFile, qualifiedName);
+            return new PyImportedModuleType(module);
+          }
+        }
       }
     }
     return null;

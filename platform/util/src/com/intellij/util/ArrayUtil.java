@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -137,6 +138,18 @@ public class ArrayUtil extends ArrayUtilRt {
     array[array.length - 1] = value;
     return array;
   }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> T[] insert(@NotNull T[] array, int index, T value) {
+    @SuppressWarnings("unchecked")
+    T[] result = (T[])Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+    System.arraycopy(array, 0, result, 0, index);
+    result[index] = value;
+    System.arraycopy(array, index, result, index + 1, array.length - index);
+    return result;
+  }
+
   @NotNull
   @Contract(pure=true)
   public static int[] insert(@NotNull int[] array, int index, int value) {
@@ -474,24 +487,6 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
-    for (int i = src.length - 1; i >= 0; i--) {
-      final T o = src[i];
-      if (o == null) {
-        if (obj == null) {
-          return i;
-        }
-      }
-      else {
-        if (o.equals(obj)) {
-          return i;
-        }
-      }
-    }
-    return -1;
-  }
-
-  @Contract(pure=true)
   public static int find(@NotNull int[] src, int obj) {
     return indexOf(src, obj);
   }
@@ -743,6 +738,46 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
+  public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final T o = src[i];
+      if (o == null) {
+        if (obj == null) {
+          return i;
+        }
+      }
+      else {
+        if (o.equals(obj)) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure=true)
+  public static <T> int lastIndexOf(@NotNull final T[] src, final T obj, @NotNull Equality<? super T> comparator) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final T o = src[i];
+      if (comparator.equals(obj, o)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure=true)
+  public static <T> int lastIndexOf(@NotNull List<T> src, final T obj, @NotNull Equality<? super T> comparator) {
+    for (int i = src.size() - 1; i >= 0; i--) {
+      final T o = src.get(i);
+      if (comparator.equals(obj, o)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure=true)
   public static boolean contains(@Nullable final Object o, @NotNull Object... objects) {
     return indexOf(objects, o) >= 0;
   }
@@ -818,5 +853,19 @@ public class ArrayUtil extends ArrayUtilRt {
     for (T t : src) {
       dst[i++] = t;
     }
+  }
+
+  @NotNull
+  public static <T> T[] stripTrailingNulls(T[] array) {
+    return array.length != 0 && array[array.length-1] == null ? Arrays.copyOf(array, trailingNullsIndex(array)) : array;
+  }
+
+  private static <T> int trailingNullsIndex(T[] array) {
+    for (int i=array.length-1; i>=0; i--) {
+      if (array[i] != null) {
+        return i+1;
+      }
+    }
+    return 0;
   }
 }

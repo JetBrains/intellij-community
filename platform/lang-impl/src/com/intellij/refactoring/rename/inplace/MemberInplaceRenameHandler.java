@@ -68,7 +68,7 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
               final MemberInplaceRenamer renamer = createMemberRenamer(element, (PsiNameIdentifierOwner)elementToRename, editor);
               boolean startedRename = renamer.performInplaceRename();
               if (!startedRename) {
-                performDialogRename(elementToRename, editor, dataContext);
+                performDialogRename(elementToRename, editor, dataContext, renamer.myInitialName);
               }
             }
           });
@@ -85,7 +85,7 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
         }
       }
     }
-    performDialogRename(elementToRename, editor, dataContext);
+    performDialogRename(elementToRename, editor, dataContext, null);
     return null;
   }
 

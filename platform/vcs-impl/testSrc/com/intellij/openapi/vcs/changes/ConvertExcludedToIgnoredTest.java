@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,6 +70,14 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
     assertTrue(getChangeListManager().isIgnoredFile(excluded));
     assertTrue(getChangeListManager().isIgnoredFile(moduleOutput));
     assertIgnored(excluded);
+  }
+
+  public void testDoNotIgnoreInnerModuleExplicitlyMarkedAsExcludedFromOuterModule() throws IOException {
+    VirtualFile inner = createChildDirectory(myContentRoot, "inner");
+    PsiTestUtil.addModule(myProject, ModuleType.EMPTY, "inner", inner);
+    PsiTestUtil.addExcludedRoot(myModule, inner);
+    getChangeListManager().convertExcludedToIgnored();
+    assertFalse(getChangeListManager().isIgnoredFile(inner));
   }
 
   private void assertIgnored(VirtualFile... ignoredDirs) {

@@ -891,8 +891,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             try {
               run.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitAnonymousClass(final PsiAnonymousClass aClass) {
-                }
+                public void visitClass(final PsiClass aClass) {}
 
                 @Override public void visitVariable(PsiVariable variable) {
                   if (name1.equals(variable.getName())) {
@@ -905,7 +904,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               continue NextName;
             }
             run = run.getNextSibling();
-            if (scope instanceof PsiMethod) {//do not check next member for param name conflict
+            if (scope instanceof PsiMethod || scope instanceof PsiForeachStatement) {//do not check next member for param name conflict
               break;
             }
           }

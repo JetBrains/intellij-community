@@ -33,6 +33,7 @@ public abstract class PsiTreeChangeEvent extends EventObject {
   @NonNls public static final String PROP_ROOTS = "roots";
 
   @NonNls public static final String PROP_FILE_TYPES = "propFileTypes";
+  @NonNls public static final String PROP_UNLOADED_PSI = "propUnloadedPsi";
 
   protected PsiElement myParent;
   protected PsiElement myOldParent;

@@ -53,28 +53,33 @@ public class GrModifierFix extends GroovyFix {
   private final boolean myDoSet;
   private final Function<ProblemDescriptor, PsiModifierList> myModifierListProvider;
 
+  public GrModifierFix(@NotNull PsiVariable member,
+                       @GrModifier.GrModifierConstant String modifier,
+                       boolean doSet,
+                       @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+    myModifier = modifier;
+    myDoSet = doSet;
+    myModifierListProvider = modifierListProvider;
+    myText = initText(doSet, member.getName(), modifier);
+  }
+
   public GrModifierFix(@NotNull PsiMember member,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean showContainingClass,
                        boolean doSet,
-                       Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+                       @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
     myModifier = modifier;
     myDoSet = doSet;
     myModifierListProvider = modifierListProvider;
-
-    myText = initText(member, showContainingClass, myModifier, myDoSet);
+    myText = initText(doSet, getMemberName(member, showContainingClass), modifier);
   }
 
-  public static String initText(final PsiMember member, final boolean showContainingClass, final String modifier, final boolean doSet) {
-    String name = getMemberName(member, showContainingClass);
-    String modifierText = toPresentableText(modifier);
-
-    if (doSet) {
-      return GroovyBundle.message("change.modifier", name, modifierText);
-    }
-    else {
-      return GroovyBundle.message("change.modifier.not", name, modifierText);
-    }
+  public static String initText(boolean doSet, @NotNull String name, @NotNull String modifier) {
+    return GroovyBundle.message(
+      doSet ? "change.modifier" : "change.modifier.not",
+      name,
+      toPresentableText(modifier)
+    );
   }
 
   private static String getMemberName(PsiMember member, boolean showContainingClass) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -36,9 +37,11 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private final PsiFile myFile;
   private final Project myProject;
   private final Document myDocument;
+  private final Language myLanguage;
 
   public IndentOptionsDetectorImpl(@NotNull PsiFile file) {
     myFile = file;
+    myLanguage = file.getLanguage();
     myProject = file.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
   }
@@ -49,7 +52,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     IndentOptions indentOptions = (IndentOptions)CodeStyleSettingsManager.getSettings(myProject).getIndentOptions(myFile.getFileType()).clone();
 
     if (myDocument != null) {
-      List<LineIndentInfo> linesInfo = new LineIndentInfoBuilder(myDocument.getCharsSequence()).build();
+      List<LineIndentInfo> linesInfo = new LineIndentInfoBuilder(myDocument.getCharsSequence(), myLanguage).build();
       IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
       adjustIndentOptions(indentOptions, stats);
     }
@@ -71,7 +74,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
       if (newIndentSize > 0) {
         if (indentOptions.INDENT_SIZE != newIndentSize) {
           indentOptions.INDENT_SIZE = newIndentSize;
-          LOG.info("Detected indent size: " + newIndentSize + " for file " + myFile);
+          LOG.debug("Detected indent size: " + newIndentSize + " for file " + myFile);
         }
       }
     }
@@ -80,7 +83,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private void setUseTabs(@NotNull IndentOptions indentOptions, boolean useTabs) {
     if (indentOptions.USE_TAB_CHARACTER != useTabs) {
       indentOptions.USE_TAB_CHARACTER = useTabs;
-      LOG.info("Tab usage set to " + useTabs + " for file " + myFile);
+      LOG.debug("Tab usage set to " + useTabs + " for file " + myFile);
     }
   }
 

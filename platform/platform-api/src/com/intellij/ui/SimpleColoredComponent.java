@@ -19,8 +19,12 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
@@ -35,6 +39,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -106,8 +112,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   public SimpleColoredComponent() {
     myFragments = new ArrayList<String>(3);
     myAttributes = new ArrayList<SimpleTextAttributes>(3);
-    myIpad = new Insets(1, 2, 1, 2);
-    myIconTextGap = 2;
+    myIpad = new JBInsets(1, 2, 1, 2);
+    myIconTextGap = JBUI.scale(2);
     myBorder = new MyBorder();
     myFixedWidths = new TIntIntHashMap(10);
     setOpaque(true);
@@ -670,6 +676,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         g.drawString(fragment, offset, textBaseline);
       }
 
+      // for some reason strokeState here may be incorrect, resetting the stroke helps
+      g.setStroke(g.getStroke());
+
       // 1. Strikeout effect
       if (attributes.isStrikeout()) {
         final int strikeOutAt = textBaseline + (metrics.getDescent() - metrics.getAscent()) / 2;
@@ -677,13 +686,24 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       // 2. Waved effect
       if (attributes.isWaved()) {
-        if (attributes.getWaveColor() != null) {
-          g.setColor(attributes.getWaveColor());
-        }
-        final int wavedAt = textBaseline + 1;
-        for (int x = offset; x <= offset + fragmentWidth; x += 4) {
-          UIUtil.drawLine(g, x, wavedAt, x + 2, wavedAt + 2);
-          UIUtil.drawLine(g, x + 3, wavedAt + 1, x + 4, wavedAt);
+        GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+        Stroke oldStroke = g.getStroke();
+        try {
+          g.setStroke(new BasicStroke(.7F));
+          if (attributes.getWaveColor() != null) {
+            g.setColor(attributes.getWaveColor());
+          }
+          final int wavedAt = textBaseline + 1;
+          GeneralPath wavePath = new GeneralPath(PathIterator.WIND_EVEN_ODD);
+          wavePath.moveTo(offset, wavedAt);
+          for (int x = offset; x <= offset + fragmentWidth; x += 4) {
+            wavePath.lineTo(x + 2, wavedAt + 2);
+            wavePath.lineTo(x + 4, wavedAt);
+          }
+          g.draw(wavePath);
+        } finally {
+          config.restore();
+          g.setStroke(oldStroke);
         }
       }
       // 3. Underline
@@ -833,7 +853,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     private Insets myInsets;
 
     public MyBorder() {
-      myInsets = new Insets(1, 1, 1, 1);
+      myInsets = new JBInsets(1, 1, 1, 1);
     }
 
     public void setInsets(final Insets insets) {
@@ -848,7 +868,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      return myInsets;
+      return (Insets)myInsets.clone();
     }
 
     @Override

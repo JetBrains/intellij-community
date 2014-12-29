@@ -27,6 +27,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -89,13 +91,13 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     JRootPane pane = myParentEditor.getComponent().getRootPane();
     JComponent layeredPane = pane != null ? pane.getLayeredPane() : myParentEditor.getComponent();
     HintHint hintHint = new HintHint(layeredPane, position.first)
-        .setAwtTooltip(true)
-        .setContentActive(true)
-        .setExplicitClose(true)
-        .setShowImmediately(true)
-        .setPreferredPosition(position.second == HintManager.ABOVE ? Balloon.Position.above : Balloon.Position.below)
-        .setTextBg(myParentEditor.getColorsScheme().getDefaultBackground())
-        .setBorderInsets(new Insets(1, 1, 1, 1));
+      .setAwtTooltip(true)
+      .setContentActive(true)
+      .setExplicitClose(true)
+      .setShowImmediately(true)
+      .setPreferredPosition(position.second == HintManager.ABOVE ? Balloon.Position.above : Balloon.Position.below)
+      .setTextBg(myParentEditor.getColorsScheme().getDefaultBackground())
+      .setBorderInsets(new Insets(1, 1, 1, 1));
 
     int hintFlags = HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myParentEditor, position.first, hintFlags, 0, false, hintHint);
@@ -123,7 +125,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       }
     }, 100);
   }
-  
+
   @TestOnly
   @NotNull
   public String getContent() {
@@ -143,10 +145,16 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   }
 
   @NotNull
-  public static EmmetPreviewHint createHint(@NotNull final EditorEx parentEditor, @NotNull String templateText, @NotNull FileType fileType) {
+  public static EmmetPreviewHint createHint(@NotNull final EditorEx parentEditor,
+                                            @NotNull String templateText,
+                                            @NotNull FileType fileType) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument(templateText);
     final EditorEx previewEditor = (EditorEx)editorFactory.createEditor(document, parentEditor.getProject(), fileType, true);
+    MarkupModelEx model = previewEditor.getMarkupModel();
+    if (model instanceof EditorMarkupModel) {
+      ((EditorMarkupModel)model).setErrorStripeVisible(true);
+    }
     final EditorSettings settings = previewEditor.getSettings();
     settings.setLineNumbersShown(false);
     settings.setAdditionalLinesCount(1);
@@ -157,6 +165,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     settings.setIndentGuidesShown(false);
     settings.setVirtualSpace(false);
     settings.setWheelFontChangeEnabled(false);
+    settings.setAdditionalPageAtBottom(false);
     previewEditor.setCaretEnabled(false);
     previewEditor.setBorder(IdeBorderFactory.createEmptyBorder());
 
@@ -171,9 +180,9 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
         Dimension parentEditorSize = parentEditor.getScrollPane().getSize();
         int maxWidth = (int)parentEditorSize.getWidth() / 3;
         int maxHeight = (int)parentEditorSize.getHeight() / 2;
-        Dimension contentSize = previewEditor.getContentSize();
-        return new Dimension(maxWidth > contentSize.getWidth() && !settings.isUseSoftWraps() ? (int)size.getWidth() : maxWidth,
-                             maxHeight > contentSize.getHeight() ? (int)size.getHeight() : maxHeight);
+        final int width = settings.isUseSoftWraps() ? maxWidth : Math.min((int)size.getWidth(), maxWidth);
+        final int height = Math.min((int)size.getHeight(), maxHeight);
+        return new Dimension(width, height);
       }
 
       @NotNull

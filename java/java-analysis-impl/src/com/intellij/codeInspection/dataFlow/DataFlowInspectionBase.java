@@ -44,6 +44,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -108,6 +109,21 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
 
       @Override
+      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        super.visitMethodReferenceExpression(expression);
+        final PsiElement resolve = expression.resolve();
+        if (resolve instanceof PsiMethod) {
+          final PsiType methodReturnType = ((PsiMethod)resolve).getReturnType();
+          if (TypeConversionUtil.isPrimitiveWrapper(methodReturnType) && NullableNotNullManager.isNullable((PsiMethod)resolve)) {
+            final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
+            if (TypeConversionUtil.isPrimitiveAndNotNull(returnType)) {
+              holder.registerProblem(expression, InspectionsBundle.message("dataflow.message.unboxing.method.reference"));
+            }
+          }
+        }
+      }
+
+      @Override
       public void visitIfStatement(PsiIfStatement statement) {
         PsiExpression condition = statement.getCondition();
         if (BranchingInstruction.isBoolConst(condition)) {
@@ -125,7 +141,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) return;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(scope, TREAT_UNKNOWN_MEMBERS_AS_NULLABLE) {
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, true) {
       @Override
       protected boolean shouldCheckTimeLimit() {
         if (!onTheFly) return false;
@@ -470,7 +486,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable", presentableNullable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
         final LocalQuickFix[] fixes =
-          PsiTreeUtil.skipParentsOfType(expr, PsiCodeBlock.class, PsiReturnStatement.class) instanceof PsiLambdaExpression
+          PsiTreeUtil.getParentOfType(expr, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression
           ? LocalQuickFix.EMPTY_ARRAY
           : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls())) {
             @Override
@@ -520,6 +536,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static boolean isCompileConstantInIfCondition(PsiElement element) {
+    if (element instanceof PsiPrefixExpression && ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.EXCL) {
+      return isCompileConstantInIfCondition(((PsiPrefixExpression)element).getOperand());
+    }
+
     if (!(element instanceof PsiReferenceExpression)) return false;
     PsiElement resolved = ((PsiReferenceExpression)element).resolve();
     if (!(resolved instanceof PsiField)) return false;

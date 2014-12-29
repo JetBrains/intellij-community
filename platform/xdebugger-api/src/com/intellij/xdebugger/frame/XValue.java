@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.util.ThreeState;
+import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +45,14 @@ public abstract class XValue extends XValueContainer {
   }
 
   /**
+   * @return evaluator to calculate value of the current object instance
+   */
+  @Nullable
+  public XInstanceEvaluator getInstanceEvaluator() {
+    return null;
+  }
+
+  /**
    * @return {@link com.intellij.xdebugger.frame.XValueModifier} instance which can be used to modify the value
    */
   @Nullable
@@ -58,6 +68,17 @@ public abstract class XValue extends XValueContainer {
    */
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
     navigatable.setSourcePosition(null);
+  }
+
+  /**
+   * Provide inline debugger data, return ability to provide, use
+   * {@link ThreeState#UNSURE} if unsupported (default platform implementation will be used),
+   * {@link ThreeState#YES} if applicable
+   * {@link ThreeState#NO} if not applicable
+   */
+  @NotNull
+  public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+    return ThreeState.UNSURE;
   }
 
   /**

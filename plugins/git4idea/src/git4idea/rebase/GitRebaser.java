@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package git4idea.rebase;
 
+import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -90,8 +93,8 @@ public class GitRebaser {
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
     final AtomicBoolean failure = new AtomicBoolean();
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
-      GitUtil.workingTreeChangeStarted(myProject);
       rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
         @Override
         protected void onSuccess() {
@@ -117,7 +120,7 @@ public class GitRebaser {
       }
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject, token);
     }
     return updateResult.get();
   }
@@ -145,7 +148,7 @@ public class GitRebaser {
    * @return true if rebase successfully finished.
    */
   public boolean continueRebase(@NotNull Collection<VirtualFile> rebasingRoots) {
-    GitUtil.workingTreeChangeStarted(myProject);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       boolean success = true;
       for (VirtualFile root : rebasingRoots) {
@@ -154,7 +157,7 @@ public class GitRebaser {
       return success;
     }
     finally {
-      GitUtil.workingTreeChangeFinished(myProject);
+      DvcsUtil.workingTreeChangeFinished(myProject, token);
     }
   }
 
@@ -428,7 +431,7 @@ public class GitRebaser {
         }
         try {
           TreeMap<String, String> pickLines = new TreeMap<String, String>();
-          StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(path), GitUtil.UTF8_ENCODING)));
+          StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(path), CharsetToolkit.UTF8)));
           while (s.hasMoreData()) {
             if (!s.tryConsume("pick ")) {
               s.line();
@@ -437,7 +440,7 @@ public class GitRebaser {
             String commit = s.spaceToken();
             pickLines.put(commit, "pick " + commit + " " + s.line());
           }
-          PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), GitUtil.UTF8_ENCODING));
+          PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), CharsetToolkit.UTF8));
           try {
             for (String commit : myCommits) {
               String key = pickLines.headMap(commit + "\u0000").lastKey();

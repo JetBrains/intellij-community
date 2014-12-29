@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.jetbrains.python.codeInsight.stdlib;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
@@ -33,15 +33,15 @@ import java.util.List;
  */
 public class PyStdlibModuleMembersProvider extends PyModuleMembersProvider {
   @Override
-  protected Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName) {
+  protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
     if (qName.equals("os")) {
-      final List<PyDynamicMember> results = new ArrayList<PyDynamicMember>();
+      final List<PyCustomMember> results = new ArrayList<PyCustomMember>();
       PsiElement path = null;
       if (module != null) {
         final String pathModuleName = SystemInfo.isWindows ? "ntpath" : "posixpath";
         path = ResolveImportUtil.resolveModuleInRoots(QualifiedName.fromDottedString(pathModuleName), module);
       }
-      results.add(new PyDynamicMember("path", path));
+      results.add(new PyCustomMember("path", path));
       return results;
     }
     return Collections.emptyList();

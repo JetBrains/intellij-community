@@ -55,6 +55,8 @@ public class StoragePathMacros {
    */
   @NonNls @NotNull public static final String WORKSPACE_FILE = "$WORKSPACE_FILE$";
 
+  @NonNls @NotNull public static final String MODULE_FILE = "$MODULE_FILE$";
+
   private StoragePathMacros() {
   }
 

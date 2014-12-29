@@ -18,7 +18,6 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
@@ -102,7 +101,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     public void perform(final ConfigurationContext context) {
       final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration == null) return;
-      ((RunManagerEx)context.getRunManager()).setActiveConfiguration(configuration);
+      context.getRunManager().setSelectedConfiguration(configuration);
     }
 
     @Override
@@ -131,7 +130,7 @@ public class CreateAction extends BaseRunConfigurationAction {
                                   runManager.isConfigurationShared(template),
                                   runManager.getBeforeRunTasks(templateConfiguration),
                                   false);
-      runManager.setActiveConfiguration(configuration);
+      runManager.setSelectedConfiguration(configuration);
     }
   }
 
@@ -150,7 +149,7 @@ public class CreateAction extends BaseRunConfigurationAction {
         runManager.addConfiguration(configuration,
                                     runManager.isConfigurationShared(configuration),
                                     runManager.getBeforeRunTasks(configuration.getConfiguration()), false);
-        runManager.setActiveConfiguration(configuration);
+        runManager.setSelectedConfiguration(configuration);
       }
     }
   }

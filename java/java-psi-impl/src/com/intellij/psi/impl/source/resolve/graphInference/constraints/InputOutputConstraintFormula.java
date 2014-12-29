@@ -42,7 +42,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   public Set<InferenceVariable> getInputVariables(InferenceSession session) {
     final PsiExpression psiExpression = getExpression();
     final PsiType type = getT();
-    if (psiExpression instanceof PsiLambdaExpression || psiExpression instanceof PsiMethodReferenceExpression) {
+    if (psiExpression instanceof PsiFunctionalExpression) {
       final InferenceVariable inferenceVariable = session.getInferenceVariable(type);
       if (inferenceVariable != null) {
         return Collections.singleton(inferenceVariable);
@@ -112,12 +112,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   public void apply(PsiSubstitutor substitutor, boolean cache) {
     setT(substitutor.substitute(getT()));
     if (cache) {
-      Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
-      if (map == null) {
-        map = new HashMap<PsiElement, PsiType>();
-        LambdaUtil.ourFunctionTypes.set(map);
-      }
-      map.put(getExpression(), getT());
+      LambdaUtil.getFunctionalTypeMap().put(getExpression(), getT());
     }
   }
 

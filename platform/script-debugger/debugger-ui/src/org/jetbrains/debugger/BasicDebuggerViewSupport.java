@@ -1,12 +1,14 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.frame.CallFrameView;
 import org.jetbrains.debugger.values.ObjectValue;
 import org.jetbrains.debugger.values.Value;
@@ -69,12 +71,18 @@ public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilt
   }
 
   @Override
-  public void computeSourcePosition(@NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable) {
+  public void computeSourcePosition(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable) {
+  }
+
+  @NotNull
+  @Override
+  public ThreeState computeInlineDebuggerData(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback) {
+    return ThreeState.UNSURE;
   }
 
   @Nullable
   @Override
-  public ActionCallback computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node) {
+  public Promise<Void> computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node) {
     return null;
   }
 

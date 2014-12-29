@@ -135,7 +135,6 @@ public class NewColorAndFontPanel extends JPanel {
 
   public void disposeUIResources() {
     myPreviewPanel.disposeUIResources();
-    mySchemesPanel.disposeUIResources();
   }
 
   public void addSchemesListener(final ColorAndFontSettingsListener schemeListener) {

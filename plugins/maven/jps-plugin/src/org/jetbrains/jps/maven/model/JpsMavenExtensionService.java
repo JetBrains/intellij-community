@@ -28,6 +28,6 @@ public abstract class JpsMavenExtensionService {
 
   public abstract boolean hasMavenProjectConfiguration(@NotNull BuildDataPaths paths);
 
-  @NotNull
+  @Nullable
   public abstract MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths);
 }

@@ -1,0 +1,4 @@
+{
+	"foo": true,
+	"bar": false,<caret>
+}

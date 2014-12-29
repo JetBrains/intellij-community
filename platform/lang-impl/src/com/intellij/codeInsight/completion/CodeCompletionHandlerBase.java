@@ -193,7 +193,7 @@ public class CodeCompletionHandlerBase {
     insertDummyIdentifier(initializationContext[0], hasModifiers, invocationCount);
   }
 
-  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile, int invocationCount, Caret caret) {
+  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile, int invocationCount, @NotNull Caret caret) {
     final Ref<CompletionContributor> current = Ref.create(null);
     CompletionInitializationContext context = new CompletionInitializationContext(editor, caret, psiFile, myCompletionType, invocationCount) {
       CompletionContributor dummyIdentifierChanger;
@@ -296,7 +296,8 @@ public class CodeCompletionHandlerBase {
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
-    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
+    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
+                                                                                  parameters, this, freezeSemaphore,
                                                                                   initContext.getOffsetMap(), hasModifiers, lookup);
     Disposer.register(indicator, hostMap);
     Disposer.register(indicator, context.getOffsetMap());
@@ -389,17 +390,7 @@ public class CodeCompletionHandlerBase {
 
   @Nullable
   private static AutoCompletionPolicy getAutocompletionPolicy(LookupElement element) {
-    final AutoCompletionPolicy policy = AutoCompletionPolicy.getPolicy(element);
-    if (policy != null) {
-      return policy;
-    }
-
-    final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
-    if (item != null) {
-      return item.getAutoCompletionPolicy();
-    }
-
-    return null;
+    return element.getAutoCompletionPolicy();
   }
 
   private static boolean isInsideIdentifier(final OffsetMap offsetMap) {
@@ -602,7 +593,7 @@ public class CodeCompletionHandlerBase {
                                                                         final CompletionLookupArranger.StatisticsUpdate update) {
     final Editor editor = indicator.getEditor();
 
-    final int caretOffset = editor.getCaretModel().getOffset();
+    final int caretOffset = indicator.getCaret().getOffset();
     int idEndOffset = indicator.getIdentifierEndOffset();
     if (idEndOffset < 0) {
       idEndOffset = CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
@@ -653,6 +644,7 @@ public class CodeCompletionHandlerBase {
       hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
+          PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostEditor.getDocument());
           PsiFile targetFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, caret.getOffset());
           Editor targetEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, targetFile);
           int targetCaretOffset = targetEditor.getCaretModel().getOffset();
@@ -770,7 +762,7 @@ public class CodeCompletionHandlerBase {
         if (!editor.getCaretModel().supportsMultipleCarets()) { // done later, outside of this method
           context.stopWatching();
         }
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        EditorModificationUtil.scrollToCaret(editor);
       }
     });
     update.addSparedChars(indicator, item, context, completionChar);

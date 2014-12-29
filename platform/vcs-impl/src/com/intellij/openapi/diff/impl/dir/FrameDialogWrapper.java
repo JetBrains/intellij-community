@@ -1,8 +1,10 @@
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FrameWrapper;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,15 +41,22 @@ public abstract class FrameDialogWrapper {
     return Mode.MODAL;
   }
 
+  @Nullable
+  protected Disposable getDisposable() {
+    return null;
+  }
+
   public void show() {
     switch (getMode()) {
       case FRAME:
-        new MyFrameWrapper(getProject(), getMode(), getPanel(), getPreferredFocusedComponent(), getTitle(), getDimensionServiceKey())
+        new MyFrameWrapper(getProject(), getMode(), getPanel(), getPreferredFocusedComponent(), getTitle(), getDimensionServiceKey(),
+                           getDisposable())
           .show();
         return;
       case MODAL:
       case NON_MODAL:
-        new MyDialogWrapper(getProject(), getMode(), getPanel(), getPreferredFocusedComponent(), getTitle(), getDimensionServiceKey())
+        new MyDialogWrapper(getProject(), getMode(), getPanel(), getPreferredFocusedComponent(), getTitle(), getDimensionServiceKey(),
+                            getDisposable())
           .show();
         return;
       default:
@@ -65,7 +74,8 @@ public abstract class FrameDialogWrapper {
                            @NotNull JComponent component,
                            @Nullable JComponent preferredFocusedComponent,
                            @Nullable String title,
-                           @Nullable String dimensionServiceKey) {
+                           @Nullable String dimensionServiceKey,
+                           @Nullable Disposable disposable) {
       super(project, true);
       myComponent = component;
       myPreferredFocusedComponent = preferredFocusedComponent;
@@ -83,6 +93,10 @@ public abstract class FrameDialogWrapper {
           break;
         default:
           throw new IllegalArgumentException(mode.toString());
+      }
+
+      if (disposable != null) {
+        Disposer.register(getDisposable(), disposable);
       }
 
       init();
@@ -119,7 +133,8 @@ public abstract class FrameDialogWrapper {
                           @NotNull JComponent component,
                           @Nullable JComponent preferredFocusedComponent,
                           @Nullable String title,
-                          @Nullable String dimensionServiceKey) {
+                          @Nullable String dimensionServiceKey,
+                          @Nullable Disposable disposable) {
       super(project, dimensionServiceKey);
 
       assert mode == Mode.FRAME;
@@ -130,6 +145,9 @@ public abstract class FrameDialogWrapper {
       setComponent(component);
       setPreferredFocusedComponent(preferredFocusedComponent);
       closeOnEsc();
+      if (disposable != null) {
+        addDisposable(disposable);
+      }
     }
   }
 }

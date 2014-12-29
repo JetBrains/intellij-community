@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -92,6 +93,35 @@ public class PatchFileCreatorTest extends PatchTestCase {
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     preparationResult.patch.getActions().add(new MyFailOnApplyPatchAction());
     assertNothingHasChanged(preparationResult, new HashMap<String, ValidationResult.Option>());
+  }
+
+  @Test
+  public void testRevertedWhenFileToDeleteIsProcessLocked() throws Exception {
+    if (!UtilsTest.mIsWindows) return;
+
+    PatchFileCreator.create(myOlderDir, myNewerDir, myFile, Collections.<String>emptyList(), Collections.<String>emptyList(),
+                            Collections.<String>emptyList(), TEST_UI);
+
+
+    RandomAccessFile raf = new RandomAccessFile(new File(myOlderDir, "bin/idea.bat"),"rw");
+    // Lock the file. FileLock is not good here, because we need to prevent deletion.
+    int b = raf.read();
+    raf.seek(0);
+    raf.write(b);
+
+    try {
+      PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+
+      Map<String, Long> original = Digester.digestFiles(myOlderDir, Collections.<String>emptyList(), TEST_UI);
+
+      File backup = getTempFile("backup");
+      PatchFileCreator.apply(preparationResult, new HashMap<String, ValidationResult.Option>(), backup, TEST_UI);
+
+      assertEquals(original, Digester.digestFiles(myOlderDir, Collections.<String>emptyList(), TEST_UI));
+    }
+    finally {
+      raf.close();
+    }
   }
 
   @Test
@@ -305,6 +335,11 @@ public class PatchFileCreatorTest extends PatchTestCase {
   private static class MyFailOnApplyPatchAction extends PatchAction {
     public MyFailOnApplyPatchAction() {
       super("_dummy_file_", -1);
+    }
+
+    @Override
+    protected boolean isModified(File toFile) throws IOException {
+      return false;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
@@ -64,7 +65,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
     myUnderPopup = fillMenu(true);
     myAbovePopup = fillMenu(false);
-    enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
   @Override
@@ -99,7 +100,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   public void mouseMoved(MouseEvent e) {
     final MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, getParent());
     final boolean insideRec = getBounds().contains(event.getPoint());
-    boolean buttonsNotPressed = (e.getModifiersEx() & (MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK | MouseEvent.BUTTON3_DOWN_MASK)) == 0;
+    boolean buttonsNotPressed = (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK |
+                                                       InputEvent.BUTTON3_DOWN_MASK)) == 0;
     if (!myPopupIsShowing && insideRec && buttonsNotPressed) {
       showPopup(null, false);
     } else if (myPopupIsShowing && !insideRec) {
@@ -362,17 +364,13 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     int off = dark ? 6 : 0;
     AllIcons.General.ArrowDown.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
     if (dark) return;
-    int y1 = myMoreRec.y - 2;
-    int y2 = myMoreRec.y + myMoreRec.height + 2;
 
     final Insets insets = getInsets();
+    int y1 = myMoreRec.y - 2;
+    int y2 = getHeight() - insets.bottom - 2;
 
     if (y1 < getInsets().top) {
       y1 = insets.top;
-    }
-
-    if (y2 > getHeight() - insets.bottom) {
-      y2 = getHeight() - insets.bottom;
     }
 
     final int x = myMoreRec.x - 4;

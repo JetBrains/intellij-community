@@ -17,7 +17,6 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -122,10 +121,7 @@ public class EqualsBetweenInconvertibleTypesInspection
       if (comparedType == null) {
         return;
       }
-      final PsiType comparedTypeErasure = TypeConversionUtil.erasure(comparedType);
-      final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(comparisonType);
-      if (comparedTypeErasure == null || comparisonTypeErasure == null ||
-          TypeConversionUtil.areTypesConvertible(comparedType, comparisonType)) {
+      if (TypeUtils.areConvertible(comparedType, comparisonType)) {
         return;
       }
       registerMethodCallError(expression, comparedType, comparisonType);

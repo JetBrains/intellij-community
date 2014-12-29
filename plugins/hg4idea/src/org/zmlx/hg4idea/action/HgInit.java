@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -6,10 +21,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -20,9 +35,6 @@ import org.zmlx.hg4idea.ui.HgInitAlreadyUnderHgDialog;
 import org.zmlx.hg4idea.ui.HgInitDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Action for initializing a Mercurial repository.
@@ -42,8 +54,7 @@ public class HgInit extends DumbAwareAction {
 
     // provide window to select the root directory
     final HgInitDialog hgInitDialog = new HgInitDialog(myProject);
-    hgInitDialog.show();
-    if (!hgInitDialog.isOK()) {
+    if (!hgInitDialog.showAndGet()) {
       return;
     }
     final VirtualFile selectedRoot = hgInitDialog.getSelectedFolder();
@@ -57,24 +68,27 @@ public class HgInit extends DumbAwareAction {
     boolean needToCreateRepo = false;
     if (vcsRoot != null) {
       final HgInitAlreadyUnderHgDialog dialog = new HgInitAlreadyUnderHgDialog(myProject,
-                                                   selectedRoot.getPresentableUrl(), vcsRoot.getPresentableUrl());
-      dialog.show();
-      if (!dialog.isOK()) {
+                                                                               selectedRoot.getPresentableUrl(),
+                                                                               vcsRoot.getPresentableUrl());
+      if (!dialog.showAndGet()) {
         return;
       }
 
       if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.USE_PARENT_REPO) {
         mapRoot = vcsRoot;
-      } else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_REPO_HERE) {
+      }
+      else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_REPO_HERE) {
         needToCreateRepo = true;
       }
-    } else { // no parent repository => creating the repository here.
+    }
+    else { // no parent repository => creating the repository here.
       needToCreateRepo = true;
     }
 
     if (needToCreateRepo) {
-      createRepository(selectedRoot, mapRoot); 
-    } else {
+      createRepository(selectedRoot, mapRoot);
+    }
+    else {
       updateDirectoryMappings(mapRoot);
     }
   }
@@ -85,28 +99,9 @@ public class HgInit extends DumbAwareAction {
       .isAncestor(myProject.getBaseDir(), mapRoot, false)) {
       mapRoot.refresh(false, false);
       final String path = mapRoot.equals(myProject.getBaseDir()) ? "" : mapRoot.getPath();
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings());
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, HgVcs.VCS_NAME);
-      for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
-        final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
-        if (m.getDirectory().equals(path)) {
-          if (m.getVcs().length() == 0) {
-            vcsDirectoryMappings.set(i, mapping);
-            mapping = null;
-            break;
-          }
-          else if (m.getVcs().equals(mapping.getVcs())) {
-            mapping = null;
-            break;
-          }
-        }
-      }
-      if (mapping != null) {
-        vcsDirectoryMappings.add(mapping);
-      }
-      vcsManager.setDirectoryMappings(vcsDirectoryMappings);
-      vcsManager.updateActiveVcss();
+      ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(myProject);
+      manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, HgVcs.VCS_NAME));
+      manager.updateActiveVcss();
     }
   }
 

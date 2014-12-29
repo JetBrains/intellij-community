@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,11 +43,14 @@ public class PythonTemplateContextType extends FileTypeBasedContextType {
     if (super.isInContext(file, offset)) {
       final PsiElement element = file.findElementAt(offset);
       if (element != null) {
-        return !(isAfterDot(element) || element instanceof PsiComment || element instanceof PyStringLiteralExpression ||
-                 isInsideParameterList(element));
+        return !(isAfterDot(element) || element instanceof PsiComment || isInsideStringLiteral(element) || isInsideParameterList(element));
       }
     }
     return false;
+  }
+
+  private static boolean isInsideStringLiteral(@NotNull PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class, false) != null;
   }
 
   private static boolean isInsideParameterList(@NotNull PsiElement element) {

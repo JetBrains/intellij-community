@@ -17,14 +17,19 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectHashingStrategy;
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ConcurrentMapsTest extends TestCase {
+import static org.junit.Assert.*;
+
+@SuppressWarnings("deprecation")
+public class ConcurrentMapsTest {
+  private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
+
   private static final TObjectHashingStrategy<String> CUSTOM_STRATEGY = new TObjectHashingStrategy<String>() {
     @Override
     public int computeHashCode(String object) {
@@ -37,12 +42,13 @@ public class ConcurrentMapsTest extends TestCase {
     }
   };
 
+  @Test(timeout = TIMEOUT)
   public void testKeysRemovedWhenIdentityStrategyIsUsed() {
     @SuppressWarnings("unchecked") ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
     do {
+      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
       System.gc();
     }
     while (!map.processQueue());
@@ -50,10 +56,11 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(1, map.underlyingMapSize());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testRemoveFromSoftEntrySet() {
     ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
     map.put(this, this);
-    Set<Map.Entry<Object,Object>> entries = map.entrySet();
+    Set<Map.Entry<Object, Object>> entries = map.entrySet();
     assertEquals(1, entries.size());
     Map.Entry<Object, Object> entry = entries.iterator().next();
     entries.remove(entry);
@@ -61,10 +68,11 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testRemoveFromWeakEntrySet() {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
     map.put(this, this);
-    Set<Map.Entry<Object,Object>> entries = map.entrySet();
+    Set<Map.Entry<Object, Object>> entries = map.entrySet();
     assertEquals(1, entries.size());
     Map.Entry<Object, Object> entry = entries.iterator().next();
     entries.remove(entry);
@@ -72,12 +80,13 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testTossedWeakKeysAreRemoved() {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
     do {
+      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
       System.gc();
     }
     while (!map.processQueue());
@@ -95,12 +104,13 @@ public class ConcurrentMapsTest extends TestCase {
     }
   }
 
+  @Test(timeout = TIMEOUT)
   public void testTossedSoftKeysAreRemoved() {
     ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects();
     do {
+      tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
@@ -109,12 +119,14 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(1, map.underlyingMapSize());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testTossedWeakValueIsRemoved() {
-    ConcurrentWeakValueHashMap<Object, Object> map = new ConcurrentWeakValueHashMap<Object, Object>();
+    ConcurrentWeakValueHashMap<Object, Object> map =
+      (ConcurrentWeakValueHashMap<Object, Object>)ContainerUtil.createConcurrentWeakValueMap();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
     do {
+      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
       System.gc();
     }
     while (!map.processQueue());
@@ -122,12 +134,14 @@ public class ConcurrentMapsTest extends TestCase {
     map.put(this, this);
     assertEquals(1, map.underlyingMapSize());
   }
+
+  @Test(timeout = TIMEOUT)
   public void testTossedSoftValueIsRemoved() {
     ConcurrentSoftValueHashMap<Object, Object> map = new ConcurrentSoftValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects();
     do {
+      tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
@@ -136,6 +150,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(1, map.underlyingMapSize());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testCustomStrategy() {
     SoftHashMap<String, String> map = new SoftHashMap<String, String>(CUSTOM_STRATEGY);
 
@@ -146,6 +161,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testCustomStrategyForConcurrentSoft() {
     ConcurrentSoftHashMap<String, String> map = new ConcurrentSoftHashMap<String, String>(CUSTOM_STRATEGY);
 
@@ -157,8 +173,9 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testCustomStrategyForConcurrentWeakSoft() {
-    ConcurrentWeakKeySoftValueHashMap<String, String> map = new ConcurrentWeakKeySoftValueHashMap<String, String>(1,1,1,CUSTOM_STRATEGY);
+    ConcurrentWeakKeySoftValueHashMap<String, String> map = new ConcurrentWeakKeySoftValueHashMap<String, String>(1, 1, 1, CUSTOM_STRATEGY);
 
     map.put("ab", "ab");
     assertEquals(1, map.size());
@@ -168,33 +185,36 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testTossedSoftKeyAndValue() {
     SoftKeySoftValueHashMap<Object, Object> map = new SoftKeySoftValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects();
     do {
+      tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
     assertTrue(map.isEmpty());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testTossedWeakKeyAndValue() {
     WeakKeyWeakValueHashMap<Object, Object> map = new WeakKeyWeakValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
-    tryGcSoftlyReachableObjects();
     do {
+      tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
     assertTrue(map.isEmpty());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testConcurrentLongObjectHashMap() {
     ConcurrentLongObjectMap<Object> map = new ConcurrentLongObjectHashMap<Object>();
-    for (int i=0; i<1000;i++) {
+    for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
       Object ret = map.get(i);
@@ -204,7 +224,7 @@ public class ConcurrentMapsTest extends TestCase {
       if (i != 0) {
         Object remove = map.remove(i - 1);
         assertTrue(remove instanceof Integer);
-        assertEquals(i-1, remove);
+        assertEquals(i - 1, remove);
       }
       assertEquals(map.size(), 1);
     }
@@ -213,9 +233,10 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test(timeout = TIMEOUT)
   public void testStripedLockIntObjectConcurrentHashMap() {
     ConcurrentIntObjectMap<Object> map = new StripedLockIntObjectConcurrentHashMap<Object>();
-    for (int i=0; i<1000;i++) {
+    for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
       Object ret = map.get(i);
@@ -225,7 +246,7 @@ public class ConcurrentMapsTest extends TestCase {
       if (i != 0) {
         Object remove = map.remove(i - 1);
         assertTrue(remove instanceof Integer);
-        assertEquals(i-1, remove);
+        assertEquals(i - 1, remove);
       }
       assertEquals(map.size(), 1);
     }
@@ -233,9 +254,10 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(map.size(), 0);
   }
 
+  @Test(timeout = TIMEOUT)
   public void testConcurrentIntObjectHashMap() {
     ConcurrentIntObjectMap<Object> map = new ConcurrentIntObjectHashMap<Object>();
-    for (int i=0; i<1000;i++) {
+    for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
       Object ret = map.get(i);
@@ -245,7 +267,7 @@ public class ConcurrentMapsTest extends TestCase {
       if (i != 0) {
         Object remove = map.remove(i - 1);
         assertTrue(remove instanceof Integer);
-        assertEquals(i-1, remove);
+        assertEquals(i - 1, remove);
       }
       assertEquals(map.size(), 1);
     }

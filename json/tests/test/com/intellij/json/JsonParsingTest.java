@@ -66,6 +66,11 @@ public class JsonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // WEB-13600
+  public void testNumberLiterals() {
+    doTest();
+  }
+
   // Moved from JavaScript
 
   public void testSimple1() {

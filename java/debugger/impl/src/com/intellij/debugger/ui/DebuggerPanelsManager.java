@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -142,7 +144,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
         @Override
         @NotNull
         public XDebugProcess start(@NotNull XDebugSession session) {
-          return new JavaDebugProcess(session, debuggerSession);
+          return JavaDebugProcess.create(session, debuggerSession);
         }
       });
     return debugSession.getRunContentDescriptor();
@@ -155,7 +157,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
       @Override
       public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         if (executor == DefaultDebugExecutor.getDebugExecutorInstance()) {
-          DebuggerSession session = descriptor == null ? null : getSession(myProject, descriptor.getExecutionConsole());
+          DebuggerSession session = descriptor == null ? null : getSession(myProject, descriptor);
           if (session != null) {
             getContextManager().setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.EVENT_CONTEXT, null);
           }
@@ -215,16 +217,17 @@ public class DebuggerPanelsManager implements ProjectComponent {
   public void toFront(DebuggerSession session) {
     DebuggerSessionTab sessionTab = getSessionTab(session);
     if (sessionTab != null) {
-      sessionTab.toFront(true);
+      sessionTab.toFront(true, null);
     }
   }
 
-  private static DebuggerSession getSession(Project project, ExecutionConsole console) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getDebugSession(console);
-    if (session != null) {
-      XDebugProcess process = session.getDebugProcess();
-      if (process instanceof JavaDebugProcess) {
-        return ((JavaDebugProcess)process).getDebuggerSession();
+  private static DebuggerSession getSession(Project project, RunContentDescriptor descriptor) {
+    for (XDebugSession session : XDebuggerManager.getInstance(project).getDebugSessions()) {
+      if (session.getRunContentDescriptor().equals(descriptor)) {
+        XDebugProcess process = session.getDebugProcess();
+        if (process instanceof JavaDebugProcess) {
+          return ((JavaDebugProcess)process).getDebuggerSession();
+        }
       }
     }
     return null;

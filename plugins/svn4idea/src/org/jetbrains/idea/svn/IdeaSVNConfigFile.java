@@ -29,6 +29,7 @@ import java.util.Map;
 public class IdeaSVNConfigFile {
 
   public final static String SERVERS_FILE_NAME = "servers";
+  public final static String CONFIG_FILE_NAME = "config";
 
   private final Map<String, String> myPatternsMap;
   private final long myLatestUpdate;

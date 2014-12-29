@@ -23,10 +23,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -92,7 +91,7 @@ public class UninstallPluginAction extends AnAction implements DumbAware {
 
       //  Get the list of plugins which depend on this one. If this list is
       //  not empty - issue warning instead of simple prompt.
-      ArrayList<IdeaPluginDescriptorImpl> dependant = host.getDependentList(pluginDescriptor);
+      List<IdeaPluginDescriptorImpl> dependant = host.getDependentList(pluginDescriptor);
       if (dependant.size() > 0) {
         message = IdeBundle.message("several.plugins.depend.on.0.continue.to.remove", pluginDescriptor.getName());
         actualDelete = (Messages.showYesNoDialog(host.getMainPanel(), message, IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == Messages.YES);
@@ -110,11 +109,6 @@ public class UninstallPluginAction extends AnAction implements DumbAware {
 
     try {
       PluginInstaller.prepareToUninstall(pluginId);
-      final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().getInstalledPlugins();
-      final String pluginIdString = pluginId.getIdString();
-      while (installedPlugins.contains(pluginIdString)) {
-        installedPlugins.remove(pluginIdString);
-      }
       host.setRequireShutdown(descriptor.isEnabled());
     }
     catch (IOException e1) {

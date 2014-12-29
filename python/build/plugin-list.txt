@@ -19,3 +19,4 @@ IntelliLang-js
 IntelliLang-python
 rest
 python-rest
+ipnb

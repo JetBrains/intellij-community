@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   boolean hasReportedProblems();
 
+  @NotNull
   Map<String, Set<RefEntity>> getContent();
 
   Map<String, Set<RefEntity>> getOldContent();
@@ -63,6 +64,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   HTMLComposerImpl getComposer();
   void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity);
+  @NotNull
   Set<RefModule> getModuleProblems();
   @Nullable
   QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements);

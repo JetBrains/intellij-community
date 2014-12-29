@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +79,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTryStatement)) {
@@ -95,7 +95,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         return;
       }
       final PsiElement[] tryBlockChildren = tryBlock.getChildren();
-      final Set<PsiLocalVariable> variables = new HashSet();
+      final Set<PsiLocalVariable> variables = new LinkedHashSet<PsiLocalVariable>();
       for (final PsiLocalVariable variable : collectVariables(tryStatement)) {
         if (!isVariableUsedOutsideContext(variable, tryBlock)) {
           variables.add(variable);
@@ -297,6 +297,11 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel7OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TryFinallyCanBeTryWithResourcesVisitor();
   }
@@ -306,9 +311,6 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     @Override
     public void visitTryStatement(PsiTryStatement tryStatement) {
       super.visitTryStatement(tryStatement);
-      if (!PsiUtil.isLanguageLevel7OrHigher(tryStatement)) {
-        return;
-      }
       final PsiResourceList resourceList = tryStatement.getResourceList();
       if (resourceList != null) {
         return;
@@ -375,6 +377,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         variables.add(variable);
       }
     }
+    Collections.sort(variables, PsiElementOrderComparator.getInstance());
     return variables;
   }
 

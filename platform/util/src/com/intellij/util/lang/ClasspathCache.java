@@ -54,14 +54,9 @@ public class ClasspathCache {
     myDebugInfo = doDebug ? new DebugInfo() : new NullDebugInfo();
   }
 
-  public static class LoaderData {
+  static class LoaderData {
     private final List<String> myResourcePaths = new ArrayList<String>();
     private final List<String> myNames = new ArrayList<String>();
-    private final Loader myLoader;
-
-    public LoaderData(Loader loader) {
-      myLoader = loader;
-    }
 
     public void addResourceEntry(String resourcePath) {
       myResourcePaths.add(resourcePath);
@@ -74,14 +69,14 @@ public class ClasspathCache {
 
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
 
-  public void applyLoaderData(LoaderData loaderData) {
+  public void applyLoaderData(LoaderData loaderData, Loader loader) {
     myLock.writeLock().lock();
     try {
       for(String resourceEntry:loaderData.myResourcePaths) {
-        addResourceEntry(resourceEntry, loaderData.myLoader);
+        addResourceEntry(resourceEntry, loader);
       }
       for(String name:loaderData.myNames) {
-        addNameEntry(name, loaderData.myLoader);
+        addNameEntry(name, loader);
       }
     } finally {
       myLock.writeLock().unlock();

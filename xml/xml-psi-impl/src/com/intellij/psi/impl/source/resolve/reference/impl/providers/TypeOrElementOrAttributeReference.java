@@ -334,16 +334,16 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
       final XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace, true);
 
       if (nsDescriptor instanceof XmlNSDescriptorImpl) {
-        processNamespace(namespace, processor, nsDescriptor, tagNames);
+        processNamespace(namespace, processor, (XmlNSDescriptorImpl)nsDescriptor, tagNames);
       }
     }
 
     XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
-    if (nsDescriptor != null) {
+    if (nsDescriptor instanceof XmlNSDescriptorImpl) {
       processNamespace(
         ourNamespace,
         processor,
-        nsDescriptor,
+        (XmlNSDescriptorImpl)nsDescriptor,
         tagNames
       );
     }
@@ -353,13 +353,12 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
 
   private static void processNamespace(final String namespace,
                                 final CompletionProcessor processor,
-                                final XmlNSDescriptor nsDescriptor,
+                                final XmlNSDescriptorImpl nsDescriptor,
                                 final String[] tagNames) {
     processor.namespace = namespace;
 
-    final XmlNSDescriptorImpl xmlNSDescriptor = ((XmlNSDescriptorImpl)nsDescriptor);
     XmlNSDescriptorImpl.processTagsInNamespace(
-      xmlNSDescriptor.getTag(),
+      nsDescriptor.getTag(),
       tagNames,
       processor
     );

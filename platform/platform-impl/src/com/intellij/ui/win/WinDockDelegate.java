@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,19 @@
  */
 package com.intellij.ui.win;
 
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.wm.impl.SystemDock;
+
 import java.io.File;
 
 /**
  * @author Denis Fokin
  */
 public class WinDockDelegate implements SystemDock.Delegate {
-
   private static final String javaExe = System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + "javaw.exe";
   private static final String argsToExecute = " -classpath \"" +
                                               PathManager.getJarPathForClass(SocketControlHelper.class) +
@@ -40,8 +40,9 @@ public class WinDockDelegate implements SystemDock.Delegate {
 
   private WinDockDelegate() {}
 
+  @Override
   public void updateRecentProjectsMenu () {
-    final AnAction[] recentProjectActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
+    final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
     RecentTasks.clear();
     Task[] tasks = new Task[recentProjectActions.length];
     for (int i = 0; i < recentProjectActions.length; i ++) {

@@ -22,7 +22,10 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
@@ -59,7 +62,7 @@ import java.util.List;
  * @author mike
  */
 public class StorageUtil {
-  private static final Logger LOG = Logger.getInstance(StorageUtil.class);
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
@@ -74,7 +77,7 @@ public class StorageUtil {
 
   public static void notifyUnknownMacros(@NotNull TrackingPathMacroSubstitutor substitutor,
                                          @NotNull final Project project,
-                                         @Nullable String componentName) {
+                                         @Nullable final String componentName) {
     final LinkedHashSet<String> macros = new LinkedHashSet<String>(substitutor.getUnknownMacros(componentName));
     if (macros.isEmpty()) {
       return;
@@ -86,6 +89,7 @@ public class StorageUtil {
         macros.removeAll(getMacrosFromExistingNotifications(project));
 
         if (!macros.isEmpty()) {
+          LOG.debug("Reporting unknown path macros " + macros + " in component " + componentName);
           String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a></p>";
           String productName = ApplicationNamesInfo.getInstance().getProductName();
           String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are") +
@@ -115,7 +119,6 @@ public class StorageUtil {
     return notified;
   }
 
-
   public static boolean isEmpty(@Nullable Parent element) {
     if (element == null) {
       return true;
@@ -129,55 +132,15 @@ public class StorageUtil {
     }
   }
 
-  /**
-   * Due to historical reasons files in ROOT_CONFIG don’t wrapped into document (xml prolog) opposite to files in APP_CONFIG
-   */
-  @Nullable
-  static VirtualFile save(@NotNull File file, @Nullable Parent element, @NotNull Object requestor, boolean wrapAsDocument, @Nullable VirtualFile cachedVirtualFile) throws StateStorageException {
-    if (isEmpty(element)) {
-      try {
-        deleteFile(file, requestor, cachedVirtualFile);
-      }
-      catch (IOException e) {
-        throw new StateStorageException(e);
-      }
-      return null;
-    }
-
-    VirtualFile virtualFile = cachedVirtualFile == null || !cachedVirtualFile.isValid() ? null : cachedVirtualFile;
-    Parent document = !wrapAsDocument || element instanceof Document ? element : new Document((Element)element);
-    try {
-      BufferExposingByteArrayOutputStream byteOut;
-      if (file.exists()) {
-        if (virtualFile == null) {
-          virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-        }
-
-        Pair<byte[], String> pair = loadFile(virtualFile);
-        byteOut = writeToBytes(document, pair.second);
-        if (equal(pair.first, byteOut)) {
-          return null;
-        }
-      }
-      else {
-        FileUtil.createParentDirs(file);
-        byteOut = writeToBytes(document, SystemProperties.getLineSeparator());
-      }
-      return writeFile(file, requestor, virtualFile, byteOut, null);
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
-    }
-  }
-
   @NotNull
-  public static VirtualFile writeFile(@NotNull File file, @NotNull Object requestor, @Nullable VirtualFile virtualFile, @NotNull BufferExposingByteArrayOutputStream content, @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+  public static VirtualFile writeFile(@Nullable File file, @NotNull Object requestor, @Nullable VirtualFile virtualFile, @NotNull BufferExposingByteArrayOutputStream content, @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
     // mark this action as modifying the file which daemon analyzer should ignore
     AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
     try {
-      if (virtualFile == null || !virtualFile.isValid()) {
+      if (file != null && (virtualFile == null || !virtualFile.isValid())) {
         virtualFile = getOrCreateVirtualFile(requestor, file);
       }
+      assert virtualFile != null;
       OutputStream out = virtualFile.getOutputStream(requestor);
       try {
         if (lineSeparatorIfPrependXmlProlog != null) {
@@ -215,13 +178,20 @@ public class StorageUtil {
       }
     }
     else if (virtualFile.exists()) {
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
-      try {
-        virtualFile.delete(requestor);
-      }
-      finally {
-        token.finish();
-      }
+      deleteFile(requestor, virtualFile);
+    }
+  }
+
+  public static void deleteFile(@NotNull Object requestor, @NotNull VirtualFile virtualFile) throws IOException {
+    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+    try {
+      virtualFile.delete(requestor);
+    }
+    catch (FileNotFoundException ignored) {
+      throw new ReadOnlyModificationException(virtualFile);
+    }
+    finally {
+      token.finish();
     }
   }
 
@@ -251,7 +221,7 @@ public class StorageUtil {
    * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
    */
   @NotNull
-  private static Pair<byte[], String> loadFile(@Nullable final VirtualFile file) throws IOException {
+  public static Pair<byte[], String> loadFile(@Nullable final VirtualFile file) throws IOException {
     if (file == null || !file.exists()) {
       return NON_EXISTENT_FILE_DATA;
     }
@@ -277,10 +247,6 @@ public class StorageUtil {
       }
     }
     return defaultSeparator == null ? LineSeparator.getSystemLineSeparator() : defaultSeparator;
-  }
-
-  public static boolean contentEquals(@NotNull Parent element, @NotNull VirtualFile file) {
-    return newContentIfDiffers(element, file) == null;
   }
 
   @Nullable
@@ -312,56 +278,15 @@ public class StorageUtil {
   }
 
   @Nullable
-  public static Document loadDocument(final byte[] bytes) {
+  public static Element loadElement(@Nullable InputStream stream) {
     try {
-      return bytes == null || bytes.length == 0 ? null : JDOMUtil.loadDocument(new ByteArrayInputStream(bytes));
+      return JDOMUtil.load(stream);
     }
-    catch (JDOMException e) {
+    catch (JDOMException ignored) {
       return null;
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
       return null;
-    }
-  }
-
-  @SuppressWarnings("Contract")
-  @Nullable
-  public static Document loadDocument(@Nullable InputStream stream) {
-    if (stream == null) {
-      return null;
-    }
-
-    try {
-      try {
-        return JDOMUtil.loadDocument(stream);
-      }
-      finally {
-        stream.close();
-      }
-    }
-    catch (JDOMException e) {
-      return null;
-    }
-    catch (IOException e) {
-      return null;
-    }
-  }
-
-  @NotNull
-  public static BufferExposingByteArrayOutputStream elementToBytes(@NotNull Parent element, boolean useSystemLineSeparator) throws IOException {
-    return writeToBytes(element, useSystemLineSeparator ? SystemProperties.getLineSeparator() : "\n");
-  }
-
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Parent element, @NotNull RoamingType type, boolean async) {
-    if (!provider.isApplicable(fileSpec, type)) {
-      return;
-    }
-
-    try {
-      doSendContent(provider, fileSpec, element, type, async);
-    }
-    catch (IOException e) {
-      LOG.warn(e);
     }
   }
 
@@ -374,13 +299,13 @@ public class StorageUtil {
   /**
    * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
    */
-  public static void doSendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Parent element, @NotNull RoamingType type, boolean async) throws IOException {
+  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type, boolean async) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
-    BufferExposingByteArrayOutputStream content = elementToBytes(element, false);
+    BufferExposingByteArrayOutputStream content = writeToBytes(element, "\n");
     provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
   }
 
   public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {
-    return StoragePathMacros.PROJECT_FILE.equals(fileSpec) || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec.equals("$MODULE_FILE$");
+    return StoragePathMacros.PROJECT_FILE.equals(fileSpec) || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec.equals(StoragePathMacros.MODULE_FILE);
   }
 }

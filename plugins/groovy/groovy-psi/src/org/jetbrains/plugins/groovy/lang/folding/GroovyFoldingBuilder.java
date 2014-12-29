@@ -74,13 +74,14 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       }
     }
     // comments
-    if (((type.equals(GroovyTokenTypes.mML_COMMENT) && !isCustomRegionStart(node)) || type.equals(GroovyDocElementTypes.GROOVY_DOC_COMMENT)) &&
+    if ((type.equals(GroovyTokenTypes.mML_COMMENT) || type.equals(GroovyDocElementTypes.GROOVY_DOC_COMMENT)) &&
         isMultiline(element) &&
         isWellEndedComment(element)) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
-    if (type.equals(GroovyTokenTypes.mSL_COMMENT) && !isCustomRegionStart(node) && !usedComments.contains(element)) {
+    if (type.equals(GroovyTokenTypes.mSL_COMMENT) && !usedComments.contains(element)) {
+      boolean containsCustomRegionMarker = isCustomRegionElement(element);
       usedComments.add(element);
       PsiElement end = null;
       for (PsiElement current = element.getNextSibling(); current != null; current = current.getNextSibling()) {
@@ -90,11 +91,12 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
         if (elementType == GroovyTokenTypes.mSL_COMMENT) {
           end = current;
           usedComments.add(current);
+          containsCustomRegionMarker |= isCustomRegionElement(current);
           continue;
         }
         break;
       }
-      if (end != null) {
+      if (end != null && !containsCustomRegionMarker) {
         final TextRange range = new TextRange(element.getTextRange().getStartOffset(), end.getTextRange().getEndOffset());
         descriptors.add(new FoldingDescriptor(element, range));
       }

@@ -26,9 +26,11 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +46,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,46 +70,34 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   public PsiClass getOriginalClass(PsiClass psiClass) {
     PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) return (PsiClass)cls;
+    
+    if (DumbService.isDumb(myProject)) return psiClass;
 
     VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
-    final Project project = psiClass.getProject();
-    final ProjectFileIndex idx = ProjectRootManager.getInstance(project).getFileIndex();
+    final ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (vFile == null || !idx.isInLibrarySource(vFile)) return psiClass;
 
     String fqn = psiClass.getQualifiedName();
     if (fqn == null) return psiClass;
 
-    final Set<OrderEntry> orderEntries = new THashSet<OrderEntry>(idx.getOrderEntriesForFile(vFile));
-    PsiClass original = JavaPsiFacade.getInstance(project).findClass(fqn, new GlobalSearchScope(project) {
-      @Override
-      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-        return 0;
-      }
-
-      @Override
-      public boolean contains(@NotNull VirtualFile file) {
-        // order for file and vFile has non empty intersection.
-        List<OrderEntry> entries = idx.getOrderEntriesForFile(file);
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0; i < entries.size(); i++) {
-          final OrderEntry entry = entries.get(i);
-          if (orderEntries.contains(entry)) return true;
+    final Set<OrderEntry> orderEntries = ContainerUtil.newHashSet(idx.getOrderEntriesForFile(vFile));
+    GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope();
+    for (PsiClass original : JavaPsiFacade.getInstance(myProject).findClasses(fqn, librariesScope)) {
+      PsiFile psiFile = original.getContainingFile();
+      if (psiFile != null) {
+        VirtualFile candidateFile = psiFile.getVirtualFile();
+        if (candidateFile != null) {
+          // order for file and vFile has non empty intersection.
+          List<OrderEntry> entries = idx.getOrderEntriesForFile(candidateFile);
+          //noinspection ForLoopReplaceableByForEach
+          for (int i = 0; i < entries.size(); i++) {
+            if (orderEntries.contains(entries.get(i))) return original;
+          }
         }
-        return false;
       }
+    }
 
-      @Override
-      public boolean isSearchInModuleContent(@NotNull Module aModule) {
-        return false;
-      }
-
-      @Override
-      public boolean isSearchInLibraries() {
-        return true;
-      }
-    });
-
-    return original != null ? original : psiClass;
+    return psiClass;
   }
 
   @NotNull
@@ -276,7 +266,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   @Override
   public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection catchSection) {
-    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     LOG.assertTrue(catchBodyTemplate != null);
 
     final Properties props = new Properties();

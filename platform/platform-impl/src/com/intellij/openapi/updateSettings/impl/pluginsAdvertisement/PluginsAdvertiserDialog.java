@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
@@ -30,15 +29,15 @@ import java.io.IOException;
 import java.util.*;
 
 /**
-* User: anna
-*/
+ * @author anna
+ */
 public class PluginsAdvertiserDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#" + PluginsAdvertiserDialog.class.getName());
 
   @Nullable private final Project myProject;
   private final PluginDownloader[] myUploadedPlugins;
   private final List<IdeaPluginDescriptor> myAllPlugins;
-  private final HashSet<String> mySkippedPlugins = new HashSet<String>();
+  private final Set<String> mySkippedPlugins = new HashSet<String>();
 
   PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<IdeaPluginDescriptor> allPlugins) {
     super(project);
@@ -91,7 +90,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
     final Runnable notifyRunnable = new Runnable() {
       @Override
       public void run() {
-        PluginManagerMain.notifyPluginsWereInstalled(null, myProject);
+        PluginManagerMain.notifyPluginsUpdated(myProject);
       }
     };
     for (String pluginId : pluginsToEnable) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,7 @@ public class ExportToTextFileAction extends DumbAwareAction {
   public static void export(Project project, ExporterToTextFile exporter) {
     final ExportToFileUtil.ExportDialogBase dlg = new ExportToFileUtil.ExportDialogBase(project, exporter);
 
-    dlg.show();
-    if (!dlg.isOK()) {
+    if (!dlg.showAndGet()) {
       return;
     }
 

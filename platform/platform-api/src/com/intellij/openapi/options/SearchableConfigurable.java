@@ -39,6 +39,7 @@ public interface SearchableConfigurable extends Configurable {
     /**
      * @deprecated use {@link ConfigurableProvider#canCreateConfigurable()} instead
      *             to specify configurables which should not be visible
+     *             (a provider usually does not instantiate a configurable and related classes)
      */
     @Deprecated
     boolean isVisible();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,10 +78,8 @@ public class LocalFileReaderBasedOnVFS implements ILocalFileReader {
                                       ICvsFileSystem cvsFileSystem) {
     VirtualFile virtualDirectory = getVirtualFile(directoryObject, cvsFileSystem);
     if (virtualDirectory == null) return;
-    VirtualFile[] children = CvsVfsUtil.getChildrenOf(virtualDirectory);
-    if (children == null) return;
 
-    for (final VirtualFile fileOrDirectory : children) {
+    for (final VirtualFile fileOrDirectory : CvsVfsUtil.getChildrenOf(virtualDirectory)) {
       if (CvsUtil.CVS.equals(fileOrDirectory.getName())) continue;
       if (!myProjectContentInfoProvider.fileIsUnderProject(fileOrDirectory)) continue;
       final String name = fileOrDirectory.getName();
@@ -92,7 +90,7 @@ public class LocalFileReaderBasedOnVFS implements ILocalFileReader {
       }
       else {
         if (fileNames != null) {
-          LOG.assertTrue(name.length() > 0);
+          LOG.assertTrue(!name.isEmpty());
           fileNames.add(name);
         }
       }

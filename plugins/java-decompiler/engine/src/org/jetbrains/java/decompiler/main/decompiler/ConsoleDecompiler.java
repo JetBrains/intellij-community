@@ -42,8 +42,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     }
 
     Map<String, Object> mapOptions = new HashMap<String, Object>();
-    List<String> lstSources = new ArrayList<String>();
-    List<String> lstLibraries = new ArrayList<String>();
+    List<File> lstSources = new ArrayList<File>();
+    List<File> lstLibraries = new ArrayList<File>();
 
     boolean isOption = true;
     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
@@ -65,10 +65,10 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
         isOption = false;
 
         if (arg.startsWith("-e=")) {
-          lstLibraries.add(arg.substring(3));
+          addPath(lstLibraries, arg.substring(3));
         }
         else {
-          lstSources.add(arg);
+          addPath(lstSources, arg);
         }
       }
     }
@@ -87,14 +87,25 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     PrintStreamLogger logger = new PrintStreamLogger(System.out);
     ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
 
-    for (String source : lstSources) {
-      decompiler.addSpace(new File(source), true);
+    for (File source : lstSources) {
+      decompiler.addSpace(source, true);
     }
-    for (String library : lstLibraries) {
-      decompiler.addSpace(new File(library), false);
+    for (File library : lstLibraries) {
+      decompiler.addSpace(library, false);
     }
 
     decompiler.decompileContext();
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static void addPath(List<File> list, String path) {
+    File file = new File(path);
+    if (file.exists()) {
+      list.add(file);
+    }
+    else {
+      System.out.println("warn: missing '" + path + "', ignored");
+    }
   }
 
   // *******************************************************************
@@ -181,7 +192,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   }
 
   @Override
-  public void saveClassFile(String path, String qualifiedName, String entryName, String content) {
+  public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
     File file = new File(getAbsolutePath(path), entryName);
     try {
       Writer out = new OutputStreamWriter(new FileOutputStream(file), "UTF8");

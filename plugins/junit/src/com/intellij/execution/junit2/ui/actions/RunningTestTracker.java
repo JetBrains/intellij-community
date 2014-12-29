@@ -60,13 +60,18 @@ class RunningTestTracker extends JUnitAdapter implements TestFrameworkPropertyLi
   public void onTestChanged(final TestEvent event) {
     if (event instanceof StateChangedEvent) {
       final TestProxy proxy = event.getSource();
-      if (proxy == myLastRan && !isRunningState(proxy)) {
-        if (myLastSelected == proxy){
+      final boolean isRunning = isRunningState(proxy);
+      if (isRunning) {
+        if (proxy.isLeaf()) {
+          myLastRan = proxy;
+        }
+        if (myLastSelected == proxy) {
           myLastSelected = null;
         }
+      }
+      else if (proxy == myLastRan) {
         myLastRan = null;
       }
-      if (proxy.isLeaf() && isRunningState(proxy)) myLastRan = proxy;
       myTrackingPolicy.applyTo(proxy);
     }
   }

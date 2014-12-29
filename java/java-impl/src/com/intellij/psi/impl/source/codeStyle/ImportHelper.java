@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +42,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -362,7 +364,11 @@ public class ImportHelper{
    * Adds import if it is needed.
    * @return false when the FQ-name have to be used in code (e.g. when conflicting imports already exist)
    */
-  public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass){
+  public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass) {
+    return addImport(file, refClass, false);
+  }
+
+  private boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass, boolean forceReimport){
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
     PsiElementFactory factory = facade.getElementFactory();
     PsiResolveHelper helper = facade.getResolveHelper();
@@ -377,7 +383,7 @@ public class ImportHelper{
     String shortName = PsiNameHelper.getShortClassName(className);
 
     PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
-    if (conflictSingleRef != null){
+    if (conflictSingleRef != null && !forceReimport){
       return className.equals(conflictSingleRef.getQualifiedName());
     }
 
@@ -449,7 +455,7 @@ public class ImportHelper{
 
       for (PsiClass aClass : classesToReimport) {
         if (aClass != null) {
-          addImport(file, aClass);
+          addImport(file, aClass, true);
         }
       }
     }
@@ -558,6 +564,15 @@ public class ImportHelper{
       }
     }
     return null;
+  }
+  
+  public static boolean isAlreadyImported(@NotNull PsiJavaFile file, @NotNull String fullyQualifiedName) {
+    String className = ClassUtil.extractClassName(fullyQualifiedName);
+    Project project = file.getProject();
+    PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(project);
+
+    PsiClass psiClass = resolveHelper.resolveReferencedClass(className, file);
+    return psiClass != null && fullyQualifiedName.equals(psiClass.getQualifiedName());
   }
 
   public ASTNode getDefaultAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement){

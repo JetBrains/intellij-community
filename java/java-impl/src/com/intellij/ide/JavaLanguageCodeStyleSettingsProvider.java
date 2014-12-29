@@ -168,6 +168,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       String groupName = ApplicationBundle.message("wrapping.fields.annotation");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", "Do not wrap after single annotation", groupName);
     }
+    else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
+      consumer.showAllStandardOptions();
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", ApplicationBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
+    }
     else {
       consumer.showAllStandardOptions();
     }
@@ -184,7 +188,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public DisplayPriority getDisplayPriority() {
-    if (PlatformUtils.isIdeaUltimate()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
+    if (PlatformUtils.isIntelliJ()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
     return DisplayPriority.LANGUAGE_SETTINGS;
   }
 
@@ -202,7 +206,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   private static final String GENERAL_CODE_SAMPLE =
     "public class Foo {\n" +
-    "  public int[] X = new int[]{1, 3, 5 7, 9, 11};\n" +
+    "  public int[] X = new int[]{1, 3, 5, 7, 9, 11};\n" +
     "\n" +
     "  public void foo(boolean a, int x, int y, int z) {\n" +
     "    label1:\n" +
@@ -240,7 +244,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    if (2 < 3) return;\n" +
     "    if (3 < 4) return;\n" +
     "    do {\n" +
-    "      x++\n" +
+    "      x++;\n" +
     "    }\n" +
     "    while (x < 10000);\n" +
     "    while (x < 50000) x++;\n" +
@@ -268,11 +272,15 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "  private int field1;\n" +
     "  private int field2;\n" +
     "\n" +
+    "  {\n" +
+    "      field1 = 2;\n" +
+    "  }\n" +
+    "\n" +
     "  public void foo1() {\n" +
     "      new Runnable() {\n" +
     "          public void run() {\n" +
     "          }\n" +
-    "      }\n" +
+    "      };\n" +
     "  }\n" +
     "\n" +
     "  public class InnerClass {\n" +
@@ -293,7 +301,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "public class Foo<T extends Bar & Abba, U> {\n" +
     "  int[] X = new int[]{1, 3, 5, 6, 7, 87, 1213, 2};\n" +
     "\n" +
-    "  public void foo(int x, int y) {" +
+    "  public void foo(int x, int y) {\n" +
     "    Runnable r = () -> {};\n" +
     "    Runnable r1 = this :: bar;\n" +
     "    for (int i = 0; i < x; i++) {\n" +
@@ -361,7 +369,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    if (2 < 3) return; else if (2 > 3) return; else return;\n" +
     "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i);\n" +
     "    while (x < 50000) x++;\n" +
-    "    do x++ while (x < 10000);\n" +
+    "    do x++; while (x < 10000);\n" +
     "    switch (a) {\n" +
     "    case 0:\n" +
     "      doCase0();\n" +
@@ -378,7 +386,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    }\n" +
     "    do {\n" +
     "        x--;\n" +
-    "    } while (x > 10) \n" +
+    "    } while (x > 10); \n" +
     "  }\n" +
     "    public static void test() \n" +
     "        throws Exception { \n" +

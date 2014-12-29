@@ -16,11 +16,11 @@
 package git4idea.config;
 
 import com.intellij.openapi.components.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,7 +33,7 @@ import java.util.List;
 public class GitSharedSettings implements PersistentStateComponent<GitSharedSettings.State> {
 
   public static class State {
-    public List<String> FORCE_PUSH_PROHIBITED_PATTERNS = Arrays.asList("master");
+    public List<String> FORCE_PUSH_PROHIBITED_PATTERNS = ContainerUtil.newArrayList("master");
   }
 
   private State myState = new State();

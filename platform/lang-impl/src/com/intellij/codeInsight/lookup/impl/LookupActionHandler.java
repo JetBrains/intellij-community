@@ -26,6 +26,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -111,7 +112,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     public void actionPerformed(AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
-      assert lookup != null;
+      assert lookup != null : LookupImpl.getLastLookupDisposeTrace();
       lookup.hide();
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).actionPerformed(e);
     }
@@ -211,7 +212,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     @Override
-    protected void executeInLookup(LookupImpl lookup, DataContext context, Caret caret) {
+    protected void executeInLookup(LookupImpl lookup, DataContext context, final Caret caret) {
       final Editor editor = lookup.getEditor();
       final int offset = editor.getCaretModel().getOffset();
       CharSequence seq = editor.getDocument().getCharsSequence();
@@ -231,8 +232,19 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       if (!lookup.performGuardedChange(new Runnable() {
         @Override
         public void run() {
-          editor.getSelectionModel().removeSelection();
-          editor.getCaretModel().moveToOffset(offset + 1);
+          CaretAction action = new CaretAction() {
+            @Override
+            public void perform(Caret caret) {
+              caret.removeSelection();
+              caret.moveToOffset(caret.getOffset() + 1);
+            }
+          };
+          if (caret == null) {
+            editor.getCaretModel().runForEachCaret(action);
+          }
+          else {
+            action.perform(caret);
+          }
         }
       })) {
         return;

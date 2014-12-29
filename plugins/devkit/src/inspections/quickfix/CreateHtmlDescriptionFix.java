@@ -181,7 +181,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
           descrRoot = descrRoot.createSubdirectory(myFilename);
         }
       }
-      final FileTemplate descrTemplate = FileTemplateManager.getInstance().getJ2eeTemplate(TEMPLATE_NAME);
+      final FileTemplate descrTemplate = FileTemplateManager.getInstance(myModule.getProject()).getJ2eeTemplate(TEMPLATE_NAME);
       final PsiElement template =
         FileTemplateUtil.createFromTemplate(descrTemplate, getNewFileName(), null, descrRoot);
       if (template instanceof PsiFile) {

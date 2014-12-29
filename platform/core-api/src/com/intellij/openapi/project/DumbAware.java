@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.project;
 
 /**
  * A marker interface for the things that are allowed to run in dumb mode (when indices are in background update).
- * Implementors must take care of handling and/or not calling non-DumbAware parts of system
- *
+ * Implementors must take care of handling and/or not calling non-DumbAware parts of system.
+ * <p/>
  * Known implementors are:
  * <li> {@link com.intellij.openapi.actionSystem.AnAction}s
  * <li> {@link com.intellij.openapi.fileEditor.FileEditorProvider}s
@@ -34,10 +34,11 @@ package com.intellij.openapi.project;
  * <li> {@link com.intellij.openapi.wm.ToolWindowFactory}s
  * <li> {@link com.intellij.lang.injection.MultiHostInjector}s
  *
+ * @author peter
  * @see com.intellij.openapi.project.DumbService
  * @see com.intellij.openapi.project.DumbAwareRunnable
  * @see PossiblyDumbAware
- * @author peter
  */
+@SuppressWarnings("JavadocReference")
 public interface DumbAware {
 }

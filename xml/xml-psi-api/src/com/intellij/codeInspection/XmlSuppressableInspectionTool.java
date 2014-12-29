@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,20 @@ import org.jetbrains.annotations.NotNull;
 public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool implements BatchSuppressableTool {
   @NonNls static final String ALL = "ALL";
 
-  public static SuppressQuickFix[] getSuppressFixes(final String shortName) {
+  @NotNull
+  public static SuppressQuickFix[] getSuppressFixes(@NotNull String shortName) {
     return getSuppressFixes(shortName, new DefaultXmlSuppressionProvider());
   }
 
-  public static SuppressQuickFix[] getSuppressFixes(final String shortName, XmlSuppressionProvider provider) {
-    final String id = HighlightDisplayKey.find(shortName).getID();
+  @NotNull
+  public static SuppressQuickFix[] getSuppressFixes(@NotNull String shortName, @NotNull XmlSuppressionProvider provider) {
+    HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null) return SuppressQuickFix.EMPTY_ARRAY;
+    final String id = key.getID();
     return new SuppressQuickFix[]{new SuppressTagStatic(id, provider), new SuppressForFile(id, provider), new SuppressAllForFile(provider)};
   }
 
-  public static abstract class XmlSuppressFix implements SuppressQuickFix {
+  public abstract static class XmlSuppressFix implements SuppressQuickFix {
 
     protected final String myId;
     protected final XmlSuppressionProvider myProvider;

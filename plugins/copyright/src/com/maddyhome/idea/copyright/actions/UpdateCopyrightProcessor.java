@@ -88,6 +88,8 @@ public class UpdateCopyrightProcessor extends AbstractFileProcessor
             if (update == null) return EmptyRunnable.getInstance();
             update.prepare();
 
+            if (update instanceof UpdatePsiFileCopyright && !((UpdatePsiFileCopyright)update).hasUpdates()) return EmptyRunnable.getInstance();
+
             return new Runnable() {
                 public void run()
                 {

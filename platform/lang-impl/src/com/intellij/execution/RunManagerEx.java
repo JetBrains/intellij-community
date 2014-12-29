@@ -35,7 +35,10 @@ public abstract class RunManagerEx extends RunManager {
 
   //public abstract boolean isTemporary(@NotNull RunnerAndConfigurationSettings configuration);
 
-  @Deprecated // use setSelectedConfiguration instead
+  /**
+   * @deprecated use {@link #setSelectedConfiguration(RunnerAndConfigurationSettings)} instead
+   */
+  @Deprecated
   public void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
     setSelectedConfiguration(configuration);
   }

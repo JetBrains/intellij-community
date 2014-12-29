@@ -11,7 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor.*;
 
 /**
  * @author Mikhail Golubev
@@ -133,6 +137,32 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     assertNotNull(card);
     assertTrue(card.isClosed());
     assertFalse(card.isVisible());
+  }
+
+  public void testLabelsAndColors() throws Exception {
+    final TrelloCard card = myRepository.fetchCardById("548591e00f3d598512ced37b");
+    assertNotNull(card);
+    final List<TrelloLabel> labels = card.getLabels();
+
+    assertEquals(6, labels.size());
+    final Set<String> labelNames = ContainerUtil.map2Set(labels, new Function<TrelloLabel, String>() {
+      @Override
+      public String fun(TrelloLabel label) {
+        return label.getName();
+      }
+    });
+    assertEquals(ContainerUtil.newHashSet("Sky colored label", "Boring label", "Dull label", ""), labelNames);
+
+    assertEquals(EnumSet.of(SKY, LIME, PINK, BLACK), card.getColors());
+  }
+
+  public void testTestConnection() throws Exception {
+    assertNull(myRepository.createCancellableConnection().call());
+
+    myRepository.setPassword("illegal password");
+    final Exception error = myRepository.createCancellableConnection().call();
+    assertNotNull(error);
+    assertTrue(error.getMessage().contains("Unauthorized"));
   }
 
   static void assertObjectsNamed(@NotNull String message, @NotNull Collection<? extends TrelloModel> objects, @NotNull String... names) {

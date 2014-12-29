@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.LogicalPosition;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -79,4 +82,32 @@ public class MappingUtil {
     return -(start + 1);
   }
 
+  @Nullable
+  public static CacheEntry getCacheEntryForLogicalPosition(@NotNull LogicalPosition position, @NotNull List<CacheEntry> cache) {
+    int start = 0;
+    int end = cache.size() - 1;
+
+    while (start <= end) {
+      int i = (end + start) >>> 1;
+      CacheEntry cacheEntry = cache.get(i);
+      if (cacheEntry.startLogicalLine < position.line
+          || cacheEntry.startLogicalLine == position.line && cacheEntry.startLogicalColumn < position.column) {
+        start = i + 1;
+        continue;
+      }
+      if (cacheEntry.startLogicalLine > position.line
+        || cacheEntry.startLogicalLine == position.line && cacheEntry.startLogicalColumn > position.column) {
+        end = i - 1;
+        continue;
+      }
+
+      return assertEnd(position, cache.get(i));
+    }
+    return end < 0 ? null : assertEnd(position, cache.get(end));
+  }
+
+  @Nullable
+  private static CacheEntry assertEnd(@NotNull LogicalPosition position, @NotNull CacheEntry entry) {
+    return position.line <= entry.endLogicalLine ? entry : null;
+  }
 }

@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 
@@ -80,6 +81,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myGroupingRulesPanel = new ArrangementGroupingRulesPanel(settingsManager, colorsProvider);
     myMatchingRulesPanel = new ArrangementMatchingRulesPanel(myLanguage, settingsManager, colorsProvider);
 
+    myContent.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
     myContent.add(myGroupingRulesPanel, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     myContent.add(myMatchingRulesPanel, new GridBag().fillCell().weightx(1).weighty(1).coverLine());
 
@@ -139,6 +141,8 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(CodeStyleSettings settings) {
+    myMatchingRulesPanel.hideEditor();
+
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
     commonSettings.setArrangementSettings(createSettings());
     if (myForceArrangementPanel != null) {
@@ -155,7 +159,12 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   private StdArrangementSettings createSettings() {
     final List<ArrangementGroupingRule> groupingRules = myGroupingRulesPanel.getRules();
-    return new StdArrangementSettings(groupingRules, myMatchingRulesPanel.getSections());
+    final List<ArrangementSectionRule> sections = myMatchingRulesPanel.getSections();
+    final Collection<StdArrangementRuleAliasToken> tokens = myMatchingRulesPanel.getRulesAliases();
+    if (tokens != null) {
+      return new StdArrangementExtendableSettings(groupingRules, sections, tokens);
+    }
+    return new StdArrangementSettings(groupingRules, sections);
   }
 
   @Override
@@ -169,6 +178,10 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       List<ArrangementGroupingRule> groupings = s.getGroupings();
       myGroupingRulesPanel.setRules(ContainerUtilRt.newArrayList(groupings));
       myMatchingRulesPanel.setSections(copy(s.getSections()));
+      if (s instanceof StdArrangementExtendableSettings) {
+        myMatchingRulesPanel.setRulesAliases(((StdArrangementExtendableSettings)s).getRuleAliases());
+      }
+
       if (myForceArrangementPanel != null) {
         myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
       }

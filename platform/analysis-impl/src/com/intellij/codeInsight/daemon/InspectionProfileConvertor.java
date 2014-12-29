@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -21,11 +20,11 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.SeverityProvider;
-import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -87,7 +86,7 @@ public class InspectionProfileConvertor {
         Element e = (Element)o;
         String key = e.getName();
         String levelName = e.getAttributeValue(LEVEL_ATT);
-        HighlightSeverity severity = ((SeverityProvider)myManager).getSeverityRegistrar().getSeverity(levelName);
+        HighlightSeverity severity = myManager.getSeverityRegistrar().getSeverity(levelName);
         HighlightDisplayLevel level = severity == null ? null : HighlightDisplayLevel.find(severity);
         if (level == null) continue;
         myDisplayLevelMap.put(key, level);
@@ -112,7 +111,7 @@ public class InspectionProfileConvertor {
     }
   }
 
-  public static Element convertToNewFormat(Element profileFile, InspectionProfile profile) throws IOException, JDOMException {
+  public static Element convertToNewFormat(Element profileFile, InspectionProfile profile) {
     Element rootElement = new Element(INSPECTIONS_TAG);
     rootElement.setAttribute(NAME_ATT, profile.getName());
     final InspectionToolWrapper[] tools = profile.getInspectionTools(null);
@@ -130,26 +129,28 @@ public class InspectionProfileConvertor {
   }
 
   private static void renameOldDefaultsProfile() {
-    final File profileDirectory = InspectionProfileManager.getProfileDirectory();
-    if (profileDirectory == null) return;
-    final File[] files = profileDirectory.listFiles(new FileFilter() {
+    String directoryPath = PathManager.getConfigPath() + File.separator + InspectionProfileManager.INSPECTION_DIR;
+    File profileDirectory = new File(directoryPath);
+    if (!profileDirectory.exists()) {
+      return;
+    }
+
+    File[] files = profileDirectory.listFiles(new FileFilter() {
       @Override
-      public boolean accept(File pathname) {
+      public boolean accept(@NotNull File pathname) {
         return pathname.getPath().endsWith(File.separator + DEFAULT_XML);
       }
     });
-    if (files == null || files.length != 1) {
+    if (files == null || files.length != 1 || !files[0].isFile()) {
       return;
     }
-    if (!files[0].isFile()) return;
-    final File dest = new File(profileDirectory, OLD_DEFAUL_PROFILE + XML_EXTENSION);
     try {
       Document doc = JDOMUtil.loadDocument(files[0]);
       Element root = doc.getRootElement();
       if (root.getAttributeValue(VERSION_ATT) == null){
         root.setAttribute(PROFILE_NAME_ATT, OLD_DEFAUL_PROFILE);
-        JDOMUtil.writeDocument(doc, dest, SystemProperties.getLineSeparator());
-        files[0].delete();
+        JDOMUtil.writeDocument(doc, new File(profileDirectory, OLD_DEFAUL_PROFILE + XML_EXTENSION), "\n");
+        FileUtil.delete(files[0]);
       }
     }
     catch (IOException e) {

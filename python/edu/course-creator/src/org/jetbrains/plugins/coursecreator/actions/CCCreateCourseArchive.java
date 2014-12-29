@@ -44,7 +44,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   }
 
   public CCCreateCourseArchive() {
-    super("Generate course archive", "Generate course archive", AllIcons.FileTypes.Archive);
+    super("Generate Course Archive", "Generate Course Archive", AllIcons.FileTypes.Archive);
   }
 
   @Override
@@ -53,11 +53,15 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
     }
+    createCourseArchive(project);
+  }
+
+  public void createCourseArchive(final Project project) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     if (course == null) return;
@@ -130,6 +134,9 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     final TaskFile taskFile = taskFiles.getValue();
     TaskFile taskFileSaved = new TaskFile();
     taskFile.copy(taskFileSaved);
+    for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
+      taskWindow.setLength(taskWindow.getReplacementLength());
+    }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
@@ -164,7 +171,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            document.replaceString(offset, offset + taskWindow.getReplacementLength(), taskText);
+            document.replaceString(offset, offset + taskWindow.getLength(), taskText);
             FileDocumentManager.getInstance().saveDocument(document);
           }
         });
@@ -197,7 +204,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           @Override
           public boolean accept(File pathname) {
             String name = pathname.getName();
-            return !name.contains(".answer") && !name.contains("__pycache__") && !name.contains("_windows");
+            return !name.contains(".answer") && !name.contains("__pycache__") && !name.contains("_windows") && !name.contains(".pyc");
           }
         }, null);
       }
@@ -212,20 +219,17 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void generateJson(@NotNull final Project project) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(project.getBasePath(), "course.json");
-    FileWriter writer = null;
+    OutputStreamWriter outputStreamWriter = null;
     try {
-      writer = new FileWriter(courseJson);
-      writer.write(json);
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(e.getMessage(), "Failed to Generate Json");
-      LOG.info(e);
+      outputStreamWriter = new OutputStreamWriter(new FileOutputStream(courseJson), "UTF-8");
+      outputStreamWriter.write(json);
     }
     catch (Exception e) {
       Messages.showErrorDialog(e.getMessage(), "Failed to Generate Json");
@@ -233,8 +237,8 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
     finally {
       try {
-        if (writer != null) {
-          writer.close();
+        if (outputStreamWriter != null) {
+          outputStreamWriter.close();
         }
       }
       catch (IOException e1) {
@@ -243,15 +247,10 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
   }
 
-  private static class InsertionListener extends CCDocumentListener {
+  public static class InsertionListener extends CCDocumentListener {
 
     public InsertionListener(TaskFile taskFile) {
       super(taskFile);
-    }
-
-    @Override
-    protected void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change) {
-      //we don't need to update task window length
     }
 
     @Override

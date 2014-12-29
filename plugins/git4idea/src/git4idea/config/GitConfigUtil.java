@@ -19,8 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
@@ -177,7 +177,7 @@ public class GitConfigUtil {
       // ignore exception
     }
     if (encoding == null || encoding.length() == 0) {
-      encoding = GitUtil.UTF8_ENCODING;
+      encoding = CharsetToolkit.UTF8;
     }
     return encoding;
   }

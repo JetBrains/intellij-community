@@ -86,6 +86,7 @@ public class QuickDocOnMouseOverManager {
         @Override
         public void applicationDeactivated(IdeFrame ideFrame) {
           myApplicationActive = false;
+          closeQuickDocIfPossible();
         }
       });
   }
@@ -285,7 +286,7 @@ public class QuickDocOnMouseOverManager {
     @Override
     public void run() {
       myAlarm.cancelAllRequests();
-      
+
       // Skip the request if it's outdated (the mouse is moved other another element).
       DelayedQuickDocInfo info = myDelayedQuickDocInfo;
       if (info == null || !info.targetElement.equals(myActiveElements.get(info.editor))) {

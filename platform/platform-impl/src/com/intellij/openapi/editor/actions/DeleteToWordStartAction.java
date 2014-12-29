@@ -77,10 +77,10 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       if (editor.getSelectionModel().hasSelection()) {
-        BackspaceAction.doBackspaceAction(editor);
+        EditorModificationUtil.deleteSelectedText(editor);
         return;
       }
       deleteToWordStart(editor);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,8 @@
  */
 package git4idea;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
-import com.intellij.ide.file.BatchFileChangeListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,7 +24,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -44,7 +41,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -67,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -91,24 +86,11 @@ public class GitUtil {
       return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
     }
   };
-  /**
-   * The UTF-8 encoding name
-   */
-  public static final String UTF8_ENCODING = "UTF-8";
-  /**
-   * The UTF8 charset
-   */
-  public static final Charset UTF8_CHARSET = Charset.forName(UTF8_ENCODING);
   public static final String DOT_GIT = ".git";
 
-  private final static Logger LOG = Logger.getInstance(GitUtil.class);
+  public static final String ORIGIN_HEAD = "origin/HEAD";
 
-  public static final Predicate<GitBranchTrackInfo> NOT_NULL_PREDICATE = new Predicate<GitBranchTrackInfo>() {
-    @Override
-    public boolean apply(@Nullable GitBranchTrackInfo input) {
-      return input != null;
-    }
-  };
+  private final static Logger LOG = Logger.getInstance(GitUtil.class);
 
   /**
    * A private constructor to suppress instance creation
@@ -198,7 +180,8 @@ public class GitUtil {
     throws VcsException {
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
     for (VirtualFile file : virtualFiles) {
-      final VirtualFile vcsRoot = gitRootOrNull(file);
+      // directory is reported only when it is a submodule => it should be treated in the context of super-root
+      final VirtualFile vcsRoot = gitRootOrNull(file.isDirectory() ? file.getParent() : file);
       if (vcsRoot == null) {
         if (ignoreNonGit) {
           continue;
@@ -227,22 +210,6 @@ public class GitUtil {
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(final Collection<FilePath> files) throws VcsException {
     return sortFilePathsByGitRoot(files, false);
   }
-
-  /**
-   * Sort files by vcs root
-   *
-   * @param files files to sort.
-   * @return the map from root to the files under the root
-   */
-  public static Map<VirtualFile, List<FilePath>> sortGitFilePathsByGitRoot(Collection<FilePath> files) {
-    try {
-      return sortFilePathsByGitRoot(files, true);
-    }
-    catch (VcsException e) {
-      throw new RuntimeException("Unexpected exception:", e);
-    }
-  }
-
 
   /**
    * Sort files by vcs root
@@ -657,6 +624,8 @@ public class GitUtil {
                 //noinspection AssignmentToForLoopParameter
                 i++;
               }
+              //noinspection AssignmentToForLoopParameter
+              i--;
               assert n == b.length;
               // add them to string
               final String encoding = GitConfigUtil.getFileNameEncoding();
@@ -689,49 +658,31 @@ public class GitUtil {
 
 
   @Nullable
-  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @Nullable String name) {
-    if (name == null) {
-      return null;
-    }
-    for (GitRemote remote : repository.getRemotes()) {
-      if (remote.getName().equals(name)) {
-        return remote;
-      }
-    }
-    return null;
+  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @NotNull final String name) {
+    return findRemoteByName(repository.getRemotes(), name);
   }
 
-  /**
-   * @deprecated Calls Git for tracked info, use {@link GitRepository#getBranchTrackInfos()} instead.
-   */
   @Nullable
-  @Deprecated
-  public static Pair<GitRemote, GitRemoteBranch> findMatchingRemoteBranch(GitRepository repository, GitLocalBranch branch)
-    throws VcsException {
-    /*
-    from man git-push:
-    git push
-               Works like git push <remote>, where <remote> is the current branch's remote (or origin, if no
-               remote is configured for the current branch).
-
-     */
-    String remoteName = GitBranchUtil.getTrackedRemoteName(repository.getProject(), repository.getRoot(), branch.getName());
-    GitRemote remote;
-    if (remoteName == null) {
-      remote = findOrigin(repository.getRemotes());
-    } else {
-      remote = findRemoteByName(repository, remoteName);
-    }
-    if (remote == null) {
-      return null;
-    }
-
-    for (GitRemoteBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
-      if (remoteBranch.getName().equals(remote.getName() + "/" + branch.getName())) {
-        return Pair.create(remote, remoteBranch);
+  public static GitRemote findRemoteByName(Collection<GitRemote> remotes, @NotNull final String name) {
+    return ContainerUtil.find(remotes, new Condition<GitRemote>() {
+      @Override
+      public boolean value(GitRemote remote) {
+        return remote.getName().equals(name);
       }
-    }
-    return null;
+    });
+  }
+
+  @Nullable
+  public static GitRemoteBranch findRemoteBranch(@NotNull GitRepository repository,
+                                                         @NotNull final GitRemote remote,
+                                                         @NotNull final String nameAtRemote) {
+    return ContainerUtil.find(repository.getBranches().getRemoteBranches(), new Condition<GitRemoteBranch>() {
+      @Override
+      public boolean value(GitRemoteBranch remoteBranch) {
+        return remoteBranch.getRemote().equals(remote) &&
+               remoteBranch.getNameForRemoteOperations().equals(GitBranchUtil.stripRefsPrefix(nameAtRemote));
+      }
+    });
   }
 
   @Nullable
@@ -742,10 +693,6 @@ public class GitUtil {
       }
     }
     return null;
-  }
-
-  public static boolean repoContainsRemoteBranch(@NotNull GitRepository repository, @NotNull GitRemoteBranch dest) {
-    return repository.getBranches().getRemoteBranches().contains(dest);
   }
 
   @NotNull
@@ -1001,16 +948,6 @@ public class GitUtil {
     builder.addOkAction();
     builder.setTitle(title);
     builder.show();
-  }
-
-  public static void workingTreeChangeStarted(@NotNull Project project) {
-    HeavyProcessLatch.INSTANCE.processStarted();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
-  }
-
-  public static void workingTreeChangeFinished(@NotNull Project project) {
-    HeavyProcessLatch.INSTANCE.processFinished();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
   }
 
   @NotNull

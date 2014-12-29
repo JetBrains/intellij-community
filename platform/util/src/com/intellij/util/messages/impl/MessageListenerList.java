@@ -17,7 +17,7 @@ package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -31,7 +31,7 @@ import java.util.Map;
 public class MessageListenerList<T> {
   private final MessageBus myMessageBus;
   private final Topic<T> myTopic;
-  private final Map<T, MessageBusConnection> myListenerToConnectionMap = new ConcurrentHashMap<T, MessageBusConnection>();
+  private final Map<T, MessageBusConnection> myListenerToConnectionMap = ContainerUtil.newConcurrentMap();
 
   public MessageListenerList(@NotNull MessageBus messageBus, @NotNull Topic<T> topic) {
     myTopic = topic;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class DaemonCodeAnalyzerSettings {
   public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
   public boolean SUPPRESS_WARNINGS = true;
   public boolean SHOW_METHOD_SEPARATORS = false;
-  public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
+  public int ERROR_STRIPE_MARK_MIN_HEIGHT = 2;
   public boolean SHOW_SMALL_ICONS_IN_GUTTER = true;
 
   @Transient

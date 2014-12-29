@@ -70,14 +70,16 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     Set<InspectionSuppressor> suppressors = getSuppressors(element);
+    String toolId = getSuppressId();
     for (InspectionSuppressor suppressor : suppressors) {
-      if (isSuppressed(suppressor, element)) {
+      if (isSuppressed(toolId, suppressor, element)) {
         return true;
       }
     }
     return false;
   }
 
+  @NotNull
   protected String getSuppressId() {
     return getShortName();
   }
@@ -85,31 +87,31 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
   @NotNull
   @Override
   public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
-    if (element != null) {
-      THashSet<SuppressQuickFix> fixes = new THashSet<SuppressQuickFix>(new TObjectHashingStrategy<SuppressQuickFix>() {
-        @Override
-        public int computeHashCode(SuppressQuickFix object) {
-          return object.getName().hashCode();
-        }
-
-        @Override
-        public boolean equals(SuppressQuickFix o1, SuppressQuickFix o2) {
-          return o1.getName().equals(o2.getName());
-        }
-      });
-      Set<InspectionSuppressor> suppressors = getSuppressors(element);
-      for (InspectionSuppressor suppressor : suppressors) {
-        SuppressQuickFix[] actions = suppressor.getSuppressActions(element, getShortName());
-        fixes.addAll(Arrays.asList(actions));
-      }
-      return fixes.toArray(new SuppressQuickFix[fixes.size()]);
+    if (element == null) {
+      return SuppressQuickFix.EMPTY_ARRAY;
     }
-    return SuppressQuickFix.EMPTY_ARRAY;
+    Set<SuppressQuickFix> fixes = new THashSet<SuppressQuickFix>(new TObjectHashingStrategy<SuppressQuickFix>() {
+      @Override
+      public int computeHashCode(SuppressQuickFix object) {
+        return object.getName().hashCode();
+      }
+
+      @Override
+      public boolean equals(SuppressQuickFix o1, SuppressQuickFix o2) {
+        return o1.getName().equals(o2.getName());
+      }
+    });
+    Set<InspectionSuppressor> suppressors = getSuppressors(element);
+    for (InspectionSuppressor suppressor : suppressors) {
+      SuppressQuickFix[] actions = suppressor.getSuppressActions(element, getShortName());
+      fixes.addAll(Arrays.asList(actions));
+    }
+    return fixes.toArray(new SuppressQuickFix[fixes.size()]);
   }
 
-  private boolean isSuppressed(@Nullable InspectionSuppressor suppressor, @NotNull PsiElement element) {
-    if (suppressor == null) return false;
-    String toolId = getSuppressId();
+  private boolean isSuppressed(@NotNull String toolId,
+                               @NotNull InspectionSuppressor suppressor,
+                               @NotNull PsiElement element) {
     if (suppressor.isSuppressedFor(element, toolId)) {
       return true;
     }
@@ -117,11 +119,12 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
     return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
   }
 
+  @NotNull
   public static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
     final InspectionSuppressor elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
-      LinkedHashSet<InspectionSuppressor> suppressors = new LinkedHashSet<InspectionSuppressor>();
+      Set<InspectionSuppressor> suppressors = new LinkedHashSet<InspectionSuppressor>();
       ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(viewProvider.getBaseLanguage()));
       for (Language language : viewProvider.getLanguages()) {
         ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(language));

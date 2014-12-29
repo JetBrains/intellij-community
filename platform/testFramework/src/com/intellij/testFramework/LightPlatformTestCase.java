@@ -32,6 +32,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -109,7 +110,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
 
@@ -180,6 +184,23 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static IdeaTestApplication getApplication() {
     return ourApplication;
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void reportTestExecutionStatistics() {
+    System.out.println("----- TEST STATISTICS -----");
+    UsefulTestCase.logSetupTeardownCosts();
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']",
+                                     MockApplication.INSTANCES_CREATED));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']",
+                                     ProjectManagerImpl.TEST_PROJECTS_CREATED));
+    long totalGcTime = 0;
+    for (GarbageCollectorMXBean mxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+      totalGcTime += mxBean.getCollectionTime();
+    }
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.gcTimeMs' value='%d']", totalGcTime));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.classesLoaded' value='%d']",
+                                     ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount()));
   }
 
   protected void resetAllFields() {
@@ -666,8 +687,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       return;
     }
 
-    final Throwable[] throwables = new Throwable[1];
+    final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
 
+    replaceIdeEventQueueSafely();
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -675,8 +697,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           ourTestThread = Thread.currentThread();
           startRunAndTear();
         }
-        catch (Throwable throwable) {
-          throwables[0] = throwable;
+        catch (Throwable e) {
+          throwable.set(e);
         }
         finally {
           ourTestThread = null;
@@ -694,8 +716,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     });
 
-    if (throwables[0] != null) {
-      throw throwables[0];
+    if (throwable.get() != null) {
+      throw throwable.get();
     }
 
     // just to make sure all deferred Runnables to finish

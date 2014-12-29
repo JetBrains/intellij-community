@@ -3,6 +3,7 @@ package com.intellij.json.psi;
 import com.intellij.json.JsonFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,13 @@ public class JsonElementGenerator {
     return (T)((JsonObject)file.getFirstChild()).getPropertyList().get(0).getValue();
   }
 
+  @NotNull
+  public JsonObject createObject(@NotNull String content) {
+    final PsiFile file = createDummyFile("{" + content + "}");
+    //noinspection unchecked,ConstantConditions
+    return (JsonObject) file.getFirstChild();
+  }
+
   /**
    * Create JSON string literal from supplied <em>unescaped</em> content.
    *
@@ -54,5 +62,18 @@ public class JsonElementGenerator {
   @NotNull
   public JsonStringLiteral createStringLiteral(@NotNull String unescapedContent) {
     return createValue('"' + StringUtil.escapeStringCharacters(unescapedContent) + '"');
+  }
+
+  @NotNull
+  public JsonProperty createProperty(@NotNull final String name, @NotNull final String value) {
+    final PsiFile file = createDummyFile("{\"" + name + "\": " + value + "}");
+    //noinspection unchecked,ConstantConditions
+    return ((JsonObject) file.getFirstChild()).getPropertyList().get(0);
+  }
+
+  @NotNull
+  public PsiElement createComma() {
+    final JsonArray jsonArray1 = createValue("[1, 2]");
+    return jsonArray1.getValueList().get(0).getNextSibling();
   }
 }

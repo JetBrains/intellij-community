@@ -12,14 +12,17 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
+import org.jetbrains.plugins.coursecreator.CCUtils;
 import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.format.Lesson;
 import org.jetbrains.plugins.coursecreator.format.Task;
@@ -34,28 +37,40 @@ public class CCCreateTask extends DumbAwareAction {
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
-    if (view == null || project == null) {
+    if (project == null) {
       return;
     }
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
+    createTask(view, project, directory, true);
+  }
+
+  public static void createTask(final IdeView view, final Project project, final PsiDirectory lessonDir, boolean showDialog) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
-    final Lesson lesson = course.getLesson(directory.getName());
+    final Lesson lesson = course.getLesson(lessonDir.getName());
     final int size = lesson.getTaskList().size();
+    final String taskName;
+    if (showDialog) {
+      taskName = Messages.showInputDialog("Name:", "Task Name", null, "task" + (size + 1), null);
+    }
+    else {
+      taskName = "task" + (size + 1);
+    }
 
-    final String taskName = Messages.showInputDialog("Name:", "Task Name", null, "task" + (size + 1), null);
-    if (taskName == null) return;
-
+    if (taskName == null) {
+      return;
+    }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories("task" + (size + 1), directory, "\\/");
+        final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories("task" + (size + 1), lessonDir, "\\/");
         if (taskDirectory != null) {
-          final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate("task.html");
-          final FileTemplate testsTemplate = FileTemplateManager.getInstance().getInternalTemplate("tests");
-          final FileTemplate taskTemplate = FileTemplateManager.getInstance().getInternalTemplate("task.answer");
+          CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
+          final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("task.html");
+          final FileTemplate testsTemplate = FileTemplateManager.getInstance(project).getInternalTemplate("tests");
+          final FileTemplate taskTemplate = FileTemplateManager.getInstance(project).getInternalTemplate("task.answer");
           try {
             final PsiElement taskFile = FileTemplateUtil.createFromTemplate(template, "task.html", null, taskDirectory);
             final PsiElement testsFile = FileTemplateUtil.createFromTemplate(testsTemplate, "tests.py", null, taskDirectory);
@@ -68,16 +83,21 @@ public class CCCreateTask extends DumbAwareAction {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                EditorHelper.openInEditor(testsFile, false);
-                EditorHelper.openInEditor(taskPyFile, false);
-                view.selectElement(taskFile);
+                FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+                for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
+                  fileEditorManager.closeFile(virtualFile);
+                }
+                if (view != null) {
+                  EditorHelper.openInEditor(testsFile, false);
+                  EditorHelper.openInEditor(taskPyFile, false);
+                  view.selectElement(taskFile);
+                  EditorHelper.openInEditor(taskFile, false);
+                }
               }
             });
           }
           catch (Exception ignored) {
           }
-
-
         }
       }
     });
@@ -120,6 +140,5 @@ public class CCCreateTask extends DumbAwareAction {
 
     presentation.setVisible(true);
     presentation.setEnabled(true);
-
   }
 }

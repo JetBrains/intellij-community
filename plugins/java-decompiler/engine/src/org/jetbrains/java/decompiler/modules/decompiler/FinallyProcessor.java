@@ -36,7 +36,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -217,7 +217,7 @@ public class FinallyProcessor {
 
     List<Exprent> lstExprents = firstBlockStatement.getExprents();
 
-    VarVersionPaar varpaar = new VarVersionPaar((VarExprent)((AssignmentExprent)lstExprents.get(firstcode == 2 ? 1 : 0)).getLeft());
+    VarVersionPair varpaar = new VarVersionPair((VarExprent)((AssignmentExprent)lstExprents.get(firstcode == 2 ? 1 : 0)).getLeft());
 
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
@@ -259,7 +259,7 @@ public class FinallyProcessor {
 
             boolean found = false;
             for (Exprent expr : lst) {
-              if (expr.type == Exprent.EXPRENT_VAR && new VarVersionPaar((VarExprent)expr).equals(varpaar)) {
+              if (expr.type == Exprent.EXPRENT_VAR && new VarVersionPair((VarExprent)expr).equals(varpaar)) {
                 found = true;
                 break;
               }
@@ -269,7 +269,7 @@ public class FinallyProcessor {
               found = false;
               if (exprent.type == Exprent.EXPRENT_EXIT) {
                 ExitExprent exexpr = (ExitExprent)exprent;
-                if (exexpr.getExittype() == ExitExprent.EXIT_THROW && exexpr.getValue().type == Exprent.EXPRENT_VAR) {
+                if (exexpr.getExitType() == ExitExprent.EXIT_THROW && exexpr.getValue().type == Exprent.EXPRENT_VAR) {
                   found = true;
                 }
               }
@@ -287,7 +287,7 @@ public class FinallyProcessor {
             if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
               AssignmentExprent assexpr = (AssignmentExprent)exprent;
               if (assexpr.getRight().type == Exprent.EXPRENT_VAR &&
-                  new VarVersionPaar((VarExprent)assexpr.getRight()).equals(varpaar)) {
+                  new VarVersionPair((VarExprent)assexpr.getRight()).equals(varpaar)) {
 
                 Exprent next = null;
                 if (i == node.exprents.size() - 1) {
@@ -305,7 +305,7 @@ public class FinallyProcessor {
                 boolean found = false;
                 if (next != null && next.type == Exprent.EXPRENT_EXIT) {
                   ExitExprent exexpr = (ExitExprent)next;
-                  if (exexpr.getExittype() == ExitExprent.EXIT_THROW && exexpr.getValue().type == Exprent.EXPRENT_VAR
+                  if (exexpr.getExitType() == ExitExprent.EXIT_THROW && exexpr.getValue().type == Exprent.EXPRENT_VAR
                       && assexpr.getLeft().equals(exexpr.getValue())) {
                     found = true;
                   }

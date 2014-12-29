@@ -8903,8 +8903,8 @@
     <option name="hierarchy" path="ActionManager" hit="Implement Method (from Method Hierarchy)" />
     <option name="implement" path="ActionManager" hit="Implement Method (from Method Hierarchy)" />
     <option name="method" path="ActionManager" hit="Implement Method (from Method Hierarchy)" />
-    <option name="implement" path="ActionManager" hit="Implement Methods..." />
-    <option name="methods" path="ActionManager" hit="Implement Methods..." />
+    <option name="implement" path="ActionManager" hit="Implement methods..." />
+    <option name="methods" path="ActionManager" hit="Implement methods..." />
     <option name="base" path="ActionManager" hit="Implement base interface/class methods in the current class" />
     <option name="class" path="ActionManager" hit="Implement base interface/class methods in the current class" />
     <option name="current" path="ActionManager" hit="Implement base interface/class methods in the current class" />
@@ -22026,6 +22026,7 @@
     <option name="jboss-app_5_0" hit="jboss-app_5_0" />
     <option name="jboss-deployment-structure_1_0" hit="jboss-deployment-structure_1_0" />
     <option name="jboss-deployment-structure_1_1" hit="jboss-deployment-structure_1_1" />
+    <option name="jboss-deployment-structure_1_2" hit="jboss-deployment-structure_1_2" />
     <option name="jboss-web_3_2" hit="jboss-web_3_2" />
     <option name="jboss-web_4_0" hit="jboss-web_4_0" />
     <option name="jboss-web_4_2" hit="jboss-web_4_2" />

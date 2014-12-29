@@ -119,12 +119,10 @@
               </component>
               <component id="3499c" class="javax.swing.JTextField" binding="myTabTitleLimitField">
                 <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                    <preferred-size width="30" height="27"/>
-                  </grid>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <columns value="2"/>
+                  <columns value="3"/>
                   <text value="30"/>
                 </properties>
               </component>
@@ -168,11 +166,10 @@
               </component>
               <component id="16477" class="javax.swing.JTextField" binding="myEditorTabLimitField">
                 <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                    <preferred-size width="30" height="27"/>
-                  </grid>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
+                  <columns value="2"/>
                   <text value="15"/>
                 </properties>
               </component>

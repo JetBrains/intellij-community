@@ -18,6 +18,8 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.Messages;
 
@@ -26,7 +28,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
-public class ArrayRendererConfigurable implements UnnamedConfigurable{
+public class ArrayRendererConfigurable implements UnnamedConfigurable, Configurable.NoScroll {
   private JTextField myEntriesLimit;
   private JTextField myStartIndex;
   private JTextField myEndIndex;
@@ -50,17 +52,25 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
     myEntriesLimit.setText(String.valueOf(myRenderer.ENTRIES_LIMIT));
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     applyTo(myRenderer, true);
   }
 
-  private void applyTo(ArrayRenderer renderer, boolean showBigRangeWarning) {
+  private void applyTo(ArrayRenderer renderer, boolean showBigRangeWarning) throws ConfigurationException {
     int newStartIndex = getInt(myStartIndex);
     int newEndIndex = getInt(myEndIndex);
     int newLimit = getInt(myEntriesLimit);
 
+    if (newStartIndex < 0) {
+      throw new ConfigurationException(DebuggerBundle.message("error.array.renderer.configurable.start.index.less.than.zero"));
+    }
+
+    if (newEndIndex < newStartIndex) {
+      throw new ConfigurationException(DebuggerBundle.message("error.array.renderer.configurable.end.index.less.than.start"));
+    }
+
     if (newStartIndex >= 0 && newEndIndex >= 0) {
-      if (newStartIndex >= newEndIndex) {
+      if (newStartIndex > newEndIndex) {
         int currentStartIndex = renderer.START_INDEX;
         int currentEndIndex = renderer.END_INDEX;
         newEndIndex = newStartIndex + (currentEndIndex - currentStartIndex);
@@ -116,9 +126,12 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
     myPanel.add(endIndexLabel, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
     myPanel.add(myEndIndex, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
-    myPanel.add(entriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 8), 0, 0));
+    myPanel.add(entriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 8), 0, 0));
     myPanel.add(myEntriesLimit, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 8), 0, 0));
-    myPanel.add(new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+    myPanel.add(new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+
+    // push other components up
+    myPanel.add(new JLabel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     final DocumentListener listener = new DocumentListener() {
       private void updateEntriesLimit() {
@@ -186,7 +199,12 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
 
   public boolean isModified() {
     ArrayRenderer cloneRenderer = myRenderer.clone();
-    applyTo(cloneRenderer, false);
+    try {
+      applyTo(cloneRenderer, false);
+    }
+    catch (ConfigurationException e) {
+      return true;
+    }
     final boolean valuesEqual =
       (myRenderer.END_INDEX == cloneRenderer.END_INDEX) &&
       (myRenderer.START_INDEX == cloneRenderer.START_INDEX) &&

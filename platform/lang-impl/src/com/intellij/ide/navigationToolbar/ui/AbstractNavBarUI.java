@@ -49,7 +49,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
-    return isPopupElement ? new Insets(1, 2, 1, 2) : JBInsets.NONE;
+    return isPopupElement ? new Insets(1, 2, 1, 2) : (Insets)JBInsets.NONE.clone();
   }
 
   @Override
@@ -126,8 +126,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   private BufferedImage drawToBuffer(NavBarItem item, boolean floating, boolean toolbarVisible, boolean selected, NavBarPanel navbar) {
-    int w = item.getWidth();
-    int h = item.getHeight();
+    int w = 2 * item.getWidth();
+    int h = 2 * item.getHeight();
     int offset = (w - getDecorationOffset());
     int h2 = h / 2;
 

@@ -245,6 +245,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
 
     PsiElement end = null;
+    boolean containsCustomRegionMarker = isCustomRegionElement(comment);
     for (PsiElement current = comment.getNextSibling(); current != null; current = current.getNextSibling()) {
       ASTNode node = current.getNode();
       if (node == null) {
@@ -257,6 +258,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         // during all elements traversal. I.e. we expect to start from the first comment and grab as many subsequent
         // comments as possible during the single iteration.
         processedComments.add(current);
+        containsCustomRegionMarker |= isCustomRegionElement(current);
         continue;
       }
       if (elementType == TokenType.WHITE_SPACE) {
@@ -265,7 +267,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       break;
     }
 
-    if (end != null) {
+    if (end != null && !containsCustomRegionMarker) {
       foldElements.add(
         new FoldingDescriptor(comment, new TextRange(comment.getTextRange().getStartOffset(), end.getTextRange().getEndOffset()))
       );
@@ -588,7 +590,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       else if (child instanceof PsiClass) {
         addElementsToFold(list, (PsiClass)child, document, true, quick);
       }
-      else if (child instanceof PsiComment && !isCustomRegionStart(child.getNode()) && !isCustomRegionEnd(child.getNode())) {
+      else if (child instanceof PsiComment) {
         addCommentFolds((PsiComment)child, processedComments, list);
       }
     }

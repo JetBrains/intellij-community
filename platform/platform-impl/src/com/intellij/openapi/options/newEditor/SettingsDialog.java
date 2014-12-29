@@ -23,18 +23,12 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.ui.border.CustomLineBorder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.border.Border;
-import java.awt.AWTEvent;
-import java.awt.Component;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -42,34 +36,43 @@ import java.util.ArrayList;
 /**
  * @author Sergey.Malenkov
  */
-public final class SettingsDialog extends DialogWrapper implements DataProvider {
+public class SettingsDialog extends DialogWrapper implements DataProvider {
   private final String myDimensionServiceKey;
   private final AbstractEditor myEditor;
+  private boolean myApplyButtonNeeded;
+  private boolean myResetButtonNeeded;
 
-  public SettingsDialog(Project project, @NotNull String key, @NotNull Configurable configurable, boolean showApplyButton) {
+  public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(project, true);
     myDimensionServiceKey = key;
-    myEditor = new ConfigurableEditor(myDisposable, configurable, showApplyButton);
-    init(configurable);
+    myEditor = new ConfigurableEditor(myDisposable, configurable);
+    myApplyButtonNeeded = showApplyButton;
+    myResetButtonNeeded = showResetButton;
+    init(configurable, project);
   }
 
-  public SettingsDialog(@NotNull Component parent, @NotNull String key, @NotNull Configurable configurable, boolean showApplyButton) {
+  public SettingsDialog(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(parent, true);
     myDimensionServiceKey = key;
-    myEditor = new ConfigurableEditor(myDisposable, configurable, showApplyButton);
-    init(configurable);
+    myEditor = new ConfigurableEditor(myDisposable, configurable);
+    myApplyButtonNeeded = showApplyButton;
+    myResetButtonNeeded = showResetButton;
+    init(configurable, null);
   }
 
   public SettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] groups, Configurable configurable, String filter) {
     super(project, true);
     myDimensionServiceKey = "SettingsEditor";
     myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter);
-    init(null);
+    myApplyButtonNeeded = true;
+    init(null, project);
   }
 
-  private void init(Configurable configurable) {
+  private void init(Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
-    setTitle(name == null ? CommonBundle.settingsTitle() : name.replaceAll("\n", " "));
+    String title = CommonBundle.settingsTitle();
+    if (project != null && project.isDefault()) title = "Default " + title;
+    setTitle(name == null ? title : name.replaceAll("\n", " "));
     init();
   }
 
@@ -96,22 +99,10 @@ public final class SettingsDialog extends DialogWrapper implements DataProvider 
     return true;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  protected Border createContentPaneBorder() {
-    return BorderFactory.createEmptyBorder();
-  }
-
-  @Nullable
-  @Override
-  protected JComponent createSouthPanel() {
-    JComponent panel = super.createSouthPanel();
-    if (panel != null) {
-      panel.setBorder(BorderFactory.createCompoundBorder(
-        new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0),
-        BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-    }
-    return panel;
+  protected DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
   }
 
   protected JComponent createCenterPanel() {
@@ -125,11 +116,11 @@ public final class SettingsDialog extends DialogWrapper implements DataProvider 
     actions.add(getOKAction());
     actions.add(getCancelAction());
     Action apply = myEditor.getApplyAction();
-    if (apply != null) {
+    if (apply != null && myApplyButtonNeeded) {
       actions.add(apply);
     }
     Action reset = myEditor.getResetAction();
-    if (reset != null) {
+    if (reset != null && myResetButtonNeeded) {
       actions.add(reset);
     }
     actions.add(getHelpAction());
@@ -145,7 +136,7 @@ public final class SettingsDialog extends DialogWrapper implements DataProvider 
   }
 
   @Override
-  protected void doOKAction() {
+  public void doOKAction() {
     if (myEditor.apply()) {
       ApplicationManager.getApplication().saveAll();
       super.doOKAction();

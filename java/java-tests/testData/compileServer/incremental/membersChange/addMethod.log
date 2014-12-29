@@ -5,8 +5,10 @@ Compiling files:
 src/A.java
 End of files
 Cleaning output files:
+out/production/AddMethod/C.class
 out/production/AddMethod/D.class
 End of files
 Compiling files:
+src/C.java
 src/D.java
 End of files

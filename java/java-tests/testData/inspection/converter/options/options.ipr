@@ -59,7 +59,6 @@
   </component>
   <component name="InspectionProjectProfileManager">
     <option name="PROJECT_PROFILE" value="p1" />
-    <profiles>
       <profile version="1.0" is_locked="false">
         <option name="myName" value="Project Default" />
         <option name="myLocal" value="false" />
@@ -72,7 +71,6 @@
             <option name="DONT_REPORT_TRUE_ASSERT_STATEMENTS" value="true" />
         </inspection_tool>
       </profile>
-    </profiles>
     <list size="5">
       <item index="0" class="java.lang.String" itemvalue="TYPO" />
       <item index="1" class="java.lang.String" itemvalue="SERVER PROBLEM" />

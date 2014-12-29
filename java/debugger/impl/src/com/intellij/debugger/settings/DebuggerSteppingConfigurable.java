@@ -63,6 +63,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
 
   @Override
   public void apply(@NotNull DebuggerSettings settings) {
+    mySteppingFilterEditor.stopEditing();
     getSettingsTo(settings);
   }
 
@@ -83,7 +84,6 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
       settings.EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ASK;
     }
 
-    mySteppingFilterEditor.stopEditing();
     settings.setSteppingFilters(mySteppingFilterEditor.getFilters());
   }
 

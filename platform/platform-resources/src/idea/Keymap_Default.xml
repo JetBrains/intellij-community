@@ -121,6 +121,9 @@
   <action id="EditorAddOrRemoveCaret">
     <mouse-shortcut keystroke="alt shift button1"/>
   </action>
+  <action id="EditorAddRectangularSelectionOnMouseDrag">
+    <mouse-shortcut keystroke="ctrl alt shift button1"/>
+  </action>
   <action id="EditorCreateRectangularSelection">
     <mouse-shortcut keystroke="alt shift button2"/>
   </action>
@@ -774,6 +777,9 @@
   <action id="ResizeToolWindowDown">
     <keyboard-shortcut first-keystroke="control shift DOWN"/>
   </action>
+  <action id="MaximizeToolWindow">
+    <keyboard-shortcut first-keystroke="control shift QUOTE"/>
+  </action>
   <action id="HideSideWindows"/>
   <action id="ShowPopupMenu">
     <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
@@ -833,6 +839,7 @@
   </action>
   <action id="ActivateChangesToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
+    <keyboard-shortcut first-keystroke="alt shift 9"/>
   </action>
   <action id="NewElement">
      <keyboard-shortcut first-keystroke="alt INSERT"/>
@@ -921,12 +928,8 @@
     <keyboard-shortcut first-keystroke="control shift PERIOD"/>
   </action>
 
-  <action id="StructuralSearchPlugin.StructuralSearchAction">
-    <keyboard-shortcut first-keystroke="control shift S"/>
-  </action>
-  <action id="StructuralSearchPlugin.StructuralReplaceAction">
-    <keyboard-shortcut first-keystroke="control shift M"/>
-  </action>
+  <action id="StructuralSearchPlugin.StructuralSearchAction"/>
+  <action id="StructuralSearchPlugin.StructuralReplaceAction"/>
   <action id="DuplicatesForm.SendToLeft">
     <keyboard-shortcut first-keystroke="control 1"/>
   </action>

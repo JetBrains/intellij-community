@@ -15,11 +15,16 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 
 public class EditorActionTest extends AbstractEditorTest {
@@ -112,5 +117,54 @@ public class EditorActionTest extends AbstractEditorTest {
     deleteLine();
     checkResultByText("xxxx\n" +
                       "yyy<caret>");
+  }
+
+  public void testIndentWhitespaceLineWithCaretAtLineStart() throws Exception {
+    init("<caret> ", TestFileType.TEXT);
+    executeAction("EditorIndentLineOrSelection");
+    checkResultByText("    <caret> ");
+  }
+
+  public void testBackspaceWithStickySelection() throws Exception {
+    init("te<caret>xt", TestFileType.TEXT);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_STICKY_SELECTION);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+    checkResultByText("te<caret>t");
+    assertFalse(((EditorEx)myEditor).isStickySelection());
+  }
+
+  public void testMoveRightAtFoldedLineEnd() throws Exception {
+    init("line1<caret>\nline2\nline3", TestFileType.TEXT);
+    addCollapsedFoldRegion(5, 7, "...");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    assertEquals(new VisualPosition(0, 6), myEditor.getCaretModel().getVisualPosition());
+  }
+
+  public void testEnterOnLastLineInOverwriteMode() throws Exception {
+    init("text<caret>", TestFileType.TEXT);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_OVERWRITE_MODE);
+    executeAction(IdeActions.ACTION_EDITOR_ENTER);
+    checkResultByText("text\n<caret>");
+  }
+
+  public void testPasteInOneLineMode() throws Exception {
+    init("", TestFileType.TEXT);
+    ((EditorEx)myEditor).setOneLineMode(true);
+    CopyPasteManager.getInstance().setContents(new StringSelection("a\rb"));
+    executeAction(IdeActions.ACTION_EDITOR_PASTE);
+    checkResultByText("a b<caret>");
+  }
+
+  public void testDeleteToWordStartWithEscapeChars() throws Exception {
+    init("class Foo { String s = \"a\\nb<caret>\"; }", TestFileType.JAVA);
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START);
+    checkResultByText("class Foo { String s = \"a\\n<caret>\"; }");
+  }
+
+  public void testDeleteToWordEndWithEscapeChars() throws Exception {
+    init("class Foo { String s = \"a\\<caret>nb\"; }", TestFileType.JAVA);
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
+    checkResultByText("class Foo { String s = \"a\\<caret>b\"; }");
   }
 }

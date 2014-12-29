@@ -1,16 +1,15 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CALL_FRAME extends CallFrame> implements SuspendContextManager<CALL_FRAME> {
   protected final AtomicReference<T> context = new AtomicReference<T>();
 
-  protected final AtomicReference<ActionCallback> suspendCallback = new AtomicReference<ActionCallback>();
+  protected final AtomicReference<Promise<Void>> suspendCallback = new AtomicReference<Promise<Void>>();
 
   public final void setContext(@NotNull T newContext) {
     if (!context.compareAndSet(null, newContext)) {
@@ -44,21 +43,20 @@ public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CA
 
   @NotNull
   @Override
-  public final ActionCallback suspend() {
-    ActionCallback callback = suspendCallback.get();
+  public final Promise<Void> suspend() {
+    Promise<Void> callback = suspendCallback.get();
     if (callback != null) {
       return callback;
     }
 
     if (context.get() != null) {
-      return ActionCallback.DONE;
+      return Promise.DONE;
     }
-    callback = new ActionCallback();
-    doSuspend(callback).notifyWhenRejected(callback);
-    return callback;
+    return doSuspend();
   }
 
-  protected abstract ActionCallback doSuspend(ActionCallback callback);
+  @NotNull
+  protected abstract Promise<Void> doSuspend();
 
   @Override
   public boolean isContextObsolete(@NotNull SuspendContext context) {
@@ -71,10 +69,10 @@ public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CA
 
   @NotNull
   @Override
-  public final AsyncResult<Boolean> restartFrame(@NotNull CALL_FRAME callFrame) {
+  public final Promise<Boolean> restartFrame(@NotNull CALL_FRAME callFrame) {
     return restartFrame(callFrame, getContextOrFail());
   }
 
   @NotNull
-  protected abstract AsyncResult<Boolean> restartFrame(@NotNull CALL_FRAME callFrame, @NotNull T currentContext);
+  protected abstract Promise<Boolean> restartFrame(@NotNull CALL_FRAME callFrame, @NotNull T currentContext);
 }

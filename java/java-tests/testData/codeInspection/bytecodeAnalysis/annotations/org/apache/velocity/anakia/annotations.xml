@@ -49,8 +49,18 @@
   <item name="org.apache.velocity.anakia.AnakiaTask void setTemplatePath(java.io.File) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.anakia.AnakiaTask.Context java.lang.String getName()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.anakia.AnakiaTask.Context void setName(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.anakia.Escape Escape()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.anakia.Escape java.lang.String getText(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -81,6 +91,11 @@
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.velocity.anakia.NodeList java.util.List getList()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.anakia.NodeList java.util.List subList(int, int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -96,6 +111,11 @@
   <item name="org.apache.velocity.anakia.NodeList.AttributeXMLOutputter void output(org.jdom.Attribute, java.io.Writer) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.anakia.TreeWalker TreeWalker()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.anakia.TreeWalker org.apache.velocity.anakia.NodeList allElements(org.jdom.Element) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -104,6 +124,16 @@
   </item>
   <item name="org.apache.velocity.anakia.TreeWalker void treeWalk(org.jdom.Element, java.util.Collection) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.anakia.XPathCache XPathCache()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.anakia.XPathTool XPathTool()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.anakia.XPathTool org.apache.velocity.anakia.NodeList applyTo(java.lang.String, java.util.List)">
     <annotation name="org.jetbrains.annotations.NotNull"/>

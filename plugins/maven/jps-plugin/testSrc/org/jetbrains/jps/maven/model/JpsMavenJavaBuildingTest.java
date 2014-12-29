@@ -17,7 +17,10 @@ package org.jetbrains.jps.maven.model;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.jps.builders.BuildResult;
+import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +35,9 @@ public class JpsMavenJavaBuildingTest extends JpsBuildTestCase {
     FileUtil.copyDir(srcDir, workDir);
     addJdk("1.6");
     loadProject(workDir.getAbsolutePath());
-    rebuildAll();
+    BuildResult result = doBuild(CompileScopeTestBuilder.rebuild().all());
+    result.assertFailed();
+    BuildMessage message = assertOneElement(result.getMessages(BuildMessage.Kind.ERROR));
+    assertTrue(message.toString(), message.getMessageText().contains("Maven project configuration") && message.getMessageText().contains("isn't available."));
   }
 }

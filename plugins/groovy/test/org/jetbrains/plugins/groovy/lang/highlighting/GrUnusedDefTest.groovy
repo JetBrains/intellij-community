@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 class GrUnusedDefTest extends GrHighlightingTestBase {
   @Override
   InspectionProfileEntry[] getCustomInspections() {
-    return [new UnusedDefInspection(), new GrUnusedIncDecInspection(), new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection(), new GroovyResultOfAssignmentUsedInspection()] as InspectionProfileEntry[]
+    return [new UnusedDefInspection(), new GrUnusedIncDecInspection(), new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspectionBase(true), new GroovyResultOfAssignmentUsedInspection()] as InspectionProfileEntry[]
   }
 
   public void testUnusedVariable() { doTest() }

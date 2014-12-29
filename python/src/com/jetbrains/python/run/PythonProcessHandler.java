@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public class PythonProcessHandler extends KillableColoredProcessHandler {
-  protected PythonProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
-    super(process, commandLine.getCommandLineString());
+  protected PythonProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    super(commandLine);
   }
 
   public PythonProcessHandler(Process process, String commandLine, @NotNull Charset charset) {
@@ -39,11 +39,9 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
     return true;
   }
 
-  public static PythonProcessHandler createProcessHandler(GeneralCommandLine commandLine)
+  public static PythonProcessHandler createProcessHandler(@NotNull GeneralCommandLine commandLine)
     throws ExecutionException {
 
-    Process p = commandLine.createProcess();
-
-    return new PythonProcessHandler(p, commandLine);
+    return new PythonProcessHandler(commandLine);
   }
 }

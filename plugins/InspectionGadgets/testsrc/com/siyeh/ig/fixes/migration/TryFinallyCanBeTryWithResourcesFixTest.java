@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.siyeh.ig.fixes.migration;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.migration.IfCanBeSwitchInspection;
 import com.siyeh.ig.migration.TryFinallyCanBeTryWithResourcesInspection;
 
 public class TryFinallyCanBeTryWithResourcesFixTest extends IGQuickFixesTestCase {
 
   public void testComments() { doTest(); }
+  public void testMultiple() { doTest(); }
 
   @Override
   public void setUp() throws Exception {
@@ -30,5 +30,9 @@ public class TryFinallyCanBeTryWithResourcesFixTest extends IGQuickFixesTestCase
     myFixture.enableInspections(new TryFinallyCanBeTryWithResourcesInspection());
     myRelativePath = "migration/try_finally_can_be_try_with_resources";
     myDefaultHint = InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.quickfix");
+    myFixture.addClass("package test;" +
+                       "public class MyBufferedInputStream implements java.io.Closeable {" +
+                       "  public BufferedInputStream(InputStream in) {}" +
+                       "}");
   }
 }

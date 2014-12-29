@@ -173,9 +173,10 @@ public class ClsParsingUtil {
     return StringUtil.isJavaIdentifier(identifier) && !JavaLexer.isKeyword(identifier, level);
   }
 
-  public static LanguageLevel getLanguageLevelByVersion(final int version) {
-    switch (version) {
+  public static LanguageLevel getLanguageLevelByVersion(int major) {
+    switch (major) {
       case Opcodes.V1_1:
+      case 45:  // other variant of 1.1
       case Opcodes.V1_2:
       case Opcodes.V1_3:
         return LanguageLevel.JDK_1_3;

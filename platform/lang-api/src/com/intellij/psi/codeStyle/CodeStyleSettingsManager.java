@@ -114,6 +114,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return myTemporarySettings;
   }
 
+  /**
+   * @see #dropTemporarySettings()
+   */
   public void setTemporarySettings(@NotNull CodeStyleSettings settings) {
     myTemporarySettings = settings;
   }

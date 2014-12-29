@@ -28,6 +28,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.testng.remote.strprotocol.MessageHelper;
@@ -290,36 +292,18 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   @Override
-  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
+  public DiffHyperlink getDiffViewerProvider() {
     if (myHyperlink == null) {
+      for (TestProxy proxy : getChildren()) {
+        if (!proxy.isDefect()) continue;
+        final DiffHyperlink provider = proxy.getDiffViewerProvider();
+        if (provider != null) {
+          return provider;
+        }
+      }
       return null;
     }
-    return new AssertEqualsMultiDiffViewProvider() {
-      @Override
-      public void openDiff(Project project) {
-        myHyperlink.openDiff(project);
-      }
-
-      @Override
-      public String getExpected() {
-        return myHyperlink.getLeft();
-      }
-
-      @Override
-      public String getActual() {
-        return myHyperlink.getRight();
-      }
-
-      @Override
-      public void openMultiDiff(Project project, AssertEqualsDiffChain chain) {
-        myHyperlink.openMultiDiff(project, chain);
-      }
-
-      @Override
-      public String getFilePath() {
-        return myHyperlink.getFilePath();
-      }
-    };
+    return myHyperlink;
   }
 
   private static String trimStackTrace(String stackTrace) {

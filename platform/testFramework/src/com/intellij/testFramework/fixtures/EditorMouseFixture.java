@@ -112,6 +112,11 @@ public class EditorMouseFixture {
     return this;
   }
 
+  public EditorMouseFixture ctrl() {
+    myModifiers |= InputEvent.CTRL_DOWN_MASK;
+    return this;
+  }
+
   public EditorMouseFixture alt() {
     myModifiers |= InputEvent.ALT_DOWN_MASK;
     return this;

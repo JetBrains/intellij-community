@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,6 @@ public class ClassComplexityInspection
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // note: no call to super
       final int totalComplexity = calculateTotalComplexity(aClass);
       if (totalComplexity <= getLimit()) {
         return;
@@ -84,7 +83,7 @@ public class ClassComplexityInspection
     }
 
     private int calculateInitializerComplexity(PsiClass aClass) {
-      final ComplexityVisitor visitor = new ComplexityVisitor();
+      final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
       int complexity = 0;
       final PsiClassInitializer[] initializers = aClass.getInitializers();
       for (final PsiClassInitializer initializer : initializers) {
@@ -96,7 +95,7 @@ public class ClassComplexityInspection
     }
 
     private int calculateComplexityForMethods(PsiMethod[] methods) {
-      final ComplexityVisitor visitor = new ComplexityVisitor();
+      final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
       int complexity = 0;
       for (final PsiMethod method : methods) {
         visitor.reset();

@@ -89,6 +89,11 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel7OrHigher(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AutoCloseableResourceVisitor();
   }
@@ -117,7 +122,7 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
     }
 
     private boolean isNotSafelyClosedResource(PsiExpression expression) {
-      if (!PsiUtil.isLanguageLevel7OrHigher(expression) || !TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.AutoCloseable")) {
+      if (!TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.AutoCloseable")) {
         return false;
       }
       if (TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes)) {

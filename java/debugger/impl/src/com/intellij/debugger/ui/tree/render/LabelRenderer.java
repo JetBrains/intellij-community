@@ -83,7 +83,7 @@ public class LabelRenderer extends com.intellij.debugger.ui.tree.render.Referenc
         }
         EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(value);
         Value labelValue = evaluator.evaluate(thisEvaluationContext);
-        result = DebuggerUtils.convertToPresentationString(DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue));
+        result = DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue);
       }
       catch (final EvaluateException ex) {
         throw new EvaluateException(DebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex);

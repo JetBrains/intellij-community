@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -42,12 +40,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,18 +63,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
-import org.picocontainer.defaults.CachingComponentAdapter;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
-  private static final String PLUGIN_SETTINGS_ERROR = "Plugin Settings Error";
 
   public static final String NAME_FILE = ".name";
   public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
@@ -143,7 +140,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       public ComponentAdapter getDelegate() {
         if (myDelegate == null) {
           final Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
-          myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true));
+          myDelegate = new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
         }
 
         return myDelegate;
@@ -241,6 +238,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return getStateStore().getProjectBaseDir();
   }
 
+  @Nullable
   @Override
   public String getBasePath() {
     return getStateStore().getProjectBasePath();
@@ -328,7 +326,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public void save() {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) {
-      return; //no need to save
+      // no need to save
+      return;
     }
 
     if (!mySavingInProgress.compareAndSet(false, true)) {
@@ -337,48 +336,26 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     try {
       if (isToSaveProjectName()) {
-        VirtualFile baseDir = getStateStore().getProjectBaseDir();
-        if (baseDir != null && baseDir.isValid()) {
-          VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
-          if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-            File nameFile = new File(ideaDir.getPath(), NAME_FILE);
-            try {
-              FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
+        try {
+          VirtualFile baseDir = getStateStore().getProjectBaseDir();
+          if (baseDir != null && baseDir.isValid()) {
+            VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
+            if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+              File nameFile = new File(ideaDir.getPath(), NAME_FILE);
+
+              FileUtil.writeToFile(nameFile, getName());
               myOldName = null;
+
+              RecentProjectsManager.getInstance().clearNameCache();
             }
-            catch (IOException e) {
-              LOG.info("Unable to store project name to: " + nameFile.getPath());
-            }
-            RecentProjectsManagerBase.getInstance().clearNameCache();
           }
+        }
+        catch (Throwable e) {
+          LOG.error("Unable to store project name");
         }
       }
 
-      StoreUtil.doSave(getStateStore());
-    }
-    catch (IComponentStore.SaveCancelledException e) {
-      LOG.info(e);
-    }
-    catch (PluginException e) {
-      PluginManagerCore.disablePlugin(e.getPluginId().getIdString());
-      Notification notification = new Notification(
-        PLUGIN_SETTINGS_ERROR,
-        "Unable to save plugin settings!",
-        "<p>The plugin <i>" + e.getPluginId() + "</i> failed to save settings and has been disabled. Please restart " +
-        ApplicationNamesInfo.getInstance().getFullProductName() + "</p>" +
-        (ApplicationManagerEx.getApplicationEx().isInternal() ? "<p>" + StringUtil.getThrowableText(e) + "</p>" : ""),
-        NotificationType.ERROR);
-      Notifications.Bus.notify(notification, this);
-      LOG.info("Unable to save plugin settings", e);
-    }
-    catch (Throwable e) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(e);
-      }
-      else {
-        LOG.info("Error saving project", e);
-        MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
-      }
+      StoreUtil.save(getStateStore(), this);
     }
     finally {
       mySavingInProgress.set(false);

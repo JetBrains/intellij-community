@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   private final CacheEntry mySearchKey;
   private VisualPosition myTargetVisual;
 
-  VisualToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache)
+  VisualToLogicalCalculationStrategy(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache)
   {
     super(editor, storage, cache);
     mySearchKey = new CacheEntry(0, editor);
@@ -79,7 +80,7 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     if (i > 0 && i <= cache.size()) {
       CacheEntry entry = cache.get(i - 1);
       EditorPosition position = entry.buildEndLinePosition();
-      position.onNewLine(true);
+      position.onNewLineSoftWrapAware();
       setInitialPosition(position);
     }
     else {

@@ -260,6 +260,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  @NotNull
   public static String stripHtml(@NotNull String html, boolean convertBreaks) {
     if (convertBreaks) {
       html = html.replaceAll("<br/?>", "\n\n");
@@ -422,24 +423,30 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String wordsToBeginFromUpperCase(@NotNull String s) {
-    return toTitleCase(s, ourPrepositions);
+    return fixCapitalization(s, ourPrepositions, true);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String wordsToBeginFromLowerCase(@NotNull String s) {
+    return fixCapitalization(s, ourPrepositions, false);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String toTitleCase(@NotNull String s) {
-    return toTitleCase(s, ArrayUtil.EMPTY_STRING_ARRAY);
+    return fixCapitalization(s, ArrayUtil.EMPTY_STRING_ARRAY, true);
   }
 
   @NotNull
-  private static String toTitleCase(@NotNull String s, @NotNull String[] prepositions) {
+  private static String fixCapitalization(@NotNull String s, @NotNull String[] prepositions, boolean title) {
     StringBuilder buffer = null;
     for (int i = 0; i < s.length(); i++) {
       char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
       char currChar = s.charAt(i);
       if (!Character.isLetterOrDigit(prevChar) && prevChar != '\'') {
         if (Character.isLetterOrDigit(currChar)) {
-          if (!Character.isUpperCase(currChar)) {
+          if (title || Character.isUpperCase(currChar)) {
             int j = i;
             for (; j < s.length(); j++) {
               if (!Character.isLetterOrDigit(s.charAt(j))) {
@@ -450,7 +457,7 @@ public class StringUtil extends StringUtilRt {
               if (buffer == null) {
                 buffer = new StringBuilder(s);
               }
-              buffer.setCharAt(i, toUpperCase(currChar));
+              buffer.setCharAt(i, title ? toUpperCase(currChar) : toLowerCase(currChar));
             }
           }
         }
@@ -876,6 +883,35 @@ public class StringUtil extends StringUtilRt {
     return stringHashCodeInsensitive(chars, 0, chars.length());
   }
 
+  @Contract(pure = true)
+  public static int stringHashCodeIgnoreWhitespaces(char[] chars, int from, int to) {
+    int h = 0;
+    for (int off = from; off < to; off++) {
+      char c = chars[off];
+      if (!isWhiteSpace(c)) {
+        h = 31 * h + c;
+      }
+    }
+    return h;
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeIgnoreWhitespaces(@NotNull CharSequence chars, int from, int to) {
+    int h = 0;
+    for (int off = from; off < to; off++) {
+      char c = chars.charAt(off);
+      if (!isWhiteSpace(c)) {
+        h = 31 * h + c;
+      }
+    }
+    return h;
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeIgnoreWhitespaces(@NotNull CharSequence chars) {
+    return stringHashCodeIgnoreWhitespaces(chars, 0, chars.length());
+  }
+
   /**
    * Equivalent to string.startsWith(prefixes[0] + prefixes[1] + ...) but avoids creating an object for concatenation.
    */
@@ -939,9 +975,14 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String trimLeading(@NotNull String string) {
+    return trimLeading((CharSequence)string).toString();
+  }
+  @NotNull
+  @Contract(pure = true)
+  public static CharSequence trimLeading(@NotNull CharSequence string) {
     int index = 0;
     while (index < string.length() && Character.isWhitespace(string.charAt(index))) index++;
-    return string.substring(index);
+    return string.subSequence(index, string.length());
   }
 
   @NotNull
@@ -955,9 +996,15 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String trimTrailing(@NotNull String string) {
+    return trimTrailing((CharSequence)string).toString();
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static CharSequence trimTrailing(@NotNull CharSequence string) {
     int index = string.length() - 1;
     while (index >= 0 && Character.isWhitespace(string.charAt(index))) index--;
-    return string.substring(0, index + 1);
+    return string.subSequence(0, index + 1);
   }
 
   @Contract(pure = true)
@@ -1154,6 +1201,11 @@ public class StringUtil extends StringUtilRt {
   public static List<String> split(@NotNull String s, @NotNull String separator) {
     return split(s, separator, true);
   }
+  @NotNull
+  @Contract(pure = true)
+  public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
+    return split(s, separator, true, true);
+  }
 
   @NotNull
   @Contract(pure = true)
@@ -1166,23 +1218,29 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static List<String> split(@NotNull String s, @NotNull String separator,
                                    boolean excludeSeparator, boolean excludeEmptyStrings) {
-    if (separator.isEmpty()) {
+    return (List)split((CharSequence)s,separator,excludeSeparator,excludeEmptyStrings);
+  }
+  @NotNull
+  @Contract(pure = true)
+  public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator,
+                                   boolean excludeSeparator, boolean excludeEmptyStrings) {
+    if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
-    List<String> result = new ArrayList<String>();
+    List<CharSequence> result = new ArrayList<CharSequence>();
     int pos = 0;
     while (true) {
-      int index = s.indexOf(separator, pos);
+      int index = indexOf(s,separator, pos);
       if (index == -1) break;
       final int nextPos = index + separator.length();
-      String token = s.substring(pos, excludeSeparator ? index : nextPos);
-      if (!token.isEmpty() || !excludeEmptyStrings) {
+      CharSequence token = s.subSequence(pos, excludeSeparator ? index : nextPos);
+      if (token.length() != 0 || !excludeEmptyStrings) {
         result.add(token);
       }
       pos = nextPos;
     }
     if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
-      result.add(s.substring(pos, s.length()));
+      result.add(s.subSequence(pos, s.length()));
     }
     return result;
   }
@@ -1432,9 +1490,20 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String stripQuotesAroundValue(@NotNull String text) {
-    if (startsWithChar(text, '\"') || startsWithChar(text, '\'')) text = text.substring(1);
-    if (endsWithChar(text, '\"') || endsWithChar(text, '\'')) text = text.substring(0, text.length() - 1);
+    final int len = text.length();
+    if (len > 0) {
+      final int from = isQuoteAt(text, 0) ? 1 : 0;
+      final int to = len > 1 && isQuoteAt(text, len - 1) ? len - 1 : len;
+      if (from > 0 || to < len) {
+        return text.substring(from, to);
+      };
+    }
     return text;
+  }
+
+  private static boolean isQuoteAt(@NotNull String text, int ind) {
+    char ch = text.charAt(ind);
+    return ch == '\'' || ch == '\"';
   }
 
   @Contract(pure = true)
@@ -1798,7 +1867,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
-    for (int i = 0; i < sequence.length() - infix.length(); i++) {
+    return indexOf(sequence, infix, 0);
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start) {
+    for (int i = start; i <= sequence.length() - infix.length(); i++) {
       if (startsWith(sequence, i, infix)) {
         return i;
       }
@@ -1947,11 +2021,19 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String unescapeSlashes(@NotNull final String str) {
     final StringBuilder buf = new StringBuilder(str.length());
-    unescapeSlashes(buf, str);
+    unescapeChar(buf, str, '/');
     return buf.toString();
   }
 
-  private static void unescapeSlashes(@NotNull StringBuilder buf, @NotNull String str) {
+  @NotNull
+  @Contract(pure = true)
+  public static String unescapeBackSlashes(@NotNull final String str) {
+    final StringBuilder buf = new StringBuilder(str.length());
+    unescapeChar(buf, str, '\\');
+    return buf.toString();
+  }
+
+  private static void unescapeChar(@NotNull StringBuilder buf, @NotNull String str, char unescapeChar) {
     final int length = str.length();
     final int last = length - 1;
     for (int i = 0; i < length; i++) {
@@ -1959,7 +2041,7 @@ public class StringUtil extends StringUtilRt {
       if (ch == '\\' && i != last) {
         i++;
         ch = str.charAt(i);
-        if (ch != '/') buf.append('\\');
+        if (ch != unescapeChar) buf.append('\\');
       }
 
       buf.append(ch);
@@ -2650,6 +2732,51 @@ public class StringUtil extends StringUtilRt {
         return false;
       }
     }
+    return true;
+  }
+
+  @Contract(pure = true)
+  public static boolean equalsIgnoreWhitespaces(@Nullable CharSequence s1, @Nullable CharSequence s2) {
+    if (s1 == null ^ s2 == null) {
+      return false;
+    }
+
+    if (s1 == null) {
+      return true;
+    }
+
+    int len1 = s1.length();
+    int len2 = s2.length();
+
+    int index1 = 0;
+    int index2 = 0;
+    while (index1 < len1 && index2 < len2) {
+      if (s1.charAt(index1) == s2.charAt(index2)) {
+        index1++;
+        index2++;
+        continue;
+      }
+
+      boolean skipped = false;
+      while (index1 != len1 && isWhiteSpace(s1.charAt(index1))) {
+        skipped = true;
+        index1++;
+      }
+      while (index2 != len2 && isWhiteSpace(s2.charAt(index2))) {
+        skipped = true;
+        index2++;
+      }
+
+      if (!skipped) return false;
+    }
+
+    for (; index1 != len1; index1++) {
+      if (!isWhiteSpace(s1.charAt(index1))) return false;
+    }
+    for (; index2 != len2; index2++) {
+      if (!isWhiteSpace(s2.charAt(index2))) return false;
+    }
+
     return true;
   }
 

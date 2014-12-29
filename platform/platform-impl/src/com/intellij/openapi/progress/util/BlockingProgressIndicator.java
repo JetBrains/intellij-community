@@ -18,5 +18,5 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 
 public interface BlockingProgressIndicator extends ProgressIndicatorEx {
-  public void startBlocking();
+  void startBlocking();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,7 @@ public class CreateBranchOrTagAction extends BasicAction {
   protected void perform(final Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
     CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(project, true, new File(file.getPath()));
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       final String dstURL = dialog.getToURL();
       final SVNRevision revision = dialog.getRevision();
       final String comment = dialog.getComment();
@@ -128,11 +127,10 @@ public class CreateBranchOrTagAction extends BasicAction {
       }
 
       if (dialog.isCopyFromWorkingCopy() && dialog.isSwitchOnCreate()) {
-        SingleRootSwitcher switcher =
-          new SingleRootSwitcher(project, VcsUtil.getFilePath(srcFile, srcFile.isDirectory()), dstSvnUrl.toDecodedString());
-
+        SingleRootSwitcher switcher = new SingleRootSwitcher(project, VcsUtil.getFilePath(srcFile, srcFile.isDirectory()), dstSvnUrl);
         AutoSvnUpdater.run(switcher, SvnBundle.message("action.name.switch"));
       }
+      ;
     }
   }
 

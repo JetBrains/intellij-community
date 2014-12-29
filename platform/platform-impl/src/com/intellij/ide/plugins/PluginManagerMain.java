@@ -28,13 +28,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -42,7 +40,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,7 +47,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.concurrency.SwingWorker;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xml.util.XmlStringUtil;
@@ -66,16 +63,14 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
@@ -85,8 +80,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  */
 public abstract class PluginManagerMain implements Disposable {
   public static final String JETBRAINS_VENDOR = "JetBrains";
-  public static final NotificationGroup PLUGIN_LIFECYCLE_NOTIFICATION_GROUP =
-    new NotificationGroup("Plugins Lifecycle Group", NotificationDisplayType.STICKY_BALLOON, true);
+
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
   @NonNls private static final String TEXT_PREFIX = "<html><head>" +
@@ -142,7 +136,7 @@ public abstract class PluginManagerMain implements Disposable {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
     JScrollPane installedScrollPane = createTable();
-    myPluginHeaderPanel = new PluginHeaderPanel(this, getPluginTable());
+    myPluginHeaderPanel = new PluginHeaderPanel(this);
     myHeader.setBackground(UIUtil.getTextFieldBackground());
     myPluginHeaderPanel.getPanel().setBackground(UIUtil.getTextFieldBackground());
     myPluginHeaderPanel.getPanel().setOpaque(true);
@@ -213,6 +207,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected abstract JScrollPane createTable();
 
+  @Override
   public void dispose() {
     myDisposed = true;
   }
@@ -227,6 +222,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   public void reset() {
     UiNotifyConnector.doWhenFirstShown(getPluginTable(), new Runnable() {
+      @Override
       public void run() {
         requireShutdown = false;
         TableUtil.ensureSelectionExists(getPluginTable());
@@ -245,6 +241,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected void installTableActions() {
     pluginTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         refresh();
       }
@@ -256,9 +253,9 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public void refresh() {
-    final IdeaPluginDescriptor[] descriptors = pluginTable.getSelectedObjects();
-    pluginInfoUpdate(descriptors != null && descriptors.length == 1 ? descriptors[0] : null,
-                     myFilter.getFilter(), myDescriptionTextArea, myPluginHeaderPanel, this);
+    IdeaPluginDescriptor[] descriptors = pluginTable.getSelectedObjects();
+    IdeaPluginDescriptor plugin = descriptors != null && descriptors.length == 1 ? descriptors[0] : null;
+    pluginInfoUpdate(plugin, myFilter.getFilter(), myDescriptionTextArea, myPluginHeaderPanel);
     myActionToolbar.updateActionsImmediately();
     final JComponent parent = (JComponent)myHeader.getParent();
     parent.revalidate();
@@ -269,7 +266,7 @@ public abstract class PluginManagerMain implements Disposable {
     requireShutdown |= val;
   }
 
-  public ArrayList<IdeaPluginDescriptorImpl> getDependentList(IdeaPluginDescriptorImpl pluginDescriptor) {
+  public List<IdeaPluginDescriptorImpl> getDependentList(IdeaPluginDescriptorImpl pluginDescriptor) {
     return pluginsModel.dependent(pluginDescriptor);
   }
 
@@ -302,77 +299,58 @@ public abstract class PluginManagerMain implements Disposable {
   protected void loadPluginsFromHostInBackground() {
     setDownloadStatus(true);
 
-    new SwingWorker() {
-      List<IdeaPluginDescriptor> list = null;
-      List<String> errorMessages = new ArrayList<String>();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        final List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
+        final List<String> errors = ContainerUtil.newSmartList();
+        ProgressIndicator indicator = new EmptyProgressIndicator();
 
-      public Object construct() {
-        try {
-          list = RepositoryHelper.loadPluginsFromRepository(null);
-        }
-        catch (Exception e) {
-          LOG.info(e);
-          errorMessages.add(e.getMessage());
-        }
         String builtinPluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
-        if (builtinPluginsUrl != null) {
-          processPluginHost(builtinPluginsUrl, true);
-        }
-        for (String host : UpdateSettings.getInstance().getPluginHosts()) {
-          processPluginHost(host, false);
-        }
-        return list;
-      }
+        List<String> hosts = ContainerUtil.newArrayList();
+        hosts.add(null);  // default repository
+        if (builtinPluginsUrl != null) hosts.add(builtinPluginsUrl);
+        hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
 
-      void processPluginHost(@NotNull String host, boolean builtIn) {
-        if (!acceptHost(host)) return;
-        final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
-        try {
-          UpdateChecker.checkPluginsHost(host, downloaded, false, null);
-          for (PluginDownloader downloader : downloaded.values()) {
-            final PluginNode pluginNode = PluginDownloader.createPluginNode(host, downloader);
-            if (pluginNode != null) {
-              if (list == null) list = new ArrayList<IdeaPluginDescriptor>();
-              list.add(pluginNode);
+        for (String host : hosts) {
+          try {
+            if (host == null || acceptHost(host)) {
+              list.addAll(RepositoryHelper.loadPlugins(host, null, indicator));
+            }
+          }
+          catch (FileNotFoundException e) {
+            LOG.info(host, e);
+          }
+          catch (IOException e) {
+            LOG.info(host, e);
+            if (host != builtinPluginsUrl) {
+              errors.add(e.getMessage());
             }
           }
         }
-        catch (ProcessCanceledException ignore) {
-        }
-        catch (FileNotFoundException e) {
-          LOG.info(e);
-        }
-        catch (Exception e) {
-          if (builtIn) {
-            LOG.info("built-in repo failed: " + e.toString());
-          }
-          else {
-            LOG.info(e);
-            errorMessages.add(e.getMessage());
-          }
-        }
-      }
 
-      public void finished() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
             setDownloadStatus(false);
-            if (list != null) {
+
+            if (!list.isEmpty()) {
               modifyPluginsList(list);
               propagateUpdates(list);
             }
-            if (!errorMessages.isEmpty()) {
-              if (Messages.OK == Messages.showOkCancelDialog(
-                IdeBundle.message("error.list.of.plugins.was.not.loaded", StringUtil.join(errorMessages, ", ")),
-                IdeBundle.message("title.plugins"),
-                CommonBundle.message("button.retry"), CommonBundle.getCancelButtonText(), Messages.getErrorIcon())) {
+
+            if (!errors.isEmpty()) {
+              String message = IdeBundle.message("error.list.of.plugins.was.not.loaded", StringUtil.join(errors, ", "));
+              String title = IdeBundle.message("title.plugins");
+              String ok = CommonBundle.message("button.retry"), cancel = CommonBundle.getCancelButtonText();
+              if (Messages.showOkCancelDialog(message, title, ok, cancel, Messages.getErrorIcon()) == Messages.OK) {
                 loadPluginsFromHostInBackground();
               }
             }
           }
         });
       }
-    }.start();
+    });
   }
 
   protected abstract void propagateUpdates(List<IdeaPluginDescriptor> list);
@@ -383,18 +361,13 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   protected void loadAvailablePlugins() {
-    ArrayList<IdeaPluginDescriptor> list;
     try {
       //  If we already have a file with downloaded plugins from the last time,
       //  then read it, load into the list and start the updating process.
       //  Otherwise just start the process of loading the list and save it
       //  into the persistent config file for later reading.
-      File file = new File(PathManager.getPluginsPath(), RepositoryHelper.PLUGIN_LIST_FILE);
-      if (file.exists()) {
-        RepositoryContentHandler handler = new RepositoryContentHandler();
-        SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-        parser.parse(file, handler);
-        list = handler.getPluginsList();
+      List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
+      if (list != null) {
         modifyPluginsList(list);
       }
     }
@@ -415,7 +388,7 @@ public abstract class PluginManagerMain implements Disposable {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (PluginInstaller.prepareToInstall(plugins, allPlugins)) {
+            if (PluginInstaller.prepareToInstall(plugins, allPlugins, indicator)) {
               ApplicationManager.getApplication().invokeLater(onSuccess);
               result[0] = true;
             }
@@ -448,8 +421,7 @@ public abstract class PluginManagerMain implements Disposable {
   public static void pluginInfoUpdate(IdeaPluginDescriptor plugin,
                                       @Nullable String filter,
                                       @NotNull JEditorPane descriptionTextArea,
-                                      @NotNull PluginHeaderPanel header, PluginManagerMain manager) {
-
+                                      @NotNull PluginHeaderPanel header) {
     if (plugin == null) {
       setTextValue(null, filter, descriptionTextArea);
       header.getPanel().setVisible(false);
@@ -546,6 +518,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static class MyHyperlinkListener implements HyperlinkListener {
+    @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JEditorPane pane = (JEditorPane)e.getSource();
@@ -574,18 +547,22 @@ public abstract class PluginManagerMain implements Disposable {
       return getComponent().convertRowIndexToModel(viewIndex);
     }
 
+    @Override
     public int getSelectedIndex() {
       return myComponent.getSelectedRow();
     }
 
+    @Override
     public Object[] getAllElements() {
       return myComponent.getElements();
     }
 
+    @Override
     public String getElementText(Object element) {
       return ((IdeaPluginDescriptor)element).getName();
     }
 
+    @Override
     public void selectElement(Object element, String selectedText) {
       for (int i = 0; i < myComponent.getRowCount(); i++) {
         if (myComponent.getObjectAt(i).getName().equals(((IdeaPluginDescriptor)element).getName())) {
@@ -625,59 +602,34 @@ public abstract class PluginManagerMain implements Disposable {
     return false;
   }
 
-  private static boolean isAccepted(final Set<String> search,
-                                    @NotNull final String filter,
-                                    @NotNull final String description) {
+  private static boolean isAccepted(Set<String> search, @NotNull String filter, @NotNull String description) {
     if (StringUtil.containsIgnoreCase(description, filter)) return true;
-    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final HashSet<String> descriptionSet = new HashSet<String>(search);
-    descriptionSet.removeAll(optionsRegistrar.getProcessedWords(description));
-    if (descriptionSet.isEmpty()) {
-      return true;
-    }
-    return false;
+    Set<String> descriptionSet = new HashSet<String>(search);
+    descriptionSet.removeAll(SearchableOptionsRegistrar.getInstance().getProcessedWords(description));
+    return descriptionSet.isEmpty();
   }
 
-
-  public static void notifyPluginsWereInstalled(@Nullable String pluginName, final Project project) {
-    notifyPluginsWereUpdated(pluginName != null
-                             ? "Plugin \'" + pluginName + "\' was successfully installed"
-                             : "Plugins were installed", project);
-  }
-
-  public static void notifyPluginsWereUpdated(final String title, @Nullable final Project project) {
+  public static void notifyPluginsUpdated(@Nullable Project project) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    final boolean restartCapable = app.isRestartCapable();
-    String message =
-      restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName())
-                     : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
-    message += "<br><a href=";
-    message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
-    message += "</a>";
-    PLUGIN_LIFECYCLE_NOTIFICATION_GROUP
-      .createNotification(title,
-                          XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
-                          new NotificationListener() {
-                            @Override
-                            public void hyperlinkUpdate(@NotNull Notification notification,
-                                                        @NotNull HyperlinkEvent event) {
-                              notification.expire();
-                              if (restartCapable) {
-                                app.restart(true);
-                              }
-                              else {
-                                app.exit(false, true);
-                              }
-                            }
-                          }).notify(project);
+    String title = IdeBundle.message("update.notifications.title");
+    String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
+    String message = IdeBundle.message("ide.restart.required.notification", action, ApplicationNamesInfo.getInstance().getFullProductName());
+    NotificationListener listener = new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        notification.expire();
+        app.restart(true);
+      }
+    };
+    UpdateChecker.NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener).notify(project);
   }
 
   public class MyPluginsFilter extends FilterComponent {
-
     public MyPluginsFilter() {
       super("PLUGIN_FILTER", 5);
     }
 
+    @Override
     public void filter() {
       getPluginTable().putClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY, getFilter());
       pluginsModel.filter(getFilter().toLowerCase());

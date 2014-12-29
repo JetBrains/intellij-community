@@ -22,16 +22,27 @@ for i, arg in enumerate(sys.argv[1:]):
                '  {0} diff <left> <right>' +
                '  {0} merge <local> <remote> [base] <merged>').format(sys.argv[0]))
         exit(0)
-    elif ':' in arg:
-        file_path, line_number = arg.rsplit(':', 1)
-        if line_number.isdigit():
-            args.append('-l')
-            args.append(line_number)
-            args.append(file_path)
-        else:
-            args.append(arg)
-    else:
+    elif arg == 'diff' and i == 0:
         args.append(arg)
+    elif arg == 'merge' and i == 0:
+        args.append(arg)
+    elif arg == '-l' or arg == '--line':
+        args.append(arg)
+        skip_next = True
+    elif skip_next:
+        args.append(arg)
+        skip_next = False
+    else:
+        if ':' in arg:
+            file_path, line_number = arg.rsplit(':', 1)
+            if line_number.isdigit():
+              args.append('-l')
+              args.append(line_number)
+              args.append(os.path.abspath(file_path))
+            else:
+              args.append(os.path.abspath(arg))
+        else:
+            args.append(os.path.abspath(arg))
 
 
 def launch_with_port(port):
@@ -81,5 +92,12 @@ if port == -1:
 else:
     if launch_with_port(port): exit()
 
-bin_dir, bin_file = os.path.split(RUN_PATH)
-os.execv(RUN_PATH, [bin_file] + args)
+if sys.platform == "darwin":
+    # Mac OS: RUN_PATH is *.app path
+    if len(args):
+        args.insert(0, "--args")
+    os.execvp("open", ["-a", RUN_PATH] + args)
+else:
+    # unix common
+    bin_dir, bin_file = os.path.split(RUN_PATH)
+    os.execv(RUN_PATH, [bin_file] + args)

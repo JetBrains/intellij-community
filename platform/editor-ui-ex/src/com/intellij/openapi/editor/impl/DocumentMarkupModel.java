@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +84,7 @@ public class DocumentMarkupModel {
     if (create && model == null) {
       MarkupModelImpl newModel = new MarkupModelImpl((DocumentEx)document);
       if ((model = ConcurrencyUtil.cacheOrGet(markupModelMap, project, newModel)) == newModel) {
-        documentMarkupModelManager.registerDocument((DocumentImpl)document);
+        documentMarkupModelManager.registerDocument(document);
       }
       else {
         newModel.dispose();
@@ -97,7 +97,7 @@ public class DocumentMarkupModel {
   private static ConcurrentMap<Project, MarkupModelImpl> getMarkupModelMap(@NotNull Document document) {
     ConcurrentMap<Project, MarkupModelImpl> markupModelMap = document.getUserData(MARKUP_MODEL_MAP_KEY);
     if (markupModelMap == null) {
-      ConcurrentMap<Project, MarkupModelImpl> newMap = new ConcurrentHashMap<Project, MarkupModelImpl>();
+      ConcurrentMap<Project, MarkupModelImpl> newMap = ContainerUtil.newConcurrentMap();
       markupModelMap = ((UserDataHolderEx)document).putUserDataIfAbsent(MARKUP_MODEL_MAP_KEY, newMap);
     }
     return markupModelMap;

@@ -17,4 +17,12 @@ public class ReturnOfInnerClass {
   private Object four() {
     return new B();
   }
+
+  protected Object five() {
+    return new B();
+  }
+
+  Object six() {
+    return new B();
+  }
 }

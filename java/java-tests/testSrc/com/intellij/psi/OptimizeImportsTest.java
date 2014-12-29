@@ -16,13 +16,8 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.PsiTestCase;
 
-public class OptimizeImportsTest extends PsiTestCase{
+public class OptimizeImportsTest extends OptimizeImportsTestCase {
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
 
   @Override
@@ -44,37 +39,6 @@ public class OptimizeImportsTest extends PsiTestCase{
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() throws Exception { doTest(); }
 
   private void doTest() throws Exception {
-    final String extension = ".java";
-    doTest(extension);
-  }
-
-  private void doTest(final String extension) throws Exception {
-    CommandProcessor.getInstance().executeCommand(
-      getProject(), new Runnable() {
-      @Override
-      public void run() {
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          @Override
-          public void run() {
-            String fileName = getTestName(false) + extension;
-            try {
-              String text = loadFile(fileName);
-              PsiFile file = createFile(fileName, text);
-
-              JavaCodeStyleManager.getInstance(myProject).optimizeImports(file);
-              PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-              PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-              String textAfter = loadFile(getTestName(false) + "_after" + extension);
-              String fileText = file.getText();
-              assertEquals(textAfter, fileText);
-            }
-            catch (Exception e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-    }, "", "");
-
+    doTest(".java");
   }
 }

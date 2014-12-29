@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.idea.Bombed;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -589,6 +588,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1,
       findMatchesCount(s,s2_2)
     );
+
+    String pattern3 = "\"'String\"";
+    assertEquals("String literal", 1, findMatchesCount(s, pattern3));
+
+    String pattern4 = "\"test\"";
+    String source = "@SuppressWarnings(\"test\") class A {" +
+                    "  @SuppressWarnings({\"other\", \"test\"}) String field;" +
+                    "}";
+    assertEquals("String literal in annotation", 2, findMatchesCount(source, pattern4));
   }
 
   public void testCovariantArraySearch() {
@@ -1211,15 +1219,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       2
     );
 
-    options.setDistinct(true);
-    assertEquals(
-      "case sensitive disitinct match",
-      findMatchesCount(s129,s130),
-      1
-    );
-
-    options.setDistinct(false);
-
     final String s133 = "class C { int a; int A() { a = 1; }} void c(int a) { a = 2; }";
     final String s133_2 = "class C { int a() {} int A() { a(1); }}";
     final String s134 = "a";
@@ -1253,6 +1252,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       "parameterized cast match",
       findMatchesCount(s81,s82_3),
       1
+    );
+
+    assertEquals(
+      "parameterized symbol without variables matching",
+      findMatchesCount(s81, "S<T>"),
+      2
     );
 
     assertEquals(
@@ -1315,8 +1320,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s82_8 = "'T<'_Subst+>";
     assertEquals(
       "typed symbol",
-      findMatchesCount(s81_4,s82_8),
-      6
+      8,
+      findMatchesCount(s81_4,s82_8)
     );
 
     String s81_5 = "class A { HashMap<String, Integer> variable = new HashMap<String, Integer>(\"aaa\");}";
@@ -1326,6 +1331,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s81_5,s82_9),
       1
     );
+    assertEquals(
+      "no exception on searching for diamond operator",
+      findMatchesCount(s81_5, "new 'Type<>('_Param)"),
+      0
+    );
+    assertEquals(
+      "order of parameters matters",
+      0,
+      findMatchesCount(s81_5, "HashMap<Integer, String>")
+    );
+    assertEquals(
+      "order of parameters matters 2",
+      2,
+      findMatchesCount(s81_5, "HashMap<String, Integer>")
+    );
+
     String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; }";
     String target1 = "java.util.Comparator 'a;";
     assertEquals(
@@ -1418,6 +1439,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     // typed var with instanceof
     assertEquals("typed instanceof",findMatchesCount(s65,s66),1);
+
+    assertEquals("don't throw exception on incomplete instanceof expression", findMatchesCount(s65, "'_T instanceof"), 2);
 
     // typed vars with arrays
     assertEquals("typed pattern with array",findMatchesCount(s23,s24_1),2);
@@ -2129,8 +2152,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       assertFalse("spaces around reg exp check",false);
     } catch(MalformedPatternException ex) {}
 
-    options.setDistinct(true);
-
     final String s101 = "class A { void b() { String d; String e; String[] f; f.length=1; f.length=1; } }";
     final String s102 = "'_:[ref('T)] '_;";
 
@@ -2139,8 +2160,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s101,s102),
       1
     );
-
-    options.setDistinct(false);
 
     final String s103 = " a=1; ";
     final String s104 = "'T:{ ;";
@@ -2399,6 +2418,24 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find anno parameter value",0,findMatchesCount(s11,s12_5));
     assertEquals("Find anno parameter value",4,findMatchesCount(s11,s12_6));
     assertEquals("Find anno parameter value",4,findMatchesCount(s11,s12_7));
+
+    String source1 = "class A {" +
+                     "  void m() {" +
+                     "    new @B Object();" +
+                     "  }" +
+                     "}";
+    assertEquals("Find annotated new expression", 1, findMatchesCount(source1, "new Object()"));
+    assertEquals("Find annotated new expression", 1, findMatchesCount(source1, "new @B Object()"));
+    assertEquals("Find annotated new expression", 0, findMatchesCount(source1, "new @C Object()"));
+
+    String source2 = "@X\n" +
+                     "class A {\n" +
+                     "  @Y int value;" +
+                     "  @Y int void m(@Z int i) {\n" +
+                     "    return 1;\n" +
+                     "  }\n" +
+                     "}\n";
+    assertEquals("Find all annotations", 4, findMatchesCount(source2, "@'_Annotation"));
   }
 
   public void testBoxingAndUnboxing() {
@@ -2929,6 +2966,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  Runnable r = System.out::println;" +
                     "  Runnable s = this::hashCode;" +
                     "  Runnable t = this::new;" +
+                    "  Runnable u = @AA A::new;" +
                     "  static {" +
                     "    System.out.println();" +
                     "  }" +
@@ -2941,7 +2979,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should find method reference 2", 2, findMatchesCount(source, pattern2));
 
     String pattern3 = "'_a::'_b";
-    assertEquals("should find all method references", 3, findMatchesCount(source, pattern3));
+    assertEquals("should find all method references", 4, findMatchesCount(source, pattern3));
+
+    String pattern4 = "@AA A::new";
+    assertEquals("should find annotated method references", 1, findMatchesCount(source, pattern4));
   }
 
   public void testNoUnexpectedException() {
@@ -2973,5 +3014,32 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       ex = e;
     }
     assertNotNull(ex);
+  }
+
+  public void testFindInnerClass() {
+    String source = "class Foo {\n" +
+                    "  static class Bar {}\n" +
+                    "}" +
+                    "class A {{" +
+                    "  new Foo.Bar();" +
+                    "}}";
+    String pattern = "new Foo.Bar();";
+    assertEquals("should find qualified with outer class", 1, findMatchesCount(source, pattern));
+  }
+
+  public void testFindCommentsEverywhere() {
+    String source = "abstract class A<T/*1*/> implements java.util.List<T/*2*/>, /*3*/java.io.Serializable {" +
+                    "  @SuppressWarnings({\"one\",/*10*/ \"two\"})" +
+                    "  public /*11*/ static void m(/*12*/) {" +
+                    "    System./*4*/out.println(/*5*/);" +
+                    "    A<String/*6*/> a1 = new A(){};" +
+                    "    int i = 1 + /*7*/ + 2;" +
+                    "    try (java.io.FileInputStream /*8*/in = new java.io.FileInputStream(\"name\")) {" +
+                    "    } catch (java.lang./*9*/Exception e) {" +
+                    "    }" +
+                    "  }" +
+                    "}";
+    String pattern = "/*$Text$*/";
+    assertEquals("should find comments in all the right places", 12, findMatchesCount(source, pattern));
   }
 }

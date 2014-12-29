@@ -10,7 +10,6 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.codeInspection.ui.RefElementNode;
@@ -69,7 +68,7 @@ public class SuppressActionWrapper extends ActionGroup {
   @Override
   @NotNull
   public SuppressTreeAction[] getChildren(@Nullable final AnActionEvent e) {
-    final SuppressIntentionAction[] suppressActions = InspectionManagerEx.getSuppressActions(myToolWrapper.getTool());
+    final SuppressIntentionAction[] suppressActions = InspectionManagerEx.getSuppressActions(myToolWrapper);
     if (suppressActions == null || suppressActions.length == 0) return new SuppressTreeAction[0];
     final SuppressTreeAction[] actions = new SuppressTreeAction[suppressActions.length];
     for (int i = 0; i < suppressActions.length; i++) {
@@ -123,7 +122,7 @@ public class SuppressActionWrapper extends ActionGroup {
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(InspectionManagerEx.getSuppressActions(myToolWrapper.getTool()) != null);
+    e.getPresentation().setEnabled(InspectionManagerEx.getSuppressActions(myToolWrapper) != null);
   }
 
   private static Pair<PsiElement, CommonProblemDescriptor> getContentToSuppress(InspectionTreeNode node) {

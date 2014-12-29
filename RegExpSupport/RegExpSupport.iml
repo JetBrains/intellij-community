@@ -19,6 +19,6 @@
     <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
     <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="xdebugger-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="xml-psi-api" />
   </component>
 </module>
-

@@ -18,6 +18,8 @@ package com.intellij.xdebugger.frame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * Represents a group of values in a debugger tree.
  */
@@ -31,6 +33,11 @@ public abstract class XValueGroup extends XValueContainer {
   @NotNull
   public String getName() {
     return myName;
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return null;
   }
 
   /**

@@ -4,7 +4,7 @@ class A {
     void method(List<String> y, boolean a){}
 
    /**
-     * {@link #method(java.util.List, boolean)}
+     * {@link #method(List, boolean)}
      */
     void bar() {}
 }

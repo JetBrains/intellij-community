@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Bas Leijdekkers
+ * Copyright 2011-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,23 +83,22 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
       }
       final int startOffset = range.getStartOffset();
       final int replaceStartOffset = element.getTextOffset() + startOffset;
-      final int endOffset = range.getEndOffset();
+      int startTag = range.getEndOffset();
       @NonNls String text = element.getText();
-      if (!"<code>".equals(text.substring(startOffset, endOffset))) {
+      if (!"<code>".equals(text.substring(startOffset, startTag))) {
         return;
       }
       @NonNls final StringBuilder newCommentText = new StringBuilder("{@code");
-      int endTag = text.indexOf("</code>", startOffset);
-      boolean first = true;
+      int endTag = text.indexOf("</code>", startTag);
       while (endTag < 0) {
-        appendElementText(text, endOffset, text.length(), first, newCommentText);
-        first = false;
+        appendElementText(text, startTag, text.length(), newCommentText);
         element = element.getNextSibling();
         if (element == null) return;
+        startTag = 0;
         text = element.getText();
         endTag = text.indexOf("</code>");
       }
-      appendElementText(text, endOffset, endTag, first, newCommentText);
+      appendElementText(text, startTag, endTag, newCommentText);
       newCommentText.append('}');
       final int replaceEndOffset = element.getTextOffset() + endTag + 7;
       final String oldText = document.getText(new TextRange(replaceStartOffset, replaceEndOffset));
@@ -109,18 +108,17 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
       document.replaceString(replaceStartOffset, replaceEndOffset, newCommentText);
     }
 
-    private static void appendElementText(String text, int startOffset, int endOffset, boolean first, StringBuilder out) {
-      if (first) {
-        final String substring = text.substring(startOffset, endOffset);
-        if (!substring.isEmpty() && !Character.isWhitespace(substring.charAt(0))) {
-          out.append(' ');
-        }
-        out.append(substring);
+    private static void appendElementText(String text, int startOffset, int endOffset, StringBuilder out) {
+      if (out.length() == "{@code".length() && endOffset - startOffset > 0 && !Character.isWhitespace(text.charAt(startOffset))) {
+        out.append(' ');
       }
-      else {
-        out.append(text.substring(0, endOffset));
-      }
+      out.append(text, startOffset, endOffset);
     }
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
   @Override
@@ -129,13 +127,9 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
   }
 
   private static class HtmlTagCanBeJavaDocTagVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitDocToken(PsiDocToken token) {
       super.visitDocToken(token);
-      if (!PsiUtil.isLanguageLevel5OrHigher(token)) {
-        return;
-      }
       final IElementType tokenType = token.getTokenType();
       if (!JavaDocTokenType.DOC_COMMENT_DATA.equals(tokenType)) {
         return;

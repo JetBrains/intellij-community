@@ -199,7 +199,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   public void paint(Graphics g, JComponent c) {
     final Container parent = c.getParent();
     if (parent != null) {
-      g.setColor(parent.getBackground());
+      g.setColor(isTableCellEditor(c) && editor != null ? editor.getBackground() : parent.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
     Rectangle r = rectangleForCurrentValue();
@@ -212,7 +212,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   }
 
   private static boolean isTableCellEditor(JComponent c) {
-    return Boolean.TRUE.equals(c.getClientProperty("JComboBox.isTableCellEditor"));
+    return Boolean.TRUE.equals(c.getClientProperty("JComboBox.isTableCellEditor")) || c.getParent() instanceof JTable;
   }
 
   @Override

@@ -12,6 +12,7 @@ import com.intellij.testFramework.LightPlatformLangTestCase;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import gnu.trove.THashMap;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ import java.io.InputStream;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ApplicationStoreTest extends LightPlatformLangTestCase {
   private File testAppConfig;
@@ -60,7 +61,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     }
   }
 
-  public void testStreamProviderSaveIfSeveralStoragesConfigured() throws Exception {
+  public void testStreamProviderSaveIfSeveralStoragesConfigured() throws Throwable {
     SeveralStoragesConfigured component = new SeveralStoragesConfigured();
 
     MyStreamProvider streamProvider = new MyStreamProvider();
@@ -68,7 +69,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
 
     componentStore.initComponent(component, false);
     component.foo = "newValue";
-    StoreUtil.doSave(componentStore);
+    StoreUtil.save(componentStore, null);
 
     assertThat(streamProvider.data.get(RoamingType.PER_USER).get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), equalTo("<application>\n" +
                                                                                                                                 "  <component name=\"HttpConfigurable\">\n" +
@@ -92,6 +93,43 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     componentStore.getStateStorageManager().setStreamProvider(streamProvider);
     componentStore.initComponent(component, false);
     assertThat(component.foo, equalTo("newValue"));
+  }
+
+  public void testRemoveDeprecatedStorageOnWrite() throws Exception {
+    doRemoveDeprecatedStorageOnWrite(new SeveralStoragesConfigured());
+  }
+
+  public void testRemoveDeprecatedStorageOnWrite2() throws Exception {
+    doRemoveDeprecatedStorageOnWrite(new ActualStorageLast());
+  }
+
+  private void doRemoveDeprecatedStorageOnWrite(@NotNull Foo component) throws IOException {
+    File oldFile = saveConfig("other.xml", "<application>" +
+                                           "  <component name=\"HttpConfigurable\">\n" +
+                                           "    <option name=\"foo\" value=\"old\" />\n" +
+                                           "  </component>\n" +
+                                           "</application>");
+
+    saveConfig("proxy.settings.xml", "<application>\n" +
+                                     "  <component name=\"HttpConfigurable\">\n" +
+                                     "    <option name=\"foo\" value=\"new\" />\n" +
+                                     "  </component>\n" +
+                                     "</application>");
+
+    componentStore.initComponent(component, false);
+    assertThat(component.foo, equalTo("new"));
+
+    component.foo = "new2";
+    StoreUtil.save(componentStore, null);
+
+    assertThat(oldFile.exists(), equalTo(false));
+  }
+
+  @NotNull
+  private File saveConfig(@NotNull String fileName, @Language("XML") String data) throws IOException {
+    File file = new File(testAppConfig, fileName);
+    FileUtil.writeToFile(file, data);
+    return file;
   }
 
   private static class MyStreamProvider extends StreamProvider {
@@ -138,19 +176,14 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
       TrackingPathMacroSubstitutor macroSubstitutor = new ApplicationPathMacroManager().createTrackingSubstitutor();
       stateStorageManager = new StateStorageManagerImpl(macroSubstitutor, "application", this, ApplicationManager.getApplication().getPicoContainer()) {
         @Override
-        protected StorageData createStorageData(@NotNull String storageSpec) {
-          return new FileBasedStorage.FileStorageData("application");
+        protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
+          return new StorageData("application");
         }
 
         @Nullable
         @Override
         protected String getOldStorageSpec(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation) {
           return null;
-        }
-
-        @Override
-        protected String getVersionsFilePath() {
-          return testAppConfigPath + "/options/appComponentVersions.xml";
         }
 
         @Override
@@ -181,7 +214,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
 
     @Nullable
     @Override
-    protected StateStorage getDefaultsStorage() {
+    protected PathMacroManager getPathMacroManagerForDefaults() {
       return null;
     }
 
@@ -192,32 +225,18 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     }
   }
 
-  static class SeveralStoragesConfiguredStorageChooser implements StateStorageChooser<SeveralStoragesConfigured> {
-    @Override
-    public Storage[] selectStorages(Storage[] storages, SeveralStoragesConfigured component, StateStorageOperation operation) {
-      if (operation == StateStorageOperation.WRITE) {
-        for (Storage storage : storages) {
-          if (storage.file().equals(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")) {
-            return new Storage[]{storage};
-          }
-        }
-      }
-      return storages;
-    }
+  abstract static class Foo {
+    public String foo = "defaultValue";
   }
 
   @State(
     name = "HttpConfigurable",
     storages = {
-      // we use two storages due to backward compatibility, see http://crucible.labs.intellij.net/cru/CR-IC-5142
-      @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-      @Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")
-    },
-    storageChooser = SeveralStoragesConfiguredStorageChooser.class
+      @Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"),
+      @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+    }
   )
-  static class SeveralStoragesConfigured implements PersistentStateComponent<SeveralStoragesConfigured> {
-    public String foo = "defaultValue";
-
+  static class SeveralStoragesConfigured extends Foo implements PersistentStateComponent<SeveralStoragesConfigured> {
     @Nullable
     @Override
     public SeveralStoragesConfigured getState() {
@@ -226,6 +245,26 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
 
     @Override
     public void loadState(SeveralStoragesConfigured state) {
+      XmlSerializerUtil.copyBean(state, this);
+    }
+  }
+
+  @State(
+    name = "HttpConfigurable",
+    storages = {
+      @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true),
+      @Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")
+    }
+  )
+  static class ActualStorageLast extends Foo implements PersistentStateComponent<ActualStorageLast> {
+    @Nullable
+    @Override
+    public ActualStorageLast getState() {
+      return this;
+    }
+
+    @Override
+    public void loadState(ActualStorageLast state) {
       XmlSerializerUtil.copyBean(state, this);
     }
   }

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin.Ulitin
  */
-public abstract class JsonStringLiteralMixin extends JsonLiteralMixin implements PsiLanguageInjectionHost {
+public abstract class JsonStringLiteralMixin extends JsonLiteralImpl implements PsiLanguageInjectionHost {
   protected JsonStringLiteralMixin(ASTNode node) {
     super(node);
   }

@@ -18,7 +18,6 @@ package com.intellij.lang;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,7 @@ import java.util.List;
 public class TreeBackedLighterAST extends LighterAST {
   private final FileASTNode myRoot;
 
-  public TreeBackedLighterAST(final FileASTNode root) {
+  public TreeBackedLighterAST(@NotNull FileASTNode root) {
     super(root.getCharTable());
     myRoot = root;
   }
@@ -34,7 +33,6 @@ public class TreeBackedLighterAST extends LighterAST {
   @NotNull
   @Override
   public LighterASTNode getRoot() {
-    //noinspection ConstantConditions
     return wrap(myRoot);
   }
 
@@ -50,24 +48,20 @@ public class TreeBackedLighterAST extends LighterAST {
     if (children == null || children.length == 0) {
       return ContainerUtil.emptyList();
     }
-    final ArrayList<LighterASTNode> result = new ArrayList<LighterASTNode>(children.length);
+    List<LighterASTNode> result = new ArrayList<LighterASTNode>(children.length);
     for (final ASTNode child : children) {
       result.add(wrap(child));
     }
     return result;
   }
 
-  @Nullable
-  private static LighterASTNode wrap(@Nullable final ASTNode node) {
-    if (node == null) return null;
-    if (node.getFirstChildNode() == null && node.getTextLength() > 0) {
-      return new TokenNodeWrapper(node);
-    }
-    return new NodeWrapper(node);
+  @NotNull
+  private static LighterASTNode wrap(@NotNull ASTNode node) {
+    return node.getFirstChildNode() == null && node.getTextLength() > 0 ? new TokenNodeWrapper(node) : new NodeWrapper(node);
   }
 
   @NotNull
-  public ASTNode unwrap(LighterASTNode node) {
+  public ASTNode unwrap(@NotNull LighterASTNode node) {
     return ((NodeWrapper)node).myNode;
   }
 

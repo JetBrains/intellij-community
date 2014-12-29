@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -29,13 +28,16 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedDecls";
 
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UnusedSymbolLocalInspection()};
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedDeclarationInspection());
   }
 
   public void testInnerClass() throws Exception { doTest(); }
   public void testInnerUsesSelf() throws Exception { doTest(); }
   public void testLocalClass() throws Exception { doTest(); }
+  public void testPrivateConstructor() throws Exception { doTest(); }
+
   //@Bombed(day = 5, month = Calendar.SEPTEMBER, user = "anet")
   //public void testInjectedAnno() throws Exception { doTest(); }
 

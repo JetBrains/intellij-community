@@ -153,6 +153,11 @@ public class UpdateZipAction extends BaseUpdateAction {
     }
   }
 
+  @Override
+  protected boolean isModified(File toFile) throws IOException {
+    return myChecksum != Digester.digestFile(toFile);
+  }
+
   protected void doApply(final ZipFile patchFile, File toFile) throws IOException {
     File temp = Utils.createTempFile();
     FileOutputStream fileOut = new FileOutputStream(temp);

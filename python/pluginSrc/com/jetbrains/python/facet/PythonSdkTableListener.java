@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.jetbrains.python.facet;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -78,13 +77,14 @@ public class PythonSdkTableListener implements ApplicationComponent {
   }
 
   private static void removeLibrary(final Sdk sdk) {
-    LaterInvocator.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run()  {
-            final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
+          public void run() {
+            final LibraryTable.ModifiableModel libraryTableModel =
+              ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
             final Library library = libraryTableModel.getLibraryByName(PythonFacet.getFacetLibraryName(sdk.getName()));
-            if (library!=null) {
+            if (library != null) {
               libraryTableModel.removeLibrary(library);
             }
             libraryTableModel.commit();
@@ -95,13 +95,14 @@ public class PythonSdkTableListener implements ApplicationComponent {
   }
 
   private static void renameLibrary(final Sdk sdk, final String previousName) {
-    LaterInvocator.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
+            final LibraryTable.ModifiableModel libraryTableModel =
+              ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
             final Library library = libraryTableModel.getLibraryByName(PythonFacet.getFacetLibraryName(previousName));
-            if (library!=null){
+            if (library != null) {
               final Library.ModifiableModel model = library.getModifiableModel();
               model.setName(PythonFacet.getFacetLibraryName(sdk.getName()));
               model.commit();

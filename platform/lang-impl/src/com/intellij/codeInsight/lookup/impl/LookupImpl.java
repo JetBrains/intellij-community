@@ -52,8 +52,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -95,11 +93,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       super.processKeyEvent(e);
     }
 
-    ExpandableItemsHandler<Integer> myExtender = new CompletionExtender(this);
     @NotNull
     @Override
-    public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
-      return myExtender;
+    protected ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
+      return new CompletionExtender(this);
     }
   };
   final LookupCellRenderer myCellRenderer;
@@ -118,9 +115,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private boolean myChangeGuard;
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
-  private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(
-    ContainerUtil.<LookupElement>identityStrategy());
-  private final Map<LookupElement, Font> myCustomFonts = new ConcurrentWeakHashMap<LookupElement, Font>(
+  private final Map<LookupElement, PrefixMatcher> myMatchers =
+    ContainerUtil.newConcurrentMap(ContainerUtil.<LookupElement>identityStrategy());
+  private final Map<LookupElement, Font> myCustomFonts = ContainerUtil.createConcurrentWeakMap(10, 0.75f, Runtime.getRuntime().availableProcessors(),
     ContainerUtil.<LookupElement>identityStrategy());
   private boolean myStartCompletionWhenNothingMatches;
   boolean myResizePending;

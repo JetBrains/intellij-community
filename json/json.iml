@@ -14,6 +14,6 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
-

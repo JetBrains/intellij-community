@@ -102,7 +102,11 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return doMake(myProject, configuration, env, false);
   }
 
-   static boolean doMake(final Project myProject, final RunConfiguration configuration, final ExecutionEnvironment env, final boolean ignoreErrors) {
+  static boolean doMake(final Project myProject, final RunConfiguration configuration, final ExecutionEnvironment env, final boolean ignoreErrors) {
+    return doMake(myProject, configuration, env, ignoreErrors, Boolean.getBoolean(MAKE_PROJECT_ON_RUN_KEY));
+  }
+
+  static boolean doMake(final Project myProject, final RunConfiguration configuration, final ExecutionEnvironment env, final boolean ignoreErrors, final boolean forceMakeProject) {
     if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption)) {
       return true;
     }
@@ -130,7 +134,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
         public void run() {
           CompileScope scope;
           final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-          if (Boolean.valueOf(System.getProperty(MAKE_PROJECT_ON_RUN_KEY, Boolean.FALSE.toString())).booleanValue()) {
+          if (forceMakeProject) {
             // user explicitly requested whole-project make
             scope = compilerManager.createProjectCompileScope(myProject);
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,7 +254,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
     public void removeRow(final int idx) {
       myFilters.remove(idx);
-      fireTableDataChanged();
+      fireTableRowsDeleted(idx, idx);
     }
   }
 
@@ -270,7 +270,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
       com.intellij.ui.classFilter.ClassFilter filter =
         (com.intellij.ui.classFilter.ClassFilter)table.getValueAt(row, FilterTableModel.FILTER);
-      component.setEnabled(ClassFilterEditor.this.isEnabled() && filter.isEnabled());
+      component.setEnabled(isSelected || (ClassFilterEditor.this.isEnabled() && filter.isEnabled()));
       return component;
     }
   }
@@ -297,8 +297,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
   protected void addPatternFilter() {
     ClassFilterEditorAddDialog dialog = new ClassFilterEditorAddDialog(myProject, myPatternsHelpId);
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       String pattern = dialog.getPattern();
       if (pattern != null) {
         com.intellij.ui.classFilter.ClassFilter filter = createFilter(pattern);

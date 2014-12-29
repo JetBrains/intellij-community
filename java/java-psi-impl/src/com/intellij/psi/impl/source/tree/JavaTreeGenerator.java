@@ -61,6 +61,9 @@ public class JavaTreeGenerator implements TreeGenerator {
       final LanguageLevel level = PsiUtil.getLanguageLevel(original);
       final DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), new JavaDummyElement(text, MOD_LIST, level), null);
       final TreeElement modifierListElement = holder.getTreeElement().getFirstChildNode();
+      if (modifierListElement == null) {
+        throw new AssertionError("No modifier list for \"" + text + '\"');
+      }
       return markGeneratedIfNeeded(original, modifierListElement);
     }
 
@@ -148,7 +151,7 @@ public class JavaTreeGenerator implements TreeGenerator {
     return Factory.createSingleLeafElement(type, text, 0, text.length(), table, manager, CodeEditUtil.isNodeGenerated(original.getNode()));
   }
 
-  private static TreeElement markGeneratedIfNeeded(PsiElement original, TreeElement copy) {
+  private static TreeElement markGeneratedIfNeeded(@NotNull PsiElement original, @NotNull TreeElement copy) {
     if (CodeEditUtil.isNodeGenerated(original.getNode())) {
       copy.acceptTree(new GeneratedMarkerVisitor());
     }

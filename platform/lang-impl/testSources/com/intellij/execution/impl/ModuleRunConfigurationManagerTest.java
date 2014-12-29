@@ -25,7 +25,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -149,12 +148,12 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
     }
 
     @Override
-    void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettings template) throws WriteExternalException {
+    void addConfigurationElement(@NotNull Element parentNode, RunnerAndConfigurationSettings template) {
       myAddedElements.add(template);
     }
   }
 
-  private final class MyModuleBasedConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
+  private static final class MyModuleBasedConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
     public MyModuleBasedConfiguration(@NotNull final String name, @NotNull final Project project, @NotNull final Module module) {
       super(name, new MyRunConfigurationModule(project, module), new MockConfigurationFactory());
     }

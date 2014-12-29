@@ -174,17 +174,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
   }
 
   protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
-    PsiType functionalInterfaceType = null;
-    final Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
-    if (map != null) {
-      functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(map.get(reference));
-    }
-
-    if (functionalInterfaceType == null) {
-      functionalInterfaceType = reference.getFunctionalInterfaceType();
-    }
-
-    return functionalInterfaceType;
+    return reference.getFunctionalInterfaceType();
   }
 
   protected PsiConflictResolver createResolver(PsiMethodReferenceExpressionImpl referenceExpression,
@@ -226,8 +216,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
       if (mySignature == null) return null;
 
-      checkSameSignatures(conflicts);
-      checkAccessStaticLevels(conflicts, true);
+      if (conflicts.size() > 1) checkSameSignatures(conflicts);
+      if (conflicts.size() > 1) checkAccessStaticLevels(conflicts, true);
 
       final PsiType[] argTypes = mySignature.getParameterTypes();
       boolean hasReceiver = PsiMethodReferenceUtil.hasReceiver(argTypes, myQualifierResolveResult, myReferenceExpression);
@@ -297,13 +287,12 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     }
 
     @Override
-    protected boolean nonComparable(@NotNull CandidateInfo method, @NotNull CandidateInfo conflict) {
+    protected boolean nonComparable(@NotNull CandidateInfo method, @NotNull CandidateInfo conflict, boolean fixedArity) {
       if (method == conflict) return true;
       PsiElement psiElement = method.getElement();
       PsiElement conflictElement = conflict.getElement();
       if (psiElement instanceof PsiMethod && conflictElement instanceof PsiMethod) {
-        if (((PsiMethod)psiElement).getParameterList().getParametersCount() !=
-            ((PsiMethod)conflictElement).getParameterList().getParametersCount()) {
+        if (fixedArity && ((PsiMethod)psiElement).getParameterList().getParametersCount() != ((PsiMethod)conflictElement).getParameterList().getParametersCount()) {
           return true;
         }
       }

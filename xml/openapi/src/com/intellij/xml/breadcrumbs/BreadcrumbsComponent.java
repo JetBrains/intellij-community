@@ -102,7 +102,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       final int offset = myBuffer.getPageOffset();
 
       for (final Crumb each : myCrumbs) {
-        if (((p.x + offset) >= each.getOffset()) && ((p.x + offset) < (each.getOffset() + each.getWidth()))) {
+        if (p.x + offset >= each.getOffset() && p.x + offset < each.getOffset() + each.getWidth()) {
           return each;
         }
       }
@@ -121,6 +121,9 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
 
     myHovered = crumb;
+    for (BreadcrumbsItemListener listener : myListeners) {
+      listener.itemHovered(myHovered != null ? myHovered.myItem : null);
+    }
     repaint();
   }
 
@@ -148,12 +151,12 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
   @Override
   public void paint(final Graphics g) {
-    final Graphics2D g2 = ((Graphics2D)g);
+    final Graphics2D g2 = (Graphics2D)g;
     final Dimension d = getSize();
     final FontMetrics fm = g2.getFontMetrics();
 
     if (myItems != null) {
-      final boolean veryDirty = (myCrumbs == null) || (myBuffer != null && !myBuffer.isValid(d.width));
+      final boolean veryDirty = myCrumbs == null || myBuffer != null && !myBuffer.isValid(d.width);
 
       final List<Crumb> crumbList = veryDirty ? createCrumbList(fm, myItems, d.width) : myCrumbs;
       if (crumbList != null) {
@@ -272,7 +275,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
           screenWidth += first.getWidth();
         }
 
-        rightmostCrumb = (first != null) ? first : crumb;
+        rightmostCrumb = first != null ? first : crumb;
       }
 
       result.addFirst(crumb);
@@ -672,7 +675,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     @Override
     @Nullable
     Color getBorderColor(@NotNull final Crumb c) {
-      return (c.isLight() && !c.isHovered() && !(c instanceof NavigationCrumb)) ? LIGHT_BORDER_COLOR : DEFAULT_BORDER_COLOR;
+      return c.isLight() && !c.isHovered() && !(c instanceof NavigationCrumb) ? LIGHT_BORDER_COLOR : DEFAULT_BORDER_COLOR;
     }
   }
 
@@ -754,7 +757,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       }
 
       UIUtil.applyRenderingHints(g2);
-      g2.drawString(string, offset + ROUND_VALUE, height - fm.getDescent() - 2);
+      g2.drawString(string, offset + ROUND_VALUE, height - fm.getDescent() - 4);
 
       g2.setFont(oldFont);
     }
@@ -762,7 +765,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     @Override
     @NotNull
     Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm, final int maxWidth) {
-      final int width = fm.stringWidth(s) + (ROUND_VALUE * 2);
+      final int width = fm.stringWidth(s) + ROUND_VALUE * 2;
       return new Dimension(width > maxWidth ? maxWidth : width, fm.getHeight() + 4);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,9 +368,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return isLibraryOverride(new HashSet<RefMethod>());
   }
 
-  private boolean isLibraryOverride(Collection<RefMethod> processed) {
-    if (processed.contains(this)) return false;
-    processed.add(this);
+  private boolean isLibraryOverride(@NotNull Collection<RefMethod> processed) {
+    if (!processed.add(this)) return false;
 
     if (checkFlag(IS_LIBRARY_OVERRIDE_MASK)) return true;
     for (RefMethod superMethod : getSuperMethods()) {

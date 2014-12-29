@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,53 +25,35 @@ import com.intellij.openapi.project.impl.convertors.Convertor34;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author mike
- */
-public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
-  public IdeaProjectStoreImpl(final ProjectImpl project) {
-    super(project);
+class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
+  public IdeaProjectStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
+    super(project, pathMacroManager);
   }
 
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject) {
+    return new ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject) {
       @Override
-      public StorageData createWsStorageData() {
-        return new IdeaWsStorageData(ROOT_TAG_NAME, myProject);
-      }
-
-      @Override
-      public StorageData createIprStorageData() {
-        return new IdeaIprStorageData(ROOT_TAG_NAME, myProject);
+      public StorageData createIprStorageData(@NotNull String filePath) {
+        return new IdeaIprStorageData(ROOT_TAG_NAME, myProject, filePath);
       }
     };
   }
 
-  private class IdeaWsStorageData extends WsStorageData {
-    public IdeaWsStorageData(final String rootElementName, final Project project) {
+  private static class IdeaIprStorageData extends IprStorageData {
+    private final String myFilePath;
+
+    public IdeaIprStorageData(@NotNull String rootElementName, @NotNull Project project, @NotNull String filePath) {
       super(rootElementName, project);
+
+      myFilePath = filePath;
     }
 
-    public IdeaWsStorageData(final WsStorageData storageData) {
+    private IdeaIprStorageData(@NotNull IdeaIprStorageData storageData) {
       super(storageData);
-    }
 
-    @Override
-    public StorageData clone() {
-      return new IdeaWsStorageData(this);
-    }
-  }
-
-  private class IdeaIprStorageData extends IprStorageData {
-
-    public IdeaIprStorageData(final String rootElementName, Project project) {
-      super(rootElementName, project);
-    }
-
-    public IdeaIprStorageData(final IprStorageData storageData) {
-      super(storageData);
+      myFilePath = storageData.myFilePath;
     }
 
     @Override
@@ -94,6 +76,5 @@ public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
         Convertor34.execute(root, myFilePath, getConversionProblemsStorage());
       }
     }
-
   }
 }

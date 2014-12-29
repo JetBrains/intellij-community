@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReferenc
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
@@ -44,23 +45,23 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool {
-
   private static final String NAMESPACE_LOCATION_IS_NEVER_USED = "Namespace location is never used";
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-
     return new XmlElementVisitor() {
-
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
+        PsiFile file = holder.getFile();
+        if (!(file instanceof XmlFile)) return;
+        
+        XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder((XmlFile)file);
+        if (refCountHolder == null) return;
         if (!attribute.isNamespaceDeclaration()) {
-          checkUnusedLocations(attribute, holder);
+          checkUnusedLocations(attribute, holder, refCountHolder);
           return;
         }
-        XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder(attribute);
-        if (refCountHolder == null) return;
 
         String namespace = attribute.getValue();
         String declaredPrefix = getDeclaredPrefix(attribute);
@@ -126,11 +127,8 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     pointerElement.setValue(trimmed);
   }
 
-  private static void checkUnusedLocations(XmlAttribute attribute, ProblemsHolder holder) {
+  private static void checkUnusedLocations(XmlAttribute attribute, ProblemsHolder holder, @NotNull XmlRefCountHolder refCountHolder) {
     if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(attribute.getNamespace())) {
-      XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder(attribute);
-      if (refCountHolder == null) return;
-
       if (XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT.equals(attribute.getLocalName())) {
         if (refCountHolder.isInUse("")) return;
         holder.registerProblem(attribute, NAMESPACE_LOCATION_IS_NEVER_USED, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
@@ -234,7 +232,6 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
   }
 
   public static class RemoveNamespaceDeclarationFix implements LocalQuickFix {
-
     public static final String NAME = "Remove unused namespace declaration";
 
     protected final String myPrefix;

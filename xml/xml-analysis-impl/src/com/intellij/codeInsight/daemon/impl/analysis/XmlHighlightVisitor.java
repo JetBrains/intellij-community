@@ -54,7 +54,6 @@ import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlUndefinedElementFixProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.AnchorReference;
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -469,14 +468,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     else {
       checkDuplicateAttribute(tag, attribute);
 
-      if (tag instanceof HtmlTag &&
-          attribute.getValueElement() == null &&
-          !HtmlUtil.isSingleHtmlAttribute(name)
-         ) {
-        final String localizedMessage = XmlErrorMessages.message("empty.attribute.is.not.allowed", name);
-        reportAttributeProblem(tag, name, attribute, localizedMessage);
-      }
-
       // we skip resolve of attribute references since there is separate check when taking attribute descriptors
       PsiReference[] attrRefs = attribute.getReferences();
       doCheckRefs(attribute, attrRefs, !attribute.getNamespacePrefix().isEmpty() ? 2 : 1);
@@ -527,8 +518,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
         if (extension.canBeDuplicated(tagAttribute)) continue; // multiple import attributes are allowed in jsp directive
 
+        final ASTNode attributeNode = SourceTreeToPsiMap.psiElementToTree(attribute);
+        assert attributeNode != null;
+        final ASTNode attributeNameNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attributeNode);
+        assert attributeNameNode != null;
         HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(getTagProblemInfoType(tag))
-          .range(XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)))
+          .range(attributeNameNode)
           .descriptionAndTooltip(XmlErrorMessages.message("duplicate.attribute", localName)).create();
         addToResults(highlightInfo);
 

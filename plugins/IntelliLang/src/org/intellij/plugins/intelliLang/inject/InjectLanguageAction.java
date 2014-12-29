@@ -66,7 +66,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction {
-  @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject Language/Reference";
+  @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject language or reference";
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
   public static final Key<Processor<PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
 

@@ -470,4 +470,184 @@ public class Seq<T> {
       ]
     )
   }
+
+  void "test overridden method is matched by overridden rule"() {
+    doTest(
+      initial: '''\
+class A {
+  public void test() {}
+  public void run() {}
+}
+
+class B extends A {
+
+  public void infer() {}
+
+  @Override
+  public void test() {}
+
+  private void fail() {}
+
+  @Override
+  public void run() {}
+
+  private void compute() {}
+
+  public void adjust() {}
+
+}
+''',
+      expected: '''\
+class A {
+  public void test() {}
+  public void run() {}
+}
+
+class B extends A {
+
+  public void infer() {}
+  public void adjust() {}
+  private void fail() {}
+  private void compute() {}
+  @Override
+  public void test() {}
+  @Override
+  public void run() {}
+
+}
+''',
+      rules: [rule(PUBLIC, METHOD), rule(PRIVATE, METHOD), rule(OVERRIDDEN)]
+    )
+  }
+
+  void "test overridden method is matched by method rule if no overridden rule found"() {
+    doTest(
+      initial: '''\
+class A {
+  public void test() {}
+  public void run() {}
+}
+
+class B extends A {
+
+  public void infer() {}
+
+  @Override
+  public void test() {}
+
+  private void fail() {}
+
+  @Override
+  public void run() {}
+
+  private void compute() {}
+
+  public void adjust() {}
+
+}
+''',
+      expected: '''\
+class A {
+  public void test() {}
+  public void run() {}
+}
+
+class B extends A {
+
+  public void infer() {}
+
+  @Override
+  public void test() {}
+  @Override
+  public void run() {}
+  public void adjust() {}
+  private void fail() {}
+  private void compute() {}
+
+}
+''',
+      rules: [rule(PUBLIC, METHOD), rule(PRIVATE, METHOD)]
+    )
+  }
+
+  void "test initializer block after fields"() {
+    doTest(
+      initial: '''\
+public class NewOneClass {
+
+    {
+        a = 1;
+    }
+
+    int a;
+
+    {
+        b = 5;
+    }
+
+    int b;
+
+}
+''',
+      expected: '''\
+public class NewOneClass {
+
+    int a;
+    int b;
+
+    {
+        a = 1;
+    }
+
+    {
+        b = 5;
+    }
+
+}
+''',
+      rules: [rule(FIELD), rule(INIT_BLOCK)]
+    )
+  }
+
+  void "test static initializer block"() {
+    doTest(
+      initial: '''\
+public class NewOneClass {
+
+    static {
+        a = 1;
+    }
+
+    static int a;
+
+    {
+        b = 5;
+    }
+
+    int b;
+
+}
+''',
+      expected: '''\
+public class NewOneClass {
+
+    static int a;
+
+    static {
+        a = 1;
+    }
+
+    int b;
+
+    {
+        b = 5;
+    }
+
+}
+''',
+      rules: [rule(STATIC, FIELD), rule(STATIC, INIT_BLOCK), rule(FIELD), rule(INIT_BLOCK)]
+    )
+  }
+
+
 }

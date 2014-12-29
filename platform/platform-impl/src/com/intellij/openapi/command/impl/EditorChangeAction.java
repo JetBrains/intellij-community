@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,15 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.impl.FileStatusManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.CompressionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.nio.charset.Charset;
-
-import static com.intellij.util.CompressionUtil.compressCharSequence;
-import static com.intellij.util.CompressionUtil.uncompressCharSequence;
 
 public class EditorChangeAction extends BasicUndoableAction {
   private final int myOffset;
@@ -40,7 +34,6 @@ public class EditorChangeAction extends BasicUndoableAction {
   private final Object myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
-  @NotNull private final Charset myCharset;
 
   public EditorChangeAction(DocumentEvent e) {
     this((DocumentEx)e.getDocument(), e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
@@ -48,23 +41,18 @@ public class EditorChangeAction extends BasicUndoableAction {
 
   public EditorChangeAction(@NotNull DocumentEx document,
                             int offset,
-                            CharSequence oldString,
-                            CharSequence newString,
+                            @NotNull CharSequence oldString,
+                            @NotNull CharSequence newString,
                             long oldTimeStamp) {
     super(document);
-
-    Charset charset = EncodingManager.getInstance().getEncoding(FileDocumentManager.getInstance().getFile(document), true);
-    if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
-    if (charset == null) charset = Charset.defaultCharset();
-    myCharset = charset;
-
     myOffset = offset;
-    myOldString = oldString == null ? "" : compressCharSequence(oldString, myCharset);
-    myNewString = newString == null ? "" : compressCharSequence(newString, myCharset);
+    myOldString = CompressionUtil.compressStringRawBytes(oldString);
+    myNewString = CompressionUtil.compressStringRawBytes(newString);
     myOldTimeStamp = oldTimeStamp;
     myNewTimeStamp = document.getModificationStamp();
   }
 
+  @Override
   public void undo() {
     DocumentUndoProvider.startDocumentUndo(getDocument());
     try {
@@ -79,13 +67,18 @@ public class EditorChangeAction extends BasicUndoableAction {
   }
 
   public void performUndo() {
-    exchangeStrings(uncompressCharSequence(myNewString, myCharset), uncompressCharSequence(myOldString, myCharset));
+    CharSequence oldString = CompressionUtil.uncompressStringRawBytes(myOldString);
+    CharSequence newString = CompressionUtil.uncompressStringRawBytes(myNewString);
+    exchangeStrings(newString, oldString);
   }
 
+  @Override
   public void redo() {
     DocumentUndoProvider.startDocumentUndo(getDocument());
     try {
-      exchangeStrings(uncompressCharSequence(myOldString, myCharset), uncompressCharSequence(myNewString, myCharset));
+      CharSequence oldString = CompressionUtil.uncompressStringRawBytes(myOldString);
+      CharSequence newString = CompressionUtil.uncompressStringRawBytes(myNewString);
+      exchangeStrings(oldString, newString);
     }
     finally {
       DocumentUndoProvider.finishDocumentUndo(getDocument());
@@ -94,7 +87,7 @@ public class EditorChangeAction extends BasicUndoableAction {
     refreshFileStatus();
   }
 
-  private void exchangeStrings(CharSequence newString, CharSequence oldString) {
+  private void exchangeStrings(@NotNull CharSequence newString, @NotNull CharSequence oldString) {
     DocumentEx d = getDocument();
 
     if (newString.length() > 0 && oldString.length() == 0) {
@@ -123,6 +116,7 @@ public class EditorChangeAction extends BasicUndoableAction {
     return (DocumentEx)getAffectedDocuments()[0].getDocument();
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "editor change: '" + myOldString + "' to '" + myNewString + "'" + " at: " + myOffset;

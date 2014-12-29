@@ -339,6 +339,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
   public String getAlternativeJrePath() {
     throw new UnsupportedOperationException();

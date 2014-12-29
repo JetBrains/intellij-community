@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,49 @@ package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.*;
+
 /**
-* @author nik
-*/
+ * @author nik
+ */
 public class BuildResult implements MessageHandler {
   private final List<BuildMessage> myErrorMessages;
   private final List<BuildMessage> myWarnMessages;
   private final List<BuildMessage> myInfoMessages;
   private boolean myUpToDate = true;
+  private String myMappingsDump;
 
   public BuildResult() {
     myErrorMessages = new ArrayList<BuildMessage>();
     myWarnMessages = new ArrayList<BuildMessage>();
     myInfoMessages = new ArrayList<BuildMessage>();
+  }
+
+  void storeMappingsDump(ProjectDescriptor pd) throws IOException {
+    final ByteArrayOutputStream dump = new ByteArrayOutputStream();
+
+    final PrintStream stream = new PrintStream(dump);
+    try {
+      pd.dataManager.getMappings().toStream(stream);
+    }
+    finally {
+      stream.close();
+    }
+
+    dump.close();
+    myMappingsDump = dump.toString();
   }
 
   @Override
@@ -58,12 +79,16 @@ public class BuildResult implements MessageHandler {
     }
   }
 
+  public String getMappingsDump() {
+    return myMappingsDump;
+  }
+
   public void assertUpToDate() {
-    Assert.assertTrue("Project sources weren't up to date", myUpToDate);
+    assertTrue("Project sources weren't up to date", myUpToDate);
   }
 
   public void assertFailed() {
-    Assert.assertFalse("Build not failed as expected", isSuccessful());
+    assertFalse("Build not failed as expected", isSuccessful());
   }
 
   public boolean isSuccessful() {
@@ -71,9 +96,12 @@ public class BuildResult implements MessageHandler {
   }
 
   public void assertSuccessful() {
-    final Function<BuildMessage,String> toStringFunction = StringUtil.createToStringFunction(BuildMessage.class);
-    Assert.assertTrue("Build failed. \nErrors:\n" + StringUtil.join(myErrorMessages, toStringFunction, "\n") +
-                      "\nInfo messages:\n" + StringUtil.join(myInfoMessages, toStringFunction, "\n"), isSuccessful());
+    if (!isSuccessful()) {
+      Function<BuildMessage, String> toStringFunction = StringUtil.createToStringFunction(BuildMessage.class);
+      fail("Build failed.\n" +
+           "Errors:\n" + StringUtil.join(myErrorMessages, toStringFunction, "\n") + "\n" +
+           "Info messages:\n" + StringUtil.join(myInfoMessages, toStringFunction, "\n"));
+    }
   }
 
   @NotNull

@@ -60,18 +60,21 @@ public class MigrateCvsRootAction extends AnAction implements DumbAware {
     final VirtualFile selectedFile = context.getSelectedFile();
     final Project project = context.getProject();
     final MigrateRootDialog dialog = new MigrateRootDialog(project, selectedFile);
-    dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.showAndGet()) {
+      return;
+    }
     final File directory = dialog.getSelectedDirectory();
     final boolean shouldReplaceAllRoots = dialog.shouldReplaceAllRoots();
     final List<File> rootFiles = new ArrayList<File>();
     try {
       if (shouldReplaceAllRoots) {
         collectRootFiles(directory, null, rootFiles);
-      } else {
+      }
+      else {
         collectRootFiles(directory, dialog.getCvsRoot(), rootFiles);
       }
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       LOG.error(e);
       return;
     }
@@ -91,7 +94,8 @@ public class MigrateCvsRootAction extends AnAction implements DumbAware {
       for (File file : rootFiles) {
         CvsVfsUtil.findFileByIoFile(file).refresh(true, false);
       }
-    } finally {
+    }
+    finally {
       token.finish();
     }
     StatusBar.Info.set("Finished migrating CVS root to " + cvsRoot, project);

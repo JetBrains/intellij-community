@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
 
 public class StreamUtil {
   private StreamUtil() {
@@ -64,7 +66,11 @@ public class StreamUtil {
     return new String(data);
   }
 
-  public static String readText(InputStream inputStream, String encoding) throws IOException {
+  public static String readText(InputStream inputStream, @NotNull String encoding) throws IOException {
+    final byte[] data = loadFromStream(inputStream);
+    return new String(data, encoding);
+  }
+  public static String readText(InputStream inputStream, @NotNull Charset encoding) throws IOException {
     final byte[] data = loadFromStream(inputStream);
     return new String(data, encoding);
   }

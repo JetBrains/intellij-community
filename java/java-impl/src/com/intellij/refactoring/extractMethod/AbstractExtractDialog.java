@@ -21,6 +21,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.VariableData;
 
 public interface AbstractExtractDialog {
@@ -31,6 +32,7 @@ public interface AbstractExtractDialog {
   String getVisibility();
   boolean isMakeStatic();
   boolean isChainedConstructor();
+  PsiType getReturnType();
 
   void show();
   boolean isOK();

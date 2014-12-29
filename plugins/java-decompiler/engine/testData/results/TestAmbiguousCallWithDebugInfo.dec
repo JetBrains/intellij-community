@@ -1,0 +1,42 @@
+package pkg;
+
+class TestAmbiguousCall {
+   void m1(RuntimeException e, String s) {
+   }
+
+   void m1(IllegalArgumentException e, String s) {
+   }
+
+   void test() {
+      IllegalArgumentException iae = new IllegalArgumentException();// 8
+      this.m1((RuntimeException)iae, "RE");// 9
+      this.m1(iae, "IAE");// 10
+      IllegalArgumentException re = new IllegalArgumentException();// 12
+      this.m1((RuntimeException)re, "RE");// 13
+      this.m1((IllegalArgumentException)re, "IAE");// 14
+   }
+}
+
+class 'pkg/TestAmbiguousCall' {
+   method 'test ()V' {
+      7      10
+      a      11
+      c      11
+      11      12
+      13      12
+      1d      13
+      20      14
+      22      14
+      27      15
+      2a      15
+      2c      15
+   }
+}
+
+Lines mapping:
+8 <-> 11
+9 <-> 12
+10 <-> 13
+12 <-> 14
+13 <-> 15
+14 <-> 16

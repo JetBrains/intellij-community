@@ -184,6 +184,9 @@ private layoutPlugins(layouts) {
   dir("plugins") {
     layouts.layoutPlugin("rest")
     layouts.layoutPlugin("python-rest")
+    layouts.layoutPlugin("ipnb") {
+      fileset(dir: "$pythonCommunityHome/ipnb/lib")
+    }
   }
 
   layouts.layoutCommunityPlugins(ch)

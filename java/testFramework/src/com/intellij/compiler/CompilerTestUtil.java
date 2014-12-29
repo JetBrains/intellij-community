@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -18,7 +19,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -26,10 +26,11 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.SystemProperties;
+import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.junit.Assert;
 
@@ -52,11 +53,10 @@ public class CompilerTestUtil {
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
   }
 
+  /**
+   * @deprecated not needed anymore
+   */
   public static void scanSourceRootsToRecompile(Project project) {
-    // need this to emulate project opening
-    final List<VirtualFile> roots = ProjectRootManager.getInstance(project).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
-    // todo: forced source roots scan is not needed?
-    //TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(project), roots, roots.size(), true);
   }
 
   public static void saveApplicationSettings() {
@@ -68,12 +68,12 @@ public class CompilerTestUtil {
     try {
       final File file;
       String componentName;
-      State state = appComponent.getClass().getAnnotation(State.class);
+      State state = StoreUtil.getStateSpec(appComponent.getClass());
       if (state != null) {
         componentName = state.name();
-        Storage lastStorage = state.storages()[state.storages().length - 1];
+        Storage storageToWrite = findNonDeprecated(state.storages());
         StateStorageManager storageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
-        file = new File(storageManager.expandMacros(lastStorage.file()));
+        file = new File(storageManager.expandMacros(storageToWrite.file()));
       }
       else if (appComponent instanceof ExportableApplicationComponent && appComponent instanceof NamedJDOMExternalizable) {
         componentName = ((ExportableApplicationComponent)appComponent).getComponentName();
@@ -95,16 +95,23 @@ public class CompilerTestUtil {
       root.addContent(element);
       Assert.assertTrue("Cannot create " + file, FileUtil.createIfDoesntExist(file));
       new WriteAction() {
+        @Override
         protected void run(@NotNull final Result result) throws IOException {
-          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-          Assert.assertNotNull(file.getAbsolutePath(), virtualFile);
-          //emulate save via 'saveSettings' so file won't be treated as changed externally
-          OutputStream stream = virtualFile.getOutputStream(new SaveSessionRequestor());
+          VfsRootAccess.allowRootAccess(file.getAbsolutePath());
           try {
-            JDOMUtil.writeParent(root, stream, SystemProperties.getLineSeparator());
+            VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+            Assert.assertNotNull(file.getAbsolutePath(), virtualFile);
+            //emulate save via 'saveSettings' so file won't be treated as changed externally
+            OutputStream stream = virtualFile.getOutputStream(new SaveSessionRequestor());
+            try {
+              JDOMUtil.writeParent(root, stream, SystemProperties.getLineSeparator());
+            }
+            finally {
+              stream.close();
+            }
           }
           finally {
-            stream.close();
+            VfsRootAccess.disallowRootAccess(file.getAbsolutePath());
           }
         }
       }.execute().throwException();
@@ -114,8 +121,18 @@ public class CompilerTestUtil {
     }
   }
 
+  private static Storage findNonDeprecated(Storage[] storages) {
+    for (Storage storage : storages) {
+      if (!storage.deprecated()) {
+        return storage;
+      }
+    }
+    throw new AssertionFailedError("All storages are deprecated");
+  }
+
   public static void enableExternalCompiler() {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         ApplicationManagerEx.getApplicationEx().doNotSave(false);
         JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
@@ -126,6 +143,7 @@ public class CompilerTestUtil {
 
   public static void disableExternalCompiler(final Project project) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         ApplicationManagerEx.getApplicationEx().doNotSave(true);
         Module[] modules = ModuleManager.getInstance(project).getModules();

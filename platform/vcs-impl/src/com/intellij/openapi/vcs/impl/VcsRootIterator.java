@@ -67,7 +67,7 @@ public class VcsRootIterator {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return !project.isDisposed() && vcsManager.isIgnored(file);
+        return project.isDisposed() ||  vcsManager.isIgnored(file);
       }
     });
   }

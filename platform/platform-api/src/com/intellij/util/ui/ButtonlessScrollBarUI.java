@@ -23,10 +23,14 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Alarm;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
@@ -39,30 +43,48 @@ import java.lang.reflect.Method;
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private static final Logger LOG = Logger.getInstance("#" + ButtonlessScrollBarUI.class.getName());
 
-  public static JBColor getGradientLightColor() {
-    return new JBColor(Gray._251, Gray._95);
+  protected JBColor getGradientLightColor() {
+    return jbColor(Gray._251, Gray._95);
   }
 
-  public static JBColor getGradientDarkColor() {
-    return new JBColor(Gray._215, Gray._80);
+  protected JBColor getGradientDarkColor() {
+    return jbColor(Gray._215, Gray._80);
   }
 
-  private static JBColor getGradientThumbBorderColor() {
-    return new JBColor(Gray._201, Gray._85);
+  private JBColor getGradientThumbBorderColor() {
+    return jbColor(Gray._201, Gray._85);
   }
 
-  public static JBColor getTrackBackground() {
+  public static JBColor getTrackBackgroundDefault() {
     return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
 
-  public static JBColor getTrackBorderColor() {
+  public static JBColor getTrackBorderColorDefault() {
     return new JBColor(Gray._230, UIUtil.getListBackground());
   }
 
-  private static final BasicStroke BORDER_STROKE = new BasicStroke();
+  private JBColor getTrackBackground() {
+    return jbColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
+  }
+  
+  private JBColor getTrackBorderColor() {
+    return jbColor(Gray._230, UIUtil.getListBackground());
+  }
 
-  private static int getAnimationColorShift() {
-    return UIUtil.isUnderDarcula() ? 20 : 40;
+  private static final BasicStroke BORDER_STROKE = new BasicStroke();
+  
+  private JBColor jbColor(final Color regular, final Color dark) {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return isDark() ? dark : regular;
+      }
+    });
+  }
+
+  private int getAnimationColorShift() {
+    return isDark() ? 20 : 40;
   }
 
   private final AdjustmentListener myAdjustmentListener;
@@ -85,17 +107,65 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   private NSScrollerHelper.Style myMacScrollerStyle;
   private Animator myMouseOverScrollbarExpandAnimator;
+  private Alarm myMacScrollbarFadeTimer;
   private Animator myMacScrollbarFadeAnimator;
   private double myMacScrollbarFadeLevel = 0;
   private boolean myMacScrollbarHidden;
- 
+
+  private ScrollbarRepaintCallback myRepaintCallback;
 
   protected ButtonlessScrollBarUI() {
     myAdjustmentListener = new AdjustmentListener() {
+      Point oldViewportPosition = null;
+      Dimension oldViewportDimension = null;
+
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
-        resetRegularThumbAnimator();
-        resetMacScrollbarFadeout();
+        JScrollPane scrollpane = (JScrollPane)SwingUtilities.getAncestorOfClass(JScrollPane.class, scrollbar);
+        JViewport viewport = scrollpane == null ? null : scrollpane.getViewport();
+
+        if (viewport == null) {
+          oldViewportPosition = null;
+          return;
+        }
+
+        boolean vertical = isVertical();
+        Point position = viewport.getViewPosition();
+        // we don't take viewport's size here since it often changes on scrollbar appearance.
+        // instead, we want to only react on visible area resizes
+        Dimension dimension = scrollpane.getSize();
+
+        boolean scrolled = false;
+        if (oldViewportPosition != null) {
+          int scrollH = position.x - oldViewportPosition.x;
+          int scrollV = position.y - oldViewportPosition.y;
+          scrolled = vertical && scrollH == 0 && scrollV != 0 ||
+                     !vertical && scrollV == 0 && scrollH != 0;
+        }
+        oldViewportPosition = position;
+
+        boolean resized = false;
+        if (oldViewportDimension != null) {
+          int resizedH = dimension.width - oldViewportDimension.width;
+          int resizedV = dimension.height - oldViewportDimension.height;
+          resized = vertical && resizedV != 0 || !vertical && resizedH != 0;
+        }
+        oldViewportDimension = dimension;
+        
+        if (scrolled) {
+          // hide the opposite scrollbar when user scrolls 
+          JScrollBar other = vertical ? scrollpane.getHorizontalScrollBar()
+                                      : scrollpane.getVerticalScrollBar();
+          ScrollBarUI otherUI = other == null ? null : other.getUI();
+          if (otherUI instanceof ButtonlessScrollBarUI) {
+            ((ButtonlessScrollBarUI)otherUI).startMacScrollbarFadeout(true);
+          }
+
+          restart();
+        }
+        else if (resized) {
+          startMacScrollbarFadeout();
+        }
       }
     };
 
@@ -105,7 +175,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         boolean inside = isOverThumb(e.getPoint());
         if (inside != myMouseIsOverThumb) {
           myMouseIsOverThumb = inside;
-          resetRegularThumbAnimator();
+          startRegularThumbAnimator();
         }
       }
     };
@@ -116,8 +186,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         // only restart animations when fading hasn't started yet
         if (myMacScrollbarFadeLevel == 0) {
           myMouseOverScrollbar = true;
-          resetMacScrollbarExpandAnimator();
-          resetMacScrollbarFadeout();
+          startMacScrollbarExpandAnimator();
+          startMacScrollbarFadeout();
         }
       }
       
@@ -125,13 +195,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       public void mouseExited(MouseEvent e) {
         if (myMouseIsOverThumb) {
           myMouseIsOverThumb = false;
-          resetRegularThumbAnimator();
+          startRegularThumbAnimator();
         }
 
         if (myMouseOverScrollbar) {
           myMouseOverScrollbar = false;
-          resetMacScrollbarExpandAnimator();
-          resetMacScrollbarFadeout();
+          startMacScrollbarExpandAnimator();
+          startMacScrollbarFadeout();
         }
       }
     };
@@ -140,13 +210,16 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
         if (e.getChanged() == scrollbar) {
+          // scrollbar is added to the screen resources
           if ((HierarchyEvent.DISPLAYABILITY_CHANGED & e.getChangeFlags()) != 0) {
             updateGlobalListeners(false);
           }
+        }
 
+        if (e.getChanged() == scrollbar.getParent()) {
+          // when scrollpane is shown first time, we 'blink' the scrollbars
           if ((HierarchyEvent.SHOWING_CHANGED & e.getChangeFlags()) != 0) {
-            resetRegularThumbAnimator();
-            resetMacScrollbarFadeout();
+            restart();
           }
         }
       }
@@ -161,7 +234,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
             Point loc = ((MouseEvent)event).getLocationOnScreen();
             SwingUtilities.convertPointFromScreen(loc, scrollpane);
             if (scrollpane.contains(loc) && !myMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
-              resetMacScrollbarFadeout();
+              startMacScrollbarFadeout();
             }
           }
         }
@@ -171,6 +244,19 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       @Override
       public void styleChanged() {
         updateMacScrollbarStyle();
+      }
+    };
+  }
+
+  @Override
+  protected ArrowButtonListener createArrowButtonListener() {
+    return new ArrowButtonListener() {
+      @Override
+      public void mousePressed(MouseEvent event) {
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent event) {
       }
     };
   }
@@ -188,11 +274,11 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     if (style != myMacScrollerStyle && scrollbar != null) {
       myMacScrollerStyle = style;
-      JScrollBar scrollBar = scrollbar;
-      uninstallUI(scrollBar);
-      installUI(scrollBar);
 
-      JScrollPane pane = JBScrollPane.findScrollPane(scrollBar);
+      updateStyleDefaults();
+      restart();
+      
+      JScrollPane pane = JBScrollPane.findScrollPane(scrollbar);
       if (pane != null) pane.revalidate();
     }
   }
@@ -209,6 +295,37 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       //installUI is not performed yet or uninstallUI has set almost every field to null. Just ignore it //IDEA-89674
     }
   }
+
+  /**
+   * This is overridden only to increase the invalid area.
+   * This ensures that whole track will be repainted in case of installed callback
+   */
+  @Override
+  protected void setThumbBounds(int x, int y, int width, int height) {
+    if (myRepaintCallback == null) {
+      super.setThumbBounds(x, y, width, height);
+    }
+    else {
+      // We want to repaint whole scrollbar even if thumb wasn't moved (on small scroll of a big panel)
+      // Even if scrollbar wasn't changed itself, myRepaintCallback could need repaint
+
+        /* Update thumbRect, and repaint the union of x,y,w,h and
+         * the old thumbRect.
+         */
+      int minX = Math.min(x, trackRect.x);
+      int minY = Math.min(y, trackRect.y);
+      int maxX = Math.max(x + width, trackRect.x + trackRect.width);
+      int maxY = Math.max(y + height, trackRect.y + trackRect.height);
+
+      thumbRect.setBounds(x, y, width, height);
+      scrollbar.repaint(minX, minY, maxX - minX, maxY - minY);
+
+      // Once there is API to determine the mouse location this will need
+      // to be changed.
+      setThumbRollover(false);
+    }
+  }
+
 
   @Override
   protected ModelListener createModelListener() {
@@ -229,7 +346,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return Math.max(0, incrButton.getHeight());
   }
 
-  private void resetRegularThumbAnimator() {
+  private void startRegularThumbAnimator() {
     if (isMacOverlayScrollbar()) return;
     
     myThumbFadeAnimator.reset();
@@ -242,7 +359,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  private void resetMacScrollbarExpandAnimator() {
+  private void startMacScrollbarExpandAnimator() {
     if (!isMacOverlayScrollbar()) return;
     
     if (myMouseOverScrollbarExpandLevel == 0) {
@@ -254,9 +371,22 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  private void resetMacScrollbarFadeout() {
+  private void startMacScrollbarFadeout() {
+    startMacScrollbarFadeout(false);
+  }
+
+  private void startMacScrollbarFadeout(boolean now) {
     if (!isMacOverlayScrollbar()) return;
-    
+
+    myMacScrollbarFadeTimer.cancelAllRequests();
+
+    if (now) {
+      if (!myMacScrollbarHidden && !myMacScrollbarFadeAnimator.isRunning()) {
+        myMacScrollbarFadeAnimator.resume();
+      }
+      return;
+    }
+
     myMacScrollbarFadeAnimator.suspend();
     myMacScrollbarFadeAnimator.reset();
     myMacScrollbarHidden = false;
@@ -267,7 +397,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       sb.repaint();
 
       if (!myMouseOverScrollbar && !sb.getValueIsAdjusting()) {
-        myMacScrollbarFadeAnimator.resume();
+        myMacScrollbarFadeTimer.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            myMacScrollbarFadeAnimator.resume();
+          }
+        }, 700, null);
       }
     }
   }
@@ -275,7 +410,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   public static BasicScrollBarUI createNormal() {
     return new ButtonlessScrollBarUI();
   }
-
 
   public static BasicScrollBarUI createTransparent() {
     return new ButtonlessScrollBarUI() {
@@ -287,16 +421,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   @Override
-  public void installUI(JComponent c) {
-    super.installUI(c);
-    scrollbar.setFocusable(false);
-    scrollbar.setOpaque(alwaysShowTrack());
-  }
-
-  @Override
   protected void installDefaults() {
-    myMacScrollerStyle = NSScrollerHelper.getScrollerStyle();
-    
     final int incGap = UIManager.getInt("ScrollBar.incrementButtonGap");
     final int decGap = UIManager.getInt("ScrollBar.decrementButtonGap");
     try {
@@ -308,6 +433,14 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       UIManager.put("ScrollBar.incrementButtonGap", incGap);
       UIManager.put("ScrollBar.decrementButtonGap", decGap);
     }
+
+    myMacScrollerStyle = NSScrollerHelper.getScrollerStyle();
+    scrollbar.setFocusable(false);
+    updateStyleDefaults();
+  }
+
+  private void updateStyleDefaults() {
+    scrollbar.setOpaque(alwaysShowTrack());
   }
 
   @Override
@@ -323,10 +456,14 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     scrollbar.addHierarchyListener(myHierarchyListener);
     updateGlobalListeners(false);
 
-    resetRegularThumbAnimator();
-    resetMacScrollbarFadeout();
+    restart();
   }
-  
+
+  private void restart() {
+    startRegularThumbAnimator();
+    startMacScrollbarFadeout();
+  }
+
   private static final Method setValueFrom = ReflectionUtil.getDeclaredMethod(TrackListener.class, "setValueFrom", MouseEvent.class);
   static {
     LOG.assertTrue(setValueFrom != null, "Cannot get TrackListener.setValueFrom method");
@@ -389,7 +526,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       public void paintNow(int frame, int totalFrames, int cycle) {
         myThumbFadeColorShift = getAnimationColorShift();
         if (frame > DELAY_FRAMES) {
-          myThumbFadeColorShift *= 1 - ((double)(frame - DELAY_FRAMES)) / ((double)(totalFrames - DELAY_FRAMES));
+          myThumbFadeColorShift *= 1 - (double)(frame - DELAY_FRAMES) / (double)(totalFrames - DELAY_FRAMES);
         }
 
         if (scrollbar != null) {
@@ -411,15 +548,16 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       public void paintNow(int frame, int totalFrames, int cycle) {
         int delay = totalFrames / 2;
         int frameAfterDelay = frame - delay;
-        
+
         if (frameAfterDelay > 0) {
           myMouseOverScrollbarExpandLevel = frameAfterDelay / (float)(totalFrames - delay);
           if (scrollbar != null) scrollbar.repaint();
         }
       }
-    };  
+    };
 
-    myMacScrollbarFadeAnimator = new Animator("Mac scrollbar fade animator", 30, 1000, false) {
+    myMacScrollbarFadeTimer = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    myMacScrollbarFadeAnimator = new Animator("Mac scrollbar fade animator", 30, 300, false) {
       @Override
       protected void paintCycleEnd() {
         myMacScrollbarHidden = true;
@@ -431,12 +569,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
       @Override
       public void paintNow(int frame, int totalFrames, int cycle) {
-        int delay = (int)(totalFrames / 1.5);
-        int frameAfterDelay = frame - delay;
-
-        if (frameAfterDelay > 0) {
-          myMacScrollbarFadeLevel = frameAfterDelay / (float)(totalFrames - delay);
-        }
+        myMacScrollbarFadeLevel = frame / (float)totalFrames;
         if (scrollbar != null) scrollbar.repaint();
       }
     };
@@ -468,6 +601,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     Disposer.dispose(myThumbFadeAnimator);
     Disposer.dispose(myMouseOverScrollbarExpandAnimator);
+    Disposer.dispose(myMacScrollbarFadeTimer);
     Disposer.dispose(myMacScrollbarFadeAnimator);
   }
 
@@ -499,10 +633,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   
   @Override
   public boolean contains(JComponent c, int x, int y) {
-    if (isMacOverlayScrollbar() && !alwaysShowTrack() && myMacScrollbarHidden) return false;  
+    if (isMacOverlayScrollbar() && !alwaysShowTrack() && !alwaysPaintThumb() && myMacScrollbarHidden) return false;  
     return super.contains(c, x, y);
   }
-
 
   @Override
   protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
@@ -546,6 +679,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     else {
       g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
     }
+
+    if (myRepaintCallback != null) {
+      myRepaintCallback.call(g);
+    }
   }
 
   @Override
@@ -569,22 +706,46 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private void paintMacThumb(Graphics g, Rectangle thumbBounds) {
-    if (myMacScrollbarHidden) return;
-    
+    if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) return;
+
     thumbBounds = getMacScrollBarBounds(thumbBounds, true);
     Graphics2D g2d = (Graphics2D)g;
     RenderingHints oldHints = g2d.getRenderingHints();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    g2d.setColor(adjustColor(new JBColor(Gray._0, Gray._128)));
+    JBColor baseColor = new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return !isDark() ? Gray._0 : Gray._128;
+      }
+    });
     
     int arc = Math.min(thumbBounds.width, thumbBounds.height);
-    g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
-    
+
+    if (alwaysPaintThumb()) {
+      //noinspection UseJBColor
+      g2d.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), isDark() ? 100 : 40));
+      g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+      //g2d.drawRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+    }
+
+    if (!myMacScrollbarHidden) {
+      g2d.setColor(adjustColor(baseColor));
+      g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+    }
     g2d.setRenderingHints(oldHints);
   }
+  
+  protected boolean isDark() {
+    return UIUtil.isUnderDarcula();
+  }
 
-  private Rectangle getMacScrollBarBounds(Rectangle baseBounds, boolean thumb) {
+  protected boolean alwaysPaintThumb() {
+    return alwaysShowTrack();
+  }
+
+  protected Rectangle getMacScrollBarBounds(Rectangle baseBounds, boolean thumb) {
     boolean vertical = isVertical();
 
     int borderSize = 2;
@@ -621,12 +782,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return new Rectangle(x, y, width, height);
   }
 
-  private void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
+  protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
     final boolean vertical = isVertical();
     int hGap = vertical ? 2 : 1;
     int vGap = vertical ? 1 : 2;
 
-    int w = adjustThumbWidth(thumbBounds.width - hGap * 2);
+    int w = thumbBounds.width - hGap * 2;
     int h = thumbBounds.height - vGap * 2;
 
     // leave one pixel between thumb and right or bottom edge
@@ -663,18 +824,15 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return true;
   }
 
-  protected int adjustThumbWidth(int width) {
-    return width;
-  }
-
   protected Color adjustColor(Color c) {
     if (isMacOverlayScrollbar()) {
-      int alpha = (int)((120 + (myMouseOverScrollbarExpandLevel * 20)) * (1 - myMacScrollbarFadeLevel));
+      int alpha = (int)((120 + myMouseOverScrollbarExpandLevel * 20) * (1 - myMacScrollbarFadeLevel));
+      //noinspection UseJBColor
       return new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha);
     }
     else {
       if (myThumbFadeColorShift == 0) return c;
-      final int sign = UIUtil.isUnderDarcula() ? -1 : 1;
+      final int sign = isDark() ? -1 : 1;
       return Gray.get(Math.max(0, Math.min(255, c.getRed() - sign * myThumbFadeColorShift)));
     }
   }
@@ -691,6 +849,18 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   @Override
   protected JButton createDecreaseButton(int orientation) {
     return new EmptyButton();
+  }
+
+  protected boolean isMacScrollbarHiddenAndXcodeLikeScrollbar() {
+    return myMacScrollbarHidden && isMacOverlayScrollbarSupported() && xcodeLikeScrollbar();
+  }
+
+  protected static boolean xcodeLikeScrollbar() {
+    return Registry.is("editor.xcode.like.scrollbar");
+  }
+
+  public void registerRepaintCallback(ScrollbarRepaintCallback callback) {
+    myRepaintCallback = callback;
   }
 
   private static class EmptyButton extends JButton {
@@ -713,5 +883,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     public Dimension getMinimumSize() {
       return getMaximumSize();
     }
+  }
+
+  public interface ScrollbarRepaintCallback {
+    void call(Graphics g);
   }
 }

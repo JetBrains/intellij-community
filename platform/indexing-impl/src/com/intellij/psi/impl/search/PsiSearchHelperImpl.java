@@ -66,6 +66,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
   private final PsiManagerEx myManager;
+  
+  public enum Options {
+    PROCESS_INJECTED_PSI, CASE_SENSITIVE_SEARCH, PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE
+  }
 
   @Override
   @NotNull
@@ -136,9 +140,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                          short searchContext,
                                          boolean caseSensitive,
                                          boolean processInjectedPsi) {
-    return processElementsWithWord(processor, searchScope, text, searchContext, caseSensitive, processInjectedPsi, null);
-  }
+    final EnumSet<Options> options = EnumSet.of(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE);
+    if (caseSensitive) options.add(Options.CASE_SENSITIVE_SEARCH);
+    if (processInjectedPsi) options.add(Options.PROCESS_INJECTED_PSI);
 
+    return processElementsWithWord(processor, searchScope, text, searchContext, options, null);
+  }
+  
   @NotNull
   @Override
   public AsyncFuture<Boolean> processElementsWithWordAsync(@NotNull final TextOccurenceProcessor processor,
@@ -146,34 +154,37 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                            @NotNull final String text,
                                                            final short searchContext,
                                                            final boolean caseSensitively) {
-    boolean result =
-      processElementsWithWord(processor, searchScope, text, searchContext, caseSensitively, shouldProcessInjectedPsi(searchScope), null);
+    boolean result = processElementsWithWord(processor, searchScope, text, searchContext, caseSensitively, shouldProcessInjectedPsi(searchScope));
     return AsyncUtil.wrapBoolean(result);
   }
 
-  private boolean processElementsWithWord(@NotNull final TextOccurenceProcessor processor,
-                                          @NotNull SearchScope searchScope,
-                                          @NotNull final String text,
-                                          final short searchContext,
-                                          final boolean caseSensitively,
-                                          boolean processInjectedPsi,
-                                          @Nullable String containerName) {
+  public boolean processElementsWithWord(@NotNull final TextOccurenceProcessor processor,
+                                         @NotNull SearchScope searchScope,
+                                         @NotNull final String text,
+                                         final short searchContext,
+                                         @NotNull EnumSet<Options> options,
+                                         @Nullable String containerName) {
     if (text.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
     final ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (searchScope instanceof GlobalSearchScope) {
-      StringSearcher searcher = new StringSearcher(text, caseSensitively, true, searchContext == UsageSearchContext.IN_STRINGS);
+      StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
+                                                   searchContext == UsageSearchContext.IN_STRINGS,
+                                                   options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
 
       return processElementsWithTextInGlobalScope(processor,
                                                   (GlobalSearchScope)searchScope,
                                                   searcher,
-                                                  searchContext, caseSensitively, containerName, progress, processInjectedPsi);
+                                                  searchContext, options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, progress,
+                                                  options.contains(Options.PROCESS_INJECTED_PSI));
     }
     LocalSearchScope scope = (LocalSearchScope)searchScope;
     PsiElement[] scopeElements = scope.getScope();
-    final StringSearcher searcher = new StringSearcher(text, caseSensitively, true, searchContext == UsageSearchContext.IN_STRINGS);
-    Processor<PsiElement> localProcessor = localProcessor(processor, progress, processInjectedPsi, searcher);
+    final StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
+                                                       searchContext == UsageSearchContext.IN_STRINGS,
+                                                       options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
+    Processor<PsiElement> localProcessor = localProcessor(processor, progress, options.contains(Options.PROCESS_INJECTED_PSI), searcher);
     return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, true, true, localProcessor);
   }
 
@@ -580,13 +591,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @Override
-  public boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor) {
-    return AsyncUtil.get(processRequestsAsync(request, processor));
-  }
-
-  @NotNull
-  @Override
-  public AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
+  public boolean processRequests(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
     final Map<SearchRequestCollector, Processor<PsiReference>> collectors = ContainerUtil.newHashMap();
     collectors.put(collector, processor);
 
@@ -615,7 +620,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
     while(appendCollectorsFromQueryRequests(collectors));
-    return AsyncUtil.wrapBoolean(result);
+    return result;
+  }
+
+  @NotNull
+  @Override
+  public AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
+    return AsyncUtil.wrapBoolean(processRequests(collector, processor));
   }
 
   private static boolean appendCollectorsFromQueryRequests(@NotNull Map<SearchRequestCollector, Processor<PsiReference>> collectors) {
@@ -872,7 +883,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           registerRequest(locals, primitive, processor);
         }
         else {
-          final List<String> words = StringUtil.getWordsInStringLongestFirst(primitive.word);
+          final List<String> words = getWordsToSearch(primitive.word);
           final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size() * 2);
           for (String word : words) {
             key.add(new IdIndexEntry(word, primitive.caseSensitive));
@@ -904,6 +915,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
+  private static List<String> getWordsToSearch(String word) {
+    List<String> words = StringUtil.getWordsInStringLongestFirst(word);
+    if (!words.isEmpty()) {
+      return words;
+    }
+    String trimmed = word.trim();
+    if (StringUtil.isNotEmpty(trimmed)) {
+      return Collections.singletonList(trimmed);
+    }
+    return Collections.emptyList();
+  }
+
   private static void registerRequest(@NotNull Collection<RequestWithProcessor> collection,
                                       @NotNull PsiSearchRequest primitive,
                                       @NotNull Processor<PsiReference> processor) {
@@ -918,8 +941,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private boolean processSingleRequest(@NotNull PsiSearchRequest single, @NotNull Processor<PsiReference> consumer) {
-    return processElementsWithWord(adaptProcessor(single, consumer), single.searchScope, single.word, single.searchContext,
-                                   single.caseSensitive, shouldProcessInjectedPsi(single.searchScope), single.containerName);
+    final EnumSet<Options> options = EnumSet.of(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE);
+    if (single.caseSensitive) options.add(Options.CASE_SENSITIVE_SEARCH);
+    if (shouldProcessInjectedPsi(single.searchScope)) options.add(Options.PROCESS_INJECTED_PSI);
+    
+    return processElementsWithWord(adaptProcessor(single, consumer), single.searchScope, single.word, single.searchContext, options, 
+                                   single.containerName);
   }
 
   @NotNull
@@ -972,7 +999,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   private static List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
-    List<String> words = StringUtil.getWordsInStringLongestFirst(name);
+    List<String> words = getWordsToSearch(name);
     if (words.isEmpty()) return Collections.emptyList();
     List<IdIndexEntry> keys = new ArrayList<IdIndexEntry>(words.size());
     for (String word : words) {

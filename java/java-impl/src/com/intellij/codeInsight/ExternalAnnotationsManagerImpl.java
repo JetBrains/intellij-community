@@ -637,8 +637,10 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   private void commitChanges(XmlFile xmlFile) {
     sortItems(xmlFile);
-    Document doc = PsiDocumentManager.getInstance(myPsiManager.getProject()).getDocument(xmlFile);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
+    Document doc = documentManager.getDocument(xmlFile);
     assert doc != null;
+    documentManager.doPostponedOperationsAndUnblockDocument(doc);
     FileDocumentManager.getInstance().saveDocument(doc);
   }
 

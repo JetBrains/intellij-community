@@ -39,3 +39,18 @@ public class UnnecessaryUnboxing {
       return i.intValue();
     }
 }
+
+
+class B23 {
+    public void set(double value) {}
+}
+class A23 extends B23 {
+    public void set(Object value) {}
+    private A23() {
+        Object o = 2d;
+        set(((Double) o).doubleValue());
+
+        B23 b23 = new B23();
+        b23.set(((Double) o).doubleValue());
+    }
+}

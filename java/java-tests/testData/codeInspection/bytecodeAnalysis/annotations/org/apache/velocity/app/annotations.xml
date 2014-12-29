@@ -8,6 +8,11 @@
   <item name="org.apache.velocity.app.FieldMethodizer void inspect(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.app.Velocity Velocity()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.app.Velocity boolean evaluate(org.apache.velocity.context.Context, java.io.Writer, java.lang.String, java.io.InputStream) 3">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

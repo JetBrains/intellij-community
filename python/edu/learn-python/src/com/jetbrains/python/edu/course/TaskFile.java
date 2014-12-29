@@ -97,6 +97,7 @@ public class TaskFile implements Stateful {
   }
 
   public void drawAllWindows(Editor editor) {
+    editor.getMarkupModel().removeAllHighlighters();
     for (TaskWindow taskWindow : taskWindows) {
       taskWindow.draw(editor, false, false);
     }
@@ -128,20 +129,6 @@ public class TaskFile implements Stateful {
   }
 
   /**
-   * Updates task window lines
-   *
-   * @param startLine lines greater than this line and including this line will be updated
-   * @param change    change to be added to line numbers
-   */
-  public void incrementLines(int startLine, int change) {
-    for (TaskWindow taskTaskWindow : taskWindows) {
-      if (taskTaskWindow.getLine() >= startLine) {
-        taskTaskWindow.setLine(taskTaskWindow.getLine() + change);
-      }
-    }
-  }
-
-  /**
    * Initializes state of task file
    *
    * @param task task which task file belongs to
@@ -165,36 +152,6 @@ public class TaskFile implements Stateful {
     myIndex = index;
   }
 
-  /**
-   * Updates windows in specific line
-   *
-   * @param lineChange         change in line number
-   * @param line               line to be updated
-   * @param newEndOffsetInLine distance from line start to end of inserted fragment
-   * @param oldEndOffsetInLine distance from line start to end of changed fragment
-   */
-  public void updateLine(int lineChange, int line, int newEndOffsetInLine, int oldEndOffsetInLine) {
-    for (TaskWindow w : taskWindows) {
-      if ((w.getLine() == line) && (w.getStart() > oldEndOffsetInLine)) {
-        int distance = w.getStart() - oldEndOffsetInLine;
-        boolean coveredByPrevTW = false;
-        int prevIndex = w.getIndex() - 1;
-        if (StudyUtils.indexIsValid(prevIndex, taskWindows)) {
-          TaskWindow prevTW = taskWindows.get(prevIndex);
-          if (prevTW.getLine() == line) {
-            int endOffset = prevTW.getStart() + prevTW.getLength();
-            if (endOffset >= newEndOffsetInLine) {
-              coveredByPrevTW = true;
-            }
-          }
-        }
-        if (lineChange != 0 || newEndOffsetInLine <= w.getStart() || coveredByPrevTW) {
-          w.setStart(distance + newEndOffsetInLine);
-          w.setLine(line + lineChange);
-        }
-      }
-    }
-  }
 
   public static void copy(@NotNull final TaskFile source, @NotNull final TaskFile target) {
     List<TaskWindow> sourceTaskWindows = source.getTaskWindows();
@@ -236,16 +193,13 @@ public class TaskFile implements Stateful {
     }
   }
 
-  private void navigateToTaskWindow(@NotNull final Editor editor, @NotNull final TaskWindow firstTaskWindow) {
-    if (!firstTaskWindow.isValid(editor.getDocument())) {
+  public void navigateToTaskWindow(@NotNull final Editor editor, @NotNull final TaskWindow taskWindow) {
+    if (!taskWindow.isValid(editor.getDocument())) {
       return;
     }
-    mySelectedTaskWindow = firstTaskWindow;
-    LogicalPosition taskWindowStart = new LogicalPosition(firstTaskWindow.getLine(), firstTaskWindow.getStart());
+    mySelectedTaskWindow = taskWindow;
+    LogicalPosition taskWindowStart = new LogicalPosition(taskWindow.getLine(), taskWindow.getStart());
     editor.getCaretModel().moveToLogicalPosition(taskWindowStart);
-    int startOffset = firstTaskWindow.getRealStartOffset(editor.getDocument());
-    int endOffset = startOffset + firstTaskWindow.getLength();
-    editor.getSelectionModel().setSelection(startOffset, endOffset);
   }
 
   public void navigateToFirstFailedTaskWindow(@NotNull final Editor editor) {

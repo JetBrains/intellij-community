@@ -184,8 +184,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         };
       } else {
         return new ValueIterator<Value>() {
-          private Map.Entry<Value, Object> current;
-          final Iterator<Map.Entry<Value, Object>> iterator = ((THashMap<Value, Object>)myInputIdMapping).entrySet().iterator();
+          private Value current;
+          private Object currentValue;
+          private final THashMap<Value, Object> myMapping = ((THashMap<Value, Object>)myInputIdMapping);
+          private final Iterator<Value> iterator = myMapping.keySet().iterator();
 
           @Override
           public boolean hasNext() {
@@ -194,7 +196,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
           @Override
           public Value next() {
-            Value next = (current = iterator.next()).getKey();
+            current = iterator.next();
+            Value next = current;
+            currentValue = myMapping.get(next);
             if (next == myNullValue) next = null;
             return next;
           }
@@ -219,7 +223,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           @Override
           public Object getFileSetObject() {
             if (current == null) throw new IllegalStateException();
-            return current.getValue();
+            return currentValue;
           }
         };
       }

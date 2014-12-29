@@ -27,12 +27,11 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
-import com.intellij.util.ContentsUtil;
+import com.intellij.util.ContentUtilEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -63,8 +62,10 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     myRepositoryPath = repositoryPath;
     myVcs = vcs;
     myRefresherI = refresherI;
-    myBuffer = new BufferedListConsumer<VcsFileRevision>(5, new Consumer<List<VcsFileRevision>>() {
+    Consumer<List<VcsFileRevision>> sessionRefresher = new Consumer<List<VcsFileRevision>>() {
       public void consume(List<VcsFileRevision> vcsFileRevisions) {
+        // TODO: Logic should be revised to we could just append some revisions to history panel instead of creating and showing new history
+        // TODO: session
         mySession.getRevisionList().addAll(vcsFileRevisions);
         final VcsHistorySession copy = mySession.copyWithCachedRevision();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -73,7 +74,16 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
           }
         });
       }
-    }, 1000);
+    };
+    myBuffer = new BufferedListConsumer<VcsFileRevision>(5, sessionRefresher, 1000) {
+      @Override
+      protected void invokeConsumer(@NotNull Runnable consumerRunnable) {
+        // Do not invoke in arbitrary background thread as due to parallel execution this could lead to cases when invokeLater() (from
+        // sessionRefresher) is scheduled at first for history session with (as an example) 10 revisions (new buffered list) and then with
+        // 5 revisions (previous buffered list). And so incorrect UI is shown to the user.
+        consumerRunnable.run();
+      }
+    };
   }
 
   public void acceptRevision(VcsFileRevision revision) {
@@ -116,11 +126,11 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
 
         myFileHistoryPanel = resetHistoryPanel();
-        Content content = ContentFactory.SERVICE.getInstance().createContent(myFileHistoryPanel, actionName, true);
-        ContentsUtil.addOrReplaceContent(contentManager, content, true);
-
         ToolWindow toolWindow = ToolWindowManager.getInstance(myVcs.getProject()).getToolWindow(ToolWindowId.VCS);
         assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
+
+        ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), myFileHistoryPanel, "History", myFileHistoryPanel.getVirtualFile().getName(), myRefresherI.isFirstTime());
+
         if (myRefresherI.isFirstTime()) {
           toolWindow.activate(null);
         }

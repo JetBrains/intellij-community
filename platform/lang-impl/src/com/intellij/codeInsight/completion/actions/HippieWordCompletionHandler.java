@@ -55,8 +55,8 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    int offset = editor.getCaretModel().getOffset();
-    if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    if (editor.isViewer() || editor.getDocument().getRangeGuard(caretOffset, caretOffset) != null) {
       editor.getDocument().fireReadOnlyModificationAttempt();
       CodeInsightUtilBase.showReadOnlyViewWarning(editor);
       return;
@@ -87,8 +87,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, file, fromOtherFiles, false);
     if (nextVariant == null) return;
 
-    int replacementEnd = data.startOffset + data.myWordUnderCursor.length();
-    editor.getDocument().replaceString(data.startOffset, replacementEnd, nextVariant.variant);
+    editor.getDocument().replaceString(data.startOffset, caretOffset, nextVariant.variant);
     editor.getCaretModel().moveToOffset(data.startOffset + nextVariant.variant.length());
     completionState.lastProposedVariant = nextVariant;
     completionState.fromOtherFiles = nextVariant.editor != editor;

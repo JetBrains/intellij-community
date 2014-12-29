@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,19 +29,22 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CodeSmellDetector;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.vcsUtil.Rethrow;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -111,23 +114,24 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
 
-    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
       @Override
-      public void run() {
+      public void run(@NotNull ProgressIndicator progress) {
         try {
-          @Nullable final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
           for (int i = 0; i < filesToCheck.size(); i++) {
+            if (progress.isCanceled()) throw new ProcessCanceledException();
 
-            if (progress != null && progress.isCanceled()) throw new ProcessCanceledException();
+            final VirtualFile file = filesToCheck.get(i);
 
-            VirtualFile file = filesToCheck.get(i);
+            progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
+            progress.setFraction((double)i / (double)filesToCheck.size());
 
-            if (progress != null) {
-              progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
-              progress.setFraction((double)i / (double)filesToCheck.size());
-            }
-
-            final PsiFile psiFile = manager.findFile(file);
+            final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+              @Override
+              public PsiFile compute() {
+                return manager.findFile(file);
+              }
+            });
             if (psiFile != null) {
               final Document document = fileManager.getDocument(file);
               if (document != null) {
@@ -145,9 +149,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
           myException = e;
         }
       }
-    }, VcsBundle.message("checking.code.smells.progress.title"), true, myProject);
-
-    if (!completed) throw new ProcessCanceledException();
+    });
     if (myException != null) {
       Rethrow.reThrowRuntime(myException);
     }
@@ -156,15 +158,32 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   }
 
   @NotNull
-  private List<CodeSmellInfo> findCodeSmells(@NotNull PsiFile psiFile, final ProgressIndicator progress, @NotNull Document document) {
+  private List<CodeSmellInfo> findCodeSmells(@NotNull final PsiFile psiFile, @NotNull final ProgressIndicator progress, @NotNull final Document document) {
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
 
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-    List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, progress);
-    collectErrorsAndWarnings(infos, result, document);
+    final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    final DaemonProgressIndicator daemonIndicator = new DaemonProgressIndicator();
+    ((ProgressIndicatorEx)progress).addStateDelegate(new AbstractProgressIndicatorExBase(){
+      @Override
+      public void cancel() {
+        super.cancel();
+        daemonIndicator.cancel();
+      }
+    });
+    ProgressManager.getInstance().runProcess(new Runnable() {
+      @Override
+      public void run() {
+        List<HighlightInfo> infos = ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
+          @Override
+          public List<HighlightInfo> compute() {
+            return codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
+          }
+        });
+        collectErrorsAndWarnings(infos, result, document);
+      }
+    }, daemonIndicator);
 
     return result;
-
   }
 
   private void collectErrorsAndWarnings(final Collection<HighlightInfo> highlights,

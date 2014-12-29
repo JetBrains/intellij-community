@@ -196,9 +196,10 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     HgRepoInfo currentInfo = readRepoInfo();
     // update only if something changed!!!   if update every time - new log will be refreshed every time, too.
     // Then blinking and do not work properly;
-    if (!Disposer.isDisposed(getProject()) && !currentInfo.equals(myInfo)) {
+    Project project = getProject();
+    if (!project.isDisposed() && !currentInfo.equals(myInfo)) {
       myInfo = currentInfo;
-      HgCommandResult branchCommandResult = new HgBranchesCommand(getProject(), getRoot()).collectBranches();
+      HgCommandResult branchCommandResult = new HgBranchesCommand(project, getRoot()).collectBranches();
       if (branchCommandResult == null || branchCommandResult.getExitValue() != 0) {
         LOG.warn("Could not collect hg opened branches."); // hg executable is not valid
         myOpenedBranches = myInfo.getBranches().keySet();
@@ -206,7 +207,9 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
       else {
         myOpenedBranches = HgBranchesCommand.collectNames(branchCommandResult);
       }
-      getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
+      if (!project.isDisposed()) {
+        project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
+      }
     }
   }
 

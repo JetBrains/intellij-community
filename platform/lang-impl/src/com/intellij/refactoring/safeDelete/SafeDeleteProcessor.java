@@ -42,8 +42,8 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
-import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
@@ -138,7 +138,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           final NonCodeUsageSearchInfo filter = delegate.findUsages(element, myElements, usages);
           if (filter != null) {
             for(PsiElement nonCodeUsageElement: filter.getElementsToSearch()) {
-              addNonCodeUsages(nonCodeUsageElement, usages, filter.getInsideDeletedCondition());
+              addNonCodeUsages(nonCodeUsageElement, usages, filter.getInsideDeletedCondition(), mySearchNonJava,
+                               mySearchInCommentsAndStrings);
             }
           }
           handled = true;
@@ -147,7 +148,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
       if (!handled && element instanceof PsiNamedElement) {
         findGenericElementUsages(element, usages, myElements);
-        addNonCodeUsages(element, usages, getDefaultInsideDeletedCondition(myElements));
+        addNonCodeUsages(element, usages, getDefaultInsideDeletedCondition(myElements), mySearchNonJava, mySearchInCommentsAndStrings);
       }
     }
     final UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
@@ -210,10 +211,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
       else {
         UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(ArrayUtil.toStringArray(conflicts), myProject);
-        dialog.show();
-        if (!dialog.isOK()) {
+        if (!dialog.showAndGet()) {
           final int exitCode = dialog.getExitCode();
-          prepareSuccessful(); // dialog is always dismissed
+          prepareSuccessful(); // dialog is always dismissed;
           if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
             showUsages(usages);
           }
@@ -422,7 +422,11 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
 
-  private void addNonCodeUsages(final PsiElement element, List<UsageInfo> usages, @Nullable final Condition<PsiElement> insideElements) {
+  public static void addNonCodeUsages(final PsiElement element,
+                                      List<UsageInfo> usages,
+                                      @Nullable final Condition<PsiElement> insideElements,
+                                      boolean searchNonJava,
+                                      boolean searchInCommentsAndStrings) {
     UsageInfoFactory nonCodeUsageFactory = new UsageInfoFactory() {
       @Override
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
@@ -432,13 +436,13 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         return new SafeDeleteReferenceSimpleDeleteUsageInfo(usage, element, startOffset, endOffset, true, false);
       }
     };
-    if (mySearchInCommentsAndStrings) {
+    if (searchInCommentsAndStrings) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
       TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, usages, nonCodeUsageFactory);
     }
-    if (mySearchNonJava) {
+    if (searchNonJava) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA);
-      TextOccurrencesUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
+      TextOccurrencesUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(element.getProject()), usages, nonCodeUsageFactory);
     }
   }
 

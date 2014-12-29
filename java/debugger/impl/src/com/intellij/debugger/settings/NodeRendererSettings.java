@@ -17,7 +17,6 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -41,7 +40,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.InternalIterator;
-import com.intellij.util.ui.ColorIcon;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -82,6 +79,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private final HexRenderer myHexRenderer = new HexRenderer();
   private final ToStringRenderer myToStringRenderer = new ToStringRenderer();
   private final CompoundReferenceRenderer myColorRenderer;
+  private final CompoundReferenceRenderer myImageRenderer;
+  private final CompoundReferenceRenderer myIconRenderer;
   // alternate collections
   private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
     createCompoundReferenceRenderer(
@@ -111,11 +110,15 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   
   public NodeRendererSettings() {
     myColorRenderer = new ColorObjectRenderer(this);
+    myImageRenderer = new ImageObjectRenderer(this);
+    myIconRenderer = new IconObjectRenderer(this);
     // default configuration
     myHexRenderer.setEnabled(false);
     myToStringRenderer.setEnabled(true);
     setAlternateCollectionViewsEnabled(true);
     myColorRenderer.setEnabled(true);
+    myImageRenderer.setEnabled(true);
+    myIconRenderer.setEnabled(true);
   }
   
   public static NodeRendererSettings getInstance() {
@@ -282,6 +285,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     });
     Collections.addAll(allRenderers, myAlternateCollectionRenderers);
     allRenderers.add(myColorRenderer);
+    allRenderers.add(myImageRenderer);
+    allRenderers.add(myIconRenderer);
     allRenderers.add(myToStringRenderer);
     allRenderers.add(myArrayRenderer);
     allRenderers.add(myClassRenderer);
@@ -557,44 +562,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     private static String getDescriptorLabel(final ValueDescriptorImpl keyDescriptor) {
       return keyDescriptor == null? "null" : keyDescriptor.getValueLabel();
-    }
-  }
-
-  private static class ColorObjectRenderer extends CompoundReferenceRenderer {
-
-    public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
-      super(rendererSettings, "Color", null, null);
-      setClassName("java.awt.Color");
-    }
-
-    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-      final ToStringRenderer toStringRenderer = myRendererSettings.getToStringRenderer();
-      if (toStringRenderer.isEnabled() && DebuggerManagerEx.getInstanceEx(evaluationContext.getProject()).getContext().isEvaluationPossible()) {
-        return toStringRenderer.calcLabel(descriptor, evaluationContext, listener);
-      }
-      return super.calcLabel(descriptor, evaluationContext, listener);
-    }
-
-    public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-      final Value value = descriptor.getValue();
-      if (value instanceof ObjectReference) {
-        try {
-          final ObjectReference objRef = (ObjectReference)value;
-          final ReferenceType refType = objRef.referenceType();
-          final Field valueField = refType.fieldByName("value");
-          if (valueField != null) {
-            final Value rgbValue = objRef.getValue(valueField);
-            if (rgbValue instanceof IntegerValue) {
-              final Color color = new Color(((IntegerValue)rgbValue).value(), true);
-              return new ColorIcon(16, 12, color, true);
-            }
-          }
-        }
-        catch (Exception e) {
-          throw new EvaluateException(e.getMessage(), e);
-        }
-      }
-      return null;
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package com.siyeh.ig.jdk;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -38,7 +37,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AutoUnboxingInspection extends BaseInspection {
 
@@ -297,19 +299,13 @@ public class AutoUnboxingInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new AutoUnboxingVisitor();
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    PsiFile psiFile = holder.getFile();
-    if (psiFile.getLanguage() != JavaLanguage.INSTANCE || !PsiUtil.isLanguageLevel5OrHigher(psiFile)) {
-      return new PsiElementVisitor() {
-      };
-    }
-    return super.buildVisitor(holder, isOnTheFly);
+  public BaseInspectionVisitor buildVisitor() {
+    return new AutoUnboxingVisitor();
   }
 
   private static class AutoUnboxingVisitor extends BaseInspectionVisitor {
@@ -340,6 +336,11 @@ public class AutoUnboxingInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
+      final PsiMethod method = expression.resolveMethod();
+      if (method != null &&
+          AnnotationUtil.isAnnotated(method, Collections.singletonList( "java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+        return;
+      }
       checkExpression(expression);
     }
 

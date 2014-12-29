@@ -185,7 +185,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     if (changeLists.size() == 0) {
       if (myContent != null) {
         myContentManager.removeContent(myContent);
-        myContentManager.selectContent("Local");
+        myContentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES);
       }
       myContent = null;
     }

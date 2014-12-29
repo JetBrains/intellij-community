@@ -16,6 +16,7 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.find.FindProgressIndicator;
+import com.intellij.find.FindSettings;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
@@ -281,34 +282,30 @@ public class XPathEvalAction extends XPathAction {
 
             @Override
             protected void execute() {
-                config.OPEN_NEW_TAB = false;
                 XPathEvalAction.this.execute(editor);
-            }
-
-            @Override
-            protected Object saveState() {
-                return config.OPEN_NEW_TAB;
-            }
-
-            @Override
-            protected void restoreState(Object o) {
-                if (!config.OPEN_NEW_TAB) config.OPEN_NEW_TAB = Boolean.TRUE.equals(o);
             }
         });
     }
 
     public static void showUsageView(@NotNull final Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
         final UsageViewPresentation presentation = new UsageViewPresentation();
-        presentation.setTargetsNodeText("Expression");
+        presentation.setTargetsNodeText("XPath Expression");
         presentation.setCodeUsages(false);
-        presentation.setCodeUsagesString("Result");
+        presentation.setCodeUsagesString("Found Matches");
         presentation.setNonCodeUsagesString("Result");
         presentation.setUsagesString("XPath Result");
         presentation.setUsagesWord("match");
-        presentation.setTabText("XPath");
+        final ItemPresentation targetPresentation = usageTarget.getPresentation();
+        if (targetPresentation != null) {
+          presentation
+            .setTabText(StringUtil.shortenTextWithEllipsis("XPath '" + targetPresentation.getPresentableText() + '\'', 60, 0, true));
+        }
+        else {
+          presentation.setTabText("XPath");
+        }
         presentation.setScopeText("XML Files");
 
-        presentation.setOpenInNewTab(XPathAppComponent.getInstance().getConfig().OPEN_NEW_TAB);
+        presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
         processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
@@ -556,12 +553,7 @@ public class XPathEvalAction extends XPathAction {
             Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
-                    final Object o = saveState();
-                    try {
-                        execute();
-                    } finally {
-                        restoreState(o);
-                    }
+                    execute();
                 }
 
             };
@@ -569,9 +561,5 @@ public class XPathEvalAction extends XPathAction {
         }
 
         protected abstract void execute();
-
-        protected abstract Object saveState();
-
-        protected abstract void restoreState(Object o);
     }
 }

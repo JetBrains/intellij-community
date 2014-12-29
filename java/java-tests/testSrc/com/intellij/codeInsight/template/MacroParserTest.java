@@ -52,4 +52,10 @@ public class MacroParserTest extends LightIdeaTestCase {
     assertTrue(parameters [0] instanceof ConstantNode);
     assertTrue(parameters [1] instanceof ConstantNode);
   }
+
+  public void testSlashEscape() {
+    Expression e = MacroParser.parse("\"test\\\\test\\n\\t\\f\\x\"");
+    Result result = assertInstanceOf(e, ConstantNode.class).calculateResult(null);
+    assertEquals("test\\test\n\t\fx", assertInstanceOf(result, TextResult.class).getText());
+  }
 }

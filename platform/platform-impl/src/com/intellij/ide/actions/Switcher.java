@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -102,49 +103,59 @@ public class Switcher extends AnAction implements DumbAware {
   private static final CustomShortcutSet TW_SHORTCUT;
 
   static {
+    Shortcut recentFiles = ArrayUtil.getFirstElement(KeymapManager.getInstance().getActiveKeymap().getShortcuts("RecentFiles"));
     List<Shortcut> shortcuts = ContainerUtil.newArrayList();
     for (char ch = '0'; ch <= '9'; ch++) {
       shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
     }
     for (char ch = 'A'; ch <= 'Z'; ch++) {
-      shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
+      Shortcut shortcut = CustomShortcutSet.fromString("control " + ch).getShortcuts()[0];
+      if (shortcut.equals(recentFiles)) continue;
+      shortcuts.add(shortcut);
     }
     TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
 
-
-      IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-        @Override
-        public boolean dispatch(AWTEvent event) {
-          ToolWindow tw;
-          if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
-            final KeyEvent keyEvent = (KeyEvent)event;
-            if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
-              SwingUtilities.invokeLater(CHECKER);
-            }
-            else if (event.getID() == KEY_PRESSED
-                     && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
-              SWITCHER.myPopup.closeOk(null);
-              tw.activate(null, true, true);
-            }
+    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
+      @Override
+      public boolean dispatch(AWTEvent event) {
+        ToolWindow tw;
+        if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
+          final KeyEvent keyEvent = (KeyEvent)event;
+          if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
+            SwingUtilities.invokeLater(CHECKER);
           }
-          return false;
+          else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
+                   && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
+            SWITCHER.myPopup.closeOk(null);
+            tw.activate(null, true, true);
+          }
         }
-      }, null);
-
+        return false;
+      }
+    }, null);
   }
 
   @NonNls private static final String SWITCHER_TITLE = "Switcher";
+  @NonNls private static InputEvent INIT_EVENT;
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getProject() != null);
+  }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
 
+    boolean isNewSwitcher = false;
       synchronized (Switcher.class) {
+        INIT_EVENT = e.getInputEvent();
         if (SWITCHER != null && SWITCHER.isPinnedMode()) {
           SWITCHER.cancel();
           SWITCHER = null;
         }
         if (SWITCHER == null) {
+          isNewSwitcher = true;
           SWITCHER = createAndShowSwitcher(project, SWITCHER_TITLE, false);
           FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
         }
@@ -156,7 +167,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (e.getInputEvent().isShiftDown()) {
         SWITCHER.goBack();
       } else {
-        if (!FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
+       if (isNewSwitcher && !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
           SWITCHER.files.setSelectedIndex(0);
         } else {
           SWITCHER.goForward();
@@ -329,8 +340,10 @@ public class Switcher extends AnAction implements DumbAware {
       final ArrayList<FileInfo> filesData = new ArrayList<FileInfo>();
       final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
       if (!pinned) {
-        for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
-          editors.add(new FileInfo(pair.first, pair.second));
+        if (UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
+          for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
+            editors.add(new FileInfo(pair.first, pair.second, project));
+          }
         }
       }
       if (editors.size() < 2 || isPinnedMode()) {
@@ -347,7 +360,7 @@ public class Switcher extends AnAction implements DumbAware {
             continue;
           }
 
-          final FileInfo info = new FileInfo(recentFiles[i], null);
+          final FileInfo info = new FileInfo(recentFiles[i], null, project);
           boolean add = true;
           if (isPinnedMode()) {
             for (FileInfo fileInfo : filesData) {
@@ -540,15 +553,7 @@ public class Switcher extends AnAction implements DumbAware {
             changeSelection();
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this, myPopup);
-
         new AnAction(null, null, null) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            //suppress all actions to activate a toolwindow : IDEA-71277
-          }
-        }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
-        new AnAction(null, null, null) {
-
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
@@ -559,6 +564,12 @@ public class Switcher extends AnAction implements DumbAware {
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
+      new AnAction(null, null, null) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          //suppress all actions to activate a toolwindow : IDEA-71277
+        }
+      }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
 
       final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
@@ -1128,17 +1139,13 @@ public class Switcher extends AnAction implements DumbAware {
       if (value instanceof FileInfo) {
         Project project = mySwitcherPanel.project;
         VirtualFile virtualFile = ((FileInfo)value).getFirst();
-        String name = virtualFile instanceof VirtualFilePathWrapper && ((VirtualFilePathWrapper)virtualFile).enforcePresentableName()
-                      ? ((VirtualFilePathWrapper)virtualFile).getPresentablePath()
-                      : UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
-                        ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, virtualFile)
-                        : virtualFile.getName();
+        String renderedName = ((FileInfo)value).getNameForRendering();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, project));
 
         FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
         open = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
         TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
-        append(name, SimpleTextAttributes.fromTextAttributes(attributes));
+        append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
 
         // calc color the same way editor tabs do this, i.e. including extensions
         Color color = EditorTabbedContainer.calcTabColor(project, virtualFile);
@@ -1152,8 +1159,23 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   private static class FileInfo extends Pair<VirtualFile, EditorWindow> {
-    public FileInfo(VirtualFile first, EditorWindow second) {
+    private final Project myProject;
+    private String myNameForRendering;
+
+    public FileInfo(VirtualFile first, EditorWindow second, Project project) {
       super(first, second);
+      myProject = project;
+    }
+
+    String getNameForRendering() {
+      if (myNameForRendering == null) {
+        myNameForRendering = first instanceof VirtualFilePathWrapper && ((VirtualFilePathWrapper)first).enforcePresentableName()
+          ? ((VirtualFilePathWrapper)first).getPresentablePath()
+          : UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
+            ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, first)
+            : first.getName();
+      }
+      return myNameForRendering;
     }
   }
 

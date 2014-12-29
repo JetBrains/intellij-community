@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis.data;
 
+import com.intellij.codeInspection.bytecodeAnalysis.ExpectContract;
 import com.intellij.codeInspection.bytecodeAnalysis.ExpectNotNull;
 
 /**
@@ -26,6 +27,7 @@ public class Test03 {
     return toString();
   }
 
+  @ExpectContract(pure = true)
   @Override
   @ExpectNotNull
   public String toString() {

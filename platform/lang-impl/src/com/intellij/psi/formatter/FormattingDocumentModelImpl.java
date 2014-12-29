@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,15 +64,15 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
       if (PsiDocumentManager.getInstance(file.getProject()).isUncommited(document)) {
         LOG.error("Document is uncommitted");
       }
-      if (!file.textMatches(document.getImmutableCharSequence())) {
-        LOG.error("Document and psi file texts should be equal: file " + file);
+      if (file.getTextLength() != document.getTextLength()) {
+        LOG.error("Document and psi file texts should be equal: " +
+                  file + " file length = " + file.getTextLength() + ", document length = " + document.getTextLength());
       }
       return new FormattingDocumentModelImpl(document, file);
     }
     else {
-      return new FormattingDocumentModelImpl(new DocumentImpl(file.getText()), file);
+      return new FormattingDocumentModelImpl(new DocumentImpl(file.getViewProvider().getContents()), file);
     }
-
   }
 
   @Nullable
@@ -81,7 +81,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return null;
     if (PsiDocumentManager.getInstance(project).isUncommited(document)) return null;
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject())).getSynchronizer();
+    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).getSynchronizer();
     if (synchronizer.isDocumentAffectedByTransactions(document)) return null;
 
     return document;

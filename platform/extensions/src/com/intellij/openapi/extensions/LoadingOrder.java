@@ -56,8 +56,8 @@ public class LoadingOrder {
   @NonNls private final String myName; // for debug only
   private final boolean myFirst;
   private final boolean myLast;
-  private final Set<String> myBefore = new HashSet<String>(2);
-  private final Set<String> myAfter = new HashSet<String>(2);
+  private final Set<String> myBefore = new LinkedHashSet<String>(2);
+  private final Set<String> myAfter = new LinkedHashSet<String>(2);
 
   private LoadingOrder() {
     myName = "ANY";
@@ -123,11 +123,10 @@ public class LoadingOrder {
 
   public static void sort(@NotNull final List<? extends Orderable> orderable) {
     // our graph is pretty sparse so do benefit from the fact
-    final Map<String, Orderable> map = ContainerUtil.newHashMap();
-    final Map<Orderable, LoadingOrder> cachedMap = ContainerUtil.newHashMap();
-    final Set<Orderable> first = ContainerUtil.newHashSet(1);
-    final Set<Orderable> hasBefore = ContainerUtil.newHashSet(orderable.size());
-
+    final Map<String, Orderable> map = ContainerUtil.newLinkedHashMap();
+    final Map<Orderable, LoadingOrder> cachedMap = ContainerUtil.newLinkedHashMap();
+    final Set<Orderable> first = new LinkedHashSet<Orderable>(1);
+    final Set<Orderable> hasBefore = new LinkedHashSet<Orderable>(orderable.size());
     for (Orderable o : orderable) {
       String id = o.getOrderId();
       if (StringUtil.isNotEmpty(id)) map.put(id, o);

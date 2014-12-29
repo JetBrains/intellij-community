@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,7 +193,7 @@ public class PyOverrideImplementUtil {
     if (anno != null) {
       pyFunctionBuilder.annotation(anno.getText());
     }
-    final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getProject(), baseFunction.getContainingFile());
     final List<PyParameter> baseParams = PyUtil.getParameters(baseFunction, context);
     for (PyParameter parameter : baseParams) {
       pyFunctionBuilder.parameter(parameter.getText());
@@ -222,7 +222,7 @@ public class PyOverrideImplementUtil {
       }
     }
 
-    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName()) || implement) {
+    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName()) || raisesNotImplementedError(baseFunction) || implement) {
       statementBody.append(PyNames.PASS);
     }
     else {
@@ -263,6 +263,29 @@ public class PyOverrideImplementUtil {
     return pyFunctionBuilder;
   }
 
+  public static boolean raisesNotImplementedError(@NotNull PyFunction function) {
+    for (PyStatement statement : function.getStatementList().getStatements()) {
+      if (!(statement instanceof PyRaiseStatement)) {
+        continue;
+      }
+      final PyRaiseStatement raiseStatement = (PyRaiseStatement)statement;
+      final PyExpression[] expressions = raiseStatement.getExpressions();
+      if (expressions.length > 0) {
+        final PyExpression firstExpression = expressions[0];
+        if (firstExpression instanceof PyCallExpression) {
+          final PyExpression callee = ((PyCallExpression)firstExpression).getCallee();
+          if (callee != null && callee.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
+            return true;
+          }
+        }
+        else if (firstExpression.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // TODO find a better place for this logic
   private static String getReferenceText(PyClass fromClass, PyClass toClass) {
     final PyExpression[] superClassExpressions = fromClass.getSuperClassExpressions();
@@ -281,7 +304,7 @@ public class PyOverrideImplementUtil {
   public static Collection<PyFunction> getAllSuperFunctions(@NotNull final PyClass pyClass) {
     final Map<String, PyFunction> superFunctions = new HashMap<String, PyFunction>();
     for (PyClass aClass : pyClass.getAncestorClasses()) {
-      for (PyFunction function : aClass.getMethods()) {
+      for (PyFunction function : aClass.getMethods(false)) {
         if (!superFunctions.containsKey(function.getName())) {
           superFunctions.put(function.getName(), function);
         }

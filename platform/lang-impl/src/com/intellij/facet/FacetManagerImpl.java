@@ -16,7 +16,10 @@
 
 package com.intellij.facet;
 
-import com.intellij.facet.impl.*;
+import com.intellij.facet.impl.FacetLoadingErrorDescription;
+import com.intellij.facet.impl.FacetModelBase;
+import com.intellij.facet.impl.FacetModelImpl;
+import com.intellij.facet.impl.FacetUtil;
 import com.intellij.facet.impl.invalid.InvalidFacet;
 import com.intellij.facet.impl.invalid.InvalidFacetConfiguration;
 import com.intellij.facet.impl.invalid.InvalidFacetManager;
@@ -25,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
@@ -48,12 +52,8 @@ import java.util.*;
  * @author nik
  */
 @State(
-    name = FacetManagerImpl.COMPONENT_NAME,
-    storages = {
-      @Storage(
-        file = "$MODULE_FILE$"
-      )
-    }
+  name = FacetManagerImpl.COMPONENT_NAME,
+  storages = @Storage(file = StoragePathMacros.MODULE_FILE)
 )
 public class FacetManagerImpl extends FacetManager implements ModuleComponent, PersistentStateComponent<FacetManagerState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");

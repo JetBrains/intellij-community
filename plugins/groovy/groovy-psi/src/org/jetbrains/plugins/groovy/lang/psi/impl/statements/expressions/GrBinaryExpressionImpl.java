@@ -18,14 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -38,21 +37,51 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionTypeCalculators;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryFacade;
 
+import java.util.List;
+
 /**
  * @author ilyas
  */
 public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements GrBinaryExpression {
 
   private static final ResolveCache.PolyVariantResolver<GrBinaryExpressionImpl> RESOLVER = new ResolveCache.PolyVariantResolver<GrBinaryExpressionImpl>() {
+
+    @NotNull
+    private List<GroovyResolveResult[]> resolveSubExpressions(@NotNull GrBinaryExpression expression, final boolean incompleteCode) {
+      // to avoid SOE, resolve all binary sub-expressions starting from the innermost
+      final List<GroovyResolveResult[]> subExpressions = new SmartList<GroovyResolveResult[]>();
+      expression.getLeftOperand().accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (element instanceof GrBinaryExpression) {
+            super.visitElement(element);
+          }
+        }
+
+        @Override
+        protected void elementFinished(@NotNull PsiElement element) {
+          if (element instanceof GrBinaryExpressionImpl) {
+            subExpressions.add(((GrBinaryExpressionImpl)element).multiResolve(incompleteCode));
+          }
+        }
+      });
+      return subExpressions;
+    }
+
     @NotNull
     @Override
     public GroovyResolveResult[] resolve(@NotNull GrBinaryExpressionImpl binary, boolean incompleteCode) {
+      List<GroovyResolveResult[]> subExpressions = resolveSubExpressions(binary, incompleteCode);
+
       final IElementType opType = binary.getOperationTokenType();
 
       final PsiType lType = binary.getLeftType();
       if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
       PsiType rType = binary.getRightType();
+
+      subExpressions.clear(); // hold resolve results until here to avoid them being gc-ed
+
       return TypesUtil.getOverloadedOperatorCandidates(lType, opType, binary, new PsiType[]{rType}, incompleteCode);
     }
   };

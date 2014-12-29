@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
+import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Comparator;
 
 /**
  * @author nik
@@ -66,7 +68,18 @@ public abstract class ServerType<C extends ServerConfiguration> {
    * @return a non-null instance of {@link DebugConnector} if the server supports deployment in debug mode
    */
   @Nullable
-  public DebugConnector<?,?> createDebugConnector() {
+  public DebugConnector<?, ?> createDebugConnector() {
     return null;
+  }
+
+  @NotNull
+  public Comparator<Deployment> getDeploymentComparator() {
+    return new Comparator<Deployment>() {
+
+      @Override
+      public int compare(Deployment o1, Deployment o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    };
   }
 }

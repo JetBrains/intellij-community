@@ -48,7 +48,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     setNavigationElement(navigationElement);
   }
 
-  public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type, Language language) {
+  public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type, @NotNull Language language) {
     super(manager, language);
     myName = name;
     myType = type;
@@ -151,10 +151,5 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
 
   public void setOriginInfo(@Nullable String originInfo) {
     myOriginInfo = originInfo;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return super.equals(obj);
   }
 }

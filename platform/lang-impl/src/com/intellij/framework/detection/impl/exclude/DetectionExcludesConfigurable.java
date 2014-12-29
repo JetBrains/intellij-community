@@ -256,9 +256,6 @@ public class DetectionExcludesConfigurable implements Configurable {
 
   @Nullable
   private ExcludesConfigurationState computeState() {
-    if (myModel.getItems().isEmpty() && myEnabledDetectionCheckBox.isSelected()) {
-      return null;
-    }
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
     state.setDetectionEnabled(myEnabledDetectionCheckBox.isSelected());
     for (ExcludeListItem item : myModel.getItems()) {
@@ -278,22 +275,20 @@ public class DetectionExcludesConfigurable implements Configurable {
   public void reset() {
     myModel.clear();
     final ExcludesConfigurationState state = myConfiguration.getActualState();
-    myEnabledDetectionCheckBox.setSelected(state == null || state.isDetectionEnabled());
-    if (state != null) {
-      for (String typeId : state.getFrameworkTypes()) {
-        final FrameworkType frameworkType = FrameworkDetectorRegistry.getInstance().findFrameworkType(typeId);
-        myModel.add(frameworkType != null ? new ValidExcludeListItem(frameworkType, null) : new InvalidExcludeListItem(typeId, null));
+    myEnabledDetectionCheckBox.setSelected(state.isDetectionEnabled());
+    for (String typeId : state.getFrameworkTypes()) {
+      final FrameworkType frameworkType = FrameworkDetectorRegistry.getInstance().findFrameworkType(typeId);
+      myModel.add(frameworkType != null ? new ValidExcludeListItem(frameworkType, null) : new InvalidExcludeListItem(typeId, null));
+    }
+    for (ExcludedFileState fileState : state.getFiles()) {
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(fileState.getUrl());
+      final String typeId = fileState.getFrameworkType();
+      if (typeId == null) {
+        myModel.add(file != null ? new ValidExcludeListItem(null, file) : new InvalidExcludeListItem(null, fileState.getUrl()));
       }
-      for (ExcludedFileState fileState : state.getFiles()) {
-        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(fileState.getUrl());
-        final String typeId = fileState.getFrameworkType();
-        if (typeId == null) {
-          myModel.add(file != null ? new ValidExcludeListItem(null, file) : new InvalidExcludeListItem(null, fileState.getUrl()));
-        }
-        else {
-          final FrameworkType frameworkType = FrameworkDetectorRegistry.getInstance().findFrameworkType(typeId);
-          myModel.add(frameworkType != null && file != null? new ValidExcludeListItem(frameworkType, file) : new InvalidExcludeListItem(typeId, fileState.getUrl()));
-        }
+      else {
+        final FrameworkType frameworkType = FrameworkDetectorRegistry.getInstance().findFrameworkType(typeId);
+        myModel.add(frameworkType != null && file != null? new ValidExcludeListItem(frameworkType, file) : new InvalidExcludeListItem(typeId, fileState.getUrl()));
       }
     }
   }

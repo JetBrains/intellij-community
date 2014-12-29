@@ -118,7 +118,10 @@ public class ReassignVariableUtil {
     };
     PsiElement scope = declaration;
     while (scope != null) {
-      if (scope instanceof PsiFile || scope instanceof PsiMethod || scope instanceof PsiClassInitializer) break;
+      if (scope instanceof PsiFile || 
+          scope instanceof PsiMethod || 
+          scope instanceof PsiLambdaExpression ||
+          scope instanceof PsiClassInitializer) break;
       scope = scope.getParent();
     }
     if (scope == null) return proc;

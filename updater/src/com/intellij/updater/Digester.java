@@ -22,14 +22,14 @@ public class Digester {
   }
 
   public static long digestFile(File file) throws IOException {
-    if (Utils.isZipFile(file.getName())) {
+    if (!Runner.ZIP_AS_BINARY && Utils.isZipFile(file.getName())) {
       ZipFile zipFile;
       try {
         zipFile = new ZipFile(file);
       }
       catch (IOException e) {
         Runner.printStackTrace(e);
-        return doDigestRegularFile(file);
+        return digestRegularFile(file);
       }
 
       try {
@@ -39,10 +39,10 @@ public class Digester {
         zipFile.close();
       }
     }
-    return doDigestRegularFile(file);
+    return digestRegularFile(file);
   }
 
-  private static long doDigestRegularFile(File file) throws IOException {
+  public static long digestRegularFile(File file) throws IOException {
     InputStream in = new BufferedInputStream(new FileInputStream(file));
     try {
       return digestStream(in);

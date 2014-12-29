@@ -20,6 +20,35 @@ import com.siyeh.ig.LightInspectionTestCase;
 
 public class UnusedImportInspectionTest extends LightInspectionTestCase {
 
+  public void testInnerClassImport() {
+    addEnvironmentClass("package pkg;" +
+                        "interface Action {" +
+                        "    interface SuperInnerInterface {}" +
+                        "}");
+    addEnvironmentClass("package pkg;" +
+                        "class ConceteAction implements Action {" +
+                        "    interface SubInnerInterface {}" +
+                        "}");
+    doTest("package pkg;" +
+           "import pkg.Action.SuperInnerInterface;" +
+           "import pkg.ConceteAction.*;" +
+           "class Main {" +
+           "    SubInnerInterface innerClass;" +
+           "    void k()  {" +
+           "        new SuperInnerInterface() { };" +
+           "    }" +
+           "}");
+    doTest("package pkg;" +
+           "/*Unused import 'import pkg.Action.SuperInnerInterface;'*/import pkg.Action.SuperInnerInterface;/**/" +
+           "import static pkg.ConceteAction.*;" +
+           "class Main {" +
+           "    SubInnerInterface innerClass;" +
+           "    void k()  {" +
+           "        new SuperInnerInterface() { };" +
+           "    }" +
+           "}");
+  }
+
   public void testShadowedImports() {
     addEnvironmentClass("package java.util; public class HashTable {}");
     addEnvironmentClass("package java.util; public class List {}");
@@ -52,6 +81,15 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "        System.out.println(\"\"+PI);" +
            "    }" +
            "}");
+  }
+
+  public void testExactStaticImport() {
+    doTest("package a;\n" +
+           "import static java.lang.Math.abs;\n" +
+           "/*Unused import 'import static java.lang.Math.max;'*/import static java.lang.Math.max;/**/\n" +
+           "class Main {{\n" +
+           "  abs(1);\n" +
+           "}}");
   }
 
   public void testStaticImportOnDemandConflict1() {
@@ -177,6 +215,15 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
     addEnvironmentClass("package a; public class List {}");
     doTest("package a;" +
            "import java.util.List;" +
+           "import java.util.*;" +
+           "class X {{" +
+           "  List list = new ArrayList();" +
+           "}}");
+  }
+
+  public void testNoConflictInSamePackage() {
+    doTest("package a;" +
+           "/*Unused import 'import java.util.List;'*/import java.util.List;/**/" +
            "import java.util.*;" +
            "class X {{" +
            "  List list = new ArrayList();" +

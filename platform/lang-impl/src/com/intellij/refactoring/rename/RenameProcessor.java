@@ -42,13 +42,16 @@ import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.RelatedUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +89,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myPrimaryElement = element;
 
     assertNonCompileElement(element);
+    //assertValidName(element, newName);
 
     mySearchInComments = isSearchInComments;
     mySearchTextOccurrences = isSearchTextOccurrences;
@@ -150,14 +154,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
       final RefactoringEventData conflictData = new RefactoringEventData();
       conflictData.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts.values());
-      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected("refactoring.rename", conflictData);
+      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+        .conflictsDetected("refactoring.rename", conflictData);
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new ConflictsInTestsException(conflicts.values());
       }
       ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
-      conflictsDialog.show();
-      if (!conflictsDialog.isOK()) {
+      if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
       }
@@ -204,7 +208,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
+    final Set<UsageInfo> usagesSet = ContainerUtil.newLinkedHashSet(usagesIn);
     usagesSet.addAll(variableUsages);
     final List<UnresolvableCollisionUsageInfo> conflictUsages = RenameUtil.removeConflictUsages(usagesSet);
     if (conflictUsages != null) {
@@ -218,6 +222,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   public static void assertNonCompileElement(PsiElement element) {
     LOG.assertTrue(!(element instanceof PsiCompiledElement), element);
+  }
+  
+  private void assertValidName(PsiElement element, String newName) {
+    LOG.assertTrue(RenameUtil.isValidName(myProject, element, newName), "element: " + element + ", newName: " + newName);
   }
 
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
@@ -245,15 +253,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean showAutomaticRenamingDialog(AutomaticRenamer automaticVariableRenamer) {
-    if (ApplicationManager.getApplication().isUnitTestMode()){
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (PsiNamedElement element : automaticVariableRenamer.getElements()) {
         automaticVariableRenamer.setRename(element, automaticVariableRenamer.getNewName(element));
       }
       return true;
     }
     final AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(myProject, automaticVariableRenamer);
-    dialog.show();
-    return dialog.isOK();
+    return dialog.showAndGet();
   }
 
   public void addElement(@NotNull PsiElement element, @NotNull String newName) {

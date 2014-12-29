@@ -33,6 +33,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.literals"),"\"'_String\"",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.all.expressions.of.some.type"),"'_Expression:[exprtype( SomeType )]",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.sample.method.invokation.with.constant.argument"),"Integer.parseInt('_a:[script( \"com.intellij.psi.util.PsiUtil.isConstantExpression(__context__)\" )])",EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.references"), "'_Qualifier::'methodName", EXPRESSION_TYPE),
 
       // Operators
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.block.dcls"),"{\n  '_Type+ 'Var+ = '_Init*;\n  '_BlockStatements*;\n}",OPERATOR_TYPE),
@@ -90,7 +91,7 @@ class JavaPredefinedConfigurations {
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.implementors.of.interface.within.hierarchy"),
-        "class 'Class implements 'Interface:* {}",
+        "class 'Class implements '_Interface:* {}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
@@ -165,6 +166,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.casts"),"( '_Type <'_GenericArgument+> ) '_Expr", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.type.var.substitutions.in.intanceof.with.generic.types"),"'_Expr instanceof '_Type <'Substitutions+> ", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.variables.of.generic.types"),"'_Type <'_GenericArgument+>  'Var = 'Init?;", GENERICS_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.diamond.operators"), "new 'ClassName<>('_Argument*)", GENERICS_TYPE),
 
       // Add comments and metadata
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments"),"/* 'CommentContent */", METADATA_TYPE),
@@ -174,6 +176,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.tags"),"/** @'Tag+ '_TagValue* */", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.xdoclet.metadata"),"/** @'Tag \n  '_Property+\n*/", METADATA_TYPE),
 
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotations"), "@'_Annotation", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.class"),
                                "@'_Annotation( )\n" +
                                "class 'Class {}", METADATA_TYPE),

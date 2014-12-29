@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
@@ -61,6 +60,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     }
   }
 
+  @Override
   public void reset() {
     super.reset();
     myErrorPanel.getValidatorsManager().validate();
@@ -73,6 +73,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     return myComponent;
   }
 
+  @Override
   public JComponent createComponent() {
     final JComponent editorComponent;
     if (myEditorTabs.length > 1) {
@@ -83,7 +84,8 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
         tabbedPane.addTab(editorTab.getDisplayName(), c);
       }
       tabbedPane.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
+        @Override
+        public void stateChanged(@NotNull ChangeEvent e) {
           myEditorTabs[mySelectedTabIndex].onTabLeaving();
           mySelectedTabIndex = tabbedPane.getSelectedIndex();
           onTabSelected(myEditorTabs[mySelectedTabIndex]);
@@ -99,10 +101,13 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     else {
       editorComponent = new JPanel();
     }
+
+    final JComponent errorComponent = myErrorPanel.getComponent();
+    UIUtil.addInsets(errorComponent, new Insets(0, 5, 5, 0));
+
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(BorderLayout.CENTER, editorComponent);
-    panel.add(BorderLayout.SOUTH, myErrorPanel.getComponent());
-
+    panel.add(BorderLayout.SOUTH, errorComponent);
     return panel;
   }
 
@@ -122,6 +127,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     }
   }
 
+  @Override
   public void disposeUIResources() {
     Disposer.dispose(myDisposable);
     myErrorPanel.disposeUIResources();
@@ -161,10 +167,12 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     }
   }
 
+  @Override
   public FacetEditorTab[] getEditorTabs() {
     return myEditorTabs;
   }
 
+  @Override
   public <T extends FacetEditorTab> T getEditorTab(@NotNull final Class<T> aClass) {
     for (FacetEditorTab editorTab : myEditorTabs) {
       if (aClass.isInstance(editorTab)) {

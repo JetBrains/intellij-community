@@ -21,17 +21,17 @@ import com.google.common.net.InternetDomainName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.PortField;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,16 +59,16 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JLabel myPortNumberLabel;
   private JBRadioButton myAutoDetectProxyRb;
   private JBRadioButton myUseHTTPProxyRb;
-  private JBLabel mySystemProxyDefined;
+  private JLabel mySystemProxyDefined;
   private JBRadioButton myNoProxyRb;
   private JBRadioButton myHTTP;
   private JBRadioButton mySocks;
   private JButton myClearPasswordsButton;
   private JLabel myErrorLabel;
   private JButton myCheckButton;
-  private JBLabel myOtherWarning;
+  private JLabel myOtherWarning;
   private JLabel myProxyExceptionsLabel;
-  private JTextArea myProxyExceptions;
+  private RawCommandLineEditor myProxyExceptions;
   private JLabel myNoProxyForLabel;
   private JCheckBox myPacUrlCheckBox;
   private JTextField myPacUrlTextField;
@@ -106,14 +106,11 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     proxyTypeGroup.add(mySocks);
     myHTTP.setSelected(true);
 
-    myProxyExceptions.setBorder(UIUtil.getTextFieldBorder());
-
     Boolean property = Boolean.getBoolean(JavaProxyProperty.USE_SYSTEM_PROXY);
     mySystemProxyDefined.setVisible(Boolean.TRUE.equals(property));
     if (Boolean.TRUE.equals(property)) {
       mySystemProxyDefined.setIcon(Messages.getWarningIcon());
-      mySystemProxyDefined.setFont(mySystemProxyDefined.getFont().deriveFont(Font.BOLD));
-      mySystemProxyDefined.setUI(new MultiLineLabelUI());
+      RelativeFont.BOLD.install(mySystemProxyDefined);
     }
 
     myProxyAuthCheckBox.addActionListener(new ActionListener() {
@@ -176,27 +173,25 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
-            HttpURLConnection connection = null;
             try {
               //already checked for null above
               //noinspection ConstantConditions
-              connection = settings.openHttpConnection(answer);
-              connection.setReadTimeout(3 * 1000);
-              connection.setConnectTimeout(3 * 1000);
-              connection.connect();
-              final int code = connection.getResponseCode();
-              if (HttpURLConnection.HTTP_OK != code) {
-                exceptionReference.set(new IOException("Error code: " + code));
-              }
+              HttpRequests.request(answer)
+                .readTimeout(3 * 1000)
+                .connect(new HttpRequests.RequestProcessor<Void>() {
+                  @Override
+                  public Void process(@NotNull HttpRequests.Request request) throws IOException {
+                    if (!request.isSuccessful()) {
+                      exceptionReference.set(new IOException("Error code: " + ((HttpURLConnection)request.getConnection()).getResponseCode()));
+                    }
+                    return null;
+                  }
+                });
             }
             catch (IOException e) {
               exceptionReference.set(e);
             }
-            finally {
-              if (connection != null) {
-                connection.disconnect();
-              }
-            }
+
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(new Runnable() {
               @Override
@@ -270,7 +265,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     myOtherWarning.setVisible(oldStyleText != null);
     if (oldStyleText != null) {
       myOtherWarning.setText(oldStyleText);
-      myOtherWarning.setUI(new MultiLineLabelUI());
       myOtherWarning.setIcon(Messages.getWarningIcon());
     }
   }
@@ -354,7 +348,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     mySocks.setEnabled(enabled);
     myHTTP.setEnabled(enabled);
     myProxyExceptions.setEnabled(enabled);
-    myProxyExceptions.setBackground(myProxyPortTextField.getBackground());
     myProxyExceptionsLabel.setEnabled(enabled);
     myNoProxyForLabel.setEnabled(enabled);
 

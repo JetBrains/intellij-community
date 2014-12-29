@@ -93,6 +93,14 @@ public class BasicBlock implements IGraphNode {
     }
   }
 
+  public Integer getOldOffset(int index) {
+    if(index < instrOldOffsets.size()) {
+      return instrOldOffsets.get(index);
+    } else {
+      return -1;
+    }
+  }
+
   public int size() {
     return seq.length();
   }

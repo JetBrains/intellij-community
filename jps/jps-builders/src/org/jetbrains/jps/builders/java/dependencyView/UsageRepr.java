@@ -278,52 +278,18 @@ class UsageRepr {
   }
 
   public static class MetaMethodUsage extends FMUsage {
-    private int myArity;
 
-    public MetaMethodUsage(final DependencyContext context, final int n, final int o, final String descr) {
+    public MetaMethodUsage(final int n, final int o) {
       super(n, o);
-      myArity = TypeRepr.getType(context, Type.getArgumentTypes(descr)).length;
     }
 
     public MetaMethodUsage(final DataInput in) {
       super(in);
-      try {
-        myArity = DataInputOutputUtil.readINT(in);
-      }
-      catch (IOException e) {
-        throw new BuildDataCorruptedException(e);
-      }
     }
 
     @Override
     public void save(final DataOutput out) {
       save(METAMETHOD_USAGE, out);
-      try {
-        DataInputOutputUtil.writeINT(out, myArity);
-      }
-      catch (IOException e) {
-        throw new BuildDataCorruptedException(e);
-      }
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-
-      MetaMethodUsage that = (MetaMethodUsage)o;
-
-      if (myArity != that.myArity) return false;
-
-      return super.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + myArity;
-      return result;
     }
 
     @Override
@@ -334,7 +300,6 @@ class UsageRepr {
     @Override
     public void toStream(DependencyContext context, PrintStream stream) {
       super.toStream(context, stream);
-      stream.println("          Arity: " + Integer.toString(myArity));
     }
   }
 
@@ -679,8 +644,8 @@ class UsageRepr {
     return context.getUsage(new MethodUsage(context, name, owner, descr));
   }
 
-  public static Usage createMetaMethodUsage(final DependencyContext context, final int name, final int owner, final String descr) {
-    return context.getUsage(new MetaMethodUsage(context, name, owner, descr));
+  public static Usage createMetaMethodUsage(final DependencyContext context, final int name, final int owner) {
+    return context.getUsage(new MetaMethodUsage(name, owner));
   }
 
   public static Usage createClassUsage(final DependencyContext context, final int name) {

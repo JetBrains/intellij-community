@@ -18,7 +18,7 @@ import java.io.*;
 
 public class CreateTaskWindowDialog extends DialogWrapper {
 
-  public static final String TITLE = "New Task Window";
+  public static final String TITLE = "Add Answer Placeholder";
   private static final Logger LOG = Logger.getInstance(CreateTaskWindowDialog.class.getName());
   private final TaskWindow myTaskWindow;
   private final CreateTaskWindowPanel myPanel;
@@ -48,14 +48,16 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     initValidation();
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void setHintText(Project project, TaskWindow taskWindow) {
     VirtualFile hints = project.getBaseDir().findChild("hints");
     if (hints != null) {
       File file = new File(hints.getPath(), taskWindow.getHintName());
       StringBuilder hintText = new StringBuilder();
       if (file.exists()) {
+        BufferedReader bufferedReader =  null;
         try {
-          BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+          bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
           String line;
           while ((line = bufferedReader.readLine()) != null) {
             hintText.append(line).append("\n");
@@ -70,6 +72,16 @@ public class CreateTaskWindowDialog extends DialogWrapper {
         catch (IOException e) {
           LOG.error(e);
         }
+        finally {
+          if (bufferedReader != null) {
+            try {
+              bufferedReader.close();
+            }
+            catch (IOException e) {
+              //close silently
+            }
+          }
+        }
       }
     }
   }
@@ -83,26 +95,42 @@ public class CreateTaskWindowDialog extends DialogWrapper {
       myTaskWindow.setHint(hintName);
       String hintText = myPanel.getHintText();
       createHint(hintName, hintText);
+    } else {
+      if (myTaskWindow.getHintName() != null) {
+        deleteHint();
+      }
     }
     super.doOKAction();
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void createHint(String hintName, String hintText) {
     VirtualFile hintsDir = myProject.getBaseDir().findChild("hints");
     if (hintsDir != null) {
       File hintFile = new File(hintsDir.getPath(), hintName);
-      PrintWriter printWriter = null;
+      OutputStreamWriter outputStreamWriter = null;
       try {
-        printWriter = new PrintWriter(hintFile);
-        printWriter.print(hintText);
+        outputStreamWriter = new OutputStreamWriter(new FileOutputStream(hintFile), "UTF-8");
+       outputStreamWriter.write(hintText);
       }
       catch (FileNotFoundException e) {
         //TODO:show error in UI
         return;
       }
+      catch (UnsupportedEncodingException e) {
+        LOG.error(e);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
       finally {
-        if (printWriter != null) {
-          printWriter.close();
+        if (outputStreamWriter != null) {
+          try {
+            outputStreamWriter.close();
+          }
+          catch (IOException e) {
+            //close silently
+          }
         }
       }
     }

@@ -17,15 +17,12 @@ package com.intellij.codeInsight.template.impl.editorActions;
 
 import com.intellij.codeInsight.editorActions.BaseEnterHandler;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterHandler extends BaseEnterHandler {
@@ -43,15 +40,13 @@ public class EnterHandler extends BaseEnterHandler {
 
   @Override
   public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null) {
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
-      if (templateManager != null && templateManager.startTemplate(editor, TemplateSettings.ENTER_CHAR)) {
-        return;
-      }
+    final Project project = editor.getProject();
+    if (project != null && TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.ENTER_CHAR)) {
+      return;
     }
 
-    myOriginalHandler.execute(editor, caret, dataContext);
+    if (myOriginalHandler != null) {
+      myOriginalHandler.execute(editor, caret, dataContext);
+    }
   }
 }

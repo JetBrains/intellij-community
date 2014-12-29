@@ -1,9 +1,8 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.List;
 
@@ -30,7 +29,7 @@ public interface Scope {
   String getDescription();
 
   @NotNull
-  AsyncResult<List<Variable>> getVariables();
+  Promise<List<Variable>> getVariables();
 
   boolean isGlobal();
 
@@ -39,5 +38,5 @@ public interface Scope {
    * for example, {@link CallFrame#getVariableScopes()} is not asynchronous method. So, you must use returned callback to postpone your code working with updated data.
    */
   @NotNull
-  ActionCallback clearCaches();
+  Promise<Void> clearCaches();
 }

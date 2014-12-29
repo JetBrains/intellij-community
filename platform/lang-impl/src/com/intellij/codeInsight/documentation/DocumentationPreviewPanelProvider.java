@@ -18,6 +18,7 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.openapi.preview.PreviewPanelProvider;
 import com.intellij.openapi.preview.PreviewProviderId;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,6 @@ public class DocumentationPreviewPanelProvider extends PreviewPanelProvider<Coup
   public static final PreviewProviderId<Couple<PsiElement>, DocumentationComponent> ID = PreviewProviderId.create("Documentation");
   private final DocumentationComponent myDocumentationComponent;
   private final DocumentationManager myDocumentationManager;
-  private boolean myBlocked = false;
 
   public DocumentationPreviewPanelProvider(DocumentationManager documentationManager) {
     super(ID);
@@ -42,8 +42,8 @@ public class DocumentationPreviewPanelProvider extends PreviewPanelProvider<Coup
   }
 
   @Override
-  public boolean shouldBeEnabledByDefault() {
-    return true;
+  public void dispose() {
+    Disposer.dispose(myDocumentationComponent);
   }
 
   @NotNull
@@ -70,20 +70,26 @@ public class DocumentationPreviewPanelProvider extends PreviewPanelProvider<Coup
   }
 
   @Override
-  public boolean moveContentToStandardView(@NotNull Couple<PsiElement> content) {
-    myBlocked = true;
-    try {
-      myDocumentationManager.showJavaDocInfo(content.getFirst(), content.getSecond());
-    }
-    finally {
-      myBlocked = false;
-    }
-    return true;
+  public void showInStandardPlace(@NotNull Couple<PsiElement> content) {
+    myDocumentationManager.showJavaDocInfo(content.getFirst(), content.getSecond());
+  }
+
+  @Override
+  public void release(@NotNull Couple<PsiElement> content) {
+  }
+
+  @Override
+  public boolean contentsAreEqual(@NotNull Couple<PsiElement> content1, @NotNull Couple<PsiElement> content2) {
+    return content1.getFirst().getManager().areElementsEquivalent(content1.getFirst(), content2.getFirst());
+  }
+
+  @Override
+  public boolean isModified(Couple<PsiElement> content, boolean beforeReuse) {
+    return beforeReuse;
   }
 
   @Override
   protected DocumentationComponent initComponent(Couple<PsiElement> content, boolean requestFocus) {
-    if (myBlocked) return null;
     if (!content.getFirst().getManager().areElementsEquivalent(myDocumentationComponent.getElement(), content.getFirst())) {
       myDocumentationManager.fetchDocInfo(content.getFirst(), myDocumentationComponent);
     }

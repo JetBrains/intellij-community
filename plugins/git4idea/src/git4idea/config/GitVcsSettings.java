@@ -23,15 +23,23 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import git4idea.GitBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitStandardRemoteBranch;
+import git4idea.GitUtil;
 import git4idea.push.GitPushTagMode;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Git VCS settings
@@ -70,6 +78,10 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public GitResetMode RESET_MODE = null;
     public boolean FORCE_PUSH_ALLOWED = false;
     public GitPushTagMode PUSH_TAGS = null;
+
+    @AbstractCollection(surroundWithTag = false)
+    @Tag("push-targets")
+    public List<PushTargetInfo> PUSH_TARGETS = ContainerUtil.newArrayList();
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -232,4 +244,66 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return getAppSettings().getIdeaSsh() == GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
   }
 
+  @Nullable
+  public GitRemoteBranch getPushTarget(@NotNull GitRepository repository, @NotNull String sourceBranch) {
+    Iterator<PushTargetInfo> iterator = myState.PUSH_TARGETS.iterator();
+    PushTargetInfo targetInfo = find(iterator, repository, sourceBranch);
+    if (targetInfo == null) {
+      return null;
+    }
+    GitRemote remote = GitUtil.findRemoteByName(repository, targetInfo.targetRemoteName);
+    if (remote == null) {
+      return null;
+    }
+    GitRemoteBranch remoteBranch = GitUtil.findRemoteBranch(repository, remote, targetInfo.targetBranchName);
+    return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, targetInfo.targetBranchName, GitBranch.DUMMY_HASH));
+  }
+
+  public void setPushTarget(@NotNull GitRepository repository, @NotNull String sourceBranch,
+                            @NotNull String targetRemote, @NotNull String targetBranch) {
+    String repositoryPath = repository.getRoot().getPath();
+    List<PushTargetInfo> targets = new ArrayList<PushTargetInfo>(myState.PUSH_TARGETS);
+    Iterator<PushTargetInfo> iterator = targets.iterator();
+    PushTargetInfo existingInfo = find(iterator, repository, sourceBranch);
+    if (existingInfo != null) {
+      iterator.remove();
+    }
+    PushTargetInfo newInfo = new PushTargetInfo(repositoryPath, sourceBranch, targetRemote, targetBranch);
+    targets.add(newInfo);
+    myState.PUSH_TARGETS = targets;
+  }
+
+  @Nullable
+  @Contract(pure = false)
+  private static PushTargetInfo find(@NotNull Iterator<PushTargetInfo> iterator,
+                                     @NotNull GitRepository repository,
+                                     @NotNull String sourceBranch) {
+    while (iterator.hasNext()) {
+      PushTargetInfo targetInfo = iterator.next();
+      if (targetInfo.repoPath.equals(repository.getRoot().getPath()) && targetInfo.sourceName.equals(sourceBranch)) {
+        return targetInfo;
+      }
+    }
+    return null;
+  }
+
+  @Tag("push-target-info")
+  private static class PushTargetInfo {
+    @Attribute(value = "repo") public String repoPath;
+    @Attribute(value = "source") public String sourceName;
+    @Attribute(value = "target-remote") public String targetRemoteName;
+    @Attribute(value = "target-branch") public String targetBranchName;
+
+    @SuppressWarnings("unused")
+    public PushTargetInfo() {
+      this("", "", "", "");
+    }
+
+    PushTargetInfo(@NotNull String repositoryPath, @NotNull String source, @NotNull String targetRemote, @NotNull String targetBranch) {
+      repoPath = repositoryPath;
+      sourceName = source;
+      targetRemoteName = targetRemote;
+      targetBranchName = targetBranch;
+    }
+  }
 }

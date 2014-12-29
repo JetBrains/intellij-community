@@ -150,7 +150,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           String oldComment = doc.getCharsSequence()
             .subSequence(range.getFirst().getTextRange().getStartOffset(), range.getLast().getTextRange().getEndOffset()).toString().trim();
           if (!StringUtil.isEmptyOrSpaces(myOptions.getAllowReplaceKeyword()) &&
-              !oldComment.contains(myOptions.allowReplaceKeyword)) {
+              !oldComment.contains(myOptions.getAllowReplaceKeyword())) {
             return;
           }
           if (newComment.trim().equals(oldComment)) {
@@ -349,6 +349,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
         }
       }
     }.execute();
+  }
+
+  public boolean hasUpdates() {
+    return !actions.isEmpty();
   }
 
   private static class CommentRange {

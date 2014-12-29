@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.resolve.PointInImport;
@@ -33,7 +33,7 @@ import java.util.Collections;
 public abstract class PyModuleMembersProvider {
   public static final ExtensionPointName<PyModuleMembersProvider> EP_NAME = ExtensionPointName.create("Pythonid.pyModuleMembersProvider");
 
-  public Collection<PyDynamicMember> getMembers(PyFile module, PointInImport point) {
+  public Collection<PyCustomMember> getMembers(PyFile module, PointInImport point) {
     final VirtualFile vFile = module.getVirtualFile();
     if (vFile != null) {
       final String qName = PyPsiFacade.getInstance(module.getProject()).findShortestImportableName(vFile, module);
@@ -46,7 +46,7 @@ public abstract class PyModuleMembersProvider {
 
   @Nullable
   public PsiElement resolveMember(PyFile module, String name) {
-    for (PyDynamicMember o : getMembers(module, PointInImport.NONE)) {
+    for (PyCustomMember o : getMembers(module, PointInImport.NONE)) {
       if (o.getName().equals(name)) {
         return o.resolve(module);
       }
@@ -54,5 +54,5 @@ public abstract class PyModuleMembersProvider {
     return null;
   }
 
-  protected abstract Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName);
+  protected abstract Collection<PyCustomMember> getMembersByQName(PyFile module, String qName);
 }

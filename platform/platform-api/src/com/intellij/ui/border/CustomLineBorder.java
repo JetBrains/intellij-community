@@ -65,7 +65,7 @@ public class CustomLineBorder implements Border {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return myInsets;
+    return (Insets)myInsets.clone();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public boolean ENABLE_SWING_INSPECTOR;
 
   public String ENV_VARIABLES;
-  private Map<String,String> myEnvs = new LinkedHashMap<String, String>();
+  private final Map<String,String> myEnvs = new LinkedHashMap<String, String>();
   public boolean PASS_PARENT_ENVS = true;
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
@@ -214,6 +214,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
      ALTERNATIVE_JRE_PATH_ENABLED = enabled;
    }
 
+   @Nullable
    @Override
    public String getAlternativeJrePath() {
      return ALTERNATIVE_JRE_PATH;

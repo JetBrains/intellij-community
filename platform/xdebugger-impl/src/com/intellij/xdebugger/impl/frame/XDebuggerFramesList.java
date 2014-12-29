@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
@@ -89,7 +88,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   private XStackFrame mySelectedFrame;
 
-  public XDebuggerFramesList(@NotNull Project project) {
+  public XDebuggerFramesList(@NotNull final Project project) {
     super(project);
 
     doInit();
@@ -98,13 +97,26 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       @Nullable
       @Override
       public Object getData(@NonNls String dataId) {
-        if (CommonDataKeys.VIRTUAL_FILE.is(dataId) && mySelectedFrame != null) {
-          XSourcePosition position = mySelectedFrame.getSourcePosition();
-          return position != null ? position.getFile() : null;
+        if (mySelectedFrame != null) {
+          if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+            return getFile(mySelectedFrame);
+          }
+          else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+            VirtualFile file = getFile(mySelectedFrame);
+            if (file != null) {
+              return PsiManager.getInstance(myProject).findFile(file);
+            }
+          }
         }
         return null;
       }
     });
+  }
+
+  @Nullable
+  private static VirtualFile getFile(XStackFrame frame) {
+    XSourcePosition position = frame.getSourcePosition();
+    return position != null ? position.getFile() : null;
   }
 
   @Override
@@ -132,10 +144,8 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   private static class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
     private final FileColorManager myColorsManager;
-    private final PsiManager myPsiManager;
 
     public XDebuggerFrameListRenderer(Project project) {
-      myPsiManager = PsiManager.getInstance(project);
       myColorsManager = FileColorManager.getInstance(project);
     }
 
@@ -165,11 +175,8 @@ public class XDebuggerFramesList extends DebuggerFramesList {
         if (position != null) {
           final VirtualFile virtualFile = position.getFile();
           if (virtualFile.isValid()) {
-            PsiFile f = myPsiManager.findFile(virtualFile);
-            if (f != null) {
-              Color c = myColorsManager.getFileColor(f);
-              if (c != null) setBackground(c);
-            }
+            Color c = myColorsManager.getFileColor(virtualFile);
+            if (c != null) setBackground(c);
           }
         }
       }

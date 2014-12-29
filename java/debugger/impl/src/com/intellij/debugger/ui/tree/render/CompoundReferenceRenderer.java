@@ -15,8 +15,12 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.CommonClassNames;
 import com.sun.jdi.ReferenceType;
@@ -104,6 +108,15 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
         ((ReferenceRenderer)originalChildrenRenderer).setClassName(name);
       }
     }
+  }
+
+  protected String calcToStringLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+    throws EvaluateException {
+    final ToStringRenderer toStringRenderer = myRendererSettings.getToStringRenderer();
+    if (toStringRenderer.isEnabled() && DebuggerManagerEx.getInstanceEx(evaluationContext.getProject()).getContext().isEvaluationPossible()) {
+      return toStringRenderer.calcLabel(descriptor, evaluationContext, listener);
+    }
+    return null;
   }
 
   public @NotNull String getClassName() {

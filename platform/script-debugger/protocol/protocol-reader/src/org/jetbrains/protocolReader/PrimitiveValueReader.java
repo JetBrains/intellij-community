@@ -38,11 +38,13 @@ class PrimitiveValueReader extends ValueReader {
     if (asRawString) {
       out.append("readRawString(");
       addReaderParameter(subtyping, out);
+      out.append(')');
     }
     else {
-      beginReadCall(readPostfix, subtyping, out, fieldName);
+      ValueReader.addReaderParameter(subtyping, out);
+      out.append(".next").append(readPostfix).append("()");
+      //beginReadCall(readPostfix, subtyping, out, fieldName);
     }
-    out.append(')');
   }
 
   @Override

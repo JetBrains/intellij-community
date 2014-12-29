@@ -80,6 +80,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     doTestInplaceRename("bar");
   }
 
+  public void testRenameFieldInIncompleteStatement() throws Exception {
+    doTestInplaceRename("bar");
+  }
+
   public void testNameSuggestion() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 

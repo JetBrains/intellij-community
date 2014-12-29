@@ -34,12 +34,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 
 /**
  * @author yole
@@ -86,15 +83,6 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     super.projectOpened();    //To change body of overridden methods use File | Settings | File Templates.
     myPsiManager.addPsiTreeChangeListener(myPsiTreeChangeListener);
     myProblemSolver.addProblemListener(myProblemListener);
-  }
-
-  @Override
-  public Color getFileColor(@NotNull final VirtualFile file) {
-    Color color = super.getFileColor(file);
-    if (myProblemSolver.isProblemFile(file)) {
-      return ColorUtil.toAlpha(color, WaverGraphicsDecorator.WAVE_ALPHA_KEY);
-    }
-    return color;
   }
 
   @Override

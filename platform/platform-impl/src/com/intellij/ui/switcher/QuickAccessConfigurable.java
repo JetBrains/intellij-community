@@ -199,7 +199,7 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
   private boolean printConflict(GridBagConstraints c, int actionKey, String actionId) {
     boolean hasConflicts = false;
 
-    int mask = myQuickAccessSettings.getModiferMask(myModifiers);
+    int mask = myQuickAccessSettings.getModifierMask(myModifiers);
 
     KeyboardShortcut sc = new KeyboardShortcut(KeyStroke.getKeyStroke(actionKey, mask), null);
 

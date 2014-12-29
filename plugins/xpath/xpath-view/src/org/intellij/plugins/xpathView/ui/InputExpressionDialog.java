@@ -15,15 +15,6 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import com.intellij.ui.ListCellRendererWrapper;
-import org.intellij.plugins.xpathView.Config;
-import org.intellij.plugins.xpathView.HistoryElement;
-import org.intellij.plugins.xpathView.eval.EvalExpressionDialog;
-import org.intellij.plugins.xpathView.support.XPathSupport;
-import org.intellij.plugins.xpathView.util.Namespace;
-import org.intellij.plugins.xpathView.util.NamespaceCollector;
-import org.intellij.plugins.xpathView.util.Variable;
-
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.javaee.ExternalResourceManager;
@@ -35,32 +26,30 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.BidirectionalMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.XPathFileType;
-import org.intellij.lang.xpath.context.SimpleVariableContext;
-import org.intellij.lang.xpath.context.ContextProvider;
-import org.intellij.lang.xpath.context.ContextType;
-import org.intellij.lang.xpath.context.NamespaceContext;
-import org.intellij.lang.xpath.context.VariableContext;
+import org.intellij.lang.xpath.context.*;
 import org.intellij.lang.xpath.psi.PrefixReference;
 import org.intellij.lang.xpath.psi.QNameElement;
 import org.intellij.lang.xpath.psi.XPathElement;
+import org.intellij.plugins.xpathView.Config;
+import org.intellij.plugins.xpathView.HistoryElement;
+import org.intellij.plugins.xpathView.eval.EvalExpressionDialog;
+import org.intellij.plugins.xpathView.support.XPathSupport;
+import org.intellij.plugins.xpathView.util.Namespace;
+import org.intellij.plugins.xpathView.util.NamespaceCollector;
+import org.intellij.plugins.xpathView.util.Variable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -164,22 +153,21 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 if (selectedItem != null) {
                     n = selectedItem.namespaces;
                     v = selectedItem.variables;
-                } else {
+                }
+                else {
                     n = Collections.emptySet();
                     v = Collections.emptySet();
                 }
 
                 // FIXME
                 final Collection<Namespace> namespaces = myNamespaceCache != null ?
-                        merge(myNamespaceCache, n, false) : n;
+                                                         merge(myNamespaceCache, n, false) : n;
 
                 final Set<String> unresolvedPrefixes = findUnresolvedPrefixes();
                 final EditContextDialog dialog =
-                        new EditContextDialog(myProject, unresolvedPrefixes, namespaces, v, myContextProvider);
+                  new EditContextDialog(myProject, unresolvedPrefixes, namespaces, v, myContextProvider);
 
-                dialog.show();
-
-                if (dialog.isOK()) {
+                if (dialog.showAndGet()) {
                     final Pair<Collection<Namespace>, Collection<Variable>> context = dialog.getContext();
                     final Collection<Namespace> newNamespaces = context.getFirst();
                     final Collection<Variable> newVariables = context.getSecond();
@@ -604,17 +592,16 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                     list.remove(namespace);
                 }
                 Collections.sort((List<String>)list);
-            } else {
+            }
+            else {
                 list = myMap.values();
             }
 
             final AddNamespaceDialog dlg = new AddNamespaceDialog(project, prefix, list, myNamespaceCache == null ?
-                    AddNamespaceDialog.Mode.URI_EDITABLE :
-                    AddNamespaceDialog.Mode.FIXED);
+                                                                                         AddNamespaceDialog.Mode.URI_EDITABLE :
+                                                                                         AddNamespaceDialog.Mode.FIXED);
 
-            dlg.show();
-
-            if (dlg.isOK()) {
+            if (dlg.showAndGet()) {
                 final Namespace namespace = new Namespace(dlg.getPrefix(), dlg.getURI());
 
                 final HistoryElement selectedItem = myModel.getSelectedItem();
@@ -625,7 +612,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                     n.remove(namespace);
                     n.add(namespace);
                     v = selectedItem.variables;
-                } else {
+                }
+                else {
                     n = Collections.singleton(namespace);
                     //noinspection unchecked
                     v = Collections.emptySet();

@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -56,12 +57,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
 
   @Nullable
   public static LayoutFocusTraversalPolicyExt findWindowPolicy(Component c) {
-    Window wnd;
-    if (c instanceof Window) {
-      wnd = (Window)c;
-    } else {
-      wnd = SwingUtilities.getWindowAncestor(c);
-    }
+    Window wnd = UIUtil.getWindow(c);
 
     final FocusTraversalPolicy policy = wnd.getFocusTraversalPolicy();
     if (policy instanceof LayoutFocusTraversalPolicyExt) {

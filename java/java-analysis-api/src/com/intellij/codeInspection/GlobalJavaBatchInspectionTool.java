@@ -20,11 +20,8 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class GlobalJavaBatchInspectionTool extends GlobalInspectionTool {
   @Override

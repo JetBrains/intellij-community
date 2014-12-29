@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -65,30 +67,30 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
       @Override
       public void visitAnonymousClass(PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
-        if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
-          final PsiClassType baseClassType = aClass.getBaseClassType();
-          if (LambdaUtil.isFunctionalType(baseClassType)) {
-            final PsiMethod[] methods = aClass.getMethods();
-            if (methods.length == 1 && methods[0].getBody() != null && aClass.getFields().length == 0 &&
-                !AnonymousCanBeLambdaInspection.hasForbiddenRefsInsideBody(methods[0], aClass)) {
-              final PsiCodeBlock body = methods[0].getBody();
-              final PsiCallExpression callExpression =
-                LambdaCanBeMethodReferenceInspection
-                  .canBeMethodReferenceProblem(body, methods[0].getParameterList().getParameters(), baseClassType);
-              if (callExpression != null) {
-                final PsiMethod resolveMethod = callExpression.resolveMethod();
-                if (resolveMethod != methods[0] && !AnonymousCanBeLambdaInspection.functionalInterfaceMethodReferenced(resolveMethod, aClass)) {
-                  final PsiElement parent = aClass.getParent();
-                  if (parent instanceof PsiNewExpression) {
-                    final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
-                    if (classReference != null) {
-                      final PsiElement lBrace = aClass.getLBrace();
-                      LOG.assertTrue(lBrace != null);
-                      final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-                      holder.registerProblem(parent,
-                                             "Anonymous #ref #loc can be replaced with method reference", ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithMethodRefFix());
-                    }
-                  }
+        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, new Condition<PsiClassType>() {
+          @Override
+          public boolean value(PsiClassType type) {
+            return LambdaUtil.isFunctionalType(type);
+          }
+        })) {
+          final PsiMethod method = aClass.getMethods()[0];
+          final PsiCodeBlock body = method.getBody();
+          final PsiCallExpression callExpression =
+            LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body, method.getParameterList().getParameters(), aClass.getBaseClassType());
+          if (callExpression != null) {
+            final PsiMethod resolveMethod = callExpression.resolveMethod();
+            if (resolveMethod != method &&
+                !AnonymousCanBeLambdaInspection.functionalInterfaceMethodReferenced(resolveMethod, aClass, callExpression)) {
+              final PsiElement parent = aClass.getParent();
+              if (parent instanceof PsiNewExpression) {
+                final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
+                if (classReference != null) {
+                  final PsiElement lBrace = aClass.getLBrace();
+                  LOG.assertTrue(lBrace != null);
+                  final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
+                  holder.registerProblem(parent,
+                                         "Anonymous #ref #loc can be replaced with method reference",
+                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithMethodRefFix());
                 }
               }
             }
@@ -115,6 +117,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement();
         if (element instanceof PsiNewExpression) {
+          if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
           final PsiAnonymousClass anonymousClass = ((PsiNewExpression)element).getAnonymousClass();
           if (anonymousClass == null) return;
           final PsiMethod[] methods = anonymousClass.getMethods();

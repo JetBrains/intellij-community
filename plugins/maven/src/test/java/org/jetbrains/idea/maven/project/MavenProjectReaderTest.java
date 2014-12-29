@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -243,14 +244,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
       protected void run(Result<VirtualFile> result) throws Throwable {
         VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
         result.setResult(res);
+        VfsUtil.saveText(res, "<project>" +
+                               "  <groupId>test</groupId>" +
+                               "  <artifactId>project</artifactId>" +
+                               "  <version>1</version>" +
+                               "</project>");
       }
     }.execute().getResultObject();
-    VfsUtil.saveText(file, "<project>" +
-                           "  <groupId>test</groupId>" +
-                           "  <artifactId>project</artifactId>" +
-                           "  <version>1</version>" +
-                           "</project>");
-
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     MavenModel p = readProject(file);
 
     assertEquals("jar", p.getPackaging());
@@ -308,50 +309,50 @@ public class MavenProjectReaderTest extends MavenTestCase {
       protected void run(Result<VirtualFile> result) throws Throwable {
         VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
         result.setResult(res);
+        VfsUtil.saveText(res, "<project>" +
+                               "  <modelVersion>1.2.3</modelVersion>" +
+                               "  <groupId>test</groupId>" +
+                               "  <artifactId>project</artifactId>" +
+                               "  <version>1</version>" +
+                               "  <name>foo</name>" +
+                               "  <packaging>pom</packaging>" +
+
+                               "  <parent>" +
+                               "    <groupId>testParent</groupId>" +
+                               "    <artifactId>projectParent</artifactId>" +
+                               "    <version>2</version>" +
+                               "    <relativePath>../parent/pom.xml</relativePath>" +
+                               "  </parent>" +
+
+                               "  <build>" +
+                               "    <finalName>xxx</finalName>" +
+                               "    <defaultGoal>someGoal</defaultGoal>" +
+                               "    <sourceDirectory>mySrc</sourceDirectory>" +
+                               "    <testSourceDirectory>myTestSrc</testSourceDirectory>" +
+                               "    <scriptSourceDirectory>myScriptSrc</scriptSourceDirectory>" +
+                               "    <resources>" +
+                               "      <resource>" +
+                               "        <directory>myRes</directory>" +
+                               "        <filtering>true</filtering>" +
+                               "        <targetPath>dir</targetPath>" +
+                               "        <includes><include>**.properties</include></includes>" +
+                               "        <excludes><exclude>**.xml</exclude></excludes>" +
+                               "      </resource>" +
+                               "    </resources>" +
+                               "    <testResources>" +
+                               "      <testResource>" +
+                               "        <directory>myTestRes</directory>" +
+                               "        <includes><include>**.properties</include></includes>" +
+                               "      </testResource>" +
+                               "    </testResources>" +
+                               "    <directory>myOutput</directory>" +
+                               "    <outputDirectory>myClasses</outputDirectory>" +
+                               "    <testOutputDirectory>myTestClasses</testOutputDirectory>" +
+                               "  </build>" +
+                               "</project>");
       }
     }.execute().getResultObject();
-    VfsUtil.saveText(file, "<project>" +
-                           "  <modelVersion>1.2.3</modelVersion>" +
-                           "  <groupId>test</groupId>" +
-                           "  <artifactId>project</artifactId>" +
-                           "  <version>1</version>" +
-                           "  <name>foo</name>" +
-                           "  <packaging>pom</packaging>" +
-
-                           "  <parent>" +
-                           "    <groupId>testParent</groupId>" +
-                           "    <artifactId>projectParent</artifactId>" +
-                           "    <version>2</version>" +
-                           "    <relativePath>../parent/pom.xml</relativePath>" +
-                           "  </parent>" +
-
-                           "  <build>" +
-                           "    <finalName>xxx</finalName>" +
-                           "    <defaultGoal>someGoal</defaultGoal>" +
-                           "    <sourceDirectory>mySrc</sourceDirectory>" +
-                           "    <testSourceDirectory>myTestSrc</testSourceDirectory>" +
-                           "    <scriptSourceDirectory>myScriptSrc</scriptSourceDirectory>" +
-                           "    <resources>" +
-                           "      <resource>" +
-                           "        <directory>myRes</directory>" +
-                           "        <filtering>true</filtering>" +
-                           "        <targetPath>dir</targetPath>" +
-                           "        <includes><include>**.properties</include></includes>" +
-                           "        <excludes><exclude>**.xml</exclude></excludes>" +
-                           "      </resource>" +
-                           "    </resources>" +
-                           "    <testResources>" +
-                           "      <testResource>" +
-                           "        <directory>myTestRes</directory>" +
-                           "        <includes><include>**.properties</include></includes>" +
-                           "      </testResource>" +
-                           "    </testResources>" +
-                           "    <directory>myOutput</directory>" +
-                           "    <outputDirectory>myClasses</outputDirectory>" +
-                           "    <testOutputDirectory>myTestClasses</testOutputDirectory>" +
-                           "  </build>" +
-                           "</project>");
-
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     MavenModel p = readProject(file);
 
     assertEquals("pom", p.getPackaging());

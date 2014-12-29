@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import org.jdom.Text;
@@ -25,9 +24,8 @@ import java.util.Date;
  * @author Dmitry Avdeev
  */
 public class DateBinding extends PrimitiveValueBinding {
-
-  public DateBinding() {
-    super(Date.class);
+  public DateBinding(@Nullable Accessor accessor) {
+    super(Date.class, accessor);
   }
 
   @Nullable
@@ -39,8 +37,7 @@ public class DateBinding extends PrimitiveValueBinding {
   @Override
   protected Object convertString(String value) {
     try {
-      long l = Long.parseLong(value);
-      return new Date(l);
+      return new Date(Long.parseLong(value));
     }
     catch (NumberFormatException e) {
       return new Date(0);

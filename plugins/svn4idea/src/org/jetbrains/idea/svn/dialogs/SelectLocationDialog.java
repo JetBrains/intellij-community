@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 
+import static com.intellij.openapi.util.Pair.create;
+
 /**
  * @author alex
  */
@@ -61,18 +63,16 @@ public class SelectLocationDialog extends DialogWrapper {
 
   // todo check that works when authenticated
   @Nullable
-  public static String selectLocation(Project project, String url) {
+  public static SVNURL selectLocation(Project project, String url) {
     SelectLocationDialog dialog = openDialog(project, url, null, null, true, false, null);
 
     return dialog == null || !dialog.isOK() ? null : dialog.getSelectedURL();
   }
 
   @Nullable
-  public static Pair<String, SVNURL> selectLocation(Project project, @NotNull SVNURL url) {
+  public static Pair<SVNURL, SVNURL> selectLocation(Project project, @NotNull SVNURL url) {
     SelectLocationDialog dialog = new SelectLocationDialog(project, url, null, null, true, true);
-    dialog.show();
-
-    return dialog.isOK() ? Pair.create(dialog.getSelectedURL(), dialog.getRootUrl()) : null;
+    return dialog.showAndGet() ? create(dialog.getSelectedURL(), dialog.getRootUrl()) : null;
   }
 
   @Nullable
@@ -80,7 +80,7 @@ public class SelectLocationDialog extends DialogWrapper {
     SelectLocationDialog dialog =
       openDialog(project, url, dstLabel, dstName, showFiles, false, SvnBundle.message("select.location.invalid.url.message", url));
 
-    return dialog == null || !dialog.isOK() ? null : SVNPathUtil.append(dialog.getSelectedURL(), dialog.getDestinationName());
+    return dialog == null || !dialog.isOK() ? null : SVNPathUtil.append(dialog.getSelectedURL().toString(), dialog.getDestinationName());
   }
 
   @Nullable
@@ -278,8 +278,9 @@ public class SelectLocationDialog extends DialogWrapper {
     return SVNEncodingUtil.uriEncode(myDstText.getText().trim());
   }
 
-  public String getSelectedURL() {
-    return myRepositoryBrowser.getSelectedURL();
+  @Nullable
+  public SVNURL getSelectedURL() {
+    return myRepositoryBrowser.getSelectedSVNURL();
   }
 
   @Nullable

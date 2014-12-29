@@ -1,0 +1,35 @@
+There are 4 possible cell types:
+- Markdown
+- Heading
+- Raw
+- Code
+
+Markdown cell type consists of:
+- metadata
+- Source <- List of Strings
+
+Heading cell type consists of:
+- metadata
+- Source <- List of Strings
+- level <- int
+
+Raw cell type consists of:
+- metadata
+
+Code cell type consists of:
+- metadata
+- collapsed <- Boolean
+- input <- List of Strings
+- language <- String
+- prompt_number <- int
+- outputs <- List of Outputs
+
+Output of Code cell consists of:
+- metadata
+- output_type <- String
+- text <- String
+- one of [png, latex, stream, ..] <- String
+- prompt_number <- int     *present only with latex field
+
+
+Cells are packed into worksheets.

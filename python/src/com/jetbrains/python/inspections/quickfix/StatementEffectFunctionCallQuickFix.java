@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
@@ -63,28 +64,14 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     final String expressionText = expression.getText();
     final StringBuilder stringBuilder = new StringBuilder(expressionText + " (");
 
-    final PsiElement whiteSpace = expression.getContainingFile().findElementAt(expression.getTextOffset() + expression.getTextLength());
-    PsiElement next = null;
-    if (whiteSpace instanceof PsiWhiteSpace) {
-      final String whiteSpaceText = whiteSpace.getText();
-      if (!whiteSpaceText.contains("\n")) {
-        next = whiteSpace.getNextSibling();
-        while (next instanceof PsiWhiteSpace && whiteSpaceText.contains("\\")) {
-          next = next.getNextSibling();
-        }
-      }
-    }
-    else
-      next = whiteSpace;
-
-    RemoveUnnecessaryBackslashQuickFix.removeBackSlash(next);
-    if (whiteSpace != null) whiteSpace.delete();
+    final PsiElement next = getNextElement(expression);
     if (next == null) {
       stringBuilder.append(")");
       expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
                                                          stringBuilder.toString()));
       return;
     }
+    final String commentText = getComment(next);
     if (next instanceof PyExpressionStatement) {
       final PyExpression expr = ((PyExpressionStatement)next).getExpression();
       if (expr instanceof PyBinaryExpression) {
@@ -107,7 +94,7 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
         }
       }
       else {
-        stringBuilder.append(next.getText());
+        stringBuilder.append(((PyExpressionStatement)next).getExpression().getText());
       }
     }
     else {
@@ -115,8 +102,22 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     }
     next.delete();
     stringBuilder.append(")");
+    if (commentText != null) {
+      stringBuilder.append(commentText);
+    }
     expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
                                                        stringBuilder.toString()));
+  }
+
+  private static String getComment(@Nullable final PsiElement next) {
+    String commentText = null;
+    if (next != null) {
+      final PsiElement lastChild = next.getLastChild();
+      if (lastChild instanceof PsiComment) {
+        commentText = lastChild.getText();
+      }
+    }
+    return commentText;
   }
 
   private static void addInArguments(@NotNull final StringBuilder stringBuilder, @NotNull final PyBinaryExpression binaryExpression) {
@@ -132,6 +133,23 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     final String expressionText = expression.getText();
     final StringBuilder stringBuilder = new StringBuilder(expressionText + " (");
 
+    final PsiElement next = getNextElement(expression);
+    String commentText = getComment(next);
+    if (next != null) {
+      final String text = next instanceof PyExpressionStatement ? ((PyExpressionStatement)next).getExpression().getText() : next.getText();
+      stringBuilder.append(text);
+      if (text.endsWith(",")) stringBuilder.append(" end=' '");
+      next.delete();
+    }
+    stringBuilder.append(")");
+    if (commentText != null) {
+      stringBuilder.append(commentText);
+    }
+    expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
+                                                       stringBuilder.toString()));
+  }
+
+  private static PsiElement getNextElement(@NotNull final PsiElement expression) {
     final PsiElement whiteSpace = expression.getContainingFile().findElementAt(expression.getTextOffset() + expression.getTextLength());
     PsiElement next = null;
     if (whiteSpace instanceof PsiWhiteSpace) {
@@ -148,23 +166,6 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
 
     RemoveUnnecessaryBackslashQuickFix.removeBackSlash(next);
     if (whiteSpace != null) whiteSpace.delete();
-    String commentText = null;
-    if (next != null) {
-      final PsiElement lastChild = next.getLastChild();
-      if (lastChild instanceof PsiComment) {
-        commentText = lastChild.getText();
-      }
-      final String text = next instanceof PyExpressionStatement ? ((PyExpressionStatement)next).getExpression().getText() : next.getText();
-
-      stringBuilder.append(text);
-      if (text.endsWith(",")) stringBuilder.append(" end=' '");
-      next.delete();
-    }
-    stringBuilder.append(")");
-    if (commentText != null) {
-      stringBuilder.append(commentText);
-    }
-    expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
-                                                       stringBuilder.toString()));
+    return next;
   }
 }

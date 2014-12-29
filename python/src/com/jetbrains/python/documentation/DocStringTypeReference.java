@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
         for (PyImportElement element : elements) {
           final PyReferenceExpression referenceExpression = element.getImportReferenceExpression();
           if (referenceExpression == null) continue;
-          final PyType type = TypeEvalContext.userInitiated(CompletionUtil.getOriginalOrSelf(file)).getType(referenceExpression);
+          final PyType type = TypeEvalContext.userInitiated(file.getProject(), CompletionUtil.getOriginalOrSelf(file)).getType(referenceExpression);
           if (type instanceof PyClassType) {
             variants.add(((PyClassType)type).getPyClass());
           }

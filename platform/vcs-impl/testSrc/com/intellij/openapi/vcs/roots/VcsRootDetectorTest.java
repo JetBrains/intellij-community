@@ -178,6 +178,9 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
                      @NotNull String... expectedPaths)
     throws IOException {
     initProject(vcsRootConfiguration);
+    if (startDir != null) {
+      startDir.refresh(false, true);
+    }
     Collection<VcsRoot> vcsRoots = detect(startDir);
     assertRoots(Arrays.asList(expectedPaths), getPaths(
       ContainerUtil.filter(vcsRoots, new Condition<VcsRoot>() {

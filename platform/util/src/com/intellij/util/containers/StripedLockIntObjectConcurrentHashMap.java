@@ -218,6 +218,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
     return new ValueIterator();
   }
 
+  @NotNull
   @Override
   public Collection<V> values() {
     Set<V> result = new THashSet<V>();

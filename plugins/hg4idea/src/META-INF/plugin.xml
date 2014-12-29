@@ -25,9 +25,11 @@
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
     <pushSupport implementation="org.zmlx.hg4idea.push.HgPushSupport"/>
+    <cherryPicker implementation="org.zmlx.hg4idea.cherrypick.HgCherryPicker"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
+    <vcs.taskHandler implementation="org.zmlx.hg4idea.HgTaskHandler"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
@@ -83,6 +85,7 @@
       <action id="hg4idea.updateTo" class="org.zmlx.hg4idea.action.HgUpdateToAction"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
       <separator/>
+      <action id="hg4idea.Graft.Continue" class="org.zmlx.hg4idea.action.HgContinueGraftAction" text="Continue Grafting"/>
       <action id="hg4idea.Rebase.Abort" class="org.zmlx.hg4idea.action.HgAbortRebaseAction" text="Abort Rebasing"/>
       <action id="hg4idea.Rebase.Continue" class="org.zmlx.hg4idea.action.HgContinueRebaseAction" text="Continue Rebasing"/>
 
@@ -92,10 +95,6 @@
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
-    </group>
-
-    <group id="Hg.LogContextMenu">
-      <separator/>
     </group>
 
     <action class="org.zmlx.hg4idea.action.HgUpdateToFromLogAction" id="hg4idea.UpdateToRevision" text="Update to Revision"/>

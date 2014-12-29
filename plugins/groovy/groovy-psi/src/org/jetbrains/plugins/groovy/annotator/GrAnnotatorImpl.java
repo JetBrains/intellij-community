@@ -22,7 +22,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -33,13 +33,25 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author Max Medvedev
  */
 public class GrAnnotatorImpl implements Annotator {
+
+  private static final ThreadLocal<GroovyStaticTypeCheckVisitor> myTypeCheckVisitorThreadLocal =
+    new ThreadLocal<GroovyStaticTypeCheckVisitor>() {
+      @Override
+      protected GroovyStaticTypeCheckVisitor initialValue() {
+        return new GroovyStaticTypeCheckVisitor();
+      }
+    };
+
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof GroovyPsiElement) {
       final GroovyAnnotator annotator = new GroovyAnnotator(holder);
       ((GroovyPsiElement)element).accept(annotator);
       if (PsiUtil.isCompileStatic(element)) {
-        GroovyAssignabilityCheckInspection.checkElement((GroovyPsiElement)element, holder);
+        final GroovyStaticTypeCheckVisitor typeCheckVisitor = myTypeCheckVisitorThreadLocal.get();
+        assert typeCheckVisitor != null;
+        typeCheckVisitor.setAnnotationHolder(holder);
+        ((GroovyPsiElement)element).accept(typeCheckVisitor);
       }
     }
     else if (element instanceof PsiComment) {

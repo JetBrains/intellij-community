@@ -92,11 +92,9 @@ class EditorPosition implements Cloneable {
 
   /**
    * Asks current position to change its state assuming that it should point to the start of the next visual line.
-   * 
-   * @param softWrapAware     flag that indicates if state update should check if current visual line ends with soft wrap
    */
-  public void onNewLine(boolean softWrapAware) {
-    if (!softWrapAware || myEditor.getSoftWrapModel().getSoftWrap(offset) == null) {
+  public void onNewLineSoftWrapAware() {
+    if (myEditor.getSoftWrapModel().getSoftWrap(offset) == null) {
       onNewLine();
       return;
     }
@@ -108,9 +106,6 @@ class EditorPosition implements Cloneable {
     x = 0;
   }
 
-  /**
-   * Similar as {@link #onNewLine(boolean)} with <code>'false'</code> argument.
-   */
   public void onNewLine() {
     softWrapLinesBefore += softWrapLinesCurrent;
     softWrapLinesCurrent = 0;
@@ -144,10 +139,7 @@ class EditorPosition implements Cloneable {
       // Single-line fold region.
       if (collapsedSymbolsWidthInColumns < 0) {
         collapsedSymbolsWidthInColumns = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)
-          .toVisualColumnSymbolsNumber(document.getCharsSequence(),
-                                       foldRegion.getStartOffset(),
-                                       foldRegion.getEndOffset(),
-                                       x);
+          .toVisualColumnSymbolsNumber(foldRegion.getStartOffset(), foldRegion.getEndOffset(), x);
       }
       logicalColumn += collapsedSymbolsWidthInColumns;
       foldingColumnDiff += placeholder.length() - collapsedSymbolsWidthInColumns;
@@ -156,16 +148,15 @@ class EditorPosition implements Cloneable {
       // Multi-line fold region.
       if (collapsedSymbolsWidthInColumns < 0) {
         collapsedSymbolsWidthInColumns = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)
-          .toVisualColumnSymbolsNumber(document.getCharsSequence(),
-                                       foldRegion.getStartOffset(),
-                                       foldRegion.getEndOffset(),
-                                       0);
+          .toVisualColumnSymbolsNumber(foldRegion.getStartOffset(), foldRegion.getEndOffset(), 0);
       }
       int linesDiff = endOffsetLogicalLine - logicalLine;
       logicalLine += linesDiff;
       foldedLines += linesDiff;
       logicalColumn = collapsedSymbolsWidthInColumns;
       foldingColumnDiff = visualColumn - logicalColumn - softWrapColumnDiff;
+      softWrapLinesBefore += softWrapLinesCurrent;
+      softWrapLinesCurrent = 0;
     }
   }
 

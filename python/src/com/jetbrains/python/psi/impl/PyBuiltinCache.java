@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,13 +161,31 @@ public class PyBuiltinCache {
   }
 
   @Nullable
-  static PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name) {
-    final PyBuiltinCache builtinCache = getInstance(sequence);
-    final PyClass setClass = builtinCache.getClass(name);
-    if (setClass != null) {
-      return new PyLiteralCollectionType(setClass, false, sequence);
+  public PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name, @NotNull TypeEvalContext context) {
+    final PyClass cls = getClass(name);
+    if (cls != null) {
+      return new PyCollectionTypeImpl(cls, false, getSequenceElementType(sequence, context));
     }
     return null;
+  }
+
+  @Nullable
+  private static PyType getSequenceElementType(@NotNull PySequenceExpression sequence, @NotNull TypeEvalContext context) {
+    final PyExpression[] elements = sequence.getElements();
+    if (elements.length == 0 || elements.length > 10 /* performance */) {
+      return null;
+    }
+    final PyType result = context.getType(elements[0]);
+    if (result == null) {
+      return null;
+    }
+    for (int i = 1; i < elements.length; i++) {
+      final PyType elementType = context.getType(elements[i]);
+      if (elementType == null || !elementType.equals(result)) {
+        return null;
+      }
+    }
+    return result;
   }
 
   @Nullable

@@ -31,7 +31,6 @@ public class SvnKitHistoryClient extends BaseSvnClient implements HistoryClient 
                     @Nullable String[] revisionProperties,
                     @Nullable LogEntryConsumer handler) throws VcsException {
     try {
-      // TODO: a bug noticed when testing: we should pass "limit + 1" to get "limit" rows
       SVNLogClient client = myVcs.getSvnKitManager().createLogClient();
 
       if (target.isFile()) {

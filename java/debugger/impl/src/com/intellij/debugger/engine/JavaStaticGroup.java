@@ -20,11 +20,14 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
+import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.*;
 import com.sun.jdi.Field;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -44,6 +47,19 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
     myNodeManager = nodeManager;
   }
 
+  @Nullable
+  @Override
+  public String getComment() {
+    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+    return classRenderer.renderTypeName(myStaticDescriptor.getType().name());
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Nodes.Static;
+  }
+
   @Override
   public NodeDescriptorImpl getDescriptor() {
     return myStaticDescriptor;
@@ -51,8 +67,7 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(
-      new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
+    JavaValue.scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public void contextAction() throws Exception {
           final XValueChildrenList children = new XValueChildrenList();

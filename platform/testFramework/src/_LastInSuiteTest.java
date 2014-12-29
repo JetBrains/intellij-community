@@ -36,6 +36,7 @@ public class _LastInSuiteTest extends TestCase {
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
+        LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
         LightPlatformTestCase.closeAndDeleteProject();
       }
     }.execute().throwException();
@@ -46,6 +47,7 @@ public class _LastInSuiteTest extends TestCase {
       public void run() {
         ((ApplicationImpl)ApplicationManager.getApplication()).setDisposeInProgress(true);
         LightPlatformTestCase.disposeApplication();
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
 
@@ -57,6 +59,16 @@ public class _LastInSuiteTest extends TestCase {
       captureMemorySnapshot();
       throw e;
     }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void testStatistics() throws Exception {
+    if (_FirstInSuiteTest.suiteStarted != 0) {
+      long testSuiteDuration = System.nanoTime() - _FirstInSuiteTest.suiteStarted;
+      System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']",
+                                       testSuiteDuration / 1000000));
+    }
+    LightPlatformTestCase.reportTestExecutionStatistics();
   }
 
   private static void captureMemorySnapshot() {

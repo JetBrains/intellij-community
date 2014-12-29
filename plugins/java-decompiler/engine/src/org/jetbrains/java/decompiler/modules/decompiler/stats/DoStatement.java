@@ -15,12 +15,11 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,52 +91,53 @@ public class DoStatement extends Statement {
     return null;
   }
 
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-    String indstr = InterpreterUtil.getIndentString(indent);
-    StringBuilder buf = new StringBuilder();
-
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buf = new TextBuffer();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
 
     if (isLabeled()) {
-      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
-      tracer.incrementSourceLine();
+      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      tracer.incrementCurrentSourceLine();
     }
 
     switch (looptype) {
       case LOOP_DO:
-        buf.append(indstr).append("while(true) {").append(new_line_separator);
-        tracer.incrementSourceLine();
+        buf.appendIndent(indent).append("while(true) {").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
-        buf.append(indstr).append("}").append(new_line_separator);
-        tracer.incrementSourceLine();
+        buf.appendIndent(indent).append("}").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
         break;
       case LOOP_DOWHILE:
-        buf.append(indstr).append("do {").append(new_line_separator);
-        tracer.incrementSourceLine();
+        buf.appendIndent(indent).append("do {").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
-        buf.append(indstr).append("} while(").append(conditionExprent.get(0).toJava(indent, tracer)).append(");").append(new_line_separator);
-        tracer.incrementSourceLine();
+        buf.appendIndent(indent).append("} while(").append(conditionExprent.get(0).toJava(indent, tracer)).append(");").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
         break;
       case LOOP_WHILE:
-        buf.append(indstr).append("while(").append(conditionExprent.get(0).toJava(indent, tracer)).append(") {").append(new_line_separator);
-        tracer.incrementSourceLine();
+        buf.appendIndent(indent).append("while(").append(conditionExprent.get(0).toJava(indent, tracer)).append(") {").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
-        buf.append(indstr).append("}").append(new_line_separator);
-        tracer.incrementSourceLine();
+        buf.appendIndent(indent).append("}").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
         break;
       case LOOP_FOR:
-        buf.append(indstr).append("for(").append(initExprent.get(0) == null ? "" : initExprent.get(0).toJava(indent, tracer)).append("; ")
+        buf.appendIndent(indent).append("for(");
+        if (initExprent.get(0) != null) {
+          buf.append(initExprent.get(0).toJava(indent, tracer));
+        }
+        buf.append("; ")
           .append(conditionExprent.get(0).toJava(indent, tracer)).append("; ").append(incExprent.get(0).toJava(indent, tracer)).append(") {")
-          .append(new_line_separator);
-        tracer.incrementSourceLine();
+          .appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
-        buf.append(indstr).append("}").append(new_line_separator);
-        tracer.incrementSourceLine();
+        buf.appendIndent(indent).append("}").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
     }
 
-    return buf.toString();
+    return buf;
   }
 
   public List<Object> getSequentialObjects() {

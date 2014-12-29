@@ -50,6 +50,12 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
     return "ParameterHidesMemberVariable";
   }
 
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "hiding";
+  }
+
   @Override
   @NotNull
   public String getDisplayName() {

@@ -22,8 +22,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousClassVariableHidesContainingMethodVariableInspectionBase
-  extends BaseInspection {
+public class AnonymousClassVariableHidesContainingMethodVariableInspectionBase extends BaseInspection {
 
   @Override
   @NotNull

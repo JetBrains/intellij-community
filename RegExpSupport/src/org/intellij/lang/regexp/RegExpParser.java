@@ -222,7 +222,8 @@ public class RegExpParser implements PsiParser {
     if (parseClassIntersection(builder)) {
       while (RegExpTT.CHARACTERS2.contains(builder.getTokenType()) ||
              builder.getTokenType() == RegExpTT.CLASS_BEGIN ||
-             builder.getTokenType() == RegExpTT.PROPERTY) {
+             builder.getTokenType() == RegExpTT.PROPERTY ||
+             builder.getTokenType() == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
         parseClassIntersection(builder);
       }
     }
@@ -255,6 +256,9 @@ public class RegExpParser implements PsiParser {
     if (token == RegExpTT.CLASS_BEGIN) {
       parseClass(builder);
     }
+    else if (token == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
+      parseBracketExpression(builder);
+    }
     else if (RegExpTT.CHARACTERS2.contains(token)) {
       parseSimpleClassdef(builder);
     }
@@ -269,6 +273,14 @@ public class RegExpParser implements PsiParser {
       return false;
     }
     return true;
+  }
+
+  private static void parseBracketExpression(PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.NAME, "POSIX character class name expected");
+    checkMatches(builder, RegExpTT.BRACKET_EXPRESSION_END, "Unclosed POSIX bracket expression");
+    marker.done(RegExpElementTypes.POSIX_BRACKET_EXPRESSION);
   }
 
   private void parseSimpleClassdef(PsiBuilder builder) {
@@ -393,10 +405,13 @@ public class RegExpParser implements PsiParser {
       marker.done(RegExpElementTypes.GROUP);
     }
     else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF) {
-      builder.advanceLexer();
-      checkMatches(builder, RegExpTT.NAME, "Group name expected");
-      checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group reference");
-      marker.done(RegExpElementTypes.PY_NAMED_GROUP_REF);
+      parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
+    }
+    else if (type == RegExpTT.RUBY_NAMED_GROUP_REF) {
+      parseNamedGroupRef(builder, marker, RegExpTT.GT);
+    }
+    else if (type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF) {
+      parseNamedGroupRef(builder, marker, RegExpTT.QUOTE);
     }
     else if (type == RegExpTT.PYTHON_COND_REF) {
       builder.advanceLexer();
@@ -444,9 +459,20 @@ public class RegExpParser implements PsiParser {
     return marker;
   }
 
+  private static void parseNamedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker, IElementType type) {
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.NAME, "Group name expected");
+    checkMatches(builder, type, "Unclosed group reference");
+    marker.done(RegExpElementTypes.NAMED_GROUP_REF);
+  }
+
   private static void parseProperty(PsiBuilder builder) {
     checkMatches(builder, RegExpTT.PROPERTY, "'\\p' expected");
 
+    if (builder.getTokenType() == RegExpTT.CATEGORY_SHORT_HAND) {
+      builder.advanceLexer();
+      return;
+    }
     checkMatches(builder, RegExpTT.LBRACE, "Character category expected");
     if (builder.getTokenType() == RegExpTT.NAME) {
       builder.advanceLexer();

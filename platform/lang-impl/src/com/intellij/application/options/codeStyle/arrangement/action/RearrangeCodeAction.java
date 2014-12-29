@@ -15,23 +15,16 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
+import com.intellij.codeInsight.actions.RearrangeCodeProcessor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
-import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Arranges content at the target file(s).
@@ -68,34 +61,6 @@ public class RearrangeCodeAction extends AnAction {
     if (file == null) {
       return;
     }
-
-    final List<TextRange> ranges = new ArrayList<TextRange>();
-    SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
-      ranges.add(TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
-    }
-    else if (selectionModel.hasBlockSelection()) {
-      int[] starts = selectionModel.getBlockSelectionStarts();
-      int[] ends = selectionModel.getBlockSelectionEnds();
-      for (int i = 0; i < starts.length; i++) {
-        ranges.add(TextRange.create(starts[i], ends[i]));
-      }
-    }
-    else {
-      ranges.add(TextRange.create(0, document.getTextLength()));
-    }
-    
-    final ArrangementEngine engine = ServiceManager.getService(project, ArrangementEngine.class);
-    try {
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        @Override
-        public void run() {
-          engine.arrange(editor, file, ranges); 
-        }
-      }, getTemplatePresentation().getText(), null);
-    }
-    finally {
-      documentManager.commitDocument(document);
-    }
+    new RearrangeCodeProcessor(project, file, editor.getSelectionModel()).run();
   }
 }

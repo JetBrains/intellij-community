@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.*;
@@ -41,11 +42,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +72,31 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   private final EditorsSplitters myOwner;
-  private static final Icon MODIFIED_ICON = AllIcons.General.Modified;
+  private static final Icon MODIFIED_ICON = Registry.is("editor.use.compressible.tabs") ? new Icon() {
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+      Font oldFont = g.getFont();
+      try {
+        g.setFont(UIUtil.getLabelFont());
+        g.setColor(JBColor.foreground());
+        g.drawString("*", 0, 10);
+      } finally {
+        config.restore();
+        g.setFont(oldFont);
+      }
+    }
+
+    @Override
+    public int getIconWidth() {
+      return 9;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return 9;
+    }
+  } : AllIcons.General.Modified;
   private static final Icon GAP_ICON = new EmptyIcon(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
 
   private boolean myIsDisposed = false;
@@ -104,7 +131,7 @@ public class EditorWindow {
       setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
     }
 
-    getWindows().add(this);
+    myOwner.addWindow(this);
     if (myOwner.getCurrentWindow() == null) {
       myOwner.setCurrentWindow(this, false);
     }
@@ -238,14 +265,10 @@ public class EditorWindow {
     }
   }
 
-  private Set<EditorWindow> getWindows() {
-    return myOwner.myWindows;
-  }
-
-  private void dispose() {
+  void dispose() {
     try {
       disposeTabs();
-      getWindows ().remove(this);
+      myOwner.removeWindow(this);
     }
     finally {
       myIsDisposed = true;
@@ -554,8 +577,11 @@ public class EditorWindow {
   public void requestFocus(boolean forced) {
     if (myTabbedPane != null) {
       myTabbedPane.requestFocus(forced);
-    } else {
-      IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myPanel, forced);
+    }
+    else {
+      EditorWithProviderComposite editor = getSelectedEditor();
+      JComponent preferred = editor == null ? null : editor.getPreferredFocusedComponent();
+      IdeFocusManager.findInstanceByComponent(preferred == null ? myPanel : preferred).requestFocus(myPanel, forced);
     }
   }
 
@@ -638,7 +664,7 @@ public class EditorWindow {
   }
 
   private void checkConsistency() {
-    LOG.assertTrue(getWindows().contains(this), "EditorWindow not in collection");
+    LOG.assertTrue(myOwner.containsWindow(this), "EditorWindow not in collection");
   }
 
   public EditorWithProviderComposite getSelectedEditor() {
@@ -894,7 +920,7 @@ public class EditorWindow {
     final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
     if (myPanel.getParent() instanceof Splitter) {
       final Splitter splitter = (Splitter)myPanel.getParent();
-      for (final EditorWindow win : getWindows()) {
+      for (final EditorWindow win : myOwner.getWindows()) {
         if (win != this && SwingUtilities.isDescendingFrom(win.myPanel, splitter)) {
           res.add(win);
         }
@@ -965,8 +991,9 @@ public class EditorWindow {
 
     int i = 0;
     final LayeredIcon result = new LayeredIcon(count);
-    result.setIcon(baseIcon, i++);
-    if (pinIcon != null) result.setIcon(pinIcon, i++);
+    int xShift = Registry.is("editor.use.compressible.tabs") ? 4 : 0;
+    result.setIcon(baseIcon, i++, xShift, 0);
+    if (pinIcon != null) result.setIcon(pinIcon, i++, xShift, 0);
     if (modifiedIcon != null) result.setIcon(modifiedIcon, i++);
 
     return result;

@@ -107,7 +107,7 @@ class AlignmentImpl extends Alignment {
     }
     LeafBlockWrapper result = null;
     if (myOffsetRespBlocks != EMPTY) {
-      LeafBlockWrapper lastBlockAfterLineFeed = null;
+      LeafBlockWrapper firstBlockAfterLineFeed = null;
       LeafBlockWrapper firstAlignedBlock = null;
       LeafBlockWrapper lastAlignedBlock = null;
       for (final LeafBlockWrapper current : myOffsetRespBlocks) {
@@ -123,16 +123,15 @@ class AlignmentImpl extends Alignment {
             lastAlignedBlock = current;
           }
 
-          if (current.getWhiteSpace().containsLineFeeds() &&
-              (lastBlockAfterLineFeed == null || lastBlockAfterLineFeed.getStartOffset() < current.getStartOffset())) {
-            lastBlockAfterLineFeed = current;
+          if (firstBlockAfterLineFeed == null && current.getWhiteSpace().containsLineFeeds()) {
+            firstBlockAfterLineFeed = current;
           }
 
         }
         //each.remove();
       }
-      if (lastBlockAfterLineFeed != null) {
-        result = lastBlockAfterLineFeed;
+      if (firstBlockAfterLineFeed != null) {
+        result = firstBlockAfterLineFeed;
       }
       else if (firstAlignedBlock != null) {
         result = firstAlignedBlock;
@@ -263,6 +262,6 @@ class AlignmentImpl extends Alignment {
 
   @Override
   public String toString() {
-    return "Align: " + System.identityHashCode(this);
+    return "Align: " + System.identityHashCode(this) + "," +  getAnchor() +  (isAllowBackwardShift() ? "<" : "");
   }
 }

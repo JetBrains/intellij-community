@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,8 +273,9 @@ public class JUnitUtil {
     return JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
   }
 
-  public static PsiPackage getContainingPackage(final PsiClass psiClass) {
-    return JavaDirectoryService.getInstance().getPackage(psiClass.getContainingFile().getContainingDirectory());
+  public static PsiPackage getContainingPackage(@NotNull PsiClass psiClass) {
+    PsiDirectory directory = psiClass.getContainingFile().getContainingDirectory();
+    return directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
   }
 
   public static PsiClass getTestClass(final PsiElement element) {

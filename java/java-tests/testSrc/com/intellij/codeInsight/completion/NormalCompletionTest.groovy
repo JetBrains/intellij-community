@@ -1147,6 +1147,12 @@ class XInternalError {}
     assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
   }
 
+  public void testMetaAnnotation() {
+    myFixture.configureByText "a.java", "@<caret> @interface Anno {}"
+    myFixture.complete(CompletionType.BASIC)
+    assert myFixture.lookup.items.find { it.lookupString == 'Retention' }
+  }
+
   public void testAnnotationClassFromWithinAnnotation() { doTest() }
 
   public void testStaticallyImportedFieldsTwice() {
@@ -1349,6 +1355,14 @@ class XInternalError {}
     checkResult()
   }
 
+  public void testImplementViaOverrideCompletion() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'public void run'
+    lookup.currentItem = lookup.items[1]
+    myFixture.type('\n')
+    checkResult()
+  }
+
   public void testAccessorViaCompletion() {
     configure()
 
@@ -1426,6 +1440,10 @@ class XInternalError {}
   public void testMulticaretCompletionFromNonPrimaryCaret() {
     configure()
     myFixture.assertPreferredCompletionItems(0, "arraycopy")
+  }
+
+  public void testMulticaretCompletionFromNonPrimaryCaretWithTab() {
+    doTest '\t'
   }
 
   public void "test complete lowercase class name"() {

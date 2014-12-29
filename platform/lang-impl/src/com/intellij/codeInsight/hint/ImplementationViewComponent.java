@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -329,12 +330,26 @@ public class ImplementationViewComponent extends JPanel {
       if (element instanceof PsiNamedElement) {
         names.add(((PsiNamedElement)element).getName());
       }
+      if (names.size() > 1) {
+        break;
+      }
     }
+
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
       if (file == null) continue;
-      final PsiElement parent = element.getParent();
-      files.add(new FileDescriptor(file, names.size() > 1 || parent == file ? element : parent));
+      if (names.size() > 1) {
+        files.add(new FileDescriptor(file, element));
+      }
+      else {
+        final PsiElement parent = PsiTreeUtil.getStubOrPsiParent(element);
+        if (parent == file) {
+          files.add(new FileDescriptor(file, element));
+        }
+        else {
+          files.add(new FileDescriptor(file, parent));
+        }
+      }
       candidates.add(element);
     }
     

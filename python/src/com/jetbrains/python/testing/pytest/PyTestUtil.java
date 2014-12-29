@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,26 @@
  */
 package com.jetbrains.python.testing.pytest;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: catherine
  */
 public class PyTestUtil {
-  private static final HashSet<String> PYTHON_TEST_QUALIFIED_CLASSES = Sets.newHashSet("unittest.TestCase", "unittest.case.TestCase");
+  private static final Set<String> PYTHON_TEST_QUALIFIED_CLASSES = ImmutableSet.of("unittest.TestCase", "unittest.case.TestCase");
 
   public static List<PyStatement> getPyTestCasesFromFile(PsiFileSystemItem file) {
     List<PyStatement> result = Lists.newArrayList();
@@ -71,7 +74,7 @@ public class PyTestUtil {
   }
 
   public static boolean isPyTestClass(PyClass pyClass) {
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback(pyClass.getProject()))) {
       if (type != null && PYTHON_TEST_QUALIFIED_CLASSES.contains(type.getClassQName())) {
         return true;
       }
@@ -80,7 +83,7 @@ public class PyTestUtil {
     if (className == null) return false;
     final String name = className.toLowerCase();
     if (name.startsWith("test")) {
-      for (PyFunction cls : pyClass.getMethods()) {
+      for (PyFunction cls : pyClass.getMethods(false)) {
         if (isPyTestFunction(cls)) {
           return true;
         }

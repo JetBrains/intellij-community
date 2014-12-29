@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -82,8 +80,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
 
-  private final List<Filter> myFilters = Lists.<Filter>newArrayList(new UrlFilter());
-
   private Boolean myMultiprocessDebug = null;
 
   public boolean isDebug() {
@@ -130,7 +126,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
-    final ConsoleView consoleView = createConsoleBuilder(project).filters(myFilters).getConsole();
+    final ConsoleView consoleView = createConsoleBuilder(project).getConsole();
 
     addTracebackFilter(project, consoleView, processHandler);
 
@@ -273,7 +269,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
     if (flavor != null) {
-      flavor.addPredefinedEnvironmentVariables(envs);
+      flavor.addPredefinedEnvironmentVariables(envs, myConfig.getProject());
     }
   }
 
@@ -337,7 +333,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected Collection<String> collectPythonPath() {
     final Module module = myConfig.getModule();
-    Set<String> pythonPath = Sets.newHashSet(collectPythonPath(module, myConfig.addContentRoots(), myConfig.addSourceRoots()));
+    Set<String> pythonPath = Sets.newHashSet(collectPythonPath(module, myConfig.shouldAddContentRoots(), myConfig.shouldAddSourceRoots()));
 
     if (isDebug() && getSdkFlavor() instanceof JythonSdkFlavor) { //that fixes Jython problem changing sys.argv on execfile, see PY-8164
       pythonPath.add(PythonHelpersLocator.getHelperPath("pycharm"));

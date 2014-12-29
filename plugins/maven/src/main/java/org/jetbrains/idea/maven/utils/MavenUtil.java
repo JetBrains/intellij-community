@@ -329,9 +329,9 @@ public class MavenUtil {
                                              Properties properties,
                                              Properties conditions,
                                              boolean interactive) throws IOException {
-    FileTemplateManager manager = FileTemplateManager.getInstance();
+    FileTemplateManager manager = FileTemplateManager.getInstance(project);
     FileTemplate fileTemplate = manager.getJ2eeTemplate(templateName);
-    Properties allProperties = manager.getDefaultProperties(project);
+    Properties allProperties = manager.getDefaultProperties();
     if (!interactive) {
       allProperties.putAll(properties);
     }

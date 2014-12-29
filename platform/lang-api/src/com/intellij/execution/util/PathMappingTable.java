@@ -89,6 +89,11 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
   }
 
   @Override
+  protected boolean isEmpty(PathMappingSettings.PathMapping element) {
+    return element.getLocalRoot().isEmpty() && element.getRemoteRoot().isEmpty();
+  }
+
+  @Override
   protected PathMappingSettings.PathMapping cloneElement(PathMappingSettings.PathMapping envVariable) {
     return envVariable.clone();
   }

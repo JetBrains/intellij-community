@@ -104,9 +104,9 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
   @Nullable
   public static VirtualFile createFileFromTemplate(final String templateName, final VirtualFile parent, final String fileName) {
     parent.refresh(false, false);
-    final FileTemplate template = FileTemplateManager.getInstance().getJ2eeTemplate(templateName);
+    final FileTemplate template = FileTemplateManager.getDefaultInstance().getJ2eeTemplate(templateName);
     try {
-      final String text = template.getText(FileTemplateManager.getInstance().getDefaultProperties());
+      final String text = template.getText(FileTemplateManager.getDefaultInstance().getDefaultProperties());
       VirtualFile file = parent.findChild(fileName);
       if (file == null) {
         file = parent.createChildData(AppEngineSupportProvider.class, fileName);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -333,6 +333,11 @@ public class GeneralCommandLine implements UserDataHolder {
         environment.putAll(myEnvParams);
       }
     }
+    if (SystemInfo.isWindows) {
+      // (Windows) An environment variable with empty name is incorrect.
+      // It'll end up in "CreateProcess error=87, The parameter is incorrect".
+      environment.remove("");
+    }
   }
 
   /**
@@ -370,6 +375,17 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   private static class MyTHashMap extends THashMap<String, String> {
+    @Override
+    public String put(String key, String value) {
+      if (key == null || value == null) {
+        LOG.error(new Exception("Nulls are not allowed"));
+        return null;
+      }
+      else {
+        return super.put(key, value);
+      }
+    }
+
     @Override
     public void putAll(Map<? extends String, ? extends String> map) {
       if (map != null) {

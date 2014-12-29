@@ -15,14 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -30,10 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -52,9 +47,9 @@ public class CollectClassMembersUtil {
       myInnerClasses = innerClasses;
     }
 
-    public static ClassMembers create(@NotNull Map<String, CandidateInfo> first,
-                                      @NotNull Map<String, List<CandidateInfo>> second,
-                                      @NotNull Map<String, CandidateInfo> third) {
+    public static ClassMembers create(@NotNull LinkedHashMap<String, CandidateInfo> first,
+                                      @NotNull LinkedHashMap<String, List<CandidateInfo>> second,
+                                      @NotNull LinkedHashMap<String, CandidateInfo> third) {
       return new ClassMembers(first, second, third);
     }
 
@@ -71,7 +66,6 @@ public class CollectClassMembersUtil {
     }
   }
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil");
   private static final Key<CachedValue<ClassMembers>> CACHED_MEMBERS = Key.create("CACHED_CLASS_MEMBERS");
 
   private static final Key<CachedValue<ClassMembers>> CACHED_MEMBERS_INCLUDING_SYNTHETIC = Key.create("CACHED_MEMBERS_INCLUDING_SYNTHETIC");
@@ -134,9 +128,9 @@ public class CollectClassMembersUtil {
     return CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<ClassMembers>() {
       @Override
       public Result<ClassMembers> compute() {
-        Map<String, CandidateInfo> allFields = new HashMap<String, CandidateInfo>();
-        Map<String, List<CandidateInfo>> allMethods = new HashMap<String, List<CandidateInfo>>();
-        Map<String, CandidateInfo> allInnerClasses = new HashMap<String, CandidateInfo>();
+        LinkedHashMap<String, CandidateInfo> allFields = ContainerUtil.newLinkedHashMap();
+        LinkedHashMap<String, List<CandidateInfo>> allMethods = ContainerUtil.newLinkedHashMap();
+        LinkedHashMap<String, CandidateInfo> allInnerClasses = ContainerUtil.newLinkedHashMap();
 
         processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic);
         return Result.create(ClassMembers.create(allFields, allMethods, allInnerClasses),

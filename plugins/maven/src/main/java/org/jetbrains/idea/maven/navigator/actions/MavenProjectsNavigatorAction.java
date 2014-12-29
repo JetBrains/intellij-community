@@ -16,6 +16,9 @@
 package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
@@ -23,19 +26,25 @@ import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 public abstract class MavenProjectsNavigatorAction extends MavenToggleAction {
   @Override
   protected boolean doIsSelected(AnActionEvent e) {
-    return isSelected(getNavigator(e));
+    final MavenProjectsNavigator navigator = getNavigator(e);
+    return navigator!= null && isSelected(navigator);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    setSelected(getNavigator(e), state);
+    final MavenProjectsNavigator navigator = getNavigator(e);
+    if (navigator != null) {
+      setSelected(navigator, state);
+    }
   }
 
-  private MavenProjectsNavigator getNavigator(AnActionEvent e) {
-    return MavenProjectsNavigator.getInstance(MavenActionUtil.getProject(e.getDataContext()));
+  @Nullable
+  private static MavenProjectsNavigator getNavigator(AnActionEvent e) {
+    final Project project = MavenActionUtil.getProject(e.getDataContext());
+    return project != null ? MavenProjectsNavigator.getInstance(project) : null;
   }
 
-  protected abstract boolean isSelected(MavenProjectsNavigator navigator);
+  protected abstract boolean isSelected(@NotNull MavenProjectsNavigator navigator);
 
-  protected abstract void setSelected(MavenProjectsNavigator navigator, boolean value);
+  protected abstract void setSelected(@NotNull MavenProjectsNavigator navigator, boolean value);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,13 +52,13 @@ public class JavaInspectionExtensionsFactory extends InspectionExtensionsFactory
   }
 
   @Override
-  public boolean isToCheckMember(final PsiElement element, final String id) {
+  public boolean isToCheckMember(@NotNull final PsiElement element, @NotNull final String id) {
     return SuppressManager.getInstance().getElementToolSuppressedIn(element, id) == null;
   }
 
   @Override
   @Nullable
-  public String getSuppressedInspectionIdsIn(final PsiElement element) {
+  public String getSuppressedInspectionIdsIn(@NotNull final PsiElement element) {
     return SuppressManager.getInstance().getSuppressedInspectionIdsIn(element);
   }
 

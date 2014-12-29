@@ -26,7 +26,10 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
-public class ModalityInvokatorImpl implements ModalityInvokator {
+class ModalityInvokatorImpl implements ModalityInvokator {
+  ModalityInvokatorImpl() {
+  }
+
   @NotNull
   @Override
   public ActionCallback invokeLater(@NotNull Runnable runnable) {

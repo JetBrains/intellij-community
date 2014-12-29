@@ -29,6 +29,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public abstract class EntryPointsManager implements Disposable {
   public static EntryPointsManager getInstance(Project project) {
@@ -50,6 +52,10 @@ public abstract class EntryPointsManager implements Disposable {
 
   public abstract void configureAnnotations();
 
+  /**
+   * {@link com.intellij.codeInspection.ex.EntryPointsManagerImpl#createConfigureAnnotationsButton()} should be used instead
+   */
+  @Deprecated
   public abstract JButton createConfigureAnnotationsBtn();
 
   public abstract boolean isEntryPoint(@NotNull PsiElement element);

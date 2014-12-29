@@ -37,10 +37,22 @@
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
 
-    <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
-    <projectConfigurable groupId="build" instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
-    <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
-    <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PyDependenciesConfigurable"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
+                         displayName="Project Structure"
+                         provider="com.jetbrains.python.configuration.PythonContentEntriesConfigurableProvider"/>
+    <projectConfigurable groupId="build"
+                         id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
+                         displayName="Buildout Support"
+                         instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         displayName="Project Interpreter"
+                         instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
+                         displayName="Project Dependencies"
+                         provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
@@ -105,7 +117,7 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <group id="WelcomeScreen.Platform.NewProject">
-      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.actions.PyCharmNewProjectStep" icon="AllIcons.General.CreateNewProject"/>
+      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.actions.PyCharmNewProjectStep" icon="AllIcons.Welcome.CreateNewProject"/>
       <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.General.OpenProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>

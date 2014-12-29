@@ -68,7 +68,7 @@ public class IdeaNotNullHelper {
       // TODO: FUNCTION_NE also possible if reversed order (in theory)
       if (ifbranch != null &&
           if_condition.type == Exprent.EXPRENT_FUNCTION &&
-          ((FunctionExprent)if_condition).getFunctype() == FunctionExprent.FUNCTION_EQ &&
+          ((FunctionExprent)if_condition).getFuncType() == FunctionExprent.FUNCTION_EQ &&
           ifbranch.type == Statement.TYPE_BASICBLOCK &&
           ifbranch.getExprents().size() == 1 &&
           ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
@@ -107,7 +107,7 @@ public class IdeaNotNullHelper {
                     List<AnnotationExprent> annotations = param_annotations_lists.get(i - shift);
 
                     for (AnnotationExprent ann : annotations) {
-                      if (ann.getClassname().equals("org/jetbrains/annotations/NotNull")) {
+                      if (ann.getClassName().equals("org/jetbrains/annotations/NotNull")) {
                         is_notnull_check = true;
                       }
                     }
@@ -116,7 +116,7 @@ public class IdeaNotNullHelper {
                   break;
                 }
 
-                index += md.params[i].stack_size;
+                index += md.params[i].stackSize;
               }
             }
           }
@@ -183,7 +183,7 @@ public class IdeaNotNullHelper {
       List<AnnotationExprent> annotations = attr.getAnnotations();
 
       for (AnnotationExprent ann : annotations) {
-        if (ann.getClassname().equals("org/jetbrains/annotations/NotNull")) {
+        if (ann.getClassName().equals("org/jetbrains/annotations/NotNull")) {
           is_notnull_check = true;
         }
       }
@@ -205,7 +205,7 @@ public class IdeaNotNullHelper {
       Exprent exprent = stat.getExprents().get(0);
       if (exprent.type == Exprent.EXPRENT_EXIT) {
         ExitExprent exit_exprent = (ExitExprent)exprent;
-        if (exit_exprent.getExittype() == ExitExprent.EXIT_RETURN) {
+        if (exit_exprent.getExitType() == ExitExprent.EXIT_RETURN) {
           Exprent exprent_value = exit_exprent.getValue();
           //if(exprent_value.type == Exprent.EXPRENT_VAR) {
           //	VarExprent var_value = (VarExprent)exprent_value;
@@ -214,7 +214,7 @@ public class IdeaNotNullHelper {
           Exprent if_condition = ifparent.getHeadexprent().getCondition();
 
           if (ifparent.getElsestat() == stat && if_condition.type == Exprent.EXPRENT_FUNCTION &&
-              ((FunctionExprent)if_condition).getFunctype() == FunctionExprent.FUNCTION_EQ) { // TODO: reversed order possible (in theory)
+              ((FunctionExprent)if_condition).getFuncType() == FunctionExprent.FUNCTION_EQ) { // TODO: reversed order possible (in theory)
 
             FunctionExprent func = (FunctionExprent)if_condition;
             Exprent first_param = func.getLstOperands().get(0);
@@ -268,7 +268,7 @@ public class IdeaNotNullHelper {
       Exprent exprent = stat.getExprents().get(0);
       if (exprent.type == Exprent.EXPRENT_EXIT) {
         ExitExprent exit_exprent = (ExitExprent)exprent;
-        if (exit_exprent.getExittype() == ExitExprent.EXIT_RETURN) {
+        if (exit_exprent.getExitType() == ExitExprent.EXIT_RETURN) {
           Exprent exprent_value = exit_exprent.getValue();
 
           SequenceStatement sequence = (SequenceStatement)parent;
@@ -282,7 +282,7 @@ public class IdeaNotNullHelper {
             Exprent if_condition = ifstat.getHeadexprent().getCondition();
 
             if (ifstat.iftype == IfStatement.IFTYPE_IF && if_condition.type == Exprent.EXPRENT_FUNCTION &&
-                ((FunctionExprent)if_condition).getFunctype() == FunctionExprent.FUNCTION_EQ) { // TODO: reversed order possible (in theory)
+                ((FunctionExprent)if_condition).getFuncType() == FunctionExprent.FUNCTION_EQ) { // TODO: reversed order possible (in theory)
 
               FunctionExprent func = (FunctionExprent)if_condition;
               Exprent first_param = func.getLstOperands().get(0);

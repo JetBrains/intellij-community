@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
@@ -42,8 +41,6 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.jetbrains.python.PyNames.FAKE_OLD_BASE;
 
 /**
  * Available on self.my_something when my_something is unresolved.
@@ -79,12 +76,12 @@ public class AddFieldQuickFix implements LocalQuickFix {
     // add this field as the last stmt of the constructor
     final PyStatementList statementList = init.getStatementList();
     // name of 'self' may be different for fancier styles
-    PyParameter[] params = init.getParameterList().getParameters();
     String selfName = PyNames.CANONICAL_SELF;
+    final PyParameter[] params = init.getParameterList().getParameters();
     if (params.length > 0) {
       selfName = params[0].getName();
     }
-    PyStatement newStmt = callback.fun(selfName);
+    final PyStatement newStmt = callback.fun(selfName);
     if (!FileModificationService.getInstance().preparePsiElementForWrite(statementList)) return null;
     final PsiElement result = PyUtil.addElementToStatementList(newStmt, statementList, true);
     PyPsiUtils.removeRedundantPass(statementList);
@@ -118,7 +115,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (element instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
       if (qualifier == null) return null;
-      final PyType type = TypeEvalContext.userInitiated(element.getContainingFile()).getType(qualifier);
+      final PyType type = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).getType(qualifier);
       return type instanceof PyClassType ? (PyClassType)type : null;
     }
     final PyClass aClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
@@ -166,7 +163,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         appendToMethod(newInit, callback);
 
         PsiElement addAnchor = null;
-        PyFunction[] meths = cls.getMethods();
+        PyFunction[] meths = cls.getMethods(false);
         if (meths.length > 0) addAnchor = meths[0].getPrevSibling();
         PyStatementList clsContent = cls.getStatementList();
         newInit = (PyFunction) clsContent.addAfter(newInit, addAnchor);
@@ -192,7 +189,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (ancestorInit == null) functionText += "    pass";
     else {
       final PyClass ancestorClass = ancestorInit.getContainingClass();
-      if (ancestorClass != null && ancestorClass != PyBuiltinCache.getInstance(ancestorInit).getClass("object") && !FAKE_OLD_BASE.equals(ancestorClass.getName())) {
+      if (ancestorClass != null && !PyUtil.isObjectClass(ancestorClass)) {
         StringBuilder sb = new StringBuilder();
         PyParameter[] params = ancestorInit.getParameterList().getParameters();
 
@@ -243,8 +240,8 @@ public class AddFieldQuickFix implements LocalQuickFix {
       myInitializer = initializer;
     }
 
-    public PyStatement fun(String self_name) {
-      return PyElementGenerator.getInstance(myProject).createFromText(LanguageLevel.getDefault(), PyStatement.class, self_name + "." + myItemName + " = " + myInitializer);
+    public PyStatement fun(String selfName) {
+      return PyElementGenerator.getInstance(myProject).createFromText(LanguageLevel.getDefault(), PyStatement.class, selfName + "." + myItemName + " = " + myInitializer);
     }
   }
 }

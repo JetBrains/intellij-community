@@ -175,4 +175,9 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
   }
 
   protected abstract void doReset();
+
+  @Override
+  public boolean alwaysCanBeActive() {
+    return false;
+  }
 }

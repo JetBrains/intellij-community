@@ -17,10 +17,10 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Couple;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,18 +29,16 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-//todo: extends from base store class
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
-  @Nullable private final Element myElement;
   private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
-  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, @NotNull ProjectManagerImpl projectManager) {
-    super(project);
+  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, @NotNull ProjectManagerImpl projectManager, @NotNull PathMacroManager pathMacroManager) {
+    super(project, pathMacroManager);
 
     myProjectManager = projectManager;
-    myElement = projectManager.getDefaultProjectRootElement();
   }
 
   @Nullable
@@ -52,27 +50,17 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    Element _d = null;
-
-    if (myElement != null) {
-      myElement.detach();
-      _d = myElement;
-    }
-
-    ComponentManager componentManager = getComponentManager();
-    final Element element = _d;
-    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(), componentManager,
-                                                            ROOT_TAG_NAME, null,
-                                                            ComponentVersionProvider.EMPTY) {
+    final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, myPathMacroManager.createTrackingSubstitutor(),
+                                                            ROOT_TAG_NAME, null) {
       @Override
       @Nullable
       protected Element loadLocalData() {
-        return element;
+        return myProjectManager.getDefaultProjectRootElement();
       }
 
       @Override
-      protected MySaveSession createSaveSession(@NotNull StorageData storageData) {
-        return new MySaveSession(storageData) {
+      protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
+        return new XmlElementStorageSaveSession(storageData) {
           @Override
           protected void doSave(@Nullable Element element) {
             // we must set empty element instead of null as indicator - ProjectManager state is ready to save
@@ -128,29 +116,14 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      @Nullable
-      public StateStorage getFileStateStorage(@NotNull String fileSpec) {
-        return storage;
-      }
-
-      @Override
       public void clearStateStorage(@NotNull String file) {
       }
 
-      @NotNull
-      @Override
-      public ExternalizationSession startExternalization() {
-        return new MyExternalizationSession(storage);
-      }
-
       @Nullable
       @Override
-      public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
-        return storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
-      }
-
-      @Override
-      public void finishSave(@NotNull SaveSession saveSession) {
+      public ExternalizationSession startExternalization() {
+        StateStorage.ExternalizationSession externalizationSession = storage.startExternalization();
+        return externalizationSession == null ? null : new MyExternalizationSession(externalizationSession);
       }
 
       @NotNull
@@ -172,18 +145,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      public void registerStreamProvider(final StreamProvider streamProvider, final RoamingType type) {
-        throw new UnsupportedOperationException("Method registerStreamProvider not implemented in " + getClass());
-      }
-
-      @Override
-      public void setStreamProvider(@Nullable com.intellij.openapi.components.impl.stores.StreamProvider streamProvider) {
+      public void setStreamProvider(@Nullable StreamProvider streamProvider) {
         throw new UnsupportedOperationException("Method setStreamProvider not implemented in " + getClass());
       }
 
       @Nullable
       @Override
-      public com.intellij.openapi.components.impl.stores.StreamProvider getStreamProvider() {
+      public StreamProvider getStreamProvider() {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
@@ -196,16 +164,17 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  public void load() throws IOException, StateStorageException {
-    if (myElement == null) return;
-    super.load();
+  public void load() throws IOException {
+    if (myProjectManager.getDefaultProjectRootElement() != null) {
+      super.load();
+    }
   }
 
   private static class MyExternalizationSession implements StateStorageManager.ExternalizationSession {
     @NotNull final StateStorage.ExternalizationSession externalizationSession;
 
-    public MyExternalizationSession(@NotNull XmlElementStorage storage) {
-      externalizationSession = storage.startExternalization();
+    public MyExternalizationSession(@NotNull StateStorage.ExternalizationSession externalizationSession) {
+      this.externalizationSession = externalizationSession;
     }
 
     @Override
@@ -216,6 +185,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     @Override
     public void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
       externalizationSession.setState(component, componentName, state, null);
+    }
+
+    @NotNull
+    @Override
+    public List<SaveSession> createSaveSessions() {
+      return ContainerUtil.createMaybeSingletonList(externalizationSession.createSaveSession());
     }
   }
 }

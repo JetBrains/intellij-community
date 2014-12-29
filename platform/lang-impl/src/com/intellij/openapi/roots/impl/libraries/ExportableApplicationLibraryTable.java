@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,17 @@
  */
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.ProjectBundle;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 
 /**
  * @author yole
  */
 @State(
   name = "libraryTable",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml", roamingType = RoamingType.DISABLED)}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml", roamingType = RoamingType.DISABLED)
 )
-public class ExportableApplicationLibraryTable extends ApplicationLibraryTable implements ExportableComponent {
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(getExternalFileName())};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return ProjectBundle.message("library.global.settings");
-  }
+public class ExportableApplicationLibraryTable extends ApplicationLibraryTable {
 }

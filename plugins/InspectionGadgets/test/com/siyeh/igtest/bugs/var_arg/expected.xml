@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>PrimitiveArrayArgumentToVariableArgMethod.java</file>
-    <line>7</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Confusing primitive array argument to var-arg method</problem_class>
-    <description>Confusing primitive array argument to var-arg method #loc</description>
-  </problem>
-</problems>

@@ -22,7 +22,6 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -49,10 +48,10 @@ public abstract class ExecutableValidator {
   private static final NotificationGroup ourNotificationGroup = new NotificationGroup("External Executable Critical Failures",
                                                                               STICKY_BALLOON, true);
   @NotNull protected final Project myProject;
-  @NotNull private final NotificationsManager myNotificationManager;
+  @NotNull protected final NotificationsManager myNotificationManager;
 
   @NotNull private final String myNotificationErrorTitle;
-  @NotNull private String myNotificationErrorDescription;
+  @NotNull private final String myNotificationErrorDescription;
 
   /**
    * Configures notification and dialog by setting text messages and titles specific to the whoever uses the validator.
@@ -71,11 +70,21 @@ public abstract class ExecutableValidator {
   protected abstract String getCurrentExecutable();
 
   /**
-   * @return the settings configurable where the executable is shown and can be fixed.
+   * @return the settings configurable display name, where the executable is shown and can be fixed.
    *         This configurable will be opened if user presses "Fix" on the notification about invalid executable.
    */
   @NotNull
-  protected abstract Configurable getConfigurable();
+  protected abstract String getConfigurableDisplayName();
+
+  @Nullable
+  protected Notification validate(@NotNull String executable) {
+    return !isExecutableValid(executable) ? createDefaultNotification() : null;
+  }
+
+  @NotNull
+  protected ExecutableNotValidNotification createDefaultNotification() {
+    return new ExecutableNotValidNotification();
+  }
 
   /**
    * Returns true if the supplied executable is valid.
@@ -110,48 +119,50 @@ public abstract class ExecutableValidator {
     }
   }
 
-  public void setNotificationErrorDescription(@NotNull String notificationErrorDescription) {
-    myNotificationErrorDescription = notificationErrorDescription;
-  }
-
   /**
    * Shows a notification about not configured executable with a link to the Settings to fix it.
    * Expires the notification if user fixes the path from the opened Settings dialog.
    * Makes sure that there is always only one notification about the problem in the stack of notifications.
    */
-  private void showExecutableNotConfiguredNotification() {
+  private void showExecutableNotConfiguredNotification(@NotNull Notification notification) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return;
     }
 
     LOG.info("Executable is not valid: " + getCurrentExecutable());
-    if (myNotificationManager.getNotificationsOfType(ExecutableNotValidNotification.class, myProject).length == 0) { // show only once
-      new ExecutableNotValidNotification().notify(myProject.isDefault() ? null : myProject);
+    if (myNotificationManager.getNotificationsOfType(notification.getClass(), myProject).length == 0) { // show only once
+      notification.notify(myProject.isDefault() ? null : myProject);
     }
   }
   
   @NotNull
-  private String prepareDescription() {
+  protected String prepareDescription(@NotNull String description, boolean appendFixIt) {
+    StringBuilder result = new StringBuilder();
     String executable = getCurrentExecutable();
+
     if (executable.isEmpty()) {
-      return String.format("<b>%s</b>%s <a href=''>Fix it.</a>", myNotificationErrorTitle, myNotificationErrorDescription);
+      result.append(String.format("<b>%s</b>%s", myNotificationErrorTitle, description));
     }
     else {
-      return String.format("<b>%s:</b> <code>%s</code><br/>%s <a href=''>Fix it.</a>",
-                           myNotificationErrorTitle, executable, myNotificationErrorDescription);
+      result.append(
+        String.format("<b>%s:</b> <code>%s</code><br/>%s", myNotificationErrorTitle, executable, description));
     }
+    if (appendFixIt) {
+      result.append(" <a href=''>Fix it.</a>");
+    }
+
+    return result.toString();
   }
 
   protected void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
     showSettings();
-    if (isExecutableValid(getCurrentExecutable())) {
+    if (validate(getCurrentExecutable()) == null) {
       notification.expire();
     }
   }
 
   protected void showSettings() {
-    Configurable configurable = getConfigurable();
-    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable.getDisplayName());
+    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurableDisplayName());
   }
 
   /**
@@ -163,8 +174,14 @@ public abstract class ExecutableValidator {
     if (myProject.isDisposed()) {
       return false;
     }
-    if (!isExecutableValid(getCurrentExecutable())) {
-      showExecutableNotConfiguredNotification();
+    Notification notification = validate(getCurrentExecutable());
+
+    return notify(notification);
+  }
+
+  protected boolean notify(@Nullable Notification notification) {
+    if (notification != null) {
+      showExecutableNotConfiguredNotification(notification);
       return false;
     }
     return true;
@@ -211,9 +228,18 @@ public abstract class ExecutableValidator {
     return isExecutableValid(getCurrentExecutable());
   }
 
-  private class ExecutableNotValidNotification extends Notification {
-    private ExecutableNotValidNotification() {
-      super(ourNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener.Adapter() {
+  public class ExecutableNotValidNotification extends Notification {
+
+    public ExecutableNotValidNotification() {
+      this(myNotificationErrorDescription);
+    }
+
+    public ExecutableNotValidNotification(@NotNull String description) {
+      this(prepareDescription(description, true), NotificationType.ERROR);
+    }
+
+    public ExecutableNotValidNotification(@NotNull String preparedDescription, @NotNull NotificationType type) {
+      super(ourNotificationGroup.getDisplayId(), "", preparedDescription, type, new NotificationListener.Adapter() {
         @Override
         protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           showSettingsAndExpireIfFixed(notification);

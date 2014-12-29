@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -291,7 +292,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       }
     }
     else if (e.getDocument() == myNewDocument) {
-      commitToOriginal();
+      commitToOriginal(e);
       if (!isValid()) closeEditor();
     }
     else if (e.getDocument() == myOrigDocument) {
@@ -366,7 +367,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   }
 
 
-  private void commitToOriginal() {
+  private void commitToOriginal(final DocumentEvent e) {
     VirtualFile origVirtualFile = PsiUtilCore.getVirtualFile(myNewFile.getContext());
     myCommittingToOriginal = true;
     try {
@@ -375,7 +376,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
           @Override
           public void run() {
             if (myAltFullRange != null) {
-              altCommitToOriginal();
+              altCommitToOriginal(e);
               return;
             }
             commitToOriginalInner();
@@ -427,7 +428,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     }
   }
 
-  private void altCommitToOriginal() {
+  private void altCommitToOriginal(@NotNull DocumentEvent e) {
     final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myOrigDocument);
     String newText = myNewDocument.getText();
     // prepare guarded blocks
@@ -440,18 +441,19 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       replacementMap.put(tempText, replacement);
     }
     // run preformat processors
-    myEditor.getCaretModel().moveToOffset(myAltFullRange.getStartOffset());
+    final int hostStartOffset = myAltFullRange.getStartOffset();
+    myEditor.getCaretModel().moveToOffset(hostStartOffset);
     for (CopyPastePreProcessor preProcessor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
       newText = preProcessor.preprocessOnPaste(myProject, origPsiFile, myEditor, newText, null);
     }
-    myOrigDocument.replaceString(myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset(), newText);
+    myOrigDocument.replaceString(hostStartOffset, myAltFullRange.getEndOffset(), newText);
     // replace temp strings for guarded blocks
     for (String tempText : replacementMap.keySet()) {
-      int idx = CharArrayUtil.indexOf(myOrigDocument.getCharsSequence(), tempText, myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset());
+      int idx = CharArrayUtil.indexOf(myOrigDocument.getCharsSequence(), tempText, hostStartOffset, myAltFullRange.getEndOffset());
       myOrigDocument.replaceString(idx, idx + tempText.length(), replacementMap.get(tempText));
     }
     // JAVA: fix occasional char literal concatenation
-    fixDocumentQuotes(myOrigDocument, myAltFullRange.getStartOffset() - 1);
+    fixDocumentQuotes(myOrigDocument, hostStartOffset - 1);
     fixDocumentQuotes(myOrigDocument, myAltFullRange.getEndOffset());
 
     // reformat
@@ -461,7 +463,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       public void run() {
         try {
           CodeStyleManager.getInstance(myProject).reformatRange(
-            origPsiFile, myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset(), true);
+            origPsiFile, hostStartOffset, myAltFullRange.getEndOffset(), true);
         }
         catch (IncorrectOperationException e) {
           //LOG.error(e);
@@ -469,8 +471,13 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       }
     };
     DocumentUtil.executeInBulk(myOrigDocument, true, task);
-    myEditor.getCaretModel().moveToOffset(myAltFullRange.getStartOffset());
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+
+    PsiElement newInjected = InjectedLanguageManager.getInstance(myProject).findInjectedElementAt(origPsiFile, hostStartOffset);
+    DocumentWindow documentWindow = newInjected == null ? null : InjectedLanguageUtil.getDocumentWindow(newInjected);
+    if (documentWindow != null) {
+      myEditor.getCaretModel().moveToOffset(documentWindow.injectedToHost(e.getOffset()));
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    }
   }
 
   private static String fixQuotes(String padding) {

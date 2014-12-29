@@ -16,6 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,8 +25,9 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.PlatformUtilsCore;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
@@ -75,7 +77,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int EDITOR_TAB_LIMIT = 10;
   public int EDITOR_TAB_TITLE_LIMIT = 100;
   public boolean ANIMATE_WINDOWS = true;
-  public int ANIMATION_SPEED = 2000; // Pixels per second
+  @Deprecated //todo remove in IDEA 16
+  public int ANIMATION_SPEED = 4000; // Pixels per second
+  public int ANIMATION_DURATION = 300; // Milliseconds
   public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
   public boolean HIDE_TOOL_STRIPES = true;
   public boolean WIDESCREEN_SUPPORT = false;
@@ -128,11 +132,14 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public UISettings() {
     tweakPlatformDefaults();
     setSystemFontFaceAndSize();
+
+    Boolean scrollToSource = WelcomeWizardUtil.getAutoScrollToSource();
+    if (scrollToSource != null) DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
   }
 
   private void tweakPlatformDefaults() {
     // TODO[anton] consider making all IDEs use the same settings
-    if (PlatformUtilsCore.isAppCode()) {
+    if (PlatformUtils.isAppCode()) {
       SCROLL_TAB_LAYOUT_IN_EDITOR = true;
       ACTIVATE_RIGHT_EDITOR_ON_CLOSE = true;
       SHOW_ICONS_IN_MENUS = false;
@@ -181,7 +188,8 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   public static class FontFilter implements SerializationFilter {
-    public boolean accepts(Accessor accessor, Object bean) {
+    @Override
+    public boolean accepts(@NotNull Accessor accessor, Object bean) {
       UISettings settings = (UISettings)bean;
       return !hasDefaultFontSetting(settings);
     }
@@ -192,10 +200,12 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     return fontData.first.equals(settings.FONT_FACE) && fontData.second.equals(settings.FONT_SIZE);
   }
 
+  @Override
   public UISettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(UISettings object) {
     XmlSerializerUtil.copyBean(object, this);
 
@@ -286,6 +296,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
       }
     }
+    UIUtil.setHintingForLCDText(g2d);
   }
 
   /**

@@ -17,7 +17,6 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -27,10 +26,8 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -38,27 +35,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance(ModuleStoreImpl.class);
 
   private final ModuleImpl myModule;
 
-  public static final String DEFAULT_STATE_STORAGE = "$MODULE_FILE$";
-
   @SuppressWarnings({"UnusedDeclaration"})
-  public ModuleStoreImpl(final ComponentManagerImpl componentManager, final ModuleImpl module) {
-    super(componentManager);
+  public ModuleStoreImpl(@NotNull ModuleImpl module, @NotNull PathMacroManager pathMacroManager) {
+    super(pathMacroManager);
+
     myModule = module;
   }
 
+  @NotNull
   @Override
   protected FileBasedStorage getMainStorage() {
-    FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE, RoamingType.PER_USER);
+    FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER);
     assert storage != null;
     return storage;
   }
@@ -72,30 +69,30 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   public void load() throws IOException, StateStorageException {
     super.load();
 
-    final ModuleFileData storageData = getMainStorageData();
-    final String moduleTypeId = storageData.myOptions.get(Module.ELEMENT_TYPE);
+    String moduleTypeId = getMainStorageData().myOptions.get(Module.ELEMENT_TYPE);
     myModule.setOption(Module.ELEMENT_TYPE, ModuleTypeManager.getInstance().findByID(moduleTypeId).getId());
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
 
     final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
     if (substitutor != null) {
       final Collection<String> macros = substitutor.getUnknownMacros(null);
       if (!macros.isEmpty()) {
         final Project project = myModule.getProject();
-
-          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-            @Override
-            public void run() {
-              StorageUtil.notifyUnknownMacros(substitutor, project, null);
-            }
-          });
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+          @Override
+          public void run() {
+            StorageUtil.notifyUnknownMacros(substitutor, project, null);
+          }
+        });
       }
     }
   }
 
   @Override
-  public ModuleFileData getMainStorageData() throws StateStorageException {
+  public ModuleFileData getMainStorageData() {
     return (ModuleFileData)super.getMainStorageData();
   }
 
@@ -103,17 +100,25 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     private final Map<String, String> myOptions;
     private final Module myModule;
 
-    public ModuleFileData(final String rootElementName, Module module) {
+    private boolean dirty = true;
+
+    public ModuleFileData(@NotNull String rootElementName, @NotNull Module module) {
       super(rootElementName);
+
       myModule = module;
-      myOptions = new THashMap<String, String>(2);
+      myOptions = new TreeMap<String, String>();
     }
 
-    protected ModuleFileData(final ModuleFileData storageData) {
+    public boolean isDirty() {
+      return dirty;
+    }
+
+    private ModuleFileData(@NotNull ModuleFileData storageData) {
       super(storageData);
 
-      myOptions = new THashMap<String, String>(storageData.myOptions);
       myModule = storageData.myModule;
+      dirty = storageData.dirty;
+      myOptions = new TreeMap<String, String>(storageData.myOptions);
     }
 
     @Override
@@ -121,26 +126,25 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       super.load(rootElement, pathMacroSubstitutor, intern);
 
       for (Attribute attribute : rootElement.getAttributes()) {
-        myOptions.put(attribute.getName(), attribute.getValue());
+        if (!attribute.getName().equals(VERSION_OPTION)) {
+          myOptions.put(attribute.getName(), attribute.getValue());
+        }
       }
+
+      dirty = false;
     }
 
     @Override
-    @NotNull
-    protected Element save(@NotNull Map<String, Element> newLiveStates) {
-      Element root = super.save(newLiveStates);
-      myOptions.put(VERSION_OPTION, Integer.toString(myVersion));
-      String[] options = ArrayUtil.toStringArray(myOptions.keySet());
-      Arrays.sort(options);
-      for (String option : options) {
-        root.setAttribute(option, myOptions.get(option));
+    protected void writeOptions(@NotNull Element root, @NotNull String versionString) {
+      if (!myOptions.isEmpty()) {
+        for (Map.Entry<String, String> entry : myOptions.entrySet()) {
+          root.setAttribute(entry.getKey(), entry.getValue());
+        }
       }
+      // need be last for compat reasons
+      super.writeOptions(root, versionString);
 
-      //need be last for compat reasons
-      root.removeAttribute(VERSION_OPTION);
-      root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
-
-      return root;
+      dirty = false;
     }
 
     @Override
@@ -158,15 +162,20 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       return super.getChangedComponentNames(newStorageData, substitutor);
     }
 
-    public void setOption(final String optionName, final String optionValue) {
-      myOptions.put(optionName, optionValue);
+    public void setOption(@NotNull String optionName, @NotNull String optionValue) {
+      if (!optionValue.equals(myOptions.put(optionName, optionValue))) {
+        dirty = true;
+      }
     }
 
-    public void clearOption(final String optionName) {
-      myOptions.remove(optionName);
+    public void clearOption(@NotNull String optionName) {
+      if (myOptions.remove(optionName) != null) {
+        dirty = true;
+      }
     }
 
-    public String getOptionValue(final String optionName) {
+    @Nullable
+    public String getOptionValue(@NotNull String optionName) {
       return myOptions.get(optionName);
     }
   }
@@ -176,8 +185,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     final String path = filePath.replace(File.separatorChar, '/');
     LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     final StateStorageManager storageManager = getStateStorageManager();
-    storageManager.clearStateStorage(DEFAULT_STATE_STORAGE);
-    storageManager.addMacro(DEFAULT_STATE_STORAGE, path);
+    storageManager.clearStateStorage(StoragePathMacros.MODULE_FILE);
+    storageManager.addMacro(StoragePathMacros.MODULE_FILE, path);
   }
 
   @Override
@@ -199,7 +208,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public void setOption(final String optionName, final String optionValue) {
+  public void setOption(@NotNull String optionName, @NotNull String optionValue) {
     try {
       getMainStorageData().setOption(optionName,  optionValue);
     }
@@ -209,7 +218,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public void clearOption(final String optionName) {
+  public void clearOption(@NotNull String optionName) {
     try {
       getMainStorageData().clearOption(optionName);
     }
@@ -219,7 +228,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public String getOptionValue(final String optionName) {
+  public String getOptionValue(@NotNull String optionName) {
     try {
       return getMainStorageData().getOptionValue(optionName);
     }
@@ -243,6 +252,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    return new ModuleStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myModule);
+    return new ModuleStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myModule);
   }
 }

@@ -68,7 +68,7 @@ public class PyTypeParserTest extends PyTestCase {
   }
 
   private TypeEvalContext getTypeEvalContext() {
-    return TypeEvalContext.userInitiated(myFixture.getFile());
+    return TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile());
   }
 
   public void testUnionType() {
@@ -127,12 +127,6 @@ public class PyTypeParserTest extends PyTestCase {
     assertEquals(2, result.getTypes().size());
   }
 
-  public void testUnqualifiedNotImportedType() {
-    myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "Iterable");
-    assertClassType(type, "Iterable");
-  }
-
   public void testTypeSubparts() {
     myFixture.configureByFile("typeParser/typeParser.py");
     final String s = "list of (MyObject, collections.Iterable of MyObject, int) or None";
@@ -188,7 +182,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCollectionType collectionType = (PyCollectionType)type;
     assertNotNull(collectionType);
     assertEquals("list", collectionType.getName());
-    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback());
+    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback(null));
     assertInstanceOf(elementType, PyUnionType.class);
   }
 
@@ -209,7 +203,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCollectionType collectionType = (PyCollectionType)type;
     assertNotNull(collectionType);
     assertEquals("list", collectionType.getName());
-    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback());
+    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback(null));
     assertNotNull(elementType);
     assertEquals("int", elementType.getName());
   }
@@ -221,7 +215,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCollectionType collectionType = (PyCollectionType)type;
     assertNotNull(collectionType);
     assertEquals("dict", collectionType.getName());
-    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback());
+    final PyType elementType = collectionType.getElementType(TypeEvalContext.codeInsightFallback(null));
     assertNotNull(elementType);
     assertInstanceOf(elementType, PyTupleType.class);
     final PyTupleType tupleType = (PyTupleType)elementType;
@@ -283,15 +277,11 @@ public class PyTypeParserTest extends PyTestCase {
     doTest("Iterator[int]", "collections.Iterator[int]");
   }
 
-  public void testUnqualifiedUserSkeletonsClass() {
-    doTest("Iterator[int]", "Iterator[int]");
-  }
-
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PsiFile file = myFixture.getFile();
     final PyType type = PyTypeParser.getTypeByName(file, text);
-    TypeEvalContext context = TypeEvalContext.userInitiated(file).withTracing();
+    TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file).withTracing();
     final String actualType = PythonDocumentationProvider.getTypeName(type, context);
     assertEquals(expectedType, actualType);
   }

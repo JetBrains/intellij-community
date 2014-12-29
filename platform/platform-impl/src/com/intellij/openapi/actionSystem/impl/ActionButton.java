@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,11 +37,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder {
-  private static final Insets ICON_INSETS = new Insets(2, 2, 2, 2);
+  private static final Insets ICON_INSETS = new JBInsets(2, 2, 2, 2);
 
   private static final Icon ourEmptyIcon = EmptyIcon.ICON_18;
 
-  private Dimension myMinimumButtonSize;
+  private JBDimension myMinimumButtonSize;
   private PropertyChangeListener myActionButtonSynchronizer;
   private Icon myDisabledIcon;
   private Icon myIcon;
@@ -72,7 +71,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myPlace = place;
     setFocusable(false);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-    myMinimumButtonSize = minimumSize;
+    myMinimumButtonSize = JBDimension.create(minimumSize);
 
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
   }
@@ -82,7 +81,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void setMinimumButtonSize(@NotNull Dimension size) {
-    myMinimumButtonSize = size;
+    myMinimumButtonSize = JBDimension.create(size);
   }
 
   public void paintChildren(Graphics g) {}
@@ -213,7 +212,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
 
   public void setIconInsets(@Nullable Insets insets) {
-    myInsets = insets != null ? insets : new Insets(0,0,0,0);
+    myInsets = insets != null ? JBUI.insets(insets) : new Insets(0,0,0,0);
   }
 
   public Dimension getMinimumSize() {

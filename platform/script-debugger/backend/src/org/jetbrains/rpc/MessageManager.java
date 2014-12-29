@@ -15,7 +15,6 @@
  */
 package org.jetbrains.rpc;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,24 +23,20 @@ import java.io.IOException;
 import java.util.Arrays;
 
 /**
- * @param <OUTGOING> type of outgoing message
+ * @param <REQUEST> type of outgoing message
  * @param <INCOMING> type of incoming message
  * @param <INCOMING_WITH_SEQ> type of incoming message that is a command (has sequence number)
  */
-public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> {
-  public static final Logger LOG = Logger.getInstance(MessageManager.class);
-
+public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> extends MessageManagerBase {
   private final ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> callbackMap = ContainerUtil.createConcurrentIntObjectMap();
-  private final Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler;
+  private final Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler;
 
-  private volatile boolean closed;
-
-  public MessageManager(Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler) {
+  public MessageManager(Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler) {
     this.handler = handler;
   }
 
   public interface Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> {
-    int getUpdatedSequence(OUTGOING message);
+    int getUpdatedSequence(@NotNull OUTGOING message);
 
     boolean write(@NotNull OUTGOING message) throws IOException;
 
@@ -54,18 +49,14 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
     void call(INCOMING_WITH_SEQ response, AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback);
   }
 
-  public void send(@NotNull OUTGOING message, @NotNull AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback) {
-    if (closed) {
-      callback.onError("Connection is closed", null);
+  public void send(@NotNull REQUEST message, @NotNull AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback) {
+    if (rejectIfClosed(callback)) {
       return;
     }
 
     int sequence = handler.getUpdatedSequence(message);
     callbackMap.put(sequence, callback);
-    doSend(message, sequence);
-  }
-
-  private void doSend(@NotNull OUTGOING message, int sequence) {
+    
     boolean success;
     try {
       success = handler.write(message);
@@ -75,7 +66,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
         failedToSend(sequence);
       }
       finally {
-        LOG.error("Failed to send", e);
+        CommandProcessor.LOG.error("Failed to send", e);
       }
       return;
     }
@@ -97,7 +88,7 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
     if (commandResponse == null) {
       if (closed) {
         // just ignore
-        LOG.info("Connection closed, ignore incoming");
+        CommandProcessor.LOG.info("Connection closed, ignore incoming");
       }
       else {
         handler.acceptNonSequence(incomingParsed);
@@ -106,17 +97,16 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
     }
 
     AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = getCallbackAndRemove(handler.getSequence(commandResponse));
+    if (rejectIfClosed(callback)) {
+      return;
+    }
+
     try {
-      if (closed) {
-        callback.onError("Connection closed", null);
-      }
-      else {
-        handler.call(commandResponse, callback);
-      }
+      handler.call(commandResponse, callback);
     }
     catch (Throwable e) {
       callback.onError("Failed to dispatch response to callback", null);
-      LOG.error("Failed to dispatch response to callback", e);
+      CommandProcessor.LOG.error("Failed to dispatch response to callback", e);
     }
   }
 
@@ -128,24 +118,15 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
     return callback;
   }
 
-  public void closed() {
-    closed = true;
-  }
-
   public void cancelWaitingRequests() {
     // we should call them in the order they have been submitted
     ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> map = callbackMap;
     int[] keys = map.keys();
     Arrays.sort(keys);
     for (int key : keys) {
-      try {
-        AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = map.get(key);
-        if (callback != null) {
-          callback.onError("Connection closed", null);
-        }
-      }
-      catch (Throwable e) {
-        LOG.error("Failed to reject callback on connection closed", e);
+      AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = map.get(key);
+      if (callback != null) {
+        rejectCallback(callback);
       }
     }
   }

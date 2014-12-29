@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -62,7 +62,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   }
 
   private ExcludedEntriesConfigurable createExcludedConfigurable(final Project project) {
-    final ExcludedEntriesConfiguration configuration = myConfig.getExcludeFromStubGeneration();
+    final ExcludesConfiguration configuration = myConfig.getExcludeFromStubGeneration();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true) {
       @Override

@@ -24,11 +24,11 @@ import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -51,8 +51,7 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
       final String name = tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ");
       myToolNames.put(name, tool);
     }
-    final Set<String> strings = myToolNames.keySet();
-    myNames = strings.toArray(new String[strings.size()]);
+    myNames = ArrayUtil.toStringArray(myToolNames.keySet());
   }
 
   @Override

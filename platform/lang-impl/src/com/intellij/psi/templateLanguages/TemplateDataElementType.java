@@ -32,7 +32,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
@@ -46,7 +46,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
+public class TemplateDataElementType extends IStubFileElementType implements ITemplateDataElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.templateLanguages.TemplateDataElementType");
 
   public static final LanguageExtension<TreePatcher> TREE_PATCHER = new LanguageExtension<TreePatcher>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
@@ -72,7 +72,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   public ASTNode parseContents(ASTNode chameleon) {
     final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
     final FileElement treeElement = new DummyHolder(((TreeElement)chameleon).getManager(), null, table).getTreeElement();
-    final PsiFile file = (PsiFile)TreeUtil.getFileElement((TreeElement)chameleon).getPsi();
+    final FileElement fileElement = TreeUtil.getFileElement((TreeElement)chameleon);
+    final PsiFile file = (PsiFile)fileElement.getPsi();
     PsiFile originalFile = file.getOriginalFile();
 
     final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)originalFile.getViewProvider();
@@ -112,8 +113,10 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     DebugUtil.checkTreeStructure(parsed);
     DebugUtil.checkTreeStructure(treeElement);
     DebugUtil.checkTreeStructure(chameleon);
-    DebugUtil.checkTreeStructure(file.getNode());
-    DebugUtil.checkTreeStructure(originalFile.getNode());
+    if (fileElement != chameleon) {
+      DebugUtil.checkTreeStructure(file.getNode());
+      DebugUtil.checkTreeStructure(originalFile.getNode());
+    }
 
     return childNode;
   }

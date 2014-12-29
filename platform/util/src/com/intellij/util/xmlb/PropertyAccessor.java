@@ -16,6 +16,7 @@
 
 package com.intellij.util.xmlb;
 
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 
 class PropertyAccessor implements Accessor {
@@ -80,23 +80,19 @@ class PropertyAccessor implements Accessor {
     }
   }
 
-  private Annotation[] myAnnotationCache;
-
   @Override
   @NotNull
   public Annotation[] getAnnotations() {
-    Annotation[] annotations = myAnnotationCache;
-    if (annotations == null) {
-      annotations = myAnnotationCache = calcAnnotations();
-    }
-    return annotations;
-  }
-
-  private Annotation[] calcAnnotations() {
-    List<Annotation> result = new ArrayList<Annotation>();
+    List<Annotation> result = new SmartList<Annotation>();
     ContainerUtil.addAll(result, myReadMethod.getAnnotations());
     ContainerUtil.addAll(result, myWriteMethod.getAnnotations());
     return result.toArray(new Annotation[result.size()]);
+  }
+
+  @Override
+  public <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass) {
+    T annotation = myReadMethod.getAnnotation(annotationClass);
+    return annotation == null ? myWriteMethod.getAnnotation(annotationClass) : annotation;
   }
 
   @Override
@@ -112,6 +108,11 @@ class PropertyAccessor implements Accessor {
   @Override
   public Type getGenericType() {
     return myGenericType;
+  }
+
+  @Override
+  public boolean isFinal() {
+    return false;
   }
 
   @NonNls

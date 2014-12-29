@@ -34,5 +34,9 @@ public abstract class SystemNotifications {
     return app.isHeadlessEnvironment() || app.isUnitTestMode() ? NULL : ServiceManager.getService(SystemNotifications.class);
   }
 
+  public boolean isAvailable() {
+    return true;
+  }
+
   public abstract void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text);
 }

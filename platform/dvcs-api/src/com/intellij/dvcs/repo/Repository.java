@@ -83,6 +83,18 @@ public interface Repository extends Disposable {
     },
 
     /**
+     * During Cherry-pick/grafting.
+     */
+    GRAFTING {
+      @NotNull
+      @Override
+      public String toString() {
+        return "Grafting";
+      }
+    },
+
+
+    /**
      * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).
      */
     DETACHED

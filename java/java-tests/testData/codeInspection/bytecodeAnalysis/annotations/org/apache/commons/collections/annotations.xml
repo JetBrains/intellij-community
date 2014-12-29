@@ -14,11 +14,21 @@
   <item name="org.apache.commons.collections.ExtendedProperties boolean endsWithSlash(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.collections.ExtendedProperties boolean isInitialized()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.collections.ExtendedProperties java.lang.String escape(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties java.lang.String escape(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String getInclude()">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="pure=true"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties java.lang.String interpolate(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Nullable"/>

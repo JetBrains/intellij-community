@@ -15,7 +15,7 @@
    </description>
   <version>8.1</version>
   <category>VCS Integration</category>
-  <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/" logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/">JetBrains</vendor>
 
   <depends>com.intellij.modules.vcs</depends>
   <xi:include href="/META-INF/remote-servers-git.xml" xpointer="xpointer(/idea-plugin/*)">
@@ -28,7 +28,7 @@
       <add-to-group group-id="Vcs.Import"/>
     </action>
 
-    <action id="Git.Log" class="git4idea.history.wholeTree.SelectRepositoryAndShowLogAction">
+    <action id="Git.Log" class="git4idea.log.GitShowExternalLogAction" text="Show Git Repository Log...">
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
@@ -92,7 +92,6 @@
       <separator/>
     </group>
 
-    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" icon="Git4ideaIcons.CherryPick"/>
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
             description="Create new branch starting from the selected commit"/>
@@ -102,7 +101,6 @@
 
     <group id="Git.Log.ContextMenu">
       <separator/>
-      <reference id="Git.CherryPick" />
       <reference id="Git.CheckoutRevision"/>
       <reference id="Git.CreateNewBranch" />
       <reference id="Git.CreateNewTag" />
@@ -112,11 +110,10 @@
     </group>
 
     <group id="Git.Log.Toolbar">
-      <reference id="Git.CherryPick"/>
-      <add-to-group group-id="Vcs.Log.Toolbar" />
       <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight non-picked commits"
               icon="Git4ideaIcons.DeepCompare"
               description="Dims those commits which have equivalent changes in the current branch"/>
+      <add-to-group group-id="Vcs.Log.Toolbar" />
     </group>
     
 
@@ -126,7 +123,6 @@
     <component>
       <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
       <implementation-class>git4idea.repo.GitRepositoryManager</implementation-class>
-      <headless-implementation-class>git4idea.test.GitTestRepositoryManager</headless-implementation-class>
     </component>
   </project-components>
 
@@ -143,10 +139,8 @@
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
+    <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
     
-    <projectService
-      serviceInterface="git4idea.history.wholeTree.LogFactoryService"
-      serviceImplementation="git4idea.history.wholeTree.LogFactoryService"/>
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
@@ -173,27 +167,17 @@
         serviceInterface="git4idea.settings.GitPushSettings"
         serviceImplementation="git4idea.settings.GitPushSettings"/>
     <projectService
-        serviceInterface="git4idea.history.NewGitUsersComponent"
-        serviceImplementation="git4idea.history.NewGitUsersComponent"/>
-    <projectService
-        serviceInterface="git4idea.history.browser.GitProjectLogManager"
-        serviceImplementation="git4idea.history.browser.GitProjectLogManager"/>
-    <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
     <projectService
         serviceInterface="git4idea.MessageManager"
         serviceImplementation="git4idea.MessageManager"/>
-    <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
-                    serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
 
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
 
-    <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
-                        serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
     <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
                         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceInterface="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"

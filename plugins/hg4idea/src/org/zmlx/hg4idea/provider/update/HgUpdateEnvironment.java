@@ -35,7 +35,7 @@ import java.util.List;
 public class HgUpdateEnvironment implements UpdateEnvironment {
 
   private final Project project;
-  private final HgUpdateConfigurationSettings updateConfiguration;
+  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
 
   public HgUpdateEnvironment(Project project) {
     this.project = project;
@@ -89,7 +89,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     private final HgUpdateConfigurationSettings updateConfiguration;
     protected HgUpdateDialog updateDialog;
 
-    public UpdateConfigurable(HgUpdateConfigurationSettings updateConfiguration) {
+    public UpdateConfigurable(@NotNull HgUpdateConfigurationSettings updateConfiguration) {
       this.updateConfiguration = updateConfiguration;
     }
 

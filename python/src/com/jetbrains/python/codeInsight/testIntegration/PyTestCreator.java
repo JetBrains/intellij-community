@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,8 @@ public class PyTestCreator implements TestCreator {
 
               PsiFile psiFile = PyUtil.getOrCreateFile(
                 dialog.getTargetDir() + "/" + fileName, project);
-              AddImportHelper.addImportFrom(psiFile, null, "unittest", "TestCase", null, AddImportHelper.ImportPriority.BUILTIN);
+              AddImportHelper.addOrUpdateFromImportStatement(psiFile, "unittest", "TestCase", null, AddImportHelper.ImportPriority.BUILTIN,
+                                                             null);
 
               PyElement createdClass = PyElementGenerator.getInstance(project).createFromText(
                 LanguageLevel.forElement(psiFile), PyClass.class,

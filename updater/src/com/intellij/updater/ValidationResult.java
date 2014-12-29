@@ -24,7 +24,7 @@ public class ValidationResult implements Comparable<ValidationResult> {
   }
 
   public enum Option {
-    IGNORE, KEEP, REPLACE, DELETE
+    IGNORE, KEEP, REPLACE, DELETE, KILL_PROCESS
   }
 
   public static final String ABSENT_MESSAGE = "Absent";

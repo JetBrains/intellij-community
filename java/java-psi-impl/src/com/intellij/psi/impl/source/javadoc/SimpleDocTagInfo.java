@@ -57,7 +57,7 @@ class SimpleDocTagInfo implements JavadocTagInfo {
 
   @Override
   public boolean isValidInContext(PsiElement element) {
-    if (PsiUtil.getLanguageLevel(element).compareTo(myLanguageLevel) < 0) {
+    if (element != null && PsiUtil.getLanguageLevel(element).compareTo(myLanguageLevel) < 0) {
       return false;
     }
 

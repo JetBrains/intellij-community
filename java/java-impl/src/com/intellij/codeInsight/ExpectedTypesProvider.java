@@ -129,6 +129,20 @@ public class ExpectedTypesProvider {
                                                     final boolean voidable, boolean usedAfter) {
     if (expr == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     PsiElement parent = expr.getParent();
+    if (expr instanceof PsiFunctionalExpression && parent instanceof PsiExpressionStatement) {
+      final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces((PsiFunctionalExpression)expr);
+      if (types.isEmpty()) {
+        return ExpectedTypeInfo.EMPTY_ARRAY;
+      }
+      else {
+        final ExpectedTypeInfo[] result = new ExpectedTypeInfo[types.size()];
+        int i = 0;
+        for (PsiType type : types) {
+          result[i++] = new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_SAME_SHAPED, type, TailType.NONE, null, ExpectedTypeInfoImpl.NULL);
+        }
+        return result;
+      }
+    }
     MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider, voidable, usedAfter);
     if (parent != null) {
       parent.accept(visitor);
@@ -363,22 +377,26 @@ public class ExpectedTypesProvider {
       final PsiMethod method;
       final PsiType type;
       final boolean tailTypeSemicolon;
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class);
-      if (lambdaExpression != null) {
-        final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+      final NavigatablePsiElement psiElement = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, PsiMethod.class);
+      if (psiElement instanceof PsiLambdaExpression) {
+        final PsiType functionalInterfaceType = ((PsiLambdaExpression)psiElement).getFunctionalInterfaceType();
         method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
         type = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-        tailTypeSemicolon = LambdaHighlightingUtil.insertSemicolonAfter(lambdaExpression);
+        tailTypeSemicolon = LambdaHighlightingUtil.insertSemicolonAfter((PsiLambdaExpression)psiElement);
       }
-      else {
-        method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-        type = method != null ? method.getReturnType() : null;
+      else if (psiElement instanceof PsiMethod) {
+        method = (PsiMethod)psiElement;
+        type = method.getReturnType();
+        tailTypeSemicolon = true;
+      } else {
+        method = null;
+        type = null;
         tailTypeSemicolon = true;
       }
-
       if (method != null) {
         visitMethodReturnType(method, type, tailTypeSemicolon);
       }
+
     }
 
     private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type, boolean tailTypeSemicolon) {
@@ -728,7 +746,7 @@ public class ExpectedTypesProvider {
         }
         else {
           if (type != null) {
-            info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, PsiType.INT, tailType);
+            info = createInfoImpl(type, type instanceof PsiPrimitiveType ? ExpectedTypeInfo.TYPE_OR_SUPERTYPE : ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, tailType);
           }
           else {
             info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, tailType);
@@ -754,7 +772,7 @@ public class ExpectedTypesProvider {
       }
       else {
         if (type != null) {
-          info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, PsiType.INT, TailType.NONE);
+          info = createInfoImpl(type, type instanceof PsiPrimitiveType ? ExpectedTypeInfo.TYPE_OR_SUPERTYPE : ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, TailType.NONE);
         }
         else {
           info = createInfoImpl(PsiType.LONG, PsiType.INT);
@@ -862,10 +880,16 @@ public class ExpectedTypesProvider {
       if (statement.getException() == myExpr) {
         PsiManager manager = statement.getManager();
         PsiType throwableType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
-        PsiMember container = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiClass.class);
+        PsiElement container = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class, PsiClass.class);
         PsiType[] throwsTypes = PsiType.EMPTY_ARRAY;
         if (container instanceof PsiMethod) {
           throwsTypes = ((PsiMethod)container).getThrowsList().getReferencedTypes();
+        }
+        else if (container instanceof PsiLambdaExpression) {
+          final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(container);
+          if (method != null) {
+            throwsTypes = method.getThrowsList().getReferencedTypes();
+          }
         }
 
         if (throwsTypes.length == 0) {

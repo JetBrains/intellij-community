@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Expirable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +42,9 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   private ActionCallback myCallback;
   private boolean myInvalidatesPendingFurtherRequestors = true;
   private Expirable myExpirable;
+
+  private static long lastProcessedCommandTime = 0;
+  protected final long commandCreationTime = System.currentTimeMillis();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.FocusCommand");
 
@@ -187,20 +190,25 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
         });
       }
 
-      if (!(myToFocus.requestFocusInWindow())) {
-        if (shouldLogFocuses) {
-          LOG.info("We could not request focus in window on " + myToFocus.getClass().getName());
-          LOG.info(myAllocation);
-        }
-        if (isForced()) {
-          myToFocus.requestFocus();
+
+      if (commandCreationTime > lastProcessedCommandTime) {
+        if (!(myToFocus.requestFocusInWindow())) {
           if (shouldLogFocuses) {
-            LOG.info("Force request focus on " + myToFocus.getClass().getName());
+            LOG.info("We could not request focus in window on " + myToFocus.getClass().getName());
+            LOG.info(myAllocation);
+          }
+          if (ApplicationManager.getApplication().isActive()) {
+            myToFocus.requestFocus();
+            if (shouldLogFocuses) {
+              LOG.info("Force request focus on " + myToFocus.getClass().getName());
+            }
           }
         }
-      } else if (shouldLogFocuses) {
-        LOG.info("We have successfully requested focus in window on " + myToFocus.getClass().getName());
-        LOG.info(myAllocation);
+        else if (shouldLogFocuses) {
+          LOG.info("We have successfully requested focus in window on " + myToFocus.getClass().getName());
+          LOG.info(myAllocation);
+        }
+        lastProcessedCommandTime = commandCreationTime;
       }
 
       clear();

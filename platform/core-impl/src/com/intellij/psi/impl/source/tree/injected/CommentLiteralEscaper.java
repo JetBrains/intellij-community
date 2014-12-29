@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
@@ -35,7 +34,6 @@ public class CommentLiteralEscaper extends LiteralTextEscaper<PsiCommentImpl> {
 
   @Override
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-    ProperTextRange.assertProperRange(rangeInsideHost);
     outChars.append(myHost.getText(), rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
     return true;
   }

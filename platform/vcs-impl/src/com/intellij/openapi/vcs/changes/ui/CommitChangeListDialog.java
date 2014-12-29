@@ -142,9 +142,27 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private final MyUpdateButtonsRunnable myUpdateButtonsRunnable = new MyUpdateButtonsRunnable(this);
 
-  public static boolean commitChanges(final Project project, final List<Change> changes, final LocalChangeList initialSelection,
-                                      final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment,
-                                      @Nullable CommitResultHandler customResultHandler, boolean cancelIfNoChanges) {
+  public static boolean commitChanges(final Project project,
+                                      final List<Change> changes,
+                                      final LocalChangeList initialSelection,
+                                      final List<CommitExecutor> executors,
+                                      final boolean showVcsCommit,
+                                      final String comment,
+                                      @Nullable CommitResultHandler customResultHandler,
+                                      boolean cancelIfNoChanges) {
+    return commitChanges(project, changes, initialSelection, executors, showVcsCommit, null, comment, customResultHandler,
+                         cancelIfNoChanges);
+  }
+
+  public static boolean commitChanges(final Project project,
+                                      final List<Change> changes,
+                                      final LocalChangeList initialSelection,
+                                      final List<CommitExecutor> executors,
+                                      final boolean showVcsCommit,
+                                      @Nullable final AbstractVcs singleVcs,
+                                      final String comment,
+                                      @Nullable CommitResultHandler customResultHandler,
+                                      boolean cancelIfNoChanges) {
     if (cancelIfNoChanges && changes.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
       Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
                                VcsBundle.message("commit.dialog.no.changes.detected.title"));
@@ -159,8 +177,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     final ChangeListManager manager = ChangeListManager.getInstance(project);
-    CommitChangeListDialog dialog = new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, manager.getDefaultChangeList(), manager.getChangeListsCopy(), null,
-                                                               false, comment, customResultHandler);
+    CommitChangeListDialog dialog =
+      new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, manager.getDefaultChangeList(),
+                                 manager.getChangeListsCopy(), singleVcs,
+                                 false, comment, customResultHandler);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       dialog.show();
     }
@@ -669,8 +689,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                       session,
                                                       getIncludedChanges(),
                                                       getCommitMessage());
-      sessionDialog.show();
-      isOK = sessionDialog.isOK();
+      isOK = sessionDialog.showAndGet();
     }
     if (isOK) {
       final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
@@ -991,7 +1010,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (myIsAlien) {
       helper.doAlienCommit(myVcs);
     } else {
-      helper.doCommit();
+      helper.doCommit(myVcs);
     }
   }
 

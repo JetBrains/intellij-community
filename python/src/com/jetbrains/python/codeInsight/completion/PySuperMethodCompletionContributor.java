@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,13 +57,13 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                  return;
                }
                Set<String> seenNames = new HashSet<String>();
-               for (PyFunction function : containingClass.getMethods()) {
+               for (PyFunction function : containingClass.getMethods(false)) {
                  seenNames.add(function.getName());
                }
                LanguageLevel languageLevel = LanguageLevel.forElement(parameters.getOriginalFile());
                seenNames.addAll(PyNames.getBuiltinMethods(languageLevel).keySet());
                for (PyClass ancestor : containingClass.getAncestorClasses()) {
-                 for (PyFunction superMethod : ancestor.getMethods()) {
+                 for (PyFunction superMethod : ancestor.getMethods(false)) {
                    if (!seenNames.contains(superMethod.getName())) {
                      String text = superMethod.getName() + superMethod.getParameterList().getText();
                      LookupElementBuilder element = LookupElementBuilder.create(text);

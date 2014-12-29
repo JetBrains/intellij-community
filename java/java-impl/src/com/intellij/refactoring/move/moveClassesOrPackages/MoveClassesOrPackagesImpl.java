@@ -317,8 +317,9 @@ public class MoveClassesOrPackagesImpl {
     DirectoryChooser chooser = new DirectoryChooser(project);
     chooser.setTitle(RefactoringBundle.message("select.source.root.chooser.title"));
     chooser.fillList(sourceRootDirectories.toArray(new PsiDirectory[sourceRootDirectories.size()]), null, project, "");
-    chooser.show();
-    if (!chooser.isOK()) return;
+    if (!chooser.showAndGet()) {
+      return;
+    }
     final PsiDirectory selectedTarget = chooser.getSelectedDirectory();
     if (selectedTarget == null) return;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
@@ -334,7 +335,8 @@ public class MoveClassesOrPackagesImpl {
         });
       }
     };
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(analyzeConflicts, "Analyze Module Conflicts...", true, project)) {
+    if (!ProgressManager.getInstance()
+      .runProcessWithProgressSynchronously(analyzeConflicts, "Analyze Module Conflicts...", true, project)) {
       return;
     }
     if (!conflicts.isEmpty()) {
@@ -343,8 +345,7 @@ public class MoveClassesOrPackagesImpl {
       }
       else {
         final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
-        conflictsDialog.show();
-        if (!conflictsDialog.isOK()) {
+        if (!conflictsDialog.showAndGet()) {
           return;
         }
       }

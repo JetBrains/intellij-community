@@ -30,6 +30,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -43,6 +44,7 @@ import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgress
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -72,7 +74,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Denis Zhdanov
  * @since 8/9/13 3:37 PM
  */
-public class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager {
+public class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
 
   private static final Logger LOG = Logger.getInstance("#" + RemoteExternalSystemCommunicationManager.class.getName());
 
@@ -153,7 +155,10 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         params.getVMParametersList().addParametersString(
           "-Dsun.rmi.transport.connectionTimeout=" + String.valueOf(TimeUnit.HOURS.toMillis(1))
         );
-//        params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009");
+        final String debugPort = System.getProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_REMOTE_COMMUNICATION_MANAGER_DEBUG_PORT);
+        if (debugPort != null) {
+          params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=" + debugPort);
+        }
 
         ProjectSystemId externalSystemId = myTargetExternalSystemId.get();
         if (externalSystemId != null) {
@@ -264,5 +269,10 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
   @Override
   public void clear() {
     mySupport.stopAll(true); 
+  }
+
+  @Override
+  public void dispose() {
+    shutdown(false);
   }
 }

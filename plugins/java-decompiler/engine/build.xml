@@ -46,13 +46,14 @@
   </target>
 
   <target name="test" depends="init,test-compile">
-    <junit printsummary="true" haltonfailure="true">
+    <junit printsummary="true" failureproperty="tests.failed">
       <classpath path="${test-out}:${out}"/>
       <classpath refid="junit"/>
       <batchtest>
         <fileset dir="${test-src}" includes="**/*Test.java"/>
       </batchtest>
     </junit>
+    <fail if="tests.failed" message="Tests failed."/>
   </target>
 
 </project>

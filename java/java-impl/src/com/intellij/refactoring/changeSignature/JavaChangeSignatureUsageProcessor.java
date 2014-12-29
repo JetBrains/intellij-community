@@ -98,7 +98,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
       else if (usage instanceof OverriderUsageInfo) {
         OverriderUsageInfo info = (OverriderUsageInfo)usage;
-        final PsiMethod method = info.getElement();
+        final PsiMethod method = info.getOverridingMethod();
         final PsiMethod baseMethod = info.getBaseMethod();
         if (info.isOriginalOverrider()) {
           processPrimaryMethod((JavaChangeInfo)changeInfo, method, baseMethod, false);
@@ -596,15 +596,17 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                 ((ParameterInfoImpl)parameter).setDefaultValue("");
                 if (!ApplicationManager.getApplication().isUnitTestMode()) {
                   final PsiType type = ((ParameterInfoImpl)parameter).getTypeWrapper().getType(element, element.getManager());
-                  final DefaultValueChooser chooser = new DefaultValueChooser(project, parameter.getName(), PsiTypesUtil.getDefaultValueOfType(type));
-                  chooser.show();
-                  if (chooser.isOK()) {
+                  final DefaultValueChooser chooser =
+                    new DefaultValueChooser(project, parameter.getName(), PsiTypesUtil.getDefaultValueOfType(type));
+                  if (chooser.showAndGet()) {
                     if (chooser.feelLucky()) {
                       parameter.setUseAnySingleVariable(true);
-                    } else {
+                    }
+                    else {
                       ((ParameterInfoImpl)parameter).setDefaultValue(chooser.getDefaultValue());
                     }
-                  } else {
+                  }
+                  else {
                     return false;
                   }
                 }
@@ -624,7 +626,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     snapshots.add(resolveSnapshotProvider.createSnapshot(changeInfo.getMethod()));
     for (UsageInfo usage : usages) {
       if (usage instanceof OverriderUsageInfo) {
-        snapshots.add(resolveSnapshotProvider.createSnapshot(usage.getElement()));
+        snapshots.add(resolveSnapshotProvider.createSnapshot(((OverriderUsageInfo)usage).getOverridingMethod()));
       }
     }
   }
@@ -634,10 +636,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
            !((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.contains(method);
   }
 
-  private static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
+  public static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
     final PsiMethod delegate = (PsiMethod)changeInfo.getMethod().copy();
     final PsiClass targetClass = changeInfo.getMethod().getContainingClass();
-    LOG.assertTrue(!targetClass.isInterface());
+    LOG.assertTrue(targetClass != null);
+    if (targetClass.isInterface() && delegate.getBody() == null) {
+      delegate.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
+    }
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(targetClass.getProject());
     ChangeSignatureProcessor.makeEmptyBody(factory, delegate);
     final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, changeInfo.getNewName());
@@ -925,7 +930,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       for (UsageInfo usageInfo : usagesSet) {
         final PsiElement element = usageInfo.getElement();
         if (usageInfo instanceof OverriderUsageInfo) {
-          final PsiMethod method = (PsiMethod)element;
+          final PsiMethod method = ((OverriderUsageInfo)usageInfo).getOverridingMethod();
           final PsiMethod baseMethod = ((OverriderUsageInfo)usageInfo).getBaseMethod();
           final int delta = baseMethod.getParameterList().getParametersCount() - method.getParameterList().getParametersCount();
           if (delta > 0) {

@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -35,7 +36,7 @@ import java.util.List;
     )}
 )
 public class SvnApplicationSettings implements PersistentStateComponent<SvnApplicationSettings.ConfigurationBean> {
-  private SvnFileSystemListenerWrapper myVFSHandler;
+  private SvnFileSystemListener myVFSHandler;
   private int mySvnProjectCount;
   private LimitedStringsList myLimitedStringsList;
 
@@ -65,11 +66,11 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
     myConfigurationBean = object;
     getTypedList();
   }
-  
+
   public void setCommandLinePath(final String path) {
     myConfigurationBean.mySvnCommandLine = path;
   }
-  
+
   public String getCommandLinePath() {
     return myConfigurationBean.mySvnCommandLine;
   }
@@ -90,8 +91,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
 
   public void svnActivated() {
     if (myVFSHandler == null) {
-      myVFSHandler = new SvnFileSystemListenerWrapper(new SvnFileSystemListener());
-      myVFSHandler.registerSelf();
+      myVFSHandler = new SvnFileSystemListener();
     }
     mySvnProjectCount++;
   }
@@ -99,7 +99,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   public void svnDeactivated() {
     mySvnProjectCount--;
     if (mySvnProjectCount == 0) {
-      myVFSHandler.unregisterSelf();
+      Disposer.dispose(myVFSHandler);
       myVFSHandler = null;
       // todo what should be done instead?
       //SVNSSHSession.shutdown();

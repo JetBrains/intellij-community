@@ -16,9 +16,11 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -96,25 +98,37 @@ public class TextBlockTransferable implements Transferable {
     throw new UnsupportedFlavorException(flavor);
   }
 
+  @NotNull
+  public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input) {
+    return convertLineSeparators(editor, input, Collections.<TextBlockTransferableData>emptyList());
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input,
+                                             @NotNull Collection<TextBlockTransferableData> itemsToUpdate) {
+    // converting line separators to spaces matches the behavior of Swing text components on paste
+    return convertLineSeparators(input, editor.isOneLineMode() ? " " : "\n", itemsToUpdate);
+  }
+
   public static String convertLineSeparators(String text,
                                              String newSeparator,
-                                             Collection<TextBlockTransferableData> transferableDatas) {
-    if (transferableDatas.size() > 0){
+                                             Collection<TextBlockTransferableData> itemsToUpdate) {
+    if (itemsToUpdate.size() > 0){
       int size = 0;
-      for(TextBlockTransferableData data: transferableDatas) {
+      for(TextBlockTransferableData data: itemsToUpdate) {
         size += data.getOffsetCount();
       }
 
       int[] offsets = new int[size];
       int index = 0;
-      for(TextBlockTransferableData data: transferableDatas) {
+      for(TextBlockTransferableData data: itemsToUpdate) {
         index = data.getOffsets(offsets, index);
       }
 
       text = StringUtil.convertLineSeparators(text, newSeparator, offsets);
 
       index = 0;
-      for(TextBlockTransferableData data: transferableDatas) {
+      for(TextBlockTransferableData data: itemsToUpdate) {
         index = data.setOffsets(offsets, index);
       }
 

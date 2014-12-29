@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.PathMacroSubstitutor;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
@@ -34,56 +36,45 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   private static final List<String> ourConversionProblemsStorage = new SmartList<String>();
 
-  private final ComponentManager myComponentManager;
-  private final DefaultsStateStorage myDefaultsStateStorage;
   private StateStorageManager myStateStorageManager;
+  protected final PathMacroManager myPathMacroManager;
 
-  protected BaseFileConfigurableStoreImpl(@NotNull ComponentManager componentManager) {
-    myComponentManager = componentManager;
-    myDefaultsStateStorage = new DefaultsStateStorage(PathMacroManager.getInstance(myComponentManager));
+  protected BaseFileConfigurableStoreImpl(@NotNull PathMacroManager pathMacroManager) {
+    myPathMacroManager = pathMacroManager;
   }
 
-  @NotNull
-  public ComponentManager getComponentManager() {
-    return myComponentManager;
-  }
+  protected static class BaseStorageData extends StorageData {
+    private int myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
 
-  protected static class BaseStorageData extends FileBasedStorage.FileStorageData {
-    protected int myVersion;
-
-    public BaseStorageData(final String rootElementName) {
+    public BaseStorageData(@NotNull String rootElementName) {
       super(rootElementName);
     }
 
     protected BaseStorageData(BaseStorageData storageData) {
       super(storageData);
-
-      myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
     }
 
     @Override
     public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
       super.load(rootElement, pathMacroSubstitutor, intern);
 
-      final String v = rootElement.getAttributeValue(VERSION_OPTION);
-      if (v != null) {
-        myVersion = Integer.parseInt(v);
-      }
-      else {
-        myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
-      }
+      String v = rootElement.getAttributeValue(VERSION_OPTION);
+      myVersion = v == null ? ProjectManagerImpl.CURRENT_FORMAT_VERSION : Integer.parseInt(v);
     }
 
     @Override
     @NotNull
-    protected Element save(@NotNull Map<String, Element> newLiveStates) {
+    protected final Element save(@NotNull Map<String, Element> newLiveStates) {
       Element root = super.save(newLiveStates);
       if (root == null) {
         root = new Element(myRootElementName);
       }
-
-      root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
+      writeOptions(root, Integer.toString(myVersion));
       return root;
+    }
+
+    protected void writeOptions(@NotNull Element root, @NotNull String versionString) {
+      root.setAttribute(VERSION_OPTION, versionString);
     }
 
     @Override
@@ -102,6 +93,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
   }
 
+  @NotNull
   protected abstract XmlElementStorage getMainStorage();
 
   @Nullable
@@ -114,19 +106,19 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     getMainStorageData(); //load it
   }
 
-  public BaseStorageData getMainStorageData() throws StateStorageException {
+  public BaseStorageData getMainStorageData() {
     return (BaseStorageData)getMainStorage().getStorageData();
-  }
-
-  @Nullable
-  @Override
-  protected StateStorage getDefaultsStorage() {
-    return myDefaultsStateStorage;
   }
 
   @NotNull
   @Override
-  public StateStorageManager getStateStorageManager() {
+  protected final PathMacroManager getPathMacroManagerForDefaults() {
+    return myPathMacroManager;
+  }
+
+  @NotNull
+  @Override
+  public final StateStorageManager getStateStorageManager() {
     if (myStateStorageManager == null) {
       myStateStorageManager = createStateStorageManager();
     }

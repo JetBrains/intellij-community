@@ -39,6 +39,11 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Allows to schedule Runnable instances (requests) to be executed after a specific time interval on a specific thread.
+ * Use "addRequest" methods to schedule the requests.
+ * {@link #cancelAllRequests()} and {@link #cancelRequest(Runnable)} allow to cancel already scheduled requests.
+ */
 public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
 
@@ -75,9 +80,28 @@ public class Alarm implements Disposable {
   }
 
   public enum ThreadToUse {
+    /**
+     * Run the action on Swing EventDispatchThread. This is the default. But the actions shouldn't take long to avoid UI freezes.
+     */
     SWING_THREAD,
+
+    /**
+     * The action will be executed on a dedicated single shared thread, one per IDEA instance.
+     * The actions should be very fast to avoid blocking other Alarm instances that need the same thread. 
+     */
     SHARED_THREAD,
+
+    /**
+     * Alarm requests are run on one of application pooled threads. 
+     * 
+     * @see com.intellij.openapi.application.Application#executeOnPooledThread(java.util.concurrent.Callable) 
+     */
     POOLED_THREAD,
+
+    /**
+     * A dedicated new thread is created for this Alarm instance to run the requests. No time limits are placed on the request execution time.
+     * In general it's advised to avoid this option because it may lead to too many OS resources being used.
+     */
     OWN_THREAD
   }
 

@@ -135,7 +135,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       public PsiField compute() {
 
         PsiField field = elementFactory.createFieldFromText(
-          psiType.getCanonicalText() + " " + (getInputName() != null ? getInputName() : names[0]) + " = " + myInitializerText + ";",
+          psiType.getCanonicalText() + " " + (chooseName(names, myParentClass.getLanguage())) + " = " + myInitializerText + ";",
           myParentClass);
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
@@ -230,7 +230,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
 
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
-    return super.startsOnTheSameElement(handler, element) && handler instanceof IntroduceConstantHandler;
+    return handler instanceof IntroduceConstantHandler && super.startsOnTheSameElement(handler, element);
   }
 
   @Override

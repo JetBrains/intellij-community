@@ -15,13 +15,12 @@
  */
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.psi.impl.source.xml.XmlCommentImpl;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.impl.source.xml.XmlCommentImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +33,6 @@ public class XmlCommentLiteralEscaper extends LiteralTextEscaper<XmlCommentImpl>
 
   @Override
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
-    ProperTextRange.assertProperRange(rangeInsideHost);
     outChars.append(myHost.getText(), rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
     return true;
   }

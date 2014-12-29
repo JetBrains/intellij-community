@@ -24,7 +24,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
@@ -75,7 +74,7 @@ public class
     int _y = effectiveBounds.y + insets.top + 3;
     int _width = effectiveBounds.width - insets.left - insets.right;
     int _height = effectiveBounds.height - insets.top - insets.bottom - 3;
-    _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+    _height -= getActiveTabUnderlineHeight();
     if (dark) {
       g2d.setPaint(UIUtil.getGradientPaint(_x, _y, ColorUtil.shift(UIUtil.getListBackground(), 1.3), _x, _y + effectiveBounds.height, UIUtil.getPanelBackground()));
       g2d.fillRect(_x, _y, _width, _height);
@@ -122,7 +121,7 @@ public class
     Rectangle rectangle;
     int y = r2.y + insets.top;
     int height = maxLength - insets.top - insets.bottom;
-    height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+    height -= getActiveTabUnderlineHeight();
 
     rectangle = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
 
@@ -194,7 +193,7 @@ public class
     shape.insets = shape.path.transformInsets(getLayoutInsets());
     shape.labelPath = shape.path.createTransform(r);
 
-    shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1);
+    shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1);
     shape.labelTopY = shape.labelPath.getY() + shape.labelPath.deltaY(1);
     shape.labelLeftX = shape.labelPath.getX();
     shape.labelRightX = shape.labelPath.getMaxX() - shape.labelPath.deltaX(1);
@@ -210,8 +209,8 @@ public class
     int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right);
 
     shape.path.lineTo(lastX, shape.labelBottomY);
-    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1));
-    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1));
+    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1));
+    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1));
 
     shape.path.closePath();
     shape.fillPath = shape.path.copy();
@@ -298,7 +297,7 @@ public class
     @Override
     public Dimension getPreferredSize() {
       Dimension result = super.getPreferredSize();
-      result.height += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+      result.height += myTabs.getActiveTabUnderlineHeight();
       return result;
     }
   }

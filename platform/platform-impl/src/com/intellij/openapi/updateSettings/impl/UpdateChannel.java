@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -39,12 +40,11 @@ public class UpdateChannel {
   public static final String LICENSING_EAP = "eap";
   public static final String LICENSING_PRODUCTION = "production";
 
-  public UpdateChannel(Element node) {
+  public UpdateChannel(@NotNull Element node) {
     myId = node.getAttributeValue("id");
     myName = node.getAttributeValue("name");
     myStatus = ChannelStatus.fromCode(node.getAttributeValue("status"));
-    String licensing = node.getAttributeValue("licensing");
-    myLicensing = licensing != null ? licensing : LICENSING_PRODUCTION;
+    myLicensing = node.getAttributeValue("licensing", LICENSING_PRODUCTION);
 
     String majorVersion = node.getAttributeValue("majorVersion");
     myMajorVersion = majorVersion != null ? Integer.parseInt(majorVersion) : -1;
@@ -56,8 +56,8 @@ public class UpdateChannel {
     myFeedbackUrl = node.getAttributeValue("feedback");
 
     myBuilds = new ArrayList<BuildInfo>();
-    for (Object child : node.getChildren("build")) {
-      myBuilds.add(new BuildInfo((Element)child));
+    for (Element child : node.getChildren("build")) {
+      myBuilds.add(new BuildInfo(child));
     }
   }
 
@@ -69,7 +69,6 @@ public class UpdateChannel {
         build = info;
       }
     }
-
     return build;
   }
 

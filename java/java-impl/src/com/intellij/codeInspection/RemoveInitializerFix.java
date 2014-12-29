@@ -46,16 +46,19 @@ public class RemoveInitializerFix implements LocalQuickFix {
     if (!(psiInitializer.getParent() instanceof PsiVariable)) return;
 
     final PsiVariable variable = (PsiVariable)psiInitializer.getParent();
-    sideEffectAwareRemove(project, psiInitializer, psiInitializer, variable);
+    sideEffectAwareRemove(project, (PsiExpression)psiInitializer, psiInitializer, variable);
   }
 
-  protected void sideEffectAwareRemove(Project project, PsiElement psiInitializer, PsiElement elementToDelete, PsiVariable variable) {
+  protected static void sideEffectAwareRemove(Project project,
+                                              PsiExpression psiInitializer,
+                                              PsiElement elementToDelete,
+                                              PsiVariable variable) {
     if (!FileModificationService.getInstance().prepareFileForWrite(elementToDelete.getContainingFile())) return;
 
     final PsiElement declaration = variable.getParent();
     final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
     boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(psiInitializer, variable, sideEffects);
-    int res = RemoveUnusedVariableUtil.DELETE_ALL;
+    RemoveUnusedVariableUtil.RemoveMode res = RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
     if (hasSideEffects) {
       hasSideEffects = PsiUtil.isStatement(psiInitializer);
       res = RemoveUnusedVariableFix.showSideEffectsWarning(sideEffects, variable,
@@ -65,15 +68,14 @@ public class RemoveInitializerFix implements LocalQuickFix {
                                                            " " +
                                                            variable.getName() +
                                                            ";<br>" +
-                                                           PsiExpressionTrimRenderer
-                                                             .render((PsiExpression)psiInitializer)
+                                                           PsiExpressionTrimRenderer.render(psiInitializer)
       );
     }
     try {
-      if (res == RemoveUnusedVariableUtil.DELETE_ALL) {
+      if (res == RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL) {
         elementToDelete.delete();
       }
-      else if (res == RemoveUnusedVariableUtil.MAKE_STATEMENT) {
+      else if (res == RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT) {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         final PsiStatement statementFromText = factory.createStatementFromText(psiInitializer.getText() + ";", null);
         final PsiElement parent = elementToDelete.getParent();

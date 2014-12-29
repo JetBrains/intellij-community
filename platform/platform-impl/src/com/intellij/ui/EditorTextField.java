@@ -472,6 +472,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     settings.setIndentGuidesShown(false);
     settings.setVirtualSpace(false);
     settings.setWheelFontChangeEnabled(false);
+    settings.setAdditionalPageAtBottom(false);
     editor.setHorizontalScrollbarVisible(false);
     editor.setVerticalScrollbarVisible(false);
     editor.setCaretEnabled(!myIsViewer);
@@ -492,6 +493,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     if (!isEnabled()) {
       editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
+        @Nullable
         @Override
         public Color getColor(ColorKey key) {
           return super.getColor(key);
@@ -605,7 +607,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public Color getBackground() {
-    final Color color = getBackgroundColor(isEnabled(), EditorColorsManager.getInstance().getGlobalScheme());
+    Color color = getBackgroundColor(isEnabled(), EditorColorsUtil.getGlobalOrDefaultColorScheme());
     return color != null ? color : super.getBackground();
   }
 

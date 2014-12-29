@@ -45,8 +45,12 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
 
   @BindControl("changelistNameFormat")
   private JTextField myChangelistNameFormat;
+
   private JBCheckBox myAlwaysDisplayTaskCombo;
   private JTextField myConnectionTimeout;
+
+  @BindControl("branchNameFormat")
+  private JTextField myBranchNameFormat;
 
   private final Project myProject;
   private Configurable[] myConfigurables;

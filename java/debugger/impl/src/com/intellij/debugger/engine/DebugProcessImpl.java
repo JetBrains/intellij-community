@@ -112,6 +112,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private ExecutionResult myExecutionResult;
   private RemoteConnection myConnection;
+  private JavaDebugProcess myXDebugProcess;
 
   private ConnectionServiceWrapper myConnectionService;
   private Map<String, Connector.Argument> myArguments;
@@ -746,7 +747,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (runToCursorBreakpoint != null) {
       myRunToCursorBreakpoint = null;
       getRequestsManager().deleteRequest(runToCursorBreakpoint);
-      runToCursorBreakpoint.delete();
       if (runToCursorBreakpoint.isRestoreBreakpoints()) {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
         breakpointManager.enableBreakpoints(this);
@@ -1990,10 +1990,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return mySession.getContextManager().getContext();
   }
 
+  public void setXDebugProcess(JavaDebugProcess XDebugProcess) {
+    myXDebugProcess = XDebugProcess;
+  }
+
   @Nullable
   public JavaDebugProcess getXdebugProcess() {
-    XDebugSession session = mySession.getXDebugSession();
-    return session != null ? (JavaDebugProcess)session.getDebugProcess() : null;
+    return myXDebugProcess;
   }
 
   public boolean areBreakpointsMuted() {

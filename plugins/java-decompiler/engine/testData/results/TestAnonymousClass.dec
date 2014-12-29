@@ -1,0 +1,142 @@
+package pkg;
+
+public abstract class TestAnonymousClass {
+   public static final Runnable R3 = new Runnable() {
+      public void run() {
+         boolean var1 = true;// 28
+         boolean var2 = true;// 29
+      }
+   };
+   public static final Runnable R = new Runnable() {
+      public void run() {
+         boolean var1 = true;// 45
+         boolean var2 = true;// 46
+      }
+   };
+   public static final Runnable R1 = new Runnable() {
+      public void run() {
+         boolean var1 = true;// 53
+         boolean var2 = true;// 54
+      }
+   };
+
+   void foo(int var1) throws Exception {
+      if(var1 > 0) {// 10
+         TestAnonymousClass.I var2 = new TestAnonymousClass.I() {
+            public void foo() throws Exception {
+               boolean var1 = true;// 13
+               boolean var2 = true;// 14
+            }
+         };// 11
+         var2.foo();// 17
+      } else {
+         System.out.println(5);// 21
+      }
+
+   }
+
+   void boo() {
+      boolean var1 = true;// 35
+   }
+
+   void zoo() {
+      boolean var1 = true;// 39
+   }
+
+   private static class Inner {
+      private static final Runnable R_I = new Runnable() {
+         public void run() {
+            boolean var1 = true;// 66
+            boolean var2 = true;// 67
+         }
+      };
+   }
+
+   interface I {
+      void foo() throws Exception;
+   }
+}
+
+class 'pkg/TestAnonymousClass$2' {
+   method 'run ()V' {
+      0      5
+      1      5
+      2      6
+      3      6
+   }
+}
+
+class 'pkg/TestAnonymousClass$3' {
+   method 'run ()V' {
+      0      11
+      1      11
+      2      12
+      3      12
+   }
+}
+
+class 'pkg/TestAnonymousClass$4' {
+   method 'run ()V' {
+      0      17
+      1      17
+      2      18
+      3      18
+   }
+}
+
+class 'pkg/TestAnonymousClass$1' {
+   method 'foo ()V' {
+      0      26
+      1      26
+      2      27
+      3      27
+   }
+}
+
+class 'pkg/TestAnonymousClass' {
+   method 'foo (I)V' {
+      1      23
+      c      29
+      e      30
+      16      32
+      19      32
+      1a      32
+   }
+
+   method 'boo ()V' {
+      0      38
+      1      38
+   }
+
+   method 'zoo ()V' {
+      0      42
+      1      42
+   }
+}
+
+class 'pkg/TestAnonymousClass$Inner$1' {
+   method 'run ()V' {
+      0      48
+      1      48
+      2      49
+      3      49
+   }
+}
+
+Lines mapping:
+10 <-> 24
+11 <-> 30
+13 <-> 27
+14 <-> 28
+17 <-> 31
+21 <-> 33
+28 <-> 6
+29 <-> 7
+35 <-> 39
+39 <-> 43
+45 <-> 12
+46 <-> 13
+53 <-> 18
+54 <-> 19
+66 <-> 49
+67 <-> 50

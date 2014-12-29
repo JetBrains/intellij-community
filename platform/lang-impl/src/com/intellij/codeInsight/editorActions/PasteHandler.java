@@ -166,7 +166,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         }
       }
 
-      text = TextBlockTransferable.convertLineSeparators(text, "\n", allValues);
+      text = TextBlockTransferable.convertLineSeparators(editor, text, allValues);
 
       final CaretModel caretModel = editor.getCaretModel();
       final SelectionModel selectionModel = editor.getSelectionModel();

@@ -32,6 +32,10 @@ public class FieldModifierTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testSetPrivateToConstantField() throws Exception {
+    doTest();
+  }
+
   public void testSetProtected() throws Exception {
     doTest();
   }

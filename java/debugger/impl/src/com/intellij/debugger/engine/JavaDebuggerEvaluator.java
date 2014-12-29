@@ -15,11 +15,14 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.EditorTextProvider;
+import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -31,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +71,14 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
 
       @Override
       public void threadAction() {
-        WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), TextWithImportsImpl.fromXExpression(
-          expression));
+        JavaDebugProcess process = myDebugProcess.getXdebugProcess();
+        if (process == null) {
+          callback.errorOccurred("No debug process");
+          return;
+        }
+        TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
+        NodeManagerImpl nodeManager = process.getNodeManager();
+        WatchItemDescriptor descriptor = nodeManager.getWatchItemDescriptor(null, text, null);
         EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext().createEvaluationContext();
         if (evalContext == null) {
           callback.errorOccurred("Context is not available");
@@ -77,16 +87,11 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
         descriptor.setContext(evalContext);
         @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
         EvaluateException exception = descriptor.getEvaluateException();
-        if (exception != null) {
+        if (exception != null && descriptor.getValue() == null) {
           callback.errorOccurred(exception.getMessage());
           return;
         }
-        JavaDebugProcess process = myDebugProcess.getXdebugProcess();
-        if (process == null) {
-          callback.errorOccurred("No debug process");
-          return;
-        }
-        callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
+        callback.evaluated(JavaValue.create(null, descriptor, evalContext, nodeManager, true));
       }
     });
   }
@@ -122,5 +127,14 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
       return textProvider.findExpression(element, allowMethodCalls);
     }
     return null;
+  }
+
+  @Override
+  public EvaluationMode getEvaluationMode(@NotNull String text, int startOffset, int endOffset, @Nullable PsiFile psiFile) {
+    if (psiFile != null) {
+      PsiElement[] range = CodeInsightUtil.findStatementsInRange(psiFile, startOffset, endOffset);
+      return range.length > 1 ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION;
+    }
+    return super.getEvaluationMode(text, startOffset, endOffset, null);
   }
 }

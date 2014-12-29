@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.options.SharedScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 /**
  * @author max
@@ -47,23 +41,9 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
       });
     }
 
-    final CodeStyleScheme[] schemes = CodeStyleSchemes.getInstance().getSchemes();
-    final CodeStyleScheme currentScheme = CodeStyleSchemes.getInstance().getCurrentScheme();
-
-    for (final CodeStyleScheme scheme : schemes) {
+    CodeStyleScheme currentScheme = CodeStyleSchemes.getInstance().getCurrentScheme();
+    for (CodeStyleScheme scheme : CodeStyleSchemes.getInstance().getSchemes()) {
       addScheme(group, manager, currentScheme, scheme, false);
-    }
-
-
-    Collection<SharedScheme<CodeStyleSchemeImpl>> sharedSchemes =
-        ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).getSchemesManager().loadSharedSchemes();
-    if (!sharedSchemes.isEmpty()) {
-      group.add(Separator.getInstance());
-
-
-      for (SharedScheme<CodeStyleSchemeImpl> scheme : sharedSchemes) {
-        addScheme(group, manager, currentScheme, scheme.getScheme(), true);
-      }
     }
   }
 

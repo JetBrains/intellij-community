@@ -23,13 +23,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import com.intellij.util.containers.Stack;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.containers.Queue;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,9 +37,9 @@ import javax.swing.*;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * User: cdr
@@ -48,13 +47,14 @@ import java.util.Set;
 public class LeakHunter {
   private static final Map<Class, Field[]> allFields = new THashMap<Class, Field[]>();
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
-  public static final Processor<Project> NOT_DEFAULT_PROJECT = new Processor<Project>() {
+  private static final Processor<Project> NOT_DEFAULT_PROJECT = new Processor<Project>() {
     @Override
     public boolean process(Project project) {
       return !project.isDefault();
     }
   };
 
+  @NotNull
   private static Field[] getAllFields(@NotNull Class aClass) {
     Field[] cached = allFields.get(aClass);
     if (cached == null) {
@@ -62,6 +62,8 @@ public class LeakHunter {
       List<Field> fields = new ArrayList<Field>(declaredFields.length + 5);
       for (Field declaredField : declaredFields) {
         declaredField.setAccessible(true);
+        Class<?> type = declaredField.getType();
+        if (isTrivial(type)) continue; // unable to hold references, skip
         fields.add(declaredField);
       }
       Class superclass = aClass.getSuperclass();
@@ -78,30 +80,35 @@ public class LeakHunter {
     return cached;
   }
 
-  private static final Set<Object> visited = ContainerUtil.<Object>newIdentityTroveSet();
+  private static boolean isTrivial(@NotNull Class<?> type) {
+    return type.isPrimitive() || type == String.class || type == Class.class || type == Object.class ||
+        type.isArray() && isTrivial(type.getComponentType());
+  }
 
   private static class BackLink {
-    private final Class aClass;
     private final Object value;
     private final Field field;
     private final BackLink backLink;
 
-    private BackLink(@NotNull Class aClass, @NotNull Object value, Field field, BackLink backLink) {
-      this.aClass = aClass;
+    private BackLink(@NotNull Object value, Field field, BackLink backLink) {
       this.value = value;
       this.field = field;
       this.backLink = backLink;
     }
   }
 
-  private static final Stack<BackLink> toVisit = new Stack<BackLink>();
-  private static void walkObjects(@NotNull Class lookFor, @NotNull Processor<BackLink> leakProcessor) {
+  private static void walkObjects(@NotNull Class<?> lookFor,
+                                  @NotNull Object startRoot,
+                                  @NotNull Processor<BackLink> leakProcessor) {
+    TIntHashSet visited = new TIntHashSet();
+    Queue<BackLink> toVisit = new Queue<BackLink>(1000000);
+    toVisit.addLast(new BackLink(startRoot, null, null));
     while (true) {
       if (toVisit.isEmpty()) return;
-      BackLink backLink = toVisit.pop();
+      BackLink backLink = toVisit.pullFirst();
       Object root = backLink.value;
-      if (!visited.add(root)) continue;
-      Class rootClass = backLink.aClass;
+      if (!visited.add(System.identityHashCode(root))) continue;
+      Class rootClass = root.getClass();
       for (Field field : getAllFields(rootClass)) {
         String fieldName = field.getName();
         if (root instanceof Reference && "referent".equals(fieldName)) continue; // do not follow weak/soft refs
@@ -116,29 +123,25 @@ public class LeakHunter {
           throw new RuntimeException(e);
         }
         if (value == null) continue;
-        Class valueClass = value.getClass();
+        Class<?> valueClass = value.getClass();
         if (lookFor.isAssignableFrom(valueClass) && isReallyLeak(field, fieldName, value, valueClass)) {
-          BackLink newBackLink = new BackLink(valueClass, value, field, backLink);
+          BackLink newBackLink = new BackLink(value, field, backLink);
           leakProcessor.process(newBackLink);
         }
         else {
-          BackLink newBackLink = new BackLink(valueClass, value, field, backLink);
-          if (toFollow(valueClass)) {
-            toVisit.push(newBackLink);
-          }
+          BackLink newBackLink = new BackLink(value, field, backLink);
+          toVisit.addLast(newBackLink);
         }
       }
       if (rootClass.isArray()) {
-        if (toFollow(rootClass.getComponentType())) {
-          try {
-            for (Object o : (Object[])root) {
-              if (o == null) continue;
-              Class oClass = o.getClass();
-              toVisit.push(new BackLink(oClass, o, null, backLink));
-            }
+        try {
+          for (Object o : (Object[])root) {
+            if (o == null) continue;
+            if (isTrivial(o.getClass())) continue;
+            toVisit.addLast(new BackLink(o, null, backLink));
           }
-          catch (ClassCastException ignored) {
-          }
+        }
+        catch (ClassCastException ignored) {
         }
       }
     }
@@ -152,26 +155,6 @@ public class LeakHunter {
     return !(value instanceof UserDataHolder) || ((UserDataHolder)value).getUserData(IS_NOT_A_LEAK) == null;
   }
 
-  private static final Set<String> noFollowClasses = new THashSet<String>();
-  static {
-    noFollowClasses.add("java.lang.Boolean");
-    noFollowClasses.add("java.lang.Byte");
-    noFollowClasses.add("java.lang.Class");
-    noFollowClasses.add("java.lang.Character");
-    noFollowClasses.add("java.lang.Double");
-    noFollowClasses.add("java.lang.Float");
-    noFollowClasses.add("java.lang.Integer");
-    noFollowClasses.add("java.lang.Long");
-    noFollowClasses.add("java.lang.Object");
-    noFollowClasses.add("java.lang.Short");
-    noFollowClasses.add("java.lang.String");
-  }
-
-  private static boolean toFollow(Class oClass) {
-    String name = oClass.getName();
-    return !noFollowClasses.contains(name);
-  }
-
   private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
   @TestOnly
   public static void checkProjectLeak() throws Exception {
@@ -183,6 +166,10 @@ public class LeakHunter {
   public static void checkLeak(@NotNull Object root, @NotNull Class suspectClass) throws AssertionError {
     checkLeak(root, suspectClass, null);
   }
+
+  /**
+   * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
+   */
   @TestOnly
   public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable final Processor<? super T> isReallyLeak) throws AssertionError {
     if (SwingUtilities.isEventDispatchThread()) {
@@ -191,43 +178,33 @@ public class LeakHunter {
     else {
       UIUtil.pump();
     }
-    PersistentEnumerator.clearCacheForTests();
-    toVisit.clear();
-    visited.clear();
-    toVisit.push(new BackLink(root.getClass(), root, null,null));
-    try {
-      walkObjects(suspectClass, new Processor<BackLink>() {
-        @Override
-        public boolean process(BackLink backLink) {
-          UserDataHolder leaked = (UserDataHolder)backLink.value;
-          if (((UserDataHolderBase)leaked).replace(REPORTED_LEAKED,null,Boolean.TRUE) && (isReallyLeak == null || isReallyLeak.process((T)leaked))) {
-            String place = leaked instanceof Project ? PlatformTestCase.getCreationPlace((Project)leaked) : "";
-            System.out.println("Leaked object found:" + leaked +
-                               "; hash: "+System.identityHashCode(leaked) + "; place: "+ place);
-            while (backLink != null) {
-              String valueStr;
-              try {
-                valueStr = backLink.value instanceof FList ? "FList" : String.valueOf(backLink.value);
-              }
-              catch (Throwable e) {
-                valueStr = "("+e.getMessage()+" while computing .toString())";
-              }
-              System.out.println("-->"+backLink.field+"; Value: "+ valueStr +"; "+backLink.aClass);
-              backLink = backLink.backLink;
+    PersistentEnumeratorBase.clearCacheForTests();
+    walkObjects(suspectClass, root, new Processor<BackLink>() {
+      @Override
+      public boolean process(BackLink backLink) {
+        UserDataHolder leaked = (UserDataHolder)backLink.value;
+        if (((UserDataHolderBase)leaked).replace(REPORTED_LEAKED, null, Boolean.TRUE) &&
+            (isReallyLeak == null || isReallyLeak.process((T)leaked))) {
+          String place = leaked instanceof Project ? PlatformTestCase.getCreationPlace((Project)leaked) : "";
+          System.out.println("Leaked object found:" + leaked +
+                             "; hash: " + System.identityHashCode(leaked) + "; place: " + place);
+          while (backLink != null) {
+            String valueStr;
+            try {
+              valueStr = backLink.value instanceof FList ? "FList" : backLink.value instanceof Collection ? "Collection" : String.valueOf(backLink.value);
             }
-            System.out.println(";-----");
-
-            throw new AssertionError();
+            catch (Throwable e) {
+              valueStr = "(" + e.getMessage() + " while computing .toString())";
+            }
+            System.out.println("-->" + backLink.field + "; Value: " + valueStr + "; " + backLink.value.getClass());
+            backLink = backLink.backLink;
           }
-          return true;
+          System.out.println(";-----");
+
+          throw new AssertionError();
         }
-      });
-    }
-    finally {
-      visited.clear();
-      ((THashSet)visited).compact();
-      toVisit.clear();
-      toVisit.trimToSize();
-    }
+        return true;
+      }
+    });
   }
 }

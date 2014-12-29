@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
@@ -21,11 +22,13 @@ import com.jetbrains.python.debugger.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,7 +112,11 @@ public class RemoteDebugger implements ProcessDebugger {
   public String handshake() throws PyDebuggerException {
     final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN");
     command.execute();
-    return command.getRemoteVersion();
+    String version = command.getRemoteVersion();
+    if (version != null) {
+      version = version.trim();
+    }
+    return version;
   }
 
   @Override
@@ -152,6 +159,20 @@ public class RemoteDebugger implements ProcessDebugger {
     final GetVariableCommand command = new GetVariableCommand(this, threadId, frameId, var);
     command.execute();
     return command.getVariables();
+  }
+
+  @Override
+  public ArrayChunk loadArrayItems(String threadId,
+                                   String frameId,
+                                   PyDebugValue var,
+                                   int rowOffset,
+                                   int colOffset,
+                                   int rows,
+                                   int cols,
+                                   String format) throws PyDebuggerException {
+    final GetArrayCommand command = new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
+    command.execute();
+    return command.getArray();
   }
 
 
@@ -437,6 +458,16 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName) {
+    final SetBreakpointCommand command =
+      new SetBreakpointCommand(this, typeId, file, line,
+                               condition,
+                               logExpression,
+                               funcName);
+    execute(command);
+  }
+
+  @Override
   public void removeBreakpoint(String typeId, String file, int line) {
     final RemoveBreakpointCommand command =
       new RemoveBreakpointCommand(this, typeId, file, line);
@@ -445,32 +476,34 @@ public class RemoteDebugger implements ProcessDebugger {
 
   public DebuggerReader createReader(@NotNull Socket socket) throws IOException {
     synchronized (mySocketObject) {
-      final InputStream myInputStream = socket.getInputStream();
       //noinspection IOResourceOpenedButNotSafelyClosed
-      final Reader reader = new InputStreamReader(myInputStream, Charset.forName("UTF-8")); //TODO: correct econding?
-      return new DebuggerReader(reader);
+      return new DebuggerReader(socket.getInputStream());
     }
   }
 
   private class DebuggerReader extends BaseOutputReader {
-    private Reader myReader;
+    private StringBuilder myTextBuilder = new StringBuilder();
 
-    private DebuggerReader(final Reader reader) throws IOException {
-      super(reader);
-      myReader = reader;
+    private DebuggerReader(final InputStream stream) throws IOException {
+      super(stream, CharsetToolkit.UTF8_CHARSET); //TODO: correct encoding?
       start();
     }
 
     protected void doRun() {
       try {
         while (true) {
-          boolean read = readAvailable();
+          boolean read = readAvailableBlocking();
 
-          if (isStopped) {
+          if (!read) {
             break;
           }
+          else {
+            if (isStopped) {
+              break;
+            }
 
-          TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
+            TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(true));
+          }
         }
       }
       catch (Exception e) {
@@ -500,9 +533,6 @@ public class RemoteDebugger implements ProcessDebugger {
           recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
         }
         else {
-          if (AbstractCommand.isErrorEvent(frame.getCommand())) {
-            LOG.error("Error response from debugger: " + frame.getPayload());
-          }
           placeResponse(frame.getSequence(), frame);
         }
       }
@@ -578,21 +608,19 @@ public class RemoteDebugger implements ProcessDebugger {
       return ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
     }
 
-    private void closeReader(Reader reader) {
-      try {
-        reader.close();
-      }
-      catch (IOException ignore) {
-      }
-    }
-
     @Override
     protected Future<?> executeOnPooledThread(Runnable runnable) {
       return ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
 
-    public void close() {
-      closeReader(myReader);
+    @Override
+    protected void close() {
+      try {
+        super.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
 
     @Override
@@ -603,7 +631,20 @@ public class RemoteDebugger implements ProcessDebugger {
 
     @Override
     protected void onTextAvailable(@NotNull String text) {
-      processResponse(text);
+      myTextBuilder.append(text);
+      if (text.contains("\n")) {
+        String[] lines = myTextBuilder.toString().split("\n");
+        myTextBuilder = new StringBuilder();
+
+        if (!text.endsWith("\n")) {
+          myTextBuilder.append(lines[lines.length - 1]);
+          lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+        }
+
+        for (String line : lines) {
+          processResponse(line + "\n");
+        }
+      }
     }
   }
 

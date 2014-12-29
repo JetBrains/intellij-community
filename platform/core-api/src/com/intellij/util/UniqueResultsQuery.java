@@ -74,17 +74,9 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   @Override
   @NotNull
   public Collection<T> findAll() {
-    if (myMapper == Function.ID) {
-      Set<M> set = new THashSet<M>(myHashingStrategy);
-      process(CommonProcessors.<T>alwaysTrue(), Collections.synchronizedSet(set));
-      //noinspection unchecked
-      return (Collection<T>)set;
-    }
-    else {
-      final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(Collections.synchronizedList(new ArrayList<T>()));
-      forEach(processor);
-      return processor.getResults();
-    }
+    final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(Collections.synchronizedList(new ArrayList<T>()));
+    forEach(processor);
+    return processor.getResults();
   }
 
   @NotNull

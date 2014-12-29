@@ -41,6 +41,11 @@ public class ReplaceAllDotInspection extends BaseInspection {
   }
 
   @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReplaceAllDotVisitor();
   }

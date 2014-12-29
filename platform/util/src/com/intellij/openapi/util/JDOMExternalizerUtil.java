@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizerUtil {
   public static void writeField(@NotNull Element root, @NotNull @NonNls String fieldName, String value) {
@@ -62,5 +64,27 @@ public class JDOMExternalizerUtil {
     element.setAttribute("name", fieldName);
     root.addContent(element);
     return element;
+  }
+
+  @NotNull
+  public static Element addElementWithValueAttribute(@NotNull Element parent, @NotNull String childTagName, @Nullable String attrValue) {
+    Element element = new Element(childTagName);
+    if (attrValue != null) {
+      element.setAttribute("value", attrValue);
+    }
+    parent.addContent(element);
+    return element;
+  }
+
+  @Nullable
+  public static String getFirstChildValueAttribute(@NotNull Element parent, @NotNull String childTagName) {
+    List<Element> children = parent.getChildren(childTagName);
+    if (!children.isEmpty()) {
+      Element first = children.get(0);
+      if (first != null) {
+        return first.getAttributeValue("value");
+      }
+    }
+    return null;
   }
 }

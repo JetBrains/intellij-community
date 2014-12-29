@@ -29,7 +29,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.*;
+import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.MessageException;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -481,6 +485,9 @@ public class Messages {
       if (canShowMacSheetPanel()) {
         return MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, null, doNotAskOption);
       }
+    }
+    catch (MessageException messageException) {
+      // just show a dialog instead
     }
     catch (Exception exception) {
       LOG.error(exception);
@@ -1215,6 +1222,7 @@ public class Messages {
     }
     else {
       final JTextArea textArea = new JTextArea(10, 50);
+      UIUtil.addUndoRedoActions(textArea);
       textArea.setWrapStyleWord(true);
       textArea.setLineWrap(true);
       List<String> lines = parser.fun(textField.getText());
@@ -1238,7 +1246,6 @@ public class Messages {
           builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
         }
       });
-      builder.addDisposable(new TextComponentUndoProvider(textArea));
       builder.show();
     }
   }
@@ -1383,7 +1390,9 @@ public class Messages {
       myDefaultOptionIndex = defaultOptionIndex;
       myFocusedOptionIndex = focusedOptionIndex;
       myIcon = icon;
-      setButtonsAlignment(SwingConstants.CENTER);
+      if (!SystemInfo.isMac) {
+        setButtonsAlignment(SwingConstants.CENTER);
+      }
       setDoNotAskOption(doNotAskOption);
       init();
       if (isMacSheetEmulation()) {

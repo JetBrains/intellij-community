@@ -159,6 +159,11 @@ public class PathManager {
     return platformPath(selector, "Library/Preferences", CONFIG_FOLDER);
   }
 
+  @NotNull
+  public static String getDefaultPluginPathFor(@NotNull String selector) {
+    return platformPath(selector, "Library/Application Support", PLUGINS_FOLDER);
+  }
+
   public static void ensureConfigFolderExists() {
     checkAndCreate(getConfigPath(), true);
   }

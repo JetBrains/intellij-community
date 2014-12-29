@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 @State(
   name = "NewModuleRootManager",
   storages = {
-    @Storage(
-      id = ClassPathStorageUtil.DEFAULT_STORAGE,
-      file = "$MODULE_FILE$"
-    ),
-
-    @Storage(
-          id = ClasspathStorage.SPECIAL_STORAGE,
-          storageClass = ClasspathStorage.class
-    )
+    @Storage(id = ClassPathStorageUtil.DEFAULT_STORAGE, file = StoragePathMacros.MODULE_FILE),
+    @Storage(id = ClasspathStorage.SPECIAL_STORAGE, storageClass = ClasspathStorage.class)
   },
   storageChooser = ModuleRootManagerComponent.StorageChooser.class
 )
@@ -47,13 +40,15 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
     super(module, projectRootManager, filePointerManager);
   }
 
-  public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
+  static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
     @Override
     public Storage[] selectStorages(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final StateStorageOperation operation) {
-      final boolean isDefaultStorageType = ClassPathStorageUtil.isDefaultStorage(moduleRootManager.getModule());
-      final String id = isDefaultStorageType ? ClassPathStorageUtil.DEFAULT_STORAGE: ClasspathStorage.SPECIAL_STORAGE;
+      boolean isDefaultStorageType = ClassPathStorageUtil.isDefaultStorage(moduleRootManager.getModule());
+      String id = isDefaultStorageType ? ClassPathStorageUtil.DEFAULT_STORAGE : ClasspathStorage.SPECIAL_STORAGE;
       for (Storage storage : storages) {
-        if (storage.id().equals(id)) return new Storage[]{storage};
+        if (storage.id().equals(id)) {
+          return new Storage[]{storage};
+        }
       }
       throw new IllegalArgumentException();
     }

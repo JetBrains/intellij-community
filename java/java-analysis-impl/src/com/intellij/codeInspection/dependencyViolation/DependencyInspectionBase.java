@@ -23,6 +23,7 @@ import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,13 +67,19 @@ public class DependencyInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (!validationManager.hasRules()) return null;
     if (validationManager.getApplicableRules(file).length == 0) return null;
     final List<ProblemDescriptor> problems =  new ArrayList<ProblemDescriptor>();
+    final FactoryMap<PsiFile, DependencyRule[]> violations = new FactoryMap<PsiFile, DependencyRule[]>() {
+      @Nullable
+      @Override
+      protected DependencyRule[] create(PsiFile dependencyFile) {
+        return validationManager.getViolatorDependencyRules(file, dependencyFile);
+      }
+    };
     DependenciesBuilder.analyzeFileDependencies(file, new DependenciesBuilder.DependencyProcessor() {
       @Override
       public void process(PsiElement place, PsiElement dependency) {
         PsiFile dependencyFile = dependency.getContainingFile();
         if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
-          final DependencyRule[] rule = validationManager.getViolatorDependencyRules(file, dependencyFile);
-          for (DependencyRule dependencyRule : rule) {
+          for (DependencyRule dependencyRule : violations.get(dependencyFile)) {
             problems.add(manager.createProblemDescriptor(place, InspectionsBundle
               .message("inspection.dependency.violator.problem.descriptor", dependencyRule.getDisplayText()), isOnTheFly,
                                                          createEditDependencyFixes(dependencyRule),

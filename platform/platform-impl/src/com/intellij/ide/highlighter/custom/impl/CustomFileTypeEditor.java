@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,8 +213,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
         @Override
         public void run(AnActionButton button) {
           ModifyKeywordDialog dialog = new ModifyKeywordDialog(myKeywordsLists[index], "");
-          dialog.show();
-          if (dialog.isOK()) {
+          if (dialog.showAndGet()) {
             String keywordName = dialog.getKeywordName();
             if (!myKeywordModels[index].contains(keywordName)) myKeywordModels[index].addElement(keywordName);
           }
@@ -232,8 +231,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private void edit(int index) {
     if (myKeywordsLists[index].getSelectedIndex() == -1) return;
     ModifyKeywordDialog dialog = new ModifyKeywordDialog(myKeywordsLists[index], (String)myKeywordsLists[index].getSelectedValue());
-    dialog.show();
-    if (dialog.isOK()) {
+    if (dialog.showAndGet()) {
       myKeywordModels[index].setElementAt(dialog.getKeywordName(), myKeywordsLists[index].getSelectedIndex());
     }
   }

@@ -245,7 +245,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
    * changes its file type.
    */
   private void updateHighlighters(){
-    if (!myProject.isDisposed()) {
+    if (!myProject.isDisposed() && !myEditor.isDisposed()) {
       final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile);
       ((EditorEx)myEditor).setHighlighter(highlighter);
     }

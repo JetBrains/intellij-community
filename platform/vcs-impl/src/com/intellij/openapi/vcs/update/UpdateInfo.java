@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -26,7 +25,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 public class UpdateInfo implements JDOMExternalizable {
-  private final Project myProject;
   private UpdatedFiles myUpdatedFiles;
   private String myDate;
   private ActionInfo myActionInfo;
@@ -34,17 +32,16 @@ public class UpdateInfo implements JDOMExternalizable {
   @NonNls private static final String FILE_INFO_ELEMENTS = "UpdatedFiles";
   @NonNls private static final String ACTION_INFO_ATTRIBUTE_NAME = "ActionInfo";
 
-  public UpdateInfo(Project project, UpdatedFiles updatedFiles, ActionInfo actionInfo) {
-    myProject = project;
+  public UpdateInfo(UpdatedFiles updatedFiles, ActionInfo actionInfo) {
     myActionInfo = actionInfo;
     myUpdatedFiles = updatedFiles;
     myDate = DateFormatUtil.formatPrettyDateTime(Clock.getTime());
   }
 
-  public UpdateInfo(Project project) {
-    myProject = project;
+  public UpdateInfo() {
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (myUpdatedFiles == null) return;
     element.setAttribute(DATE_ATTR, myDate);
@@ -54,6 +51,7 @@ public class UpdateInfo implements JDOMExternalizable {
     element.addContent(filesElement);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myDate = element.getAttributeValue(DATE_ATTR);
     Element fileInfoElement = element.getChild(FILE_INFO_ELEMENTS);
@@ -70,7 +68,7 @@ public class UpdateInfo implements JDOMExternalizable {
 
   }
 
-  private ActionInfo getActionInfoByName(String actionInfoName) {
+  private static ActionInfo getActionInfoByName(String actionInfoName) {
     if (ActionInfo.UPDATE.getActionName().equals(actionInfoName)) return ActionInfo.UPDATE;
     if (ActionInfo.STATUS.getActionName().equals(actionInfoName)) return ActionInfo.STATUS;
     return null;
@@ -78,10 +76,6 @@ public class UpdateInfo implements JDOMExternalizable {
 
   public String getHelpId() {
     return null;
-  }
-
-  public Project getPoject() {
-    return myProject;
   }
 
   public UpdatedFiles getFileInformation() {
@@ -93,11 +87,7 @@ public class UpdateInfo implements JDOMExternalizable {
   }
 
   public boolean isEmpty() {
-    if (myUpdatedFiles != null) {
-      return myUpdatedFiles.isEmpty();
-    } else {
-      return true;
-    }    
+    return myUpdatedFiles == null || myUpdatedFiles.isEmpty();
   }
 
   public ActionInfo getActionInfo() {

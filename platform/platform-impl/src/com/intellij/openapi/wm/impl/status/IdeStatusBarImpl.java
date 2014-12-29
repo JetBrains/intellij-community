@@ -37,6 +37,7 @@ import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -838,7 +839,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     @Override
     protected void paintComponent(final Graphics g) {
       final Rectangle bounds = getBounds();
-      final Insets insets = getInsets();
+      final Insets insets = JBUI.insets(getInsets());
 
       if (myIcon != null) {
         final int iconWidth = myIcon.getIconWidth();
@@ -851,7 +852,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
     @Override
     public Dimension getMinimumSize() {
-      return new Dimension(24, MIN_ICON_HEIGHT);
+      return JBUI.size(24, MIN_ICON_HEIGHT);
     }
 
     @Override

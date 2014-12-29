@@ -20,8 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
+ * Represents a single node (framework or group) in the frameworks tree ("Additional Libraries and Frameworks"
+ * in the New Project dialog or the tree displayed in the "Add Framework Support" dialog).
+ *
  * @author Dmitry Avdeev
- *         Date: 09.10.13
+ * @since 09.10.13
  */
 public interface FrameworkOrGroup {
   @NotNull

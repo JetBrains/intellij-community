@@ -85,7 +85,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     };
     myPanel.add(scrollPane
       , new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 8), 0, 0));
+                                       new Insets(0, 0, 0, 0), 0, 0));
 
     final JPanel previewPanel = createPreviewPanel();
     myPanel.add(previewPanel,

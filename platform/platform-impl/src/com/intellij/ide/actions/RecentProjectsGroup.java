@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -32,13 +32,15 @@ public class RecentProjectsGroup extends ActionGroup implements DumbAware {
     presentation.setText(ActionsBundle.message(SystemInfo.isMac ? "group.reopen.mac.text": "group.reopen.win.text"));
   }
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    return RecentProjectsManagerBase.getInstance().getRecentProjectsActions(true);
+    return RecentProjectsManager.getInstance().getRecentProjectsActions(true);
   }
 
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    presentation.setEnabled(RecentProjectsManagerBase.getInstance().getRecentProjectsActions(true).length > 0);
+    presentation.setEnabled(RecentProjectsManager.getInstance().getRecentProjectsActions(true).length > 0);
   }
 }

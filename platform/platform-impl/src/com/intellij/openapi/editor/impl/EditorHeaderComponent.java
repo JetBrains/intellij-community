@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,9 +30,11 @@ import java.awt.*;
  * @author gregsh
  */
 public class EditorHeaderComponent extends JPanel {
-
   public EditorHeaderComponent() {
     super(new BorderLayout(0, 0));
+    boolean topBorderRequired = !SystemInfo.isMac && UISettings.getInstance().EDITOR_TAB_PLACEMENT != SwingConstants.TOP &&
+                                !(UISettings.getInstance().SHOW_MAIN_TOOLBAR && UISettings.getInstance().SHOW_NAVIGATION_BAR);
+    setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
   }
 
   @Override
@@ -43,6 +48,8 @@ public class EditorHeaderComponent extends JPanel {
   @Override
   protected void paintComponent(@NotNull Graphics g) {
     super.paintComponent(g);
+    if (UIUtil.isUnderGTKLookAndFeel()) return;
+
     paintGradient(g, this);
   }
 
@@ -53,13 +60,8 @@ public class EditorHeaderComponent extends JPanel {
 
     Graphics2D g2d = (Graphics2D)g;
 
-    if (!UIUtil.isUnderGTKLookAndFeel()) {
-      g2d.setPaint(UIUtil.getGradientPaint(0, 0, GRADIENT_C1, 0, c.getHeight(), GRADIENT_C2));
-      g2d.fillRect(1, 1, c.getWidth(), c.getHeight() - 1);
-      g2d.setPaint(null);
-    }
-
-    g.setColor(UIUtil.getBorderColor());
-    g.drawLine(0, c.getHeight() - 1, c.getWidth(), c.getHeight() - 1);
+    g2d.setPaint(UIUtil.getGradientPaint(0, 0, GRADIENT_C1, 0, c.getHeight(), GRADIENT_C2));
+    g2d.fillRect(0, 0, c.getWidth(), c.getHeight() - 1);
+    g2d.setPaint(null);
   }
 }

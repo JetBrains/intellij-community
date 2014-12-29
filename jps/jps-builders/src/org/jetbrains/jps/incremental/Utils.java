@@ -22,14 +22,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -120,13 +121,6 @@ public class Utils {
       return null;
     }
     return new File(toURI(path));
-  }
-
-  public static boolean intersects(Set<JpsModule> set1, Set<JpsModule> set2) {
-    if (set1.size() < set2.size()) {
-      return new HashSet<JpsModule>(set1).removeAll(set2);
-    }
-    return new HashSet<JpsModule>(set2).removeAll(set1);
   }
 
   public static boolean errorsDetected(CompileContext context) {

@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Not thread-safe. Performs caching of char widths, so cache reset must be invoked (via {@link #clearSymbolWidthCache()} method) when
@@ -52,8 +51,8 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   @Override
-  public int toVisualColumnSymbolsNumber(@NotNull CharSequence text, int start, int end, int x) {
-    return EditorUtil.textWidthInColumns(myEditor, text, start, end, x);
+  public int toVisualColumnSymbolsNumber(int start, int end, int x) {
+    return EditorUtil.textWidthInColumns(myEditor, myEditor.getDocument().getImmutableCharSequence(), start, end, x);
   }
 
   @Override
@@ -67,7 +66,14 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   @Override
-  public int textWidth(@NotNull CharSequence text, int start, int end, int fontType, int x) {
+  public int calcSoftWrapUnawareOffset(int startOffset, int endOffset, int startColumn, int column, int startX) {
+    return EditorUtil.calcSoftWrapUnawareOffset(myEditor, myEditor.getDocument().getImmutableCharSequence(), startOffset, endOffset,
+                                                column, EditorUtil.getTabSize(myEditor), startX, new int[]{startColumn}, null);
+  }
+
+  @Override
+  public int textWidth(int start, int end, int fontType, int x) {
+    CharSequence text = myEditor.getDocument().getImmutableCharSequence();
     int startToUse = start;
     for (int i = end - 1; i >= start; i--) {
       if (text.charAt(i) == '\n') {

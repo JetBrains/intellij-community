@@ -21,7 +21,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
@@ -48,7 +47,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   };
   private TestVcsLogProvider myLogProvider;
   private VcsLogDataHolder myDataHolder;
-  private Map<Hash, VcsCommitMetadata> myTopDetailsCache;
+  private Map<Integer, VcsCommitMetadata> myTopDetailsCache;
   private Map<VirtualFile, VcsLogProvider> myLogProviders;
   private List<String> myCommits;
 
@@ -58,7 +57,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
 
     myLogProvider = new TestVcsLogProvider(myProjectRoot);
     myLogProviders = Collections.<VirtualFile, VcsLogProvider>singletonMap(myProjectRoot, myLogProvider);
-    myTopDetailsCache = new HashMap<Hash, VcsCommitMetadata>();
+    myTopDetailsCache = ContainerUtil.newHashMap();
 
     myCommits = Arrays.asList("3|-a2|-a1", "2|-a1|-a", "1|-a|-");
     myLogProvider.appendHistory(log(myCommits));
@@ -174,7 +173,8 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
 
   private VcsLogRefresherImpl createLoader(DataWaiter dataWaiter) {
     myDataHolder = new VcsLogDataHolder(myProject, myProject, myLogProviders,
-                                                       ServiceManager.getService(myProject, VcsLogSettings.class), dataWaiter);
+                                                       ServiceManager.getService(myProject, VcsLogSettings.class),
+                                                       ServiceManager.getService(myProject, VcsLogUiProperties.class), Consumer.EMPTY_CONSUMER);
     return new VcsLogRefresherImpl(myProject, myDataHolder.getHashMap(), myLogProviders, myDataHolder.getUserRegistry(), myTopDetailsCache,
                                    dataWaiter, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT);
   }

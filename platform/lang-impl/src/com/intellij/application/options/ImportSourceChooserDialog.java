@@ -18,9 +18,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeImporterEP;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +38,10 @@ public class ImportSourceChooserDialog <S extends Scheme> extends DialogWrapper 
   
   private final static String SHARED_IMPORT_SOURCE = ApplicationBundle.message("import.scheme.shared");
   
-  public ImportSourceChooserDialog(JComponent parent, Class<S> schemeClass, SchemesManager schemesManager) {
+  public ImportSourceChooserDialog(JComponent parent, Class<S> schemeClass) {
     super(parent, true);
     setTitle(ApplicationBundle.message("title.import.scheme.from"));
-    myListModel = new SourceListModel(SchemeImporterEP.getExtensions(schemeClass), schemesManager.isImportAvailable());
+    myListModel = new SourceListModel(SchemeImporterEP.getExtensions(schemeClass));
     initSourceList();
     init();
   }
@@ -83,14 +81,11 @@ public class ImportSourceChooserDialog <S extends Scheme> extends DialogWrapper 
   }
   
   private class SourceListModel extends DefaultListModel {
-    private List<String> mySourceNames = new ArrayList<String>();
+    private final List<String> mySourceNames = new ArrayList<String>();
     
-    public SourceListModel(Collection<SchemeImporterEP<S>> extensions, boolean isSharedImportAvailable) {
+    public SourceListModel(Collection<SchemeImporterEP<S>> extensions) {
       for (SchemeImporterEP extension : extensions) {
         mySourceNames.add(extension.name);
-      }
-      if (isSharedImportAvailable) {
-        mySourceNames.add(SHARED_IMPORT_SOURCE);
       }
     }
 
@@ -104,5 +99,4 @@ public class ImportSourceChooserDialog <S extends Scheme> extends DialogWrapper 
       return mySourceNames.get(index);
     }
   }
-
 }

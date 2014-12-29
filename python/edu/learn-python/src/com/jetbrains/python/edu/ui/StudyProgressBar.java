@@ -89,4 +89,11 @@ public class StudyProgressBar extends JComponent implements DumbAware {
     dimension.height = myHeight + 10;
     return dimension;
   }
+
+  @Override
+  public Dimension getMinimumSize() {
+    Dimension dimension = super.getMinimumSize();
+    dimension.height = myHeight + 10;
+    return dimension;
+  }
 }

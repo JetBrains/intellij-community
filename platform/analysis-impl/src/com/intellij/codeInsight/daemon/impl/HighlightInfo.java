@@ -59,7 +59,7 @@ public class HighlightInfo implements Segment {
 
   public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   // optimisation: if tooltip contains this marker object, then it replaced with description field in getTooltip()
-  private static final String DESCRIPTION_PLACEHOLDER = "{\u0000}";
+  private static final String DESCRIPTION_PLACEHOLDER = "\u0000";
   JComponent fileLevelComponent;
   public final TextAttributes forcedTextAttributes;
   public final TextAttributesKey forcedTextAttributesKey;
@@ -199,7 +199,7 @@ public class HighlightInfo implements Segment {
   @Nullable
   public Color getErrorStripeMarkColor(@NotNull PsiElement element,
                                        @Nullable final EditorColorsScheme colorsScheme) { // if null global scheme will be used
-    if (forcedTextAttributes != null && forcedTextAttributes.getErrorStripeColor() != null) {
+    if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
     EditorColorsScheme scheme = getColorsScheme(colorsScheme);

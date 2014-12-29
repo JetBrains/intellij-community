@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ import java.awt.*;
  * User: cdr
  */
 abstract class RangeHighlighterData {
+  private static final Color NULL_COLOR = new Color(0, 0, 0);
+
   private final MarkupModel myModel;
   private TextAttributes myTextAttributes;
   private LineMarkerRenderer myLineMarkerRenderer;
@@ -54,9 +56,6 @@ abstract class RangeHighlighterData {
     myTextAttributes = textAttributes;
     setFlag(TARGET_AREA_IS_EXACT_FLAG, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;
-    if (textAttributes != null) {
-      myErrorStripeColor = textAttributes.getErrorStripeColor();
-    }
   }
 
   private static final int AFTER_END_OF_LINE_FLAG = 0;
@@ -66,7 +65,7 @@ abstract class RangeHighlighterData {
   private static final int CHANGED_FLAG = 4;
   private static final int RENDERERS_CHANGED_FLAG = 5;
   @MagicConstant(intValues = {AFTER_END_OF_LINE_FLAG, ERROR_STRIPE_IS_THIN_FLAG, TARGET_AREA_IS_EXACT_FLAG, IN_BATCH_CHANGE_FLAG, CHANGED_FLAG, RENDERERS_CHANGED_FLAG})
-  @interface FlagConstant {}
+  private @interface FlagConstant {}
 
   private boolean isFlagSet(@FlagConstant int flag) {
     int state = myFlags >> flag;
@@ -96,15 +95,15 @@ abstract class RangeHighlighterData {
   }
 
   @NotNull
-  public HighlighterTargetArea getTargetArea() {
+  HighlighterTargetArea getTargetArea() {
     return isFlagSet(TARGET_AREA_IS_EXACT_FLAG) ? HighlighterTargetArea.EXACT_RANGE : HighlighterTargetArea.LINES_IN_RANGE;
   }
 
-  public LineMarkerRenderer getLineMarkerRenderer() {
+  LineMarkerRenderer getLineMarkerRenderer() {
     return myLineMarkerRenderer;
   }
 
-  public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
+  void setLineMarkerRenderer(LineMarkerRenderer renderer) {
     LineMarkerRenderer old = myLineMarkerRenderer;
     myLineMarkerRenderer = renderer;
     if (!Comparing.equal(old, renderer)) {
@@ -112,11 +111,11 @@ abstract class RangeHighlighterData {
     }
   }
 
-  public CustomHighlighterRenderer getCustomRenderer() {
+  CustomHighlighterRenderer getCustomRenderer() {
     return myCustomRenderer;
   }
 
-  public void setCustomRenderer(CustomHighlighterRenderer renderer) {
+  void setCustomRenderer(CustomHighlighterRenderer renderer) {
     CustomHighlighterRenderer old = myCustomRenderer;
     myCustomRenderer = renderer;
     if (!Comparing.equal(old, renderer)) {
@@ -136,11 +135,15 @@ abstract class RangeHighlighterData {
     }
   }
 
-  public Color getErrorStripeMarkColor() {
-    return myErrorStripeColor;
+  Color getErrorStripeMarkColor() {
+    if (myErrorStripeColor == NULL_COLOR) return null;
+    if (myErrorStripeColor != null) return myErrorStripeColor;
+    if (myTextAttributes != null) return myTextAttributes.getErrorStripeColor();
+    return null;
   }
 
   public void setErrorStripeMarkColor(Color color) {
+    if (color == null) color = NULL_COLOR;
     Color old = myErrorStripeColor;
     myErrorStripeColor = color;
     if (!Comparing.equal(old, color)) {
@@ -161,11 +164,11 @@ abstract class RangeHighlighterData {
     }
   }
 
-  public boolean isThinErrorStripeMark() {
+  boolean isThinErrorStripeMark() {
     return isFlagSet(ERROR_STRIPE_IS_THIN_FLAG);
   }
 
-  public void setThinErrorStripeMark(boolean value) {
+  void setThinErrorStripeMark(boolean value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     boolean old = isThinErrorStripeMark();
     setFlag(ERROR_STRIPE_IS_THIN_FLAG, value);
@@ -174,11 +177,11 @@ abstract class RangeHighlighterData {
     }
   }
 
-  public Color getLineSeparatorColor() {
+  Color getLineSeparatorColor() {
     return myLineSeparatorColor;
   }
 
-  public void setLineSeparatorColor(Color color) {
+  void setLineSeparatorColor(Color color) {
     Color old = myLineSeparatorColor;
     myLineSeparatorColor = color;
     if (!Comparing.equal(old, color)) {
@@ -186,11 +189,11 @@ abstract class RangeHighlighterData {
     }
   }
 
-  public SeparatorPlacement getLineSeparatorPlacement() {
+  SeparatorPlacement getLineSeparatorPlacement() {
     return mySeparatorPlacement;
   }
 
-  public void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement) {
+  void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement) {
     SeparatorPlacement old = mySeparatorPlacement;
     mySeparatorPlacement = placement;
     if (!Comparing.equal(old, placement)) {
@@ -198,13 +201,13 @@ abstract class RangeHighlighterData {
     }
   }
 
-  public void setEditorFilter(@NotNull MarkupEditorFilter filter) {
+  void setEditorFilter(@NotNull MarkupEditorFilter filter) {
     myFilter = filter;
     fireChanged(false);
   }
 
   @NotNull
-  public MarkupEditorFilter getEditorFilter() {
+  MarkupEditorFilter getEditorFilter() {
     return myFilter;
   }
 
@@ -212,7 +215,7 @@ abstract class RangeHighlighterData {
     return isFlagSet(AFTER_END_OF_LINE_FLAG);
   }
 
-  public void setAfterEndOfLine(boolean afterEndOfLine) {
+  void setAfterEndOfLine(boolean afterEndOfLine) {
     boolean old = isAfterEndOfLine();
     setFlag(AFTER_END_OF_LINE_FLAG, afterEndOfLine);
     if (old != afterEndOfLine) {
@@ -234,22 +237,35 @@ abstract class RangeHighlighterData {
     }
   }
 
-  public int getAffectedAreaStartOffset() {
+  int getAffectedAreaStartOffset() {
     int startOffset = getRangeHighlighter().getStartOffset();
-    if (getTargetArea() == HighlighterTargetArea.EXACT_RANGE) return startOffset;
-    Document document = myModel.getDocument();
-    int textLength = document.getTextLength();
-    if (startOffset >= textLength) return textLength;
-    return document.getLineStartOffset(document.getLineNumber(startOffset));
+    switch (getTargetArea()) {
+      case EXACT_RANGE:
+        return startOffset;
+      case LINES_IN_RANGE:
+        Document document = myModel.getDocument();
+        int textLength = document.getTextLength();
+        if (startOffset >= textLength) return textLength;
+        return document.getLineStartOffset(document.getLineNumber(startOffset));
+      default:
+        throw new IllegalStateException(getTargetArea().toString());
+    }
   }
 
-  public int getAffectedAreaEndOffset() {
+  int getAffectedAreaEndOffset() {
     int endOffset = getRangeHighlighter().getEndOffset();
-    if (getTargetArea() == HighlighterTargetArea.EXACT_RANGE) return endOffset;
-    Document document = myModel.getDocument();
-    int textLength = document.getTextLength();
-    if (endOffset >= textLength) return endOffset;
-    return Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
+    switch (getTargetArea()) {
+      case EXACT_RANGE:
+        return endOffset;
+      case LINES_IN_RANGE:
+        Document document = myModel.getDocument();
+        int textLength = document.getTextLength();
+        if (endOffset >= textLength) return endOffset;
+        return Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
+      default:
+        throw new IllegalStateException(getTargetArea().toString());
+    }
+
   }
 
   enum ChangeResult { NOT_CHANGED, MINOR_CHANGE, RENDERERS_CHANGED }
@@ -278,7 +294,7 @@ abstract class RangeHighlighterData {
     return myModel;
   }
 
-  public void setLineSeparatorRenderer(LineSeparatorRenderer renderer) {
+  void setLineSeparatorRenderer(LineSeparatorRenderer renderer) {
     LineSeparatorRenderer old = myLineSeparatorRenderer;
     myLineSeparatorRenderer = renderer;
     if (!Comparing.equal(old, renderer)) {
@@ -286,7 +302,7 @@ abstract class RangeHighlighterData {
     }
   }
 
-  public LineSeparatorRenderer getLineSeparatorRenderer() {
+  LineSeparatorRenderer getLineSeparatorRenderer() {
     return myLineSeparatorRenderer;
   }
 }

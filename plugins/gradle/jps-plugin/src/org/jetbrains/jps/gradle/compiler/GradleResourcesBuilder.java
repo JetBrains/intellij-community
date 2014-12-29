@@ -28,6 +28,7 @@ import org.jetbrains.jps.gradle.model.impl.*;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
@@ -50,6 +51,10 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
                     @NotNull final DirtyFilesHolder<GradleResourceRootDescriptor, GradleResourcesTarget> holder,
                     @NotNull final BuildOutputConsumer outputConsumer,
                     @NotNull final CompileContext context) throws ProjectBuildException, IOException {
+    if (!JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
+      return;
+    }
+
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final GradleProjectConfiguration projectConfig = JpsGradleExtensionService.getInstance().getGradleProjectConfiguration(dataPaths);
     final GradleModuleResourceConfiguration config = target.getModuleResourcesConfiguration(dataPaths);

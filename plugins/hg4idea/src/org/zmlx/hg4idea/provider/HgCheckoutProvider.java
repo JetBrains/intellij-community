@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -34,65 +34,51 @@ import org.zmlx.hg4idea.ui.HgCloneDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Checkout provider for Mercurial
- */
 public class HgCheckoutProvider implements CheckoutProvider {
 
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     final HgCloneDialog dialog = new HgCloneDialog(project);
-    dialog.show();
-    if (!dialog.isOK()) {
+    if (!dialog.showAndGet()) {
       return;
     }
     dialog.rememberSettings();
-    final VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(dialog.getParentDirectory()));
+    VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(dialog.getParentDirectory()));
     if (destinationParent == null) {
       return;
     }
     final String targetDir = destinationParent.getPath() + File.separator + dialog.getDirectoryName();
-
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
+    final AtomicReference<HgCommandResult> cloneResult = new AtomicReference<HgCommandResult>();
     new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
-      @Override public void run(@NotNull ProgressIndicator indicator) {
-        // clone
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
         HgCloneCommand clone = new HgCloneCommand(project);
         clone.setRepositoryURL(sourceRepositoryURL);
         clone.setDirectory(targetDir);
+        cloneResult.set(clone.execute());
+      }
 
-        // handle result
-        HgCommandResult myCloneResult = clone.execute();
-        if (myCloneResult == null || HgErrorUtil.hasErrorsInCommandExecution(myCloneResult)) {
-          new HgCommandResultNotifier(project).notifyError(myCloneResult, "Clone failed", "Clone from " +
-                                                                                          sourceRepositoryURL +
-                                                                                          " failed.");
+      @Override
+      public void onSuccess() {
+        if (cloneResult.get() == null || HgErrorUtil.hasErrorsInCommandExecution(cloneResult.get())) {
+          new HgCommandResultNotifier(project).notifyError(cloneResult.get(), "Clone failed",
+                                                           "Clone from " + sourceRepositoryURL + " failed.");
         }
         else {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (listener != null) {
-                listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()), HgVcs.getKey());
-                listener.checkoutCompleted();
-              }
-            }
-          });
+          DvcsUtil.addMappingIfSubRoot(project, targetDir, HgVcs.VCS_NAME);
+          if (listener != null) {
+            listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()), HgVcs.getKey());
+            listener.checkoutCompleted();
+          }
         }
       }
     }.queue();
-
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public String getVcsName() {
     return "_Mercurial";
   }

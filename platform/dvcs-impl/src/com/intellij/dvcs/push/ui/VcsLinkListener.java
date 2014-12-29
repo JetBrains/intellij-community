@@ -18,7 +18,8 @@ package com.intellij.dvcs.push.ui;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.event.MouseEvent;
 
 public interface VcsLinkListener {
-  void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode);
+  void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event);
 }

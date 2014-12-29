@@ -33,6 +33,7 @@ import java.util.Map;
  * Concurrent weak key:K -> strong value:V map.
  * Null keys are allowed
  * Null values are NOT allowed
+ * @deprecated Use {@link ContainerUtil#createConcurrentWeakMap()} instead
  */
 public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class WeakKey<K, V> extends WeakReference<K> implements KeyReference<K, V> {

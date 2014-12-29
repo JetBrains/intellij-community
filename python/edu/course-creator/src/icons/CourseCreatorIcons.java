@@ -13,5 +13,6 @@ public class CourseCreatorIcons {
     return IconLoader.getIcon(path, CourseCreatorIcons.class);
   }
 
+  public static final Icon CourseCreationProjectType = load("/icons/CourseCreationProjectType.png"); // 32x32
   public static final Icon Gutter = load("/icons/gutter.png"); // 16x16
 }

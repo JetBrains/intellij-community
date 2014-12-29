@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,7 +173,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     }
 
     String newName = range.replace(myElement.getText(), newElementName);
-    myElement.updateText(newName);
+    myElement.replace(PyElementGenerator.getInstance(myElement.getProject()).createStringLiteralAlreadyEscaped(newName));
     return myElement;
   }
 }

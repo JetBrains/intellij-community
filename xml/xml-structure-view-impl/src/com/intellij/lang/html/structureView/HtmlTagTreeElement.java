@@ -98,12 +98,12 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
   public static String getTagPresentation(final @NotNull XmlTag tag) {
     StringBuilder builder = new StringBuilder(tag.getLocalName());
 
-    String id = XmlTagTreeElement.toCanonicalForm(tag.getAttributeValue("id"));
+    String id = XmlTagTreeElement.toCanonicalForm(tag.getAttributeValue(HtmlUtil.ID_ATTRIBUTE_NAME));
     if (id != null) {
       builder.append('#').append(id);
     }
 
-    String classValue = tag.getAttributeValue("class");
+    String classValue = tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME);
     List<String> classValues = classValue == null ? Collections.<String>emptyList() : StringUtil.split(classValue, " ");
     if (!classValues.isEmpty()) {
       builder.append('.');

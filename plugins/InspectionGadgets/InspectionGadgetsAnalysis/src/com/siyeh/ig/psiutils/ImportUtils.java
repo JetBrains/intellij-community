@@ -263,7 +263,7 @@ public final class ImportUtils {
       if (element instanceof PsiPackage) {
         final PsiPackage aPackage = (PsiPackage)element;
         if (!strict) {
-          if (aPackage.containsClassNamed(shortName)) {
+          if (aPackage.findClassByShortName(shortName, containingFile.getResolveScope()).length > 0) {
             return true;
           }
         }

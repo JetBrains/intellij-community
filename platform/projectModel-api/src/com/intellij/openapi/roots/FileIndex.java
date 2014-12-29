@@ -57,6 +57,7 @@ public interface FileIndex {
 
   /**
    * Returns true if <code>file</code> is a source file which belongs to sources of the content.
+   * (Returns true for both source and test source).<p/>
    * Note that sometimes a file can belong to the content and be a source file but not belong to sources of the content.
    * This happens if sources of some library are located under the content (so they belong to the project content but not as sources).
    *

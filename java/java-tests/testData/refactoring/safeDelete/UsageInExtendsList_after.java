@@ -1,3 +1,3 @@
-nterface Foo {}
+interface Foo {}
 
 class FooBarImpl implements Foo {}

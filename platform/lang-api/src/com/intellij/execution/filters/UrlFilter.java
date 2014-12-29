@@ -15,6 +15,9 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
@@ -24,7 +27,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class UrlFilter implements Filter {
-  private static final Pattern URL_PATTERN = Pattern.compile("\\bhttps?://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]");
+  public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto\\:|(news|(ht|f)tp(s?))\\://|www\\.)[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]");
 
   @Nullable
   @Override
@@ -35,5 +38,18 @@ public class UrlFilter implements Filter {
       return new Result(textStartOffset + m.start(), textStartOffset + m.end(), new BrowserHyperlinkInfo(m.group()));
     }
     return null;
+  }
+
+  public static class UrlFilterProvider implements ConsoleFilterProviderEx {
+    @Override
+    public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+      return new Filter[]{new UrlFilter()};
+    }
+
+    @NotNull
+    @Override
+    public Filter[] getDefaultFilters(@NotNull Project project) {
+      return getDefaultFilters(project, GlobalSearchScope.allScope(project));
+    }
   }
 }

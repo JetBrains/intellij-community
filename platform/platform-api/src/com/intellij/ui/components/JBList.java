@@ -173,7 +173,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
       }
     };
 
-    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+    myExpandableItemsHandler = createExpandableItemsHandler();
     setCellRenderer(new DefaultListCellRenderer());
   }
 
@@ -200,6 +200,11 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   @NotNull
   public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
+  }
+
+  @NotNull
+  protected ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
+    return ExpandableItemsHandlerFactory.install(this);
   }
 
   @Override

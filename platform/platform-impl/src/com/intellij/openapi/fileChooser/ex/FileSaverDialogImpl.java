@@ -64,11 +64,13 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     return title != null ? title : UIBundle.message("file.chooser.save.dialog.default.title");
   }
 
+  @Override
   @Nullable
   public VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable final String filename) {
     init();
     restoreSelection(baseDir);
     myFileSystemTree.addListener(new FileSystemTree.Listener() {
+      @Override
       public void selectionChanged(final List<VirtualFile> selection) {
         updateFileName(selection);
         updateOkButton();
@@ -97,7 +99,9 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
 
     String path = (selected == null) ? myPathTextField.getTextFieldText() : selected.getPath();
     final File dir = new File(path);
-    if (! dir.exists() || path == null) return null;
+    if (!dir.exists()) {
+      return null;
+    }
     if (dir.isDirectory()) {
       path += File.separator + myFileName.getText();
     }
@@ -145,6 +149,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     panel.add(new JLabel(UIBundle.message("file.chooser.save.dialog.file.name")), BorderLayout.WEST);
     myFileName.setText("");
     myFileName.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         updateOkButton();
       }
@@ -183,7 +188,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   protected void doOKAction() {
     final File file = getFile();
     if (file != null && file.exists()) {
-      if (Messages.YES != Messages.showYesNoDialog(this.getRootPane(),
+      if (Messages.YES != Messages.showYesNoDialog(getRootPane(),
                                                   UIBundle.message("file.chooser.save.dialog.confirmation", file.getName()),
                                                   UIBundle.message("file.chooser.save.dialog.confirmation.title"),
                                                   Messages.getWarningIcon())) {

@@ -80,8 +80,9 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
                                                  @NotNull AbstractRepositoryManager<HgRepository> repositoryManager) {
     List<HgRepository> allRepositories = repositoryManager.getRepositories();
     popupGroup.add(new HgBranchPopupActions.HgNewBranchAction(myProject, allRepositories, myCurrentRepository));
-    popupGroup.addAction(new HgBranchPopupActions.HgNewBookmarkAction(myProject, allRepositories, myCurrentRepository));
-    popupGroup.addAction(new HgBranchPopupActions.HgShowUnnamedHeadsForCurrentBranchAction(myProject, myCurrentRepository));
+    popupGroup.addAction(new HgBranchPopupActions.HgNewBookmarkAction(allRepositories, myCurrentRepository));
+    popupGroup.addAction(new HgBranchPopupActions.HgCloseBranchAction(allRepositories, myCurrentRepository));
+    popupGroup.addAction(new HgBranchPopupActions.HgShowUnnamedHeadsForCurrentBranchAction(myCurrentRepository));
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Branches");

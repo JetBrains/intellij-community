@@ -1,4 +1,4 @@
-// "Create Inner Class 'MyArrayList'" "true"
+// "Create inner class 'MyArrayList'" "true"
 import java.util.*;
 
 public class Test {

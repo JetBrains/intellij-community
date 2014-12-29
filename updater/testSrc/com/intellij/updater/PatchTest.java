@@ -139,14 +139,16 @@ public class PatchTest extends PatchTestCase {
     try {
       FileLock lock = s.getChannel().lock();
       try {
+        String message = UtilsTest.mIsWindows ? "Locked by: Java(TM) Platform SE binary" : ValidationResult.ACCESS_DENIED_MESSAGE;
+        ValidationResult.Option option = UtilsTest.mIsWindows ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
         List<ValidationResult> result = myPatch.validate(myOlderDir, TEST_UI);
         assertEquals(
           new HashSet<ValidationResult>(Arrays.asList(
             new ValidationResult(ValidationResult.Kind.ERROR,
                                  "Readme.txt",
                                  ValidationResult.Action.UPDATE,
-                                 ValidationResult.ACCESS_DENIED_MESSAGE,
-                                 ValidationResult.Option.IGNORE))),
+                                 message,
+                                 option))),
           new HashSet<ValidationResult>(result));
       }
       finally {

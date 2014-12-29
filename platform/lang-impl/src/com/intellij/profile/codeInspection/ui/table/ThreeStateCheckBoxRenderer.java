@@ -15,6 +15,7 @@
  */
 package com.intellij.profile.codeInspection.ui.table;
 
+import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
@@ -26,7 +27,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
@@ -42,6 +44,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
     setThirdStateEnabled(false);
     setHorizontalAlignment(CENTER);
     setVerticalAlignment(CENTER);
+    setBorder(BorderFactory.createEmptyBorder(0, 0, 0, InspectionsConfigTreeTable.getAdditionalPadding()));
     addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {

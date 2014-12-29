@@ -56,10 +56,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.PositionTracker;
@@ -123,6 +120,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final FileEditorManager myFileEditorManager;
   private final LafManager myLafManager;
   private final Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
+  private Pair<String, Integer> myMaximizedToolwindowSize = null;
 
   private KeyState myCurrentState = KeyState.waiting;
   private final Alarm myWaiterForSecondPress = new Alarm();
@@ -414,7 +412,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     appendSetEditorComponentCmd(editorComponent, commandsList);
     if (myEditorWasActive && editorComponent instanceof EditorsSplitters) {
-      activateEditorComponentImpl(FileEditorManagerEx.getInstanceEx(myProject).getSplitters(), commandsList, true);
+      activateEditorComponentImpl(commandsList, true);
     }
     execute(commandsList);
 
@@ -569,6 +567,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l, @NotNull Disposable parentDisposable) {
+    myDispatcher.addListener(l, parentDisposable);
+  }
+
+  @Override
   public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
     myDispatcher.removeListener(l);
   }
@@ -610,7 +613,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       @Override
       public void run() {
         final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-        activateEditorComponentImpl(getSplittersFromFocus(), commandList, forced);
+        activateEditorComponentImpl(commandList, forced);
         execute(commandList);
       }
     };
@@ -637,16 +640,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
-  private EditorsSplitters getSplittersFromFocus() {
-    return FileEditorManagerEx.getInstanceEx(myProject).getSplitters();
-  }
-
-  private void activateEditorComponentImpl(EditorsSplitters splitters,
-                                           List<FinalizableCommand> commandList,
-                                           final boolean forced) {
+  private void activateEditorComponentImpl(List<FinalizableCommand> commandList, final boolean forced) {
     final String active = getActiveToolWindowId();
     // Now we have to request focus into most recent focused editor
-    appendRequestFocusInEditorComponentCmd(splitters, commandList, forced).doWhenDone(new Runnable() {
+    appendRequestFocusInEditorComponentCmd(commandList, forced).doWhenDone(new Runnable() {
       @Override
       public void run() {
         final ArrayList<FinalizableCommand> postExecute = new ArrayList<FinalizableCommand>();
@@ -949,7 +946,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
 
-      activateEditorComponentImpl(getSplittersFromFocus(), commandList, true);
+      activateEditorComponentImpl(commandList, true);
     }
     else if (isStackEnabled()) {
 
@@ -988,7 +985,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (wasActive && moveFocus) {
         if (myActiveStack.isEmpty()) {
           if (hasOpenEditorFiles()) {
-            activateEditorComponentImpl(getSplittersFromFocus(), commandList, false);
+            activateEditorComponentImpl(commandList, false);
           }
           else {
             focusToolWinowByDefault(id);
@@ -1008,7 +1005,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     //todo[kb] it's just a temporary solution due a number of focus issues in JDK 7
     if (SystemInfo.isJavaVersionAtLeast("1.7")) {
       if (hasOpenEditorFiles()) {
-        activateEditorComponentImpl(getSplittersFromFocus(), commandList, false);
+        activateEditorComponentImpl(commandList, false);
       }
       else {
         focusToolWinowByDefault(id);
@@ -1213,7 +1210,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
     else if (wasActive) { // tool window was active but it cannot be activate again
-      activateEditorComponentImpl(getSplittersFromFocus(), commandsList, true);
+      activateEditorComponentImpl(commandsList, true);
     }
 
     execute(commandsList);
@@ -1353,7 +1350,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     // if there is no any active tool window and editor is also inactive
     // then activate editor
     if (!myEditorWasActive && getActiveToolWindowId() == null) {
-      activateEditorComponentImpl(getSplittersFromFocus(), commandList, true);
+      activateEditorComponentImpl(commandList, true);
     }
     execute(commandList);
   }
@@ -1377,7 +1374,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return false;
     }
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
-    return stripe.getButtonFor(toolWindowId) != null;
+    return stripe != null && stripe.getButtonFor(toolWindowId) != null;
   }
 
   @Override
@@ -1400,6 +1397,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
+    if (stripe == null) {
+      return;
+    }
     final ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
     if (!window.isAvailable()) {
       window.setPlaceholderMode(true);
@@ -1798,13 +1798,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     commandsList.add(command);
   }
 
-  private ActionCallback appendRequestFocusInEditorComponentCmd(EditorsSplitters splitters,
-                                                                List<FinalizableCommand> commandList,
-                                                                boolean forced) {
+  private ActionCallback appendRequestFocusInEditorComponentCmd(List<FinalizableCommand> commandList, boolean forced) {
     if (myProject.isDisposed()) return new ActionCallback.Done();
-    final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
-    final RequestFocusInEditorComponentCmd command =
-      new RequestFocusInEditorComponentCmd(splitters, getFocusManager(), commandProcessor, forced);
+    EditorsSplitters splitters = getSplittersToFocus();
+    CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
+    RequestFocusInEditorComponentCmd command = new RequestFocusInEditorComponentCmd(splitters, getFocusManager(), commandProcessor, forced);
     commandList.add(command);
     return command.getDoneCallback();
   }
@@ -1829,6 +1827,22 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final JRootPane rootPane = myFrame.getRootPane();
     final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, myWindowManager.getCommandProcessor());
     commandsList.add(command);
+  }
+
+  private EditorsSplitters getSplittersToFocus() {
+    Window activeWindow = myWindowManager.getMostRecentFocusedWindow();
+
+    if (activeWindow instanceof FloatingDecorator) {
+      IdeFocusManager ideFocusManager = IdeFocusManager.findInstanceByComponent(activeWindow);
+      IdeFrame lastFocusedFrame = ideFocusManager.getLastFocusedFrame();
+      JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
+      Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
+      activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
+    }
+
+    FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(myProject);
+    EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
+    return splitters != null ? splitters : fem.getSplitters();
   }
 
   /**
@@ -1975,6 +1989,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public void stretchWidth(ToolWindowImpl toolWindow, int value) {
     myToolWindowsPane.stretchWidth(toolWindow, value);
+  }
+
+  @Override
+  public boolean isMaximized(@NotNull ToolWindow wnd) {
+    return myToolWindowsPane.isMaximized(wnd);
+  }
+
+  @Override
+  public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
+    myToolWindowsPane.setMaximized(wnd, maximized);
   }
 
   public void stretchHeight(ToolWindowImpl toolWindow, int value) {

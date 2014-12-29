@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@
 
 package com.intellij.ide.util;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +26,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Map;
+
+import static com.intellij.ide.IdeBundle.message;
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.roots.ProjectRootManager.getInstance;
 
 public class DirectoryChooserUtil {
   private DirectoryChooserUtil() {
@@ -52,7 +53,7 @@ public class DirectoryChooserUtil {
                                              PsiDirectory[] packageDirectories,
                                              PsiDirectory defaultDirectory,
                                              String postfixToShow) {
-    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    ProjectFileIndex projectFileIndex = getInstance(project).getFileIndex();
 
     ArrayList<PsiDirectory> possibleDirs = new ArrayList<PsiDirectory>();
     for (PsiDirectory dir : packageDirectories) {
@@ -66,13 +67,12 @@ public class DirectoryChooserUtil {
     if (possibleDirs.isEmpty()) return null;
     if (possibleDirs.size() == 1) return possibleDirs.get(0);
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) return possibleDirs.get(0);
+    if (getApplication().isUnitTestMode()) return possibleDirs.get(0);
 
     DirectoryChooser chooser = new DirectoryChooser(project);
-    chooser.setTitle(IdeBundle.message("title.choose.destination.directory"));
+    chooser.setTitle(message("title.choose.destination.directory"));
     chooser.fillList(possibleDirs.toArray(new PsiDirectory[possibleDirs.size()]), defaultDirectory, project, postfixToShow);
-    chooser.show();
-    return chooser.isOK() ? chooser.getSelectedDirectory() : null;
+    return chooser.showAndGet() ? chooser.getSelectedDirectory() : null;
   }
 
   @Nullable
@@ -89,8 +89,9 @@ public class DirectoryChooserUtil {
       project,
       relativePathsToCreate
     );
-    chooser.show();
-    if (!chooser.isOK()) return null;
+    if (!chooser.showAndGet()) {
+      return null;
+    }
     return chooser.getSelectedDirectory();
   }
 }

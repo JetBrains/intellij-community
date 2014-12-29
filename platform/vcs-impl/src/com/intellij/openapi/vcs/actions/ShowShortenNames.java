@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -30,9 +29,8 @@ import java.util.ArrayList;
  * @author Konstantin Bulenkov
  */
 public class ShowShortenNames extends ActionGroup {
-  public static final String KEY = "annotate.show.short.names";
-
   private final AnAction[] myChildren;
+
   public ShowShortenNames(final EditorGutterComponentEx gutter) {
     super("Names", true);
     final ArrayList<AnAction> kids = new ArrayList<AnAction>(ShortNameType.values().length);
@@ -41,6 +39,7 @@ public class ShowShortenNames extends ActionGroup {
     }
     myChildren = kids.toArray(new AnAction[kids.size()]);
   }
+
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
@@ -77,15 +76,8 @@ public class ShowShortenNames extends ActionGroup {
 
     @Override
     public void setSelected(AnActionEvent e, boolean enabled) {
-      PropertiesComponent.getInstance().unsetValue(KEY);
       if (enabled) {
-        myType.set(enabled);
-      } else {
-        if (myType == ShortNameType.NONE) {
-          ShortNameType.LASTNAME.set(true);
-        } else {
-          ShortNameType.NONE.set(true);
-        }
+        myType.set();
       }
       myGutter.revalidateMarkup();
     }

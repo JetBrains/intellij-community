@@ -167,30 +167,21 @@ class MakeResult implements PendingAction {
 }
 
 class NonNullInAnalysis extends Analysis<PResult> {
-  private static final ThreadLocal<PendingAction[]> ourPending = new ThreadLocal<PendingAction[]>() {
-    @Override
-    protected PendingAction[] initialValue() {
-      return new PendingAction[Analysis.STEPS_LIMIT];
-    }
-  };
-  private static final ThreadLocal<PResult[]> ourResults = new ThreadLocal<PResult[]>() {
-    @Override
-    protected PResult[] initialValue() {
-      return new PResult[Analysis.STEPS_LIMIT];
-    }
-  };
-
-  final private PendingAction[] pending = ourPending.get();
-
+  final private PendingAction[] pendingActions;
+  private final PResult[] results;
   private final NotNullInterpreter interpreter = new NotNullInterpreter();
-  private PResult[] results;
 
   // Flag saying that at some branch NPE was found. Used later as an evidence that this param is *NOT* @Nullable (optimization).
   boolean possibleNPE;
 
-  protected NonNullInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
+  protected NonNullInAnalysis(RichControlFlow richControlFlow,
+                              Direction direction,
+                              boolean stable,
+                              PendingAction[] pendingActions,
+                              PResult[] results) {
     super(richControlFlow, direction, stable);
-    results = ourResults.get();
+    this.pendingActions = pendingActions;
+    this.results = results;
   }
 
   PResult combineResults(PResult delta, int[] subResults) throws AnalyzerException {
@@ -232,7 +223,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
       if (steps >= STEPS_LIMIT) {
         throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
       }
-      PendingAction action = pending[--pendingTop];
+      PendingAction action = pendingActions[--pendingTop];
       if (action instanceof MakeResult) {
         MakeResult makeResult = (MakeResult) action;
         PResult result = combineResults(makeResult.subResult, makeResult.indices);
@@ -397,7 +388,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     if (pendingTop >= STEPS_LIMIT) {
       throw new AnalyzerException(null, "limit is reached in method " + method);
     }
-    pending[pendingTop++] = action;
+    pendingActions[pendingTop++] = action;
   }
 
   private void execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
@@ -418,12 +409,13 @@ class NonNullInAnalysis extends Analysis<PResult> {
 }
 
 class NullableInAnalysis extends Analysis<PResult> {
-  final private State[] pending = ourPendingStates.get();
+  final private State[] pending;
 
   private final NullableInterpreter interpreter = new NullableInterpreter();
 
-  protected NullableInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
+  protected NullableInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable, State[] pending) {
     super(richControlFlow, direction, stable);
+    this.pending = pending;
   }
 
   @NotNull
@@ -750,7 +742,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
 class NotNullInterpreter extends NullityInterpreter {
 
   NotNullInterpreter() {
-    super(false, In.NOT_NULL);
+    super(false, In.NOT_NULL_MASK);
   }
 
   @Override
@@ -762,7 +754,7 @@ class NotNullInterpreter extends NullityInterpreter {
 class NullableInterpreter extends NullityInterpreter {
 
   NullableInterpreter() {
-    super(true, In.NULLABLE);
+    super(true, In.NULLABLE_MASK);
   }
 
   @Override

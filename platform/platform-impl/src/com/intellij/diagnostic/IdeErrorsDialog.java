@@ -468,13 +468,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAttachmentWarning(final AbstractMessage message) {
-    final List<Attachment> includedAttachments;
-    if (message instanceof LogMessageEx &&
-        !(includedAttachments = ContainerUtil.filter(((LogMessageEx)message).getAttachments(), new Condition<Attachment>() {
-          public boolean value(final Attachment attachment) {
-            return attachment.isIncluded();
-          }
-        })).isEmpty()) {
+    final List<Attachment> includedAttachments = ContainerUtil.filter(message.getAttachments(), new Condition<Attachment>() {
+      public boolean value(final Attachment attachment) {
+        return attachment.isIncluded();
+      }
+    });
+    if (!includedAttachments.isEmpty()) {
       myAttachmentWarningPanel.setVisible(true);
       if (includedAttachments.size() == 1) {
         myAttachmentWarningLabel.setHtmlText(
@@ -649,7 +648,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         boolean hasAttachment = false;
         for (ArrayList<AbstractMessage> merged : myMergedMessages) {
           final AbstractMessage message = merged.get(0);
-          if (message instanceof LogMessageEx && !((LogMessageEx)message).getAttachments().isEmpty()) {
+          if (!message.getAttachments().isEmpty()) {
             hasAttachment = true;
             break;
           }
@@ -693,8 +692,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
       myDetailsTabForm.setAssigneeId(message == null ? null : message.getAssigneeId());
 
-      List<Attachment> attachments =
-        message instanceof LogMessageEx ? ((LogMessageEx)message).getAttachments() : Collections.<Attachment>emptyList();
+      List<Attachment> attachments = message != null ? message.getAttachments() : Collections.<Attachment>emptyList();
       if (!attachments.isEmpty()) {
         if (myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane()) == -1) {
           myTabs.addTab(DiagnosticBundle.message("error.attachments.tab.title"), myAttachmentsTabForm.getContentPane());

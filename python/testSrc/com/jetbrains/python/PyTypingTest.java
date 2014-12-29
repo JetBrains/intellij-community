@@ -253,8 +253,8 @@ public class PyTypingTest extends PyTestCase {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getContainingFile());
-    final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getContainingFile()).withTracing();
+    final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(),expr.getContainingFile());
+    final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType(expectedType, expr, codeAnalysis, "code analysis");
     assertType(expectedType, expr, userInitiated, "user initiated");
   }

@@ -16,10 +16,11 @@
 
 package com.intellij.execution.process;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -32,10 +33,11 @@ import java.util.List;
 public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
-  private final List<AnsiEscapeDecoder.ColoredTextAcceptor> myColoredTextListeners = Lists.newArrayList();
+  private final List<AnsiEscapeDecoder.ColoredTextAcceptor> myColoredTextListeners = ContainerUtil.newArrayList();
 
   public ColoredProcessHandler(final GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+    setHasPty(commandLine instanceof PtyCommandLine);
   }
 
   public ColoredProcessHandler(Process process, String commandLine) {

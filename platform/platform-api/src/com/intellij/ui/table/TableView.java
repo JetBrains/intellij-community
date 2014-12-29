@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.table;
 
+import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.SmartList;
@@ -258,12 +259,30 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     return this;
   }
 
-  public TableViewModel getTableViewModel() {
+  public TableViewModel<Item> getTableViewModel() {
     return getListTableModel();
   }
 
   public void stopEditing() {
     TableUtil.stopEditing(this);
+  }
+
+  @Override
+  protected void createDefaultRenderers() {
+    super.createDefaultRenderers();
+
+    UIDefaults.LazyValue booleanRenderer = new UIDefaults.LazyValue() {
+      @Override
+      public Object createValue(@NotNull UIDefaults table) {
+        DefaultCellEditor editor = new DefaultCellEditor(GuiUtils.createUndoableTextField());
+        editor.setClickCountToStart(1);
+        return new BooleanTableCellRenderer();
+      }
+    };
+    //noinspection unchecked
+    defaultRenderersByColumnClass.put(boolean.class, booleanRenderer);
+    //noinspection unchecked
+    defaultRenderersByColumnClass.put(Boolean.class, booleanRenderer);
   }
 
   @Override
@@ -273,9 +292,14 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     //noinspection unchecked
     defaultEditorsByColumnClass.put(String.class, new UIDefaults.LazyValue() {
       @Override
-      public Object createValue(UIDefaults table) {
-        return new DefaultCellEditor(GuiUtils.createUndoableTextField());
+      public Object createValue(@NotNull UIDefaults table) {
+        DefaultCellEditor editor = new DefaultCellEditor(GuiUtils.createUndoableTextField());
+        editor.setClickCountToStart(1);
+        return editor;
       }
     });
+
+    //noinspection unchecked
+    defaultEditorsByColumnClass.put(boolean.class, defaultEditorsByColumnClass.get(Boolean.class));
   }
 }

@@ -69,6 +69,8 @@ public interface EclipseXmlProfileElements {
   String OPTION_SPACE_AFTER_CLOSING_BRACE_IN_BLOCK = "org.eclipse.jdt.core.formatter.insert_space_after_closing_brace_in_block";
   String OPTION_SPACE_BEFORE_OPENING_BRACE_IN_BLOCK = "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_block";
 
+  String OPTION_JOIN_WRAPPED_LINES = "org.eclipse.jdt.core.formatter.join_wrapped_lines";
+
   int WRAP_MASK = 0x70;
 
   int DO_NOT_WRAP                       = 0x00;

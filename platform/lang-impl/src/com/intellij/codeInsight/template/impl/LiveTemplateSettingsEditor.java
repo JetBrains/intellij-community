@@ -340,7 +340,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
           sb.append(ownName);
         }
         final boolean noContexts = sb.length() == 0;
-        ctxLabel.setText((noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ");
+        String contexts = (noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ";
+        ctxLabel.setText(StringUtil.first(contexts, 100, true));
         ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
         change.setText(noContexts ? "Define" : "Change");
       }
@@ -530,9 +531,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private void editVariables() {
     ArrayList<Variable> newVariables = updateVariablesByTemplateText();
 
-    EditVariableDialog editVariableDialog = new EditVariableDialog(myTemplateEditor, myEditVariablesButton, newVariables, getApplicableContexts());
-    editVariableDialog.show();
-    if (editVariableDialog.isOK()) {
+    EditVariableDialog editVariableDialog =
+      new EditVariableDialog(myTemplateEditor, myEditVariablesButton, newVariables, getApplicableContexts());
+    if (editVariableDialog.showAndGet()) {
       applyVariables(newVariables);
     }
   }

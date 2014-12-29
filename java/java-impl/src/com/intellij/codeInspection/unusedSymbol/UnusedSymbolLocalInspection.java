@@ -16,20 +16,9 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.ex.EntryPointsManager;
-import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import org.intellij.lang.annotations.Pattern;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -37,48 +26,13 @@ import java.awt.event.ActionListener;
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase implements PairedUnfairLocalInspectionTool {
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
-  }
+public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase {
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return SHORT_NAME;
-  }
-
-  @Override
-  @Pattern(VALID_ID_PATTERN)
-  @NotNull
-  @NonNls
-  public String getID() {
-    return HighlightInfoType.UNUSED_SYMBOL_ID;
-  }
-
-  @Override
-  public String getAlternativeID() {
-    return "unused";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public String getInspectionForBatchShortName() {
-    return UnusedDeclarationInspection.SHORT_NAME;
+  /**
+   * use {@link com.intellij.codeInspection.deadCode.UnusedDeclarationInspection} instead
+   */
+  @Deprecated
+  public UnusedSymbolLocalInspection() {
   }
 
   public class OptionsPanel {
@@ -88,7 +42,6 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
     private JCheckBox myCheckMethodsCheckBox;
     private JCheckBox myCheckParametersCheckBox;
     private JCheckBox myReportUnusedParametersInPublics;
-    private JPanel myAnnos;
     private JPanel myPanel;
 
     public OptionsPanel() {
@@ -120,10 +73,6 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
       myReportUnusedParametersInPublics.addActionListener(listener);
-      Project project = ProjectUtil.guessCurrentProject(myPanel);
-      myAnnos.add(EntryPointsManager.getInstance(project).createConfigureAnnotationsBtn(),
-                  new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                         new Insets(10, 0, 0, 0), 0, 0));
     }
 
     public JComponent getPanel() {

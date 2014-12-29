@@ -19,13 +19,18 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -40,9 +45,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -86,13 +93,19 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      editorManager.closeFile(openFile);
+    try {
+      if (myProject != null) {
+        FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+        VirtualFile[] openFiles = editorManager.getOpenFiles();
+        for (VirtualFile openFile : openFiles) {
+          editorManager.closeFile(openFile);
+        }
+      }
     }
-    myEditor = null;
-    super.tearDown();
+    finally {
+      myEditor = null;
+      super.tearDown();
+    }
   }
 
   @Override
@@ -113,6 +126,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     for (int i = 0; i < files.length; i++) {
       String path = files[i];
       final String fullPath = FileUtil.toSystemIndependentName(getTestDataPath() + path);
+      allowRootAccess(fullPath);
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath);
       vFiles[i] = vFile;
       assertNotNull("file " + fullPath + " not found", vFile);
@@ -123,8 +137,19 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return configureByFiles(projectFile, vFiles);
   }
 
+  private void allowRootAccess(final String filePath) {
+    VfsRootAccess.allowRootAccess(filePath);
+    Disposer.register(myTestRootDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        VfsRootAccess.disallowRootAccess(filePath);
+      }
+    });
+  }
+
   protected VirtualFile configureByFile(@NonNls String filePath, @Nullable String projectRoot) throws Exception {
     String fullPath = getTestDataPath() + filePath;
+    allowRootAccess(fullPath);
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + fullPath + " not found", vFile);
@@ -138,7 +163,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return configureByText(fileType, text, null);
   }
 
-  protected PsiFile configureByText(@NotNull final FileType fileType, @NonNls @NotNull String text, @Nullable String _extension) {
+  protected PsiFile configureByText(@NotNull final FileType fileType, @NonNls @NotNull final String text, @Nullable String _extension) {
     try {
       final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
 
@@ -148,15 +173,19 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
         new WriteCommandAction(getProject()) {
           @Override
-          protected void run(Result result) throws Exception {
+          protected void run(@NotNull Result result) throws Exception {
             fileTypeManager.associateExtension(fileType, extension);
           }
         }.execute();
       }
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;
-      vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
-      VfsUtil.saveText(vFile, text);
+      new WriteAction() {
+        protected void run(@NotNull Result result) throws Throwable {
+          vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+          VfsUtil.saveText(vFile, text);
+        }
+      }.execute();
 
       final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
 
@@ -403,7 +432,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       streamsToClose.add(outputStream);
     }
     else {
-      VfsUtil.saveText(newVFile, newFileText);
+      setFileText(newVFile, newFileText);
     }
   }
 
@@ -469,6 +498,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
         String fullPath = getTestDataPath() + filePath;
+        allowRootAccess(fullPath);
 
         final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
         assertNotNull("Cannot find file " + fullPath, vFile);
@@ -543,6 +573,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
     String fullPath = getTestDataPath() + filePath;
+    allowRootAccess(fullPath);
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + fullPath + " not found", vFile);

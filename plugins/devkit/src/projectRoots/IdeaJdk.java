@@ -175,8 +175,14 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @Nullable
   public static String getBuildNumber(String ideaHome) {
     try {
-      @NonNls final String buildTxt = "/build.txt";
-      return FileUtil.loadFile(new File(ideaHome + buildTxt)).trim();
+      @NonNls final String buildTxt = SystemInfo.isMac ? "Resources/build.txt" : "build.txt";
+      File file = new File(ideaHome, buildTxt);
+      if (SystemInfo.isMac && !file.exists()) {
+        // IntelliJ IDEA 13 and earlier used a different location for build.txt on Mac;
+        // recognize the old location as well
+        file = new File(ideaHome, "build.txt");
+      }
+      return FileUtil.loadFile(file).trim();
     }
     catch (IOException e) {
       return null;
@@ -210,7 +216,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         for (File jar : jars) {
           @NonNls String name = jar.getName();
           if (jar.isFile() && Arrays.binarySearch(forbidden, name) < 0 && (name.endsWith(".jar") || name.endsWith(".zip"))) {
-            result.add(jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR));
+            VirtualFile file = jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
+            LOG.assertTrue(file != null, jar.getPath() + " not found");
+            result.add(file);
           }
         }
       }

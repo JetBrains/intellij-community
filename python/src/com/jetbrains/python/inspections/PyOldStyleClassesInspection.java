@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
             registerProblem(attr, "Old-style class contains __slots__ definition", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
           }
         }
-        for (PyFunction attr : node.getMethods()) {
+        for (PyFunction attr : node.getMethods(false)) {
           if ("__getattribute__".equals(attr.getName())) {
             final ASTNode nameNode = attr.getNameNode();
             assert nameNode != null;

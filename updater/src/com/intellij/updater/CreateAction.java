@@ -43,6 +43,11 @@ public class CreateAction extends PatchAction {
   }
 
   @Override
+  protected boolean isModified(File toFile) throws IOException {
+    return false;
+  }
+
+  @Override
   protected void doApply(ZipFile patchFile, File toFile) throws IOException {
     prepareToWriteFile(toFile);
 

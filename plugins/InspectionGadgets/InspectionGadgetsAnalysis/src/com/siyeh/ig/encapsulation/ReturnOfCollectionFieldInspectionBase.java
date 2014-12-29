@@ -15,21 +15,13 @@
  */
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,14 +81,14 @@ public class ReturnOfCollectionFieldInspectionBase extends BaseInspection {
       if (returnValue == null) {
         return;
       }
-      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-      if (containingMethod == null) {
+      final PsiElement element = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
+      if (element == null) {
         return;
       }
-      if (ignorePrivateMethods && containingMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (ignorePrivateMethods && element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      final PsiClass returnStatementClass = containingMethod.getContainingClass();
+      final PsiClass returnStatementClass = PsiTreeUtil.getParentOfType(statement, PsiClass.class);
       if (returnStatementClass == null) {
         return;
       }

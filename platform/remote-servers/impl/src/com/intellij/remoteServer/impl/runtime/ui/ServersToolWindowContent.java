@@ -6,18 +6,16 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeVisitor;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
-import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
-import com.intellij.remoteServer.impl.runtime.ui.tree.ServerNode;
+import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.TreeBuilderBase;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
 import com.intellij.remoteServer.runtime.ServerConnection;
@@ -108,13 +106,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        Set<ServersTreeStructure.RemoteServerNode> nodes = getSelectedRemoteServerNodes();
-        if (nodes.size() == 1) {
-          RemoteServer<?> server = nodes.iterator().next().getValue();
-          ServerConnectionManager.getInstance().getOrCreateConnection(server);
-          return true;
-        }
-        return false;
+        AnAction connectAction = ActionManager.getInstance().getAction("RemoteServers.ConnectServer");
+        AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(connectAction, event, ActionPlaces.UNKNOWN);
+        connectAction.actionPerformed(actionEvent);
+        return true;
       }
     }.installOn(myTree);
   }
@@ -263,18 +258,6 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
 
   public JPanel getMainPanel() {
     return this;
-  }
-
-  public Set<ServerNode> getSelectedServerNodes() {
-    return myBuilder.getSelectedElements(ServerNode.class);
-  }
-
-  public Set<DeploymentNode> getSelectedDeploymentNodes() {
-    return myBuilder.getSelectedElements(DeploymentNode.class);
-  }
-
-  public Set<ServersTreeStructure.RemoteServerNode> getSelectedRemoteServerNodes() {
-    return myBuilder.getSelectedElements(ServersTreeStructure.RemoteServerNode.class);
   }
 
   @Override

@@ -23,6 +23,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,8 +33,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -40,8 +40,8 @@ import java.util.regex.PatternSyntaxException;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
 
-  final List<String> methodNamePatterns = new ArrayList();
-  final List<String> classNames = new ArrayList();
+  final List<String> methodNamePatterns = ContainerUtil.newArrayList();
+  final List<String> classNames = ContainerUtil.newArrayList();
   /**
    * @noinspection PublicField
    */
@@ -183,7 +183,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         pattern = patternCache.get(methodNamePattern);
       }
       else {
-        patternCache = new HashMap(methodNamePatterns.size());
+        patternCache = ContainerUtilRt.newHashMap(methodNamePatterns.size());
         pattern = null;
       }
       if (pattern == null) {

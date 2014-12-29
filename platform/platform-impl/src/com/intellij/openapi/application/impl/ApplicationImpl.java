@@ -18,11 +18,12 @@ package com.intellij.openapi.application.impl;
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.idea.IdeaApplication;
+import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -55,6 +56,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
@@ -107,8 +109,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private final Stack<Class> myWriteActionsStack = new Stack<Class>(); // accessed from EDT only, no need to sync
 
-  private volatile Runnable myExceptionalThreadWithReadAccessRunnable;
-
   private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
   @Nullable
@@ -131,7 +131,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
-  private static final int IS_EXCEPTIONAL_THREAD_FLAG = 1<<28;
   private static class Status {
     // higher three bits are for IS_* flags
     // lower bits are for edtSafe counter
@@ -153,7 +152,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     status.flags = BitUtil.set(status.flags, IS_READ_LOCK_ACQUIRED_FLAG, acquired);
   }
 
-  @NonNls private static final ModalityState ANY = new ModalityState() {
+  private static final ModalityState ANY = new ModalityState() {
     @Override
     public boolean dominates(@NotNull ModalityState anotherState) {
       return false;
@@ -263,11 +262,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       };
     }
+    if (isUnitTestMode && IdeaApplication.getInstance() == null) {
+      String[] args = {"inspect", "", "", ""};
+      Main.setFlags(args); // set both isHeadless and isCommandLine to true
+      System.setProperty(IdeaApplication.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
+      assert Main.isHeadless();
+      assert Main.isCommandLine();
+      new IdeaApplication(args);
+    }
   }
 
   private void registerShutdownHook() {
-    ShutDownTracker.getInstance(); // Necessary to avoid creating an instance while already shutting down.
-
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {
@@ -398,9 +403,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Runnable() {
       @Override
       public void run() {
-        if (isReadAccessAllowed()) {
-          assert false : describe(Thread.currentThread());
-        }
+        assert !isReadAccessAllowed(): describe(Thread.currentThread());
         try {
           action.run();
         }
@@ -413,9 +416,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         finally {
           //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
-          if (isReadAccessAllowed()) {
-            assert false : describe(Thread.currentThread());
-          }
+          assert !isReadAccessAllowed(): describe(Thread.currentThread());
         }
       }
     });
@@ -427,9 +428,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
-        if (isReadAccessAllowed()) {
-          assert false : describe(Thread.currentThread());
-        }
+        assert !isReadAccessAllowed(): describe(Thread.currentThread());
         try {
           return action.call();
         }
@@ -442,9 +441,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         finally {
           //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
-          if (isReadAccessAllowed()) {
-            assert false : describe(Thread.currentThread());
-          }
+          assert !isReadAccessAllowed(): describe(Thread.currentThread());
         }
         return null;
       }
@@ -505,7 +502,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       myIsFiringLoadingEvent = false;
     }
 
-    HeavyProcessLatch.INSTANCE.processStarted();
+    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       store.load();
     }
@@ -513,7 +510,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       throw new IOException(e.getMessage());
     }
     finally {
-      HeavyProcessLatch.INSTANCE.processFinished();
+      token.finish();
     }
     myLoaded = true;
 
@@ -523,7 +520,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static void createLocatorFile() {
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
     try {
-      byte[] data = PathManager.getHomePath().getBytes("UTF-8");
+      byte[] data = PathManager.getHomePath().getBytes(CharsetToolkit.UTF8_CHARSET);
       FileUtil.writeToFile(locatorFile, data);
     }
     catch (IOException e) {
@@ -594,11 +591,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                      final JComponent parentComponent,
                                                      final String cancelText) {
     assertIsDispatchThread();
-
-    if (myExceptionalThreadWithReadAccessRunnable != null ||
-        isUnitTestMode() ||
-        isHeadlessEnvironment()
+    boolean writeAccessAllowed = isInsideWriteActionEDTOnly();
+    if (writeAccessAllowed // Disallow running process in separate thread from under write action.
+                           // The thread will deadlock trying to get read action otherwise.
+        || isHeadlessEnvironment() && !isUnitTestMode()
       ) {
+      LOG.debug("Starting process with progress from within write action makes no sense");
       try {
         ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
       }
@@ -616,54 +614,35 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     progress.setTitle(progressTitle);
 
-    try {
-      myExceptionalThreadWithReadAccessRunnable = process;
-      final AtomicBoolean threadStarted = new AtomicBoolean();
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myExceptionalThreadWithReadAccessRunnable != process) {
-            LOG.error("myExceptionalThreadWithReadAccessRunnable != process, process = " + myExceptionalThreadWithReadAccessRunnable);
-          }
-
-          executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              if (myExceptionalThreadWithReadAccessRunnable != process) {
-                LOG.error("myExceptionalThreadWithReadAccessRunnable != process, process = " + myExceptionalThreadWithReadAccessRunnable);
-              }
-
-              setExceptionalThreadWithReadAccessFlag(true);
-              try {
-                LOG.assertTrue(isReadAccessAllowed());
-                ProgressManager.getInstance().runProcess(process, progress);
-              }
-              catch (ProcessCanceledException e) {
-                progress.cancel();
-                // ok to ignore.
-              }
-              catch (RuntimeException e) {
-                progress.cancel();
-                throw e;
-              }
-              finally {
-                setExceptionalThreadWithReadAccessFlag(false);
-              }
+    final AtomicBoolean threadStarted = new AtomicBoolean();
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              ProgressManager.getInstance().runProcess(process, progress);
             }
-          });
-          threadStarted.set(true);
-        }
-      });
+            catch (ProcessCanceledException e) {
+              progress.cancel();
+              // ok to ignore.
+            }
+            catch (RuntimeException e) {
+              progress.cancel();
+              throw e;
+            }
+          }
+        });
+        threadStarted.set(true);
+      }
+    });
 
-      progress.startBlocking();
+    progress.startBlocking();
 
-      LOG.assertTrue(threadStarted.get());
-      LOG.assertTrue(!progress.isRunning());
-    }
-    finally {
-      myExceptionalThreadWithReadAccessRunnable = null;
-    }
+    LOG.assertTrue(threadStarted.get());
+    LOG.assertTrue(!progress.isRunning());
 
     return !progress.isCanceled();
   }
@@ -676,7 +655,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return;
     }
 
-    if (!isExceptionalThreadWithReadAccess(status) && holdsReadLock(status)) {
+    if (holdsReadLock()) {
       LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
@@ -693,12 +672,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
-    Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
+    Window window = UIUtil.getWindow(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
   }
 
   @Override
+  @NotNull
   public ModalityState getAnyModalityState() {
     return ANY;
   }
@@ -726,6 +706,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public long getIdleTime() {
+    assertIsDispatchThread();
     return IdeEventQueue.getInstance().getIdleTime();
   }
 
@@ -761,7 +742,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static volatile boolean exiting = false;
 
   public void exit(final boolean force, final boolean exitConfirmed, final boolean allowListenersToCancel, final boolean restart) {
-    if (exiting) return;
+    if (!force && exiting) {
+      return;
+    }
 
     exiting = true;
     try {
@@ -893,43 +876,28 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       action.run();
     }
     else {
-      assertNoPsiLock();
-      try {
-        myLock.readLock().lockInterruptibly();
-        setReadLockAcquired(status, true);
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeInterruptedException(e);
-      }
+      startRead(status);
       try {
         action.run();
       }
       finally {
-        setReadLockAcquired(status, false);
-        myLock.readLock().unlock();
+        endRead(status);
       }
     }
   }
+
   @Override
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
     Status status = getStatus();
     if (isReadAccessAllowed(status)) {
       return computation.compute();
     }
-    assertNoPsiLock();
-    try {
-      myLock.readLock().lockInterruptibly();
-      setReadLockAcquired(status, true);
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeInterruptedException(e);
-    }
+    startRead(status);
     try {
       return computation.compute();
     }
     finally {
-      setReadLockAcquired(status, false);
-      myLock.readLock().unlock();
+      endRead(status);
     }
   }
 
@@ -939,6 +907,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (isReadAccessAllowed(status)) {
       return computation.compute();
     }
+    startRead(status);
+    try {
+      return computation.compute();
+    }
+    finally {
+      endRead(status);
+    }
+  }
+
+  private void startRead(Status status) {
     assertNoPsiLock();
     try {
       myLock.readLock().lockInterruptibly();
@@ -947,62 +925,52 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     catch (InterruptedException e) {
       throw new RuntimeInterruptedException(e);
     }
-    try {
-      return computation.compute();
-    }
-    finally {
-      setReadLockAcquired(status, false);
-      myLock.readLock().unlock();
-    }
   }
 
-  private static boolean isExceptionalThreadWithReadAccess(Status status) {
-    return BitUtil.isSet(status.flags, IS_EXCEPTIONAL_THREAD_FLAG);
-  }
-
-  public static void setExceptionalThreadWithReadAccessFlag(boolean flag) {
-    Status status = getStatus();
-    assert !isDispatchThread(status) : "exceptional thread must not be EDT";
-    assert flag != isReadAccessAllowed(status) : "must not start exceptional thread from inside read action";
-    status.flags = BitUtil.set(status.flags, IS_EXCEPTIONAL_THREAD_FLAG, flag);
+  private void endRead(Status status) {
+    setReadLockAcquired(status, false);
+    myLock.readLock().unlock();
   }
 
   @Override
   public void runWriteAction(@NotNull final Runnable action) {
-    final AccessToken token = acquireWriteActionLock(action.getClass());
+    Class<? extends Runnable> clazz = action.getClass();
+    startWrite(clazz);
     try {
       action.run();
     }
     finally {
-      token.finish();
+      endWrite(clazz);
     }
   }
 
   @Override
   public <T> T runWriteAction(@NotNull final Computable<T> computation) {
-    final AccessToken token = acquireWriteActionLock(computation.getClass());
+    Class<? extends Computable> clazz = computation.getClass();
+    startWrite(clazz);
     try {
       return computation.compute();
     }
     finally {
-      token.finish();
+      endWrite(clazz);
     }
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    final AccessToken token = acquireWriteActionLock(computation.getClass());
+    Class<? extends ThrowableComputable> clazz = computation.getClass();
+    startWrite(clazz);
     try {
       return computation.compute();
     }
     finally {
-      token.finish();
+      endWrite(clazz);
     }
   }
 
   @Override
   public boolean hasWriteAction(@Nullable Class<?> actionClass) {
-    assertCanRunWriteAction(getStatus());
+    assertIsDispatchThread();
 
     for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
       Class action = myWriteActionsStack.get(i);
@@ -1045,11 +1013,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private static boolean isReadAccessAllowed(Status status) {
-    return (status.flags & (IS_EDT_FLAG | IS_EXCEPTIONAL_THREAD_FLAG | IS_READ_LOCK_ACQUIRED_FLAG)) != 0;
-  }
-
-  private static void assertCanRunWriteAction(Status status) {
-    assertIsDispatchThread(status, "Write access is allowed from event dispatch thread only");
+    return (status.flags & (IS_EDT_FLAG | IS_READ_LOCK_ACQUIRED_FLAG)) != 0;
   }
 
   @Override
@@ -1144,8 +1108,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
     finally {
       if (mustAcquire) {
-        setReadLockAcquired(status, false);
-        myLock.readLock().unlock();
+        endRead(status);
       }
     }
     return true;
@@ -1195,36 +1158,34 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return new ReadAccessToken(status);
   }
 
-  @NotNull
+  private volatile boolean myWriteActionPending;
+
   @Override
-  public AccessToken acquireWriteActionLock(Class clazz) {
-    return new WriteAccessToken(clazz);
+  public boolean isWriteActionPending() {
+    return myWriteActionPending;
   }
 
-  private class WriteAccessToken extends AccessToken {
-    private final Class clazz;
+  private void startWrite(Class clazz) {
+    boolean writeActionPending = myWriteActionPending;
+    myWriteActionPending = true;
 
-    public WriteAccessToken(Class _clazz) {
-      clazz = _clazz;
-      assertCanRunWriteAction(getStatus());
-
+    try {
       ActivityTracker.getInstance().inc();
-      fireBeforeWriteActionStart(_clazz);
-      final AtomicBoolean stopped = new AtomicBoolean(false);
-
-      if (!isWriteAccessAllowed()) {
-        assertNoPsiLock();
-      }
+      fireBeforeWriteActionStart(clazz);
 
       try {
+        if (!isWriteAccessAllowed()) {
+          assertNoPsiLock();
+        }
         if (!myLock.writeLock().tryLock()) {
+          final AtomicBoolean lockAcquired = new AtomicBoolean(false);
           if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
             executeOnPooledThread(new Runnable() {
               @Override
               public void run() {
-                while (!stopped.get()) {
+                while (!lockAcquired.get()) {
                   TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                  if (!stopped.get()) {
+                  if (!lockAcquired.get()) {
                     PerformanceWatcher.getInstance().dumpThreads(true);
                   }
                 }
@@ -1232,34 +1193,60 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             });
           }
           myLock.writeLock().lockInterruptibly();
+          lockAcquired.set(true);
         }
-        acquired();
       }
       catch (InterruptedException e) {
         throw new RuntimeInterruptedException(e);
       }
-      stopped.set(true);
+    }
+    finally {
+      myWriteActionPending = writeActionPending;
+    }
 
-      myWriteActionsStack.push(_clazz);
+    myWriteActionsStack.push(clazz);
+    fireWriteActionStarted(clazz);
+  }
 
-      fireWriteActionStarted(_clazz);
+  private void endWrite(Class clazz) {
+    try {
+      myWriteActionsStack.pop();
+      fireWriteActionFinished(clazz);
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
+  }
+
+  @NotNull
+  @Override
+  public AccessToken acquireWriteActionLock(Class clazz) {
+    assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
+    return new WriteAccessToken(clazz);
+  }
+
+  private class WriteAccessToken extends AccessToken {
+    private final Class clazz;
+
+    public WriteAccessToken(Class clazz) {
+      this.clazz = clazz;
+      startWrite(clazz);
+      markThreadNameInStackTrace();
+      acquired();
     }
 
     @Override
     public void finish() {
       try {
-        fireWriteActionFinished(clazz);
-
-        myWriteActionsStack.pop();
+        endWrite(clazz);
       }
       finally {
-        myLock.writeLock().unlock();
+        unmarkThreadNameInStackTrace();
         released();
       }
     }
 
-    @Override
-    protected void acquired() {
+    private void markThreadNameInStackTrace() {
       String id = id();
 
       if (id != null) {
@@ -1268,8 +1255,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
-    @Override
-    protected void released() {
+    private void unmarkThreadNameInStackTrace() {
       String id = id();
 
       if (id != null) {
@@ -1302,21 +1288,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     private ReadAccessToken(Status status) {
       myStatus = status;
-      assertNoPsiLock();
-      try {
-        myLock.readLock().lockInterruptibly();
-        setReadLockAcquired(myStatus, true);
-        acquired();
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeInterruptedException(e);
-      }
+      startRead(status);
+      acquired();
     }
 
     @Override
     public void finish() {
-      setReadLockAcquired(myStatus, false);
-      myLock.readLock().unlock();
+      endRead(myStatus);
       released();
     }
   }
@@ -1340,9 +1318,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myLock.isWriteLockedByCurrentThread();
   }
 
+  // cheaper version of isWriteAccessAllowed(). must be called from EDT
+  private boolean isInsideWriteActionEDTOnly() {
+    return !myWriteActionsStack.isEmpty();
+  }
+
   @Override
   public boolean isWriteActionInProgress() {
-    return myLock.getWriteHoldCount() != 0;
+    return myLock.isWriteLocked();
   }
 
   public void editorPaintStart() {
@@ -1385,38 +1368,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 
-  public void _saveSettings() { // public for testing purposes
+  // public for testing purposes
+  public void _saveSettings() {
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        StoreUtil.doSave(getStateStore());
-      }
-      catch (final Throwable e) {
-        if (isUnitTestMode()) {
-          System.out.println("Saving application settings failed");
-          e.printStackTrace();
-        }
-        else {
-          LOG.info("Saving application settings failed", e);
-          invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (e instanceof PluginException) {
-                final PluginException pluginException = (PluginException)e;
-                PluginManagerCore.disablePlugin(pluginException.getPluginId().getIdString());
-                Messages.showMessageDialog("The plugin " +
-                                           pluginException.getPluginId() +
-                                           " failed to save settings and has been disabled. Please restart " +
-                                           ApplicationNamesInfo.getInstance().getFullProductName(), CommonBundle.getErrorTitle(),
-                                           Messages.getErrorIcon());
-              }
-              else {
-                Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", e.getLocalizedMessage()),
-                                           CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-
-              }
-            }
-          });
-        }
+        StoreUtil.save(getStateStore(), null);
       }
       finally {
         mySaveSettingsIsInProgress.set(false);

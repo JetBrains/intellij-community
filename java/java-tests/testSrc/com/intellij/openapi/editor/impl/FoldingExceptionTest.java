@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 public class FoldingExceptionTest extends LightCodeInsightTestCase {
-
   public void test() {
     doTest("FoldingExceptionTest.java");
   }
@@ -41,6 +41,11 @@ public class FoldingExceptionTest extends LightCodeInsightTestCase {
 
   private static void runFoldingPass() {
     PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
-    EditorTestUtil.runTextEditorHighlightingPass(myEditor, CodeFoldingPassFactory.class);
+    CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 }

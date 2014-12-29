@@ -11,6 +11,7 @@ public class Patch {
   private static final int UPDATE_ACTION_KEY = 2;
   private static final int UPDATE_ZIP_ACTION_KEY = 3;
   private static final int DELETE_ACTION_KEY = 4;
+  private static final int DELETE_ZIP_ACTION_KEY = 5;
 
   public Patch(File olderDir,
                File newerDir,
@@ -45,7 +46,12 @@ public class Patch {
 
     // 'delete' actions before 'create' actions to prevent newly created files to be deleted if the names differ only on case.
     for (Map.Entry<String, Long> each : diff.filesToDelete.entrySet()) {
-      tempActions.add(new DeleteAction(each.getKey(), each.getValue()));
+      if (!Runner.ZIP_AS_BINARY && Utils.isZipFile(each.getKey())) {
+        tempActions.add(new DeleteZipAction(each.getKey(), each.getValue()));
+      } else
+      {
+        tempActions.add(new DeleteAction(each.getKey(), each.getValue()));
+      }
     }
 
     for (String each : diff.filesToCreate) {
@@ -53,7 +59,7 @@ public class Patch {
     }
 
     for (Map.Entry<String, Long> each : diff.filesToUpdate.entrySet()) {
-      if (Utils.isZipFile(each.getKey())) {
+      if (!Runner.ZIP_AS_BINARY && Utils.isZipFile(each.getKey())) {
         tempActions.add(new UpdateZipAction(each.getKey(), each.getValue()));
       }
       else {
@@ -98,6 +104,9 @@ public class Patch {
         else if (clazz == UpdateZipAction.class) {
           key = UPDATE_ZIP_ACTION_KEY;
         }
+        else if (clazz == DeleteZipAction.class) {
+          key = DELETE_ZIP_ACTION_KEY;
+        }
         else if (clazz == DeleteAction.class) {
           key = DELETE_ACTION_KEY;
         }
@@ -134,6 +143,9 @@ public class Patch {
           break;
         case DELETE_ACTION_KEY:
           a = new DeleteAction(in);
+          break;
+        case DELETE_ZIP_ACTION_KEY:
+          a = new DeleteZipAction(in);
           break;
         default:
           throw new RuntimeException("Unknown action type " + key);

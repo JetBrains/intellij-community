@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -39,9 +40,8 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,6 @@ import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -70,6 +69,10 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private final static int SEVERITIES_COLUMN = 1;
   private final static int IS_ENABLED_COLUMN = 2;
 
+  public static int getAdditionalPadding() {
+    return SystemInfo.isMac ? 10 : 0;
+  }
+
   public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
     return new InspectionsConfigTreeTable(new InspectionsConfigTreeTableModel(settings, parentDisposable));
   }
@@ -81,7 +84,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     severitiesColumn.setMaxWidth(20);
 
     final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(20);
+    isEnabledColumn.setMaxWidth(20 + getAdditionalPadding());
     isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
     isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
@@ -280,7 +283,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
     @Override
     public void setValueAt(final Object aValue, final Object node, final int column) {
       LOG.assertTrue(column == IS_ENABLED_COLUMN);
-      LOG.assertTrue(aValue != null, "node = " + node);
+      if (aValue == null) {
+        return;
+      }
       final boolean doEnable = (Boolean) aValue;
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
       for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
@@ -509,7 +514,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
       final Icon icon = state.getLevel().getIcon();
       final String scopeName = state.getScopeName();
-      if (icon instanceof HighlightDisplayLevel.SingleColorIconWithMask) {
+      if (icon instanceof HighlightDisplayLevel.ColoredIcon) {
         final SeverityAndOccurrences severityAndOccurrences = myScopeToAverageSeverityMap.get(scopeName);
         final String inspectionName = state.getTool().getShortName();
         if (severityAndOccurrences == null) {

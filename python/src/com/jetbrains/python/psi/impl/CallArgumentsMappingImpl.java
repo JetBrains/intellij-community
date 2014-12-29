@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,7 +278,7 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     }
     // map unmapped named params to **kwarg
     if (myKwdArg != null) {
-      for (int j = implicitOffset; j != parameters.size(); ++j) {
+      for (int j = implicitOffset; j < parameters.size(); ++j) {
         final PyParameter par = parameters.get(j);
         final PyNamedParameter namedParameter = par.getAsNamed();
         if (namedParameter != null && !namedParameter.isKeywordContainer()

@@ -4,7 +4,7 @@ public class StringBufferReplaceableByStringBuilder {
 
     public void foo()
     {
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuffer <warning descr="'StringBuffer buffer' may be declared as 'StringBuilder'">buffer</warning> = new StringBuffer();
         buffer.append("bar");
         buffer.append("bar");
         System.out.println(buffer.toString());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,15 +64,15 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     final PsiDirectory dir = element.getContainingFile().getContainingDirectory();
     final CreateTestDialog d = new CreateTestDialog(project);
     if (srcClass != null) {
-      d.setClassName("Test"+StringUtil.capitalize(srcClass.getName()));
-      d.setFileName("test_"+StringUtil.decapitalize(srcClass.getName()) + ".py");
+      d.setClassName("Test" + StringUtil.capitalize(srcClass.getName()));
+      d.setFileName("test_" + StringUtil.decapitalize(srcClass.getName()) + ".py");
 
       if (dir != null)
         d.setTargetDir(dir.getVirtualFile().getPath());
 
       if (srcFunction != null) {
         d.methodsSize(1);
-        d.addMethod("test_"+srcFunction.getName(), 0);
+        d.addMethod("test_" + srcFunction.getName(), 0);
       }
       else {
         final List<PyFunction> methods = Lists.newArrayList();
@@ -88,31 +88,30 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         d.methodsSize(methods.size());
         int i = 0;
         for (PyFunction f : methods) {
-          d.addMethod("test_"+f.getName(), i);
+          d.addMethod("test_" + f.getName(), i);
           ++i;
         }
       }
     }
     else {
-      d.setClassName("Test"+ StringUtil.capitalize(srcFunction.getName()));
-      d.setFileName("test_"+StringUtil.decapitalize(srcFunction.getName())+ ".py");
+      d.setClassName("Test" + StringUtil.capitalize(srcFunction.getName()));
+      d.setFileName("test_" + StringUtil.decapitalize(srcFunction.getName()) + ".py");
       if (dir != null)
         d.setTargetDir(dir.getVirtualFile().getPath());
 
       d.methodsSize(1);
-      d.addMethod("test_"+srcFunction.getName(), 0);
+      d.addMethod("test_" + srcFunction.getName(), 0);
     }
 
-    d.show();
-    if (!d.isOK()) return;
+    if (!d.showAndGet()) {
+      return;
+    }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
         PsiFile e = PyTestCreator.generateTest(project, d);
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
         documentManager.commitAllDocuments();
-
-
       }
     }, CodeInsightBundle.message("intention.create.test"), this);
   }

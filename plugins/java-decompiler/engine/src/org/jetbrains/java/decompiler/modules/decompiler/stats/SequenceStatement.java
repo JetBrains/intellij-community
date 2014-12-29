@@ -15,12 +15,11 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -99,22 +98,15 @@ public class SequenceStatement extends Statement {
     return null;
   }
 
-  public String toJava(int indent, BytecodeMappingTracer tracer) {
-
-    StringBuilder buf = new StringBuilder();
-
-    String indstr = null;
+  public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    TextBuffer buf = new TextBuffer();
     boolean islabeled = isLabeled();
-
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
 
     if (islabeled) {
-      indstr = InterpreterUtil.getIndentString(indent);
-      indent++;
-      buf.append(indstr).append("label").append(this.id).append(": {").append(new_line_separator);
-      tracer.incrementSourceLine();
+      buf.appendIndent(indent++).append("label").append(this.id.toString()).append(": {").appendLineSeparator();
+      tracer.incrementCurrentSourceLine();
     }
 
     boolean notempty = false;
@@ -124,22 +116,22 @@ public class SequenceStatement extends Statement {
       Statement st = stats.get(i);
 
       if (i > 0 && notempty) {
-        buf.append(new_line_separator);
-        tracer.incrementSourceLine();
+        buf.appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
       }
 
-      String str = ExprProcessor.jmpWrapper(st, indent, false, tracer);
+      TextBuffer str = ExprProcessor.jmpWrapper(st, indent, false, tracer);
       buf.append(str);
 
-      notempty = (str.trim().length() > 0);
+      notempty = !str.containsOnlyWhitespaces();
     }
 
     if (islabeled) {
-      buf.append(indstr).append("}").append(new_line_separator);
-      tracer.incrementSourceLine();
+      buf.appendIndent(indent-1).append("}").appendLineSeparator();
+      tracer.incrementCurrentSourceLine();
     }
 
-    return buf.toString();
+    return buf;
   }
 
   public Statement getSimpleCopy() {

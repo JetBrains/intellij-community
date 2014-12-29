@@ -55,6 +55,12 @@ public interface ApplicationEx extends Application {
    */
   boolean isWriteActionInProgress();
 
+  /**
+   * @return true if the EDT started to acquire write action but has not acquired it yet.
+   * @see #runWriteAction(Runnable)
+   */
+  boolean isWriteActionPending();
+
   void doNotSave();
   void doNotSave(boolean value);
   boolean isDoNotSave();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,8 +90,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
           SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
           dialog.setup(realm, userName, authCredsOn);
           setTitle(dialog, errorMessage);
-          dialog.show();
-          if (dialog.isOK()) {
+          if (dialog.showAndGet()) {
             result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed(), url, false);
           }
         }
@@ -106,8 +105,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
           UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
           dialog.setup(realm, userName, authCredsOn);
           setTitle(dialog, errorMessage);
-          dialog.show();
-          if (dialog.isOK()) {
+          if (dialog.showAndGet()) {
             result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed(), url, false);
           }
         }
@@ -123,8 +121,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
         public void run() {
           SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort(), isAgentAvailable);
           setTitle(dialog, errorMessage);
-          dialog.show();
-          if (dialog.isOK()) {
+          if (dialog.showAndGet()) {
             int port = dialog.getPortNumber();
             if (dialog.isSshAgentSelected()) {
               if (agentConnector != null) {
@@ -157,8 +154,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
             dialog.setFile(file);
           }
           setTitle(dialog, errorMessage);
-          dialog.show();
-          if (dialog.isOK()) {
+          if (dialog.showAndGet()) {
             result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
                                                  dialog.getSaveAuth(), url, false);
           }

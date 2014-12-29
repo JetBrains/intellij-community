@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,10 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalJavaInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
@@ -58,11 +61,11 @@ import java.util.*;
 public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
   private static final Logger LOG = Logger.getInstance("#" + GlobalJavaInspectionContextImpl.class.getName());
 
-  private THashMap<SmartPsiElementPointer, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
-  private THashMap<SmartPsiElementPointer, List<DerivedClassesProcessor>> myDerivedClassesRequests;
-  private THashMap<SmartPsiElementPointer, List<UsagesProcessor>> myMethodUsagesRequests;
-  private THashMap<SmartPsiElementPointer, List<UsagesProcessor>> myFieldUsagesRequests;
-  private THashMap<SmartPsiElementPointer, List<UsagesProcessor>> myClassUsagesRequests;
+  private Map<SmartPsiElementPointer, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
+  private Map<SmartPsiElementPointer, List<DerivedClassesProcessor>> myDerivedClassesRequests;
+  private Map<SmartPsiElementPointer, List<UsagesProcessor>> myMethodUsagesRequests;
+  private Map<SmartPsiElementPointer, List<UsagesProcessor>> myFieldUsagesRequests;
+  private Map<SmartPsiElementPointer, List<UsagesProcessor>> myClassUsagesRequests;
 
 
   @Override
@@ -187,7 +190,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
 
-  public void processSearchRequests(final GlobalInspectionContext context) {
+  private void processSearchRequests(final GlobalInspectionContext context) {
     final RefManager refManager = context.getRefManager();
     final AnalysisScope scope = refManager.getScope();
 
@@ -351,9 +354,8 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     return sum;
   }
 
-  private static int getRequestListSize(THashMap list) {
-    if (list == null) return 0;
-    return list.size();
+  private static int getRequestListSize(Map<?,?> list) {
+    return list == null ? 0 : list.size();
   }
 
   private static List<SmartPsiElementPointer> getSortedIDs(final Map<SmartPsiElementPointer, ?> requests) {

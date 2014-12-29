@@ -29,6 +29,7 @@ import java.awt.*;
 
 public class DiffDivider extends JComponent {
   public static final int MERGE_DIVIDER_POLYGONS_OFFSET = 1;
+  public static final int MERGE_SCROLL_DIVIDER_POLYGONS_OFFSET = 2;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.DiffDivider");
   private final Editor[] myEditors = new Editor[2];
   private final FragmentSide myLeftSide;

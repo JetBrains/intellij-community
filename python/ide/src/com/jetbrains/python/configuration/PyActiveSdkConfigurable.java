@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
           PythonSdkAdditionalData additionalData = (PythonSdkAdditionalData)sdk.getSdkAdditionalData();
           if (additionalData != null) {
             final String path = additionalData.getAssociatedProjectPath();
-            if (!myProject.getBasePath().equals(path))
+            final String basePath = myProject.getBasePath();
+            if (basePath != null && !basePath.equals(path))
               additionalData.setAssociatedProjectPath(null);
           }
           updateSdkList(false);

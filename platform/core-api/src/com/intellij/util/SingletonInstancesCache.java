@@ -15,7 +15,7 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentMap;
@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class SingletonInstancesCache {
 
-  private static final ConcurrentMap<String, Object> CACHE = new ConcurrentHashMap<String, Object>();
+  private static final ConcurrentMap<String, Object> CACHE = ContainerUtil.newConcurrentMap();
 
   private SingletonInstancesCache() {
   }

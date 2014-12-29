@@ -104,6 +104,7 @@ public class CachingSoftWrapDataMapperTest {
   private Mockery                            myMockery;
   private EditorEx                           myEditor;
   private DocumentEx                         myDocument;
+  private StringBuilder                      myChars;
   private SoftWrapsStorage                   myStorage;
   private SoftWrapModelEx                    mySoftWrapModel;
   private FoldingModelEx                     myFoldingModel;
@@ -115,6 +116,7 @@ public class CachingSoftWrapDataMapperTest {
 
     myEditor = myMockery.mock(EditorEx.class);
     myDocument = myMockery.mock(DocumentEx.class);
+    myChars = new StringBuilder();
     myStorage = new SoftWrapsStorage();
     mySoftWrapModel = myMockery.mock(SoftWrapModelEx.class);
     myFoldingModel = myMockery.mock(FoldingModelEx.class);
@@ -122,7 +124,7 @@ public class CachingSoftWrapDataMapperTest {
     final Project project = myMockery.mock(Project.class);
     final SoftWrapPainter painter = myMockery.mock(SoftWrapPainter.class);
 
-    myRepresentationHelper = new MockEditorTextRepresentationHelper(SPACE_SIZE, TAB_SIZE);
+    myRepresentationHelper = new MockEditorTextRepresentationHelper(myChars, SPACE_SIZE, TAB_SIZE);
 
     myMockery.checking(new Expectations() {{
       // Document
@@ -584,19 +586,19 @@ public class CachingSoftWrapDataMapperTest {
       allowing(myDocument).getCharsSequence(); will(new CustomAction("getCharsSequence()") {
         @Override
         public Object invoke(Invocation invocation) throws Throwable {
-          return context.document;
+          return myChars;
         }
       });
       allowing(myDocument).getText(); will(new CustomAction("getCharsSequence()") {
         @Override
         public Object invoke(Invocation invocation) throws Throwable {
-          return context.document.toString();
+          return myChars.toString();
         }
       });
       allowing(myDocument).getTextLength(); will(new CustomAction("getTextLength()") {
         @Override
         public Object invoke(Invocation invocation) throws Throwable {
-          return context.document.length();
+          return myChars.length();
         }
       });
     }});
@@ -629,7 +631,7 @@ public class CachingSoftWrapDataMapperTest {
       context.onNewSymbol(c);
     }
 
-    myLineRanges.add(new TextRange(context.logicalLineStartOffset, context.document.length()));
+    myLineRanges.add(new TextRange(context.logicalLineStartOffset, myChars.length()));
   }
 
   private static boolean isSoftWrapStart(String document, int index) {
@@ -685,7 +687,6 @@ public class CachingSoftWrapDataMapperTest {
 
   private class TestEditorPosition extends EditorPosition {
     private final StringBuilder mySoftWrapBuffer = new StringBuilder();
-    final         StringBuilder document         = new StringBuilder();
 
     EditorPosition lineStartPosition;
     
@@ -716,9 +717,7 @@ public class CachingSoftWrapDataMapperTest {
           new TextChangeImpl('\n' + mySoftWrapBuffer.toString(), softWrapStartOffset),
           mySoftWrapBuffer.length() + 1/* for 'after soft wrap' drawing */,
           (mySoftWrapBuffer.length() * SPACE_SIZE) + SOFT_WRAP_DRAWING_WIDTH
-        ),
-        false
-      );
+        ));
       mySoftWrapBuffer.setLength(0);
       insideSoftWrap = false;
       x += SOFT_WRAP_DRAWING_WIDTH;
@@ -741,7 +740,7 @@ public class CachingSoftWrapDataMapperTest {
       insideFolding = false;
       MockFoldRegion foldRegion = new MockFoldRegion(foldingStartOffset, offset);
       myFoldRegions.add(foldRegion);
-      myMapper.onCollapsedFoldRegion(foldRegion, myRepresentationHelper.toVisualColumnSymbolsNumber(document, foldingStartOffset, offset, prevX), foldingStartVisualLine);
+      myMapper.onCollapsedFoldRegion(foldRegion, myRepresentationHelper.toVisualColumnSymbolsNumber(foldingStartOffset, offset, prevX), foldingStartVisualLine);
     }
 
     public void onNewSymbol(char c) {
@@ -868,7 +867,7 @@ public class CachingSoftWrapDataMapperTest {
     }
 
     private void onNonSoftWrapSymbol(char c) {
-      document.append(c);
+      myChars.append(c);
       if (c == '\n') {
         myLineRanges.add(new TextRange(logicalLineStartOffset, offset));
 

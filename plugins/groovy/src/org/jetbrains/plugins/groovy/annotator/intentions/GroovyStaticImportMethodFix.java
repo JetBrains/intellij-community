@@ -65,7 +65,7 @@ public class GroovyStaticImportMethodFix extends Intention {
   @Override
   @NotNull
   public String getText() {
-    String text = "Static Import Method";
+    String text = "Static import method";
     if (getCandidates().size() == 1) {
       final int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME;
       text += " '" + PsiFormatUtil.formatMethod(getCandidates().get(0), PsiSubstitutor.EMPTY, options, 0) + "'";

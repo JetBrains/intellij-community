@@ -5,8 +5,8 @@ import sys
 import string
 import time
 
-
-VERSION = "1.135"
+# !!! Don't forget to update VERSION and required_gen_version if necessary !!!
+VERSION = "1.136"
 
 OUT_ENCODING = 'utf-8'
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to 
@@ -41,6 +45,7 @@ import java.util.*;
 public class DataNode<T> implements Serializable {
 
   private static final long serialVersionUID = 1L;
+  private static final Logger LOG = Logger.getInstance(DataNode.class);
 
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
 
@@ -48,7 +53,7 @@ public class DataNode<T> implements Serializable {
   private transient T myData;
   private byte[] myRawData;
 
-  @Nullable private final DataNode<?> myParent;
+  @Nullable private DataNode<?> myParent;
 
   public DataNode(@NotNull Key<T> key, @NotNull T data, @Nullable DataNode<?> parent) {
     myKey = key;
@@ -171,6 +176,8 @@ public class DataNode<T> implements Serializable {
       };
       myData = (T)oIn.readObject();
       myRawData = null;
+
+      assert myData != null;
     }
     catch (IOException e) {
       throw new IllegalStateException(
@@ -234,18 +241,32 @@ public class DataNode<T> implements Serializable {
   }
 
   private void writeObject(ObjectOutputStream out) throws IOException {
+    try {
+      myRawData = getDataBytes();
+    }
+    catch (IOException e) {
+      LOG.warn("Unable to serialize the data node - " + toString());
+      throw e;
+    }
+    out.defaultWriteObject();
+  }
+
+  public byte[] getDataBytes() throws IOException {
+    if (myRawData != null) return myRawData;
+
     ByteArrayOutputStream bOut = new ByteArrayOutputStream();
     ObjectOutputStream oOut = new ObjectOutputStream(bOut);
     try {
       oOut.writeObject(myData);
+      final byte[] bytes = bOut.toByteArray();
+      myRawData = bytes;
+      return bytes;
     }
     finally {
       oOut.close();
     }
-    myRawData = bOut.toByteArray();
-    out.defaultWriteObject();
   }
-  
+
   @Override
   public int hashCode() {
     int result = myChildren.hashCode();
@@ -270,6 +291,29 @@ public class DataNode<T> implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("%s: %s", myKey, getData());
+    String dataDescription;
+    try {
+      dataDescription = getData().toString();
+    }
+    catch (Exception e) {
+      dataDescription = "failed to load";
+      LOG.debug(e);
+    }
+    return String.format("%s: %s", myKey, dataDescription);
+  }
+
+  public void clear(boolean removeFromGraph) {
+    if (removeFromGraph && myParent != null) {
+      for (Iterator<DataNode<?>> iterator = myParent.getChildren().iterator(); iterator.hasNext(); ) {
+        DataNode<?> dataNode = iterator.next();
+        if (System.identityHashCode(dataNode) == System.identityHashCode(this)) {
+          iterator.remove();
+          break;
+        }
+      }
+    }
+    myParent = null;
+    myRawData = null;
+    myChildren.clear();
   }
 }

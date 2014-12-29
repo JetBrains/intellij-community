@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
   private UnixPythonSdkFlavor() {
   }
 
-  private final static String[] NAMES = new String[]{"python", "jython", "pypy"};
+  private final static String[] NAMES = new String[]{"jython", "pypy"};
 
   public static UnixPythonSdkFlavor INSTANCE = new UnixPythonSdkFlavor();
 
@@ -52,9 +52,9 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
-          final String childName = child.getName();
+          final String childName = child.getName().toLowerCase();
           for (String name : NAMES) {
-            if (childName.startsWith(name)) {
+            if (childName.startsWith(name) || PYTHON_RE.matcher(childName).matches()) {
               String childPath = child.getPath();
               if (FileSystemUtil.isSymLink(childPath)) {
                 childPath = FileSystemUtil.resolveSymLink(childPath);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -464,6 +466,16 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
     return group.isPythonNamedGroup();
+  }
+
+  @Override
+  public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
+    return ref.isPythonNamedGroupRef();
+  }
+
+  @Override
+  public boolean supportsExtendedHexCharacter(RegExpChar regExpChar) {
+    return false;
   }
 
   @Override

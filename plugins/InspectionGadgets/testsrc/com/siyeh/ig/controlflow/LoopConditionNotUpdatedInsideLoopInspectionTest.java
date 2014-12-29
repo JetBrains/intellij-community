@@ -50,6 +50,29 @@ public class LoopConditionNotUpdatedInsideLoopInspectionTest extends LightInspec
                  "}");
   }
 
+  public void testArrayVariable1() {
+    doMemberTest("void test() {" +
+                 "        int[] sockets = new int[1];" +
+                 "        while (sockets[0] == 0)" +
+                 "            sockets = new int[1];" +
+                 "    }");
+  }
+
+  public void testArrayVariable2() {
+    doMemberTest("void test() {" +
+                 "        int[] sockets = new int[1];" +
+                 "        while (sockets[0] == 0)" +
+                 "            sockets[0] = 1;" +
+                 "    }");
+  }
+
+  public void testArrayVariable3() {
+    doMemberTest("void test() {" +
+                 "        int[] sockets = new int[1];" +
+                 "        while (/*Variable 'sockets' is not updated inside loop*/sockets/**/[0] == 0) {}" +
+                 "    }");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new LoopConditionNotUpdatedInsideLoopInspection();

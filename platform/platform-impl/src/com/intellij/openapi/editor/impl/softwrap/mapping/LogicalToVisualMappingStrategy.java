@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
 
   private LogicalPosition myTargetLogical;
 
-  LogicalToVisualMappingStrategy(@NotNull LogicalPosition logical, @NotNull Editor editor, @NotNull SoftWrapsStorage storage,
+  LogicalToVisualMappingStrategy(@NotNull LogicalPosition logical, @NotNull EditorEx editor, @NotNull SoftWrapsStorage storage,
                                  @NotNull List<CacheEntry> cache)
     throws IllegalStateException
   {
@@ -122,7 +123,7 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
     if (data == null) {
       int xStart = myEditor.getDocument().getLineNumber(foldRegion.getStartOffset()) == foldEndLine ? context.x : 0;
       foldEndColumn = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).toVisualColumnSymbolsNumber(
-        myEditor.getDocument().getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), xStart
+        foldRegion.getStartOffset(), foldRegion.getEndOffset(), xStart
       );
     } else {
       foldEndColumn = data.getCollapsedSymbolsWidthInColumns();

@@ -44,6 +44,9 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new SimpleDocTagInfo("serialField", PsiField.class, false, LanguageLevel.JDK_1_3));
     myInfos.add(new SimpleDocTagInfo("since", PsiElement.class, PsiPackage.class, LanguageLevel.JDK_1_3));
     myInfos.add(new SimpleDocTagInfo("version", PsiClass.class, PsiPackage.class, LanguageLevel.JDK_1_3));
+    myInfos.add(new SimpleDocTagInfo("apiNote", PsiElement.class, false, LanguageLevel.JDK_1_8));
+    myInfos.add(new SimpleDocTagInfo("implNote", PsiElement.class, false, LanguageLevel.JDK_1_8));
+    myInfos.add(new SimpleDocTagInfo("implSpec", PsiElement.class, false, LanguageLevel.JDK_1_8));
 
     myInfos.add(new SimpleDocTagInfo("docRoot", PsiElement.class, true, LanguageLevel.JDK_1_3));
     myInfos.add(new SimpleDocTagInfo("inheritDoc", PsiElement.class, true, LanguageLevel.JDK_1_4));

@@ -45,10 +45,11 @@ public class WeakListTest {
     }
     synchronized (myWeakList) {
       boolean processed = myWeakList.processQueue();
-      assertTrue(processed); // some refs must be in the queue
+      assertTrue(myWeakList.toStrongList().toString(), processed); // some refs must be in the queue
     }
     //HARD_REFERENCED is held there
     assertEquals(1, myWeakList.listSize());
+    assertSame(HARD_REFERENCED, myWeakList.iterator().next());
   }
 
   @Test

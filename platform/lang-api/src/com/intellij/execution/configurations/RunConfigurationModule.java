@@ -23,57 +23,72 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@Tag("module")
 public class RunConfigurationModule implements JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.RunConfigurationModule");
+  private static final Logger LOG = Logger.getInstance(RunConfigurationModule.class);
+
   @NonNls private static final String ELEMENT = "module";
   @NonNls private static final String ATTRIBUTE = "name";
+
   private Module myModule = null;
+
+  @Attribute("name")
   private String myModuleName;
+
   private final Project myProject;
 
-  public RunConfigurationModule(final Project project) {
+  public RunConfigurationModule(@NotNull Project project) {
     myProject = project;
   }
 
   @Override
   @SuppressWarnings({"unchecked"})
-  public void readExternal(final Element element) throws InvalidDataException {
-    final List<Element> modules = (List<Element>)element.getChildren(ELEMENT);
+  public void readExternal(@NotNull Element element) {
+    final List<Element> modules = element.getChildren(ELEMENT);
     LOG.assertTrue(modules.size() <= 1);
     if (modules.size() == 1) {
-      final Element module = modules.get(0);
-      final String moduleName = module.getAttributeValue(ATTRIBUTE);  //we are unable to set 'null' module from 'not null' one
-      if (moduleName != null && moduleName.length() > 0){
+      // we are unable to set 'null' module from 'not null' one
+      String moduleName = modules.get(0).getAttributeValue(ATTRIBUTE);
+      if (!StringUtil.isEmpty(moduleName)) {
         myModuleName = moduleName;
       }
     }
   }
 
   @Override
-  public void writeExternal(final Element parent) throws WriteExternalException {
-    final Element element = new Element(ELEMENT);
-    element.setAttribute(ATTRIBUTE, getModuleName());
-    parent.addContent(element);
+  public void writeExternal(@NotNull Element parent) {
+    parent.addContent(new Element(ELEMENT).setAttribute(ATTRIBUTE, getModuleName()));
   }
 
   public void init() {
-    if (getModuleName().trim().length() > 0) return;
-    final Module[] modules = getModuleManager().getModules();
-    if (modules.length > 0){
-      setModule(modules[0]);
+    if (StringUtil.isEmptyOrSpaces(getModuleName())) {
+      Module[] modules = getModuleManager().getModules();
+      if (modules.length > 0) {
+        setModule(modules[0]);
+      }
     }
   }
 
-  public Project getProject() { return myProject; }
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
 
   @Nullable
+  @Transient
   public Module getModule() {
     if (myModuleName != null) { //caching
       myModule = findModule(myModuleName);
@@ -86,7 +101,10 @@ public class RunConfigurationModule implements JDOMExternalizable {
 
   @Nullable
   public Module findModule(final String moduleName) {
-    if (myProject.isDisposed()) return null;
+    if (myProject.isDisposed()) {
+      return null;
+    }
+
     return ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
       @Nullable
       @Override
@@ -102,7 +120,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   }
 
   public String getModuleName() {
-    return myModuleName != null ? myModuleName : "";
+    return StringUtil.notNullize(myModuleName);
   }
 
   private ModuleManager getModuleManager() {
@@ -118,6 +136,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
     }
     else {
       if (myModuleName != null) {
+        //noinspection SpellCheckingInspection
         throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModuleName));
       }
       throw new RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"));

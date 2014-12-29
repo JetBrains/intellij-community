@@ -22,8 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.NullableFactory;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
@@ -114,7 +112,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("provider")
   public String providerClass;
 
-  private final AtomicNotNullLazyValue<NullableFactory<T>> myFactory;
+  private final AtomicNotNullLazyValue<ObjectProducer> myProducer;
   private PicoContainer myPicoContainer;
   private Project myProject;
 
@@ -131,37 +129,43 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   protected ConfigurableEP(PicoContainer picoContainer, @Nullable Project project) {
     myProject = project;
     myPicoContainer = picoContainer;
-    myFactory = new AtomicNotNullLazyValue<NullableFactory<T>>() {
+    myProducer = new AtomicNotNullLazyValue<ObjectProducer>() {
       @NotNull
       @Override
-      protected NullableFactory<T> compute() {
-        if (providerClass != null) {
-          return new InstanceFromProviderFactory();
+      protected ObjectProducer compute() {
+        try {
+          if (providerClass != null) {
+            return new ProviderProducer((ConfigurableProvider)instantiate(providerClass, myPicoContainer));
+          }
+          if (instanceClass != null) {
+            return new ClassProducer(myPicoContainer, findClass(instanceClass));
+          }
+          if (implementationClass != null) {
+            return new ClassProducer(myPicoContainer, findClass(implementationClass));
+          }
+          throw new RuntimeException("configurable class name is not set");
         }
-        else if (instanceClass != null) {
-          return new NewInstanceFactory();
+        catch (AssertionError error) {
+          LOG.error(error);
         }
-        else if (implementationClass != null) {
-          return new ImplementationFactory();
+        catch (LinkageError error) {
+          LOG.error(error);
         }
-        throw new RuntimeException();
+        catch (Exception exception) {
+          LOG.error(exception);
+        }
+        return new ObjectProducer();
       }
     };
   }
 
   @Nullable
   public T createConfigurable() {
-    try {
-      return myFactory.getValue().create();
-    }
-    catch (LinkageError e) {
-      LOG.error(e);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    catch (AssertionError e) {
-      LOG.error(e);
+    ObjectProducer producer = myProducer.getValue();
+    if (producer.canCreateElement()) {
+      @SuppressWarnings("unchecked")
+      T configurable = (T)producer.createElement();
+      return configurable;
     }
     return null;
   }
@@ -176,71 +180,85 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   }
 
   public boolean canCreateConfigurable() {
-    if (providerClass == null) {
-      return implementationClass != null || instanceClass != null;
+    return myProducer.getValue().canCreateElement();
+  }
+
+  /**
+   * Returns the type of configurable to create or {@code null},
+   * if it cannot be determined.
+   *
+   * @return the the configurable's type or {@code null}
+   */
+  @Nullable
+  public Class<?> getConfigurableType() {
+    return myProducer.getValue().getType();
+  }
+
+  private static class ObjectProducer {
+    Object createElement() {
+      return null;
     }
-    try {
-      ConfigurableProvider provider = instantiate(providerClass, myPicoContainer);
-      return provider.canCreateConfigurable(); // do not load heavy configurables
+
+    boolean canCreateElement() {
+      return false;
     }
-    catch (Exception ignored) {
-      return true; // see InstanceFromProviderFactory#compute
+
+    Class<?> getType() {
+      return null;
     }
   }
 
-  private class InstanceFromProviderFactory extends AtomicNotNullLazyValue<ConfigurableProvider> implements NullableFactory<T> {
-    public T create() {
-      ConfigurableProvider provider = getValue();
-      return provider.canCreateConfigurable()
-             ? (T)provider.createConfigurable()
-             : null;
+  private static final class ProviderProducer extends ObjectProducer {
+    private final ConfigurableProvider myProvider;
+
+    private ProviderProducer(ConfigurableProvider provider) {
+      myProvider = provider;
     }
 
-    @NotNull
     @Override
-    protected ConfigurableProvider compute() {
-      try {
-        return instantiate(providerClass, myPicoContainer);
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
+    Object createElement() {
+      return myProvider == null ? null : myProvider.createConfigurable();
+    }
+
+    @Override
+    boolean canCreateElement() {
+      return myProvider != null && myProvider.canCreateConfigurable();
     }
   }
 
-  private class NewInstanceFactory extends NotNullLazyValue<Class<? extends T>> implements NullableFactory<T> {
-    public T create() {
-      return instantiate(getValue(), myPicoContainer, true);
+  private static final class ClassProducer extends ObjectProducer {
+    private final PicoContainer myContainer;
+    private final Class<?> myType;
+
+    private ClassProducer(PicoContainer container, Class<?> type) {
+      myContainer = container;
+      myType = type;
     }
 
-    @NotNull
     @Override
-    protected Class<? extends T> compute() {
+    Object createElement() {
       try {
-        return findClass(instanceClass);
+        return instantiate(myType, myContainer, true);
       }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
+      catch (AssertionError error) {
+        LOG.error(error);
       }
+      catch (LinkageError error) {
+        LOG.error(error);
+      }
+      catch (Exception exception) {
+        LOG.error(exception);
+      }
+      return null;
     }
-  }
 
-  private class ImplementationFactory extends AtomicNotNullLazyValue<T> implements NullableFactory<T> {
     @Override
-    public T create() {
-      return compute();
+    boolean canCreateElement() {
+      return myType != null;
     }
 
-    @NotNull
-    @Override
-    protected T compute() {
-      try {
-        final Class<T> aClass = findClass(implementationClass);
-        return instantiate(aClass, myPicoContainer, true);
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
+    Class<?> getType() {
+      return myType;
     }
   }
 }

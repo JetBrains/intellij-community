@@ -18,8 +18,7 @@ package com.siyeh.ig.visibility;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 
-public class AnonymousClassVariableHidesContainingMethodVariableInspection
-  extends AnonymousClassVariableHidesContainingMethodVariableInspectionBase {
+public class AnonymousClassVariableHidesContainingMethodVariableInspection extends AnonymousClassVariableHidesContainingMethodVariableInspectionBase {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();

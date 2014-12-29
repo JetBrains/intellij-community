@@ -49,8 +49,8 @@ public class WinTerminalExecutor extends TerminalExecutor {
   @Nullable private File myRedirectFile;
   @Nullable private FileInputStream myRedirectStream;
 
-  public WinTerminalExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
-    super(exePath, command);
+  public WinTerminalExecutor(@NotNull @NonNls String exePath, @NotNull String locale, @NotNull Command command) {
+    super(exePath, locale, command);
   }
 
   @NotNull

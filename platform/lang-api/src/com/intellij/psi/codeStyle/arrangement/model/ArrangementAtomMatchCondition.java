@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.model;
 
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.InvertibleArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,10 +32,8 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
   @NotNull private final ArrangementSettingsToken myType;
   @NotNull private final Object                   myValue;
 
-  private boolean myInverted;
-
   public ArrangementAtomMatchCondition(@NotNull ArrangementSettingsToken type) {
-    this(type, type);
+    this(type, type instanceof InvertibleArrangementSettingsToken ? Boolean.TRUE : type);
   }
   
   public ArrangementAtomMatchCondition(@NotNull ArrangementSettingsToken type, @NotNull Object value) {
@@ -57,15 +56,10 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
     visitor.visit(this);
   }
 
-  public void setInverted(boolean inverted) {
-    myInverted = inverted;
-  }
-
   @Override
   public int hashCode() {
     int result = myType.hashCode();
     result = 31 * result + myValue.hashCode();
-    result = 31 * result + (myInverted ? 1 : 0);
     return result;
   }
 
@@ -80,9 +74,6 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
 
     ArrangementAtomMatchCondition setting = (ArrangementAtomMatchCondition)o;
 
-    if (myInverted != setting.myInverted) {
-      return false;
-    }
     if (!myType.equals(setting.myType)) {
       return false;
     }
@@ -96,18 +87,16 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
   @NotNull
   @Override
   public ArrangementAtomMatchCondition clone() {
-    ArrangementAtomMatchCondition result = new ArrangementAtomMatchCondition(myType, myValue);
-    result.setInverted(myInverted);
-    return result;
+    return new ArrangementAtomMatchCondition(myType, myValue);
   }
 
   @Override
   public String toString() {
-    if (myType.equals(myValue)) {
-      return String.format("%s%s", myInverted ? "not " : "", myType.getRepresentationValue());
+    if (myValue instanceof Boolean) {
+      return String.format("%s%s", (Boolean)myValue ? "" : "not " , myType.getRepresentationValue());
     }
     else {
-      return String.format("%s: %s%s", myType.getRepresentationValue(), myInverted ? "not " : "", myValue.toString().toLowerCase());
+      return String.format("%s: %s", myType.getRepresentationValue(), myValue.toString().toLowerCase());
     }
   }
 }

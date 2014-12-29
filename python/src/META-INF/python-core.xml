@@ -39,11 +39,11 @@
     <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
-    <backspaceHandlerDelegate implementation="com.jetbrains.python.editor.PythonBackspaceHandler"/>
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterBetweenBracketsHandler"/>
+    <editor.backspaceModeOverride language="Python" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
@@ -96,6 +96,7 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyDecoratorStubIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PyModuleNameIndex"/>
+    <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex"/>
 
     <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
@@ -465,10 +466,12 @@
 
     <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
 
-    <projectConfigurable groupId="build" dynamic="true" instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"/>
+    <projectConfigurable groupId="build" dynamic="true" id="pyconsole" instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"
+                         displayName="Console"/>
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
 
-    <projectConfigurable groupId="build" instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"/>
+    <projectConfigurable groupId="build" id="reference.idesettings.debugger.python" instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
+                         displayName="Python Debugger"/>
     <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
 
     <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>
@@ -669,12 +672,18 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
+    <!-- Console -->
+    <action id="com.jetbrains.python.console.RunPythonConsoleAction"
+            class="com.jetbrains.python.console.RunPythonConsoleAction"
+            text="Python Console..." description="Allows to quickly run Python console">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
     <action id="com.jetbrains.python.console.PyOpenDebugConsoleAction"
             class="com.jetbrains.python.console.PyOpenDebugConsoleAction"
             text="Open Debug Command Line" description="Opens debug command line for running process">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-
 
     <action id="ExecuteInPyConsoleAction"
             class="com.jetbrains.python.actions.PyExecuteSelectionAction"
@@ -705,6 +714,13 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
     </action>
 
+    <action id="PyDebugger.AttachToProcess" class="com.jetbrains.python.debugger.attach.PyAttachToProcessAction"
+            text="Attach to Process..."
+            description="Attach debugger to a Python process">
+
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </action>
+
     <group id="PyPackagingMenu" text="Packaging">
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
       <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
@@ -719,6 +735,11 @@
     <action id="PyInvertBooleanAction" class="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanAction" text="Invert Boolean">
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
+
+    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.array.PyViewArrayAction" text="View as Array">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
+    </action>
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">

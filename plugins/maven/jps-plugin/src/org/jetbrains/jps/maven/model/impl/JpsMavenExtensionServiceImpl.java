@@ -90,9 +90,11 @@ public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
     return myConfigFileExists.get(new File(paths.getDataStorageRoot(), MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH));
   }
 
-  @NotNull
   @Override
   public MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths) {
+    if (!hasMavenProjectConfiguration(paths)) {
+      return null;
+    }
     final File dataStorageRoot = paths.getDataStorageRoot();
     return getMavenProjectConfiguration(dataStorageRoot);
   }

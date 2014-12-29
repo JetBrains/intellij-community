@@ -17,9 +17,11 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,19 +48,21 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
   public static final Border EDITOR_BORDER = new MacComboBoxEditorBorder(false);
   public static final Border DISABLED_EDITOR_BORDER = new MacComboBoxEditorBorder(true);
 
-  private JTextField myField;
+  @NotNull private final JBTextField myField;
   private Object oldValue;
 
   public FixedComboBoxEditor() {
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
       myField = new MacComboBoxTextField();
-    } else {
-      myField = new JTextField();
+    }
+    else {
+      myField = new JBTextField();
       myField.setBorder(null);
     }
   }
 
-  protected JTextField getField() {
+  @NotNull
+  public JBTextField getField() {
     return myField;
   }
 
@@ -124,7 +128,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     return popup;
   }
 
-  private class MacComboBoxTextField extends JTextField implements DocumentListener, FocusListener {
+  private class MacComboBoxTextField extends JBTextField implements DocumentListener, FocusListener {
     private MacComboBoxTextField() {
       setBorder(isEnabled() ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
       //setFont(UIUtil.getListFont());

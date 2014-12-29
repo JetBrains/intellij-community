@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -39,15 +40,6 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Jps
   public boolean transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
   private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
 
-  public GroovyCompilerConfiguration(Project project) {
-    GroovyCompilerWorkspaceConfiguration workspaceConfiguration = ServiceManager.getService(project, GroovyCompilerWorkspaceConfiguration.class);
-    loadState(workspaceConfiguration.getState());
-    workspaceConfiguration.myHeapSize = JpsGroovySettings.DEFAULT_HEAP_SIZE;
-    workspaceConfiguration.transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
-    workspaceConfiguration.myInvokeDynamic = JpsGroovySettings.DEFAULT_INVOKE_DYNAMIC;
-    workspaceConfiguration.myExcludeFromStubGeneration.removeAllExcludeEntryDescriptions();
-  }
-
   @Override
   public JpsGroovySettings getState() {
     final JpsGroovySettings bean = new JpsGroovySettings();
@@ -58,11 +50,11 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Jps
     return bean;
   }
 
-  public static ExcludedEntriesConfiguration getExcludeConfiguration(Project project) {
+  public static ExcludesConfiguration getExcludeConfiguration(Project project) {
     return getInstance(project).myExcludeFromStubGeneration;
   }
 
-  public ExcludedEntriesConfiguration getExcludeFromStubGeneration() {
+  public ExcludesConfiguration getExcludeFromStubGeneration() {
     return myExcludeFromStubGeneration;
   }
 

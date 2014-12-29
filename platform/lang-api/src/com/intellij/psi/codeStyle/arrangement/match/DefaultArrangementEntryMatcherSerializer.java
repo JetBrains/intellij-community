@@ -150,10 +150,28 @@ public class DefaultArrangementEntryMatcherSerializer {
     if (text != null && processInnerText) {
       text = StringUtil.unescapeStringCharacters(matcherElement.getText());
       if (!StringUtil.isEmpty(text)) {
-        value = text;
+        final Boolean booleanValue = parseBooleanValue(text);
+        if (booleanValue != null) {
+          value = booleanValue;
+        }
+        else {
+          value = text;
+        }
       }
     }
     return new ArrangementAtomMatchCondition(token, value);
+  }
+
+  @Nullable
+  private static Boolean parseBooleanValue(@NotNull String text) {
+    if (StringUtil.equalsIgnoreCase(text, Boolean.TRUE.toString())) {
+      return true;
+    }
+
+    if (StringUtil.equalsIgnoreCase(text, Boolean.FALSE.toString())) {
+      return false;
+    }
+    return null;
   }
 
   private static class MySerializationVisitor implements ArrangementMatchConditionVisitor {
@@ -167,6 +185,9 @@ public class DefaultArrangementEntryMatcherSerializer {
       final Element element = new Element(type.getId());
       if (StdArrangementTokenType.REG_EXP.is(type)) {
         element.setText(StringUtil.escapeStringCharacters(condition.getValue().toString()));
+      }
+      else if (condition.getValue() instanceof Boolean) {
+        element.setText(condition.getValue().toString());
       }
       register(element);
     }

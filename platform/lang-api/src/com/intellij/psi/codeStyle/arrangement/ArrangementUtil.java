@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+
 /**
  * @author Denis Zhdanov
  * @since 7/17/12 11:24 AM
@@ -168,7 +170,8 @@ public class ArrangementUtil {
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        if (StdArrangementTokenType.ENTRY_TYPE.is(condition.getType())) {
+        ArrangementSettingsToken type = condition.getType();
+        if (StdArrangementTokenType.ENTRY_TYPE.is(condition.getType()) || MODIFIER_AS_TYPE.contains(type)) {
           result.set(condition.getType());
         }
       }
@@ -205,7 +208,14 @@ public class ArrangementUtil {
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
         ArrangementSettingsToken type = condition.getType();
         Object value = condition.getValue();
-        result.put(condition.getType(), type.equals(value) ? null : value); 
+        result.put(condition.getType(), type.equals(value) ? null : value);
+        
+        if (type instanceof CompositeArrangementToken) {
+          Set<ArrangementSettingsToken> tokens = ((CompositeArrangementToken)type).getAdditionalTokens();
+          for (ArrangementSettingsToken token : tokens) {
+            result.put(token, null);
+          }
+        }
       }
 
       @Override
@@ -260,10 +270,10 @@ public class ArrangementUtil {
   @Nullable
   public static ArrangementEntryMatcher buildMatcher(@NotNull ArrangementAtomMatchCondition condition) {
     if (StdArrangementTokenType.ENTRY_TYPE.is(condition.getType())) {
-      return new ByTypeArrangementEntryMatcher(condition.getType());
+      return new ByTypeArrangementEntryMatcher(condition);
     }
     else if (StdArrangementTokenType.MODIFIER.is(condition.getType())) {
-      return new ByModifierArrangementEntryMatcher(condition.getType());
+      return new ByModifierArrangementEntryMatcher(condition);
     }
     else if (StdArrangementTokens.Regexp.NAME.equals(condition.getType())) {
       return new ByNameArrangementEntryMatcher(condition.getValue().toString());
@@ -312,6 +322,17 @@ public class ArrangementUtil {
       matchRules.addAll(section.getMatchRules());
     }
     return matchRules;
+  }
+  //endregion
+
+  //region Arrangement Custom Tokens
+  public static List<ArrangementSectionRule> getExtendedSectionRules(@NotNull ArrangementSettings settings) {
+    return settings instanceof ArrangementExtendableSettings ?
+           ((ArrangementExtendableSettings)settings).getExtendedSectionRules() : settings.getSections();
+  }
+
+  public static boolean isAliasedCondition(@NotNull ArrangementAtomMatchCondition condition) {
+    return StdArrangementTokenType.ALIAS.is(condition.getType());
   }
   //endregion
 }

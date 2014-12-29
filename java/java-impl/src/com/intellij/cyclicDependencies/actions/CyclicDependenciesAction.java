@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nullable;
@@ -63,9 +65,11 @@ public class CyclicDependenciesAction extends AnAction{
       if (scope == null || scope.getScopeType() != AnalysisScope.MODULES){
         ProjectModuleOrPackageDialog dlg = null;
         if (module != null) {
-          dlg = new ProjectModuleOrPackageDialog(ModuleManager.getInstance(project).getModules().length == 1 ? null : ModuleUtilCore.getModuleNameInReadAction(module), scope);
-          dlg.show();
-          if (!dlg.isOK()) return;
+          dlg = new ProjectModuleOrPackageDialog(
+            ModuleManager.getInstance(project).getModules().length == 1 ? null : ModuleUtilCore.getModuleNameInReadAction(module), scope);
+          if (!dlg.showAndGet()) {
+            return;
+          }
         }
         if (dlg == null || dlg.isProjectScopeSelected()) {
           scope = getProjectScope(dataContext);

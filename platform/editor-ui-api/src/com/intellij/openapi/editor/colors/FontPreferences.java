@@ -195,7 +195,7 @@ public class FontPreferences {
   @NotNull
   private static String getDefaultFontName() {
     if (SystemInfo.isMacOSSnowLeopard) return "Menlo";
-    if (SystemInfo.isXWindow) {
+    if (SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless()) {
       for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
         if ("DejaVu Sans Mono".equals(font.getName())) {
           return font.getFontName();

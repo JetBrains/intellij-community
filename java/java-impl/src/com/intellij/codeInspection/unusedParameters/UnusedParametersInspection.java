@@ -29,10 +29,10 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
+import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
@@ -234,8 +234,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    Project project = ProjectUtil.guessCurrentProject(panel);
-    panel.add(EntryPointsManager.getInstance(project).createConfigureAnnotationsBtn(),
+    panel.add(EntryPointsManagerImpl.createConfigureAnnotationsButton(),
               new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      new Insets(0, 0, 0, 0), 0, 0));
     return panel;

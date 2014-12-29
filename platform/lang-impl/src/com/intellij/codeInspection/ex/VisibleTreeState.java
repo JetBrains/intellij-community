@@ -176,11 +176,9 @@ public class VisibleTreeState{
       final State other = (State)o;
       if (myKey.equals(other.myKey)) {
         if (myDescriptor != null && other.myDescriptor != null) {
-          final NamedScope scope1 = myDescriptor.getScope();
-          final NamedScope scope2 = other.myDescriptor.getScope();
-          if (scope1 != null && scope2 != null) {
-            return scope1.getName().compareTo(scope2.getName());
-          }
+          final String scope1 = myDescriptor.getScopeName();
+          final String scope2 = other.myDescriptor.getScopeName();
+          return scope1.compareTo(scope2);
         }
       }
       return myKey.compareTo(other.myKey);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class DebugLogConfigureAction extends DumbAwareAction {
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      return new JBLabel("Add log categories separated by new lines");
+      return new JBLabel("Enable DEBUG level for log categories (one per line):");
     }
 
     @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,10 @@ import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
 import com.intellij.openapi.vcs.changes.patch.FilePatchInProgress;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.MultiMap;
 
@@ -53,9 +56,10 @@ import java.util.Map;
  * Time: 6:02 PM
  */
 public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor {
+  private static final Logger LOG = Logger.getInstance(ApplyPatchSaveToFileExecutor.class);
+
   private final Project myProject;
   private final VirtualFile myBaseForPatch;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.treeConflict.ApplyPatchSaveToFileExecutor");
 
   public ApplyPatchSaveToFileExecutor(Project project, VirtualFile baseForPatch) {
     myProject = project;
@@ -88,6 +92,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor {
       catch (final IOException e) {
         LOG.info(e);
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          @Override
           public void run() {
             Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", e.getMessage()), CommonBundle.getErrorTitle());
           }

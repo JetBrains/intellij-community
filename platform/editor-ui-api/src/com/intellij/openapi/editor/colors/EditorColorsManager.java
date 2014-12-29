@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,17 @@ public abstract class EditorColorsManager {
   @NotNull
   public abstract EditorColorsScheme getGlobalScheme();
 
-  public abstract EditorColorsScheme getScheme(@NonNls String schemeName);
+  public abstract EditorColorsScheme getScheme(@NotNull String schemeName);
 
   public abstract boolean isDefaultScheme(EditorColorsScheme scheme);
 
+  /**
+   * @deprecated use {@link #addEditorColorsListener(EditorColorsListener, Disposable)} instead
+   */
   public abstract void addEditorColorsListener(@NotNull EditorColorsListener listener);
+  /**
+   * @deprecated use {@link #addEditorColorsListener(EditorColorsListener, Disposable)} instead
+   */
   public abstract void removeEditorColorsListener(@NotNull EditorColorsListener listener);
   public abstract void addEditorColorsListener(@NotNull EditorColorsListener listener, @NotNull Disposable disposable);
 

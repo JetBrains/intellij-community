@@ -79,6 +79,11 @@ public class DfaPsiUtil {
     if (resultType != null) {
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
       for (PsiAnnotation annotation : resultType.getAnnotations()) {
+        if (!annotation.isValid()) {
+          PsiUtilCore.ensureValid(owner);
+          PsiUtil.ensureValidType(resultType, owner + " of " + owner.getClass());
+          PsiUtilCore.ensureValid(annotation); //should fail
+        }
         String qualifiedName = annotation.getQualifiedName();
         if (nnn.getNullables().contains(qualifiedName)) {
           return Nullness.NULLABLE;
@@ -116,7 +121,7 @@ public class DfaPsiUtil {
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
-        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(body) {
+        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, false) {
           boolean shouldCheck;
 
           @Override

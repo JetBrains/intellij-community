@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   private final VirtualFile myBeforeFile;
   private final VirtualFile myAfterFile;
 
-  public TestDataGroupVirtualFile(VirtualFile beforeFile, VirtualFile afterFile) {
+  public TestDataGroupVirtualFile(@NotNull VirtualFile beforeFile, @NotNull VirtualFile afterFile) {
     myBeforeFile = beforeFile;
     myAfterFile = afterFile;
   }
@@ -71,7 +72,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
 
   @Override
   public boolean isWritable() {
-    return true;
+    return myBeforeFile.isWritable();
   }
 
   @Override
@@ -86,14 +87,13 @@ public class TestDataGroupVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile getParent() {
-    return null;
+    return myBeforeFile.getParent();
   }
 
   @Override
   public VirtualFile[] getChildren() {
     return EMPTY_ARRAY;
   }
-
   @NotNull
   @Override
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
@@ -103,22 +103,22 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public byte[] contentsToByteArray() throws IOException {
-    throw new UnsupportedOperationException();
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   @Override
   public long getTimeStamp() {
-    return 0;
+    return myBeforeFile.getTimeStamp();
   }
 
   @Override
   public long getLength() {
-    return 0;
+    return myBeforeFile.getLength();
   }
 
   @Override
   public long getModificationStamp() {
-    return 0;
+    return myBeforeFile.getModificationStamp();
   }
 
   @Override
@@ -128,5 +128,25 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @Override
   public InputStream getInputStream() throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    TestDataGroupVirtualFile file = (TestDataGroupVirtualFile)o;
+
+    if (!myAfterFile.equals(file.myAfterFile)) return false;
+    if (!myBeforeFile.equals(file.myBeforeFile)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myBeforeFile.hashCode();
+    result = 31 * result + myAfterFile.hashCode();
+    return result;
   }
 }

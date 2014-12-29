@@ -88,8 +88,15 @@ public abstract class BreakpointBase<L> extends Breakpoint {
 
   public void setActualLocations(@Nullable List<L> value) {
     actualLocations.clear();
-    if (value != null && !value.isEmpty()) {
+    if (!ContainerUtil.isEmpty(value)) {
       actualLocations.addAll(value);
+    }
+  }
+
+  public void setActualLocation(@Nullable L value) {
+    actualLocations.clear();
+    if (value != null) {
+      actualLocations.add(value);
     }
   }
 
