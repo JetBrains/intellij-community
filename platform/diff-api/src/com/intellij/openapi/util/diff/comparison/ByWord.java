@@ -625,7 +625,6 @@ public class ByWord {
 
       if (isAlpha(ch)) {
         int startOffset = offset;
-        offset++; // We know it's a symbol
 
         int h = 0;
         while (offset < len) {
