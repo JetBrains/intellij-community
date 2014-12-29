@@ -470,8 +470,12 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         return true;
       }
     }
+    if (target instanceof PsiPackage && source instanceof PsiClass) {
+      final GlobalSearchScope globalSearchScope = GlobalSearchScope.projectScope(source.getProject());
+      return ((PsiPackage)target).findClassByShortName(((PsiClass)source).getName(), globalSearchScope).length > 0;
+    }
     if (target instanceof PsiDirectory && source instanceof PsiDirectory) {
-      final PsiPackage aPackage = JavaDirectoryServiceImpl.getInstance().getPackage((PsiDirectory)source);
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)source);
       if (aPackage != null && !MoveClassesOrPackagesImpl.checkNesting(target.getProject(), aPackage, target, false)) return true;
     }
     return super.isMoveRedundant(source, target);
