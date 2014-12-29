@@ -43,13 +43,13 @@ public class ReformatCodeActionInEditorTest extends LightCodeInsightFixtureTestC
 
     String before = null;
     if (options.isProcessOnlyChangedText()) {
-      myFixture.configureByFile(getTestDataPath() + getTestName(true) + "_revision.java");
+      myFixture.configureByFile(getTestName(true) + "_revision.java");
       PsiFile file = myFixture.getFile();
       Document document = myFixture.getDocument(file);
       before = document.getText();
     }
 
-    myFixture.configureByFile(getTestDataPath() + getTestName(true) + "_before.java");
+    myFixture.configureByFile(getTestName(true) + "_before.java");
 
     if (before != null) {
       myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, before);
