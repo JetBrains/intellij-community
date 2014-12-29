@@ -248,6 +248,9 @@ public class MultiMap<K, V> implements Serializable {
     return empty;
   }
 
+  /**
+   * Null keys supported.
+   */
   @NotNull
   public static <K, V> MultiMap<K, V> create() {
     return new MultiMap<K, V>();

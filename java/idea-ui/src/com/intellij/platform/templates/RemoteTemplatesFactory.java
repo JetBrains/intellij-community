@@ -105,7 +105,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   private static MultiMap<String, ArchivedProjectTemplate> create(@NotNull Element element) throws IOException, JDOMException {
-    MultiMap<String, ArchivedProjectTemplate> map = MultiMap.createSmart();
+    MultiMap<String, ArchivedProjectTemplate> map = MultiMap.create();
     for (ArchivedProjectTemplate template : createGroupTemplates(element)) {
       map.putValue(template.getCategory(), template);
     }
