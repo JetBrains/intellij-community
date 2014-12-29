@@ -31,11 +31,7 @@ public class TypeCookHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    if (elements == null || elements.length == 0) return;
-
-    for (PsiElement element : elements) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return;
-    }
+    if (elements.length == 0) return;
 
     new TypeCookDialog(project, elements).show();
   }
