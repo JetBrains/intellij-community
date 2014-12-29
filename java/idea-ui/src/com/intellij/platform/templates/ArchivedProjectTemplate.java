@@ -109,11 +109,11 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     return null;
   }
 
-  public static abstract class StreamConsumer<T> {
+  public static abstract class StreamProcessor<T> {
     public abstract T consume(@NotNull ZipInputStream stream) throws IOException;
   }
 
-  public abstract <T> void getStream(@NotNull StreamConsumer<T> consumer) throws IOException;
+  public abstract <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException;
 
   @Nullable
   public String getCategory() {
@@ -137,9 +137,9 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
       });
   }
 
-  static <T> void consumeZipStream(@NotNull StreamConsumer<T> consumer, @NotNull ZipInputStream stream) throws IOException {
+  static <T> T consumeZipStream(@NotNull StreamProcessor<T> consumer, @NotNull ZipInputStream stream) throws IOException {
     try {
-      consumer.consume(stream);
+      return consumer.consume(stream);
     }
     finally {
       StreamUtil.closeStream(stream);

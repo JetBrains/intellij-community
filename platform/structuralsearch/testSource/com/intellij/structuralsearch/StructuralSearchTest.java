@@ -1320,8 +1320,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s82_8 = "'T<'_Subst+>";
     assertEquals(
       "typed symbol",
-      findMatchesCount(s81_4,s82_8),
-      6
+      8,
+      findMatchesCount(s81_4,s82_8)
     );
 
     String s81_5 = "class A { HashMap<String, Integer> variable = new HashMap<String, Integer>(\"aaa\");}";
@@ -1335,6 +1335,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       "no exception on searching for diamond operator",
       findMatchesCount(s81_5, "new 'Type<>('_Param)"),
       0
+    );
+    assertEquals(
+      "order of parameters matters",
+      0,
+      findMatchesCount(s81_5, "HashMap<Integer, String>")
+    );
+    assertEquals(
+      "order of parameters matters 2",
+      2,
+      findMatchesCount(s81_5, "HashMap<String, Integer>")
     );
 
     String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; }";
@@ -2408,6 +2418,24 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find anno parameter value",0,findMatchesCount(s11,s12_5));
     assertEquals("Find anno parameter value",4,findMatchesCount(s11,s12_6));
     assertEquals("Find anno parameter value",4,findMatchesCount(s11,s12_7));
+
+    String source1 = "class A {" +
+                     "  void m() {" +
+                     "    new @B Object();" +
+                     "  }" +
+                     "}";
+    assertEquals("Find annotated new expression", 1, findMatchesCount(source1, "new Object()"));
+    assertEquals("Find annotated new expression", 1, findMatchesCount(source1, "new @B Object()"));
+    assertEquals("Find annotated new expression", 0, findMatchesCount(source1, "new @C Object()"));
+
+    String source2 = "@X\n" +
+                     "class A {\n" +
+                     "  @Y int value;" +
+                     "  @Y int void m(@Z int i) {\n" +
+                     "    return 1;\n" +
+                     "  }\n" +
+                     "}\n";
+    assertEquals("Find all annotations", 4, findMatchesCount(source2, "@'_Annotation"));
   }
 
   public void testBoxingAndUnboxing() {
@@ -2938,6 +2966,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  Runnable r = System.out::println;" +
                     "  Runnable s = this::hashCode;" +
                     "  Runnable t = this::new;" +
+                    "  Runnable u = @AA A::new;" +
                     "  static {" +
                     "    System.out.println();" +
                     "  }" +
@@ -2950,7 +2979,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should find method reference 2", 2, findMatchesCount(source, pattern2));
 
     String pattern3 = "'_a::'_b";
-    assertEquals("should find all method references", 3, findMatchesCount(source, pattern3));
+    assertEquals("should find all method references", 4, findMatchesCount(source, pattern3));
+
+    String pattern4 = "@AA A::new";
+    assertEquals("should find annotated method references", 1, findMatchesCount(source, pattern4));
   }
 
   public void testNoUnexpectedException() {

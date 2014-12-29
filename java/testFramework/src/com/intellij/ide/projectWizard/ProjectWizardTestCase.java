@@ -182,8 +182,8 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         mySdks.add(defaultJdk);
         mySdks.add(otherJdk);
 
-        Sdk[] jdks = jdkTable.getAllJdks();
-        System.out.println(Arrays.asList(jdks));
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println(Arrays.asList(jdkTable.getAllJdks()));
 
         if (getName().contains("DefaultSdk")) {
           Project defaultProject = ProjectManager.getInstance().getDefaultProject();
