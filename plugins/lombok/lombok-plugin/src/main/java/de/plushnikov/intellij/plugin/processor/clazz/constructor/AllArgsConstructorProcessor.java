@@ -51,13 +51,18 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
   }
 
   @NotNull
+  private Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, String methodVisibility, PsiAnnotation psiAnnotation, String staticName) {
+    final Collection<PsiField> allNotInitializedNotStaticFields = getAllFields(psiClass);
+    return createAllArgsConstructor(psiClass, methodVisibility, psiAnnotation, staticName, allNotInitializedNotStaticFields);
+  }
+
+  @NotNull
   public Collection<PsiField> getAllFields(@NotNull PsiClass psiClass) {
     return getAllNotInitializedAndNotStaticFields(psiClass);
   }
 
   @NotNull
-  public Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, String methodVisibility, PsiAnnotation psiAnnotation, String staticName) {
-    final Collection<PsiField> allNotInitializedNotStaticFields = getAllFields(psiClass);
+  public Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, String methodVisibility, PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields) {
     return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allNotInitializedNotStaticFields, staticName);
   }
 }

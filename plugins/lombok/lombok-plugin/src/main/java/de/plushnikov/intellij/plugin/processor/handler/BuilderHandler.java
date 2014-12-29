@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -235,7 +234,8 @@ public class BuilderHandler {
       }
       if (createField) {
         fields.add(new LombokLightFieldBuilder(psiManager, psiField.getName(), psiField.getType())
-            .withModifier(PsiModifier.PRIVATE));
+            .withModifier(PsiModifier.PRIVATE)
+            .withNavigationElement(psiField));
       }
     }
     return fields;
@@ -274,7 +274,7 @@ public class BuilderHandler {
             .withMethodReturnType(createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
             .withContainingClass(innerClass)
             .withParameter(psiField.getName(), psiField.getType())
-            .withNavigationElement(psiAnnotation)
+            .withNavigationElement(psiField.getNavigationElement())
             .withModifier(PsiModifier.PUBLIC));
       }
     }
