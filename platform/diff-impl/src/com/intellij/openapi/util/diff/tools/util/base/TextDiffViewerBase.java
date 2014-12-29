@@ -177,10 +177,10 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
   // Actions
   //
 
-  protected class MyHighlightPolicySettingAction extends ComboBoxAction implements DumbAware {
+  protected class HighlightPolicySettingAction extends ComboBoxAction implements DumbAware {
     @NotNull private final DefaultActionGroup myChildren;
 
-    public MyHighlightPolicySettingAction() {
+    public HighlightPolicySettingAction() {
       // TODO: pretty icons ?
       setEnabledInModalContext(true);
 
@@ -224,16 +224,16 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (getTextSettings().getHighlightPolicy() == myPolicy) return;
         getTextSettings().setHighlightPolicy(myPolicy);
-        MyHighlightPolicySettingAction.this.update(e);
+        HighlightPolicySettingAction.this.update(e);
         rediff();
       }
     }
   }
 
-  protected class MyIgnorePolicySettingAction extends ComboBoxAction implements DumbAware {
+  protected class IgnorePolicySettingAction extends ComboBoxAction implements DumbAware {
     @NotNull private final DefaultActionGroup myChildren;
 
-    public MyIgnorePolicySettingAction() {
+    public IgnorePolicySettingAction() {
       // TODO: pretty icons ?
       setEnabledInModalContext(true);
 
@@ -276,14 +276,14 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (getTextSettings().getIgnorePolicy() == myPolicy) return;
         getTextSettings().setIgnorePolicy(myPolicy);
-        MyIgnorePolicySettingAction.this.update(e);
+        IgnorePolicySettingAction.this.update(e);
         rediff();
       }
     }
   }
 
-  protected class MyToggleAutoScrollAction extends ToggleActionButton implements DumbAware {
-    public MyToggleAutoScrollAction() {
+  protected class ToggleAutoScrollAction extends ToggleActionButton implements DumbAware {
+    public ToggleAutoScrollAction() {
       super("Synchronize Scrolling", AllIcons.Actions.SynchronizeScrolling);
       setEnabledInModalContext(true);
     }
@@ -299,8 +299,8 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
   }
 
-  protected class MyToggleExpandByDefaultAction extends ToggleActionButton implements DumbAware {
-    public MyToggleExpandByDefaultAction() {
+  protected class ToggleExpandByDefaultAction extends ToggleActionButton implements DumbAware {
+    public ToggleExpandByDefaultAction() {
       super("Collapse unchanged fragments", AllIcons.Actions.Collapseall);
       setEnabledInModalContext(true);
     }
@@ -316,8 +316,8 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
   }
 
-  protected class MyContextRangeSettingAction extends DumbAwareAction { // TODO: add into 'diff popup'
-    public MyContextRangeSettingAction() {
+  protected class ContextRangeSettingAction extends DumbAwareAction { // TODO: add into 'diff popup'
+    public ContextRangeSettingAction() {
       super("Context Lines...", "More/Less Lines...", AllIcons.General.ExpandAll);
       setEnabledInModalContext(true);
     }

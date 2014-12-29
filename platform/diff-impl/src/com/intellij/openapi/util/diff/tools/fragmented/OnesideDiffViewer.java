@@ -137,10 +137,10 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new MyIgnorePolicySettingAction());
-    group.add(new MyHighlightPolicySettingAction());
-    group.add(new MyContextRangeSettingAction());
-    group.add(new MyToggleExpandByDefaultAction());
+    group.add(new IgnorePolicySettingAction());
+    group.add(new HighlightPolicySettingAction());
+    group.add(new ContextRangeSettingAction());
+    group.add(new ToggleExpandByDefaultAction());
     group.add(myEditorSettingsAction);
 
     return group;
@@ -151,11 +151,11 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(Separator.getInstance());
-    group.add(new MyIgnorePolicySettingAction().getPopupGroup());
+    group.add(new IgnorePolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
-    group.add(new MyHighlightPolicySettingAction().getPopupGroup());
+    group.add(new HighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
-    group.add(new MyToggleExpandByDefaultAction());
+    group.add(new ToggleExpandByDefaultAction());
 
     return group;
   }
