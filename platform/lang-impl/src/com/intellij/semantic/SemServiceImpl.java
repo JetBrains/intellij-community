@@ -94,7 +94,7 @@ public class SemServiceImpl extends SemService{
   }
 
   private static MultiMap<SemKey, SemKey> cacheKeyHierarchy(Collection<SemKey> allKeys) {
-    final MultiMap<SemKey, SemKey> result = MultiMap.createSmartList();
+    final MultiMap<SemKey, SemKey> result = MultiMap.createSmart();
     ContainerUtil.process(allKeys, new Processor<SemKey>() {
       @Override
       public boolean process(SemKey key) {
@@ -115,7 +115,7 @@ public class SemServiceImpl extends SemService{
   }
 
   private MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> collectProducers() {
-    final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> map = MultiMap.createSmartList();
+    final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> map = MultiMap.createSmart();
 
     final SemRegistrar registrar = new SemRegistrar() {
       @Override

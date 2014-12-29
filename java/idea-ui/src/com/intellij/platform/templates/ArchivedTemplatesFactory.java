@@ -52,7 +52,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
     @NotNull
     @Override
     protected MultiMap<String, Pair<URL, ClassLoader>> compute() {
-      MultiMap<String, Pair<URL, ClassLoader>> map = MultiMap.createSmartList();
+      MultiMap<String, Pair<URL, ClassLoader>> map = MultiMap.createSmart();
       Map<URL, ClassLoader> urls = new THashMap<URL, ClassLoader>();
       //for (IdeaPluginDescriptor plugin : plugins) {
       //  if (!plugin.isEnabled()) continue;

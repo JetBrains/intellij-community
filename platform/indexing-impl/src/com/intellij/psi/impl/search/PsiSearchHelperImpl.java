@@ -854,7 +854,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @NotNull
   private static MultiMap<VirtualFile, RequestWithProcessor> createMultiMap() {
     // usually there is just one request
-    return MultiMap.createSmartList();
+    return MultiMap.createSmart();
   }
 
   @NotNull

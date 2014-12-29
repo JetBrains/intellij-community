@@ -105,24 +105,22 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   private static MultiMap<String, ArchivedProjectTemplate> create(@NotNull Element element) throws IOException, JDOMException {
-    MultiMap<String, ArchivedProjectTemplate> map = MultiMap.createSmartList();
+    MultiMap<String, ArchivedProjectTemplate> map = MultiMap.createSmart();
     for (ArchivedProjectTemplate template : createGroupTemplates(element)) {
       map.putValue(template.getCategory(), template);
     }
     return map;
   }
 
-  @SuppressWarnings("unchecked")
   private static List<ArchivedProjectTemplate> createGroupTemplates(Element groupElement) {
-    List<Element> elements = groupElement.getChildren(TEMPLATE);
-    return ContainerUtil.mapNotNull(elements, new NullableFunction<Element, ArchivedProjectTemplate>() {
+    return ContainerUtil.mapNotNull(groupElement.getChildren(TEMPLATE), new NullableFunction<Element, ArchivedProjectTemplate>() {
       @Override
       public ArchivedProjectTemplate fun(final Element element) {
-        if (!checkRequiredPlugins(element)) return null;
-        String type = element.getChildText("moduleType");
+        if (!checkRequiredPlugins(element)) {
+          return null;
+        }
 
-        final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
-
+        final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(element.getChildText("moduleType"));
         final String path = element.getChildText("path");
         final String description = element.getChildTextTrim("description");
         String name = element.getChildTextTrim("name");
