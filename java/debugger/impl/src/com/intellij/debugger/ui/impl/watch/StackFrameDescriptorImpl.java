@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,15 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     try {
       myUiIndex = frame.getFrameIndex();
       myLocation = frame.location();
-      myThisObject = frame.thisObject();
+      try {
+        myThisObject = frame.thisObject();
+      } catch (EvaluateException e) {
+        // catch internal exceptions here
+        if (!(e.getCause() instanceof InternalException)) {
+          throw e;
+        }
+        LOG.info(e);
+      }
       myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, myLocation.method());
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
       ApplicationManager.getApplication().runReadAction(new Runnable() {
