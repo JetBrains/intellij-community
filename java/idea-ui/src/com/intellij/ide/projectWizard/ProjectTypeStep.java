@@ -640,6 +640,19 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   @TestOnly
+  public String availableTemplateGroupsToString() {
+    ListModel model = myProjectTypeList.getModel();
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < model.getSize(); i++) {
+      if (builder.length() > 0) {
+        builder.append(", ");
+      }
+      builder.append(((TemplatesGroup)model.getElementAt(i)).getName());
+    }
+    return builder.toString();
+  }
+
+  @TestOnly
   public boolean setSelectedTemplate(@NotNull String group, @Nullable String name) {
     ListModel model = myProjectTypeList.getModel();
     for (int i = 0; i < model.getSize(); i++) {

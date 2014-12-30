@@ -98,8 +98,9 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   protected void runWizard(@NotNull String group, @Nullable final String name, Project project, @Nullable final Consumer<Step> adjuster) throws IOException {
     createWizard(project);
-    if (!((ProjectTypeStep)myWizard.getCurrentStepObject()).setSelectedTemplate(group, name)) {
-      throw new IllegalArgumentException(group + '/' + name + " template not found");
+    ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
+    if (!step.setSelectedTemplate(group, name)) {
+      throw new IllegalArgumentException(group + '/' + name + " template not found, available groups " + step.availableTemplateGroupsToString());
     }
 
     runWizard(new Consumer<Step>() {
