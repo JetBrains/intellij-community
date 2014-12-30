@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -35,11 +36,11 @@ import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -82,8 +83,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
         if (!serverStarted) {
           return;
         }
-
-        waitForIpythonServer();
         final Notification notification =
           new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + url +
                                                   "\">" + url + "</a></html>", NotificationType.INFORMATION,
@@ -91,40 +90,19 @@ public final class IpnbConnectionManager implements ProjectComponent {
         notification.notify(myProject);
         IpnbSettings.getInstance(myProject).setURL(url);
       }
-      startConnection(codePanel, path, url, true);
+      final String finalUrl = url;
+      new Alarm().addRequest(new Runnable() {
+        @Override
+        public void run() {
+          startConnection(codePanel, path, finalUrl, true);
+        }
+      }, 3000);
     }
     else {
       final IpnbConnection connection = myKernels.get(path);
       if (connection != null) {
         final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
         myUpdateMap.put(messageId, codePanel);
-      }
-    }
-  }
-
-  private void waitForIpythonServer() {
-    final long startTime = System.currentTimeMillis();
-
-    final InputStream stream = myProcessHandler.getProcess().getErrorStream();
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-
-    try {
-      long time = System.currentTimeMillis() - startTime;
-      while (time < 50000) {
-        final String line = reader.readLine();
-        if (line != null && line.contains("The IPython Notebook is running")) {
-          break;
-        }
-        time = System.currentTimeMillis() - startTime;
-      }
-    }
-    catch (IOException ignored) {
-    }
-    finally {
-      try {
-        reader.close();
-      }
-      catch (IOException ignored) {
       }
     }
   }
