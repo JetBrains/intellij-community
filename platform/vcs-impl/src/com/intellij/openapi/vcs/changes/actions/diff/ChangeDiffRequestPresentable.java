@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -379,13 +378,12 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   private static void checkAssociate(@NotNull final Project project,
                                      @NotNull final FilePath file,
                                      @NotNull final UserDataHolder context,
-                                     @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
+                                     @NotNull ProgressIndicator indicator) {
     final String pattern = FileUtilRt.getExtension(file.getName()).toLowerCase();
-    if (getSkippedExtensionsFromContext(context).contains(pattern)) {
-      throw new DiffRequestPresentableException("Unknown file type");
-    }
+    if (getSkippedExtensionsFromContext(context).contains(pattern)) return;
 
-    final boolean[] ret = new boolean[1];
+    // TODO: this popup breaks focus. Why do we do it here anyway?
+    // We should move it into CacheDiffRequestChainProcessor, but it requires some changes in ContentRevision/BinaryContentRevision API.
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -396,17 +394,13 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
                                                  CommonBundle.getCancelButtonText(),
                                                  Messages.getQuestionIcon());
         if (result == Messages.OK) {
-          FileType fileType = FileTypeChooser.associateFileType(file.getName());
-          ret[0] = fileType != null && !FileTypes.UNKNOWN.equals(fileType);
+          FileTypeChooser.associateFileType(file.getName());
         }
         else {
           getSkippedExtensionsFromContext(context).add(pattern);
-          ret[0] = false;
         }
       }
     }, indicator.getModalityState());
-
-    if (!ret[0]) throw new DiffRequestPresentableException("Unknown file type");
   }
 
   @NotNull
