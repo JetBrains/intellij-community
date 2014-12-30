@@ -159,10 +159,7 @@ public class HighlightNamesUtil {
   @Nullable
   public static HighlightInfo highlightClassNameInQualifier(final PsiJavaCodeReferenceElement element,
                                                             @NotNull TextAttributesScheme colorsScheme) {
-    PsiExpression qualifierExpression = null;
-    if (element instanceof PsiReferenceExpression) {
-      qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
-    }
+    PsiElement qualifierExpression = element.getQualifier();
     if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
       PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
       if (resolved instanceof PsiClass) {

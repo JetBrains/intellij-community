@@ -73,18 +73,28 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
 
     myMergeAction = new MergeAction();
     myRebaseAction = new RebaseAction();
-    getDefaultAction(initialSettings.getUpdateMethod()).putValue(DEFAULT_ACTION, Boolean.TRUE);
-    getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
-    
+    setDefaultAndFocusedActions(initialSettings.getUpdateMethod());
     init();
     setTitle("Push Rejected");
   }
 
-  private AbstractAction getDefaultAction(@Nullable UpdateMethod updateMethod) {
-    if (updateMethod == UpdateMethod.REBASE && !myRebaseOverMergeProblemDetected) {
-      return myRebaseAction;
+  private void setDefaultAndFocusedActions(@Nullable UpdateMethod updateMethod) {
+    Action defaultAction;
+    Action focusedAction;
+    if (myRebaseOverMergeProblemDetected) {
+      defaultAction = myMergeAction;
+      focusedAction = getCancelAction();
     }
-    return myMergeAction;
+    else if (updateMethod == UpdateMethod.REBASE) {
+      defaultAction = myRebaseAction;
+      focusedAction = myMergeAction;
+    }
+    else {
+      defaultAction = myMergeAction;
+      focusedAction = myRebaseAction;
+    }
+    defaultAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
+    focusedAction.putValue(FOCUSED_ACTION, Boolean.TRUE);
   }
 
   @Override

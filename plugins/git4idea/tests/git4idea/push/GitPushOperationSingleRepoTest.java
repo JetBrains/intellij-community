@@ -29,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
-import git4idea.settings.GitPushSettings;
 import git4idea.test.TestDialogHandler;
 import git4idea.test.TestMessageHandler;
 import git4idea.update.GitRebaseOverMergeProblem;
@@ -255,13 +254,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   }
 
   public void test_warn_if_rebasing_over_merge() throws IOException {
-    pushCommitFromBro();
-    cd(myRepository);
-    git("checkout -b branch1");
-    makeCommit("branch1.txt");
-    git("checkout master");
-    makeCommit("master.txt");
-    git("merge branch1");
+    generateUnpushedMergedCommitProblem();
 
     final Ref<Boolean> rebaseOverMergeProblemDetected = Ref.create(false);
     myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
@@ -276,16 +269,10 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   }
 
   public void test_warn_if_silently_rebasing_over_merge() throws IOException {
-    pushCommitFromBro();
-    cd(myRepository);
-    git("checkout -b branch1");
-    makeCommit("branch1.txt");
-    git("checkout master");
-    makeCommit("master.txt");
-    git("merge branch1");
+    generateUnpushedMergedCommitProblem();
 
     myGitSettings.setAutoUpdateIfPushRejected(true);
-    GitPushSettings.getInstance(myProject).setUpdateMethod(UpdateMethod.REBASE);
+    myGitSettings.setUpdateType(UpdateMethod.REBASE);
 
     final Ref<Boolean> rebaseOverMergeProblemDetected = Ref.create(false);
     myDialogManager.registerMessageHandler(new TestMessageHandler() {
@@ -297,6 +284,35 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     });
     push("master", "origin/master");
     assertTrue(rebaseOverMergeProblemDetected.get());
+  }
+
+  public void test_dont_overwrite_rebase_setting_when_chose_to_merge_due_to_unpushed_merge_commits() throws IOException {
+    generateUnpushedMergedCommitProblem();
+
+    myGitSettings.setUpdateType(UpdateMethod.REBASE);
+
+    final Ref<Boolean> rebaseOverMergeProblemDetected = Ref.create(false);
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
+      @Override
+      public int handleDialog(@NotNull GitRejectedPushUpdateDialog dialog) {
+        rebaseOverMergeProblemDetected.set(dialog.warnsAboutRebaseOverMerge());
+        return GitRejectedPushUpdateDialog.MERGE_EXIT_CODE;
+      }
+    });
+    push("master", "origin/master");
+    assertTrue(rebaseOverMergeProblemDetected.get());
+    assertEquals("Update method was overwritten by temporary update-via-merge decision",
+                 UpdateMethod.REBASE, myGitSettings.getUpdateType());
+  }
+
+  private void generateUnpushedMergedCommitProblem() throws IOException {
+    pushCommitFromBro();
+    cd(myRepository);
+    git("checkout -b branch1");
+    makeCommit("branch1.txt");
+    git("checkout master");
+    makeCommit("master.txt");
+    git("merge branch1");
   }
 
   @NotNull

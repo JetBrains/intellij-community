@@ -16,6 +16,8 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
+import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CloudApplicationRuntime extends DeploymentRuntime {
 
@@ -27,5 +29,15 @@ public abstract class CloudApplicationRuntime extends DeploymentRuntime {
 
   public String getApplicationName() {
     return myApplicationName;
+  }
+
+  @Nullable
+  public DeploymentStatus getStatus() {
+    return null;
+  }
+
+  @Nullable
+  public String getStatusText() {
+    return null;
   }
 }

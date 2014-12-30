@@ -19,10 +19,8 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -39,8 +37,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -686,25 +682,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       // 2. Waved effect
       if (attributes.isWaved()) {
-        GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-        Stroke oldStroke = g.getStroke();
-        try {
-          g.setStroke(new BasicStroke(.7F));
-          if (attributes.getWaveColor() != null) {
-            g.setColor(attributes.getWaveColor());
-          }
-          final int wavedAt = textBaseline + 1;
-          GeneralPath wavePath = new GeneralPath(PathIterator.WIND_EVEN_ODD);
-          wavePath.moveTo(offset, wavedAt);
-          for (int x = offset; x <= offset + fragmentWidth; x += 4) {
-            wavePath.lineTo(x + 2, wavedAt + 2);
-            wavePath.lineTo(x + 4, wavedAt);
-          }
-          g.draw(wavePath);
-        } finally {
-          config.restore();
-          g.setStroke(oldStroke);
+        if (attributes.getWaveColor() != null) {
+          g.setColor(attributes.getWaveColor());
         }
+        UIUtil.drawWave(g, new Rectangle(offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent())));
       }
       // 3. Underline
       if (attributes.isUnderline()) {
