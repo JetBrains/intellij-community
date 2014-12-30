@@ -1713,7 +1713,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       endVisLine = offsetToVisualLine(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine)));
     }
-    int height = endVisLine * getLineHeight() - yStartLine + getLineHeight() + WAVE_HEIGHT;
+    int height = endVisLine * getLineHeight() - yStartLine + getLineHeight() + 2;
 
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), height);
@@ -2236,7 +2236,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int y = visibleLineToY(visibleStartLine) + getAscent() + 1;
         g.setColor(attributes.getEffectColor());
         if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
-          drawWave(g, end.x, end.x + charWidth - 1, y);
+          UIUtil.drawWave((Graphics2D)g, new Rectangle(end.x, y, end.x + charWidth - 1, 2));
         }
         else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
           final int dottedAt = SystemInfo.isMac ? y - 1 : y;
@@ -3368,7 +3368,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else if (effectType == EffectType.WAVE_UNDERSCORE) {
         g.setColor(effectColor);
-        drawWave(g, xStart, xEnd, y + 1);
+        UIUtil.drawWave((Graphics2D)g, new Rectangle(xStart, y+1, xEnd - xStart, getDescent() - 1));
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_DOTTED_LINE) {
@@ -3513,25 +3513,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       g.setColor(oldColor);
     }
-  }
-
-  private static final int WAVE_HEIGHT = 2;
-  private static final int WAVE_SEGMENT_LENGTH = 4;
-
-  private static void drawWave(Graphics g, int xStart, int xEnd, int y) {
-    int startSegment = xStart / WAVE_SEGMENT_LENGTH;
-    int endSegment = xEnd / WAVE_SEGMENT_LENGTH;
-    for (int i = startSegment; i < endSegment; i++) {
-      drawWaveSegment(g, WAVE_SEGMENT_LENGTH * i, y);
-    }
-
-    int x = WAVE_SEGMENT_LENGTH * endSegment;
-    UIUtil.drawLine(g, x, y + WAVE_HEIGHT, x + WAVE_SEGMENT_LENGTH / 2, y);
-  }
-
-  private static void drawWaveSegment(Graphics g, int x, int y) {
-    UIUtil.drawLine(g, x, y + WAVE_HEIGHT, x + WAVE_SEGMENT_LENGTH / 2, y);
-    UIUtil.drawLine(g, x + WAVE_SEGMENT_LENGTH / 2, y, x + WAVE_SEGMENT_LENGTH, y + WAVE_HEIGHT);
   }
 
   private int getTextSegmentWidth(@NotNull CharSequence text,

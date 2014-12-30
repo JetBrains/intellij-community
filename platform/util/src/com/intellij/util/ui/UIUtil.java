@@ -19,6 +19,7 @@ import com.intellij.BundleBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,6 +58,7 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.GeneralPath;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -587,6 +589,26 @@ public class UIUtil {
     }
     if (bgColor != null) {
       g.setBackground(oldBg);
+    }
+  }
+
+  public static void drawWave(Graphics2D g, Rectangle rectangle) {
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    Stroke oldStroke = g.getStroke();
+    try {
+      g.setStroke(new BasicStroke(0.7F));
+      double cycle = 4;
+      final double wavedAt = rectangle.y + (double)rectangle.height /2 - .5;
+      GeneralPath wavePath = new GeneralPath();
+      wavePath.moveTo(rectangle.x, wavedAt -  Math.cos(rectangle.x * 2 * Math.PI / cycle));
+      for (int x = rectangle.x + 1; x <= rectangle.x + rectangle.width; x++) {
+        wavePath.lineTo(x, wavedAt - Math.cos(x * 2 * Math.PI / cycle) );
+      }
+      g.draw(wavePath);
+    }
+    finally {
+      config.restore();
+      g.setStroke(oldStroke);
     }
   }
 
