@@ -22,12 +22,14 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import java.util.List;
 
 public class WCInfoWithBranches extends WCInfo {
-  private final List<Branch> myBranches;
-  private final VirtualFile myRoot;
+
+  @NotNull private final List<Branch> myBranches;
+  @NotNull private final VirtualFile myRoot;
   private final String myTrunkRoot;
 
-  public WCInfoWithBranches(@NotNull final WCInfo info, final List<Branch> branches, final VirtualFile root, final String trunkToot) {
+  public WCInfoWithBranches(@NotNull WCInfo info, @NotNull List<Branch> branches, @NotNull VirtualFile root, final String trunkToot) {
     super(info.getRootInfo(), info.isIsWcRoot(), info.getStickyDepth());
+
     myBranches = branches;
     myRoot = root;
     myTrunkRoot = trunkToot;
@@ -40,14 +42,17 @@ public class WCInfoWithBranches extends WCInfo {
   }
 
   @Override
+  @NotNull
   public VirtualFile getVcsRoot() {
     return myRoot;
   }
 
+  @NotNull
   public List<Branch> getBranches() {
     return myBranches;
   }
 
+  @NotNull
   public VirtualFile getRoot() {
     return myRoot;
   }
@@ -57,18 +62,21 @@ public class WCInfoWithBranches extends WCInfo {
   }
 
   public static class Branch {
-    private final String myName;
-    private final String myUrl;
 
-    public Branch(final String url) {
+    @NotNull private final String myName;
+    @NotNull private final String myUrl;
+
+    public Branch(@NotNull String url) {
       myName = SVNPathUtil.tail(url);
       myUrl = url;
     }
 
+    @NotNull
     public String getName() {
       return myName;
     }
 
+    @NotNull
     public String getUrl() {
       return myUrl;
     }
@@ -83,16 +91,14 @@ public class WCInfoWithBranches extends WCInfo {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final Branch branch = (Branch)o;
+      Branch branch = (Branch)o;
 
-      if (myUrl != null ? !myUrl.equals(branch.myUrl) : branch.myUrl != null) return false;
-
-      return true;
+      return myUrl.equals(branch.myUrl);
     }
 
     @Override
     public int hashCode() {
-      return (myUrl != null ? myUrl.hashCode() : 0);
+      return myUrl.hashCode();
     }
   }
 }

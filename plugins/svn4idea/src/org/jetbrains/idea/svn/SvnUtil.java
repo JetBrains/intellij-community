@@ -525,6 +525,7 @@ public class SvnUtil {
     }
   }
 
+  @NotNull
   public static Depth getDepth(final SvnVcs vcs, final File file) {
     Info info = vcs.getInfo(file);
 
