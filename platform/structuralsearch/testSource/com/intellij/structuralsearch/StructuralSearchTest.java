@@ -2955,6 +2955,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern5 = "()->{/*comment*/}";
     assertEquals("should find lambdas with comment body", 1, findMatchesCount(source, pattern5));
+
+    String pattern6 = "('_Parameter+) -> System.out.println()";
+    assertEquals("should find lambdas with at least one parameter and matching body", 0, findMatchesCount(source, pattern6));
   }
 
   public void testFindDefaultMethods() {

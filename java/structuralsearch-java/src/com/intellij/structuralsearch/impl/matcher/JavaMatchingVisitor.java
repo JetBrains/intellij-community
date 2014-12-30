@@ -392,7 +392,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       result = myMatchingVisitor.matchSons(parameterList1, expression2.getParameterList());
     }
     final PsiElement body1 = getElementToMatch(expression.getBody());
-    if (body1 != null) {
+    if (body1 != null && result) {
       result = myMatchingVisitor.matchSequentially(body1, getElementToMatch(expression2.getBody()));
     }
     myMatchingVisitor.setResult(result);
