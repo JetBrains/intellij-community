@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -50,7 +51,11 @@ public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFix
     addLombokClassesToFixture();
   }
 
-  private void addLombokClassesToFixture() {
+  private void addLombokClassesToFixture() throws IOException {
+    final String absoluteTestDataPath = new File(getTestDataPath(), getBasePath()).getCanonicalPath();
+    final String absoluteLombokPath = new File(LOMBOK_SRC_PATH).getCanonicalPath();
+    final String absoluteLombokPgPath = new File(LOMBOKPG_SRC_PATH).getCanonicalPath();
+    VfsRootAccess.allowRootAccess(absoluteTestDataPath, absoluteLombokPath, absoluteLombokPgPath);
     loadFilesFrom(LOMBOK_SRC_PATH);
     loadFilesFrom(LOMBOKPG_SRC_PATH);
   }
@@ -64,7 +69,8 @@ public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFix
   }
 
   protected PsiFile loadToPsiFile(String fileName) {
-    VirtualFile virtualFile = myFixture.copyFileToProject(getBasePath() + "/" + fileName, fileName);
+    final String sourceFilePath = getBasePath() + "/" + fileName;
+    VirtualFile virtualFile = myFixture.copyFileToProject(sourceFilePath, fileName);
     myFixture.configureFromExistingVirtualFile(virtualFile);
     return myFixture.getFile();
   }
