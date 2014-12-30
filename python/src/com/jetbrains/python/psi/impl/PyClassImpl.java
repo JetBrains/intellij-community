@@ -1219,6 +1219,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     else {
       for (PyExpression expression : getSuperClassExpressions()) {
+        context.getType(expression);
         expression = unfoldClass(expression);
         if (expression instanceof PyKeywordArgument) {
           continue;

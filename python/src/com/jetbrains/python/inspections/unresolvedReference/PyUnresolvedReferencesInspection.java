@@ -38,7 +38,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyCustomMembersType;
+import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyCustomMember;
@@ -608,13 +608,15 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     /**
-     * Checks if type  is custom-member based and has custom member with certain name
+     * Checks if type  is custom type  and has custom member with certain name
      * @param refName name to check
      * @param type type
      * @return true if has one
      */
     private static boolean isHasCustomMember(@NotNull final String refName, @NotNull final PyType type) {
-      return (type instanceof PyCustomMembersType) && ((PyCustomMembersType)type).hasMember(refName);
+      // TODO: check
+      return false;
+      /*return (type instanceof PyCustomType) && ((PyCustomType)type).hasMember(refName);*/
     }
 
     /**
@@ -711,11 +713,15 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return true;
         }
       }
-      if (type instanceof PyCustomMembersType) {
+      if (type instanceof PyCustomType) {
         // Skip custom member types that mimics another class with fuzzy parents
-        PyClassType mimic = ((PyCustomMembersType)type).getTypeToMimic();
-        if (mimic != null && PyUtil.hasUnresolvedAncestors(mimic.getPyClass(), myTypeEvalContext)) {
-          return true;
+        for (final PyClassLikeType mimic : ((PyCustomType)type).getTypesToMimic()) {
+          if (!(mimic instanceof PyClassType)) {
+            continue;
+          }
+          if (PyUtil.hasUnresolvedAncestors(((PyClassType)mimic).getPyClass(), myTypeEvalContext)) {
+            return true;
+          }
         }
       }
       if (type instanceof PyClassTypeImpl) {
