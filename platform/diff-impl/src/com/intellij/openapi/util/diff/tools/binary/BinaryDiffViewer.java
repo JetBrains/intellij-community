@@ -15,29 +15,36 @@
  */
 package com.intellij.openapi.util.diff.tools.binary;
 
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.contents.BinaryFileContent;
 import com.intellij.openapi.util.diff.contents.DiffContent;
+import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.contents.EmptyContent;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.tools.util.base.ListenerDiffViewerBase;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,14 +58,11 @@ import javax.swing.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 class BinaryDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(BinaryDiffViewer.class);
-
-  private static final Pair<FileEditor, FileEditorProvider> EMPTY_EDITOR_PAIR = Pair.create(null, null);
 
   @NotNull private final BinaryDiffPanel myPanel;
   @NotNull private final BinaryContentPanel myContentPanel;
@@ -149,41 +153,55 @@ class BinaryDiffViewer extends ListenerDiffViewerBase {
   protected Couple<Pair<FileEditor, FileEditorProvider>> createEditors() {
     DiffContent[] contents = myRequest.getContents();
 
-    final DiffContent content1 = contents[0] instanceof EmptyContent ? null : contents[0];
-    final DiffContent content2 = contents[1] instanceof EmptyContent ? null : contents[1];
-
-    Pair<FileEditor, FileEditorProvider> pair1 = EMPTY_EDITOR_PAIR;
-    Pair<FileEditor, FileEditorProvider> pair2 = EMPTY_EDITOR_PAIR;
+    Pair<FileEditor, FileEditorProvider> pair1;
+    Pair<FileEditor, FileEditorProvider> pair2;
 
     try {
-      if (content1 != null) {
-        pair1 = createEditor(content1);
-      }
-      if (content2 != null) {
-        pair2 = createEditor(content2);
-      }
+      pair1 = createEditor(contents[0]);
+      pair2 = createEditor(contents[1]);
       return Couple.of(pair1, pair2);
     }
     catch (IOException e) {
       LOG.error(e);
-      return Couple.of(EMPTY_EDITOR_PAIR, EMPTY_EDITOR_PAIR);
+      Pair<FileEditor, FileEditorProvider> empty = Pair.empty();
+      return Couple.of(empty, empty);
     }
   }
 
   @NotNull
   private Pair<FileEditor, FileEditorProvider> createEditor(@NotNull final DiffContent content) throws IOException {
-    Project project = myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject();
-    VirtualFile file = ((BinaryFileContent)content).getFile();
+    if (content instanceof EmptyContent) return Pair.empty();
+    if (content instanceof BinaryFileContent) {
+      Project project = myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject();
+      VirtualFile file = ((BinaryFileContent)content).getFile();
 
-    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
-    if (providers.length == 0) throw new IOException("Can't find FileEditorProvider");
+      FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
+      if (providers.length == 0) throw new IOException("Can't find FileEditorProvider");
 
-    FileEditorProvider provider = providers[0];
-    FileEditor editor = provider.createEditor(project, file);
+      FileEditorProvider provider = providers[0];
+      FileEditor editor = provider.createEditor(project, file);
 
-    UIUtil.removeScrollBorder(editor.getComponent());
+      UIUtil.removeScrollBorder(editor.getComponent());
 
-    return Pair.create(editor, provider);
+      return Pair.create(editor, provider);
+    }
+    if (content instanceof DocumentContent) {
+      Document document = ((DocumentContent)content).getDocument();
+      final Editor editor = DiffUtil.createEditor(document, myProject, true);
+
+      TextEditorProvider provider = TextEditorProvider.getInstance();
+      TextEditor fileEditor = provider.getTextEditor(editor);
+
+      Disposer.register(fileEditor, new Disposable() {
+        @Override
+        public void dispose() {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
+      });
+
+      return Pair.<FileEditor, FileEditorProvider>create(fileEditor, provider);
+    }
+    throw new IllegalArgumentException(content.getClass() + " - " + content.toString());
   }
 
 
@@ -360,23 +378,30 @@ class BinaryDiffViewer extends ListenerDiffViewerBase {
     if (!canShowContent(contents[0], context)) return false;
     if (!canShowContent(contents[1], context)) return false;
 
-    if (contents[0] instanceof EmptyContent && contents[1] instanceof EmptyContent) return false;
-
-    return true;
+    return wantShowContent(contents[0], context) || wantShowContent(contents[1], context);
   }
 
   public static boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
     if (content instanceof EmptyContent) return true;
+    if (content instanceof DocumentContent) return true;
     if (content instanceof BinaryFileContent) {
-      if (content.getContentType() == null) return false;
-      if (!content.getContentType().isBinary() && !(content.getContentType() instanceof UIBasedFileType)) return false;
-
       Project project = context.getProject();
       if (project == null) project = ProjectManager.getInstance().getDefaultProject();
       VirtualFile file = ((BinaryFileContent)content).getFile();
 
-      if (FileEditorProviderManager.getInstance().getProviders(project, file).length == 0) return false;
-      return true;
+      return FileEditorProviderManager.getInstance().getProviders(project, file).length != 0;
+    }
+    return false;
+  }
+
+  public static boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
+    if (content instanceof EmptyContent) return false;
+    if (content instanceof DocumentContent) return false;
+    if (content instanceof BinaryFileContent) {
+      if (content.getContentType() == null) return false;
+      if (content.getContentType().isBinary()) return true;
+      if (content.getContentType() instanceof UIBasedFileType) return true;
+      return false;
     }
     return false;
   }
