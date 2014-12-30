@@ -20,7 +20,7 @@ class GetterLazyEahcToString {
 	}
 	
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof GetterLazyEahcToString;
 	}
 	

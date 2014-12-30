@@ -9,7 +9,7 @@ class ConflictingStaticConstructorNames {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof ConflictingStaticConstructorNames;
 	}
 	@java.lang.Override

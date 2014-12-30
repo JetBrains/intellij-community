@@ -78,7 +78,7 @@ class AccessorsPrefix3 {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof AccessorsPrefix3;
 	}
 	@java.lang.Override

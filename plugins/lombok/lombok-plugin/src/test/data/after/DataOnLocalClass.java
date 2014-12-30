@@ -33,7 +33,7 @@ class DataOnLocalClass1 {
 				return true;
 			}
 			@java.lang.SuppressWarnings("all")
-			public boolean canEqual(final java.lang.Object other) {
+			protected boolean canEqual(final java.lang.Object other) {
 				return other instanceof Local;
 			}
 			@java.lang.Override
@@ -93,7 +93,7 @@ class DataOnLocalClass2 {
 					return true;
 				}
 				@java.lang.SuppressWarnings("all")
-				public boolean canEqual(final java.lang.Object other) {
+				protected boolean canEqual(final java.lang.Object other) {
 					return other instanceof Local.InnerLocal;
 				}
 				@java.lang.Override
@@ -130,7 +130,7 @@ class DataOnLocalClass2 {
 				return true;
 			}
 			@java.lang.SuppressWarnings("all")
-			public boolean canEqual(final java.lang.Object other) {
+			protected boolean canEqual(final java.lang.Object other) {
 				return other instanceof Local;
 			}
 			@java.lang.Override

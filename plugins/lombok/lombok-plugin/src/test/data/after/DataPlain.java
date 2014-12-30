@@ -32,7 +32,7 @@ class Data1 {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof Data1;
 	}
 	@java.lang.Override
@@ -85,7 +85,7 @@ class Data2 {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof Data2;
 	}
 	@java.lang.Override
@@ -181,7 +181,7 @@ final class Data4 extends java.util.Calendar {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof Data4;
 	}
 	@java.lang.Override
@@ -208,7 +208,7 @@ class Data5 {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof Data5;
 	}
 	@java.lang.Override

@@ -17,7 +17,7 @@ class EqualsAndHashCodeWithSomeExistingMethods {
 }
 class EqualsAndHashCodeWithSomeExistingMethods2 {
 	int x;
-	public boolean canEqual(Object other) {
+	protected boolean canEqual(Object other) {
 		return false;
 	}
 	@java.lang.SuppressWarnings("all")
@@ -63,7 +63,7 @@ class EqualsAndHashCodeWithNoExistingMethods {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof EqualsAndHashCodeWithNoExistingMethods;
 	}
 	@java.lang.Override

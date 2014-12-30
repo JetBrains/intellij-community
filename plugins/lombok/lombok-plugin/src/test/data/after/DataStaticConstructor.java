@@ -43,7 +43,7 @@ class Entity {
     return true;
   }
 
-  public boolean canEqual(final Object other) {
+  protected boolean canEqual(final Object other) {
     return other instanceof Entity;
   }
 }

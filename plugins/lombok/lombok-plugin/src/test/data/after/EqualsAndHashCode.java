@@ -23,7 +23,7 @@ class EqualsAndHashCode {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof EqualsAndHashCode;
 	}
 	@java.lang.Override
@@ -83,7 +83,7 @@ final class EqualsAndHashCode3 extends EqualsAndHashCode {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof EqualsAndHashCode3;
 	}
 	@java.lang.Override
@@ -105,7 +105,7 @@ class EqualsAndHashCode4 extends EqualsAndHashCode {
 		return true;
 	}
 	@java.lang.SuppressWarnings("all")
-	public boolean canEqual(final java.lang.Object other) {
+	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof EqualsAndHashCode4;
 	}
 	@java.lang.Override
