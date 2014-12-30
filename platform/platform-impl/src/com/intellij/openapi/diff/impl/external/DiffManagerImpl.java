@@ -62,13 +62,13 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     }
   };
 
-  static final StringProperty FOLDERS_TOOL = new StringProperty("foldersTool", "");
-  static final StringProperty FILES_TOOL = new StringProperty("filesTool", "");
-  static final StringProperty MERGE_TOOL = new StringProperty("mergeTool", "");
-  static final StringProperty MERGE_TOOL_PARAMETERS = new StringProperty("mergeToolParameters", "");
-  static final BooleanProperty ENABLE_FOLDERS = new BooleanProperty("enableFolders", false);
-  static final BooleanProperty ENABLE_FILES = new BooleanProperty("enableFiles", false);
-  static final BooleanProperty ENABLE_MERGE = new BooleanProperty("enableMerge", false);
+  public static final StringProperty FOLDERS_TOOL = new StringProperty("foldersTool", "");
+  public static final StringProperty FILES_TOOL = new StringProperty("filesTool", "");
+  public static final StringProperty MERGE_TOOL = new StringProperty("mergeTool", "");
+  public static final StringProperty MERGE_TOOL_PARAMETERS = new StringProperty("mergeToolParameters", "");
+  public static final BooleanProperty ENABLE_FOLDERS = new BooleanProperty("enableFolders", false);
+  public static final BooleanProperty ENABLE_FILES = new BooleanProperty("enableFiles", false);
+  public static final BooleanProperty ENABLE_MERGE = new BooleanProperty("enableMerge", false);
 
 
   private final ExternalizablePropertyContainer myProperties;
