@@ -23,7 +23,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.sorters.SortByStatusAction;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,7 +44,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -307,11 +308,7 @@ public abstract class PluginManagerMain implements Disposable {
         final List<String> errors = ContainerUtil.newSmartList();
         ProgressIndicator indicator = new EmptyProgressIndicator();
 
-        List<String> hosts = ContainerUtil.newArrayList(UpdateSettings.getInstance().getPluginHosts());
-        String builtinPluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
-        if (builtinPluginsUrl != null) hosts.add(builtinPluginsUrl);
-        hosts.add(null);  // default repository
-
+        List<String> hosts = RepositoryHelper.getPluginHosts();
         Set<PluginId> unique = ContainerUtil.newHashSet();
         for (String host : hosts) {
           try {
@@ -329,7 +326,7 @@ public abstract class PluginManagerMain implements Disposable {
           }
           catch (IOException e) {
             LOG.info(host, e);
-            if (host != builtinPluginsUrl) {
+            if (host != ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) {
               errors.add(e.getMessage());
             }
           }
