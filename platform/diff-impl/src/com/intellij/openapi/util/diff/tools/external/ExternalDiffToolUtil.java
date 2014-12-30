@@ -108,8 +108,9 @@ public class ExternalDiffToolUtil {
     List<String> args = new ArrayList<String>();
     args.addAll(files);
 
+    // FIXME: respect configurable parameters
     GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(settings.getExePath());
+    commandLine.setExePath(settings.getDiffExePath());
 
     commandLine.addParameters(args);
     commandLine.createProcess();

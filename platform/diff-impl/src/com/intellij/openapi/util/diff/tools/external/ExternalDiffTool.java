@@ -33,11 +33,11 @@ public class ExternalDiffTool {
   public static final Logger LOG = Logger.getInstance(ExternalDiffTool.class);
 
   public static boolean isDefault() {
-    return ExternalDiffSettings.getInstance().isEnabled() && ExternalDiffSettings.getInstance().isDefault();
+    return ExternalDiffSettings.getInstance().isDiffEnabled() && ExternalDiffSettings.getInstance().isDiffDefault();
   }
 
   public static boolean isEnabled() {
-    return ExternalDiffSettings.getInstance().isEnabled();
+    return ExternalDiffSettings.getInstance().isDiffEnabled();
   }
 
   public static void show(@Nullable final Project project,
