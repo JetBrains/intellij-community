@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -306,16 +307,21 @@ public abstract class PluginManagerMain implements Disposable {
         final List<String> errors = ContainerUtil.newSmartList();
         ProgressIndicator indicator = new EmptyProgressIndicator();
 
+        List<String> hosts = ContainerUtil.newArrayList(UpdateSettings.getInstance().getPluginHosts());
         String builtinPluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
-        List<String> hosts = ContainerUtil.newArrayList();
-        hosts.add(null);  // default repository
         if (builtinPluginsUrl != null) hosts.add(builtinPluginsUrl);
-        hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
+        hosts.add(null);  // default repository
 
+        Set<PluginId> unique = ContainerUtil.newHashSet();
         for (String host : hosts) {
           try {
             if (host == null || acceptHost(host)) {
-              list.addAll(RepositoryHelper.loadPlugins(host, null, indicator));
+              List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, null, indicator);
+              for (IdeaPluginDescriptor plugin : plugins) {
+                if (unique.add(plugin.getPluginId())) {
+                  list.add(plugin);
+                }
+              }
             }
           }
           catch (FileNotFoundException e) {
@@ -335,6 +341,11 @@ public abstract class PluginManagerMain implements Disposable {
             setDownloadStatus(false);
 
             if (!list.isEmpty()) {
+              InstalledPluginsState state = InstalledPluginsState.getInstance();
+              for (IdeaPluginDescriptor descriptor : list) {
+                state.onDescriptorDownload(descriptor);
+              }
+
               modifyPluginsList(list);
               propagateUpdates(list);
             }

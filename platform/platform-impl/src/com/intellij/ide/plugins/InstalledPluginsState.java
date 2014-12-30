@@ -81,14 +81,21 @@ public class InstalledPluginsState {
   public void onDescriptorDownload(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId id = descriptor.getPluginId();
     IdeaPluginDescriptor existing = PluginManager.getPlugin(id);
-    if (existing != null && !existing.isBundled() && !wasUpdated(id) &&
-        PluginDownloader.compareVersionsSkipBroken(existing, descriptor.getVersion()) > 0 &&
-        !PluginManagerCore.isIncompatible(descriptor)) {
-      String idString = id.getIdString();
-      synchronized (myLock) {
+    if (existing == null || existing.isBundled() || wasUpdated(id)) {
+      return;
+    }
+
+    boolean newer = PluginDownloader.compareVersionsSkipBroken(existing, descriptor.getVersion()) > 0 && !PluginManagerCore.isIncompatible(descriptor);
+    String idString = id.getIdString();
+
+    synchronized (myLock) {
+      if (newer) {
         if (!myUpdateSettings.myOutdatedPlugins.contains(idString)) {
           myUpdateSettings.myOutdatedPlugins.add(idString);
         }
+      }
+      else {
+        myUpdateSettings.myOutdatedPlugins.remove(idString);
       }
     }
   }
