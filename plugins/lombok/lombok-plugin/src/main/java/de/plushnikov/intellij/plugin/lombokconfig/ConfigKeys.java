@@ -12,6 +12,7 @@ public enum ConfigKeys {
   LOG_FIELD_IS_STATIC("lombok.log.fieldIsStatic", "true"),
 
   EQUALSANDHASHCODE_DO_NOT_USE_GETTERS("lombok.equalsAndHashCode.doNotUseGetters", "false"),
+  ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES("lombok.anyConstructor.suppressConstructorProperties", "false"),
 
   TOSTRING_DO_NOT_USE_GETTERS("lombok.toString.doNotUseGetters", "false"),
   TOSTRING_INCLUDE_FIELD_NAMES("lombok.toString.includeFieldNames", "true"),
@@ -38,7 +39,7 @@ public enum ConfigKeys {
   //TODO ADD ALL KEYS
   final Collection<String> booleanOptions = new HashSet<String>(Arrays.asList(
       "config.stopBubbling", "lombok.accessors.chain", "lombok.accessors.fluent",
-      "lombok.anyConstructor.suppressConstructorProperties", "lombok.getter.noIsPrefix"));
+      "lombok.getter.noIsPrefix"));
 
   final Collection<String> flagUsageOptions = new HashSet<String>(Arrays.asList(
       "lombok.accessors.flagUsage", "lombok.allArgsConstructor.flagUsage", "lombok.anyConstructor.flagUsage",

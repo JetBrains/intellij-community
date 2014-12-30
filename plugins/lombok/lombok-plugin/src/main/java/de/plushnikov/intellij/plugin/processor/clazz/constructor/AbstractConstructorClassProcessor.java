@@ -14,6 +14,8 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -154,18 +156,29 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
   @NotNull
   protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params, @Nullable String staticName) {
-    final String suppressConstructorProperties = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "suppressConstructorProperties", String.class);
-
     final boolean staticConstructorRequired = isStaticConstructor(staticName);
 
     final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodVisibility;
 
-    PsiMethod constructor = createConstructor(psiClass, constructorVisibility, Boolean.valueOf(suppressConstructorProperties), params, psiAnnotation);
+    final boolean suppressConstructorProperties = readSuppressConstructorPropertiesFlag(psiClass, psiAnnotation);
+
+    final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, suppressConstructorProperties, params, psiAnnotation);
     if (staticConstructorRequired) {
       PsiMethod staticConstructor = createStaticConstructor(psiClass, staticName, params, psiAnnotation);
       return Arrays.asList(constructor, staticConstructor);
     }
     return Collections.singletonList(constructor);
+  }
+
+  private boolean readSuppressConstructorPropertiesFlag(PsiClass psiClass, PsiAnnotation psiAnnotation) {
+    final boolean suppressConstructorProperties;
+    final Boolean suppressConstructorPropertiesAnnotationValue = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "suppressConstructorProperties", Boolean.class);
+    if (null == suppressConstructorPropertiesAnnotationValue) {
+      suppressConstructorProperties = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES, psiClass);
+    } else {
+      suppressConstructorProperties = suppressConstructorPropertiesAnnotationValue.booleanValue();
+    }
+    return suppressConstructorProperties;
   }
 
   private PsiMethod createConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, boolean suppressConstructorProperties, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {
