@@ -18,12 +18,22 @@ import java.util.Collections;
 import java.util.List;
 
 public class DiffRequestPanelImpl implements DiffRequestPanel {
+  @NotNull private final JPanel myPanel;
   @NotNull private final MyCacheDiffRequestChainProcessor myProcessor;
   @NotNull private final MyRequestChain myChain;
 
   public DiffRequestPanelImpl(@Nullable Project project, @Nullable Window window) {
     myChain = new MyRequestChain();
     myProcessor = new MyCacheDiffRequestChainProcessor(project, window, myChain);
+
+    myPanel = new JPanel(new BorderLayout()) {
+      @Override
+      public void addNotify() {
+        super.addNotify();
+        myProcessor.updateRequest();
+      }
+    };
+    myPanel.add(myProcessor.getComponent());
   }
 
   @Override
@@ -40,7 +50,7 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
   @NotNull
   @Override
   public JComponent getComponent() {
-    return myProcessor.getComponent();
+    return myPanel;
   }
 
   @Nullable

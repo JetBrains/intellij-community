@@ -654,12 +654,6 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
       super(new BorderLayout());
     }
 
-    @Override
-    public void addNotify() {
-      super.addNotify();
-      updateRequest();
-    }
-
     @Nullable
     @Override
     public Object getData(@NonNls String dataId) {
