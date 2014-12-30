@@ -64,6 +64,7 @@ import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -367,6 +368,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
         if (!ignoreUnresolved) {
+          if (isReferenceToSubModuleAvailableViaImportSideEffects(node)) {
+            severity = HighlightSeverity.WEAK_WARNING;
+          }
           registerUnresolvedReferenceProblem(node, reference, severity);
         }
         // don't highlight unresolved imports as unused
@@ -402,8 +406,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             final PyTargetExpression asElement = importElement.getAsNameElement();
             final PyElement toHighlight = asElement != null ? asElement : node;
             registerProblem(toHighlight,
-                            PyBundle.message("INSP.try.except.import.error",
-                                             visibleName),
+                            PyBundle.message("INSP.try.except.import.error", visibleName),
                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
           }
         }
@@ -494,11 +497,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return;
         }
         // may be a "try: import ..."; not an error not to resolve
-        if ((
-          PsiTreeUtil.getParentOfType(
-            PsiTreeUtil.getParentOfType(node, PyImportElement.class), PyTryExceptStatement.class, PyIfStatement.class
-          ) != null
-        )) {
+        if (PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(node, PyImportElement.class),
+                                        PyTryExceptStatement.class, PyIfStatement.class) != null) {
           severity = HighlightSeverity.WEAK_WARNING;
           description = PyBundle.message("INSP.module.$0.not.found", refText);
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
@@ -560,15 +560,18 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           addCreateClassFix(refText, element, actions);
         }
       }
-      ProblemHighlightType hl_type;
+      final ProblemHighlightType hlType;
       if (severity == HighlightSeverity.WARNING) {
-        hl_type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        hlType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
       else if (severity == HighlightSeverity.ERROR) {
-        hl_type = ProblemHighlightType.GENERIC_ERROR;
+        hlType = ProblemHighlightType.GENERIC_ERROR;
+      }
+      else if (severity == HighlightSeverity.WEAK_WARNING) {
+        hlType = ProblemHighlightType.WEAK_WARNING;
       }
       else {
-        hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
+        hlType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
       }
 
       if (element != null) {
@@ -603,7 +606,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
       }
-      registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(new LocalQuickFix[actions.size()]));
+      registerProblem(node, description, hlType, null, rangeInElement, actions.toArray(new LocalQuickFix[actions.size()]));
     }
 
     /**
@@ -1072,7 +1075,52 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
     }
+
+    private boolean isReferenceToSubModuleAvailableViaImportSideEffects(@NotNull PyElement node) {
+      final PyResolveContext context = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+      if (node instanceof PyReferenceExpression && ((PyReferenceExpression)node).isQualified()) {
+        final PyExpression qualifier = ((PyReferenceExpression)node).getQualifier();
+        if (qualifier instanceof PyReferenceOwner) {
+          for (ResolveResult result : ((PyReferenceOwner)qualifier).getReference(context).multiResolve(false)) {
+            if (result instanceof ImportedResolveResult) {
+              final PsiElement element = result.getElement();
+              for (PsiElement definer : ((ImportedResolveResult)result).getNameDefiners()) {
+                if (definer instanceof PyImportElement && definer.getParent() instanceof PyImportStatement) {
+                  final PyImportElement importElement = ((PyImportElement)definer);
+                  QualifiedName prefix = null;
+                  if (element instanceof PyFile || element instanceof PsiDirectory) {
+                    QualifiedName importedName = ((PyImportElement)definer).getImportedQName();
+                    while (importedName != null && importedName.getComponentCount() != 0) {
+                      if (PyUtil.turnInitIntoDir(ResolveImportUtil.resolveImportElement(importElement, importedName)) == element) {
+                        prefix = importedName;
+                        break;
+                      }
+                      importedName = importedName.removeLastComponent();
+                    }
+                  }
+                  else if (element instanceof PyImportedModule) {
+                    prefix = ((PyImportedModule)element).getImportedPrefix();
+                  }
+                  else {
+                    continue;
+                  }
+                  if (prefix != null) {
+                    final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement, prefix.append(node.getName()));
+                    if (resolved != null) {
+                      return true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return false;
+    }
   }
+
+
 
   /**
    * Checks if one or more extension points ask unused import to be skipped

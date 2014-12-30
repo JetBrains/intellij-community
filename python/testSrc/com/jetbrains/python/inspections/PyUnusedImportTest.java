@@ -57,7 +57,7 @@ public class PyUnusedImportTest extends PyTestCase {
   private void doTest(@NotNull String filename) {
     myFixture.copyDirectoryToProject("inspections/unusedImport/" + getTestName(true), "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    myFixture.testHighlighting(true, false, false, filename);
+    myFixture.testHighlighting(true, false, true, filename);
   }
 
   // PY-14806

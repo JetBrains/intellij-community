@@ -59,7 +59,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
         myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
         myFixture.configureFromTempProjectFile(filename);
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-        myFixture.checkHighlighting(true, false, false);
+        myFixture.checkHighlighting(true, false, true);
       }
     });
   }
@@ -115,5 +115,15 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   // PY-14385
   public void testNotImportedSubmodulesOfNamespacePackage() {
     doMultiFileTest("main.py");
+  }
+
+  // PY-14615
+  public void testImplicitlyAvailableSubModuleOfNamespacePackage() throws Exception {
+    doMultiFileTest("a.py");
+  }
+
+  // PY-14615
+  public void testImplicitlyAvailableSubModuleOfNormalPackage() throws Exception {
+    doMultiFileTest("a.py");
   }
 }
