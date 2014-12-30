@@ -61,6 +61,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -111,7 +112,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       return (ModuleBuilder)key.createModuleBuilder();
     }
   };
-  private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<String, ModuleWizardStep>();
+  private final Map<String, ModuleWizardStep> myCustomSteps = new THashMap<String, ModuleWizardStep>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private JPanel myPanel;
   private JPanel myOptionsPanel;
@@ -639,16 +640,32 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   @TestOnly
-  public boolean setSelectedTemplate(String group, String name) {
+  public String availableTemplateGroupsToString() {
+    ListModel model = myProjectTypeList.getModel();
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < model.getSize(); i++) {
+      if (builder.length() > 0) {
+        builder.append(", ");
+      }
+      builder.append(((TemplatesGroup)model.getElementAt(i)).getName());
+    }
+    return builder.toString();
+  }
+
+  @TestOnly
+  public boolean setSelectedTemplate(@NotNull String group, @Nullable String name) {
     ListModel model = myProjectTypeList.getModel();
     for (int i = 0; i < model.getSize(); i++) {
       TemplatesGroup templatesGroup = (TemplatesGroup)model.getElementAt(i);
       if (group.equals(templatesGroup.getName())) {
         myProjectTypeList.setSelectedIndex(i);
-        if (name == null) return getSelectedGroup().getName().equals(group);
-        Collection<ProjectTemplate> templates = myTemplatesMap.get(templatesGroup);
-        setTemplatesList(templatesGroup, templates, false);
-        return myTemplatesList.setSelectedTemplate(name);
+        if (name == null) {
+          return getSelectedGroup().getName().equals(group);
+        }
+        else {
+          setTemplatesList(templatesGroup, myTemplatesMap.get(templatesGroup), false);
+          return myTemplatesList.setSelectedTemplate(name);
+        }
       }
     }
     return false;

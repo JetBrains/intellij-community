@@ -122,7 +122,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     return new StorageData(myRootElementName);
   }
 
-  public void setDefaultState(final Element element) {
+  public void setDefaultState(@NotNull Element element) {
     myLoadedData = createStorageData();
     loadState(myLoadedData, element);
   }
