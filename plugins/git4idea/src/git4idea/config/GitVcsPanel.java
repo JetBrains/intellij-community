@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.List;
 
 /**
@@ -84,6 +87,13 @@ public class GitVcsPanel {
     mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Git"));
     myProtectedBranchesLabel.setLabelFor(myProtectedBranchesButton);
+    myEnableForcePush.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        UIUtil.setEnabled(myProtectedBranchesButton, myEnableForcePush.isSelected(), true);
+        UIUtil.setEnabled(myProtectedBranchesLabel, myEnableForcePush.isSelected(), false);
+      }
+    });
   }
 
   /**
