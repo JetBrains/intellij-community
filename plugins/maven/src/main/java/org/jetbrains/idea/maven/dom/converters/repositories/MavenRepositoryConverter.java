@@ -18,10 +18,10 @@ package org.jetbrains.idea.maven.dom.converters.repositories;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.UrlPsiReference;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ResolvingConverter;
@@ -76,8 +76,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
     @NotNull
     @Override
     public PsiReference[] createReferences(GenericDomValue value, final PsiElement element, final ConvertContext context) {
-      return new PsiReference[]{new UrlPsiReference(element) {
-
+      return new PsiReference[]{new WebReference(element) {
         @NotNull
         @Override
         public Object[] getVariants() {
