@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 
@@ -208,11 +209,26 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return null;
   }
 
+  @Nullable
+  private static Element loadElementOrNull(@Nullable InputStream stream) {
+    try {
+      return JDOMUtil.load(stream);
+    }
+    catch (JDOMException e) {
+      LOG.warn(e);
+      return null;
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
   private void readSchemesFromProviders(@NotNull Map<String, E> result) {
     assert myProvider != null;
     for (String subPath : myProvider.listSubFiles(myFileSpec, myRoamingType)) {
       try {
-        Element element = StorageUtil.loadElement(myProvider.loadContent(getFileFullPath(subPath), myRoamingType));
+        Element element = loadElementOrNull(myProvider.loadContent(getFileFullPath(subPath), myRoamingType));
         if (element == null) {
           return;
         }
@@ -368,7 +384,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
 
       String schemePath = element.getAttributeValue("original-scheme-path");
-      Element sharedElement = myProvider != null && myProvider.isEnabled() ? StorageUtil.loadElement(myProvider.loadContent(schemePath, myRoamingType)) : null;
+      Element sharedElement = myProvider != null && myProvider.isEnabled() ? loadElementOrNull(myProvider.loadContent(schemePath, myRoamingType)) : null;
       if (sharedElement == null) {
         Element localCopyElement = element.getChild("scheme-local-copy");
         E scheme = localCopyElement == null ? null : doReadScheme(localCopyElement.getChildren().get(0));
