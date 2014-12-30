@@ -17,8 +17,8 @@ class EqualsAndHashCodeWithSomeExistingMethods {
 @Setter(NONE)
 class EqualsAndHashCodeWithSomeExistingMethods2 {
 	int x;
-	
-	public boolean canEqual(Object other) {
+
+	protected boolean canEqual(Object other) {
 		return false;
 	}
 }

@@ -7,7 +7,7 @@ class EqualsAndHashCodeWithSomeExistingMethods {
 	}
 	@java.lang.SuppressWarnings("all")
 	public EqualsAndHashCodeWithSomeExistingMethods() {
-		
+
 	}
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
@@ -22,6 +22,24 @@ class EqualsAndHashCodeWithSomeExistingMethods2 {
 	}
 	@java.lang.SuppressWarnings("all")
 	public EqualsAndHashCodeWithSomeExistingMethods2() {
+	}
+	@java.lang.Override
+	@java.lang.SuppressWarnings("all")
+	public boolean equals(final java.lang.Object o) {
+		if (o == this) return true;
+		if (!(o instanceof EqualsAndHashCodeWithSomeExistingMethods2)) return false;
+		final EqualsAndHashCodeWithSomeExistingMethods2 other = (EqualsAndHashCodeWithSomeExistingMethods2)o;
+		if (!other.canEqual((java.lang.Object)this)) return false;
+		if (this.x != other.x) return false;
+		return true;
+	}
+	@java.lang.Override
+	@java.lang.SuppressWarnings("all")
+	public int hashCode() {
+		final int PRIME = 59;
+		int result = 1;
+		result = result * PRIME + this.x;
+		return result;
 	}
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
@@ -50,7 +68,7 @@ class EqualsAndHashCodeWithNoExistingMethods {
 	int x;
 	@java.lang.SuppressWarnings("all")
 	public EqualsAndHashCodeWithNoExistingMethods() {
-		
+
 	}
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")

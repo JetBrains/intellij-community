@@ -59,7 +59,7 @@ class EqualsAndHashCodeNoGetters {
         result = result * PRIME + Float.floatToIntBits(this.f);
         final long $d = Double.doubleToLongBits(this.d);
         result = result * PRIME + (int) ($d >>> 32 ^ $d);
-        result = ((result * PRIME) + (this.bool ? 79 : 97));
+        result = result * PRIME + (this.bool ? 79 : 97);
         result = result * PRIME + java.util.Arrays.hashCode(this.y);
         result = result * PRIME + java.util.Arrays.deepHashCode(this.z);
         final Object $a = this.a;
@@ -67,7 +67,7 @@ class EqualsAndHashCodeNoGetters {
         return result;
     }
 
-    public boolean canEqual(Object other) {
+    protected boolean canEqual(Object other) {
         return other instanceof EqualsAndHashCodeNoGetters;
     }
 }

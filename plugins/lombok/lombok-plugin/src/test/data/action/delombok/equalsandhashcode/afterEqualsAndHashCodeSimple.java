@@ -59,7 +59,7 @@ class EqualsAndHashCodeSimple {
         result = result * PRIME + Float.floatToIntBits(this.getF());
         final long $d = Double.doubleToLongBits(this.getD());
         result = result * PRIME + (int) ($d >>> 32 ^ $d);
-        result = ((result * PRIME) + (this.isBool() ? 79 : 97));
+        result = result * PRIME + (this.isBool() ? 79 : 97);
         result = result * PRIME + java.util.Arrays.hashCode(this.y);
         result = result * PRIME + java.util.Arrays.deepHashCode(this.z);
         final Object $a = this.getA();
@@ -67,7 +67,7 @@ class EqualsAndHashCodeSimple {
         return result;
     }
 
-    public boolean canEqual(Object other) {
+    protected boolean canEqual(Object other) {
         return other instanceof EqualsAndHashCodeSimple;
     }
 }

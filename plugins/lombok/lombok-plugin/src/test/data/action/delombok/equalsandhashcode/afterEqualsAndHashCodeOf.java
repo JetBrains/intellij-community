@@ -51,7 +51,7 @@ class EqualsAndHashCodeSimpleOf {
         return result;
     }
 
-    public boolean canEqual(Object other) {
+    protected boolean canEqual(Object other) {
         return other instanceof EqualsAndHashCodeSimpleOf;
     }
 }

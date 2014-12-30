@@ -13,6 +13,7 @@ final class EqualsAndHashCode2 {
 	long y;
 	float f;
 	double d;
+	boolean b;
 }
 
 @lombok.EqualsAndHashCode(callSuper=false)

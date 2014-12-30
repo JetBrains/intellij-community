@@ -32,7 +32,7 @@ public class Test {
     final class EqualsAndHashCodeWithExistingMethods3 extends EqualsAndHashCodeWithExistingMethods {
         int x;
 
-        public boolean canEqual(Object other) {
+        protected boolean canEqual(Object other) {
             return true;
         }
     }

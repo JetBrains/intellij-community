@@ -56,12 +56,12 @@ class EqualsAndHashCodeCallSuper extends java.util.Date {
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
-        result = ((result * PRIME) + super.hashCode());
+        result = result * PRIME + super.hashCode();
         result = result * PRIME + this.getX();
         result = result * PRIME + Float.floatToIntBits(this.getF());
         final long $d = Double.doubleToLongBits(this.getD());
         result = result * PRIME + (int) ($d >>> 32 ^ $d);
-        result = ((result * PRIME) + (this.isBool() ? 79 : 97));
+        result = result * PRIME + (this.isBool() ? 79 : 97);
         result = result * PRIME + java.util.Arrays.hashCode(this.y);
         result = result * PRIME + java.util.Arrays.deepHashCode(this.z);
         final Object $a = this.getA();
@@ -69,7 +69,7 @@ class EqualsAndHashCodeCallSuper extends java.util.Date {
         return result;
     }
 
-    public boolean canEqual(Object other) {
+    protected boolean canEqual(Object other) {
         return other instanceof EqualsAndHashCodeCallSuper;
     }
 }

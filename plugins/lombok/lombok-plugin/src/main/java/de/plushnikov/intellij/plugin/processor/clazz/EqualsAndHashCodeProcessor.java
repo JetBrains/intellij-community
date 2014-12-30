@@ -88,21 +88,12 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   protected boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    boolean result = true;
-
-    if (areMethodsAlreadyExists(psiClass)) {
-      final boolean needsCanEqual = shouldGenerateCanEqual(psiClass);
-      builder.addWarning("Not generating equals%s: A method with one of those names already exists. (Either all or none of these methods will be generated).",
-          needsCanEqual ? ", hashCode and canEquals" : " and hashCode");
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    if (PsiMethodUtil.hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME)) {
+      builder.addWarning("Not generating equals and hashCode: A method with one of those names already exists. (Either both or none of these methods will be generated).");
       return false;
     }
-
-    return result;
-  }
-
-  private boolean areMethodsAlreadyExists(@NotNull PsiClass psiClass) {
-    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    return PsiMethodUtil.hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME, CAN_EQUAL_METHOD_NAME);
+    return true;
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
@@ -110,7 +101,8 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   protected Collection<PsiMethod> createEqualAndHashCode(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    if (areMethodsAlreadyExists(psiClass)) {
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    if (PsiMethodUtil.hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME)) {
       return Collections.emptyList();
     }
 
@@ -120,7 +112,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     result.add(createEqualsMethod(psiClass, psiAnnotation, shouldGenerateCanEqual));
     result.add(createHashCodeMethod(psiClass, psiAnnotation, shouldGenerateCanEqual));
 
-    if (shouldGenerateCanEqual) {
+    if (shouldGenerateCanEqual && !PsiMethodUtil.hasMethodByName(classMethods, CAN_EQUAL_METHOD_NAME)) {
       result.add(createCanEqualMethod(psiClass, psiAnnotation));
     }
 
@@ -260,7 +252,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       builder.append("int result = 1;\n");
 
       if (callSuper) {
-        builder.append("result = ((result * PRIME) + super.hashCode());\n");
+        builder.append("result = result * PRIME + super.hashCode();\n");
       }
 
       for (PsiField classField : psiFields) {
@@ -271,7 +263,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
         final PsiType classFieldType = classField.getType();
         if (classFieldType instanceof PsiPrimitiveType) {
           if (PsiType.BOOLEAN.equals(classFieldType)) {
-            builder.append("result = ((result * PRIME) + (this.").append(fieldAccessor).append(" ? ").append(PRIME_FOR_TRUE).append(" : ").append(PRIME_FOR_FALSE).append("));\n");
+            builder.append("result = result * PRIME + (this.").append(fieldAccessor).append(" ? ").append(PRIME_FOR_TRUE).append(" : ").append(PRIME_FOR_FALSE).append(");\n");
           } else if (PsiType.LONG.equals(classFieldType)) {
             builder.append("final long $").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
             builder.append("result = result * PRIME + (int)($").append(fieldName).append(" >>> 32 ^ $").append(fieldName).append(");\n");
