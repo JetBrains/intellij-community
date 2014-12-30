@@ -840,8 +840,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiElement element2 = ((PsiJavaReference)el2).resolve();
 
       if (element2 instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)element2;
-        return text.equals(aClass.getQualifiedName()) || text.equals(aClass.getName());
+        return text.equals(((PsiClass)element2).getQualifiedName());
       }
       else {
         return MatchUtils.compareWithNoDifferenceToPackage(text, text2);
