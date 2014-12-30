@@ -161,7 +161,8 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
 
     if (shouldCompareModifiers()) {
       for (String modifier : MODIFIERS_TO_COMPARE) {
-        assertEquals(modifier + " Modifier is not equal; ", afterModifierList.hasModifierProperty(modifier), beforeModifierList.hasModifierProperty(modifier));
+        boolean haveSameModifiers = afterModifierList.hasModifierProperty(modifier) == beforeModifierList.hasModifierProperty(modifier);
+        assertTrue(modifier + " Modifier is not equal; ", haveSameModifiers);
       }
     }
     if (shouldCompareAnnotations()) {
