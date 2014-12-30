@@ -22,7 +22,19 @@ public class IpnbPyParser extends PyParser {
   @NotNull
   @Override
   public ASTNode parse(IElementType root, PsiBuilder builder) {
+    final PsiBuilder.Marker rootMarker = builder.mark();
+
     myIPythonStartSymbol = PyConsoleParser.startsWithIPythonSpecialSymbol(builder);
-    return super.parse(root, builder);
+
+    ParsingContext context = createParsingContext(builder, LanguageLevel.getDefault(), null);
+
+    StatementParsing statementParser = context.getStatementParser();
+    builder.setTokenTypeRemapper(statementParser);
+
+    while (!builder.eof()) {
+      statementParser.parseStatement(context.emptyParsingScope());
+    }
+    rootMarker.done(root);
+    return builder.getTreeBuilt();
   }
 }
