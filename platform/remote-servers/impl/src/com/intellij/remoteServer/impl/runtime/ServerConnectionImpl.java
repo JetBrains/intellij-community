@@ -177,7 +177,19 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
       @Override
       public void addDeployment(@NotNull String deploymentName, @Nullable DeploymentRuntime deploymentRuntime) {
-        myDeployments.add(new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYED, null, deploymentRuntime, null));
+        addDeployment(deploymentName, deploymentRuntime, null, null);
+      }
+
+      @Override
+      public void addDeployment(@NotNull String deploymentName,
+                                @Nullable DeploymentRuntime deploymentRuntime,
+                                @Nullable DeploymentStatus deploymentStatus,
+                                @Nullable String deploymentStatusText) {
+        myDeployments.add(new DeploymentImpl(deploymentName,
+                                             deploymentStatus == null ? DeploymentStatus.DEPLOYED : deploymentStatus,
+                                             deploymentStatusText,
+                                             deploymentRuntime,
+                                             null));
       }
 
       @Override
