@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 public class RequestHint {
   public static final int STOP = 0;
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.RequestHint");
+  private final int mySize;
   private final int myDepth;
   private final SourcePosition myPosition;
   private final int myFrameCount;
@@ -57,14 +58,15 @@ public class RequestHint {
   private boolean myRestoreBreakpoints = false;
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull MethodFilter methodFilter) {
-    this(stepThread, suspendContext, StepRequest.STEP_INTO, methodFilter);
+    this(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, methodFilter);
   }
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth) {
-    this(stepThread, suspendContext, depth, null);
+    this(stepThread, suspendContext, StepRequest.STEP_LINE, depth, null);
   }
 
-  private RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth, @Nullable MethodFilter methodFilter) {
+  private RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int stepSize, int depth, @Nullable MethodFilter methodFilter) {
+    mySize = stepSize;
     myDepth = depth;
     myMethodFilter = methodFilter;
 
@@ -119,6 +121,10 @@ public class RequestHint {
 
   public boolean isIgnoreFilters() {
     return myIgnoreFilters;
+  }
+
+  public int getSize() {
+    return mySize;
   }
 
   public int getDepth() {

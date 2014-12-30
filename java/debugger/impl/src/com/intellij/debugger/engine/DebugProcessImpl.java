@@ -368,10 +368,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
    *
    * @param suspendContext
    * @param stepThread
+   * @param size the step size. One of {@link StepRequest#STEP_LINE} or {@link StepRequest#STEP_MIN}
    * @param depth
    * @param hint may be null
    */
-  protected void doStep(final SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int depth, RequestHint hint) {
+  protected void doStep(final SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
+                        RequestHint hint) {
     if (stepThread == null) {
       return;
     }
@@ -382,7 +384,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       deleteStepRequests(stepThreadReference);
       EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
-      StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, StepRequest.STEP_LINE, depth);
+      StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, size, depth);
       if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
         final List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
         DebuggerSettings settings = DebuggerSettings.getInstance();
@@ -1410,8 +1412,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private class StepOutCommand extends ResumeCommand {
-    public StepOutCommand(SuspendContextImpl suspendContext) {
+    private final int myStepSize;
+
+    public StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
       super(suspendContext);
+      myStepSize = stepSize;
     }
 
     @Override
@@ -1426,7 +1431,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (rvWatcher != null) {
         rvWatcher.enable(thread.getThreadReference());
       }
-      doStep(suspendContext, thread, StepRequest.STEP_OUT, hint);
+      doStep(suspendContext, thread, myStepSize, StepRequest.STEP_OUT, hint);
       super.contextAction();
     }
   }
@@ -1436,14 +1441,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private final MethodFilter mySmartStepFilter;
     @Nullable
     private final StepIntoBreakpoint myBreakpoint;
+    private final int myStepSize;
 
-    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter) {
+    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter,
+                           int stepSize) {
       super(suspendContext);
       myForcedIgnoreFilters = ignoreFilters || methodFilter != null;
       mySmartStepFilter = methodFilter;
       myBreakpoint = methodFilter instanceof BreakpointStepMethodFilter ?
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addStepIntoBreakpoint(((BreakpointStepMethodFilter)methodFilter)) :
         null;
+      myStepSize = stepSize;
     }
 
     @Override
@@ -1469,17 +1477,19 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myBreakpoint.createRequest(suspendContext.getDebugProcess());
         myRunToCursorBreakpoint = myBreakpoint;
       }
-      doStep(suspendContext, stepThread, StepRequest.STEP_INTO, hint);
+      doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_INTO, hint);
       super.contextAction();
     }
   }
 
   private class StepOverCommand extends ResumeCommand {
     private final boolean myIsIgnoreBreakpoints;
+    private final int myStepSize;
 
-    public StepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {
+    public StepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
       super(suspendContext);
       myIsIgnoreBreakpoints = ignoreBreakpoints;
+      myStepSize = stepSize;
     }
 
     @Override
@@ -1501,7 +1511,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         rvWatcher.enable(stepThread.getThreadReference());
       }
 
-      doStep(suspendContext, stepThread, StepRequest.STEP_OVER, hint);
+      doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_OVER, hint);
 
       if (myIsIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
@@ -1945,15 +1955,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {
-    return new StepOverCommand(suspendContext, ignoreBreakpoints);
+    return createStepOverCommand(suspendContext, ignoreBreakpoints, StepRequest.STEP_LINE);
+  }
+
+  public ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
+    return new StepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
   }
 
   public ResumeCommand createStepOutCommand(SuspendContextImpl suspendContext) {
-    return new StepOutCommand(suspendContext);
+    return createStepOutCommand(suspendContext, StepRequest.STEP_LINE);
+  }
+
+  public ResumeCommand createStepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
+    return new StepOutCommand(suspendContext, stepSize);
   }
 
   public ResumeCommand createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final MethodFilter smartStepFilter) {
-    return new StepIntoCommand(suspendContext, ignoreFilters, smartStepFilter);
+    return createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, StepRequest.STEP_LINE);
+  }
+
+  public ResumeCommand createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final MethodFilter smartStepFilter,
+                                             int stepSize) {
+    return new StepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
   }
 
   public ResumeCommand createRunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex,
