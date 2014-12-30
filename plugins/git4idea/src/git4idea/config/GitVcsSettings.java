@@ -97,8 +97,9 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return PeriodicalTasksCloser.getInstance().safeGetService(project, GitVcsSettings.class);
   }
 
+  @NotNull
   public UpdateMethod getUpdateType() {
-    return myState.UPDATE_TYPE;
+    return ObjectUtils.notNull(myState.UPDATE_TYPE, UpdateMethod.BRANCH_DEFAULT);
   }
 
   public void setUpdateType(UpdateMethod updateType) {
