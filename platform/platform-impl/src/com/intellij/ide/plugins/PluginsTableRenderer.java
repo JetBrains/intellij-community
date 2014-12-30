@@ -85,14 +85,14 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     myCategory.setText("");
     myLastUpdated.setFont(smallFont);
 
-    if (!showFullInfo || !(pluginDescriptor instanceof PluginNode)) {
+    if (myPluginsView || pluginDescriptor.getDownloads() == null || !(pluginDescriptor instanceof PluginNode)) {
       myPanel.remove(myRightPanel);
     }
-    if (!showFullInfo) {
+    if (myPluginsView) {
       myInfoPanel.remove(myBottomPanel);
     }
 
-    myPanel.setBorder(UIUtil.isRetina() ? new EmptyBorder(4,3,4,3) : new EmptyBorder(2,3,2,3));
+    myPanel.setBorder(UIUtil.isRetina() ? new EmptyBorder(4, 3, 4, 3) : new EmptyBorder(2, 3, 2, 3));
   }
 
   private void createUIComponents() {
@@ -134,6 +134,9 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       if (category != null) {
         myCategory.setText(category.toUpperCase(Locale.getDefault()));
       }
+      else if (!myPluginsView) {
+        myCategory.setText(AvailablePluginsManagerMain.N_A);
+      }
 
       myStatus.setIcon(AllIcons.Nodes.Plugin);
       if (myPluginDescriptor.isBundled()) {
@@ -145,19 +148,15 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         myStatus.setIcon(AllIcons.Nodes.PluginJB);
       }
 
-      if (myPluginDescriptor instanceof PluginNode) {
-        PluginNode pluginNode = (PluginNode)myPluginDescriptor;
-
-        String downloads = pluginNode.getDownloads();
-        if (downloads != null) {
-          if (downloads.length() > 3) {
-            downloads = new DecimalFormat("#,###").format(Integer.parseInt(downloads));
-          }
-          myDownloads.setText(downloads);
+      String downloads = myPluginDescriptor.getDownloads();
+      if (downloads != null && myPluginDescriptor instanceof PluginNode) {
+        if (downloads.length() > 3) {
+          downloads = new DecimalFormat("#,###").format(Integer.parseInt(downloads));
         }
+        myDownloads.setText(downloads);
 
-        myRating.setRate(pluginNode.getRating());
-        myLastUpdated.setText(DateFormatUtil.formatBetweenDates(pluginNode.getDate(), System.currentTimeMillis()));
+        myRating.setRate(((PluginNode)myPluginDescriptor).getRating());
+        myLastUpdated.setText(DateFormatUtil.formatBetweenDates(((PluginNode)myPluginDescriptor).getDate(), System.currentTimeMillis()));
       }
 
       // plugin state-dependent rendering

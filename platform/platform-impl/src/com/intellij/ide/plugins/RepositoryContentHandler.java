@@ -106,7 +106,7 @@ class RepositoryContentHandler extends DefaultHandler {
       if (id != null) {
         currentPlugin.setId(id);
       }
-      currentPlugin.setUrl(attributes.getValue(URL));
+      currentPlugin.setDownloadUrl(attributes.getValue(URL));
       currentPlugin.setVersion(attributes.getValue(VERSION));
       currentPlugin.setIncomplete(true);
       plugins.add(currentPlugin);

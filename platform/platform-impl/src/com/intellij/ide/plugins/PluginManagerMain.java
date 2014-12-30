@@ -23,7 +23,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.sorters.SortByStatusAction;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,6 +34,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -41,7 +44,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -306,16 +308,17 @@ public abstract class PluginManagerMain implements Disposable {
         final List<String> errors = ContainerUtil.newSmartList();
         ProgressIndicator indicator = new EmptyProgressIndicator();
 
-        String builtinPluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
-        List<String> hosts = ContainerUtil.newArrayList();
-        hosts.add(null);  // default repository
-        if (builtinPluginsUrl != null) hosts.add(builtinPluginsUrl);
-        hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
-
+        List<String> hosts = RepositoryHelper.getPluginHosts();
+        Set<PluginId> unique = ContainerUtil.newHashSet();
         for (String host : hosts) {
           try {
             if (host == null || acceptHost(host)) {
-              list.addAll(RepositoryHelper.loadPlugins(host, null, indicator));
+              List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, null, indicator);
+              for (IdeaPluginDescriptor plugin : plugins) {
+                if (unique.add(plugin.getPluginId())) {
+                  list.add(plugin);
+                }
+              }
             }
           }
           catch (FileNotFoundException e) {
@@ -323,7 +326,7 @@ public abstract class PluginManagerMain implements Disposable {
           }
           catch (IOException e) {
             LOG.info(host, e);
-            if (host != builtinPluginsUrl) {
+            if (host != ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) {
               errors.add(e.getMessage());
             }
           }
@@ -335,6 +338,11 @@ public abstract class PluginManagerMain implements Disposable {
             setDownloadStatus(false);
 
             if (!list.isEmpty()) {
+              InstalledPluginsState state = InstalledPluginsState.getInstance();
+              for (IdeaPluginDescriptor descriptor : list) {
+                state.onDescriptorDownload(descriptor);
+              }
+
               modifyPluginsList(list);
               propagateUpdates(list);
             }

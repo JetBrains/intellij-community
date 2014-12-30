@@ -283,9 +283,7 @@ public final class UpdateChecker {
     // check custom repositories and the main one for updates
     Map<PluginId, PluginDownloader> toUpdate = ContainerUtil.newTroveMap();
 
-    List<String> hosts = UpdateSettings.getInstance().getPluginHosts();
-    ContainerUtil.addIfNotNull(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl(), hosts);
-    hosts.add(null);  // default repository
+    List<String> hosts = RepositoryHelper.getPluginHosts();
     InstalledPluginsState state = InstalledPluginsState.getInstance();
 
     outer:

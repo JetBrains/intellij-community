@@ -219,7 +219,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
         })) {
           final PsiPackage[] subPackages = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage[]>() {
             public PsiPackage[] compute() {
-              return psiPackage.getSubPackages(mySuitesBundle.getSearchScope(node.getProject()));
+              return psiPackage.isValid()
+                     ? psiPackage.getSubPackages(mySuitesBundle.getSearchScope(node.getProject()))
+                     : PsiPackage.EMPTY_ARRAY;
             }
           });
           for (PsiPackage subPackage: subPackages) {
@@ -228,7 +230,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
           final PsiFile[] childFiles = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
             public PsiFile[] compute() {
-              return psiPackage.getFiles(mySuitesBundle.getSearchScope(node.getProject()));
+              return psiPackage.isValid()
+                     ? psiPackage.getFiles(mySuitesBundle.getSearchScope(node.getProject()))
+                     : PsiFile.EMPTY_ARRAY;
             }
           });
           for (PsiFile file : childFiles) {
@@ -240,7 +244,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
                 children.add(new CoverageListNode(myProject, aClass, mySuitesBundle, myStateBean));
               }
             }
-            else {
+            else if (file instanceof PsiClassOwner) {
               children.add(new CoverageListNode(myProject, file, mySuitesBundle, myStateBean));
             }
           }

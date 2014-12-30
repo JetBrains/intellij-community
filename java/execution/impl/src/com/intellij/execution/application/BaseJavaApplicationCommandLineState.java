@@ -25,9 +25,9 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +45,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   protected void setupJavaParameters(JavaParameters params) throws ExecutionException {
     JavaParametersUtil.configureConfiguration(params, myConfiguration);
 
-    for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensions()) {
       ext.updateJavaParameters(getConfiguration(), params, getRunnerSettings());
     }
   }
@@ -53,7 +53,15 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
-    OSProcessHandler handler = SystemInfo.isWindows ? super.startProcess() : KillableColoredProcessHandler.create(createCommandLine());
+    OSProcessHandler handler;
+    if (SystemInfo.isWindows) {
+      handler = super.startProcess();
+    }
+    else {
+      handler = KillableColoredProcessHandler.create(createCommandLine());
+      ProcessTerminatedListener.attach(handler);
+    }
+
     RunnerSettings runnerSettings = getRunnerSettings();
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     return handler;

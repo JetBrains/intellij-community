@@ -873,7 +873,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (myDebuggerManagerThread == null) {
       synchronized (this) {
         if (myDebuggerManagerThread == null) {
-          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable);
+          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, getProject());
         }
       }
     }

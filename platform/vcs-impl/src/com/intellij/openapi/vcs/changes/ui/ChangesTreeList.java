@@ -51,7 +51,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -542,18 +541,12 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         return Collections.emptyList();
       }
       else {
-        final List<T> changes = new ArrayList<T>();
-        final TIntHashSet checkSet = new TIntHashSet();
+        LinkedHashSet<T> changes = ContainerUtil.newLinkedHashSet();
         for (TreePath path : paths) {
           //noinspection unchecked
-          List<T> list = getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent());
-          for (T object : list) {
-            if (checkSet.add(object.hashCode()) || !changes.contains(object)) {
-              changes.add(object);
-            }
-          }
+          changes.addAll(getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent()));
         }
-        return changes;
+        return ContainerUtil.newArrayList(changes);
       }
     }
   }

@@ -1521,37 +1521,37 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitTypeElement(final PsiTypeElement typeElement) {
-    myMatchingVisitor.setResult(matchType(typeElement, myMatchingVisitor.getElement()));
+    final PsiElement other = myMatchingVisitor.getElement(); // might not be a PsiTypeElement
+
+    final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(typeElement, PsiAnnotation.class);
+    // also can't use AnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
+    final PsiAnnotation[] annotations2 = PsiTreeUtil.getChildrenOfType(other, PsiAnnotation.class);
+    if (annotations != null) {
+      myMatchingVisitor.setResult(annotations2 != null && myMatchingVisitor.matchInAnyOrder(annotations, annotations2));
+      if (!myMatchingVisitor.getResult()) return;
+    }
+    myMatchingVisitor.setResult(matchType(typeElement, other));
   }
 
   @Override
   public void visitTypeParameter(PsiTypeParameter psiTypeParameter) {
     final PsiTypeParameter parameter = (PsiTypeParameter)myMatchingVisitor.getElement();
-    final PsiElement[] children = psiTypeParameter.getChildren();
-    final PsiElement[] children2 = parameter.getChildren();
+    final PsiIdentifier identifier = psiTypeParameter.getNameIdentifier();
+    final PsiIdentifier identifier2 = parameter.getNameIdentifier();
 
-    final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(children[0]);
-
+    final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
     if (handler instanceof SubstitutionHandler) {
-      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(children2[0], myMatchingVisitor.getMatchContext()));
+      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(identifier2, myMatchingVisitor.getMatchContext()));
     }
     else {
-      myMatchingVisitor.setResult(children[0].textMatches(children2[0]));
+      myMatchingVisitor.setResult(identifier.textMatches(identifier2));
     }
 
-    if (myMatchingVisitor.getResult() && children.length > 2) {
-      // constraint present
-      if (children2.length == 2) {
-        myMatchingVisitor.setResult(false);
-        return;
-      }
-
-      if (!children[2].getFirstChild().textMatches(children2[2].getFirstChild())) {
-        // constraint type (extends)
-        myMatchingVisitor.setResult(false);
-        return;
-      }
-      myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(children[2].getChildren(), children2[2].getChildren()));
+    if (myMatchingVisitor.getResult()) {
+      myMatchingVisitor.setResult(matchInAnyOrder(psiTypeParameter.getExtendsList(), parameter.getExtendsList(), myMatchingVisitor));
+    }
+    if (myMatchingVisitor.getResult()) {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(psiTypeParameter.getAnnotations(), parameter.getAnnotations()));
     }
   }
 
