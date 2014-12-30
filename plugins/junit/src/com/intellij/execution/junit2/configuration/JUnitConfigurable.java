@@ -53,7 +53,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -105,11 +104,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private JComboBox myTypeChooser;
   private JBLabel mySearchForTestsLabel;
   private JPanel myScopesPanel;
-  @NonNls private static final String NONE = "none";
-  @NonNls private static final String METHOD = "method";
-  @NonNls private static final String KLASS = "class";
-  private static final String[] FORK_MODE_ALL = {NONE, METHOD, KLASS};
-  private static final String[] FORK_MODE = {NONE, METHOD};
+  private static final String[] FORK_MODE_ALL = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
+  private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
   private Project myProject;
   private JComponent anchor;
 
@@ -273,7 +269,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private void changePanel () {
     String selectedItem = (String)myForkCb.getSelectedItem();
     if (selectedItem == null) {
-      selectedItem = NONE;
+      selectedItem = JUnitConfiguration.FORK_NONE;
     }
     final Integer selectedType = (Integer)myTypeChooser.getSelectedItem();
     if (selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE) {
@@ -309,7 +305,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE));
-      myForkCb.setSelectedItem(selectedItem != KLASS ? selectedItem : METHOD);
+      myForkCb.setSelectedItem(selectedItem != JUnitConfiguration.FORK_KLASS ? selectedItem : JUnitConfiguration.FORK_METHOD);
     }
     else if (selectedType == JUnitConfigurationModel.METHOD){
       myPackagePanel.setVisible(false);
@@ -320,7 +316,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myCategory.setVisible(false);
       myMethod.setVisible(true);
       myForkCb.setEnabled(false);
-      myForkCb.setSelectedItem(NONE);
+      myForkCb.setSelectedItem(JUnitConfiguration.FORK_NONE);
     } else if (selectedType == JUnitConfigurationModel.CATEGORY) {
       myPackagePanel.setVisible(false);
       myScopesPanel.setVisible(true);
