@@ -8,6 +8,7 @@ import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -79,24 +80,33 @@ public final class IpnbConnectionManager implements ProjectComponent {
       IpnbSettings.getInstance(myProject).setURL(url);
       boolean connectionStarted = startConnection(codePanel, path, url, false);
       if (!connectionStarted) {
-        final boolean serverStarted = startIpythonServer(url, fileEditor);
-        if (!serverStarted) {
-          return;
-        }
-        final Notification notification =
-          new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + url +
-                                                  "\">" + url + "</a></html>", NotificationType.INFORMATION,
-                           NotificationListener.URL_OPENING_LISTENER);
-        notification.notify(myProject);
-        IpnbSettings.getInstance(myProject).setURL(url);
+        final String finalUrl = url;
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            final boolean serverStarted = startIpythonServer(finalUrl, fileEditor);
+            if (!serverStarted) {
+              return;
+            }
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                new Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(new Runnable() {
+                  @Override
+                  public void run() {
+                    final Notification notification =
+                      new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + finalUrl +
+                                                              "\">" + finalUrl + "</a></html>", NotificationType.INFORMATION,
+                                       NotificationListener.URL_OPENING_LISTENER);
+                    notification.notify(myProject);
+                    startConnection(codePanel, path, finalUrl, true);
+                  }
+                }, 3000);
+              }
+            });
+          }
+        });
       }
-      final String finalUrl = url;
-      new Alarm().addRequest(new Runnable() {
-        @Override
-        public void run() {
-          startConnection(codePanel, path, finalUrl, true);
-        }
-      }, 3000);
     }
     else {
       final IpnbConnection connection = myKernels.get(path);
