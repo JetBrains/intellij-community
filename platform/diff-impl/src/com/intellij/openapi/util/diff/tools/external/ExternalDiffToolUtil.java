@@ -1,6 +1,7 @@
 package com.intellij.openapi.util.diff.tools.external;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.CommandLineTokenizer;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -105,10 +106,25 @@ public class ExternalDiffToolUtil {
       files.add(createFile(contents[i], titles[i], windowTitle));
     }
 
-    List<String> args = new ArrayList<String>();
-    args.addAll(files);
+    CommandLineTokenizer parameterTokenizer = new CommandLineTokenizer(settings.getDiffParameters(), true);
 
-    // FIXME: respect configurable parameters
+    List<String> args = new ArrayList<String>();
+    while (parameterTokenizer.hasMoreTokens()) {
+      String arg = parameterTokenizer.nextToken();
+      if ("%1".equals(arg)) {
+        if (files.size() > 0) args.add(files.get(0));
+      }
+      else if ("%2".equals(arg)) {
+        if (files.size() > 1) args.add(files.get(1));
+      }
+      else if ("%3".equals(arg)) {
+        if (files.size() > 2) args.add(files.get(2));
+      }
+      else {
+        args.add(arg);
+      }
+    }
+
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(settings.getDiffExePath());
 
