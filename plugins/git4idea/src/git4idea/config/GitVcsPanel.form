@@ -99,27 +99,9 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="9d661" class="javax.swing.JCheckBox" binding="myAutoUpdateIfPushRejected">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <iconTextGap value="4"/>
-              <text value="Auto-update if &amp;push of the current branch was rejected"/>
-            </properties>
-          </component>
-          <component id="2e80d" class="com.intellij.ui.components.JBCheckBox" binding="mySyncControl">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/intellij/dvcs/ui/DvcsBundle" key="sync.setting"/>
-              <toolTipText value=""/>
-            </properties>
-          </component>
           <component id="5a98" class="javax.swing.JCheckBox" binding="myAutoCommitOnCherryPick">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <iconTextGap value="4"/>
@@ -128,7 +110,7 @@
           </component>
           <component id="1ad55" class="com.intellij.ui.components.JBCheckBox" binding="myWarnAboutCrlf" default-binding="true">
             <constraints>
-              <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value="Warn if &amp;CRLF line separators are about to be committed"/>
@@ -136,7 +118,7 @@
           </component>
           <component id="29d5c" class="javax.swing.JCheckBox" binding="myWarnAboutDetachedHead">
             <constraints>
-              <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <selected value="true"/>
@@ -166,6 +148,24 @@
             </constraints>
             <properties>
               <text value="Protected branches:"/>
+            </properties>
+          </component>
+          <component id="2e80d" class="com.intellij.ui.components.JBCheckBox" binding="mySyncControl">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="com/intellij/dvcs/ui/DvcsBundle" key="sync.setting"/>
+              <toolTipText value=""/>
+            </properties>
+          </component>
+          <component id="9d661" class="javax.swing.JCheckBox" binding="myAutoUpdateIfPushRejected">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <iconTextGap value="4"/>
+              <text value="Auto-update if &amp;push of the current branch was rejected"/>
             </properties>
           </component>
         </children>
