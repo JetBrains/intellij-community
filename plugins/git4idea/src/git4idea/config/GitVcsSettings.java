@@ -68,6 +68,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
     public boolean PUSH_AUTO_UPDATE = false;
+    public boolean PUSH_UPDATE_ALL_ROOTS = true;
     public Value ROOT_SYNC = Value.NOT_DECIDED;
     public String RECENT_GIT_ROOT_PATH = null;
     public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<String, String>();
@@ -144,6 +145,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setAutoUpdateIfPushRejected(boolean autoUpdate) {
     myState.PUSH_AUTO_UPDATE = autoUpdate;
+  }
+
+  public boolean shouldUpdateAllRootsIfPushRejected() {
+    return myState.PUSH_UPDATE_ALL_ROOTS;
+  }
+
+  public void setUpdateAllRootsIfPushRejected(boolean updateAllRoots) {
+    myState.PUSH_UPDATE_ALL_ROOTS = updateAllRoots;
   }
 
   @NotNull

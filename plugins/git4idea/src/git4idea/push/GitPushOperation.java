@@ -49,7 +49,6 @@ import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.settings.GitPushSettings;
 import git4idea.update.GitRebaseOverMergeProblem;
 import git4idea.update.GitUpdateProcess;
 import git4idea.update.GitUpdateResult;
@@ -80,7 +79,6 @@ public class GitPushOperation {
   private final Git myGit;
   private final ProgressIndicator myProgressIndicator;
   private final GitVcsSettings mySettings;
-  private final GitPushSettings myPushSettings;
   private final GitPlatformFacade myPlatformFacade;
   private final GitRepositoryManager myRepositoryManager;
 
@@ -97,7 +95,6 @@ public class GitPushOperation {
     myGit = ServiceManager.getService(Git.class);
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
     mySettings = GitVcsSettings.getInstance(myProject);
-    myPushSettings = GitPushSettings.getInstance(myProject);
     myPlatformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
     myRepositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
 
@@ -154,7 +151,7 @@ public class GitPushOperation {
             updateSettings = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings,
                                                       rebaseOverMergeProblemDetected.booleanValue());
             if (updateSettings != null) {
-              savePushUpdateSettings(updateSettings);
+              savePushUpdateSettings(updateSettings, rebaseOverMergeProblemDetected.booleanValue());
             }
             else {
               shouldUpdate = false;
@@ -383,16 +380,18 @@ public class GitPushOperation {
     });
   }
 
-  private void savePushUpdateSettings(@NotNull PushUpdateSettings settings) {
+  private void savePushUpdateSettings(@NotNull PushUpdateSettings settings, boolean rebaseOverMergeDetected) {
     UpdateMethod updateMethod = settings.getUpdateMethod();
-    myPushSettings.setUpdateAllRoots(settings.shouldUpdateAllRoots());
-    myPushSettings.setUpdateMethod(updateMethod);
+    mySettings.setUpdateAllRootsIfPushRejected(settings.shouldUpdateAllRoots());
+    if (!rebaseOverMergeDetected) { // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
+      mySettings.setUpdateType(updateMethod);
+    }
   }
 
   @NotNull
   private PushUpdateSettings readPushUpdateSettings() {
-    boolean updateAllRoots = myPushSettings.shouldUpdateAllRoots();
-    UpdateMethod updateMethod = myPushSettings.getUpdateMethod();
+    boolean updateAllRoots = mySettings.shouldUpdateAllRootsIfPushRejected();
+    UpdateMethod updateMethod = mySettings.getUpdateType();
     return new PushUpdateSettings(updateAllRoots, updateMethod);
   }
 
