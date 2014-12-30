@@ -59,7 +59,6 @@ public class SliceUtil {
     }
   };
 
-  // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
   public static final KeyWithDefaultValue<Integer> KEY_INDEX_NESTING = new KeyWithDefaultValue<Integer>("indexNesting") {
     @Override
     public Integer getDefaultValue() {
@@ -67,7 +66,6 @@ public class SliceUtil {
     }
   };
 
-  // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
   public static final KeyWithDefaultValue<String> KEY_SYNTHETIC_FIELD = new KeyWithDefaultValue<String>("syntheticField") {
     @Override
     public String getDefaultValue() {
@@ -84,22 +82,31 @@ public class SliceUtil {
 
   @NotNull
   public static String getSyntheticField(@NotNull SliceUsage parent) {
-    final String syntheticField = parent.getUserData(KEY_SYNTHETIC_FIELD);
-    assert syntheticField != null;
-    return syntheticField;
+    if (parent instanceof JavaSliceUsage) {
+      return ((JavaSliceUsage)parent).getSyntheticField();
+    }
+    else {
+      return "";
+    }
   }
 
   public static int getIndexNesting(@NotNull SliceUsage parent) {
-    final Integer indexNesting = parent.getUserData(KEY_INDEX_NESTING);
-    assert indexNesting != null;
-    return indexNesting;
+    if (parent instanceof JavaSliceUsage) {
+      return ((JavaSliceUsage)parent).getIndexNesting();
+    }
+    else {
+      return 0;
+    }
   }
 
   @NotNull
   public static PsiSubstitutor getSubstitutor(@NotNull SliceUsage parent) {
-    final PsiSubstitutor substitutor = parent.getUserData(KEY_SUBSTITUTOR);
-    assert substitutor != null;
-    return substitutor;
+    if (parent instanceof JavaSliceUsage) {
+      return ((JavaSliceUsage)parent).getSubstitutor();
+    }
+    else {
+      return PsiSubstitutor.EMPTY;
+    }
   }
 
   public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
@@ -389,16 +396,12 @@ public class SliceUtil {
   }
 
   @NotNull
-  public static SliceUsage createSliceUsage(@NotNull PsiElement element,
-                                            @NotNull SliceUsage parent,
-                                            @NotNull PsiSubstitutor substitutor,
-                                            int indexNesting,
-                                            @NotNull String syntheticField) {
-    final SliceUsage usage = new SliceUsage(simplify(element), parent);
-    usage.putUserData(KEY_SUBSTITUTOR, substitutor);
-    usage.putUserData(KEY_INDEX_NESTING, indexNesting);
-    usage.putUserData(KEY_SYNTHETIC_FIELD, syntheticField);
-    return usage;
+  public static JavaSliceUsage createSliceUsage(@NotNull PsiElement element,
+                                                @NotNull SliceUsage parent,
+                                                @NotNull PsiSubstitutor substitutor,
+                                                int indexNesting,
+                                                @NotNull String syntheticField) {
+    return new JavaSliceUsage(simplify(element), parent, parent.params, substitutor, indexNesting, syntheticField);
   }
 
   private static boolean processParameterUsages(@NotNull final PsiParameter parameter,

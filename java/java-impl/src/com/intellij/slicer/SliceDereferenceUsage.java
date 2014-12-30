@@ -16,6 +16,7 @@
 package com.intellij.slicer;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.util.Processor;
@@ -26,9 +27,9 @@ import javax.swing.*;
 /**
  * User: cdr
  */
-public class SliceDereferenceUsage extends SliceUsage {
-  public SliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
-    super(element, parent);
+public class SliceDereferenceUsage extends JavaSliceUsage {
+  public SliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+    super(element, parent, parent.params, substitutor, 0, "");
   }
 
   @Override

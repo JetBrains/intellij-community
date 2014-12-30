@@ -32,7 +32,7 @@ import java.awt.*;
  */
 public class SliceTooComplexDFAUsage extends SliceUsage {
   public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
-    super(element, parent);
+    super(element, parent, parent.params);
   }
 
   @Override

@@ -201,8 +201,7 @@ public class SliceForwardUtil {
       return processor.process(usage);
     }
     if (parent.params.showInstanceDereferences && isDereferenced(element)) {
-      final SliceUsage usage = new SliceDereferenceUsage(element.getParent(), parent);
-      usage.putUserData(SliceUtil.KEY_SUBSTITUTOR, SliceUtil.getSubstitutor(parent));
+      final JavaSliceUsage usage = new SliceDereferenceUsage(element.getParent(), parent, SliceUtil.getSubstitutor(parent));
       return processor.process(usage);
     }
     return true;

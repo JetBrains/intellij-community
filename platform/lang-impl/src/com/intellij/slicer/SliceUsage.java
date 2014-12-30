@@ -20,35 +20,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyWithDefaultValue;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author cdr
  */
-public class SliceUsage extends UsageInfo2UsageAdapter implements UserDataHolder {
+public class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
   public final SliceAnalysisParams params;
-  private Map<Object, Object> myUserData = null;
 
-  public SliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
-    this(element, parent, parent.params);
-  }
-
-  private SliceUsage(@NotNull PsiElement element, @Nullable SliceUsage parent, @NotNull SliceAnalysisParams params) {
+  protected SliceUsage(@NotNull PsiElement element, @Nullable SliceUsage parent, @NotNull SliceAnalysisParams params) {
     super(new UsageInfo(element));
     myParent = parent;
     this.params = params;
@@ -107,35 +95,6 @@ public class SliceUsage extends UsageInfo2UsageAdapter implements UserDataHolder
 
   @NotNull
   SliceUsage copy() {
-    PsiElement element = getUsageInfo().getElement();
-    final SliceUsage usage = getParent() == null ? createRootUsage(element, params) : new SliceUsage(element, getParent());
-    if (myUserData != null) {
-      usage.myUserData = new HashMap<Object, Object>(myUserData);
-    }
-    return usage;
-  }
-
-  @Override
-  public <T> T getUserData(@NotNull final Key<T> key) {
-    final T result;
-    if (myUserData != null) {
-      //noinspection unchecked
-      result = (T)myUserData.get(key);
-    }
-    else {
-      result = null;
-    }
-    if (result == null && key instanceof KeyWithDefaultValue) {
-      return ((KeyWithDefaultValue<T>)key).getDefaultValue();
-    }
-    return result;
-  }
-
-  @Override
-  public <T> void putUserData(@NotNull final Key<T> key, @Nullable final T value) {
-    if (myUserData == null) {
-      myUserData = ContainerUtil.newHashMap();
-    }
-    myUserData.put(key, value);
+    return new SliceUsage(getElement(), getParent(), params);
   }
 }
