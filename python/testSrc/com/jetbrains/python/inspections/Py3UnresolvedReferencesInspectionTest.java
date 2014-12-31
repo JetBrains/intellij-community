@@ -111,24 +111,4 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testAttributesOfUnresolvedTypeFile() {
     doTest();
   }
-
-  // PY-14385
-  public void testNotImportedSubmodulesOfNamespacePackage() {
-    doMultiFileTest("main.py");
-  }
-
-  // PY-14615
-  public void testImplicitlyAvailableSubModuleOfNamespacePackage() {
-    doMultiFileTest("a.py");
-  }
-
-  // PY-14615
-  public void testImplicitlyAvailableSubModuleOfNormalPackage() {
-    doMultiFileTest("a.py");
-  }
-
-  // PY-14615
-  public void testImplicitlyAvailableDeeplyNestedSubModule() {
-    doMultiFileTest("a.py");
-  }
 }

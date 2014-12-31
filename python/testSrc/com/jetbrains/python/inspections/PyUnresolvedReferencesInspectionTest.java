@@ -460,6 +460,34 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-14385
+  public void testNotImportedSubmodulesOfNamespacePackage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      public void run() {
+        doMultiFileTest("main.py");
+      }
+    });
+  }
+
+  // PY-14615
+  public void testImplicitlyAvailableSubModuleOfNamespacePackage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      public void run() {
+        doMultiFileTest("a.py");
+      }
+    });
+  }
+
+  // PY-14615
+  public void testImplicitlyAvailableSubModuleOfNormalPackage() {
+    doMultiFileTest("a.py");
+  }
+
+  // PY-14615
+  public void testImplicitlyAvailableDeeplyNestedSubModule() {
+    doMultiFileTest("a.py");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
