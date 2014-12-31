@@ -104,8 +104,6 @@ extends
   @Nullable
   PyAnnotation getAnnotation();
 
-  // TODO: Doc
-  //
 
   /**
    * Searches for function attributes.
