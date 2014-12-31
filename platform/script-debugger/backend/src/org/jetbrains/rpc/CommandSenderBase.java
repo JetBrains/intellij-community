@@ -27,6 +27,8 @@ public abstract class CommandSenderBase<SUCCESS_RESPONSE, ERROR_DETAILS> impleme
     return callback;
   }
 
+
+
   protected static final class PromiseWrapper<SUCCESS_RESPONSE, RESULT, ERROR_DETAILS> extends AsyncPromise<RESULT> implements AsyncResultCallback<SUCCESS_RESPONSE, ERROR_DETAILS> {
     private final String methodName;
 

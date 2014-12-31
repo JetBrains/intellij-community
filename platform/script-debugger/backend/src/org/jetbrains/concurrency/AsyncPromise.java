@@ -267,6 +267,10 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   public void setResult(T result) {
+    if (state != State.PENDING) {
+      return;
+    }
+
     this.result = result;
     state = State.FULFILLED;
 
@@ -278,6 +282,10 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   public void setError(String error) {
+    if (state != State.PENDING) {
+      return;
+    }
+
     result = error;
     state = State.REJECTED;
 

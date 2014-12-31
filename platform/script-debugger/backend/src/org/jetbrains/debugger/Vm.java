@@ -33,7 +33,7 @@ public interface Vm {
    * Controls whether VM stops on exceptions
    */
   @NotNull
-  Promise<?> setBreakOnException(ExceptionCatchMode catchMode);
+  Promise<?> setBreakOnException(@NotNull ExceptionCatchMode catchMode);
 
   @NotNull
   EvaluateContext getEvaluateContext();

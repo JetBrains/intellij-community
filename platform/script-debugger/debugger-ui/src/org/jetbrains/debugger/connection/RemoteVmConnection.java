@@ -67,16 +67,14 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
             @Override
             public void consume(@NotNull Vm vm) {
               RemoteVmConnection.this.vm = vm;
-              setState(ConnectionStatus.CONNECTED, "Connected to " + address.getHostName() + ":" + address.getPort());
+              setState(ConnectionStatus.CONNECTED, "Connected to " + connectedAddressToPresentation(address, vm));
               startProcessing();
             }
           })
           .rejected(new Consumer<String>() {
             @Override
             public void consume(String error) {
-              if (getState().getStatus() == ConnectionStatus.WAITING_FOR_CONNECTION) {
-                setState(ConnectionStatus.CONNECTION_FAILED, error == null ? "Internal error" : error);
-              }
+              setState(ConnectionStatus.CONNECTION_FAILED, error == null ? "Internal error" : error);
             }
           })
           .processed(new Consumer<Vm>() {
@@ -93,6 +91,11 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
         future.cancel(true);
       }
     });
+  }
+
+  @NotNull
+  protected String connectedAddressToPresentation(@NotNull InetSocketAddress address, @NotNull Vm vm) {
+    return address.getHostName() + ":" + address.getPort();
   }
 
   @Override
