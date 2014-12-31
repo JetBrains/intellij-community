@@ -2446,10 +2446,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find all annotations", 4, findMatchesCount(source2, "@'_Annotation"));
 
     String source3 = "class A {\n" +
-                     "  @HH final String s = (@HH String) new Object();\n" +
+                     "  @HH final String s = (@HH String) new @HH Object();\n" +
                      "  final String t = (String) new Object();\n" +
                      "}\n";
     assertEquals("Find annotated casts", 1, findMatchesCount(source3, "(@'_A 'Cast) '_Expression"));
+    assertEquals("Find annotated new expressions", 1, findMatchesCount(source3, "new @'_A 'Type()"));
   }
 
   public void testBoxingAndUnboxing() {
@@ -2954,6 +2955,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern5 = "()->{/*comment*/}";
     assertEquals("should find lambdas with comment body", 1, findMatchesCount(source, pattern5));
+
+    String pattern6 = "('_Parameter+) -> System.out.println()";
+    assertEquals("should find lambdas with at least one parameter and matching body", 0, findMatchesCount(source, pattern6));
   }
 
   public void testFindDefaultMethods() {

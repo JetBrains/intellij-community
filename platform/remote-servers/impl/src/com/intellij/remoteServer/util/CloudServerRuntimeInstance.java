@@ -95,7 +95,7 @@ public abstract class CloudServerRuntimeInstance
       public void run() throws Exception {
         try {
           for (CloudApplicationRuntime application : getApplications()) {
-            callback.addDeployment(application.getApplicationName(), application);
+            callback.addDeployment(application.getApplicationName(), application, application.getStatus(), application.getStatusText());
           }
           callback.succeeded();
         }

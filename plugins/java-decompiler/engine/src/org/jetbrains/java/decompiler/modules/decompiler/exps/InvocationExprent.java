@@ -324,8 +324,8 @@ public class InvocationExprent extends Exprent {
       ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 
       if (newNode != null) {  // own class
-        if (newNode.wrapper != null) {
-          sigFields = newNode.wrapper.getMethodWrapper("<init>", stringDescriptor).signatureFields;
+        if (newNode.getWrapper() != null) {
+          sigFields = newNode.getWrapper().getMethodWrapper("<init>", stringDescriptor).signatureFields;
         }
         else {
           if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class

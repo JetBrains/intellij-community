@@ -19,6 +19,13 @@ class RejectedPromise<T> extends Promise<T> {
 
   @NotNull
   @Override
+  public Promise<T> done(@NotNull AsyncPromise<T> fulfilled) {
+    fulfilled.setError(error);
+    return this;
+  }
+
+  @NotNull
+  @Override
   public Promise<T> rejected(@NotNull Consumer<String> rejected) {
     rejected.consume(error);
     return this;

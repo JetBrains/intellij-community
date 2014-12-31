@@ -183,7 +183,16 @@ public class RemoteConnectionCredentialsWrapper {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof RemoteConnectionCredentialsWrapper) {
-      return getId().equals(((RemoteConnectionCredentialsWrapper)obj).getId());
+      RemoteConnectionCredentialsWrapper w = (RemoteConnectionCredentialsWrapper)obj;
+      if (isVagrantConnection()) {
+        return w.isVagrantConnection() && getVagrantCredentials().equals(w.getVagrantCredentials());
+      }
+      else if (isWebDeploymentConnection()) {
+        return w.isWebDeploymentConnection() && getWebDeploymentCredentials().equals(w.getWebDeploymentCredentials());
+      }
+      else if (isPlainSshConnection()) {
+        return w.isPlainSshConnection() && getPlainSshCredentials().equals(w.getPlainSshCredentials());
+      }
     }
     return false;
   }
