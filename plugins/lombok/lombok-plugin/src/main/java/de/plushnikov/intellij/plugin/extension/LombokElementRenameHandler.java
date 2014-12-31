@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import de.plushnikov.intellij.plugin.psi.LombokLightMethod;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public class LombokElementRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
-    return element instanceof LombokLightMethod || element instanceof LombokLightMethodBuilder;
+    return element instanceof LombokLightMethodBuilder;
   }
 
   @Nullable
@@ -50,7 +49,7 @@ public class LombokElementRenameHandler implements RenameHandler {
 
   private void invokeInner(Project project, Editor editor, PsiElement element) {
     String message = RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed.");
-    if (message != null && message.length() > 0) {
+    if (!message.isEmpty()) {
       showErrorMessage(project, editor, message);
     }
   }

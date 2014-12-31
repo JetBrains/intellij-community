@@ -23,6 +23,7 @@ import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.experimental.Builder;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -153,12 +154,15 @@ public class BuilderHandler {
 
   @NotNull
   public PsiMethod createBuilderMethod(@NotNull PsiClass containingClass, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
-    return new LombokLightMethodBuilder(containingClass.getManager(), getBuilderMethodName(psiAnnotation))
+    final LombokLightMethodBuilder method = new LombokLightMethodBuilder(containingClass.getManager(), getBuilderMethodName(psiAnnotation))
         .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(builderPsiClass))
         .withContainingClass(containingClass)
         .withNavigationElement(psiAnnotation)
-        .withModifier(PsiModifier.PUBLIC)
-        .withModifier(PsiModifier.STATIC);
+        .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
+
+    method.withBody(PsiMethodUtil.createCodeBlockFromText("return new " + builderPsiClass.getQualifiedName() + "();", containingClass));
+
+    return method;
   }
 
   @NotNull

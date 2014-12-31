@@ -67,9 +67,8 @@ public class EnumIdFieldProcessor extends AbstractFieldProcessor {
         .withMethodReturnType(PsiTypesUtil.getClassType(psiClass))
         .withContainingClass(psiClass)
         .withParameter(fieldName, psiFieldType)
-        .withNavigationElement(psiField);
-    method.withModifier(PsiModifier.STATIC);
-    method.withModifier(PsiModifier.PUBLIC);
+        .withNavigationElement(psiField)
+        .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
 
     target.add(method);
   }

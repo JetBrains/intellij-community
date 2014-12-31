@@ -7,7 +7,6 @@ import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeGenerator;
 import com.intellij.util.CharTable;
-import de.plushnikov.intellij.plugin.psi.LombokLightMethod;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +21,7 @@ public class LombokLightMethodTreeGenerator implements TreeGenerator {
   @Nullable
   public TreeElement generateTreeFor(PsiElement original, CharTable table, PsiManager manager) {
     TreeElement result = null;
-    if (original instanceof LombokLightMethod || original instanceof LombokLightMethodBuilder) {
+    if (original instanceof LombokLightMethodBuilder) {
       result = ChangeUtil.copyElement((TreeElement) SourceTreeToPsiMap.psiElementToTree(original), table);
     }
     return result;

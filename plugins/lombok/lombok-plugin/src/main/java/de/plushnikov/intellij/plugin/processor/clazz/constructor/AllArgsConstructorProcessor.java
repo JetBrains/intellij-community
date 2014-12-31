@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import lombok.AllArgsConstructor;
@@ -62,7 +63,7 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
   }
 
   @NotNull
-  public Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, String methodVisibility, PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields) {
-    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allNotInitializedNotStaticFields, staticName);
+  public Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields) {
+    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, allNotInitializedNotStaticFields, staticName);
   }
 }

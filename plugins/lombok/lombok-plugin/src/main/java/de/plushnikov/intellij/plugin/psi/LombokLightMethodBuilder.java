@@ -55,6 +55,13 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
     return this;
   }
 
+  public LombokLightMethodBuilder withModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String ...modifiers) {
+    for (String modifier : modifiers) {
+      addModifier(modifier);
+    }
+    return this;
+  }
+
   public LombokLightMethodBuilder withMethodReturnType(PsiType returnType) {
     setMethodReturnType(returnType);
     return this;

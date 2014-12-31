@@ -5,13 +5,10 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
-import de.plushnikov.intellij.plugin.psi.LombokLightMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,18 +18,6 @@ import java.util.Collection;
  * @author Plushnikov Michail
  */
 public class PsiMethodUtil {
-  @NotNull
-  public static PsiMethod createMethod(@NotNull PsiClass psiClass, @NotNull String methodText, @NotNull PsiElement navigationTarget) {
-    PsiManager manager = psiClass.getContainingFile().getManager();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-
-    PsiMethod method = elementFactory.createMethodFromText(methodText, psiClass);
-
-    LombokLightMethod lightMethod = new LombokLightMethod(manager, method, psiClass);
-    lightMethod.setNavigationElement(navigationTarget);
-    return lightMethod;
-  }
-
   @NotNull
   public static PsiCodeBlock createCodeBlockFromText(@NotNull String blockText, @NotNull PsiClass psiClass) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 public class BaseDelombokHandler {
@@ -59,9 +60,11 @@ public class BaseDelombokHandler {
   }
 
   private void invoke(Project project, PsiClass psiClass) {
+    Collection<PsiAnnotation> processedAnnotations = new HashSet<PsiAnnotation>();
     for (AbstractProcessor lombokProcessor : lombokProcessors) {
-      processClass(project, psiClass, lombokProcessor);
+      processedAnnotations.addAll(processClass(project, psiClass, lombokProcessor));
     }
+    deleteAnnotations(processedAnnotations);
   }
 
   private void finish(Project project, PsiFile psiFile) {
@@ -69,7 +72,7 @@ public class BaseDelombokHandler {
     UndoUtil.markPsiFileForUndo(psiFile);
   }
 
-  protected void processClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AbstractProcessor lombokProcessor) {
+  protected Collection<PsiAnnotation> processClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AbstractProcessor lombokProcessor) {
     Collection<PsiAnnotation> psiAnnotations = lombokProcessor.collectProcessedAnnotations(psiClass);
 
     List<? super PsiElement> psiElements = lombokProcessor.process(psiClass);
@@ -77,13 +80,16 @@ public class BaseDelombokHandler {
     ProjectSettings.setEnabledInProject(project, false);
     try {
       for (Object psiElement : psiElements) {
-        psiClass.add(rebuildPsiElement(project, (PsiElement) psiElement));
+        final PsiElement element = rebuildPsiElement(project, (PsiElement) psiElement);
+        if (null != element) {
+          psiClass.add(element);
+        }
       }
     } finally {
       ProjectSettings.setEnabledInProject(project, true);
     }
 
-    deleteAnnotations(psiAnnotations);
+    return psiAnnotations;
   }
 
   public Collection<PsiAnnotation> collectProcessableAnnotations(@NotNull PsiClass psiClass) {

@@ -41,7 +41,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
     final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
     // Create all args constructor only if there is no declared constructors
     if (definedConstructors.isEmpty()) {
-      target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(psiClass, PsiModifier.DEFAULT, psiAnnotation));
+      target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation));
     }
 
     final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiClass);

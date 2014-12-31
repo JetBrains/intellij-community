@@ -140,10 +140,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @NotNull
-  protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params) {
+  protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params) {
     final String staticName = getStaticConstructorName(psiAnnotation);
 
-    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, params, staticName);
+    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, params, staticName);
   }
 
   protected String getStaticConstructorName(@NotNull PsiAnnotation psiAnnotation) {
@@ -155,10 +155,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @NotNull
-  protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params, @Nullable String staticName) {
+  protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params, @Nullable String staticName) {
     final boolean staticConstructorRequired = isStaticConstructor(staticName);
 
-    final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodVisibility;
+    final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodModifier;
 
     final boolean suppressConstructorProperties = readSuppressConstructorPropertiesFlag(psiClass, psiAnnotation);
 
@@ -181,37 +181,34 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return suppressConstructorProperties;
   }
 
-  private PsiMethod createConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, boolean suppressConstructorProperties, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      if (!suppressConstructorProperties && !params.isEmpty()) {
-        builder.append("@java.beans.ConstructorProperties( {");
-        for (PsiField param : params) {
-          builder.append('"').append(param.getName()).append('"').append(',');
-        }
-        builder.deleteCharAt(builder.length() - 1);
-        builder.append("} ) ");
+  private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier, boolean suppressConstructorProperties, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {
+    LombokLightMethodBuilder constructor = new LombokLightMethodBuilder(psiClass.getManager(), psiClass.getName())
+        .withConstructor(true)
+        .withContainingClass(psiClass)
+        .withNavigationElement(psiAnnotation)
+        .withModifier(modifier);
+
+    if (!suppressConstructorProperties && !params.isEmpty()) {
+      StringBuilder constructorPropertiesAnnotation = new StringBuilder("java.beans.ConstructorProperties( {");
+      for (PsiField param : params) {
+        constructorPropertiesAnnotation.append('"').append(param.getName()).append('"').append(',');
       }
+      constructorPropertiesAnnotation.deleteCharAt(constructorPropertiesAnnotation.length() - 1);
+      constructorPropertiesAnnotation.append("} ) ");
 
-      builder.append(methodVisibility);
-      if (StringUtil.isNotEmpty(methodVisibility)) {
-        builder.append(' ');
-      }
-
-      builder.append(psiClass.getName());
-      appendParamDeclaration(params, builder);
-      builder.append("{");
-      appendParamInitialization(params, builder);
-      builder.append("\n}");
-
-      for (PsiField psiField : params) {
-        UserMapKeys.addWriteUsageFor(psiField);
-      }
-
-      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiAnnotation);
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
+      constructor.getModifierList().addAnnotation(constructorPropertiesAnnotation.toString());
     }
+
+    for (PsiField param : params) {
+      UserMapKeys.addWriteUsageFor(param);
+      constructor.withParameter(param.getName(), param.getType());
+    }
+
+    final StringBuilder blockText = new StringBuilder();
+    appendParamInitialization(params, blockText);;
+    constructor.withBody(PsiMethodUtil.createCodeBlockFromText(blockText.toString(), psiClass));
+
+    return constructor;
   }
 
   private PsiMethod createStaticConstructor(PsiClass psiClass, String staticName, Collection<PsiField> params, PsiAnnotation psiAnnotation) {
@@ -219,8 +216,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(psiClass))
         .withContainingClass(psiClass)
         .withNavigationElement(psiAnnotation)
-        .withModifier(PsiModifier.PUBLIC)
-        .withModifier(PsiModifier.STATIC);
+        .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
 
     for (PsiField param : params) {
       UserMapKeys.addWriteUsageFor(param);
@@ -262,18 +258,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     } finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
-  }
-
-  private StringBuilder appendParamDeclaration(Collection<PsiField> params, StringBuilder builder) {
-    builder.append('(');
-    if (!params.isEmpty()) {
-      for (PsiField param : params) {
-        builder.append(param.getType().getCanonicalText()).append(' ').append(param.getName()).append(',');
-      }
-      builder.deleteCharAt(builder.length() - 1);
-    }
-    builder.append(')');
-    return builder;
   }
 
   private StringBuilder appendParamInitialization(Collection<PsiField> params, StringBuilder builder) {

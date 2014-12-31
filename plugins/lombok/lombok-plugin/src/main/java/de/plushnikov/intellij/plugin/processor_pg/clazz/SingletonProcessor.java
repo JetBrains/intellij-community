@@ -77,8 +77,7 @@ public class SingletonProcessor extends AbstractClassProcessor {
         .withMethodReturnType(PsiTypesUtil.getClassType(psiClass))
         .withContainingClass(psiClass)
         .withNavigationElement(psiAnnotation)
-        .withModifier(PsiModifier.STATIC)
-        .withModifier(PsiModifier.PUBLIC);
+        .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
 
     target.add(method);
   }

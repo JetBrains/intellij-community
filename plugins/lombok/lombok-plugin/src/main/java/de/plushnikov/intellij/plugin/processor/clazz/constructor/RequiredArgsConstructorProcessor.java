@@ -53,10 +53,10 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
   }
 
   @NotNull
-  public Collection<PsiMethod> createRequiredArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @Nullable String staticName) {
+  public Collection<PsiMethod> createRequiredArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, @Nullable String staticName) {
     final Collection<PsiField> allReqFields = getRequiredFields(psiClass);
 
-    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allReqFields, staticName);
+    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, allReqFields, staticName);
   }
 
   @NotNull
