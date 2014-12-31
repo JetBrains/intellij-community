@@ -3,7 +3,6 @@ package de.plushnikov.manual;
 import lombok.Value;
 import lombok.experimental.Builder;
 
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 @Value
