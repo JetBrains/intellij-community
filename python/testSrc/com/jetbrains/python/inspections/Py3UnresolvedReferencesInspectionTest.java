@@ -118,12 +118,17 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   // PY-14615
-  public void testImplicitlyAvailableSubModuleOfNamespacePackage() throws Exception {
+  public void testImplicitlyAvailableSubModuleOfNamespacePackage() {
     doMultiFileTest("a.py");
   }
 
   // PY-14615
-  public void testImplicitlyAvailableSubModuleOfNormalPackage() throws Exception {
+  public void testImplicitlyAvailableSubModuleOfNormalPackage() {
+    doMultiFileTest("a.py");
+  }
+
+  // PY-14615
+  public void testImplicitlyAvailableDeeplyNestedSubModule() {
     doMultiFileTest("a.py");
   }
 }
