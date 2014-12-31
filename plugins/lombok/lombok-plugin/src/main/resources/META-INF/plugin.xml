@@ -148,10 +148,9 @@
       <action id="delombokDelegate" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDelegateAction"
               text="@Delegate" description="Action to replace lombok @Delegate annotation with vanilla java methods">
       </action>
-      <!--TODO: implement de.plushnikov.intellij.plugin.action.delombok.BaseDelombokHandler.rebuildPsiElement-->
-      <!--<action id="delombokBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokBuilderAction"-->
-              <!--text="@Builder" description="Action to replace lombok @Builder annotation with vanilla java methods">-->
-      <!--</action>-->
+      <action id="delombokBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokBuilderAction"
+              text="@Builder" description="Action to replace lombok @Builder annotation with vanilla java methods">
+      </action>
       <separator/>
       <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"
               text="@Constructors"
@@ -187,6 +186,7 @@
 		<ul>
 			<li>0.9.0
 				<ol>
+				    <li>Added Delombok Feature for @Builder</li>
 				    <li>Issue #53: Basic Support for Lombok configuration keys</li>
 				    <li>Fixed #57: Incorrect constructors appear in "Structure" when `@Value` and `@Builder`</li>
 				    <li>Fixed #70: Conflict resolution failed on renaming field together with its accessors in IntelliJ 14</li>

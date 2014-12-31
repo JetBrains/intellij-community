@@ -13,6 +13,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
@@ -29,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -195,7 +197,7 @@ public class BuilderHandler {
     Collection<PsiMethod> psiMethods = new ArrayList<PsiMethod>();
     psiMethods.addAll(createFieldMethods(psiClass, builderClass, psiAnnotation));
     psiMethods.add(createBuildMethod(psiClass, builderClass, psiAnnotation, psiBuilderType));
-    psiMethods.addAll(toStringProcessor.createToStringMethod(builderClass, psiAnnotation));
+    psiMethods.addAll(toStringProcessor.createToStringMethod(builderClass, Arrays.asList(builderClass.getFields()), psiAnnotation));
     return psiMethods;
   }
 
@@ -265,21 +267,23 @@ public class BuilderHandler {
     for (PsiField psiField : innerClass.getFields()) {
       boolean createMethod = true;
       PsiModifierList modifierList = psiField.getModifierList();
+      final String psiFieldName = psiField.getName();
       if (null != modifierList) {
         //Skip static fields.
         createMethod = !modifierList.hasModifierProperty(PsiModifier.STATIC);
         //Skip fields that start with $
-        createMethod &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+        createMethod &= !psiFieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         // skip initialized final fields
         createMethod &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL));
       }
       if (createMethod) {
-        methods.add(new LombokLightMethodBuilder(psiField.getManager(), createSetterName(psiAnnotation, psiField.getName()))
+        methods.add(new LombokLightMethodBuilder(psiField.getManager(), createSetterName(psiAnnotation, psiFieldName))
             .withMethodReturnType(createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
             .withContainingClass(innerClass)
-            .withParameter(psiField.getName(), psiField.getType())
+            .withParameter(psiFieldName, psiField.getType())
             .withNavigationElement(psiField.getNavigationElement())
-            .withModifier(PsiModifier.PUBLIC));
+            .withModifier(PsiModifier.PUBLIC)
+            .withBody(PsiMethodUtil.createCodeBlockFromText(String.format("this.%s = %s;\nreturn this;", psiFieldName, psiFieldName), innerClass)));
       }
     }
     return methods;
@@ -290,13 +294,29 @@ public class BuilderHandler {
         .withMethodReturnType(psiBuilderType)
         .withContainingClass(innerClass)
         .withNavigationElement(parentClass)
-        .withModifier(PsiModifier.PUBLIC);
+        .withModifier(PsiModifier.PUBLIC)
+        .withBody(PsiMethodUtil.createCodeBlockFromText(
+            String.format("return new %s(%s);", parentClass.getName(), joinParameters(innerClass.getFields())), innerClass));
+  }
+
+  private String joinParameters(PsiField[] psiFields) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      for (PsiField psiField : psiFields) {
+        builder.append(psiField.getName()).append(',');
+      }
+      if (psiFields.length > 0) {
+        builder.deleteCharAt(builder.length() - 1);
+      }
+      return builder.toString();
+    } finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   public static final String ANNOTATION_FLUENT = "fluent";
   public static final String ANNOTATION_CHAIN = "chain";
-
-  public final static String SETTER_PREFIX = "set";
+  public static final String SETTER_PREFIX = "set";
 
   @NotNull
   private String createSetterName(@NotNull PsiAnnotation psiAnnotation, @NotNull String fieldName) {

@@ -18,7 +18,6 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiFieldUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
@@ -94,6 +93,12 @@ public class ToStringProcessor extends AbstractClassProcessor {
       return Collections.emptyList();
     }
 
+    final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation, false);
+    return createToStringMethod(psiClass, psiFields, psiAnnotation);
+  }
+
+  @NotNull
+  public Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
     final PsiManager psiManager = psiClass.getManager();
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiManager, METHOD_NAME)
         .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
@@ -101,17 +106,16 @@ public class ToStringProcessor extends AbstractClassProcessor {
         .withNavigationElement(psiAnnotation)
         .withModifier(PsiModifier.PUBLIC);
 
-    final String paramString = createParamString(psiClass, psiAnnotation);
+    final String paramString = createParamString(psiClass, psiFields, psiAnnotation);
     final String blockText = String.format("return \"%s(%s)\";", psiClass.getQualifiedName(), paramString);
     method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
 
-    Collection<PsiField> toStringFields = PsiFieldUtil.filterFieldsByModifiers(psiClass.getFields(), PsiModifier.STATIC);
-    UserMapKeys.addReadUsageFor(toStringFields);
+    UserMapKeys.addReadUsageFor(psiFields);
 
     return Collections.<PsiMethod>singletonList(method);
   }
 
-  private String createParamString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
     final boolean includeFieldNames = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "includeFieldNames", Boolean.class, Boolean.TRUE);
     final boolean callSuper = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "callSuper", Boolean.class, Boolean.FALSE);
     final boolean doNotUseGetters = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "doNotUseGetters", Boolean.class, Boolean.FALSE);
@@ -122,7 +126,6 @@ public class ToStringProcessor extends AbstractClassProcessor {
         paramString.append("super=\" + super.toString() + \", ");
       }
 
-      final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation, false);
       for (PsiField classField : psiFields) {
         final String fieldName = classField.getName();
 

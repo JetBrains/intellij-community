@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
+import de.plushnikov.intellij.plugin.processor.clazz.BuilderClassProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.BuilderProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.DataProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor;
@@ -20,6 +22,8 @@ import de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor;
+import de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
 
 public class DelombokEverythingAction extends BaseDelombokAction {
@@ -35,7 +39,8 @@ public class DelombokEverythingAction extends BaseDelombokAction {
         new SetterProcessor(), new EqualsAndHashCodeProcessor(), new ToStringProcessor(),
         new CommonsLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(),
         new GetterFieldProcessor(), new SetterFieldProcessor(), new WitherFieldProcessor(), new DelegateFieldProcessor(),
-        new DelegateMethodProcessor()
+        new DelegateMethodProcessor(),
+        new BuilderClassProcessor(), new BuilderClassMethodProcessor(), new BuilderMethodProcessor(), new BuilderProcessor()
     );
   }
 

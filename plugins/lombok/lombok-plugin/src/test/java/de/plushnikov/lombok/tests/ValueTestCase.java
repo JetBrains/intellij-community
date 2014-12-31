@@ -30,4 +30,8 @@ public class ValueTestCase extends LombokParsingTestCase {
   public void testValueExperimentalStarImport() throws IOException {
     doTest();
   }
+
+  public void testValueBuilder() throws IOException {
+    doTest();
+  }
 }

@@ -108,9 +108,25 @@ public class BaseDelombokHandler {
     } else if (psiElement instanceof PsiField) {
       return rebuildField(project, (PsiField) psiElement);
     } else if (psiElement instanceof PsiClass) {
-      //TODO
+      return rebuildClass(project, (PsiClass) psiElement);
     }
     return null;
+  }
+
+  private PsiClass rebuildClass(@NotNull Project project, @NotNull PsiClass fromClass) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+
+    PsiClass resultClass = elementFactory.createClass(fromClass.getName());
+    copyModifiers(fromClass.getModifierList(), resultClass.getModifierList());
+
+    for (PsiField psiField : fromClass.getFields()) {
+      resultClass.add(rebuildField(project, psiField));
+    }
+    for (PsiMethod psiMethod : fromClass.getMethods()) {
+      resultClass.add(rebuildMethod(project, psiMethod));
+    }
+
+    return (PsiClass) CodeStyleManager.getInstance(project).reformat(resultClass);
   }
 
   private PsiMethod rebuildMethod(@NotNull Project project, @NotNull PsiMethod fromMethod) {
