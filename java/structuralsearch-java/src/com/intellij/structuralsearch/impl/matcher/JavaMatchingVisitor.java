@@ -417,14 +417,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return element;
   }
 
-  protected boolean matchInAnyOrder(final PsiReferenceList elements, final PsiReferenceList elements2, GlobalMatchingVisitor visitor) {
-    if ((elements == null && visitor.isLeftLooseMatching()) ||
+  private boolean matchInAnyOrder(final PsiReferenceList elements, final PsiReferenceList elements2) {
+    if ((elements == null && myMatchingVisitor.isLeftLooseMatching()) ||
         elements == elements2 // null
       ) {
       return true;
     }
 
-    return visitor.matchInAnyOrder(
+    return myMatchingVisitor.matchInAnyOrder(
       elements.getReferenceElements(),
       (elements2 != null) ? elements2.getReferenceElements() : PsiElement.EMPTY_ARRAY
     );
@@ -478,17 +478,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final boolean templateIsInterface = clazz.isInterface();
       if (templateIsInterface != clazz2.isInterface()) return false;
       if (templateIsInterface && clazz.isAnnotationType() && !clazz2.isAnnotationType()) return false;
-      final boolean templateIsEnum = clazz.isEnum();
-      if (templateIsEnum && !clazz2.isEnum()) return false;
+      if (clazz.isEnum() && !clazz2.isEnum()) return false;
 
-      if (!matchInAnyOrder(clazz.getExtendsList(), clazz2.getExtendsList(), myMatchingVisitor)) {
+      if (!matchInAnyOrder(clazz.getExtendsList(), clazz2.getExtendsList())) {
         return false;
       }
 
       // check if implements is in extended classes implements
       final PsiReferenceList implementsList = clazz.getImplementsList();
       if (implementsList != null) {
-        if (!matchInAnyOrder(implementsList, clazz2.getImplementsList(), myMatchingVisitor)) {
+        if (!matchInAnyOrder(implementsList, clazz2.getImplementsList())) {
           final PsiReferenceList anotherExtendsList = clazz2.getExtendsList();
           final PsiJavaCodeReferenceElement[] referenceElements = implementsList.getReferenceElements();
 
@@ -1605,7 +1604,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     if (myMatchingVisitor.getResult()) {
-      myMatchingVisitor.setResult(matchInAnyOrder(psiTypeParameter.getExtendsList(), parameter.getExtendsList(), myMatchingVisitor));
+      myMatchingVisitor.setResult(matchInAnyOrder(psiTypeParameter.getExtendsList(), parameter.getExtendsList()));
     }
     if (myMatchingVisitor.getResult()) {
       myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(psiTypeParameter.getAnnotations(), parameter.getAnnotations()));
@@ -1685,7 +1684,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
                                   myMatchingVisitor.match(method.getModifierList(), method2.getModifierList()) &&
                                   myMatchingVisitor.matchSons(method.getParameterList(), method2.getParameterList()) &&
                                   myMatchingVisitor.match(method.getReturnTypeElement(), method2.getReturnTypeElement()) &&
-                                                    matchInAnyOrder(method.getThrowsList(), method2.getThrowsList(), myMatchingVisitor) &&
+                                                    matchInAnyOrder(method.getThrowsList(), method2.getThrowsList()) &&
                                   myMatchingVisitor.matchSonsOptionally(method.getBody(), method2.getBody()));
     }
     finally {
