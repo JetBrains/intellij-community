@@ -4,18 +4,19 @@ import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.socketConnection.ConnectionStatus;
+import io.netty.bootstrap.Bootstrap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.Vm;
+import org.jetbrains.io.NettyUtil;
 
 import javax.swing.*;
 import java.net.InetSocketAddress;
@@ -32,7 +33,8 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
     return null;
   }
 
-  public abstract void createVmAndConnect(@NotNull InetSocketAddress address, @NotNull AsyncResult<Vm> result);
+  @NotNull
+  public abstract Bootstrap createBootstrap(@NotNull InetSocketAddress address, @NotNull AsyncPromise<Vm> result);
 
   public void open(@NotNull final InetSocketAddress address) {
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to " + address.getHostName() + ":" + address.getPort());
@@ -43,35 +45,46 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
           return;
         }
 
-        final AsyncResult<Vm> result = new AsyncResult<Vm>();
+        final AsyncPromise<Vm> result = new AsyncPromise<Vm>();
         connectCancelHandler.set(new Runnable() {
           @Override
           public void run() {
-            result.reject("Closed explicitly");
+            result.setError("Closed explicitly");
           }
         });
 
-        createVmAndConnect(address, result);
-        result.doWhenDone(new Consumer<Vm>() {
-          @Override
-          public void consume(@NotNull Vm vm) {
-            RemoteVmConnection.this.vm = vm;
-            setState(ConnectionStatus.CONNECTED, "Connected to " + address.getHostName() + ":" + address.getPort());
-            startProcessing();
-          }
-        }).doWhenRejected(new Consumer<String>() {
+        ActionCallback callback = new ActionCallback();
+        NettyUtil.connectClient(createBootstrap(address, result), address, callback);
+        callback.doWhenRejected(new Consumer<String>() {
           @Override
           public void consume(String error) {
-            if (getState().getStatus() == ConnectionStatus.WAITING_FOR_CONNECTION) {
-              setState(ConnectionStatus.CONNECTION_FAILED, error == null ? "Internal error" : error);
-            }
-          }
-        }).doWhenProcessed(new Runnable() {
-          @Override
-          public void run() {
-            connectCancelHandler.set(null);
+            result.setError(error);
           }
         });
+
+        result
+          .done(new Consumer<Vm>() {
+            @Override
+            public void consume(@NotNull Vm vm) {
+              RemoteVmConnection.this.vm = vm;
+              setState(ConnectionStatus.CONNECTED, "Connected to " + address.getHostName() + ":" + address.getPort());
+              startProcessing();
+            }
+          })
+          .rejected(new Consumer<String>() {
+            @Override
+            public void consume(String error) {
+              if (getState().getStatus() == ConnectionStatus.WAITING_FOR_CONNECTION) {
+                setState(ConnectionStatus.CONNECTION_FAILED, error == null ? "Internal error" : error);
+              }
+            }
+          })
+          .processed(new Consumer<Vm>() {
+            @Override
+            public void consume(Vm vm) {
+              connectCancelHandler.set(null);
+            }
+          });
       }
     });
     connectCancelHandler.set(new Runnable() {
