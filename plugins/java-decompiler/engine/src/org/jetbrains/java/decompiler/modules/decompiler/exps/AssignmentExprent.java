@@ -118,7 +118,7 @@ public class AssignmentExprent extends Exprent {
           if (field.isStatic() && fd.hasModifier(CodeConstants.ACC_FINAL)) {
             fieldInClassInit = true;
           }
-          if (node.wrapper.getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()))) {
+          if (node.getWrapper() != null && node.getWrapper().getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()))) {
             hiddenField = true;
           }
         }

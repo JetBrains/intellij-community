@@ -214,6 +214,39 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     return promise;
   }
 
+  @NotNull
+  public Promise<T> done(@NotNull final AsyncPromise<T> fulfilled) {
+    switch (state) {
+      case PENDING:
+        break;
+      case FULFILLED:
+        //noinspection unchecked
+        fulfilled.setResult((T)result);
+        return this;
+      case REJECTED:
+        fulfilled.setError((String)result);
+        return this;
+    }
+
+    addHandlers(new Consumer<T>() {
+      @Override
+      public void consume(T result) {
+        try {
+          fulfilled.setResult(result);
+        }
+        catch (Throwable e) {
+          fulfilled.setError(e.getMessage());
+        }
+      }
+    }, new Consumer<String>() {
+      @Override
+      public void consume(String error) {
+        fulfilled.setError(error);
+      }
+    });
+    return this;
+  }
+
   private void addHandlers(@NotNull Consumer<T> done, @NotNull Consumer<String> rejected) {
     this.done = setHandler(this.done, done);
     this.rejected = setHandler(this.rejected, rejected);
@@ -261,17 +294,13 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @Override
-  public void processed(@NotNull Consumer<T> processed) {
-    assert done == null && rejected == null;
-    done = processed;
-    rejected = new Consumer<String>() {
+  public void processed(@NotNull final Consumer<T> processed) {
+    done(processed);
+    rejected(new Consumer<String>() {
       @Override
       public void consume(String error) {
-        Consumer<T> rejected = done;
-        if (rejected != null) {
-          rejected.consume(null);
-        }
+        processed.consume(null);
       }
-    };
+    });
   }
 }

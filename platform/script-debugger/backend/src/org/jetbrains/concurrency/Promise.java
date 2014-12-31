@@ -16,6 +16,7 @@ public abstract class Promise<T> {
     PENDING, FULFILLED, REJECTED
   }
 
+  @NotNull
   public static <T> Promise<T> resolve(T result) {
     if (result == null) {
       //noinspection unchecked
@@ -37,6 +38,7 @@ public abstract class Promise<T> {
     }
   }
 
+  @NotNull
   public static Promise<Void> all(@NotNull Collection<Promise<?>> promises) {
     if (promises.isEmpty()) {
       return DONE;
@@ -103,6 +105,9 @@ public abstract class Promise<T> {
     //noinspection unchecked
     return done((Consumer<T>)done);
   }
+
+  @NotNull
+  public abstract Promise<T> done(@NotNull final AsyncPromise<T> fulfilled);
 
   @NotNull
   public Promise<Void> then(@NotNull ConsumerRunnable done) {

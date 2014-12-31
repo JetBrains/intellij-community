@@ -56,7 +56,7 @@ public class ClassWriter {
   }
 
   private void invokeProcessors(ClassNode node) {
-    ClassWrapper wrapper = node.wrapper;
+    ClassWrapper wrapper = node.getWrapper();
     StructClass cl = wrapper.getClassStruct();
 
     InitializerProcessor.extractInitializers(wrapper);
@@ -75,12 +75,8 @@ public class ClassWriter {
   }
 
   public void classLambdaToJava(ClassNode node, TextBuffer buffer, Exprent method_object, int indent) {
-    // get the class node with the content method
-    ClassNode classNode = node;
-    while (classNode != null && classNode.type == ClassNode.CLASS_LAMBDA) {
-      classNode = classNode.parent;
-    }
-    if (classNode == null) {
+    ClassWrapper wrapper = node.getWrapper();
+    if (wrapper == null) {
       return;
     }
 
@@ -92,7 +88,6 @@ public class ClassWriter {
     BytecodeMappingTracer tracer = new BytecodeMappingTracer();
 
     try {
-      ClassWrapper wrapper = classNode.wrapper;
       StructClass cl = wrapper.getClassStruct();
 
       DecompilerContext.getLogger().startWriteClass(node.simpleName);
@@ -144,7 +139,7 @@ public class ClassWriter {
 
         buffer.append(" {").appendLineSeparator();
 
-        methodLambdaToJava(node, classNode, mt, buffer, indent + 1, !lambdaToAnonymous, tracer);
+        methodLambdaToJava(node, wrapper, mt, buffer, indent + 1, !lambdaToAnonymous, tracer);
 
         buffer.appendIndent(indent).append("}");
       }
@@ -167,7 +162,7 @@ public class ClassWriter {
       // last minute processing
       invokeProcessors(node);
 
-      ClassWrapper wrapper = node.wrapper;
+      ClassWrapper wrapper = node.getWrapper();
       StructClass cl = wrapper.getClassStruct();
 
       DecompilerContext.getLogger().startWriteClass(cl.qualifiedName);
@@ -287,7 +282,7 @@ public class ClassWriter {
       return;
     }
 
-    ClassWrapper wrapper = node.wrapper;
+    ClassWrapper wrapper = node.getWrapper();
     StructClass cl = wrapper.getClassStruct();
 
     int flags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
@@ -474,12 +469,11 @@ public class ClassWriter {
   }
 
   private static void methodLambdaToJava(ClassNode lambdaNode,
-                                         ClassNode classNode,
+                                         ClassWrapper classWrapper,
                                          StructMethod mt,
                                          TextBuffer buffer,
                                          int indent,
                                          boolean codeOnly, BytecodeMappingTracer tracer) {
-    ClassWrapper classWrapper = classNode.wrapper;
     MethodWrapper methodWrapper = classWrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
 
     MethodWrapper outerWrapper = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
@@ -562,7 +556,7 @@ public class ClassWriter {
   }
 
   private boolean methodToJava(ClassNode node, StructMethod mt, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
-    ClassWrapper wrapper = node.wrapper;
+    ClassWrapper wrapper = node.getWrapper();
     StructClass cl = wrapper.getClassStruct();
     MethodWrapper methodWrapper = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
 
