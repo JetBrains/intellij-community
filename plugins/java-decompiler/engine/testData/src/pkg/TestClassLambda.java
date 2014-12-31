@@ -74,4 +74,12 @@ public class TestClassLambda {
   public static int localMax(int first, int second) {
     return 0;
   }
+
+  public void nestedLambdas() {
+    int a =5;
+    Runnable r1 = () -> {
+      Runnable r2 = () -> { System.out.println("hello2" + a); };
+      System.out.println("hello1" + a);
+    };
+  }
 }

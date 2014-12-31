@@ -70,6 +70,16 @@ public class TestClassLambda {
    public static int localMax(int var0, int var1) {
       return 0;// 75
    }
+
+   public void nestedLambdas() {
+      byte var1 = 5;// 79
+      Runnable var2 = () -> {
+         Runnable var1x = () -> {
+            System.out.println("hello2" + var1);
+         };
+         System.out.println("hello1" + var1);
+      };// 80
+   }
 }
 
 class 'pkg/TestClassLambda' {
@@ -150,6 +160,12 @@ class 'pkg/TestClassLambda' {
       0      70
       1      70
    }
+
+   method 'nestedLambdas ()V' {
+      0      74
+      1      74
+      8      80
+   }
 }
 
 Lines mapping:
@@ -171,3 +187,5 @@ Lines mapping:
 67 <-> 63
 71 <-> 67
 75 <-> 71
+79 <-> 75
+80 <-> 81

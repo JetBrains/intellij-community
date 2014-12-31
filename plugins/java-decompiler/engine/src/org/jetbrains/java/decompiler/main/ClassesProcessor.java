@@ -354,7 +354,7 @@ public class ClassesProcessor {
     public int access;
     public String simpleName;
     public StructClass classStruct;
-    public ClassWrapper wrapper;
+    private ClassWrapper wrapper;
     public String enclosingMethod;
     public InvocationExprent superInvocation;
     public Map<String, VarVersionPair> mapFieldsToVars = new HashMap<String, VarVersionPair>();
@@ -417,6 +417,14 @@ public class ClassesProcessor {
         }
       }
       return null;
+    }
+
+    public ClassWrapper getWrapper() {
+      ClassNode node = this;
+      while (node.type == CLASS_LAMBDA) {
+        node = node.parent;
+      }
+      return node.wrapper;
     }
 
     public static class LambdaInformation {
