@@ -50,7 +50,7 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
           if (dirs.add(dir)) {
             String url = resource.getResourceUrl();
             if (url != null) {
-              set.add(url.substring(0, url.lastIndexOf('/')));
+              set.add(url.substring(0, url.lastIndexOf('/') + 1));
             }
           }
         }
