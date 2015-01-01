@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.maturity;
+package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TodoCommentInspection extends BaseJavaBatchLocalInspectionTool {
+public class TodoCommentInspection extends LocalInspectionTool {
 
   @Nullable
   @Override
@@ -45,7 +40,7 @@ public class TodoCommentInspection extends BaseJavaBatchLocalInspectionTool {
       final PsiComment comment =
         PsiTreeUtil.getParentOfType(file.findElementAt(todoItem.getTextRange().getStartOffset()), PsiComment.class, false);
       if (comment != null && comments.add(comment)) {
-        result.add(manager.createProblemDescriptor(comment, InspectionGadgetsBundle.message("todo.comment.problem.descriptor"), isOnTheFly,
+        result.add(manager.createProblemDescriptor(comment, InspectionsBundle.message("todo.comment.problem.descriptor"), isOnTheFly,
                                                    null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }

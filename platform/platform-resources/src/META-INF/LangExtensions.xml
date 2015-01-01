@@ -762,6 +762,9 @@
     <localInspection shortName="ProblematicWhitespace" bundle="messages.InspectionsBundle" key="problematic.whitespace.display.name"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ProblematicWhitespaceInspection"/>
+    <localInspection shortName="TodoComment" bundle="messages.InspectionsBundle" key="todo.comment.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.maturity.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.intellij.codeInspection.TodoCommentInspection"/>
 
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
 

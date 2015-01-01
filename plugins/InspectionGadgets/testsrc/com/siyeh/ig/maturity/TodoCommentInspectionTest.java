@@ -16,6 +16,7 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.TodoCommentInspection;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
