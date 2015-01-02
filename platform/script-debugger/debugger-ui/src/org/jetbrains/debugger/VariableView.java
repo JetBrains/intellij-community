@@ -108,9 +108,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
             }
           }
         })
-        .rejected(new Consumer<String>() {
+        .rejected(new Consumer<Throwable>() {
           @Override
-          public void consume(String error) {
+          public void consume(Throwable error) {
             node.setPresentation(icon, null, "Internal error: " + error, false);
           }
         });
@@ -176,11 +176,11 @@ public final class VariableView extends XNamedValue implements VariableContext {
             }
           }
         }
-      }).rejected(new Consumer<String>() {
+      }).rejected(new Consumer<Throwable>() {
         @Override
-        public void consume(String error) {
+        public void consume(Throwable error) {
           if (!node.isObsolete()) {
-            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error), error, node);
+            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error.getMessage()), error.getMessage(), node);
           }
         }
       });
@@ -496,11 +496,11 @@ public final class VariableView extends XNamedValue implements VariableContext {
     };
   }
 
-  private static Consumer<String> createErrorMessageConsumer(@NotNull final XValueCallback callback) {
-    return new Consumer<String>() {
+  private static Consumer<Throwable> createErrorMessageConsumer(@NotNull final XValueCallback callback) {
+    return new Consumer<Throwable>() {
       @Override
-      public void consume(@Nullable String errorMessage) {
-        callback.errorOccurred(errorMessage == null ? "Internal error" : errorMessage);
+      public void consume(@Nullable Throwable error) {
+        callback.errorOccurred(error.getMessage());
       }
     };
   }

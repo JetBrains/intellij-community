@@ -6,18 +6,18 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jsonProtocol.Request;
 
-public abstract class CommandSenderBase<SUCCESS_RESPONSE, ERROR_DETAILS> implements CommandSender {
-  protected abstract <RESULT> void send(@NotNull Request message, @NotNull RequestPromise<SUCCESS_RESPONSE, RESULT, ERROR_DETAILS> callback);
+public abstract class CommandSenderBase<SUCCESS_RESPONSE> implements CommandSender {
+  protected abstract <RESULT> void send(@NotNull Request message, @NotNull RequestPromise<SUCCESS_RESPONSE, RESULT> callback);
 
   @Override
   @NotNull
   public final <RESULT> Promise<RESULT> send(@NotNull Request<RESULT> request) {
-    RequestPromise<SUCCESS_RESPONSE, RESULT, ERROR_DETAILS> callback = new RequestPromise<SUCCESS_RESPONSE, RESULT, ERROR_DETAILS>(request.getMethodName());
+    RequestPromise<SUCCESS_RESPONSE, RESULT> callback = new RequestPromise<SUCCESS_RESPONSE, RESULT>(request.getMethodName());
     send(request, callback);
     return callback;
   }
 
-  protected static final class RequestPromise<SUCCESS_RESPONSE, RESULT, ERROR_DETAILS> extends AsyncPromise<RESULT> implements RequestCallback<SUCCESS_RESPONSE, ERROR_DETAILS> {
+  protected static final class RequestPromise<SUCCESS_RESPONSE, RESULT> extends AsyncPromise<RESULT> implements RequestCallback<SUCCESS_RESPONSE> {
     private final String methodName;
 
     public RequestPromise(@Nullable String methodName) {
@@ -37,13 +37,13 @@ public abstract class CommandSenderBase<SUCCESS_RESPONSE, ERROR_DETAILS> impleme
       }
       catch (Throwable e) {
         CommandProcessor.LOG.error(e);
-        setError(e.getMessage());
+        setError(e);
       }
     }
 
     @Override
-    public void onError(@NotNull String errorMessage, ERROR_DETAILS details) {
-      setError(errorMessage);
+    public void onError(@NotNull Throwable error) {
+      setError(error);
     }
   }
 }
