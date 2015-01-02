@@ -28,7 +28,7 @@ import java.util.Arrays;
  * @param <INCOMING_WITH_SEQ> type of incoming message that is a command (has sequence number)
  */
 public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> extends MessageManagerBase {
-  private final ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> callbackMap = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<RequestCallback<SUCCESS, ERROR_DETAILS>> callbackMap = ContainerUtil.createConcurrentIntObjectMap();
   private final Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler;
 
   public MessageManager(Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler) {
@@ -46,10 +46,10 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
 
     void acceptNonSequence(INCOMING incoming);
 
-    void call(INCOMING_WITH_SEQ response, AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback);
+    void call(INCOMING_WITH_SEQ response, RequestCallback<SUCCESS, ERROR_DETAILS> callback);
   }
 
-  public void send(@NotNull REQUEST message, @NotNull AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback) {
+  public void send(@NotNull REQUEST message, @NotNull RequestCallback<SUCCESS, ERROR_DETAILS> callback) {
     if (rejectIfClosed(callback)) {
       return;
     }
@@ -77,7 +77,7 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
   }
 
   private void failedToSend(int sequence) {
-    AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = callbackMap.remove(sequence);
+    RequestCallback<SUCCESS, ERROR_DETAILS> callback = callbackMap.remove(sequence);
     if (callback != null) {
       callback.onError("Failed to send", null);
     }
@@ -96,7 +96,7 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
       return;
     }
 
-    AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = getCallbackAndRemove(handler.getSequence(commandResponse));
+    RequestCallback<SUCCESS, ERROR_DETAILS> callback = getCallbackAndRemove(handler.getSequence(commandResponse));
     if (rejectIfClosed(callback)) {
       return;
     }
@@ -110,8 +110,8 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
     }
   }
 
-  public AsyncResultCallback<SUCCESS, ERROR_DETAILS> getCallbackAndRemove(int id) {
-    AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = callbackMap.remove(id);
+  public RequestCallback<SUCCESS, ERROR_DETAILS> getCallbackAndRemove(int id) {
+    RequestCallback<SUCCESS, ERROR_DETAILS> callback = callbackMap.remove(id);
     if (callback == null) {
       throw new IllegalArgumentException("Cannot find callback with id " + id);
     }
@@ -120,11 +120,11 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
 
   public void cancelWaitingRequests() {
     // we should call them in the order they have been submitted
-    ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> map = callbackMap;
+    ConcurrentIntObjectMap<RequestCallback<SUCCESS, ERROR_DETAILS>> map = callbackMap;
     int[] keys = map.keys();
     Arrays.sort(keys);
     for (int key : keys) {
-      AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = map.get(key);
+      RequestCallback<SUCCESS, ERROR_DETAILS> callback = map.get(key);
       if (callback != null) {
         rejectCallback(callback);
       }

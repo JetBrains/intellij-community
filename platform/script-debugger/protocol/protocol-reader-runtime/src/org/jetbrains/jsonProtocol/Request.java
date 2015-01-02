@@ -2,7 +2,7 @@ package org.jetbrains.jsonProtocol;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface Request {
+public interface Request<RESULT> {
   @NotNull
   CharSequence toJson();
 

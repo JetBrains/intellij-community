@@ -38,7 +38,7 @@ public abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESP
   }
 
   @Override
-  protected void send(@NotNull Request message, @NotNull AsyncResultCallback<SUCCESS_RESPONSE, ERROR_DETAILS> callback) {
+  protected <RESULT> void send(@NotNull Request message, @NotNull RequestPromise<SUCCESS_RESPONSE, RESULT, ERROR_DETAILS> callback) {
     messageManager.send(message, callback);
   }
 }

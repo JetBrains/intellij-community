@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class MessageManagerBase {
   protected volatile boolean closed;
 
-  protected final boolean rejectIfClosed(AsyncResultCallback<?, ?> callback) {
+  protected final boolean rejectIfClosed(RequestCallback<?, ?> callback) {
     if (closed) {
       callback.onError("Connection closed", null);
       return true;
@@ -17,7 +17,7 @@ public abstract class MessageManagerBase {
     closed = true;
   }
 
-  protected static void rejectCallback(@NotNull AsyncResultCallback<?, ?> callback) {
+  protected static void rejectCallback(@NotNull RequestCallback<?, ?> callback) {
     callback.onError("Connection closed", null);
   }
 }
