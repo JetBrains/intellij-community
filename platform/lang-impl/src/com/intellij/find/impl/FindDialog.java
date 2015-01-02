@@ -495,23 +495,13 @@ public class FindDialog extends DialogWrapper {
       }
     }
     else {
-      if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-        JPanel leftOptionsPanel = new JPanel();
-        leftOptionsPanel.setLayout(new GridLayout(3, 1, 0, 4));
+      JPanel leftOptionsPanel = new JPanel();
+      leftOptionsPanel.setLayout(new GridLayout(3, 1, 0, 4));
 
-        leftOptionsPanel.add(createDirectionPanel());
-        leftOptionsPanel.add(createOriginPanel());
-        leftOptionsPanel.add(createScopePanel());
-        topOptionsPanel.add(leftOptionsPanel);
-      } else {
-        topOptionsPanel.add(createDirectionPanel());
-        gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
-        JPanel bottomOptionsPanel = new JPanel();
-        bottomOptionsPanel.setLayout(new GridLayout(1, 2, 8, 0));
-        optionsPanel.add(bottomOptionsPanel, gbConstraints);
-        bottomOptionsPanel.add(createScopePanel());
-        bottomOptionsPanel.add(createOriginPanel());
-      }
+      leftOptionsPanel.add(createDirectionPanel());
+      leftOptionsPanel.add(createOriginPanel());
+      leftOptionsPanel.add(createScopePanel());
+      topOptionsPanel.add(leftOptionsPanel);
     }
 
     if (myModel.isOpenInNewTabVisible()){
@@ -793,9 +783,7 @@ public class FindDialog extends DialogWrapper {
     panel.add(mySearchContext, BorderLayout.NORTH);
     searchContextPanel.add(panel, BorderLayout.CENTER);
 
-    if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-      findOptionsPanel.add(searchContextPanel);
-    }
+    findOptionsPanel.add(searchContextPanel);
 
     ActionListener actionListener = new ActionListener() {
       @Override

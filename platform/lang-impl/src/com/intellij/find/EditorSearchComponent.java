@@ -18,7 +18,6 @@ package com.intellij.find;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.*;
-import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.icons.AllIcons;
@@ -298,12 +297,9 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
     myRightComponent.add(centerPanel, BorderLayout.CENTER);
 
-    if (secondaryActionsAvailable()) {
-      if (myToolbarComponent instanceof ActionToolbarImpl) {
-        new ShowMoreOptions(myToolbarComponent, mySearchField);
-      }
+    if (myToolbarComponent instanceof ActionToolbarImpl) {
+      new ShowMoreOptions(myToolbarComponent, mySearchField);
     }
-
 
     JPanel tailPanel = new NonOpaquePanel(new BorderLayout(5, 0));
     JPanel tailContainer = new NonOpaquePanel(new BorderLayout(5, 0));
@@ -385,13 +381,13 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myActionsToolbar.setSecondaryActionsTooltip("More Options(" + ShowMoreOptions.SHORT_CUT + ")");
 
     actionGroup.addAction(new ToggleWholeWordsOnlyAction(this));
-    if (secondaryActionsAvailable()) {
-      actionGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
-      actionGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
-      actionGroup.addAction(new ToggleExceptCommentsAction(this)).setAsSecondary(true);
-      actionGroup.addAction(new ToggleExceptLiteralsAction(this)).setAsSecondary(true);
-      actionGroup.addAction(new ToggleExceptCommentsAndLiteralsAction(this)).setAsSecondary(true);
-    }
+
+    actionGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
+    actionGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
+    actionGroup.addAction(new ToggleExceptCommentsAction(this)).setAsSecondary(true);
+    actionGroup.addAction(new ToggleExceptLiteralsAction(this)).setAsSecondary(true);
+    actionGroup.addAction(new ToggleExceptCommentsAndLiteralsAction(this)).setAsSecondary(true);
+
     actionGroup.addAction(new TogglePreserveCaseAction(this));
     actionGroup.addAction(new ToggleSelectionOnlyAction(this));
 
@@ -423,10 +419,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   public void selectAllText() {
     mySearchField.selectAll();
-  }
-
-  private boolean secondaryActionsAvailable() {
-    return FindManagerImpl.ourHasSearchInCommentsAndLiterals;
   }
 
   private void setupSearchFieldListener() {
