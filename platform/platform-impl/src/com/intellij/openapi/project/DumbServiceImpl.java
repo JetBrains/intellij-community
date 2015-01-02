@@ -281,16 +281,13 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
   @Override
   public void waitForSmartMode() {
-    final Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode()) {
-      assert !application.isDispatchThread();
-      if (application.isReadAccessAllowed() && isDumb()) {
-        throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
-      }
-    }
-
     if (!isDumb()) {
       return;
+    }
+
+    final Application application = ApplicationManager.getApplication();
+    if (application.isReadAccessAllowed() || application.isDispatchThread()) {
+      throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
 
     final Semaphore semaphore = new Semaphore();
