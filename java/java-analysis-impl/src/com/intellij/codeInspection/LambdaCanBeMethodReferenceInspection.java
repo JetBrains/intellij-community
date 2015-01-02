@@ -89,12 +89,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
                                                                  final PsiParameter[] parameters,
                                                                  PsiType functionalInterfaceType) {
     final PsiCallExpression callExpression = extractMethodCallFromBlock(body);
-    if (callExpression instanceof PsiNewExpression && ((PsiNewExpression)callExpression).getAnonymousClass() != null) {
-      return null;
+    if (callExpression instanceof PsiNewExpression) {
+      final PsiNewExpression newExpression = (PsiNewExpression)callExpression;
+      if (newExpression.getAnonymousClass() != null || newExpression.getArrayInitializer() != null) {
+        return null;
+      }
     }
 
     final String methodReferenceText = createMethodReferenceText(callExpression, functionalInterfaceType, parameters);
     if (methodReferenceText != null) {
+      LOG.assertTrue(callExpression != null);
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
       final PsiMethodReferenceExpression methodReferenceExpression = 
         (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, callExpression);
@@ -108,6 +112,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
             return null;
           }
           if (!(element instanceof PsiMethod)) {
+            LOG.assertTrue(callExpression instanceof PsiNewExpression);
+            final PsiExpression[] dims = ((PsiNewExpression)callExpression).getArrayDimensions();
+            if (dims.length == 1 && parameters.length == 1){
+              if (!resolvesToParameter(dims[0], parameters[0])) {
+                return null;
+              }
+            }
+            else if (dims.length > 0) {
+              return null;
+            }
             return callExpression;
           }
 
