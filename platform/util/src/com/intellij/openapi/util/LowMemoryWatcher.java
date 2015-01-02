@@ -125,5 +125,10 @@ public class LowMemoryWatcher {
   public void stop() {
     ourInstances.remove(this);
   }
+  
+  public static void stopAll() {
+    ourExecutor.shutdown();
+    ourInstances.clear();
+  }
 
 }
