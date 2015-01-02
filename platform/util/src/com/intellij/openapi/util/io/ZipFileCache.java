@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipFile;
 
@@ -76,9 +77,12 @@ public class ZipFileCache {
   private static final Map<ZipFile, CacheRecord> ourFileCache = ContainerUtil.newHashMap();
   private static final Map<ZipFile, Integer> ourQueue = ContainerUtil.newHashMap();
 
+  private static final ScheduledThreadPoolExecutor ourExecutor;
+
   static {
     if (ourEnabled) {
-      ConcurrencyUtil.newSingleScheduledThreadExecutor("ZipFileCache Dispose", Thread.MIN_PRIORITY).scheduleWithFixedDelay(new Runnable() {
+      ourExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("ZipFileCache Dispose", Thread.MIN_PRIORITY);
+      ourExecutor.scheduleWithFixedDelay(new Runnable() {
         @Override
         public void run() {
           List<ZipFile> toClose = getFilesToClose(0, System.currentTimeMillis() - TIMEOUT);
@@ -87,6 +91,8 @@ public class ZipFileCache {
           }
         }
       }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
+    } else {
+      ourExecutor = null;
     }
   }
 
@@ -250,5 +256,11 @@ public class ZipFileCache {
 
   private static void debug(@NotNull String format, Object... args) {
     LogUtil.debug(logger(), format, args);
+  }
+
+  public static void stopBackgroundThread() {
+    if (ourExecutor != null) {
+      ourExecutor.shutdown();
+    }
   }
 }

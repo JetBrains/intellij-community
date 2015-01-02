@@ -244,6 +244,9 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     runner.execute(environment, new ProgramRunner.Callback() {
       @Override
       public void processStarted(final RunContentDescriptor descriptor) {
+        if (descriptor == null) {
+          throw new AssertionError("Null descriptor!");
+        }
         disposeOnTearDown(new Disposable() {
           @Override
           public void dispose() {

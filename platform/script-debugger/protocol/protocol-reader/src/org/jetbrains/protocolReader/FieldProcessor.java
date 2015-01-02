@@ -67,7 +67,7 @@ final class FieldProcessor<T> {
     if (method.getAnnotation(JsonNullable.class) != null) {
       nullable = true;
     }
-    else if (genericReturnType == String.class || genericReturnType == Enum.class) {
+    else if (genericReturnType == String.class || genericReturnType == Enum.class || (genericReturnType instanceof Class && !((Class)genericReturnType).isPrimitive())) {
       JsonField jsonField = method.getAnnotation(JsonField.class);
       if (jsonField != null) {
         nullable = jsonField.optional() && !jsonField.allowAnyPrimitiveValue() && !jsonField.allowAnyPrimitiveValueAndMap();

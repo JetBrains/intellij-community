@@ -17,6 +17,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.Vm;
 import org.jetbrains.io.NettyUtil;
+import org.jetbrains.rpc.CommandProcessor;
 
 import javax.swing.*;
 import java.net.InetSocketAddress;
@@ -49,7 +50,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
         connectCancelHandler.set(new Runnable() {
           @Override
           public void run() {
-            result.setError("Closed explicitly");
+            result.setError(Promise.getError("Closed explicitly"));
           }
         });
 
@@ -58,7 +59,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
         callback.doWhenRejected(new Consumer<String>() {
           @Override
           public void consume(String error) {
-            result.setError(error);
+            result.setError(Promise.getError(error));
           }
         });
 
@@ -71,10 +72,11 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
               startProcessing();
             }
           })
-          .rejected(new Consumer<String>() {
+          .rejected(new Consumer<Throwable>() {
             @Override
-            public void consume(String error) {
-              setState(ConnectionStatus.CONNECTION_FAILED, error == null ? "Internal error" : error);
+            public void consume(Throwable error) {
+              CommandProcessor.LOG.error(error);
+              setState(ConnectionStatus.CONNECTION_FAILED, error.getMessage());
             }
           })
           .processed(new Consumer<Vm>() {
@@ -144,7 +146,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
               @SuppressWarnings("unchecked")
               T value = (T)list.getSelectedValue();
               if (value == null) {
-                result.setError(null);
+                result.setError(Promise.getError("No target to inspect"));
               }
               else {
                 result.setResult(value);

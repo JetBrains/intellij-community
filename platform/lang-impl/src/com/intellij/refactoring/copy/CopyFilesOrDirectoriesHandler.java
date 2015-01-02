@@ -227,9 +227,9 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                 }
               }
 
-              if (firstFile != null) {
+              if (firstFile != null && openInEditor) {
                 CopyHandler.updateSelectionInActiveProjectView(firstFile, project, doClone);
-                if (!(firstFile instanceof PsiBinaryFile) && openInEditor){
+                if (!(firstFile instanceof PsiBinaryFile)) {
                   EditorHelper.openInEditor(firstFile);
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
                     @Override

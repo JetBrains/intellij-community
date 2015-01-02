@@ -10,7 +10,7 @@ public interface SuspendContextManager<CALL_FRAME extends CallFrame> {
    * will be called.
    */
   @NotNull
-  Promise<Void> suspend();
+  Promise<?> suspend();
 
   @Nullable
   SuspendContext getContext();

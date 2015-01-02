@@ -22,8 +22,15 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
+import org.jdom.Element;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @State(
   name="NamedScopeManager",
@@ -33,6 +40,7 @@ import javax.swing.*;
     )}
 )
 public class NamedScopeManager extends NamedScopesHolder {
+  public OrderState myOrderState = new OrderState();
 
   public NamedScopeManager(final Project project) {
     super(project);
@@ -43,6 +51,19 @@ public class NamedScopeManager extends NamedScopesHolder {
   }
 
   @Override
+  public void loadState(Element state) {
+    super.loadState(state);
+    XmlSerializer.deserializeInto(myOrderState, state);
+  }
+
+  @Override
+  public Element getState() {
+    final Element state = super.getState();
+    XmlSerializer.serializeInto(myOrderState, state);
+    return state;
+  }
+
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("local.scopes.node.text");
   }
@@ -50,5 +71,11 @@ public class NamedScopeManager extends NamedScopesHolder {
   @Override
   public Icon getIcon() {
     return AllIcons.Ide.LocalScope;
+  }
+
+  public static class OrderState {
+    @Tag("order")
+    @AbstractCollection(surroundWithTag = false, elementTag = "scope", elementValueAttribute = "name")
+    public List<String> myOrder = new ArrayList<String>();
   }
 }

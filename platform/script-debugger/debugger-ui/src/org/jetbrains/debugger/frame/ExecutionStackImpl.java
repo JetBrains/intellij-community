@@ -42,7 +42,7 @@ public class ExecutionStackImpl extends XExecutionStack {
       return;
     }
 
-    suspendContext.getCallFrames().done(new ContextDependentAsyncResultConsumer<CallFrame[]>(suspendContext) {
+    suspendContext.getFrames().done(new ContextDependentAsyncResultConsumer<CallFrame[]>(suspendContext) {
       @Override
       protected void consume(CallFrame[] frames, @NotNull Vm vm) {
         int count = frames.length - firstFrameIndex;

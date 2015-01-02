@@ -169,20 +169,23 @@ public class StartupManagerImpl extends StartupManagerEx {
     });
   }
 
-  public synchronized void runPostStartupActivities() {
+  public void runPostStartupActivities() {
     final Application app = ApplicationManager.getApplication();
 
-    if (myPostStartupActivitiesPassed) return;
-
+    if (postStartupActivityPassed()) return;
+    
     runActivities(myDumbAwarePostStartupActivities);
+    
     DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
       @Override
       public void run() {
+        app.assertIsDispatchThread();
+        
+        // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
+        runActivities(myDumbAwarePostStartupActivities);
+        
         //noinspection SynchronizeOnThis
         synchronized (StartupManagerImpl.this) {
-          app.assertIsDispatchThread();
-          runActivities(myDumbAwarePostStartupActivities); // they can register activities while in the dumb mode
-
           if (!myNotDumbAwarePostStartupActivities.isEmpty()) {
             while (!myNotDumbAwarePostStartupActivities.isEmpty()) {
               queueSmartModeActivity(myNotDumbAwarePostStartupActivities.remove(0));
@@ -316,43 +319,29 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   @Override
-  public synchronized void runWhenProjectIsInitialized(@NotNull final Runnable action) {
+  public void runWhenProjectIsInitialized(@NotNull final Runnable action) {
     final Application application = ApplicationManager.getApplication();
     if (application == null) return;
 
-    final Runnable runnable;
-    if (DumbService.isDumbAware(action)) {
-      runnable = new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          action.run();
-        }
-      };
-    }
-    else {
-      runnable = new Runnable() {
-        @Override
-        public void run() {
-          action.run();
-        }
-      };
-    }
-
-    if (myProject.isInitialized() || application.isUnitTestMode() && myPostStartupActivitiesPassed) {
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
       // in tests which simulate project opening, post-startup activities could have been run already.
       // Then we should act as if the project was initialized
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          if (!myProject.isDisposed()) {
-            runnable.run();
-          }
+      boolean initialized = myProject.isInitialized() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
+      if (!initialized) {
+        registerPostStartupActivity(action);
+        return;
+      }
+    }
+
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (!myProject.isDisposed()) {
+          action.run();
         }
-      });
-    }
-    else {
-      registerPostStartupActivity(runnable);
-    }
+      }
+    });
   }
 
   @TestOnly

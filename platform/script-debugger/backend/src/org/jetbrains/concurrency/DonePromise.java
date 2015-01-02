@@ -28,7 +28,7 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
 
   @NotNull
   @Override
-  public Promise<T> rejected(@NotNull Consumer<String> rejected) {
+  public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
     return this;
   }
 

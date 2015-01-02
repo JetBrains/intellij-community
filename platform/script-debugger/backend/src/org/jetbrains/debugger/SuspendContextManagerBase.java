@@ -43,7 +43,7 @@ public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CA
 
   @NotNull
   @Override
-  public final Promise<Void> suspend() {
+  public final Promise<?> suspend() {
     Promise<Void> callback = suspendCallback.get();
     if (callback != null) {
       return callback;
@@ -56,7 +56,7 @@ public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CA
   }
 
   @NotNull
-  protected abstract Promise<Void> doSuspend();
+  protected abstract Promise<?> doSuspend();
 
   @Override
   public boolean isContextObsolete(@NotNull SuspendContext context) {
