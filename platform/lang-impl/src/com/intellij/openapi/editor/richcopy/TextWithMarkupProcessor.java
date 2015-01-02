@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.editor.richcopy.view.HtmlTransferableData;
 import com.intellij.openapi.editor.richcopy.view.RawTextWithMarkup;
 import com.intellij.openapi.editor.richcopy.view.RtfTransferableData;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -63,7 +64,7 @@ import java.util.List;
  * Interoperability with the following applications was tested:
  *   MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail.
  */
-public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> {
+public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#" + TextWithMarkupProcessor.class.getName());
 
   private List<RawTextWithMarkup> myResult;
