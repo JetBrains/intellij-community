@@ -35,9 +35,9 @@ public interface SuspendContext {
   Promise<CallFrame[]> getFrames();
 
   /**
-   * @return a set of the breakpoints hit on VM suspension with which this
-   *         context is associated. An empty collection if the suspension was
-   *         not related to hitting breakpoints (e.g. a step end)
+   * list of the breakpoints hit on VM suspension with which this
+   * context is associated. An empty collection if the suspension was
+   * not related to hitting breakpoints (e.g. a step end)
    */
   @NotNull
   List<Breakpoint> getBreakpointsHit();
