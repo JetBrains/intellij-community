@@ -52,6 +52,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitRebaseOverMergeProblem;
 import git4idea.update.GitUpdateProcess;
 import git4idea.update.GitUpdateResult;
+import git4idea.update.GitUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -383,7 +384,8 @@ public class GitPushOperation {
   private void savePushUpdateSettings(@NotNull PushUpdateSettings settings, boolean rebaseOverMergeDetected) {
     UpdateMethod updateMethod = settings.getUpdateMethod();
     mySettings.setUpdateAllRootsIfPushRejected(settings.shouldUpdateAllRoots());
-    if (!rebaseOverMergeDetected) { // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
+    if (!rebaseOverMergeDetected // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
+        && mySettings.getUpdateType() != updateMethod && mySettings.getUpdateType() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
       mySettings.setUpdateType(updateMethod);
     }
   }
@@ -392,6 +394,10 @@ public class GitPushOperation {
   private PushUpdateSettings readPushUpdateSettings() {
     boolean updateAllRoots = mySettings.shouldUpdateAllRootsIfPushRejected();
     UpdateMethod updateMethod = mySettings.getUpdateType();
+    if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
+      // deliberate limitation: we have only 2 buttons => choose method from the 1st repo if different
+      updateMethod = GitUpdater.resolveUpdateMethod(myProject, myPushSpecs.keySet().iterator().next().getRoot());
+    }
     return new PushUpdateSettings(updateAllRoots, updateMethod);
   }
 
@@ -429,12 +435,9 @@ public class GitPushOperation {
   protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate,
                                    @NotNull UpdateMethod updateMethod,
                                    boolean checkForRebaseOverMergeProblem) {
-    GitUpdateProcess.UpdateMethod um = updateMethod == UpdateMethod.MERGE ?
-                                       GitUpdateProcess.UpdateMethod.MERGE :
-                                       GitUpdateProcess.UpdateMethod.REBASE;
     GitUpdateResult updateResult = new GitUpdateProcess(myProject, myPlatformFacade, myProgressIndicator,
                                                         new HashSet<GitRepository>(rootsToUpdate), UpdatedFiles.create(),
-                                                        checkForRebaseOverMergeProblem).update(um);
+                                                        checkForRebaseOverMergeProblem).update(updateMethod);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);
       repository.update();

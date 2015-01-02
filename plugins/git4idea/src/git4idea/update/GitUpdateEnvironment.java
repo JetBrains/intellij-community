@@ -61,7 +61,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject, myPlatformFacade,
                                                                    progressIndicator, getRepositoriesFromRoots(repositoryManager, roots),
                                                                    updatedFiles, true);
-    boolean result = gitUpdateProcess.update(GitUpdateProcess.UpdateMethod.READ_FROM_SETTINGS).isSuccess();
+    boolean result = gitUpdateProcess.update(mySettings.getUpdateType()).isSuccess();
     return new GitUpdateSession(result);
   }
 
