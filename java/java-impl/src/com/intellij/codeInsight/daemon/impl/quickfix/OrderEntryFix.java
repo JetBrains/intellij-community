@@ -128,7 +128,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
               addJUnit4Library(inTests, currentModule);
               final GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
               final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-              if (aClass != null && editor != null) {
+              if (aClass != null && editor != null && !DumbService.isDumb(project)) {
                 new AddImportAction(project, reference, editor, aClass).execute();
               }
             }
@@ -323,6 +323,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                           @NonNls final String className,
                                           @NonNls final String libVirtFile) {
     addJarToRoots(libVirtFile, currentModule, reference != null ? reference.getElement() : null);
+    
+    if (DumbService.isDumb(project)) return;
 
     GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
