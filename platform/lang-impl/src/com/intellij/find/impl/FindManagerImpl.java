@@ -29,6 +29,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -107,6 +108,8 @@ public class FindManagerImpl extends FindManager {
 
     myFindUsagesManager = new FindUsagesManager(myProject, anotherManager);
     myFindInProjectModel.setMultipleFiles(true);
+
+    NotificationsConfigurationImpl.remove("FindInPath");
   }
 
   @Override
