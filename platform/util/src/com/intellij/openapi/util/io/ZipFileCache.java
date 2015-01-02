@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,25 +68,34 @@ public class ZipFileCache {
     }
   }
 
+  private static final boolean ourEnabled =
+    ZipFileCache.class.getClassLoader().getClass().getName().equals(UrlClassLoader.class.getName());
+
   private static final Object ourLock = new Object();
   private static final Map<String, CacheRecord> ourPathCache = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
   private static final Map<ZipFile, CacheRecord> ourFileCache = ContainerUtil.newHashMap();
   private static final Map<ZipFile, Integer> ourQueue = ContainerUtil.newHashMap();
 
   static {
-    ConcurrencyUtil.newSingleScheduledThreadExecutor("ZipFileCache Dispose", Thread.MIN_PRIORITY).scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        List<ZipFile> toClose = getFilesToClose(0, System.currentTimeMillis() - TIMEOUT);
-        if (toClose != null) {
-          close(toClose);
+    if (ourEnabled) {
+      ConcurrencyUtil.newSingleScheduledThreadExecutor("ZipFileCache Dispose", Thread.MIN_PRIORITY).scheduleWithFixedDelay(new Runnable() {
+        @Override
+        public void run() {
+          List<ZipFile> toClose = getFilesToClose(0, System.currentTimeMillis() - TIMEOUT);
+          if (toClose != null) {
+            close(toClose);
+          }
         }
-      }
-    }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
+      }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
+    }
   }
 
   @NotNull
   public static ZipFile acquire(@NotNull String path) throws IOException {
+    if (!ourEnabled) {
+      return new ZipFile(path);
+    }
+
     path = FileUtil.toCanonicalPath(path);
 
     synchronized (ourLock) {
@@ -162,6 +172,11 @@ public class ZipFileCache {
   }
 
   public static void release(@NotNull ZipFile file) {
+    if (!ourEnabled) {
+      close(file);
+      return;
+    }
+
     synchronized (ourLock) {
       CacheRecord record = ourFileCache.get(file);
       if (record != null) {
