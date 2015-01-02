@@ -124,9 +124,9 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     pushCommitFromBro();
 
     final Ref<Boolean> dialogShown = Ref.create(false);
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler() {
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
       @Override
-      public int handleDialog(DialogWrapper dialog) {
+      public int handleDialog(GitRejectedPushUpdateDialog dialog) {
         dialogShown.set(true);
         return DialogWrapper.CANCEL_EXIT_CODE;
       }
@@ -144,9 +144,9 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     git("checkout -b feature");
 
     final Ref<Boolean> dialogShown = Ref.create(false);
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler() {
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
       @Override
-      public int handleDialog(DialogWrapper dialog) {
+      public int handleDialog(GitRejectedPushUpdateDialog dialog) {
         dialogShown.set(true);
         return DialogWrapper.CANCEL_EXIT_CODE;
       }
