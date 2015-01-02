@@ -42,12 +42,6 @@ public interface SuspendContext {
   @NotNull
   List<Breakpoint> getBreakpointsHit();
 
-  /**
-   * @return value mapping that all values have by default; typically unique for a particular {@link SuspendContext}
-   */
   @NotNull
   ValueManager getValueManager();
-
-  @NotNull
-  Vm getVm();
 }

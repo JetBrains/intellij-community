@@ -12,7 +12,7 @@ public abstract class ContextDependentAsyncResultConsumer<T> implements Consumer
 
   @Override
   public final void consume(T result) {
-    Vm vm = context.getVm();
+    Vm vm = context.getValueManager().getVm();
     if (vm.isAttached() && !vm.getSuspendContextManager().isContextObsolete(context)) {
       consume(result, vm);
     }
