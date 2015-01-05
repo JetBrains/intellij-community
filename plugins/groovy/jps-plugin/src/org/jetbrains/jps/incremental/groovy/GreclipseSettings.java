@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,16 @@
  */
 package org.jetbrains.jps.incremental.groovy;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.BuilderService;
-import org.jetbrains.jps.incremental.ModuleLevelBuilder;
-
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * @author peter
  */
-public class GroovyBuilderService extends BuilderService {
-  @NotNull
-  @Override
-  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return Arrays.asList(new GroovyBuilder(true), new GroovyBuilder(false), new GreclipseBuilder());
-  }
+public class GreclipseSettings {
+  public static final String COMPONENT_NAME = "GreclipseSettings";
+  public static final String COMPONENT_FILE = "compiler.xml";
+
+  public String greclipsePath = "";
+  public boolean debugInfo = true;
+  public String cmdLineParams = "";
+
 
 }
