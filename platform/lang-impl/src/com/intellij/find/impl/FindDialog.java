@@ -685,6 +685,11 @@ public class FindDialog extends DialogWrapper {
       if (mask.isEmpty()) {
         return new ValidationInfo(FindBundle.message("find.filter.empty.file.mask.error"), myFileFilter);
       }
+
+      if (mask.contains(";")) {
+        return new ValidationInfo("File masks should be comma-separated", myFileFilter);
+      }
+
       else {
         try {
           FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
