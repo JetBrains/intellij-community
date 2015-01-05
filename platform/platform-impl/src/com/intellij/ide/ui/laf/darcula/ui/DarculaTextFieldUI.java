@@ -165,7 +165,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
       final boolean noBorder = c.getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE;
       int radius = r.height-1;
       g.fillRoundRect(r.x, r.y+1, r.width, r.height - (noBorder ? 2 : 1), radius, radius);
-      g.setColor(c.isEnabled() ? Gray._100 : new Color(0x535353));
+      g.setColor(c.isEnabled() ? Gray._100 : Gray._83);
       if (!noBorder) {
         if (c.hasFocus()) {
             DarculaUIUtil.paintSearchFocusRing(g, r);
