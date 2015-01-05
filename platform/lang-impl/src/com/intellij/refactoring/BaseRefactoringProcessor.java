@@ -548,12 +548,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
         @Override
         public void run() {
           doRun();
         }
-      }, myProject.getDisposed());
+      });
     }
     else {
       doRun();
