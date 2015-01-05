@@ -258,6 +258,11 @@ public class ZipFileCache {
     LogUtil.debug(logger(), format, args);
   }
 
+  /**
+   * ZipFileCache maintains a background thread. In server environments, this thread may run indefinitely and prevent the class loader from
+   * being gc-ed. Thus it's necessary to invoke this method to stop that thread and let the classes be garbage-collected.
+   */
+  @SuppressWarnings("unused")
   public static void stopBackgroundThread() {
     if (ourExecutor != null) {
       ourExecutor.shutdown();
