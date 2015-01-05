@@ -154,13 +154,13 @@ fi
 
 COMMON_JVM_ARGS="-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log \"-Xbootclasspath/a:$IDE_HOME/lib/boot.jar\" -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
 IDE_JVM_ARGS="@@ide_jvm_args@@"
-ALL_JVM_ARGS="$VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
 fi
-export CLASSPATH
+
+ALL_JVM_ARGS="-cp $CLASSPATH $VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 
 LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH
