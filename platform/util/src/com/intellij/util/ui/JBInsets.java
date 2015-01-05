@@ -18,6 +18,7 @@ package com.intellij.util.ui;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.InsetsUIResource;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 
 import static com.intellij.util.ui.JBUI.scale;
@@ -53,7 +54,17 @@ public class JBInsets extends Insets {
                                       : new JBInsets(insets.top, insets.left, insets.bottom, insets.right);
   }
 
-  public InsetsUIResource asUIResource() {
-    return new InsetsUIResource(top, left, bottom, right);
+  public JBInsetsUIResource asUIResource() {
+    return new JBInsetsUIResource(this);
+  }
+
+  public static class JBInsetsUIResource extends JBInsets implements UIResource {
+    public JBInsetsUIResource(JBInsets insets) {
+      super(0, 0, 0, 0);
+      top = insets.top;
+      left = insets.left;
+      bottom = insets.bottom;
+      right = insets.right;
+    }
   }
 }
