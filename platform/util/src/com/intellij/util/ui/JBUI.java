@@ -42,8 +42,8 @@ public class JBUI {
     return new JBInsets(top, left, bottom, right);
   }
 
-  public static Icon emptyIcon(int i) {
-    return EmptyIcon.create(scale(i));
+  public static EmptyIcon emptyIcon(int i) {
+    return (EmptyIcon)EmptyIcon.create(scale(i));
   }
 
   public static float scale(float f) {
