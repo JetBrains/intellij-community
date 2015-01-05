@@ -67,7 +67,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     ConnectionState oldState = state.getAndSet(newState);
     if (oldState == null || oldState.getStatus() != status) {
       if (status == ConnectionStatus.CONNECTION_FAILED) {
-        opened.setError(Promise.getError(newState.getMessage()));
+        opened.setError(Promise.createError(newState.getMessage()));
       }
       connectionDispatcher.getMulticaster().statusChanged(status);
     }
@@ -91,7 +91,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
       return;
     }
 
-    opened.setError(Promise.getError("closed"));
+    opened.setError(Promise.createError("closed"));
     setState(status, message);
     Disposer.dispose(this, false);
   }
@@ -102,7 +102,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
   }
 
   public ActionCallback detachAndClose() {
-    opened.setError(Promise.getError("detached and closed"));
+    opened.setError(Promise.createError("detached and closed"));
 
     Vm currentVm = vm;
     ActionCallback callback;

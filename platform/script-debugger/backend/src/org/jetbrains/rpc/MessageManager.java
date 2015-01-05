@@ -80,7 +80,7 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>
   private void failedToSend(int sequence) {
     RequestCallback<SUCCESS> callback = callbackMap.remove(sequence);
     if (callback != null) {
-      callback.onError(Promise.getError("Failed to send"));
+      callback.onError(Promise.createError("Failed to send"));
     }
   }
 

@@ -11,17 +11,11 @@ import java.util.Collection;
 
 public abstract class Promise<T> {
   public static final Promise<Void> DONE = new DonePromise<Void>(null);
-  public static final Promise<Void> REJECTED = new RejectedPromise<Void>(getError("rejected"));
+  public static final Promise<Void> REJECTED = new RejectedPromise<Void>(createError("rejected"));
 
   @NotNull
-  public static Throwable getError(@NotNull String error) {
-    return new Throwable(error) {
-      @NotNull
-      @Override
-      public synchronized Throwable fillInStackTrace() {
-        return this;
-      }
-    };
+  public static Throwable createError(@NotNull String error) {
+    return new MessageError(error);
   }
 
   public enum State {
@@ -41,7 +35,7 @@ public abstract class Promise<T> {
 
   @NotNull
   public static <T> Promise<T> reject(@NotNull String error) {
-    return reject(getError(error));
+    return reject(createError(error));
   }
 
   @NotNull
@@ -91,7 +85,7 @@ public abstract class Promise<T> {
     }).doWhenRejected(new Consumer<String>() {
       @Override
       public void consume(String error) {
-        promise.setError(getError(error));
+        promise.setError(createError(error));
       }
     });
     return promise;
@@ -108,7 +102,7 @@ public abstract class Promise<T> {
     }).doWhenRejected(new Consumer<String>() {
       @Override
       public void consume(String error) {
-        promise.setError(getError(error));
+        promise.setError(createError(error));
       }
     });
     return promise;
@@ -124,7 +118,7 @@ public abstract class Promise<T> {
   }
 
   @NotNull
-  public abstract Promise<T> done(@NotNull final AsyncPromise<T> fulfilled);
+  public abstract Promise<T> processed(@NotNull final AsyncPromise<T> fulfilled);
 
   @NotNull
   public Promise<Void> then(@NotNull ConsumerRunnable done) {
@@ -171,5 +165,17 @@ public abstract class Promise<T> {
         result.reject(error == null ? null : error.getMessage());
       }
     });
+  }
+
+  public static class MessageError extends Throwable {
+    public MessageError(@NotNull String error) {
+      super(error);
+    }
+
+    @NotNull
+    @Override
+    public final synchronized Throwable fillInStackTrace() {
+      return this;
+    }
   }
 }

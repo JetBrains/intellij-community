@@ -50,7 +50,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
         connectCancelHandler.set(new Runnable() {
           @Override
           public void run() {
-            result.setError(Promise.getError("Closed explicitly"));
+            result.setError(Promise.createError("Closed explicitly"));
           }
         });
 
@@ -59,7 +59,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
         callback.doWhenRejected(new Consumer<String>() {
           @Override
           public void consume(String error) {
-            result.setError(Promise.getError(error));
+            result.setError(Promise.createError(error));
           }
         });
 
@@ -75,7 +75,9 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
           .rejected(new Consumer<Throwable>() {
             @Override
             public void consume(Throwable error) {
-              CommandProcessor.LOG.error(error);
+              if (!(error instanceof Promise.MessageError)) {
+                CommandProcessor.LOG.error(error);
+              }
               setState(ConnectionStatus.CONNECTION_FAILED, error.getMessage());
             }
           })
@@ -146,7 +148,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
               @SuppressWarnings("unchecked")
               T value = (T)list.getSelectedValue();
               if (value == null) {
-                result.setError(Promise.getError("No target to inspect"));
+                result.setError(Promise.createError("No target to inspect"));
               }
               else {
                 result.setResult(value);

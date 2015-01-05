@@ -81,6 +81,7 @@ public class StandaloneVmHelper extends MessageWriter {
       return closeChannel(currentChannel);
     }
 
+    @SuppressWarnings("unchecked")
     Promise<Void> promise = vm.getCommandProcessor().send(disconnectRequest);
     vm.getCommandProcessor().closed();
     channel = null;

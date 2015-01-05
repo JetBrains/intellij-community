@@ -111,14 +111,13 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
         return new RejectedPromise<SUB_RESULT>((Throwable)result);
     }
 
-    assert done == null && rejected == null;
     final AsyncPromise<SUB_RESULT> promise = new AsyncPromise<SUB_RESULT>();
     addHandlers(new Consumer<T>() {
       @Override
       public void consume(T result) {
         try {
           if (fulfilled instanceof ObsolescentFunction && ((ObsolescentFunction)fulfilled).isObsolete()) {
-            promise.setError(getError("Obsolete"));
+            promise.setError(createError("Obsolete"));
           }
           else {
             promise.setResult(fulfilled.fun(result));
@@ -215,7 +214,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @NotNull
-  public Promise<T> done(@NotNull final AsyncPromise<T> fulfilled) {
+  public Promise<T> processed(@NotNull final AsyncPromise<T> fulfilled) {
     switch (state) {
       case PENDING:
         break;
