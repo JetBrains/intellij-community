@@ -247,7 +247,6 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """
   }
 
-
   public void "test popup in javadoc reference"() {
     myFixture.configureByText("a.java", """
     /**
@@ -299,6 +298,19 @@ class Foo {
     """)
     type 'o'
     assert !lookup
+  }
+  
+  public void "test autopopup in javadoc parameter name"() {
+    myFixture.configureByText("a.java", """
+class Foo {
+  /**
+  * @param <caret>
+  */
+  void foo2(Object oooooooo) {}
+}
+    """)
+    type 'o'
+    assert lookup
   }
 
   public void testPrefixLengthDependentSorting() {
