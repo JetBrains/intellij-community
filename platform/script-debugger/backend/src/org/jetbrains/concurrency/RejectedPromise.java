@@ -5,9 +5,9 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 class RejectedPromise<T> extends Promise<T> {
-  private final String error;
+  private final Throwable error;
 
-  public RejectedPromise(String error) {
+  public RejectedPromise(@NotNull Throwable error) {
     this.error = error;
   }
 
@@ -19,14 +19,14 @@ class RejectedPromise<T> extends Promise<T> {
 
   @NotNull
   @Override
-  public Promise<T> done(@NotNull AsyncPromise<T> fulfilled) {
+  public Promise<T> processed(@NotNull AsyncPromise<T> fulfilled) {
     fulfilled.setError(error);
     return this;
   }
 
   @NotNull
   @Override
-  public Promise<T> rejected(@NotNull Consumer<String> rejected) {
+  public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
     rejected.consume(error);
     return this;
   }

@@ -32,6 +32,8 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainText;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +67,9 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.STOP;
     }
 
-    if (Character.isLetter(charTyped) || charTyped == '_') {
+    if ((Character.isLetter(charTyped) || charTyped == '_') &&
+        !(file instanceof PsiPlainTextFile) // todo [maxim, peter] why we start autopopup when editing text files ? it cancels find preview
+      ) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }

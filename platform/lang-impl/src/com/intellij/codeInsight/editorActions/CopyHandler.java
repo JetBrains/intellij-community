@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
@@ -34,6 +35,7 @@ import com.intellij.psi.PsiFile;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
@@ -87,7 +89,8 @@ public class CopyHandler extends EditorActionHandler {
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
     List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
-    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+    CopyPastePostProcessor<? extends TextBlockTransferableData>[] postProcessors = Extensions.getExtensions(CopyPastePostProcessor.EP_NAME);
+    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : DumbService.getInstance(project).filterByDumbAwareness( Arrays.asList(postProcessors))) {
       transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
     }
 

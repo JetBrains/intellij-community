@@ -17,6 +17,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.Vm;
 import org.jetbrains.io.NettyUtil;
+import org.jetbrains.rpc.CommandProcessor;
 
 import javax.swing.*;
 import java.net.InetSocketAddress;
@@ -49,7 +50,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
         connectCancelHandler.set(new Runnable() {
           @Override
           public void run() {
-            result.setError("Closed explicitly");
+            result.setError(Promise.createError("Closed explicitly"));
           }
         });
 
@@ -58,7 +59,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
         callback.doWhenRejected(new Consumer<String>() {
           @Override
           public void consume(String error) {
-            result.setError(error);
+            result.setError(Promise.createError(error));
           }
         });
 
@@ -67,16 +68,17 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
             @Override
             public void consume(@NotNull Vm vm) {
               RemoteVmConnection.this.vm = vm;
-              setState(ConnectionStatus.CONNECTED, "Connected to " + address.getHostName() + ":" + address.getPort());
+              setState(ConnectionStatus.CONNECTED, "Connected to " + connectedAddressToPresentation(address, vm));
               startProcessing();
             }
           })
-          .rejected(new Consumer<String>() {
+          .rejected(new Consumer<Throwable>() {
             @Override
-            public void consume(String error) {
-              if (getState().getStatus() == ConnectionStatus.WAITING_FOR_CONNECTION) {
-                setState(ConnectionStatus.CONNECTION_FAILED, error == null ? "Internal error" : error);
+            public void consume(Throwable error) {
+              if (!(error instanceof Promise.MessageError)) {
+                CommandProcessor.LOG.error(error);
               }
+              setState(ConnectionStatus.CONNECTION_FAILED, error.getMessage());
             }
           })
           .processed(new Consumer<Vm>() {
@@ -95,9 +97,15 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
     });
   }
 
+  @NotNull
+  protected String connectedAddressToPresentation(@NotNull InetSocketAddress address, @NotNull Vm vm) {
+    return address.getHostName() + ":" + address.getPort();
+  }
+
+  @NotNull
   @Override
-  public ActionCallback detachAndClose() {
-    ActionCallback callback;
+  public Promise<Void> detachAndClose() {
+    Promise<Void> callback;
     try {
       Runnable runnable = connectCancelHandler.getAndSet(null);
       if (runnable != null) {
@@ -141,7 +149,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
               @SuppressWarnings("unchecked")
               T value = (T)list.getSelectedValue();
               if (value == null) {
-                result.setError(null);
+                result.setError(Promise.createError("No target to inspect"));
               }
               else {
                 result.setResult(value);

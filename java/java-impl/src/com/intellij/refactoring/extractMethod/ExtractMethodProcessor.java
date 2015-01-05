@@ -142,8 +142,9 @@ public class ExtractMethodProcessor implements MatchProvider {
                                 String helpId) {
     myProject = project;
     myEditor = editor;
-    if (elements.length != 1 || elements.length == 1 && !(elements[0] instanceof PsiBlockStatement)) {
-      myElements = elements;
+    if (elements.length != 1 || !(elements[0] instanceof PsiBlockStatement)) {
+      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression 
+                   ? new PsiElement[] {PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0])} : elements;
       myEnclosingBlockStatement = null;
     }
     else {

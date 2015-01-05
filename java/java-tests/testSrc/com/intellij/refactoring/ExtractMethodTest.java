@@ -657,6 +657,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testTheOnlyParenthesisExpressionWhichIsSkippedInControlFlow() throws Exception {
+    doTest();
+  }
+
   public void testExpression() throws Exception {
     doTest();
   }

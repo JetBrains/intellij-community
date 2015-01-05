@@ -146,13 +146,16 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
+  /**
+   * @param providerToSkip provider that should not be used (use it to prevent recursion). Pass null to use any provider.
+   */
   @Nullable
   public List<? extends RatedResolveResult> doResolveMember(@NotNull String name,
                                                             @Nullable PyExpression location,
                                                             @NotNull AccessDirection direction,
                                                             @NotNull PyResolveContext resolveContext,
                                                             boolean inherited,
-                                                            @Nullable PyClassMembersProvider providerToSkip) {
+                                                            @Nullable final PyClassMembersProvider providerToSkip) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     PsiElement classMember =
       resolveByOverridingMembersProviders(this, name, location,
@@ -348,10 +351,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return null;
   }
 
+  /**
+   * @param providerToSkip provider that should not be used (use it to prevent recursion). Pass null to use any provider.
+   */
   @Nullable
   private static PsiElement resolveByMembersProviders(PyClassType aClass, String name,
                                                       @Nullable PsiElement location,
-                                                      @Nullable PyClassMembersProvider providerToSkip) {
+                                                      @Nullable final PyClassMembersProvider providerToSkip) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider == providerToSkip) {
         continue;
@@ -363,9 +369,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return null;
   }
 
+  /**
+   * @param providerToSkip provider that should not be used (use it to prevent recursion). Pass null to use any provider.
+   */
   @Nullable
   private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location,
-                                                                @Nullable PyClassMembersProvider providerToSkip) {
+                                                                @Nullable final PyClassMembersProvider providerToSkip) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingClassMembersProvider && provider != providerToSkip) {
         final PsiElement resolveResult = provider.resolveMember(aClass, name, location);
@@ -376,11 +385,14 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return null;
   }
 
+  /**
+   * @param providerToSkip provider that should not be used (use it to prevent recursion). Pass null to use any provider.
+   */
   @Nullable
   private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type, String name, @Nullable PyExpression location,
-                                                                         @Nullable PyClassMembersProvider providerToSkip) {
+                                                                         @Nullable final PyClassMembersProvider providerToSkip) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      if (provider instanceof PyOverridingAncestorsClassMembersProvider && !(provider == providerToSkip)) {
+      if (provider instanceof PyOverridingAncestorsClassMembersProvider && provider != providerToSkip) {
         final PsiElement resolveResult = provider.resolveMember(type, name, location);
         if (resolveResult != null) return resolveResult;
       }
@@ -421,7 +433,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       namesAlready = new HashSet<String>();
     }
 
-    // TODO: Doc
+    /**
+     * [element_name] => (how_element_obtained, element_it_self).
+     * To be used to replace elements with providers that may override them.
+     */
     final Map<String, Pair<ElementType, Object>> usedNames = new HashMap<String, Pair<ElementType, Object>>();
 
 
@@ -438,22 +453,23 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     namesAlready.addAll(usedNames.keySet());
 
 
-    // Move to func
-    // TODO: Override only if Overriding
-    // from providers
+    // TODO: extract method?
+    // Adding elements from providers
     for (final PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (final PyCustomMember member : provider.getMembers(this, location)) {
         final String name = member.getName();
         final LookupElementBuilder element = PyCustomMemberUtils.toLookUpElement(member, getName());
 
         final Pair<ElementType, Object> usedNameInfo = usedNames.get(name);
-        // TODO: Doc
+        /**
+         * If element exists already (usedNameInfo != null) then we need to check if it is overwritable.
+         * OWN elements could be overwritten by PyOverridingClassMembersProvider
+         * INHERITED only by PyOverridingAncestorsClassMembersProvider
+         */
         if (usedNameInfo == null ||
             (usedNameInfo.first == ElementType.INHERITED && provider instanceof PyOverridingAncestorsClassMembersProvider) ||
             (usedNameInfo.first == ElementType.OWN && provider instanceof PyOverridingClassMembersProvider)) {
           usedNames.put(name, Pair.<ElementType, Object>create(ElementType.BY_PROVIDER, element));
-        } else {
-          int i = 1;
         }
       }
     }
@@ -533,11 +549,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @NotNull
   private List<Object> addInheritedMembers(String name,
-                                   PsiElement expressionHook,
-                                   Set<String> namesAlready,
-                                   ProcessingContext context,
-                                   @NotNull final Map<String, Pair<ElementType, Object>> usedNames,
-                                   @NotNull TypeEvalContext typeEvalContext) {
+                                           PsiElement expressionHook,
+                                           Set<String> namesAlready,
+                                           ProcessingContext context,
+                                           @NotNull final Map<String, Pair<ElementType, Object>> usedNames,
+                                           @NotNull TypeEvalContext typeEvalContext) {
     final List<Object> ret = new ArrayList<Object>();
     for (PyExpression expression : myClass.getSuperClassExpressions()) {
       final PsiReference reference = expression.getReference();
@@ -657,10 +673,21 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return ret;
   }
 
-  // TODO: Doc
+  /**
+   * How class member was obtained
+   */
   private enum ElementType {
+    /**
+     * Class own member
+     */
     OWN,
+    /**
+     * Inherited from parent
+     */
     INHERITED,
+    /**
+     * Added by provider (via extension point)
+     */
     BY_PROVIDER
   }
 }

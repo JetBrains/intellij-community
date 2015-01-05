@@ -1,14 +1,16 @@
 package org.jetbrains.debugger.connection;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.socketConnection.ConnectionState;
 import com.intellij.util.io.socketConnection.ConnectionStatus;
 import com.intellij.util.io.socketConnection.SocketConnectionListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.DebugEventListener;
 import org.jetbrains.debugger.Vm;
 
@@ -23,7 +25,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
 
   protected volatile T vm;
 
-  private final ActionCallback opened = new ActionCallback();
+  private final AsyncPromise<Void> opened = new AsyncPromise<Void>();
   private final AtomicBoolean closed = new AtomicBoolean();
 
   public final Vm getVm() {
@@ -41,13 +43,18 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
   }
 
   @NotNull
-  public ActionCallback opened() {
+  public AsyncPromise<Void> opened() {
     return opened;
   }
 
   @Override
-  public void executeOnStart(@NotNull Runnable runnable) {
-    opened.doWhenDone(runnable);
+  public void executeOnStart(@NotNull final Runnable runnable) {
+    opened.done(new Consumer<Void>() {
+      @Override
+      public void consume(Void aVoid) {
+        runnable.run();
+      }
+    });
   }
 
   protected void setState(@NotNull ConnectionStatus status, @Nullable String message) {
@@ -59,7 +66,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     ConnectionState oldState = state.getAndSet(newState);
     if (oldState == null || oldState.getStatus() != status) {
       if (status == ConnectionStatus.CONNECTION_FAILED) {
-        opened.reject(newState.getMessage());
+        opened.setError(Promise.createError(newState.getMessage()));
       }
       connectionDispatcher.getMulticaster().statusChanged(status);
     }
@@ -75,7 +82,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
   }
 
   protected void startProcessing() {
-    opened.setDone();
+    opened.setResult(null);
   }
 
   public final void close(@Nullable String message, @NotNull ConnectionStatus status) {
@@ -83,9 +90,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
       return;
     }
 
-    if (!opened.isProcessed()) {
-      opened.setRejected();
-    }
+    opened.setError(Promise.createError("closed"));
     setState(status, message);
     Disposer.dispose(this, false);
   }
@@ -95,19 +100,18 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     vm = null;
   }
 
-  public ActionCallback detachAndClose() {
-    if (!opened.isProcessed()) {
-      opened.setRejected();
-    }
+  @NotNull
+  public Promise<Void> detachAndClose() {
+    opened.setError(Promise.createError("detached and closed"));
 
     Vm currentVm = vm;
-    ActionCallback callback;
+    Promise<Void> callback;
     if (currentVm == null) {
-      callback = new ActionCallback.Done();
+      callback = Promise.DONE;
     }
     else {
       vm = null;
-      callback = currentVm.detach();
+      callback = currentVm.getAttachStateManager().detach();
     }
     close(null, ConnectionStatus.DISCONNECTED);
     return callback;

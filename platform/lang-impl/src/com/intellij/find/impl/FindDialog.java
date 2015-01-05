@@ -20,8 +20,11 @@ import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
+import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -35,6 +38,10 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
@@ -48,19 +55,29 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.table.JBTable;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -102,6 +119,10 @@ public class FindDialog extends DialogWrapper {
   protected JLabel myReplacePrompt;
   private HideableTitledPanel myScopePanel;
   private static boolean myPreviousResultsExpandedState;
+  private static boolean myPreviousPreviewResultsState = true;
+  private HideableTitledPanel myResultsPreviewPanel;
+  private JBTable myResultsPreviewTable;
+  private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
   public FindDialog(@NotNull Project project, @NotNull FindModel model, @NotNull Consumer<FindModel> myOkHandler){
     super(project, true);
@@ -115,6 +136,15 @@ public class FindDialog extends DialogWrapper {
     init();
     initByModel();
     updateReplaceVisibility();
+
+    if (myResultsPreviewTable != null) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          findSettingsChanged();
+        }
+      }, ModalityState.any());
+    }
   }
 
   private void updateTitle() {
@@ -139,11 +169,13 @@ public class FindDialog extends DialogWrapper {
 
   @Override
   protected void dispose() {
+    if (myResultsPreviewSearchProgress != null) myResultsPreviewSearchProgress.cancel();
     for(Map.Entry<EditorTextField, DocumentAdapter> e: myComboBoxListeners.entrySet()) {
       e.getKey().removeDocumentListener(e.getValue());
     }
     myComboBoxListeners.clear();
     if (myScopePanel != null) myPreviousResultsExpandedState = myScopePanel.isExpanded();
+    if (myResultsPreviewTable != null) myPreviousPreviewResultsState = myResultsPreviewPanel.isExpanded();
     super.dispose();
   }
 
@@ -274,7 +306,84 @@ public class FindDialog extends DialogWrapper {
       comboBox.setSelectedItem(item);
       setCaretPosition(comboBox, caretPosition);
     }
+
+    findSettingsChanged();
     validateFindButton();
+  }
+
+  private void findSettingsChanged() {
+    if (myModel.isMultipleFiles() && myResultsPreviewTable != null) {
+      final ModalityState state = ModalityState.current();
+      if (state == ModalityState.NON_MODAL) return; // skip initial changes
+
+      if (myResultsPreviewSearchProgress != null && !myResultsPreviewSearchProgress.isCanceled()) {
+        myResultsPreviewSearchProgress.cancel();
+      }
+      final DefaultTableModel model = new DefaultTableModel();
+      model.addColumn("Usages");
+
+      myResultsPreviewTable.setModel(model);
+      myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new MyTableCellRenderer());
+
+      final FindModel modelClone = myModel.clone();
+      applyTo(modelClone, false);
+
+      ValidationInfo result = getValidationInfo(modelClone);
+      if (result != null) return;  // todo
+
+      final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(modelClone, myProject);
+
+      final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase();
+      myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
+      myResultsPreviewTable.getEmptyText().setText("Searching...");
+
+      final AtomicInteger resultsCount = new AtomicInteger();
+
+      ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
+        @Override
+        public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+          final UsageViewPresentation presentation =
+            FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), modelClone);
+          final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
+
+          final FindUsagesProcessPresentation processPresentation =
+            FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+
+          FindInProjectUtil.findUsages(modelClone, psiDirectory, myProject, new Processor<UsageInfo>() {
+            @Override
+            public boolean process(final UsageInfo info) {
+              final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
+              usage.getPresentation().getIcon(); // cache icon
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  model.addRow(new Object[]{usage});
+                }
+              }, state);
+              return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
+            }
+          }, processPresentation);
+          if (resultsCount.get() == 0) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress) {
+                  myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+                }
+              }
+            }, state);
+          }
+        }
+
+        @Override
+        public void onCanceled(@NotNull ProgressIndicator indicator) {
+          if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && resultsCount.get() == 0) {
+            myResultsPreviewTable.getEmptyText().setText("Cancelled");
+          }
+        }
+      });
+    }
+
   }
 
   @NotNull
@@ -358,25 +467,41 @@ public class FindDialog extends DialogWrapper {
       resultsOptionPanel.add(myCbToSkipResultsWhenOneUsage);
 
       myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
+
+      if (ApplicationManager.getApplication().isInternal() && myModel.isMultipleFiles()) {
+        gbConstraints.weightx = 1;
+        gbConstraints.weighty = 2;
+        gbConstraints.fill = GridBagConstraints.BOTH;
+        JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable = new JBTable(), JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                             JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        optionsPanel.add(
+          myResultsPreviewPanel = new HideableTitledPanel("Results preview", scrollPane, myPreviousPreviewResultsState),
+          gbConstraints
+        );
+        myResultsPreviewTable.setShowColumns(false);
+        new DoubleClickListener() {
+
+          @Override
+          protected boolean onDoubleClick(MouseEvent event) {
+            int row = myResultsPreviewTable.getSelectedRow();
+            Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
+            if (valueAt instanceof Usage) {
+              doCancelAction();
+              ((Usage)valueAt).navigate(true);
+            }
+            return true;
+          }
+        }.installOn(myResultsPreviewTable);
+      }
     }
     else {
-      if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-        JPanel leftOptionsPanel = new JPanel();
-        leftOptionsPanel.setLayout(new GridLayout(3, 1, 0, 4));
+      JPanel leftOptionsPanel = new JPanel();
+      leftOptionsPanel.setLayout(new GridLayout(3, 1, 0, 4));
 
-        leftOptionsPanel.add(createDirectionPanel());
-        leftOptionsPanel.add(createOriginPanel());
-        leftOptionsPanel.add(createScopePanel());
-        topOptionsPanel.add(leftOptionsPanel);
-      } else {
-        topOptionsPanel.add(createDirectionPanel());
-        gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
-        JPanel bottomOptionsPanel = new JPanel();
-        bottomOptionsPanel.setLayout(new GridLayout(1, 2, 8, 0));
-        optionsPanel.add(bottomOptionsPanel, gbConstraints);
-        bottomOptionsPanel.add(createScopePanel());
-        bottomOptionsPanel.add(createOriginPanel());
-      }
+      leftOptionsPanel.add(createDirectionPanel());
+      leftOptionsPanel.add(createOriginPanel());
+      leftOptionsPanel.add(createScopePanel());
+      topOptionsPanel.add(leftOptionsPanel);
     }
 
     if (myModel.isOpenInNewTabVisible()){
@@ -417,6 +542,7 @@ public class FindDialog extends DialogWrapper {
     myUseFileFilter.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        findSettingsChanged();
         validateFindButton();
       }
     });
@@ -559,6 +685,11 @@ public class FindDialog extends DialogWrapper {
       if (mask.isEmpty()) {
         return new ValidationInfo(FindBundle.message("find.filter.empty.file.mask.error"), myFileFilter);
       }
+
+      if (mask.contains(";")) {
+        return new ValidationInfo("File masks should be comma-separated", myFileFilter);
+      }
+
       else {
         try {
           FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
@@ -603,14 +734,25 @@ public class FindDialog extends DialogWrapper {
 
     myCbCaseSensitive = createCheckbox(FindBundle.message("find.options.case.sensitive"));
     findOptionsPanel.add(myCbCaseSensitive);
+    ChangeListener l = new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        findSettingsChanged();
+      }
+    };
+    myCbCaseSensitive.addChangeListener(l);
+
     myCbPreserveCase = createCheckbox(FindBundle.message("find.options.replace.preserve.case"));
+    myCbPreserveCase.addChangeListener(l);
     findOptionsPanel.add(myCbPreserveCase);
     myCbPreserveCase.setVisible(myModel.isReplaceState());
     myCbWholeWordsOnly = createCheckbox(FindBundle.message("find.options.whole.words.only"));
+    myCbWholeWordsOnly.addChangeListener(l);
 
     findOptionsPanel.add(myCbWholeWordsOnly);
 
     myCbRegularExpressions = createCheckbox(FindBundle.message("find.options.regular.expressions"));
+    myCbRegularExpressions.addChangeListener(l);
 
     final JPanel regExPanel = new JPanel();
     regExPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -626,6 +768,12 @@ public class FindDialog extends DialogWrapper {
       FindBundle.message("find.context.except.comments.scope.label"),
       FindBundle.message("find.context.except.literals.scope.label"),
       FindBundle.message("find.context.except.comments.and.literals.scope.label")});
+    mySearchContext.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        findSettingsChanged();
+      }
+    });
     final JPanel searchContextPanel = new JPanel(new BorderLayout());
     searchContextPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -640,9 +788,7 @@ public class FindDialog extends DialogWrapper {
     panel.add(mySearchContext, BorderLayout.NORTH);
     searchContextPanel.add(panel, BorderLayout.CENTER);
 
-    if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-      findOptionsPanel.add(searchContextPanel);
-    }
+    findOptionsPanel.add(searchContextPanel);
 
     ActionListener actionListener = new ActionListener() {
       @Override
@@ -757,6 +903,13 @@ public class FindDialog extends DialogWrapper {
                                    ? FindBundle.message("find.scope.all.projects.radio")
                                    : FindBundle.message("find.scope.whole.project.radio"), true);
     scopePanel.add(myRbProject, gbConstraints);
+    ChangeListener l = new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        findSettingsChanged();
+      }
+    };
+    myRbProject.addChangeListener(l);
 
     gbConstraints.gridx = 0;
     gbConstraints.gridy++;
@@ -766,6 +919,7 @@ public class FindDialog extends DialogWrapper {
                                   ? FindBundle.message("find.scope.project.radio")
                                   : FindBundle.message("find.scope.module.radio"), false);
     scopePanel.add(myRbModule, gbConstraints);
+    myRbModule.addChangeListener(l);
 
     gbConstraints.gridx = 1;
     gbConstraints.gridwidth = 2;
@@ -778,6 +932,12 @@ public class FindDialog extends DialogWrapper {
 
     Arrays.sort(names,String.CASE_INSENSITIVE_ORDER);
     myModuleComboBox = new ComboBox(names);
+    myModuleComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        findSettingsChanged();
+      }
+    });
     scopePanel.add(myModuleComboBox, gbConstraints);
 
     if (modules.length == 1) {
@@ -791,6 +951,7 @@ public class FindDialog extends DialogWrapper {
     gbConstraints.gridwidth = 1;
     myRbDirectory = new JRadioButton(FindBundle.message("find.scope.directory.radio"), false);
     scopePanel.add(myRbDirectory, gbConstraints);
+    myRbDirectory.addChangeListener(l);
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
@@ -801,6 +962,12 @@ public class FindDialog extends DialogWrapper {
       field.setColumns(40);
     }
     initCombobox(myDirectoryComboBox);
+    myDirectoryComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        findSettingsChanged();
+      }
+    });
     scopePanel.add(myDirectoryComboBox, gbConstraints);
 
     gbConstraints.weightx = 0;
@@ -832,6 +999,8 @@ public class FindDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 2;
     myScopeCombo = new ScopeChooserCombo(myProject, true, true, FindSettings.getInstance().getDefaultScopeName());
+    myRbCustomScope.addChangeListener(l);
+
     Disposer.register(myDisposable, myScopeCombo);
     scopePanel.add(myScopeCombo, gbConstraints);
 
@@ -1204,6 +1373,26 @@ public class FindDialog extends DialogWrapper {
       setStringsToComboBox(FindSettings.getInstance().getRecentReplaceStrings(), myReplaceComboBox, myModel.getStringToReplace());
     }
     updateControls();
+  }
+
+  private static class MyTableCellRenderer extends SimpleColoredComponent implements TableCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      clear();
+
+      if (value instanceof UsageInfo2UsageAdapter) {
+        UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
+        UsagePresentation presentation = usageAdapter.getPresentation();
+        TextChunk[] text = presentation.getText();
+        append(usageAdapter.getFile().getName() + " ", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+
+        for (TextChunk textChunk : text) {
+          SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
+          append(textChunk.getText(), simples);
+        }
+      }
+      return this;
+    }
   }
 }
 

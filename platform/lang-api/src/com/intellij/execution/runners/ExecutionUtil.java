@@ -100,7 +100,7 @@ public class ExecutionUtil {
     final String fullMessage = title + ":<br>" + description;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.error(fullMessage);
+      LOG.error(fullMessage, e);
     }
 
     if (listener == null && e instanceof HyperlinkListener) {

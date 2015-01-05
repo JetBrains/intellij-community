@@ -1530,9 +1530,6 @@
                      key="printstacktrace.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.maturity.ThrowablePrintStackTraceInspection"/>
-    <localInspection language="JAVA" shortName="TodoComment" bundle="com.siyeh.InspectionGadgetsBundle" key="todo.comment.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.maturity.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.maturity.TodoCommentInspection"/>
     <localInspection language="JAVA" suppressId="CallToThreadDumpStack" shortName="ThreadDumpStack" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="dumpstack.call.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.maturity.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.maturity.ThreadDumpStackInspection"/>

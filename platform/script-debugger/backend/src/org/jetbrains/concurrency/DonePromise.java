@@ -21,14 +21,14 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
 
   @NotNull
   @Override
-  public Promise<T> done(@NotNull AsyncPromise<T> fulfilled) {
+  public Promise<T> processed(@NotNull AsyncPromise<T> fulfilled) {
     fulfilled.setResult(result);
     return this;
   }
 
   @NotNull
   @Override
-  public Promise<T> rejected(@NotNull Consumer<String> rejected) {
+  public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
     return this;
   }
 

@@ -5,12 +5,18 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 public abstract class Promise<T> {
   public static final Promise<Void> DONE = new DonePromise<Void>(null);
-  public static final Promise<Void> REJECTED = new RejectedPromise<Void>(null);
+  public static final Promise<Void> REJECTED = new RejectedPromise<Void>(createError("rejected"));
+
+  @NotNull
+  public static Throwable createError(@NotNull String error) {
+    return new MessageError(error);
+  }
 
   public enum State {
     PENDING, FULFILLED, REJECTED
@@ -28,13 +34,18 @@ public abstract class Promise<T> {
   }
 
   @NotNull
-  public static <T> Promise<T> reject(String result) {
-    if (result == null) {
+  public static <T> Promise<T> reject(@NotNull String error) {
+    return reject(createError(error));
+  }
+
+  @NotNull
+  public static <T> Promise<T> reject(@Nullable Throwable error) {
+    if (error == null) {
       //noinspection unchecked
       return (Promise<T>)REJECTED;
     }
     else {
-      return new RejectedPromise<T>(result);
+      return new RejectedPromise<T>(error);
     }
   }
 
@@ -46,9 +57,9 @@ public abstract class Promise<T> {
 
     final AsyncPromise<Void> totalPromise = new AsyncPromise<Void>();
     Consumer done = new CountDownConsumer(promises.size(), totalPromise);
-    Consumer<String> rejected = new Consumer<String>() {
+    Consumer<Throwable> rejected = new Consumer<Throwable>() {
       @Override
-      public void consume(String error) {
+      public void consume(Throwable error) {
         if (totalPromise.state == AsyncPromise.State.PENDING) {
           totalPromise.setError(error);
         }
@@ -74,7 +85,7 @@ public abstract class Promise<T> {
     }).doWhenRejected(new Consumer<String>() {
       @Override
       public void consume(String error) {
-        promise.setError(error);
+        promise.setError(createError(error));
       }
     });
     return promise;
@@ -91,7 +102,7 @@ public abstract class Promise<T> {
     }).doWhenRejected(new Consumer<String>() {
       @Override
       public void consume(String error) {
-        promise.setError(error);
+        promise.setError(createError(error));
       }
     });
     return promise;
@@ -107,7 +118,7 @@ public abstract class Promise<T> {
   }
 
   @NotNull
-  public abstract Promise<T> done(@NotNull final AsyncPromise<T> fulfilled);
+  public abstract Promise<T> processed(@NotNull final AsyncPromise<T> fulfilled);
 
   @NotNull
   public Promise<Void> then(@NotNull ConsumerRunnable done) {
@@ -116,7 +127,7 @@ public abstract class Promise<T> {
   }
 
   @NotNull
-  public abstract Promise<T> rejected(@NotNull Consumer<String> rejected);
+  public abstract Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
 
   public abstract void processed(@NotNull Consumer<T> processed);
 
@@ -148,11 +159,23 @@ public abstract class Promise<T> {
         result.setDone(t);
       }
     });
-    rejected(new Consumer<String>() {
+    rejected(new Consumer<Throwable>() {
       @Override
-      public void consume(String error) {
-        result.reject(error);
+      public void consume(Throwable error) {
+        result.reject(error == null ? null : error.getMessage());
       }
     });
+  }
+
+  public static class MessageError extends Throwable {
+    public MessageError(@NotNull String error) {
+      super(error);
+    }
+
+    @NotNull
+    @Override
+    public final synchronized Throwable fillInStackTrace() {
+      return this;
+    }
   }
 }

@@ -70,10 +70,11 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
 
     breakpoints.add(breakpoint);
     if (enabled) {
-      doSetBreakpoint(target, breakpoint).rejected(new Consumer<String>() {
+      doSetBreakpoint(target, breakpoint).rejected(new Consumer<Throwable>() {
         @Override
-        public void consume(@Nullable String errorMessage) {
-          dispatcher.getMulticaster().errorOccurred(breakpoint, errorMessage);
+        public void consume(@NotNull Throwable error) {
+          String message = error.getMessage();
+          dispatcher.getMulticaster().errorOccurred(breakpoint, message == null ? error.toString() : message);
         }
       });
     }

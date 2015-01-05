@@ -3060,4 +3060,43 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern = "/*$Text$*/";
     assertEquals("should find comments in all the right places", 12, findMatchesCount(source, pattern));
   }
+
+  public void testCaseInsensitive() {
+    String source = "/* HELLO */\n" +
+                    "class A<T> {\n" +
+                    "  private char b = 'C';\n" +
+                    "  void m() {\n" +
+                    "    @X String s = \"\";\n" +
+                    "    s.equals(\"\");\n" +
+                    "    s = s;\n" +
+                    "    this.b = 'D';\n" +
+                    "  }\n" +
+                    "}";
+    String pattern1 = "a";
+    assertEquals("should find symbol case insensitively", 1, findMatchesCount(source, pattern1));
+    String pattern2 = "class a {}";
+    assertEquals("should find class case insensitively", 1, findMatchesCount(source, pattern2));
+    String pattern3 = "/* hello */";
+    assertEquals("should find comment case insensitively", 1, findMatchesCount(source, pattern3));
+    String pattern4 = "'c'";
+    assertEquals("should find character literal case insensitively", 1, findMatchesCount(source, pattern4));
+    String pattern5 = "char B = '_initializer;";
+    assertEquals("should find variable case insensitively", 1, findMatchesCount(source, pattern5));
+    String pattern6 = "class '_a<t> {}";
+    assertEquals("should find type parameter case insensitively", 1, findMatchesCount(source, pattern6));
+    String pattern7 = "class '_A {" +
+                      "  void M();" +
+                      "}";
+    assertEquals("should find class with method case insensitively", 1, findMatchesCount(source, pattern7));
+    String pattern8 = "'_a.EQUALS('_b)";
+    assertEquals("should find method call case insensitively", 1, findMatchesCount(source, pattern8));
+    String pattern9 = "S.'_call('_e)";
+    assertEquals("should find qualifier case insensitively", 1, findMatchesCount(source, pattern9));
+    String pattern10 = "S = S";
+    assertEquals("should find reference case insensitively", 1, findMatchesCount(source, pattern10));
+    String pattern11 = "this.B";
+    assertEquals("should find qualified reference case insensitively", 1, findMatchesCount(source, pattern11));
+    String pattern12 = "@x";
+    assertEquals("should find annotation case insensitively", 1, findMatchesCount(source, pattern12));
+  }
 }

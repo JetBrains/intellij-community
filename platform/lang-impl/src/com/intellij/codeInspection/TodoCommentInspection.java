@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,37 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.maturity;
+package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.InspectionGadgetsBundle;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TodoCommentInspection extends BaseJavaBatchLocalInspectionTool {
+public class TodoCommentInspection extends LocalInspectionTool {
 
   @Nullable
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
-    final TodoItem[] todoItems = searchHelper.findTodoItems(file);
+    final TodoItem[] todoItems = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject()).findTodoItems(file);
 
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    final THashSet<PsiComment> comments = new THashSet<PsiComment>();
     for (TodoItem todoItem : todoItems) {
-      final PsiComment comment = PsiTreeUtil.getParentOfType(file.findElementAt(todoItem.getTextRange().getStartOffset()), PsiComment.class, false);
-      if (comment != null) {
-        result.add(manager.createProblemDescriptor(comment, InspectionGadgetsBundle.message("todo.comment.problem.descriptor"), isOnTheFly,
+      final PsiComment comment =
+        PsiTreeUtil.getParentOfType(file.findElementAt(todoItem.getTextRange().getStartOffset()), PsiComment.class, false);
+      if (comment != null && comments.add(comment)) {
+        result.add(manager.createProblemDescriptor(comment, InspectionsBundle.message("todo.comment.problem.descriptor"), isOnTheFly,
                                                    null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }

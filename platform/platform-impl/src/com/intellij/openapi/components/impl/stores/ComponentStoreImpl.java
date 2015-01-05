@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -229,7 +228,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return name;
     }
 
-    Class<T> stateClass = getComponentStateClass(component);
+    Class<T> stateClass = ComponentSerializationUtil.getStateClass(component.getClass());
     T state = getDefaultState(component, name, stateClass);
 
     Storage[] storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ);
@@ -277,29 +276,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     catch (JDOMException e) {
       throw new StateStorageException("Error loading state from " + url, e);
     }
-  }
-
-  @NotNull
-  private static <T> Class<T> getComponentStateClass(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
-    final Class persistentStateComponentClass = PersistentStateComponent.class;
-
-    Class componentClass = persistentStateComponent.getClass();
-
-    nextSuperClass:
-    while (true) {
-      for (Class anInterface : componentClass.getInterfaces()) {
-        if (anInterface.equals(persistentStateComponentClass)) {
-          break nextSuperClass;
-        }
-      }
-
-      componentClass = componentClass.getSuperclass();
-    }
-
-    final Type type = ReflectionUtil.resolveVariable(persistentStateComponentClass.getTypeParameters()[0], componentClass);
-    assert type != null;
-    //noinspection unchecked
-    return (Class<T>)ReflectionUtil.getRawType(type);
   }
 
   @NotNull
