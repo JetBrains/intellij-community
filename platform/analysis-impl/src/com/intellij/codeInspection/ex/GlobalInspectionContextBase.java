@@ -429,9 +429,12 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
         for (SmartPsiElementPointer<PsiElement> element : elements) {
           PsiElement psiElement = element.getElement();
-          if (psiElement != null) {
+          if (psiElement != null && psiElement.isPhysical()) {
             psiElements.add(psiElement);
           }
+        }
+        if (psiElements.isEmpty()) {
+          return;
         }
         GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
         final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
