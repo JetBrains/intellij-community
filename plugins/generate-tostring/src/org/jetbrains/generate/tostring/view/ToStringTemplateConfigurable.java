@@ -24,8 +24,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.generate.tostring.template.TemplateResource;
 
@@ -35,11 +40,12 @@ public class ToStringTemplateConfigurable implements UnnamedConfigurable{
     private final TemplateResource template;
     private final Editor myEditor;
 
-    public ToStringTemplateConfigurable(TemplateResource template) {
+    public ToStringTemplateConfigurable(TemplateResource template, Project project) {
         this.template = template;
         final EditorFactory factory = EditorFactory.getInstance();
         final Document doc = factory.createDocument(template.getTemplate());
-        myEditor = template.isDefault() ? factory.createViewer(doc) : factory.createEditor(doc);
+        final FileType ftl = FileTypeManager.getInstance().findFileTypeByName("VTL");
+        myEditor = factory.createEditor(doc, project, ftl != null ? ftl : FileTypes.PLAIN_TEXT, template.isDefault());
     }
 
     public JComponent createComponent() {

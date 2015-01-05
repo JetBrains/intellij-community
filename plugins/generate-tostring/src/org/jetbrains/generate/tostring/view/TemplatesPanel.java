@@ -21,6 +21,7 @@ package org.jetbrains.generate.tostring.view;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
@@ -75,13 +76,15 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
             return Comparing.equal(o1.getTemplate(), o2.getTemplate()) && Comparing.equal(o1.getFileName(), o2.getFileName());
         }
     };
+  private final Project myProject;
 
-    public TemplatesPanel() {
+  public TemplatesPanel(Project project) {
         super(NAMER, FACTORY, CLONER, COMPARER,
                 new ArrayList<TemplateResource>(TemplatesManager.getInstance().getAllTemplates()));
 
         //ServiceManager.getService(project, MasterDetailsStateService.class).register("ToStringTemplates.UI", this);
-    }
+    myProject = project;
+  }
 
     @Nls
     public String getDisplayName() {
@@ -110,7 +113,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     }
 
     protected UnnamedConfigurable createConfigurable(TemplateResource item) {
-        return new ToStringTemplateConfigurable(item);
+        return new ToStringTemplateConfigurable(item, myProject);
     }
 
     @Override
