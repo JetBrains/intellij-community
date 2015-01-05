@@ -1,7 +1,6 @@
 package org.jetbrains.debugger.connection;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
@@ -101,17 +100,18 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     vm = null;
   }
 
-  public ActionCallback detachAndClose() {
+  @NotNull
+  public Promise<Void> detachAndClose() {
     opened.setError(Promise.createError("detached and closed"));
 
     Vm currentVm = vm;
-    ActionCallback callback;
+    Promise<Void> callback;
     if (currentVm == null) {
-      callback = new ActionCallback.Done();
+      callback = Promise.DONE;
     }
     else {
       vm = null;
-      callback = currentVm.detach();
+      callback = currentVm.getAttachStateManager().detach();
     }
     close(null, ConnectionStatus.DISCONNECTED);
     return callback;

@@ -102,9 +102,10 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
     return address.getHostName() + ":" + address.getPort();
   }
 
+  @NotNull
   @Override
-  public ActionCallback detachAndClose() {
-    ActionCallback callback;
+  public Promise<Void> detachAndClose() {
+    Promise<Void> callback;
     try {
       Runnable runnable = connectCancelHandler.getAndSet(null);
       if (runnable != null) {

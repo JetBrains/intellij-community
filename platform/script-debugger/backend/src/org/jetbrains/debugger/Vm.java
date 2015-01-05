@@ -1,14 +1,18 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
 public interface Vm {
-  @NotNull
-  ActionCallback detach();
+  interface AttachStateManager {
+    @NotNull
+    Promise<Void> detach();
 
-  boolean isAttached();
+    boolean isAttached();
+  }
+
+  @NotNull
+  AttachStateManager getAttachStateManager();
 
   @NotNull
   ScriptManager getScriptManager();
