@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ import sun.security.action.GetPropertyAction;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.DimensionUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
@@ -532,6 +533,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     patchLafFonts(uiDefaults);
 
+    patchHiDPI(uiDefaults);
+
     patchGtkDefaults(uiDefaults);
 
     fixSeparatorColor(uiDefaults);
@@ -552,6 +555,17 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       updateUI(frame);
     }
     fireLookAndFeelChanged();
+  }
+
+  private static void patchHiDPI(UIDefaults defaults) {
+    if (JBUI.isHiDPI()) {
+      for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
+        if (entry.getValue() instanceof DimensionUIResource) {
+          DimensionUIResource size = (DimensionUIResource)entry.getValue();
+          entry.setValue(JBUI.size(size).asUIResource());
+        }
+      }
+    }
   }
 
   public static void updateToolWindows() {
