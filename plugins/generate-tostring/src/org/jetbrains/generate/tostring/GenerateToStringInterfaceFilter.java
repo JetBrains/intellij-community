@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.java.generate;
+package org.jetbrains.generate.tostring;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
 
 /**
  * Nikolay.Tropin
  * 2014-12-01
  */
-public interface GenerateToStringClassFilter {
-    ExtensionPointName<GenerateToStringClassFilter> EP_NAME = ExtensionPointName.create("com.intellij.generation.toStringClassFilter");
+public class GenerateToStringInterfaceFilter implements GenerateToStringClassFilter {
 
-    boolean canGenerateToString(PsiClass psiClass);
+    @Override
+    public boolean canGenerateToString(PsiClass psiClass) {
+        return !psiClass.isInterface();
+    }
 }
