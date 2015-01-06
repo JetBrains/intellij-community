@@ -51,7 +51,6 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -729,18 +728,19 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private void patchLafFonts(UIDefaults uiDefaults) {
-    if (JBUI.isHiDPI()) {
-      HashMap<Object, Font> newFonts = new HashMap<Object, Font>();
-      for (Object key : uiDefaults.keySet().toArray()) {
-        Object val = uiDefaults.get(key);
-        if (val instanceof Font) {
-          newFonts.put(key, JBFont.create((Font)val));
-        }
-      }
-      for (Map.Entry<Object, Font> entry : newFonts.entrySet()) {
-        uiDefaults.put(entry.getKey(), entry.getValue());
-      }
-    } else if (UISettings.getInstance().OVERRIDE_NONIDEA_LAF_FONTS) {
+    //if (JBUI.isHiDPI()) {
+    //  HashMap<Object, Font> newFonts = new HashMap<Object, Font>();
+    //  for (Object key : uiDefaults.keySet().toArray()) {
+    //    Object val = uiDefaults.get(key);
+    //    if (val instanceof Font) {
+    //      newFonts.put(key, JBFont.create((Font)val));
+    //    }
+    //  }
+    //  for (Map.Entry<Object, Font> entry : newFonts.entrySet()) {
+    //    uiDefaults.put(entry.getKey(), entry.getValue());
+    //  }
+    //} else
+    if (UISettings.getInstance().OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
       initFontDefaults(uiDefaults, myUiSettings.FONT_FACE, myUiSettings.FONT_SIZE);
     }
