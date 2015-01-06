@@ -2464,12 +2464,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "a.c(new Integer(2));\n" +
                 "a.c(new Integer(3));\n" +
                 "a.c2(new Integer(3));\n" +
-                "a.c(3);";
+                "a.c(3);\n" +
+                "Integer i = 4;\n" +
+                "int j = Integer.valueOf(4);\n";
     String s2 = "a.'b('_Params:[formal( Integer ) && exprtype( int ) ])";
     String s2_2 = "a.c('_Params:[formal( int ) && exprtype( Integer ) ])";
 
     assertEquals("Find boxing in method call",1,findMatchesCount(s1,s2,false));
     assertEquals("Find unboxing in method call",2,findMatchesCount(s1,s2_2,false));
+
+    String pattern1 = "'_a:[formal( Integer ) && exprtype( int ) ]";
+    assertEquals("Find any boxing", 2, findMatchesCount(s1, pattern1));
+
+    String pattern2 = "'_a:[formal( int ) && exprtype( Integer ) ]";
+    assertEquals("Find any unboxing", 3, findMatchesCount(s1, pattern2));
   }
 
   public void testCommentsInDclSearch() {

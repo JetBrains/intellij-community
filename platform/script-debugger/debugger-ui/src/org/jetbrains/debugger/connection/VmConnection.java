@@ -73,8 +73,8 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
   }
 
   @Override
-  public void addListener(@NotNull SocketConnectionListener listener, @NotNull Disposable parentDisposable) {
-    connectionDispatcher.addListener(listener, parentDisposable);
+  public void addListener(@NotNull SocketConnectionListener listener) {
+    connectionDispatcher.addListener(listener);
   }
 
   public DebugEventListener getDebugEventListener() {
@@ -90,7 +90,9 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
       return;
     }
 
-    opened.setError(Promise.createError("closed"));
+    if (opened.getState() == Promise.State.PENDING) {
+      opened.setError(Promise.createError("closed"));
+    }
     setState(status, message);
     Disposer.dispose(this, false);
   }
@@ -102,7 +104,9 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
 
   @NotNull
   public Promise<Void> detachAndClose() {
-    opened.setError(Promise.createError("detached and closed"));
+    if (opened.getState() == Promise.State.PENDING) {
+      opened.setError(Promise.createError("detached and closed"));
+    }
 
     Vm currentVm = vm;
     Promise<Void> callback;

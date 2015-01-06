@@ -16,8 +16,6 @@
 package com.intellij.util.ui;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
@@ -60,7 +58,7 @@ public class JBUI {
 
   public static class Fonts {
     public static JBFont label() {
-      return JBFont.create(UIManager.getFont("Label.font"));
+      return JBFont.create(UIManager.getFont("Label.font"), false);
     }
 
     public static JBFont label(float size) {
