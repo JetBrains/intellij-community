@@ -51,12 +51,18 @@ public abstract class Promise<T> {
 
   @NotNull
   public static Promise<Void> all(@NotNull Collection<Promise<?>> promises) {
+    return all(promises, null);
+  }
+
+  @NotNull
+  public static <T> Promise<T> all(@NotNull Collection<Promise<?>> promises, @Nullable T totalResult) {
     if (promises.isEmpty()) {
-      return DONE;
+      //noinspection unchecked
+      return (Promise<T>)DONE;
     }
 
-    final AsyncPromise<Void> totalPromise = new AsyncPromise<Void>();
-    Consumer done = new CountDownConsumer(promises.size(), totalPromise);
+    final AsyncPromise<T> totalPromise = new AsyncPromise<T>();
+    Consumer done = new CountDownConsumer<T>(promises.size(), totalPromise, totalResult);
     Consumer<Throwable> rejected = new Consumer<Throwable>() {
       @Override
       public void consume(Throwable error) {
