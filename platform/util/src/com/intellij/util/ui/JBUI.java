@@ -40,6 +40,10 @@ public class JBUI {
     return new JBInsets(top, left, bottom, right);
   }
 
+  public static JBInsets emptyInsets() {
+    return new JBInsets(0, 0, 0, 0);
+  }
+
   public static EmptyIcon emptyIcon(int i) {
     return (EmptyIcon)EmptyIcon.create(scale(i));
   }
