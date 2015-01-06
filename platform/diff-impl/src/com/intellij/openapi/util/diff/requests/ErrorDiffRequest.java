@@ -5,19 +5,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ErrorDiffRequest extends DiffRequestBase {
-  @NotNull private final DiffRequestPresentable myPresentable;
+  @Nullable private final DiffRequestPresentable myPresentable;
   @NotNull private final String myErrorMessage;
   @Nullable private final Throwable myException;
 
-  public ErrorDiffRequest(@NotNull DiffRequestPresentable presentable, @NotNull Throwable e) {
+  public ErrorDiffRequest(@NotNull String message) {
+    this(null, message, null);
+  }
+
+  public ErrorDiffRequest(@NotNull Throwable e) {
+    this(null, e.getMessage(), e);
+  }
+
+  public ErrorDiffRequest(@Nullable DiffRequestPresentable presentable, @NotNull Throwable e) {
     this(presentable, e.getMessage(), e);
   }
 
-  public ErrorDiffRequest(@NotNull DiffRequestPresentable presentable, @NotNull String message) {
+  public ErrorDiffRequest(@Nullable DiffRequestPresentable presentable, @NotNull String message) {
     this(presentable, message, null);
   }
 
-  public ErrorDiffRequest(@NotNull DiffRequestPresentable presentable,
+  public ErrorDiffRequest(@Nullable DiffRequestPresentable presentable,
                           @NotNull String message,
                           @Nullable Throwable e) {
     myPresentable = presentable;
@@ -25,7 +33,7 @@ public class ErrorDiffRequest extends DiffRequestBase {
     myException = e;
   }
 
-  @NotNull
+  @Nullable
   public DiffRequestPresentable getPresentable() {
     return myPresentable;
   }
@@ -40,9 +48,9 @@ public class ErrorDiffRequest extends DiffRequestBase {
     return myException;
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public String getWindowTitle() {
-    return myPresentable.getName();
+  public String getTitle() {
+    return myPresentable != null ? myPresentable.getName() : null;
   }
 }

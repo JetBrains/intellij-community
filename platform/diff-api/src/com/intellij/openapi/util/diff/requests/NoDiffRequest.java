@@ -7,7 +7,7 @@ public class NoDiffRequest extends DiffRequestBase {
 
   @NotNull
   @Override
-  public String getWindowTitle() {
+  public String getTitle() {
     return "Nothing To Show";
   }
 }

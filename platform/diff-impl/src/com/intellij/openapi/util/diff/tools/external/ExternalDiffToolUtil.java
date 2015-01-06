@@ -31,7 +31,7 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static String createFile(@NotNull DiffContent content, @NotNull String title, @NotNull String windowTitle)
+  public static String createFile(@NotNull DiffContent content, @NotNull String title, @Nullable String windowTitle)
     throws IOException {
 
     if (content instanceof EmptyContent) {
@@ -82,7 +82,7 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static String getFileName(@NotNull String title, @NotNull String windowTitle, @Nullable FileType fileType) {
+  public static String getFileName(@NotNull String title, @Nullable String windowTitle, @Nullable FileType fileType) {
     // TODO: keep file name in DiffContent ?
     String ext = fileType != null ? fileType.getDefaultExtension() : ".tmp";
     return title + "." + ext;
@@ -99,7 +99,7 @@ public class ExternalDiffToolUtil {
   public static void execute(@NotNull ExternalDiffSettings settings,
                              @NotNull DiffContent[] contents,
                              @NotNull String[] titles,
-                             @NotNull String windowTitle)
+                             @Nullable String windowTitle)
     throws IOException, ExecutionException {
     List<String> files = new ArrayList<String>();
     for (int i = 0; i < contents.length; i++) {

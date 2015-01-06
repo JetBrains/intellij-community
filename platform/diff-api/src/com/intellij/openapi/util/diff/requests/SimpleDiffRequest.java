@@ -2,26 +2,27 @@ package com.intellij.openapi.util.diff.requests;
 
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SimpleDiffRequest extends DiffRequestBase implements ContentDiffRequest {
+  @Nullable private final String myTitle;
   @NotNull private final DiffContent[] myContents;
   @NotNull private final String[] myContentTitles;
-  @NotNull private final String myWindowTitle;
 
-  public SimpleDiffRequest(@NotNull String windowTitle,
+  public SimpleDiffRequest(@Nullable String title,
                            @NotNull DiffContent content1,
                            @NotNull DiffContent content2,
                            @NotNull String title1,
                            @NotNull String title2) {
-    this(windowTitle, new DiffContent[]{content1, content2}, new String[]{title1, title2});
+    this(title, new DiffContent[]{content1, content2}, new String[]{title1, title2});
   }
 
-  public SimpleDiffRequest(@NotNull String windowTitle,
+  public SimpleDiffRequest(@Nullable String title,
                            @NotNull DiffContent[] contents,
                            @NotNull String[] titles) {
     assert contents.length == titles.length;
 
-    myWindowTitle = windowTitle;
+    myTitle = title;
     myContents = contents;
     myContentTitles = titles;
   }
@@ -38,10 +39,10 @@ public class SimpleDiffRequest extends DiffRequestBase implements ContentDiffReq
     return myContentTitles;
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public String getWindowTitle() {
-    return myWindowTitle;
+  public String getTitle() {
+    return myTitle;
   }
 
   @Override

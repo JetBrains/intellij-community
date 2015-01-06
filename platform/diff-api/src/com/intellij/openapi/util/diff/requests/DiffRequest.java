@@ -18,10 +18,11 @@ package com.intellij.openapi.util.diff.requests;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface DiffRequest extends UserDataHolder {
-  @NotNull
-  String getWindowTitle();
+  @Nullable
+  String getTitle();
 
   /*
    * Called when DiffRequest is shown

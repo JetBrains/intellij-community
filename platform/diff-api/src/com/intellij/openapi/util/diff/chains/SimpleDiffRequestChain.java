@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,7 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
     @NotNull
     @Override
     public String getName() {
-      return myRequest.getWindowTitle();
+      return StringUtil.notNullize(myRequest.getTitle(), "Change");
     }
 
     @NotNull

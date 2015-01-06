@@ -59,7 +59,7 @@ public class ShowOldDiffAction extends DumbAwareAction {
     DiffContent[] contents = ((ContentDiffRequest)request).getContents();
     String[] titles = request.getContentTitles();
 
-    SimpleDiffRequest newRequest = new SimpleDiffRequest(e.getProject(), request.getWindowTitle());
+    SimpleDiffRequest newRequest = new SimpleDiffRequest(e.getProject(), request.getTitle());
     newRequest.setContentTitles(titles[0], titles[1]);
     newRequest.setContents(convert(e.getProject(), contents[0]), convert(e.getProject(), contents[1]));
     newRequest.addHint(DO_NOT_TRY_MIGRATE);

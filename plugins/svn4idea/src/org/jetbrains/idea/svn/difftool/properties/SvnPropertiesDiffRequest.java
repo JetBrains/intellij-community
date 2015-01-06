@@ -49,7 +49,7 @@ public class SvnPropertiesDiffRequest extends UserDataHolderBase implements Cont
 
   @NotNull
   @Override
-  public String getWindowTitle() {
+  public String getTitle() {
     return myWindowTitle;
   }
 
