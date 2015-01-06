@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.jet.asJava;
+package org.jetbrains.kotlin.asJava;
 
 import com.google.common.collect.Sets;
 import com.intellij.psi.PsiClass;
