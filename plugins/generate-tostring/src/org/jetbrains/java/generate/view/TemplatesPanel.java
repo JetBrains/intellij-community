@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.template.TemplateResource;
-import org.jetbrains.java.generate.template.TemplatesManager;
+import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 
 import java.util.ArrayList;
 
@@ -80,7 +80,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
 
   public TemplatesPanel(Project project) {
         super(NAMER, FACTORY, CLONER, COMPARER,
-                new ArrayList<TemplateResource>(TemplatesManager.getInstance().getAllTemplates()));
+                new ArrayList<TemplateResource>(ToStringTemplatesManager.getInstance().getAllTemplates()));
 
         //ServiceManager.getService(project, MasterDetailsStateService.class).register("ToStringTemplates.UI", this);
     myProject = project;
@@ -104,7 +104,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
 
     @Override
     public boolean isModified() {
-        return super.isModified() || !Comparing.equal(TemplatesManager.getInstance().getDefaultTemplate(), getSelectedItem());
+        return super.isModified() || !Comparing.equal(ToStringTemplatesManager.getInstance().getDefaultTemplate(), getSelectedItem());
     }
 
     @Override
@@ -119,10 +119,10 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     @Override
     public void apply() throws ConfigurationException {
         super.apply();
-        TemplatesManager.getInstance().setTemplates(getItems());
+        ToStringTemplatesManager.getInstance().setTemplates(getItems());
         final TemplateResource selection = getSelectedItem();
         if (selection != null) {
-            TemplatesManager.getInstance().setDefaultTemplate(selection);
+            ToStringTemplatesManager.getInstance().setDefaultTemplate(selection);
         }
     }
 }

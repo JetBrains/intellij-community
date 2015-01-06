@@ -1559,20 +1559,20 @@
     <weigher order="first" key="completion" id="methodsChains"
              implementationClass="com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsWeigher"/>
 
-    <applicationService serviceInterface="TemplatesManager"
-                        serviceImplementation="TemplatesManager"/>
-    <applicationService serviceInterface="GenerateToStringActionHandler"
-                        serviceImplementation="GenerateToStringActionHandlerImpl"/>
-    <applicationService serviceInterface="GenerateToStringContext"
-                        serviceImplementation="GenerateToStringContext"/>
+    <applicationService serviceInterface="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"
+                        serviceImplementation="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>
+    <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringActionHandler"
+                        serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
+    <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringContext"
+                        serviceImplementation="org.jetbrains.java.generate.GenerateToStringContext"/>
 
     <localInspection language="JAVA" shortName="ClassHasNoToStringMethod" displayName="Class does not override 'toString()' method"
                      groupName="toString() issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="ClassHasNoToStringMethodInspection"/>
+                     implementationClass="org.jetbrains.java.generate.inspection.ClassHasNoToStringMethodInspection"/>
     <localInspection language="JAVA" shortName="FieldNotUsedInToString" displayName="Field not used in 'toString()' method" groupName="toString() issues"
                      enabledByDefault="false" level="WARNING" runForWholeFile="true"
-                     implementationClass="FieldNotUsedInToStringInspection"/>
-    <generation.toStringClassFilter implementation="GenerateToStringInterfaceFilter" order="last"/>
+                     implementationClass="org.jetbrains.java.generate.inspection.FieldNotUsedInToStringInspection"/>
+    <generation.toStringClassFilter implementation="org.jetbrains.java.generate.GenerateToStringInterfaceFilter" order="last"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
 

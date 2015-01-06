@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.java.generate.config.ConflictResolutionPolicy
 import org.jetbrains.java.generate.config.ReplacePolicy
 import org.jetbrains.java.generate.template.TemplateResource
-import org.jetbrains.java.generate.template.TemplatesManager
 import org.jetbrains.java.generate.GenerateWorker
+import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager
 
 /**
  * Created by Max Medvedev on 07/03/14
@@ -101,7 +101,7 @@ public class Foobar  {
 
   @NotNull
   private static TemplateResource findDefaultTemplate() {
-    Collection<TemplateResource> templates = TemplatesManager.getInstance().getAllTemplates();
+    Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates();
     def template = templates.find { it.fileName == "String concat (+)" }
     assert template != null
     template

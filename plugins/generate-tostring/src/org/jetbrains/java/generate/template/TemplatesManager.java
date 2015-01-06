@@ -21,30 +21,39 @@ package org.jetbrains.java.generate.template;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
-@State(
-  name = "ToStringTemplates",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/toStringTemplates.xml"
-    )}
-)
-public class TemplatesManager implements PersistentStateComponent<TemplatesState> {
-    public static TemplatesManager getInstance() {
-        return ServiceManager.getService(TemplatesManager.class);
-    }
+public abstract class TemplatesManager implements PersistentStateComponent<TemplatesState> {
 
     private TemplatesState myState = new TemplatesState();
 
-    public TemplatesManager() {
-        for (TemplateResource o : TemplateResourceLocator.getDefaultTemplates()) {
+    public TemplatesManager(TemplateResource[] resources) {
+        for (TemplateResource o : resources) {
             addTemplate(o);
         }
     }
 
-    public TemplatesState getState() {
+  /**
+   * Reads the content of the resource and return it as a String.
+   * <p/>Uses the class loader that loaded this class to find the resource in its classpath.
+   *
+   * @param resource the resource name. Will lookup using the classpath.
+   * @return the content if the resource
+   * @throws java.io.IOException error reading the file.
+   */
+  protected static String readFile(String resource, Class<? extends TemplatesManager> templatesManagerClass) throws IOException {
+    BufferedInputStream in = new BufferedInputStream(templatesManagerClass.getResourceAsStream(resource));
+    return StringUtil.convertLineSeparators(FileUtil.loadTextAndClose(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET)));
+  }
+
+  public TemplatesState getState() {
         return myState;
     }
 
@@ -67,14 +76,10 @@ public class TemplatesManager implements PersistentStateComponent<TemplatesState
     }
 
   public Collection<TemplateResource> getAllTemplates() {
-    TemplateResource[] defaultTemplates = TemplateResourceLocator.getDefaultTemplates();
     HashSet<String> names = new HashSet<String>();
-    for (TemplateResource defaultTemplate : defaultTemplates) {
-      names.add(defaultTemplate.getFileName());
-    }
-    Collection<TemplateResource> templates = new LinkedHashSet<TemplateResource>(Arrays.asList(defaultTemplates));
+    Collection<TemplateResource> templates = new LinkedHashSet<TemplateResource>();
     for (TemplateResource template : myState.templates) {
-      if (!names.contains(template.getFileName())) {
+      if (names.add(template.getFileName())) {
         templates.add(template);
       }
     }

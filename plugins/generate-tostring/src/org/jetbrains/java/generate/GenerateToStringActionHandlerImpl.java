@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.config.Config;
 import org.jetbrains.java.generate.template.TemplateResource;
-import org.jetbrains.java.generate.template.TemplatesManager;
+import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 import org.jetbrains.java.generate.view.TemplatesPanel;
 
 import javax.swing.*;
@@ -106,7 +106,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                     Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(chooser.getSelectedElements());
 
                     final TemplateResource template = header.getSelectedTemplate();
-                    TemplatesManager.getInstance().setDefaultTemplate(template);
+                    ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
 
                     if (template.isValidTemplate()) {
                         GenerateWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template,
@@ -182,7 +182,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         public MemberChooserHeaderPanel(final PsiClass clazz) {
             super(new GridBagLayout());
 
-            final Collection<TemplateResource> templates = TemplatesManager.getInstance().getAllTemplates();
+            final Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates();
             final TemplateResource[] all = templates.toArray(new TemplateResource[templates.size()]);
 
             final JButton settingsButton = new JButton("Settings");
@@ -215,23 +215,23 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                             updateDialog(clazz, chooser);
 
                             comboBox.removeAllItems();
-                            for (TemplateResource resource : TemplatesManager.getInstance().getAllTemplates()) {
+                            for (TemplateResource resource : ToStringTemplatesManager.getInstance().getAllTemplates()) {
                               comboBox.addItem(resource);
                             }
-                            comboBox.setSelectedItem(TemplatesManager.getInstance().getDefaultTemplate());
+                            comboBox.setSelectedItem(ToStringTemplatesManager.getInstance().getDefaultTemplate());
                         }
                     };
 
                     ShowSettingsUtil.getInstance().editConfigurable(MemberChooserHeaderPanel.this, composite, new Runnable() {
                         public void run() {
-                            ui.selectItem(TemplatesManager.getInstance().getDefaultTemplate());
+                            ui.selectItem(ToStringTemplatesManager.getInstance().getDefaultTemplate());
                         }
                     });
                   Disposer.dispose(disposable);
                 }
             });
 
-            comboBox.setSelectedItem(TemplatesManager.getInstance().getDefaultTemplate());
+            comboBox.setSelectedItem(ToStringTemplatesManager.getInstance().getDefaultTemplate());
 
             final JLabel templatesLabel = new JLabel("Template: ");
             templatesLabel.setDisplayedMnemonic('T');
