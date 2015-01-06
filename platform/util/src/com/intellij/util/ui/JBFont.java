@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ public class JBFont extends Font {
     }
     Font scaled = font;
     if (tryToScale) {
-      scaled = font.deriveFont(font.getSize() * JBUI.scale(1f));
+      Object value = Toolkit.getDefaultToolkit().getDesktopProperty("win.systemFixed.font.height");
+      float scale = value instanceof Integer ? ((Integer)value).floatValue() / 12f : 1f;
+      scaled = font.deriveFont(font.getSize() / scale * JBUI.scale(1f));
     }
 
     if (font instanceof UIResource) {
