@@ -689,6 +689,9 @@ public class PsiAdapter {
       case JDK_1_8:
         version = 8;
         break;
+      case JDK_1_9:
+        version = 9;
+        break;
     }
     return version;
   }
