@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.java.generate.config.ConflictResolutionPolicy
 import org.jetbrains.java.generate.config.ReplacePolicy
 import org.jetbrains.java.generate.template.TemplateResource
-import org.jetbrains.java.generate.GenerateWorker
+import org.jetbrains.java.generate.GenerateToStringWorker
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager
 
 /**
@@ -77,7 +77,7 @@ public class Foobar  {
 
     PsiClass clazz = findClass()
     Collection<PsiMember> members = collectMembers(clazz)
-    GenerateWorker worker = buildWorker(clazz, policy)
+    GenerateToStringWorker worker = buildWorker(clazz, policy)
 
     new WriteCommandAction(myFixture.project, myFixture.file) {
       @Override
@@ -90,8 +90,8 @@ public class Foobar  {
   }
 
   @NotNull
-  private GenerateWorker buildWorker(@NotNull PsiClass clazz, @NotNull ConflictResolutionPolicy policy) {
-    new GenerateWorker(clazz, myFixture.editor, true) {
+  private GenerateToStringWorker buildWorker(@NotNull PsiClass clazz, @NotNull ConflictResolutionPolicy policy) {
+    new GenerateToStringWorker(clazz, myFixture.editor, true) {
       @Override
       protected ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
         policy

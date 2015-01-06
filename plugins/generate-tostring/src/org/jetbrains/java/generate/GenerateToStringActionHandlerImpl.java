@@ -110,8 +110,8 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                     ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
 
                     if (template.isValidTemplate()) {
-                        GenerateWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template,
-                                                                  chooser.isInsertOverrideAnnotation());
+                        GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template,
+                                                                          chooser.isInsertOverrideAnnotation());
                     }
                     else {
                         HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");

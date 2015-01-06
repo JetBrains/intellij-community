@@ -19,42 +19,33 @@
  */
 package org.jetbrains.java.generate;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.config.*;
-import org.jetbrains.java.generate.element.*;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.template.TemplateResource;
-import org.jetbrains.java.generate.velocity.VelocityFactory;
 import org.jetbrains.java.generate.view.MethodExistsDialog;
 
-import java.io.StringWriter;
 import java.util.*;
 
-public class GenerateWorker {
-  private static final Logger logger = Logger.getInstance("#GenerateWorker");
+public class GenerateToStringWorker {
+  private static final Logger logger = Logger.getInstance("#" + GenerateToStringWorker.class.getName());
 
   private final Editor editor;
   private final PsiClass clazz;
   private final Config config;
   private final boolean hasOverrideAnnotation;
 
-  public GenerateWorker(PsiClass clazz, Editor editor, boolean insertAtOverride) {
+  public GenerateToStringWorker(PsiClass clazz, Editor editor, boolean insertAtOverride) {
     this.clazz = clazz;
     this.editor = editor;
     this.config = GenerateToStringContext.getConfig();
@@ -74,7 +65,9 @@ public class GenerateWorker {
     beforeCreateToStringMethod(params, template);
 
     // generate method
-    PsiMethod method = createToStringMethod(members, resolutionPolicy, params, template);
+    PsiMethod method = GenerationUtil
+      .createMethodByTemplate(template, clazz, editor, members, params, resolutionPolicy, hasOverrideAnnotation,
+                              config.getSortElements(), config.isUseFullyQualifiedName());
 
     // after, if method was generated (not cancel policy)
     if (method != null) {
@@ -135,75 +128,6 @@ public class GenerateWorker {
     }
   }
 
-  /**
-   * Creates the <code>toString</code> method.
-   *
-   * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
-   * @param policy          conflict resolution policy
-   * @param params          additional parameters stored with key/value in the map.
-   * @param template        the template to use
-   * @return the created method, null if the method is not created due the user cancels this operation
-   * @throws GenerateCodeException       is thrown when there is an error generating the javacode.
-   * @throws IncorrectOperationException is thrown by IDEA.
-   */
-  @Nullable
-  private PsiMethod createToStringMethod(Collection<PsiMember> selectedMembers,
-                                         ConflictResolutionPolicy policy,
-                                         Map<String, String> params,
-                                         TemplateResource template) throws IncorrectOperationException, GenerateCodeException {
-    // generate code using velocity
-    String body = velocityGenerateCode(selectedMembers, params, template.getMethodBody());
-    if (logger.isDebugEnabled()) logger.debug("Method body generated from Velocity:\n" + body);
-
-    // fix weird linebreak problem in IDEA #3296 and later
-    body = StringUtil.convertLineSeparators(body);
-
-    // create psi newMethod named toString()
-    final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
-    if (topLevelFactory == null) {
-      return null;
-    }
-    PsiMethod newMethod;
-    try {
-      newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
-      CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
-    } catch (IncorrectOperationException ignore) {
-      HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
-                                                      template.getFileName() + '\'');
-      return null;
-    }
-
-    // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
-    PsiMethod existingMethod = clazz.findMethodBySignature(newMethod, false);
-    PsiMethod toStringMethod = policy.applyMethod(clazz, existingMethod, newMethod, editor);
-    if (toStringMethod == null) {
-      return null; // user cancelled so return null
-    }
-
-    if (hasOverrideAnnotation) {
-      toStringMethod.getModifierList().addAnnotation("java.lang.Override");
-    }
-
-    // applyJavaDoc conflict resolution policy (add or keep existing)
-    String existingJavaDoc = params.get("existingJavaDoc");
-    String newJavaDoc = template.getJavaDoc();
-    if (existingJavaDoc != null || newJavaDoc != null) {
-      // generate javadoc using velocity
-      newJavaDoc = velocityGenerateCode(selectedMembers, params, newJavaDoc);
-      if (logger.isDebugEnabled()) logger.debug("JavaDoc body generated from Velocity:\n" + newJavaDoc);
-
-      applyJavaDoc(toStringMethod, existingJavaDoc, newJavaDoc);
-    }
-
-    // return the created method
-    return toStringMethod;
-  }
-
-  private static void applyJavaDoc(PsiMethod newMethod, String existingJavaDoc, String newJavaDoc) {
-    String text = newJavaDoc != null ? newJavaDoc : existingJavaDoc; // prefer to use new javadoc
-    PsiAdapter.addOrReplaceJavadoc(newMethod, text, true);
-  }
-
 
   /**
    * This method is executed just after the <code>toString</code> method is created or updated.
@@ -254,75 +178,6 @@ public class GenerateWorker {
   }
 
   /**
-   * Generates the code using Velocity.
-   * <p/>
-   * This is used to create the <code>toString</code> method body and it's javadoc.
-   *
-   * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
-   * @param params          additional parameters stored with key/value in the map.
-   * @param templateMacro   the velocity macro template
-   * @return code (usually javacode). Returns null if templateMacro is null.
-   * @throws GenerateCodeException is thrown when there is an error generating the javacode.
-   */
-  private String velocityGenerateCode(Collection<PsiMember> selectedMembers, Map<String, String> params, String templateMacro)
-    throws GenerateCodeException {
-    if (templateMacro == null) {
-      return null;
-    }
-
-    StringWriter sw = new StringWriter();
-    try {
-      VelocityContext vc = new VelocityContext();
-
-      vc.put("java_version", PsiAdapter.getJavaVersion(clazz));
-
-      // field information
-      logger.debug("Velocity Context - adding fields");
-      vc.put("fields", ElementUtils.getOnlyAsFieldElements(selectedMembers));
-
-      // method information
-      logger.debug("Velocity Context - adding methods");
-      vc.put("methods", ElementUtils.getOnlyAsMethodElements(selectedMembers));
-
-      // element information (both fields and methods)
-      logger.debug("Velocity Context - adding members (fields and methods)");
-      List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(selectedMembers);
-      // sort elements if enabled and not using chooser dialog
-      if (config.getSortElements() != 0) {
-        Collections.sort(elements, new ElementComparator(config.getSortElements()));
-      }
-      vc.put("members", elements);
-
-      // class information
-      ClassElement ce = ElementFactory.newClassElement(clazz);
-      vc.put("class", ce);
-      if (logger.isDebugEnabled()) logger.debug("Velocity Context - adding class: " + ce);
-
-      // information to keep as it is to avoid breaking compatibility with prior releases
-      vc.put("classname", config.isUseFullyQualifiedName() ? ce.getQualifiedName() : ce.getName());
-      vc.put("FQClassname", ce.getQualifiedName());
-
-      if (logger.isDebugEnabled()) logger.debug("Velocity Macro:\n" + templateMacro);
-
-      // velocity
-      VelocityEngine velocity = VelocityFactory.getVelocityEngine();
-      logger.debug("Executing velocity +++ START +++");
-      velocity.evaluate(vc, sw, this.getClass().getName(), templateMacro);
-      logger.debug("Executing velocity +++ END +++");
-
-      // any additional packages to import returned from velocity?
-      if (vc.get("autoImportPackages") != null) {
-        params.put("autoImportPackages", (String)vc.get("autoImportPackages"));
-      }
-    }
-    catch (Exception e) {
-      throw new GenerateCodeException("Error in Velocity code generator", e);
-    }
-
-    return sw.getBuffer().toString();
-  }
-
-  /**
    * Generates the toString() code for the specified class and selected
    * fields, doing the work through a WriteAction ran by a CommandProcessor.
    *
@@ -340,7 +195,7 @@ public class GenerateWorker {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
-              new GenerateWorker(clazz, editor, insertAtOverride).execute(selectedMembers, template);
+              new GenerateToStringWorker(clazz, editor, insertAtOverride).execute(selectedMembers, template);
             }
             catch (Exception e) {
               GenerationUtil.handleException(clazz.getProject(), e);
