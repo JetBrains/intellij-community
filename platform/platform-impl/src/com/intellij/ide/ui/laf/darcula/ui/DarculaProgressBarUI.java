@@ -22,8 +22,6 @@ import com.intellij.util.ui.JBUI;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicProgressBarUI;
 import java.awt.*;
@@ -68,7 +66,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     final int R = h - 1;
     final int R2 = h;
     final int off = JBUI.scale(1);
-    final Area aaa = new Area(new RoundRectangle2D.Double(off, off, w - 2*off, h - 2*off, R, R));
+    final Area aaa = new Area(new RoundRectangle2D.Double(off, off, w - 2*off-1, h - 2*off-1, R, R));
     while (x < Math.max(c.getWidth(), c.getHeight())) {
       Path2D.Double path = new Path2D.Double();
       int ww = getPeriodLength() / 2;
@@ -86,12 +84,12 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     }
     offset = (offset + 1) % getPeriodLength();
     Area area = new Area(new Rectangle2D.Double(0, 0, w, h));
-    area.subtract(new Area(new RoundRectangle2D.Double(off, off, w - 2*off, h - 2*off, R, R)));
+    area.subtract(new Area(new RoundRectangle2D.Double(off, off, w - 2*off - 1, h - 2*off - 1, R, R)));
     ((Graphics2D)g).setPaint(Gray._128);
     if (c.isOpaque()) {
       ((Graphics2D)g).fill(area);
     }
-    area.subtract(new Area(new RoundRectangle2D.Double(0, 0, w, h, R2, R2)));
+    area.subtract(new Area(new RoundRectangle2D.Double(0, 0, w-1, h-1, R2, R2)));
     ((Graphics2D)g).setPaint(c.getParent().getBackground());
     if (c.isOpaque()) {
       ((Graphics2D)g).fill(area);
@@ -150,7 +148,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     g2.setColor(c.getParent().getBackground());
     g2.fill(new RoundRectangle2D.Double(off, off, w - 2*off - off, h - 2*off - off, R, R));
     g2.setColor(progressBar.getForeground());
-    g2.fill(new RoundRectangle2D.Double(2*off,2*off, amountFull - JBUI.scale(5), h - JBUI.scale(5), R2, R2));
+    g2.fill(new RoundRectangle2D.Double(2*off,2*off, amountFull - JBUI.scale(5), h - JBUI.scale(5), R-1, R-1));
     g2.translate(0, -(c.getHeight() - h)/2);
 
     // Deal with possible text painting
