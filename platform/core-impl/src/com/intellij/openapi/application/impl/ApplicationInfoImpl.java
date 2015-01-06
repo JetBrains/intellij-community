@@ -98,6 +98,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myStatisticsServiceUrl;
   private String myStatisticsServiceKey;
   private String myThirdPartySoftwareUrl;
+  private String myJetbrainsTvUrl;
 
   private Rectangle myAboutLogoRect;
 
@@ -167,6 +168,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
   private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
   private static final String ELEMENT_THIRD_PARTY = "third-party";
+  private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
   private static final String STEPS_PROVIDER = "provider";
 
@@ -467,6 +469,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   @Override
+  public String getJetbrainsTvUrl() {
+    return myJetbrainsTvUrl;
+  }
+
+  @Override
   public Rectangle getAboutLogoRect() {
     return myAboutLogoRect;
   }
@@ -735,6 +742,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element thirdPartyElement = parentNode.getChild(ELEMENT_THIRD_PARTY);
     if (thirdPartyElement != null) {
       myThirdPartySoftwareUrl = thirdPartyElement.getAttributeValue(ATTRIBUTE_URL);
+    }
+
+    Element tvElement = parentNode.getChild(ELEMENT_JB_TV);
+    if (tvElement != null) {
+      myJetbrainsTvUrl = tvElement.getAttributeValue(ATTRIBUTE_URL);
     }
   }
 
