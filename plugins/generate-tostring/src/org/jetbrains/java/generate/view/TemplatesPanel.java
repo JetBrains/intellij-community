@@ -113,7 +113,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     }
 
     protected UnnamedConfigurable createConfigurable(TemplateResource item) {
-        return new ToStringTemplateConfigurable(item, myProject);
+        return new GenerateTemplateConfigurable(item, myProject);
     }
 
     @Override

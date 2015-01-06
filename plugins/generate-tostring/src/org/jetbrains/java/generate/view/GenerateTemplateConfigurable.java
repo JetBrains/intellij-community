@@ -35,11 +35,11 @@ import org.jetbrains.java.generate.template.TemplateResource;
 
 import javax.swing.*;
 
-public class ToStringTemplateConfigurable implements UnnamedConfigurable{
+public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     private final TemplateResource template;
     private final Editor myEditor;
 
-    public ToStringTemplateConfigurable(TemplateResource template, Project project) {
+    public GenerateTemplateConfigurable(TemplateResource template, Project project) {
         this.template = template;
         final EditorFactory factory = EditorFactory.getInstance();
         final Document doc = factory.createDocument(template.getTemplate());
