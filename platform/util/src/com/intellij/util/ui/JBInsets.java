@@ -17,7 +17,6 @@ package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
@@ -27,7 +26,6 @@ import static com.intellij.util.ui.JBUI.scale;
  * @author Konstantin Bulenkov
  */
 public class JBInsets extends Insets {
-  public static final JBInsets NONE = new JBInsets(0, 0, 0, 0);
   /**
    * Creates and initializes a new <code>Insets</code> object with the
    * specified top, left, bottom, and right insets.
