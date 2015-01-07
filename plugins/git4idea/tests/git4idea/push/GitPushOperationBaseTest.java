@@ -18,7 +18,6 @@ package git4idea.push;
 import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.push.PushSupport;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -148,9 +147,9 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
   }
 
   protected void agreeToUpdate(final int exitCode) {
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler() {
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
       @Override
-      public int handleDialog(DialogWrapper dialog) {
+      public int handleDialog(GitRejectedPushUpdateDialog dialog) {
         return exitCode;
       }
     });

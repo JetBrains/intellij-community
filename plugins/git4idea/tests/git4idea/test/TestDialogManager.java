@@ -48,8 +48,15 @@ public class TestDialogManager extends DialogManager {
   @Override
   protected void showDialog(@NotNull DialogWrapper dialog) {
     TestDialogHandler handler = myHandlers.get(dialog.getClass());
-    int exitCode = handler != null ? handler.handleDialog(dialog) : DialogWrapper.OK_EXIT_CODE;
-    dialog.close(exitCode, exitCode == DialogWrapper.OK_EXIT_CODE);
+    int exitCode = DialogWrapper.OK_EXIT_CODE;
+    try {
+      if (handler != null) {
+        exitCode = handler.handleDialog(dialog);
+      }
+    }
+    finally {
+      dialog.close(exitCode, exitCode == DialogWrapper.OK_EXIT_CODE);
+    }
   }
 
   @Override
