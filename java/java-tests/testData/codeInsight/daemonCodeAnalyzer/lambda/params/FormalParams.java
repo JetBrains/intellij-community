@@ -11,7 +11,7 @@ class Foo {
   };
 
   void bazz() {
-    bar((<error descr="Incompatible parameter types in lambda expression">String s</error>) -> {
+    bar(<error descr="Incompatible parameter types in lambda expression: expected int but found String">(String s)</error> -> {
       System.out.println(s);});
     bar((int i) -> {System.out.println(i);});
   }

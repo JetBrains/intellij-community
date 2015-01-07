@@ -333,12 +333,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                 final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
                 if (interfaceMethod != null) {
                   final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-                  PsiElement incompatibleElt = LambdaHighlightingUtil
+                  HighlightInfo result = LambdaHighlightingUtil
                     .checkParametersCompatible(expression, parameters, LambdaUtil.getSubstitutor(interfaceMethod, resolveResult));
-                  if (incompatibleElt != null) {
-                    final String incompatibleTypesMessage = "Incompatible parameter types in lambda expression";
-                    HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(incompatibleElt)
-                      .descriptionAndTooltip(incompatibleTypesMessage).create();
+                  if (result != null) {
                     myHolder.add(result);
                   } else {
                     final PsiClass samClass = resolveResult.getElement();
