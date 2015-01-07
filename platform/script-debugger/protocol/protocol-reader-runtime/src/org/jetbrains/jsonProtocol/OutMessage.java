@@ -56,7 +56,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeInt(String name, int value) {
+  public final void writeInt(String name, int value) {
     try {
       beginArguments();
       writer.name(name).value(value);

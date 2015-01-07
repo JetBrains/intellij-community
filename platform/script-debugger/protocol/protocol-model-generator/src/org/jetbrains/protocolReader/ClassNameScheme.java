@@ -16,11 +16,9 @@ abstract class ClassNameScheme {
     return new NamePath(getShortName(baseName), new NamePath(getPackageNameVirtual(domainName)));
   }
 
+  @NotNull
   String getShortName(@NotNull String baseName) {
-    if (baseName.endsWith("Descriptor")) {
-      return baseName;
-    }
-    return new String(getShortNameChars(baseName));
+    return baseName.endsWith("Descriptor") ? baseName : new String(getShortNameChars(baseName));
   }
 
   private char[] getShortNameChars(@NotNull String baseName) {
