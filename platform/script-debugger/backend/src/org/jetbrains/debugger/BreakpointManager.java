@@ -7,8 +7,10 @@ import org.jetbrains.concurrency.Promise;
 import java.util.EventListener;
 
 public interface BreakpointManager {
+  @NotNull
   Breakpoint setBreakpoint(@NotNull BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled);
 
+  @NotNull
   Promise<Void> remove(@NotNull Breakpoint breakpoint);
 
   @Nullable
