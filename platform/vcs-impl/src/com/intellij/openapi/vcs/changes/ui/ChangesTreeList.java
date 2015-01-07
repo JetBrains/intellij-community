@@ -405,6 +405,10 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
             if (rowInTree > -1) {
               selectedTreeRow = rowInTree;
             }
+            int rowInList = findRowContainingFile(myList.getModel(), toSelect);
+            if (rowInList > -1) {
+              selectedListRow = rowInList;
+            }
           }
         }
         
@@ -426,6 +430,20 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
   }
 
+  private static int findRowContainingFile(@NotNull ListModel listModel, @Nullable final VirtualFile toSelect) {
+    if (toSelect == null) {
+      return -1;
+    }
+
+    for (int i = 0; i < listModel.getSize(); i++) {
+      Object item = listModel.getElementAt(i);
+      if (item instanceof Change && matches((Change)item, toSelect)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   private int findRowContainingFile(@NotNull TreeNode root, @Nullable final VirtualFile toSelect) {
     if (toSelect == null) {
       return -1;
@@ -438,9 +456,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         if (node instanceof DefaultMutableTreeNode) {
           Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
           if (userObject instanceof Change) {
-            Change change = (Change)userObject;
-            VirtualFile virtualFile = change.getVirtualFile();
-            if ((virtualFile != null && virtualFile.equals(toSelect)) || seemsToBeMoved(change, toSelect)) {
+            if (matches((Change)userObject, toSelect)) {
               TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
               row.set(myTree.getRowForPath(new TreePath(path)));
             }
@@ -451,6 +467,11 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       }
     });
     return row.get();
+  }
+
+  private static boolean matches(@NotNull Change change, @NotNull VirtualFile file) {
+    VirtualFile virtualFile = change.getVirtualFile();
+    return virtualFile != null && virtualFile.equals(file) || seemsToBeMoved(change, file);
   }
 
   private static boolean seemsToBeMoved(Change change, VirtualFile toSelect) {
