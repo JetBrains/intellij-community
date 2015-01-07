@@ -20,7 +20,7 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
 
       @NotNull
       @Override
-      public Promise<List<Variable>> load(@NotNull DeclarativeScope host, @NotNull Promise<List<Variable>> promise) {
+      public Promise<List<Variable>> load(@NotNull DeclarativeScope host) {
         //noinspection unchecked
         return host.loadVariables();
       }

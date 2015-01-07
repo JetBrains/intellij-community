@@ -4,7 +4,7 @@ import org.jetbrains.io.JsonReaderEx;
 
 class RawValueReader extends ValueReader {
   RawValueReader(boolean nullable) {
-    super(nullable);
+    super();
   }
 
   @Override
@@ -23,8 +23,7 @@ class RawValueReader extends ValueReader {
   @Override
   void writeArrayReadCode(ClassScope scope,
                           boolean subtyping,
-                          boolean nullable,
-                          String fieldName, TextOutput out) {
+                          TextOutput out) {
     throw new UnsupportedOperationException();
   }
 }

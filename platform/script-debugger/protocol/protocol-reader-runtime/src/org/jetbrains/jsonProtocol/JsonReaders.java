@@ -24,74 +24,17 @@ public final class JsonReaders {
     }
   }
 
-  public static String readString(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextString();
-  }
-
   public static String readRawString(JsonReaderEx reader) {
     return reader.nextString(true);
   }
 
   public static Object readRawStringOrMap(JsonReaderEx reader) {
     if (reader.peek() == JsonToken.BEGIN_OBJECT) {
-      return readMap(reader, null);
+      return readMap(reader);
     }
     else {
       return reader.nextString(true);
     }
-  }
-
-  public static String readNullableString(JsonReaderEx reader) {
-    if (reader.peek() == JsonToken.NULL) {
-      reader.skipValue();
-      return null;
-    }
-    return reader.nextString();
-  }
-
-  public static boolean readBoolean(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextBoolean();
-  }
-
-  public static boolean readNullableBoolean(JsonReaderEx reader) {
-    if (reader.peek() == JsonToken.NULL) {
-      reader.skipValue();
-      return false;
-    }
-    return reader.nextBoolean();
-  }
-
-  public static int readInt(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextInt();
-  }
-
-  public static int readNullableInt(JsonReaderEx reader) {
-    if (reader.peek() == JsonToken.NULL) {
-      reader.skipValue();
-      return -1;
-    }
-    return reader.nextInt();
-  }
-
-  public static long readLong(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextLong();
-  }
-
-  public static double readDouble(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextDouble();
-  }
-
-  public static long readNullableLong(JsonReaderEx reader) {
-    if (reader.peek() == JsonToken.NULL) {
-      reader.skipValue();
-      return -1;
-    }
-    return reader.nextLong();
   }
 
   public static <T extends Enum<T>> T readEnum(JsonReaderEx reader, String fieldName, Class<T> enumClass) {
@@ -133,7 +76,7 @@ public final class JsonReaders {
     return convertRawEnumName(reader.nextString());
   }
 
-  public static <T extends Enum<T>> T readNullableEnum(JsonReaderEx reader, Class<T> enumClass) {
+  public static <T extends Enum<T>> T readEnum(JsonReaderEx reader, Class<T> enumClass) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();
       return null;
@@ -141,26 +84,16 @@ public final class JsonReaders {
     return Enum.valueOf(enumClass, readEnumName(reader));
   }
 
-  public static <T> List<T> readObjectArray(JsonReaderEx reader, String fieldName, ObjectFactory<T> factory, boolean nullable) {
+  public static <T> List<T> readObjectArray(JsonReaderEx reader, ObjectFactory<T> factory) {
     if (reader.peek() == JsonToken.NULL) {
-      if (nullable) {
-        reader.skipValue();
-        return null;
-      }
-      else {
-        checkIsNull(reader, fieldName);
-      }
+      reader.skipValue();
+      return null;
     }
 
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();
-      if (nullable) {
-        return null;
-      }
-      else {
-        return Collections.emptyList();
-      }
+      return Collections.emptyList();
     }
 
     List<T> result = new ArrayList<T>();
@@ -172,8 +105,7 @@ public final class JsonReaders {
     return result;
   }
 
-  public static Map<?, ?> readMap(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
+  public static Map<?, ?> readMap(JsonReaderEx reader) {
     reader.beginObject();
     if (!reader.hasNext()) {
       reader.endObject();
@@ -319,10 +251,6 @@ public final class JsonReaders {
     while (reader.hasNext());
     reader.endArray();
     return result;
-  }
-
-  public static JsonReaderEx createReader(CharSequence string) {
-    return new JsonReaderEx(string);
   }
 
   public static boolean findBooleanField(String name, JsonReaderEx reader) {

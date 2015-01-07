@@ -2,11 +2,11 @@ package org.jetbrains.protocolReader;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jsonProtocol.JsonField;
-import org.jetbrains.jsonProtocol.JsonNullable;
 import org.jetbrains.jsonProtocol.JsonOptionalField;
 import org.jetbrains.jsonProtocol.JsonSubtypeCasting;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -63,24 +63,23 @@ final class FieldProcessor<T> {
 
   private MethodHandler processFieldGetterMethod(@NotNull Method method, @NotNull String fieldName) {
     Type genericReturnType = method.getGenericReturnType();
-    boolean nullable;
-    if (method.getAnnotation(JsonNullable.class) != null) {
-      nullable = true;
-    }
-    else if (genericReturnType == String.class || genericReturnType == Enum.class || (genericReturnType instanceof Class && !((Class)genericReturnType).isPrimitive())) {
-      JsonField jsonField = method.getAnnotation(JsonField.class);
-      if (jsonField != null) {
-        nullable = jsonField.optional() && !jsonField.allowAnyPrimitiveValue() && !jsonField.allowAnyPrimitiveValueAndMap();
-      }
-      else {
-        nullable = method.getAnnotation(JsonOptionalField.class) != null;
-      }
+    boolean addNotNullAnnotation;
+
+    boolean isPrimitive = genericReturnType instanceof Class ? ((Class)genericReturnType).isPrimitive() : !(genericReturnType instanceof ParameterizedType);
+    if (isPrimitive) {
+      addNotNullAnnotation = false;
     }
     else {
-      nullable = false;
+      JsonField jsonField = method.getAnnotation(JsonField.class);
+      if (jsonField != null) {
+        addNotNullAnnotation = !jsonField.optional() && !jsonField.allowAnyPrimitiveValue() && !jsonField.allowAnyPrimitiveValueAndMap();
+      }
+      else {
+        addNotNullAnnotation = method.getAnnotation(JsonOptionalField.class) == null;
+      }
     }
 
-    ValueReader fieldTypeParser = reader.getFieldTypeParser(genericReturnType, nullable, false, method);
+    ValueReader fieldTypeParser = reader.getFieldTypeParser(genericReturnType, false, method);
     if (fieldTypeParser != InterfaceReader.VOID_PARSER) {
       fieldLoaders.add(new FieldLoader(fieldName, fieldTypeParser));
     }
@@ -89,7 +88,7 @@ final class FieldProcessor<T> {
     return new MethodHandler() {
       @Override
       void writeMethodImplementationJava(@NotNull ClassScope scope, @NotNull Method method, @NotNull TextOutput out) {
-        if (!nullable) {
+        if (addNotNullAnnotation) {
           out.append("@NotNull").newLine();
         }
         writeMethodDeclarationJava(out, method);
@@ -103,7 +102,7 @@ final class FieldProcessor<T> {
   }
 
   private MethodHandler processManualSubtypeMethod(final Method m, JsonSubtypeCasting jsonSubtypeCaseAnn) {
-    ValueReader fieldTypeParser = reader.getFieldTypeParser(m.getGenericReturnType(), false, !jsonSubtypeCaseAnn.reinterpret(), null);
+    ValueReader fieldTypeParser = reader.getFieldTypeParser(m.getGenericReturnType(), !jsonSubtypeCaseAnn.reinterpret(), null);
     VolatileFieldBinding fieldInfo = allocateVolatileField(fieldTypeParser, true);
     LazyCachedMethodHandler handler = new LazyCachedMethodHandler(fieldTypeParser, fieldInfo);
     ObjectValueReader<?> parserAsObjectValueParser = fieldTypeParser.asJsonTypeParser();

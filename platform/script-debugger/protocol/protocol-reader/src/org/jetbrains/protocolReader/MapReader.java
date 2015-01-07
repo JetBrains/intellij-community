@@ -2,7 +2,7 @@ package org.jetbrains.protocolReader;
 
 public class MapReader extends ValueReader {
   MapReader(boolean nullable) {
-    super(nullable);
+    super();
   }
 
   @Override
@@ -12,15 +12,14 @@ public class MapReader extends ValueReader {
 
   @Override
   void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, TextOutput out) {
-    beginReadCall("Map", subtyping, out, fieldName);
+    beginReadCall("Map", subtyping, out);
     out.append(')');
   }
 
   @Override
   void writeArrayReadCode(ClassScope scope,
                           boolean subtyping,
-                          boolean nullable,
-                          String fieldName, TextOutput out) {
+                          TextOutput out) {
     throw new UnsupportedOperationException();
   }
 }

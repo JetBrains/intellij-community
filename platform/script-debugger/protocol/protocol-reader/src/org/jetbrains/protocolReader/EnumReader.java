@@ -5,14 +5,14 @@
 package org.jetbrains.protocolReader;
 
 class EnumReader<T extends Enum<T>> extends ValueReader {
-  public static <T extends Enum<T>> EnumReader<T> create(Class<T> enumTypeClass, boolean isNullable) {
-    return new EnumReader<>(enumTypeClass, isNullable);
+  public static <T extends Enum<T>> EnumReader<T> create(Class<T> enumTypeClass) {
+    return new EnumReader<>(enumTypeClass);
   }
 
   private final Class<T> enumClass;
 
-  private EnumReader(Class<T> enumClass, boolean nullable) {
-    super(nullable);
+  private EnumReader(Class<T> enumClass) {
+    super();
     this.enumClass = enumClass;
   }
 
@@ -23,15 +23,14 @@ class EnumReader<T extends Enum<T>> extends ValueReader {
 
   @Override
   void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, TextOutput out) {
-    beginReadCall("Enum", subtyping, out, fieldName);
+    beginReadCall("Enum", subtyping, out);
     out.comma().append(enumClass.getCanonicalName()).append(".class").append(')');
   }
 
   @Override
   void writeArrayReadCode(ClassScope scope,
                           boolean subtyping,
-                          boolean nullable,
-                          String fieldName, TextOutput out) {
+                          TextOutput out) {
     throw new UnsupportedOperationException();
   }
 }

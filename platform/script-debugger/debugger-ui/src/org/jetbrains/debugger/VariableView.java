@@ -8,7 +8,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XSourcePositionWrapper;
@@ -99,7 +98,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       node.setPresentation(icon, null, valueString, true);
     }
     else {
-      context.getEvaluateContext().evaluate("a.length", Collections.<String, EvaluateContextAdditionalParameter>singletonMap("a", value))
+      context.getEvaluateContext().evaluate("a.length", Collections.<String, EvaluateContextAdditionalParameter>singletonMap("a", value), false)
         .done(new Consumer<EvaluateResult>() {
           @Override
           public void consume(EvaluateResult result) {
@@ -383,31 +382,32 @@ public final class VariableView extends XNamedValue implements VariableContext {
   }
 
   @NotNull
-  private Promise<List<Variable>> computeNamedProperties(@NotNull final ObjectValue value, @NotNull XCompositeNode node, final boolean isLastChildren) {
-    return ObsolescentAsyncResults.consume(value.getProperties(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
-      @Override
-      public void consume(List<Variable> variables, XCompositeNode node) {
-        if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
-          computeArrayRanges(variables, node);
-          return;
-        }
+  private Promise<List<Variable>> computeNamedProperties(@NotNull final ObjectValue value, @NotNull final XCompositeNode node, final boolean isLastChildren) {
+    return value.getProperties()
+      .done(new ValueNodeConsumer<List<Variable>>(node) {
+        @Override
+        public void consume(List<Variable> variables) {
+          if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
+            computeArrayRanges(variables, node);
+            return;
+          }
 
-        FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
-        if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
-          functionValue = null;
-        }
+          FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
+          if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
+            functionValue = null;
+          }
 
-        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null);
-        if (remainingChildren != null) {
-          remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
-        }
+          remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null);
+          if (remainingChildren != null) {
+            remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
+          }
 
-        if (functionValue != null) {
-          // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), isLastChildren);
+          if (functionValue != null) {
+            // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
+            node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), isLastChildren);
+          }
         }
-      }
-    });
+      });
   }
 
   private void computeArrayRanges(@NotNull List<Variable> properties, @NotNull XCompositeNode node) {

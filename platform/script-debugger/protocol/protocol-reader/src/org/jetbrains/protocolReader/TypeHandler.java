@@ -152,8 +152,7 @@ class TypeHandler<T> {
     else {
       out.append("if (name == null)").openBlock();
       {
-        out.append("reader.beginObject()").semi();
-        out.newLine().append("if (reader.hasNext())").openBlock();
+        out.append("if (reader.beginObject().hasNext())").openBlock();
         {
           out.append("name = reader.nextName()").semi();
         }
