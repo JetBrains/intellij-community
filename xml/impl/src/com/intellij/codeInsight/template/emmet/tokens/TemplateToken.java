@@ -22,13 +22,9 @@ import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.XmlElementFactory;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +96,7 @@ public class TemplateToken extends ZenCodingToken {
     String templateString = template.getString();
     final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(callback.getProject());
     if (!containsAttrsVar(template)) {
-      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, templateString);
+      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.HTML, templateString);
       dummyRootTag = dummyFile.getRootTag();
       if (dummyRootTag != null) {
         addMissingAttributes(dummyRootTag, attributes);
@@ -119,29 +115,13 @@ public class TemplateToken extends ZenCodingToken {
 
 
   private static void addMissingAttributes(@NotNull XmlTag tag, @NotNull Map<String, String> attributes) {
-    Map<String, String> missingAttributes = ContainerUtil.newLinkedHashMap();
     for (Map.Entry<String, String> attribute : attributes.entrySet()) {
       if (!XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME.equals(attribute.getKey()) && tag.getAttribute(attribute.getKey()) == null) {
-        missingAttributes.put(attribute.getKey(), attribute.getValue());
-      }
-    }
-    addAttributesBefore(tag, missingAttributes);
-  }
-
-
-  private static void addAttributesBefore(@NotNull XmlTag tag, @NotNull Map<String, String> attributes) {
-    XmlAttribute firstAttribute = ArrayUtil.getFirstElement(tag.getAttributes());
-    XmlElementFactory factory = XmlElementFactory.getInstance(tag.getProject());
-    for (String name : attributes.keySet()) {
-      XmlAttribute xmlAttribute = factory.createXmlAttribute(name, "");
-      if (firstAttribute != null) {
-        tag.addBefore(xmlAttribute, firstAttribute);
-      }
-      else {
-        tag.add(xmlAttribute);
+        tag.setAttribute(attribute.getKey(), "");
       }
     }
   }
+
 
   @Nullable
   public TemplateImpl getTemplate() {

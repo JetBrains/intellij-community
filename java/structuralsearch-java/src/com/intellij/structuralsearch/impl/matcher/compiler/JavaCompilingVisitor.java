@@ -589,18 +589,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private MatchingStrategy findStrategy(PsiElement el) {
-    // identify matching strategy
-    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(el);
-
-    //if (handler instanceof SubstitutionHandler) {
-    //  final SubstitutionHandler shandler = (SubstitutionHandler) handler;
-    if (handler.getFilter() instanceof SymbolNodeFilter ||
-        handler.getFilter() instanceof TypedSymbolNodeFilter
-      ) {
-      return SymbolMatchingStrategy.getInstance();
-    }
-    //}
-
     if (el instanceof PsiDocComment) {
       return JavaDocMatchingStrategy.getInstance();
     }

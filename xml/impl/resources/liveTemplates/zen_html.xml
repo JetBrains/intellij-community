@@ -160,6 +160,14 @@
     </context>
   </template>
   <template description="&lt;link rel=&quot;import&quot; href=&quot;&quot;&gt;"
+            name="link:import" toReformat="true" toShortenFQNames="true"
+            value="&lt;link rel=&quot;import&quot; href=&quot;$HTML$.html&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="HTML"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;link rel=&quot;import&quot; href=&quot;&quot;&gt;"
             name="link:im" toReformat="true" toShortenFQNames="true"
             value="&lt;link rel=&quot;import&quot; href=&quot;$HTML$.html&quot;/&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="HTML"/>
@@ -397,13 +405,13 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;input name=&quot;...&quot; type=&quot;hidden&quot;/&gt;" name="input:hidden" toReformat="true" toShortenFQNames="true" value="&lt;input name=&quot;$VAR0$&quot; type=&quot;hidden&quot;/&gt;">
+  <template description="&lt;input type=&quot;hidden&quot; name=&quot;...&quot;/&gt;" name="input:hidden" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;hidden&quot; name=&quot;$VAR0$&quot; /&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;input name=&quot;...&quot; type=&quot;hidden&quot;/&gt;" name="input:h" toReformat="true" toShortenFQNames="true" value="&lt;input name=&quot;$VAR0$&quot; type=&quot;hidden&quot;/&gt;">
+  <template description="&lt;input type=&quot;hidden&quot; name=&quot;...&quot;/&gt;" name="input:h" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;hidden&quot; name=&quot;$VAR0$&quot;/&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <context>
       <option name="HTML_TEXT" value="true"/>

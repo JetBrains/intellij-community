@@ -116,6 +116,17 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
                        link2.getPath() + "/" + link1Home.getName() + "/" + link1.getName());
   }
 
+  public void testSameTargetShouldBeVisitedSeveralTimesFromSeveralNonRecursiveLinks() throws Exception {
+    File target = createTestDir(myTempDir, "target");
+    File child = createTestDir(myTempDir, "child");
+    File link1 = createSymLink(target.getPath(), myTempDir.getPath() + "/link1");
+    File link2 = createSymLink(target.getPath(), myTempDir.getPath() + "/link2");
+    assertVisitedPaths(myTempDir,
+                       target.getPath(), child.getPath(),
+                       link1.getPath(), link1.getPath() + "/child",
+                       link2.getPath(), link2.getPath() + "/child");
+  }
+
   public void testTargetIsWritable() throws Exception {
     File targetFile = createTestFile(myTempDir, "target.txt");
     File linkFile = createSymLink(targetFile.getPath(), myTempDir + "/link");

@@ -45,6 +45,7 @@ import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
+import git4idea.config.UpdateMethod;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
@@ -82,12 +83,6 @@ public class GitUpdateProcess {
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
   private GitUpdateResult myResult;
   private final Collection<VirtualFile> myRootsToSave;
-
-  public enum UpdateMethod {
-    MERGE,
-    REBASE,
-    READ_FROM_SETTINGS
-  }
 
   public GitUpdateProcess(@NotNull Project project,
                           @NotNull GitPlatformFacade platformFacade,
@@ -298,15 +293,8 @@ public class GitUpdateProcess {
     LOG.info("updateImpl: defining updaters...");
     for (GitRepository repository : myRepositories) {
       VirtualFile root = repository.getRoot();
-      final GitUpdater updater;
-      if (updateMethod == UpdateMethod.MERGE) {
-        updater = new GitMergeUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
-      } else if (updateMethod == UpdateMethod.REBASE) {
-        updater = new GitRebaseUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
-      } else {
-        updater = GitUpdater.getUpdater(myProject, myGit, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles);
-      }
-
+      GitUpdater updater = GitUpdater.getUpdater(myProject, myGit, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles,
+                                                 updateMethod);
       if (updater.isUpdateNeeded()) {
         updaters.put(root, updater);
       }

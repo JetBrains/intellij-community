@@ -44,6 +44,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -55,6 +57,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -119,9 +122,9 @@ public class FindDialog extends DialogWrapper {
   protected JLabel myReplacePrompt;
   private HideableTitledPanel myScopePanel;
   private static boolean myPreviousResultsExpandedState;
-  private static boolean myPreviousPreviewResultsState = true;
-  private HideableTitledPanel myResultsPreviewPanel;
+
   private JBTable myResultsPreviewTable;
+  private JBPopup myResultsPopup;
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
   public FindDialog(@NotNull Project project, @NotNull FindModel model, @NotNull Consumer<FindModel> myOkHandler){
@@ -137,7 +140,7 @@ public class FindDialog extends DialogWrapper {
     initByModel();
     updateReplaceVisibility();
 
-    if (myResultsPreviewTable != null) {
+    if (haveResultsPreview()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -169,13 +172,12 @@ public class FindDialog extends DialogWrapper {
 
   @Override
   protected void dispose() {
-    if (myResultsPreviewSearchProgress != null) myResultsPreviewSearchProgress.cancel();
+    finishPreviousPreviewSearch();
     for(Map.Entry<EditorTextField, DocumentAdapter> e: myComboBoxListeners.entrySet()) {
       e.getKey().removeDocumentListener(e.getValue());
     }
     myComboBoxListeners.clear();
     if (myScopePanel != null) myPreviousResultsExpandedState = myScopePanel.isExpanded();
-    if (myResultsPreviewTable != null) myPreviousPreviewResultsState = myResultsPreviewPanel.isExpanded();
     super.dispose();
   }
 
@@ -312,18 +314,19 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void findSettingsChanged() {
-    if (myModel.isMultipleFiles() && myResultsPreviewTable != null) {
+    if (haveResultsPreview()) {
       final ModalityState state = ModalityState.current();
       if (state == ModalityState.NON_MODAL) return; // skip initial changes
 
-      if (myResultsPreviewSearchProgress != null && !myResultsPreviewSearchProgress.isCanceled()) {
-        myResultsPreviewSearchProgress.cancel();
-      }
-      final DefaultTableModel model = new DefaultTableModel();
-      model.addColumn("Usages");
+      finishPreviousPreviewSearch();
+      final DefaultTableModel model = new DefaultTableModel() {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+          return false;
+        }
+      };
 
-      myResultsPreviewTable.setModel(model);
-      myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new MyTableCellRenderer());
+      model.addColumn("Usages");
 
       final FindModel modelClone = myModel.clone();
       applyTo(modelClone, false);
@@ -335,8 +338,16 @@ public class FindDialog extends DialogWrapper {
 
       final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase();
       myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
+
+      myResultsPreviewTable.setModel(model);
+      myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new UsageTableCellRenderer());
+      myResultsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(new JBScrollPane(myResultsPreviewTable),
+                                                                                myResultsPreviewTable)
+        .setRequestFocus(false).createPopup();
+
       myResultsPreviewTable.getEmptyText().setText("Searching...");
 
+      myResultsPopup.show(new RelativePoint(myInputComboBox, new Point(0, myInputComboBox.getHeight())));
       final AtomicInteger resultsCount = new AtomicInteger();
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
@@ -383,7 +394,13 @@ public class FindDialog extends DialogWrapper {
         }
       });
     }
+  }
 
+  private void finishPreviousPreviewSearch() {
+    if (myResultsPreviewSearchProgress != null && !myResultsPreviewSearchProgress.isCanceled()) {
+      myResultsPreviewSearchProgress.cancel();
+      if (myResultsPopup != null) myResultsPopup.cancel();
+    }
   }
 
   @NotNull
@@ -468,30 +485,16 @@ public class FindDialog extends DialogWrapper {
 
       myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
 
-      if (ApplicationManager.getApplication().isInternal() && myModel.isMultipleFiles()) {
-        gbConstraints.weightx = 1;
-        gbConstraints.weighty = 2;
-        gbConstraints.fill = GridBagConstraints.BOTH;
-        JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable = new JBTable(), JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                             JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        optionsPanel.add(
-          myResultsPreviewPanel = new HideableTitledPanel("Results preview", scrollPane, myPreviousPreviewResultsState),
-          gbConstraints
-        );
-        myResultsPreviewTable.setShowColumns(false);
-        new DoubleClickListener() {
-
+      if (haveResultsPreview()) {
+        final JBTable table = new JBTable() {
           @Override
-          protected boolean onDoubleClick(MouseEvent event) {
-            int row = myResultsPreviewTable.getSelectedRow();
-            Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
-            if (valueAt instanceof Usage) {
-              doCancelAction();
-              ((Usage)valueAt).navigate(true);
-            }
-            return true;
+          public Dimension getPreferredSize() {
+            return new Dimension(myInputComboBox.getWidth(), super.getPreferredSize().height);
           }
-        }.installOn(myResultsPreviewTable);
+        };
+        table.setShowColumns(false);
+        new NavigateToSourceListener().installOn(table);
+        myResultsPreviewTable = table;
       }
     }
     else {
@@ -515,6 +518,10 @@ public class FindDialog extends DialogWrapper {
     }
 
     return optionsPanel;
+  }
+
+  private boolean haveResultsPreview() {
+    return ApplicationManager.getApplication().isInternal() && myModel.isMultipleFiles();
   }
 
   private JPanel createResultsOptionPanel(JPanel optionsPanel, GridBagConstraints gbConstraints) {
@@ -1375,23 +1382,53 @@ public class FindDialog extends DialogWrapper {
     updateControls();
   }
 
-  private static class MyTableCellRenderer extends SimpleColoredComponent implements TableCellRenderer {
+  private static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
+    private SimpleColoredComponent myUsageRenderer = new SimpleColoredComponent();
+    private SimpleColoredComponent myFileAndLineNumber = new SimpleColoredComponent();
+
+    UsageTableCellRenderer() {
+      setLayout(new BorderLayout());
+      add(myUsageRenderer, BorderLayout.WEST);
+      add(myFileAndLineNumber, BorderLayout.EAST);
+    }
+
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      clear();
+      myUsageRenderer.clear();
+      myFileAndLineNumber.clear();
 
       if (value instanceof UsageInfo2UsageAdapter) {
         UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
         UsagePresentation presentation = usageAdapter.getPresentation();
         TextChunk[] text = presentation.getText();
-        append(usageAdapter.getFile().getName() + " ", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
 
-        for (TextChunk textChunk : text) {
+        // put line number / file info at the right
+        for (int i = 1; i < text.length; ++i) {
+          TextChunk textChunk = text[i];
           SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
-          append(textChunk.getText(), simples);
+          myUsageRenderer.append(textChunk.getText(), simples);
         }
+
+        myFileAndLineNumber.append(usageAdapter.getFile().getName() + " " + text[0].getText(),
+                                    SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
       }
       return this;
+    }
+  }
+
+  private class NavigateToSourceListener extends DoubleClickListener {
+
+    @Override
+    protected boolean onDoubleClick(MouseEvent event) {
+      Object source = event.getSource();
+      if (!(source instanceof JBTable)) return false;
+      int row = ((JBTable)source).getSelectedRow();
+      Object valueAt = ((JBTable)source).getModel().getValueAt(row, 0);
+      if (valueAt instanceof Usage) {
+        doCancelAction(); //?
+        ((Usage)valueAt).navigate(true);
+      }
+      return true;
     }
   }
 }

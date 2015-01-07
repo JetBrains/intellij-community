@@ -90,7 +90,7 @@ class ContractInferenceInterpreter {
         if (notNull && contract.returnValue == NOT_NULL_VALUE) {
           return false;
         }
-        return ContractInspection.isReturnTypeCompatible(returnType, contract.returnValue);
+        return InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue);
       }
     });
   }
