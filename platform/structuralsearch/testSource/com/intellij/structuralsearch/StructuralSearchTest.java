@@ -2445,12 +2445,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}\n";
     assertEquals("Find all annotations", 4, findMatchesCount(source2, "@'_Annotation"));
 
-    String source3 = "class A {\n" +
+    String source3 = "class A<@HH T> extends @HH Object {\n" +
                      "  @HH final String s = (@HH String) new @HH Object();\n" +
                      "  final String t = (String) new Object();\n" +
+                     "  Map<@HH String, @HH List<@HH String>> map;\n" +
                      "}\n";
     assertEquals("Find annotated casts", 1, findMatchesCount(source3, "(@'_A 'Cast) '_Expression"));
     assertEquals("Find annotated new expressions", 1, findMatchesCount(source3, "new @'_A 'Type()"));
+    assertEquals("Find all annotations 2", 8, findMatchesCount(source3, "@'_Annotation"));
 
     // package-info.java
     final String source4 = "/**\n" +
