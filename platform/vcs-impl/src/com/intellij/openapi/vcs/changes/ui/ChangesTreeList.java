@@ -363,15 +363,15 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         if (myProject.isDisposed()) return;
         TreeUtil.expandAll(myTree);
 
-        int listSelection = 0;
-        int scrollRow = -1;
+        int selectedListRow = 0;
+        int selectedTreeRow = -1;
 
         if (myShowCheckboxes) {
           if (myIncludedChanges.size() > 0) {
             for (int i = 0; i < sortedChanges.size(); i++) {
               T t = sortedChanges.get(i);
               if (myIncludedChanges.contains(t)) {
-                listSelection = i;
+                selectedListRow = i;
                 break;
               }
             }
@@ -394,7 +394,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
               @SuppressWarnings("unchecked")
               final CheckboxTree.NodeState state = getNodeStatus(node);
               if (state == CheckboxTree.NodeState.FULL && node.isLeaf()) {
-                scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
+                selectedTreeRow = myTree.getRowForPath(new TreePath(node.getPath()));
                 break;
               }
             }
@@ -403,19 +403,19 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
           if (toSelect != null) {
             int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
             if (rowInTree > -1) {
-              scrollRow = rowInTree;
+              selectedTreeRow = rowInTree;
             }
           }
         }
         
         if (changes.size() > 0) {
-          myList.setSelectedIndex(listSelection);
-          myList.ensureIndexIsVisible(listSelection);
+          myList.setSelectedIndex(selectedListRow);
+          myList.ensureIndexIsVisible(selectedListRow);
 
-          if (scrollRow >= 0) {
-            myTree.setSelectionRow(scrollRow);
+          if (selectedTreeRow >= 0) {
+            myTree.setSelectionRow(selectedTreeRow);
           }
-          TreeUtil.showRowCentered(myTree, scrollRow, false);
+          TreeUtil.showRowCentered(myTree, selectedTreeRow, false);
         }
       }
     };
