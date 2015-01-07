@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.openapi.util.Computable;
+import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.plugin2.message.JavaScriptEvalMessage;
 
 import java.util.List;
 
@@ -71,41 +69,6 @@ public class LambdaHighlightingUtil {
             return lambdaParameter;
           }
         }
-      }
-    }
-    return null;
-  }
-
-  public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
-    if (functionalInterfaceReturnType == PsiType.VOID) {
-      final PsiElement body = lambdaExpression.getBody();
-      if (body instanceof PsiCodeBlock) {
-        if (!LambdaUtil.getReturnExpressions(lambdaExpression).isEmpty()) return "Unexpected return value";
-      } else if (body instanceof PsiExpression) {
-        final PsiType type = ((PsiExpression)body).getType();
-        try {
-          if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
-            return "Bad return type in lambda expression: " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " cannot be converted to void";
-          }
-        }
-        catch (IncorrectOperationException ignore) {
-        }
-      }
-    } else if (functionalInterfaceReturnType != null) {
-      final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
-      for (final PsiExpression expression : returnExpressions) {
-        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
-          @Override
-          public PsiType compute() {
-            return expression.getType();
-          }
-        });
-        if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
-          return "Bad return type in lambda expression: " + expressionType.getPresentableText() + " cannot be converted to " + functionalInterfaceReturnType.getPresentableText();
-        }
-      }
-      if (LambdaUtil.getReturnStatements(lambdaExpression).length > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
-        return "Missing return value";
       }
     }
     return null;

@@ -319,7 +319,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               myHolder.add(result); //todo[ann] append not inferred type params info
             }
             else {
-              final String incompatibleReturnTypesMessage = LambdaHighlightingUtil
+              final String incompatibleReturnTypesMessage = LambdaUtil
                 .checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
               if (incompatibleReturnTypesMessage != null) {
                 final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(expression);
