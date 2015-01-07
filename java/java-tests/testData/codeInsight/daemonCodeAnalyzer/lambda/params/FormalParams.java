@@ -32,6 +32,6 @@ class ReturnTypeCompatibility {
     call((String i)->{ return i;});
     call(i->{ return i;});
     call(i->"");
-    call(<error descr="Incompatible return type int in lambda expression">(int i)->{ return i;}</error>);
+    call((int i)->{ return <error descr="Bad return type in lambda expression: int cannot be converted to P">i</error>;});
   }
 }

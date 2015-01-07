@@ -322,7 +322,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               final String incompatibleReturnTypesMessage = LambdaHighlightingUtil
                 .checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
               if (incompatibleReturnTypesMessage != null) {
-                HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(expression);
+                final PsiElement returnStatementToHighlight = returnExpressions.size() == 1 ? returnExpressions.get(0) : expression.getBody();
+                HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(returnStatementToHighlight != null ? returnStatementToHighlight : expression)
                   .descriptionAndTooltip(incompatibleReturnTypesMessage).create();
                 myHolder.add(result);
               }

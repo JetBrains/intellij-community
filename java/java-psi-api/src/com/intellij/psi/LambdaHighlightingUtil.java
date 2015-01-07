@@ -23,6 +23,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.plugin2.message.JavaScriptEvalMessage;
 
 import java.util.List;
 
@@ -84,7 +85,7 @@ public class LambdaHighlightingUtil {
         final PsiType type = ((PsiExpression)body).getType();
         try {
           if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
-            return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " in lambda expression";
+            return "Bad return type in lambda expression: " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " cannot be converted to void";
           }
         }
         catch (IncorrectOperationException ignore) {
@@ -100,7 +101,7 @@ public class LambdaHighlightingUtil {
           }
         });
         if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
-          return "Incompatible return type " + expressionType.getPresentableText() + " in lambda expression";
+          return "Bad return type in lambda expression: " + expressionType.getPresentableText() + " cannot be converted to " + functionalInterfaceReturnType.getPresentableText();
         }
       }
       if (LambdaUtil.getReturnStatements(lambdaExpression).length > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
