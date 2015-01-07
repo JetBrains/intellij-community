@@ -133,4 +133,19 @@ public class TaskManagerTest extends TaskManagerTestCase {
     assertEquals(historyLength, myTaskManager.getLocalTasks().size());
     assertEquals(Integer.toString(historyLength + 100 - 1), myTaskManager.getLocalTasks().get(historyLength - 1).getId());
   }
+
+  public void testBranchNameSuggestion() throws Exception {
+    TaskTestUtil.TaskBuilder task = new TaskTestUtil.TaskBuilder("IDEA-666", "Bad news", null);
+    assertEquals("IDEA-666", myTaskManager.suggestBranchName(task));
+    String format = myTaskManager.getState().branchNameFormat;
+    try {
+      myTaskManager.getState().branchNameFormat = "feature/{id}";
+      assertEquals("feature/IDEA-666", myTaskManager.suggestBranchName(task));
+      myTaskManager.getState().branchNameFormat = "{id}_{summary}";
+      assertEquals("IDEA-666_Bad-news", myTaskManager.suggestBranchName(task));
+    }
+    finally {
+      myTaskManager.getState().branchNameFormat = format;
+    }
+  }
 }

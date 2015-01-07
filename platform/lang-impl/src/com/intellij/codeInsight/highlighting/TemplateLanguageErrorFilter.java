@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     return true;
   }
 
-  private boolean shouldIgnoreErrorAt(@NotNull FileViewProvider viewProvider, int offset) {
+  protected boolean shouldIgnoreErrorAt(@NotNull FileViewProvider viewProvider, int offset) {
     PsiElement element = viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
     if (element instanceof PsiWhiteSpace) element = element.getNextSibling();
     if (element != null && myTemplateExpressionStartTokens.contains(element.getNode().getElementType())) {

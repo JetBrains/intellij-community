@@ -27,6 +27,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
@@ -93,7 +94,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       myRendererColors.put(severity.getName(), renderColor);
     }
     myOrderMap = null;
-    HighlightDisplayLevel.registerSeverity(severity, renderColor);
+    HighlightDisplayLevel.registerSeverity(severity, getHighlightInfoTypeBySeverity(severity).getAttributesKey());
     severitiesChanged();
   }
 

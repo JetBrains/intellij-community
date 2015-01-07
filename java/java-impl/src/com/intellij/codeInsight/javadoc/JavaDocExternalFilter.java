@@ -102,7 +102,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   }
 
   @Override
-  protected RefConvertor[] getRefConvertors() {
+  protected RefConvertor[] getRefConverters() {
     return myReferenceConvertors;
   }
 

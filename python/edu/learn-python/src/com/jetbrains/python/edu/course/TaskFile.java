@@ -97,6 +97,7 @@ public class TaskFile implements Stateful {
   }
 
   public void drawAllWindows(Editor editor) {
+    editor.getMarkupModel().removeAllHighlighters();
     for (TaskWindow taskWindow : taskWindows) {
       taskWindow.draw(editor, false, false);
     }
@@ -192,16 +193,13 @@ public class TaskFile implements Stateful {
     }
   }
 
-  private void navigateToTaskWindow(@NotNull final Editor editor, @NotNull final TaskWindow firstTaskWindow) {
-    if (!firstTaskWindow.isValid(editor.getDocument())) {
+  public void navigateToTaskWindow(@NotNull final Editor editor, @NotNull final TaskWindow taskWindow) {
+    if (!taskWindow.isValid(editor.getDocument())) {
       return;
     }
-    mySelectedTaskWindow = firstTaskWindow;
-    LogicalPosition taskWindowStart = new LogicalPosition(firstTaskWindow.getLine(), firstTaskWindow.getStart());
+    mySelectedTaskWindow = taskWindow;
+    LogicalPosition taskWindowStart = new LogicalPosition(taskWindow.getLine(), taskWindow.getStart());
     editor.getCaretModel().moveToLogicalPosition(taskWindowStart);
-    int startOffset = firstTaskWindow.getRealStartOffset(editor.getDocument());
-    int endOffset = startOffset + firstTaskWindow.getLength();
-    editor.getSelectionModel().setSelection(startOffset, endOffset);
   }
 
   public void navigateToFirstFailedTaskWindow(@NotNull final Editor editor) {

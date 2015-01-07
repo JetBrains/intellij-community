@@ -433,4 +433,29 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testBlankLinesAroundInitializer() {
+    getJavaSettings().BLANK_LINES_AROUND_INITIALIZER = 3;
+    doTextTest(
+      "public class JavaClass {\n" +
+      "    int a = 3;\n" +
+      "    {\n" +
+      "        System.out.println(\"Hello\");\n" +
+      "    }\n" +
+      "\n" +
+      "    public void test() {\n" +
+      "    }\n" +
+      "}",
+      "public class JavaClass {\n" +
+      "    int a = 3;\n" +
+      "\n\n\n" +
+      "    {\n" +
+      "        System.out.println(\"Hello\");\n" +
+      "    }\n" +
+      "\n\n\n" +
+      "    public void test() {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

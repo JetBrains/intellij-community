@@ -514,7 +514,8 @@ public final class PsiUtil extends PsiUtilCore {
       PsiType lastParmType = getParameterType(lastParameter, languageLevel, substitutorForMethod);
       if (!(lastParmType instanceof PsiArrayType)) return ApplicabilityLevel.NOT_APPLICABLE;
       lastParmType = ((PsiArrayType)lastParmType).getComponentType();
-      if (lastParmType instanceof PsiCapturedWildcardType && !JavaVersionService.getInstance().isAtLeast(lastParameter, JavaSdkVersion.JDK_1_8)) {
+      if (lastParmType instanceof PsiCapturedWildcardType && 
+          !JavaVersionService.getInstance().isAtLeast(((PsiCapturedWildcardType)lastParmType).getContext(), JavaSdkVersion.JDK_1_8)) {
         lastParmType = ((PsiCapturedWildcardType)lastParmType).getWildcard();
       }
       for (int i = parms.length - 1; i < args.length; i++) {

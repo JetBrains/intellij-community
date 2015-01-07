@@ -49,7 +49,6 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   private boolean myUseSafeWrite = true;
   private final PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
-  private boolean myConfirmExtractFiles = true;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
@@ -96,6 +95,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myBrowserPath = browserPath;
   }
 
+  @SuppressWarnings("unused")
   @Deprecated
   public boolean showTipsOnStartup() {
     return isShowTipsOnStartup();
@@ -199,12 +199,16 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myUseDefaultBrowser = value;
   }
 
+  @SuppressWarnings("unused")
+  @Transient
+  @Deprecated
   public boolean isConfirmExtractFiles() {
-    return myConfirmExtractFiles;
+    return true;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public void setConfirmExtractFiles(boolean value) {
-    myConfirmExtractFiles = value;
   }
 
   public boolean isConfirmExit() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.execution.configurations;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.EnvironmentUtil;
@@ -138,15 +137,12 @@ public class EncodingEnvironmentUtil {
 
   @NotNull
   private static Charset getCharset(@Nullable Project project) {
-    Charset charset = null;
-    if (project != null) {
-      charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-    }
-    if (charset == null) {
+    Charset charset;
+    if (project == null) {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
-    if (charset == null) {
-      charset = CharsetToolkit.UTF8_CHARSET;
+    else {
+      charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
     }
     return charset;
   }

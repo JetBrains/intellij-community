@@ -49,4 +49,21 @@ public class VagrantBasedCredentialsHolder {
   public void save(Element element) {
     element.setAttribute(VAGRANT_FOLDER, getVagrantFolder());
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    VagrantBasedCredentialsHolder holder = (VagrantBasedCredentialsHolder)o;
+
+    if (!myVagrantFolder.equals(holder.myVagrantFolder)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myVagrantFolder.hashCode();
+  }
 }

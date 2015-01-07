@@ -72,10 +72,10 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
     PsiClassType exception = getRuntimeExceptionAtCaret(editor, file);
     if (exception == null) return false;
 
-    PsiElement element = PsiTreeUtil.getParentOfType(elementAtCaret(editor, file), PsiMethod.class, PsiLambdaExpression.class);
-    if (element == null || element instanceof PsiLambdaExpression || !((PsiMethod)element).getThrowsList().isPhysical()) return false;
+    PsiMethod method = PsiTreeUtil.getParentOfType(elementAtCaret(editor, file), PsiMethod.class, true, PsiLambdaExpression.class);
+    if (method == null || !method.getThrowsList().isPhysical()) return false;
 
-    return !isMethodThrows((PsiMethod)element, exception);
+    return !isMethodThrows(method, exception);
   }
 
   private static PsiClassType getRuntimeExceptionAtCaret(Editor editor, PsiFile file) {

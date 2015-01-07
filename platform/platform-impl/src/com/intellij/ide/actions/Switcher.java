@@ -138,6 +138,11 @@ public class Switcher extends AnAction implements DumbAware {
   @NonNls private static final String SWITCHER_TITLE = "Switcher";
   @NonNls private static InputEvent INIT_EVENT;
 
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getProject() != null);
+  }
+
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;

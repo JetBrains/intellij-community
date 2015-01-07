@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 public class Foo {
     static Foo
             f1 = new Foo(){
@@ -6,6 +8,7 @@ public class Foo {
                 }
             };
 
+    @NotNull
     private static String newMethod() {
         return "a" + "b";
     }

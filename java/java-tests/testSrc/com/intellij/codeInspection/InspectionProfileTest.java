@@ -25,7 +25,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.LightIdeaTestCase;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -77,96 +76,88 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testConvertOldProfile() throws Exception {
-    final Element element = loadOldStyleProfile();
-    final InspectionProfileImpl profile = createProfile();
+    Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
+                                            "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                                            "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                            "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
+                                            "      <value>\n" +
+                                            "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                            "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                            "      </value>\n" +
+                                            "    </option>\n" +
+                                            "    <option name=\"INNER_CLASS_OPTIONS\">\n" +
+                                            "      <value>\n" +
+                                            "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                            "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                            "      </value>\n" +
+                                            "    </option>\n" +
+                                            "    <option name=\"METHOD_OPTIONS\">\n" +
+                                            "      <value>\n" +
+                                            "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                            "        <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
+                                            "      </value>\n" + "    </option>\n" +
+                                            "    <option name=\"FIELD_OPTIONS\">\n" +
+                                            "      <value>\n" +
+                                            "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                            "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                            "      </value>\n" +
+                                            "    </option>\n" +
+                                            "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
+                                            "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
+                                            "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
+                                            "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
+                                            "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
+                                            "  </inspection_tool>\n" +
+                                            "</inspections>").getRootElement();
+    InspectionProfileImpl profile = createProfile();
     profile.readExternal(element);
-    final ModifiableModel model = profile.getModifiableModel();
+    ModifiableModel model = profile.getModifiableModel();
     model.commit();
-    final Element copy = new Element("inspections");
+
+    Element copy = new Element("inspections");
     profile.writeExternal(copy);
     assertElementsEqual(loadProfile(), copy);
   }
 
-  private static Element loadOldStyleProfile() throws IOException, JDOMException {
-    final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
-                                                    "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                                                    "  <option name=\"myLocal\" value=\"true\" />\n" +
-                                                    "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
-                                                    "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"INNER_CLASS_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"METHOD_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
-                                                    "      </value>\n" + "    </option>\n" +
-                                                    "    <option name=\"FIELD_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
-                                                    "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
-                                                    "  </inspection_tool>\n" +
-                                                    "</inspections>");
-    return document.getRootElement();
-  }
-
   private static Element loadProfile() throws IOException, JDOMException {
-    final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
-                                                    "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                                                    "  <option name=\"myLocal\" value=\"true\" />\n" +
-                                                    "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
-                                                    "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"INNER_CLASS_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"METHOD_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
-                                                    "      </value>\n" + "    </option>\n" +
-                                                    "    <option name=\"FIELD_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
-                                                    "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
-                                                    "  </inspection_tool>\n" +
-                                                    "</inspections>");
-    return document.getRootElement();
+    return JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
+                                 "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                                 "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                 "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
+                                 "      <value>\n" +
+                                 "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                 "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                 "      </value>\n" +
+                                 "    </option>\n" +
+                                 "    <option name=\"INNER_CLASS_OPTIONS\">\n" +
+                                 "      <value>\n" +
+                                 "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                 "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                 "      </value>\n" +
+                                 "    </option>\n" +
+                                 "    <option name=\"METHOD_OPTIONS\">\n" +
+                                 "      <value>\n" +
+                                 "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                 "        <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
+                                 "      </value>\n" + "    </option>\n" +
+                                 "    <option name=\"FIELD_OPTIONS\">\n" +
+                                 "      <value>\n" +
+                                 "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                 "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                 "      </value>\n" +
+                                 "    </option>\n" +
+                                 "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
+                                 "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
+                                 "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
+                                 "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
+                                 "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
+                                 "  </inspection_tool>\n" +
+                                 "</inspections>").getRootElement();
   }
 
   public void testReloadProfileWithUnknownScopes() throws Exception {
-    final Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
+    final Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
                                                   "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                                                  "  <option name=\"myLocal\" value=\"true\" />\n" +
                                                   "  <inspection_tool class=\"ArgNamesErrorsInspection\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
                                                   "  <inspection_tool class=\"ArgNamesWarningsInspection\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
                                                   "  <inspection_tool class=\"AroundAdviceStyleInspection\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
@@ -188,9 +179,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   public void testMergeUnusedDeclarationAndUnusedSymbol() throws Exception {
     //no specific settings
-    final Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
+    final Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
                                                   "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                                                  "  <option name=\"myLocal\" value=\"true\" />\n" +
                                                   "</inspections>").getRootElement();
     InspectionProfileImpl profile = createProfile();
     profile.setBaseProfile(new InspectionProfileImpl("foo"));
@@ -203,9 +193,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
 
     //settings to merge
-    final Element unusedProfile = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
+    final Element unusedProfile = JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
                                                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                                                        "  <option name=\"myLocal\" value=\"true\" />\n" +
                                                         "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                                                         "      <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                                                         "      <option name=\"FIELD\" value=\"true\" />\n" +
@@ -224,9 +213,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.readExternal(unusedProfile);
     model = profile.getModifiableModel();
     model.commit();
-    assertEquals("<profile version=\"1.0\" is_locked=\"false\">\n" +
+    assertEquals("<profile version=\"1.0\">\n" +
                  "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                 "  <option name=\"myLocal\" value=\"true\" />\n" +
                  "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                  "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                  "    <option name=\"FIELD\" value=\"true\" />\n" +
@@ -254,9 +242,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
     inspectionTool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
     model.commit();
-    String mergedText = "<profile version=\"1.0\" is_locked=\"false\">\n" +
+    String mergedText = "<profile version=\"1.0\">\n" +
                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                        "  <option name=\"myLocal\" value=\"true\" />\n" +
                         "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                         "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                         "    <option name=\"FIELD\" value=\"true\" />\n" +
@@ -288,9 +275,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testDisabledUnusedDeclarationWithoutChanges() throws Exception {
-    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                         "  <option name=\"myLocal\" value=\"true\" />\n" +
                          "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                          "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
                          "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
@@ -301,9 +287,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testDisabledUnusedDeclarationWithChanges() throws Exception {
-    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                         "  <option name=\"myLocal\" value=\"true\" />\n" +
                          "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                          "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
                          "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
@@ -314,9 +299,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testEnabledUnusedDeclarationWithChanges() throws Exception {
-    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                         "  <option name=\"myLocal\" value=\"true\" />\n" +
                          "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                          "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
                          "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
@@ -327,11 +311,10 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testDisabledUnusedSymbolWithoutChanges() throws Exception {
-    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" +
                          PROFILE +
                          "\" />\n" +
-                         "  <option name=\"myLocal\" value=\"true\" />\n" +
                          "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                          "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                          "    <option name=\"FIELD\" value=\"true\" />\n" +
@@ -344,11 +327,10 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testEnabledUnusedSymbolWithChanges() throws Exception {
-    checkMergedNoChanges("<profile version=\"1.0\" is_locked=\"false\">\n" +
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" +
                          PROFILE +
                          "\" />\n" +
-                         "  <option name=\"myLocal\" value=\"true\" />\n" +
                          "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                          "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                          "    <option name=\"FIELD\" value=\"true\" />\n" +
@@ -396,7 +378,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     assertEquals("<profile version=\"1.0\" is_locked=\"true\">\n" +
                  "  <option name=\"myName\" value=\"Foo\" />\n" +
-                 "  <option name=\"myLocal\" value=\"true\" />\n" +
                  "  <inspection_tool class=\"foo\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
                  "</profile>",
                  serialize(profile));
@@ -422,7 +403,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     assertEquals("<profile version=\"1.0\" is_locked=\"true\">\n" +
                  "  <option name=\"myName\" value=\"Foo\" />\n" +
-                 "  <option name=\"myLocal\" value=\"true\" />\n" +
                  "  <inspection_tool class=\"bar\" enabled=\"false\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
                  "  <inspection_tool class=\"disabled\" enabled=\"false\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
                  "  <inspection_tool class=\"foo\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
@@ -507,9 +487,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   public void testInspectionInitializationForSerialization() throws Exception {
     InspectionProfileImpl foo = new InspectionProfileImpl("foo");
-    foo.readExternal(JDOMUtil.loadDocument("<profile version=\"1.0\" is_locked=\"false\">\n" +
+    foo.readExternal(JDOMUtil.loadDocument("<profile version=\"1.0\">\n" +
                                            "    <option name=\"myName\" value=\"idea.default\" />\n" +
-                                           "    <option name=\"myLocal\" value=\"false\" />\n" +
                                            "    <inspection_tool class=\"AbstractMethodCallInConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
                                            "    <inspection_tool class=\"AssignmentToForLoopParameter\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                                            "      <option name=\"m_checkForeachParameters\" value=\"false\" />\n" +
@@ -517,6 +496,23 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                            "</profile>").getRootElement());
     foo.initInspectionTools(getProject());
     assertEquals(1, countInitializedTools(foo));
+  }
+
+  public void testPreserveCompatibility() throws Exception {
+    InspectionProfileImpl foo = new InspectionProfileImpl("foo");
+    String test = "<profile version=\"1.0\" is_locked=\"false\">\n" +
+                 "  <option name=\"myName\" value=\"idea.default\" />\n" +
+                 "  <option name=\"myLocal\" value=\"false\" />\n" +
+                 "  <inspection_tool class=\"AbstractMethodCallInConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                 "  <inspection_tool class=\"AssignmentToForLoopParameter\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                 "    <option name=\"m_checkForeachParameters\" value=\"false\" />\n" +
+                 "  </inspection_tool>\n" +
+                 "</profile>";
+    foo.readExternal(JDOMUtil.loadDocument(test).getRootElement());
+    foo.initInspectionTools(getProject());
+    Element serialized = new Element("profile");
+    foo.writeExternal(serialized);
+    assertEquals(test, JDOMUtil.writeElement(serialized));
   }
 
   public static int countInitializedTools(Profile foo) {

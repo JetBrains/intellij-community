@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
@@ -58,12 +57,6 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
                                         @Override
                                         public FileTypeRegistry get() {
                                           return FileTypeManager.getInstance();
-                                        }
-                                      },
-                                      new Getter<EncodingRegistry>() {
-                                        @Override
-                                        public EncodingRegistry get() {
-                                          return EncodingManager.getInstance();
                                         }
                                       },
                                       getTestRootDisposable());

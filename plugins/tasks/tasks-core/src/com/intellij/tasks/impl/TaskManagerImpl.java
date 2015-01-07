@@ -816,7 +816,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         long start = System.currentTimeMillis();
         Task[] tasks = repository.getIssues(request, offset, limit, withClosed, cancelled);
         long timeSpent = System.currentTimeMillis() - start;
-        LOG.debug(String.format("Total %s ms to download %d issues from '%s'", timeSpent, tasks.length, repository.getUrl()));
+        LOG.debug(String.format("Total %s ms to download %d issues from '%s' (pattern '%s')",
+                                timeSpent, tasks.length, repository.getUrl(), request));
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
@@ -981,8 +982,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public String suggestBranchName(Task task) {
-    if (task.isIssue() && StringUtil.isNotEmpty(task.getNumber())) {
-      return task.getId().replace(' ', '-');
+    if (task.isIssue()) {
+      return TaskUtil.formatTask(task, myConfig.branchNameFormat).replace(' ', '-');
     }
     else {
       String summary = task.getSummary();
@@ -1038,6 +1039,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean markAsInProgress = false;
 
     public String changelistNameFormat = "{id} {summary}";
+    public String branchNameFormat = "{id}";
 
     public boolean searchClosedTasks = false;
     @Tag("servers")

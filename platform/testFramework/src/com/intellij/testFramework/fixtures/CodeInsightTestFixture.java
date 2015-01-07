@@ -120,7 +120,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return the VirtualFile for the copied directory in the test project directory.
    */
   @NotNull
-  VirtualFile copyDirectoryToProject(@NonNls @NotNull String sourceFilePath, @NonNls @NotNull String targetPath);
+  VirtualFile copyDirectoryToProject(@TestDataFile @NonNls @NotNull String sourceFilePath, @NonNls @NotNull String targetPath);
 
   /**
    * Copies a file from the testdata directory to the same relative path in the test project directory.
@@ -281,7 +281,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Runs highlighting test for the given files.
-   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set.
+   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with {@code checkInfos=false}.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
    * @return highlighting duration in milliseconds
@@ -564,4 +564,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #completeBasic()
    */
   void completeBasicAllCarets();
+
+  void saveText(VirtualFile file, String text);
 }

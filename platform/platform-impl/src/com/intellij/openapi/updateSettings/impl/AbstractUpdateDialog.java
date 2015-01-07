@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,20 +38,21 @@ import java.awt.*;
  */
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
+
   protected String myLicenseInfo = null;
   protected boolean myPaidUpgrade;
-  protected boolean mySubscribtionLicense = false;
+  protected boolean mySubscriptionLicense = false;
 
-  public AbstractUpdateDialog(boolean enableLink) {
+  protected AbstractUpdateDialog(boolean enableLink) {
     super(true);
     myEnableLink = enableLink;
-    setTitle(IdeBundle.message("updates.info.dialog.title"));
+    setTitle(IdeBundle.message("update.notifications.title"));
   }
 
   protected AbstractUpdateDialog(Component parent, boolean enableLink) {
     super(parent, true);
     myEnableLink = enableLink;
-    setTitle(IdeBundle.message("updates.info.dialog.title"));
+    setTitle(IdeBundle.message("update.notifications.title"));
   }
 
   @Override
@@ -83,9 +84,13 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   protected void initLicensingInfo(@NotNull UpdateChannel channel, @NotNull BuildInfo build) {
     LicensingFacade facade = LicensingFacade.getInstance();
     if (facade != null) {
-      mySubscribtionLicense = facade.isSubscriptionLicense();
+      mySubscriptionLicense = facade.isSubscriptionLicense();
       if (!channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        Boolean paidUpgrade = facade.isPaidUpgrade(channel.getMajorVersion(), build.getReleaseDate());
+        int majorVersion = build.getMajorVersion();
+        if (majorVersion < 0) {
+          majorVersion = channel.getMajorVersion(); // fallback
+        }
+        final Boolean paidUpgrade = facade.isPaidUpgrade(majorVersion, build.getReleaseDate());
         if (paidUpgrade == Boolean.TRUE) {
           myPaidUpgrade = true;
           myLicenseInfo = IdeBundle.message("updates.channel.key.needed", channel.getEvalDays());
@@ -102,7 +107,8 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
 
 
   protected void configureMessageArea(@NotNull JEditorPane area) {
-    configureMessageArea(area, myEnableLink ? IdeBundle.message("updates.configure.label", ShowSettingsUtil.getSettingsMenuName()) : "", null, null);
+    String messageBody = myEnableLink ? IdeBundle.message("updates.configure.label", ShowSettingsUtil.getSettingsMenuName()) : "";
+    configureMessageArea(area, messageBody, null, null);
   }
 
   protected void configureMessageArea(final @NotNull JEditorPane area,

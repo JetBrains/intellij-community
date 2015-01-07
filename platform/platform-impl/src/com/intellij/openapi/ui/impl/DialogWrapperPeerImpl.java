@@ -170,7 +170,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     myWrapper = wrapper;
-    if (!parent.isShowing() && parent != JOptionPane.getRootFrame()) {
+    if (!parent.isShowing()) {
       throw new IllegalArgumentException("parent must be showing: " + parent);
     }
     myWindowManager = null;
@@ -244,6 +244,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
     myDialog = new MyDialog(owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
+
+    UIUtil.suppressFocusStealing(getWindow());
+
     myDialog.setModalityType(ideModalityType.toAwtModality());
 
     myCanBeParent = canBeParent;
@@ -433,7 +436,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
-    anCancelAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), rootPane);
+    anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(new Runnable() {
       @Override
       public void run() {

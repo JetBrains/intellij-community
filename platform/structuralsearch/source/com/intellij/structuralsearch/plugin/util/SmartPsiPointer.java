@@ -41,13 +41,11 @@ public class SmartPsiPointer {
   }
 
   public boolean equals(Object o) {
-    if (o instanceof SmartPsiPointer) {
-      final SmartPsiPointer ref = ((SmartPsiPointer)o);
-      return ref.getFile().equals(getFile()) &&
-        ref.getOffset() == getOffset() &&
-        ref.getLength() == getLength();
+    if (!(o instanceof SmartPsiPointer)) {
+      return false;
     }
-    return false;
+    final SmartPsiPointer ref = (SmartPsiPointer)o;
+    return ref.pointer.equals(pointer);
   }
 
   public int hashCode() {

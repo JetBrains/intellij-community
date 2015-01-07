@@ -204,6 +204,11 @@ public class ExtractLightMethodObjectHandler {
       protected AbstractExtractDialog createExtractMethodObjectDialog(MyExtractMethodProcessor processor) {
         return new LightExtractMethodObjectDialog(this, methodName);
       }
+
+      @Override
+      protected boolean isFoldingApplicable() {
+        return false;
+      }
     };
     extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 
@@ -303,6 +308,11 @@ public class ExtractLightMethodObjectHandler {
     @Override
     public boolean isChainedConstructor() {
       return false;
+    }
+
+    @Override
+    public PsiType getReturnType() {
+      return null;
     }
 
     @Override

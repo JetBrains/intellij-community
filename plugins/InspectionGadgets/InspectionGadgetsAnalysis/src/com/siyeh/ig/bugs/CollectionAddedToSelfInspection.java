@@ -46,6 +46,11 @@ public class CollectionAddedToSelfInspection extends BaseInspection {
     return new CollectionAddedToSelfVisitor();
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   private static class CollectionAddedToSelfVisitor
     extends BaseInspectionVisitor {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package git4idea.rebase;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
@@ -93,7 +94,7 @@ public class GitRebaseUtils {
     File nextFile = new File(rebaseDir, "next");
     int next;
     try {
-      next = Integer.parseInt(FileUtil.loadFile(nextFile, GitUtil.UTF8_ENCODING).trim());
+      next = Integer.parseInt(FileUtil.loadFile(nextFile, CharsetToolkit.UTF8_CHARSET).trim());
     }
     catch (Exception e) {
       if (LOG.isDebugEnabled()) {
@@ -105,7 +106,7 @@ public class GitRebaseUtils {
     String hash = null;
     String subject = null;
     try {
-      BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(commitFile), GitUtil.UTF8_CHARSET));
+      BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(commitFile), CharsetToolkit.UTF8_CHARSET));
       try {
         String line;
         while ((line = in.readLine()) != null) {

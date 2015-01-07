@@ -113,8 +113,11 @@ public class VirtualFileHolder implements FileHolder {
   }
 
   public void addFile(VirtualFile file) {
-    myFiles.add(file);
-    if (file.isDirectory()) ++ myNumDirs;
+    if (myFiles.add(file)) {
+      if (file.isDirectory()) {
+        ++myNumDirs;
+      }
+    }
   }
 
   public void removeFile(VirtualFile file) {

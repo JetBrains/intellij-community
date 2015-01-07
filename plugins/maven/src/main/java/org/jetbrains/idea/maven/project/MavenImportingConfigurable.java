@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.execution.MavenJdkComboBox;
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import javax.swing.*;
@@ -38,7 +38,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
 
   private final JCheckBox myUseMaven3CheckBox;
   private final JTextField myEmbedderVMOptions;
-  private final MavenJdkComboBox myEmbedderJdk;
+  private final ExternalSystemJdkComboBox myEmbedderJdk;
 
   public MavenImportingConfigurable(Project project) {
     myImportingSettings = MavenProjectsManager.getInstance(project).getImportingSettings();
@@ -52,7 +52,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     myUseMaven3CheckBox.setToolTipText("If this option is disabled maven 2 will be used");
 
     myEmbedderVMOptions = new JTextField(30);
-    myEmbedderJdk = new MavenJdkComboBox(null); // Embedder JDK is an application setting, not a project setting, so don't pass project
+    myEmbedderJdk = new ExternalSystemJdkComboBox(); // Embedder JDK is an application setting, not a project setting, so don't pass project
     assert myEmbedderJdk.getProject() == null;
   }
 

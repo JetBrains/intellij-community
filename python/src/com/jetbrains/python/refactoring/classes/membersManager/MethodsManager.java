@@ -162,7 +162,7 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @param nameToImport what to import
    */
   private static void addImportFromAbc(@NotNull final PsiFile file, @NotNull final String nameToImport) {
-    AddImportHelper.addImportFromStatement(file, ABC_META_PACKAGE, nameToImport, null,
+    AddImportHelper.addFromImportStatement(file, ABC_META_PACKAGE, nameToImport, null,
                                            AddImportHelper.ImportPriority.BUILTIN, null);
   }
 

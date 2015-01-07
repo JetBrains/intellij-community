@@ -249,12 +249,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * @throws IllegalArgumentException if <code>component</code> is <code>null</code>.
    */
   public static boolean isModalContext(@NotNull Component component) {
-    Window window;
-    if (component instanceof Window) {
-      window = (Window)component;
-    } else {
-      window = SwingUtilities.getWindowAncestor(component);
-    }
+    Window window = UIUtil.getWindow(component);
 
     if (window instanceof IdeFrameImpl) {
       final Component pane = ((IdeFrameImpl) window).getGlassPane();
@@ -309,30 +304,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     int modifier=originalKeyStroke.getModifiers()&~InputEvent.BUTTON1_DOWN_MASK&~InputEvent.BUTTON1_MASK&
                  ~InputEvent.BUTTON2_DOWN_MASK&~InputEvent.BUTTON2_MASK&
                  ~InputEvent.BUTTON3_DOWN_MASK&~InputEvent.BUTTON3_MASK;
-    try {
-      Method[] methods=AWTKeyStroke.class.getDeclaredMethods();
-      Method getCachedStrokeMethod=null;
-      for (Method method : methods) {
-        if (GET_CACHED_STROKE_METHOD_NAME.equals(method.getName())) {
-          getCachedStrokeMethod = method;
-          getCachedStrokeMethod.setAccessible(true);
-          break;
-        }
-      }
-      if(getCachedStrokeMethod==null){
-        throw new IllegalStateException("not found method with name getCachedStrokeMethod");
-      }
-      Object[] getCachedStrokeMethodArgs=
-        {originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(), modifier, originalKeyStroke.isOnKeyRelease()};
-      return (KeyStroke)getCachedStrokeMethod.invoke(originalKeyStroke, getCachedStrokeMethodArgs);
-    }
-    catch(Exception exc){
-      throw new IllegalStateException(exc.getMessage());
-    }
-  }
-
-  private static KeyStroke getKeyStrokeWithoutCtrlModifier(KeyStroke originalKeyStroke){
-    int modifier=originalKeyStroke.getModifiers()&~InputEvent.CTRL_MASK&~InputEvent.CTRL_DOWN_MASK;
     try {
       Method[] methods=AWTKeyStroke.class.getDeclaredMethods();
       Method getCachedStrokeMethod=null;
@@ -436,15 +407,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
-
-
-
-    if (Registry.is("fix.jdk7.alt.shortcuts") && SystemInfo.isMac && SystemInfo.isOracleJvm && (keyStroke.getModifiers() & InputEvent.ALT_MASK) == InputEvent.ALT_MASK)
-    {
-      if (KeymapManager.getInstance().getActiveKeymap().getActionIds(new KeyboardShortcut(keyStroke, null)).length == 0) {
-        keyStroke = getKeyStrokeWithoutCtrlModifier(keyStroke);
-      }
-    }
 
     if (myKeyGestureProcessor.processInitState()) {
       return true;

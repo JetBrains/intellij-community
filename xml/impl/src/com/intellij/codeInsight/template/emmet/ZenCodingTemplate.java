@@ -19,6 +19,7 @@ import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
@@ -40,7 +41,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -54,6 +54,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,9 +66,6 @@ import java.util.*;
 import java.util.List;
 
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public static final char MARKER = '\0';
   private static final String EMMET_RECENT_WRAP_ABBREVIATIONS_KEY = "emmet.recent.wrap.abbreviations";
@@ -300,11 +298,9 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     if (node instanceof TemplateNode) {
       final TemplateToken token = ((TemplateNode)node).getTemplateToken();
       if (token != null) {
-        final List<Couple<String>> attributes = token.getAttribute2Value();
-        final Couple<String> singleAttribute = ContainerUtil.getFirstItem(attributes);
-        if (singleAttribute == null || "class".equalsIgnoreCase(singleAttribute.first) && StringUtil.isEmpty(singleAttribute.second)) {
-          return true;
-        }
+        final Map<String, String> attributes = token.getAttributes();
+        return attributes.isEmpty() || 
+               attributes.containsKey(HtmlUtil.CLASS_ATTRIBUTE_NAME) && StringUtil.isEmpty(attributes.get(HtmlUtil.CLASS_ATTRIBUTE_NAME));
       }
     }
     return false;
@@ -510,8 +506,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           }
         }).isEmpty();
         
-        CompletionResultSet resultSet = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
-        resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
+        result = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
+        result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
         if (!regularTemplateWithSamePrefixExists) {
           // exclude perfect matches with existing templates because LiveTemplateCompletionContributor handles it
           final Collection<SingleLineEmmetFilter> extraFilters = ContainerUtil.newLinkedList(new SingleLineEmmetFilter());
@@ -526,8 +522,17 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
             template.setKey(templatePrefix);
             template.setDescription(template.getTemplateText());
 
-            resultSet.addElement(new CustomLiveTemplateLookupElement(this, template.getKey(), template.getKey(), template.getDescription(), 
-              !LiveTemplateCompletionContributor.shouldShowAllTemplates(), true));
+            final CustomLiveTemplateLookupElement lookupElement =
+              new CustomLiveTemplateLookupElement(this, template.getKey(), template.getKey(), template.getDescription(),
+                                                  !LiveTemplateCompletionContributor.shouldShowAllTemplates(), true) {
+                @Override
+                public void renderElement(LookupElementPresentation presentation) {
+                  super.renderElement(presentation);
+                  presentation.setTailText("\tEmmet abbreviation", true);
+                }
+              };
+            
+            result.addElement(lookupElement);
           }
         }
       }

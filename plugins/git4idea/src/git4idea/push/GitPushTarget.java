@@ -58,7 +58,7 @@ public class GitPushTarget implements PushTarget {
   @NotNull
   @Override
   public String getPresentation() {
-    return myRemoteBranch.getName();
+    return myRemoteBranch.getNameForRemoteOperations();
   }
 
   public boolean isNewBranchCreated() {
@@ -100,6 +100,23 @@ public class GitPushTarget implements PushTarget {
     });
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof GitPushTarget)) return false;
 
+    GitPushTarget target = (GitPushTarget)o;
 
+    if (myIsNewBranchCreated != target.myIsNewBranchCreated) return false;
+    if (!myRemoteBranch.equals(target.myRemoteBranch)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myRemoteBranch.hashCode();
+    result = 31 * result + (myIsNewBranchCreated ? 1 : 0);
+    return result;
+  }
 }

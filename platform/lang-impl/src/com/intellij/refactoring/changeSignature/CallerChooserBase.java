@@ -72,6 +72,14 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   protected abstract M[] findDeepestSuperMethods(M method);
 
+  protected String getEmptyCalleeText() {
+    return "";
+  }
+
+  protected String getEmptyCallerText() {
+    return "";
+  }
+
   public CallerChooserBase(M method, Project project, String title, Tree previousTree, String fileName, Consumer<Set<M>> callback) {
     super(true);
     myMethod = method;
@@ -135,10 +143,11 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   }
 
   private void updateEditorTexts(final MethodNodeBase<M> node) {
-    final MethodNodeBase<M> parentNode = (MethodNodeBase)node.getParent();
-    final String callerText = node != myRoot ? getText(node.getMethod()) : "";
+    final MethodNodeBase<M> parentNode = getCalleeNode(node);
+    final MethodNodeBase<M> callerNode = getCallerNode(node);
+    final String callerText = node != myRoot ? getText(callerNode.getMethod()) : getEmptyCallerText();
     final Document callerDocument = myCallerEditor.getDocument();
-    final String calleeText = node != myRoot ? getText(parentNode.getMethod()) : "";
+    final String calleeText = node != myRoot ? getText(parentNode.getMethod()) : getEmptyCalleeText();
     final Document calleeDocument = myCalleeEditor.getDocument();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -149,7 +158,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
       }
     });
 
-    final M caller = node.getMethod();
+    final M caller = callerNode.getMethod();
     final PsiElement callee = parentNode != null ? parentNode.getElementToSearch() : null;
     if (caller != null && caller.isPhysical() && callee != null) {
       HighlightManager highlighter = HighlightManager.getInstance(myProject);
@@ -161,6 +170,14 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
                                       element.getTextRange().getEndOffset() - start, attributes, false, null);
       }
     }
+  }
+
+  protected MethodNodeBase<M> getCalleeNode(MethodNodeBase<M> node) {
+    return (MethodNodeBase<M>)node.getParent();
+  }
+
+  protected MethodNodeBase<M> getCallerNode(MethodNodeBase<M> node) {
+    return node;
   }
 
   protected Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
@@ -261,6 +278,10 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return tree;
   }
 
+  protected M getTopMethod() {
+    return myMethod;
+  }
+  
   private void getSelectedMethods(Set<M> methods) {
     MethodNodeBase<M> node = myRoot;
     getSelectedMethodsInner(node, methods);

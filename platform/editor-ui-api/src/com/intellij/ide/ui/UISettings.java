@@ -25,6 +25,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
@@ -76,7 +77,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int EDITOR_TAB_LIMIT = 10;
   public int EDITOR_TAB_TITLE_LIMIT = 100;
   public boolean ANIMATE_WINDOWS = true;
-  public int ANIMATION_SPEED = 2000; // Pixels per second
+  @Deprecated //todo remove in IDEA 16
+  public int ANIMATION_SPEED = 4000; // Pixels per second
+  public int ANIMATION_DURATION = 300; // Milliseconds
   public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
   public boolean HIDE_TOOL_STRIPES = true;
   public boolean WIDESCREEN_SUPPORT = false;
@@ -293,6 +296,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
       }
     }
+    UIUtil.setHintingForLCDText(g2d);
   }
 
   /**

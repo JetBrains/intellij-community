@@ -1,8 +1,8 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public interface CallFrame {
    * Computed variable must be null if no receiver variable, call {@link com.intellij.openapi.util.AsyncResult#setDone(Object null)}
    */
   @NotNull
-  AsyncResult<Variable> getReceiverVariable();
+  Promise<Variable> getReceiverVariable();
 
   int getLine();
 

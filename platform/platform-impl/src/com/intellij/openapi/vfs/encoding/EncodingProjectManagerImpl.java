@@ -171,7 +171,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       if (parent == null) break;
       parent = parent.getParent();
     }
-    return null;
+
+    return getDefaultCharset();
   }
 
   @NotNull
@@ -331,7 +332,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     };
   }
 
-  private boolean processSubFiles(@Nullable("null means in the project") VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
+  private boolean processSubFiles(@Nullable("null means all in the project") VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
     if (file == null) {
       for (VirtualFile virtualFile : ProjectRootManager.getInstance(myProject).getContentRoots()) {
         if (!processSubFiles(virtualFile, processor)) return false;
@@ -349,19 +350,15 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
 
   //retrieves encoding for the Project node
   @Override
-  @Nullable
+  @NotNull
   public Charset getDefaultCharset() {
     Charset charset = getEncoding(null, false);
-    return charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset;
+    return charset == null ? Charset.defaultCharset() : charset;
   }
 
   @Override
   public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
     return true;
-  }
-
-  @Override
-  public void setUseUTFGuessing(final VirtualFile virtualFile, final boolean useUTFGuessing) {
   }
 
   private static final ThreadLocal<Boolean> SUPPRESS_RELOAD = new ThreadLocal<Boolean>();
@@ -388,7 +385,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     }, "Reload Files", false, myProject);
   }
 
-  private void reloadAllFilesUnder(final VirtualFile root) {
+  private void reloadAllFilesUnder(@Nullable final VirtualFile root) {
     tryStartReloadWithProgress(new Runnable() {
       @Override
       public void run() {
@@ -435,6 +432,18 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     }
   }
 
+  @NotNull // empty means system default
+  @Override
+  public String getDefaultCharsetName() {
+    Charset charset = getEncoding(null, false);
+    return charset == null ? "" : charset.name();
+  }
+
+  @Override
+  public void setDefaultCharsetName(@NotNull String name) {
+    setEncoding(null, name.isEmpty() ? null : CharsetToolkit.forName(name));
+  }
+
   @Override
   @Nullable
   public Charset getDefaultCharsetForPropertiesFiles(@Nullable final VirtualFile virtualFile) {
@@ -451,18 +460,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   }
 
   @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener){
-    EncodingManager.getInstance().addPropertyChangeListener(listener);
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
     EncodingManager.getInstance().addPropertyChangeListener(listener,parentDisposable);
-  }
-
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
-    EncodingManager.getInstance().removePropertyChangeListener(listener);
   }
 
   @Override

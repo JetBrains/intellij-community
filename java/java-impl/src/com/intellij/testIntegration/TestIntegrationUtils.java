@@ -199,7 +199,7 @@ public class TestIntegrationUtils {
                                                   Set<String> existingNames) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
     String templateName = templateDesc.getFileName();
-    FileTemplate fileTemplate = FileTemplateManager.getInstance().getCodeTemplate(templateName);
+    FileTemplate fileTemplate = FileTemplateManager.getInstance(targetClass.getProject()).getCodeTemplate(templateName);
     Template template = TemplateManager.getInstance(targetClass.getProject()).createTemplate("", "");
 
     String templateText;

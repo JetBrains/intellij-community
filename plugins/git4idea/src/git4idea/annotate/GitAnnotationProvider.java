@@ -113,7 +113,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(repositoryFilePath), GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.setCharset(file.getCharset());
-    h.addParameters("-p", "-l", "-t", "-w");
+    h.addParameters("--porcelain", "-l", "-t", "-w");
     if (revision == null) {
       h.addParameters("HEAD");
     }

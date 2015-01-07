@@ -63,6 +63,10 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(2, "num", "num2", "num3");
   }
 
+  public void testVarargMethod() throws Exception {
+    doTest(0, "vararg", "vararg2");
+  }
+
   public void testGenerics() throws Exception {
     myFixture.addFileToProject("a.properties", "foo=bar"); // check that property variants don't override reflection ones
     doTest(0, "foo");

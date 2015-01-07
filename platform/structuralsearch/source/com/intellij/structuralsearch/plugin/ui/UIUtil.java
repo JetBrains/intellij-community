@@ -146,17 +146,34 @@ public class UIUtil {
         append(buf, SSRBundle.message("target.tooltip.message"));
       }
       if (constraint.getRegExp() != null && constraint.getRegExp().length() > 0) {
-        append(buf, SSRBundle.message("text.tooltip.message", constraint.isInvertRegExp() ? SSRBundle.message("not.tooltip.message") : "",
-                                     constraint.getRegExp(),
-                                     constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy() ?
-                                     SSRBundle.message("within.hierarchy.tooltip.message") : ""));
+        append(buf, SSRBundle.message("text.tooltip.message",
+                                      constraint.isInvertRegExp() ? SSRBundle.message("not.tooltip.message") : "", constraint.getRegExp()));
+      }
+      if (constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy()) {
+        append(buf, SSRBundle.message("within.hierarchy.tooltip.message"));
+      }
+
+      if (constraint.isReadAccess()) {
+        append(buf, SSRBundle.message("value.read.tooltip.message",
+                                      constraint.isInvertReadAccess() ? SSRBundle.message("not.tooltip.message") : ""));
+      }
+      if (constraint.isWriteAccess()) {
+        append(buf, SSRBundle.message("value.written.tooltip.message",
+                                      constraint.isInvertWriteAccess() ? SSRBundle.message("not.tooltip.message") : ""));
       }
 
       if (constraint.getNameOfExprType() != null && constraint.getNameOfExprType().length() > 0) {
         append(buf, SSRBundle.message("exprtype.tooltip.message",
                                      constraint.isInvertExprType() ? SSRBundle.message("not.tooltip.message") : "",
                                      constraint.getNameOfExprType(),
-                                     constraint.isExprTypeWithinHierarchy() ? SSRBundle.message("within.hierarchy.tooltip.message") : ""));
+                                     constraint.isExprTypeWithinHierarchy() ? SSRBundle.message("supertype.tooltip.message") : ""));
+      }
+
+      if (constraint.getNameOfFormalArgType() != null && constraint.getNameOfFormalArgType().length() > 0) {
+        append(buf, SSRBundle.message("expected.type.tooltip.message",
+                                      constraint.isInvertFormalType() ? SSRBundle.message("not.tooltip.message") : "",
+                                      constraint.getNameOfFormalArgType(),
+                                      constraint.isFormalArgTypeWithinHierarchy() ? SSRBundle.message("supertype.tooltip.message") : ""));
       }
 
       if (constraint.getMinCount() == constraint.getMaxCount()) {

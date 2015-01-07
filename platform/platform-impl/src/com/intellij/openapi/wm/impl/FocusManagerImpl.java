@@ -302,7 +302,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           command.run().doWhenDone(new Runnable() {
             @Override
             public void run() {
-              SwingUtilities.invokeLater(new Runnable() {
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
                 @Override
                 public void run() {
                   resetCommand(command, false);

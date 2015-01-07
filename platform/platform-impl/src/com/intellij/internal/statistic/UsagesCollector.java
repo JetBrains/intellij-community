@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public abstract class UsagesCollector {
-  public static ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");
+  public static final ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");
 
   public abstract @NotNull Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException;
 

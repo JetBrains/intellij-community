@@ -67,7 +67,7 @@ public class NestedMemberAccess {
       computeMethodTypes(nd);
     }
 
-    for (MethodWrapper method : node.wrapper.getMethods()) {
+    for (MethodWrapper method : node.getWrapper().getMethods()) {
       computeMethodType(node, method);
     }
   }
@@ -220,7 +220,7 @@ public class NestedMemberAccess {
       return;
     }
 
-    for (MethodWrapper meth : node.wrapper.getMethods()) {
+    for (MethodWrapper meth : node.getWrapper().getMethods()) {
 
       if (meth.root != null) {
 
@@ -327,8 +327,8 @@ public class NestedMemberAccess {
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(invexpr.getClassname());
 
     MethodWrapper methsource = null;
-    if (node != null && node.wrapper != null) {
-      methsource = node.wrapper.getMethodWrapper(invexpr.getName(), invexpr.getStringDescriptor());
+    if (node != null && node.getWrapper() != null) {
+      methsource = node.getWrapper().getMethodWrapper(invexpr.getName(), invexpr.getStringDescriptor());
     }
 
     if (methsource == null || !mapMethodType.containsKey(methsource)) {
@@ -440,7 +440,7 @@ public class NestedMemberAccess {
         }
       }
       if (hide) {
-        node.wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(invexpr.getName(), invexpr.getStringDescriptor()));
+        node.getWrapper().getHiddenMembers().add(InterpreterUtil.makeUniqueKey(invexpr.getName(), invexpr.getStringDescriptor()));
       }
     }
 

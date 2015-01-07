@@ -1,4 +1,4 @@
-// "Create Method 'foo'" "true"
+// "Create method 'foo'" "true"
 interface Int<T> {
 }
 

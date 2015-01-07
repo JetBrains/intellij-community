@@ -1,4 +1,4 @@
-// "Static Import Method..." "true"
+// "Static import method..." "true"
 package p;
 public class X {
   public void test() throws Exception {

@@ -215,13 +215,13 @@ class BeanBinding extends Binding {
         return name;
       }
     }
-    return aClass.getSimpleName();
+    String name = aClass.getSimpleName();
+    return name.isEmpty() ? aClass.getSuperclass().getSimpleName() : name;
   }
 
   private static String getTagNameFromAnnotation(Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
-    if (tag != null && !tag.value().isEmpty()) return tag.value();
-    return null;
+    return tag != null && !tag.value().isEmpty() ? tag.value() : null;
   }
 
   @NotNull
@@ -287,6 +287,7 @@ class BeanBinding extends Binding {
              field.getAnnotation(Tag.class) != null ||
              field.getAnnotation(Attribute.class) != null ||
              field.getAnnotation(Property.class) != null ||
+             field.getAnnotation(Text.class) != null ||
              (Modifier.isPublic(modifiers) &&
               !Modifier.isFinal(modifiers) &&
               !Modifier.isTransient(modifiers) &&
@@ -332,13 +333,17 @@ class BeanBinding extends Binding {
     }
 
     Tag tag = accessor.getAnnotation(Tag.class);
-    if (tag != null && !tag.value().isEmpty()) {
+    if (tag != null) {
       return new TagBinding(accessor, tag);
     }
 
     Text text = accessor.getAnnotation(Text.class);
     if (text != null) {
       return new TextBinding(accessor);
+    }
+
+    if (binding instanceof JDOMExternalizableStringListBinding) {
+      return new AccessorBindingWrapper(accessor, binding);
     }
 
     boolean surroundWithTag = true;

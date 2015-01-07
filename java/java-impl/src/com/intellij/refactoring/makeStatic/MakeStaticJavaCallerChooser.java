@@ -25,12 +25,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.MethodNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-class MakeStaticJavaCallerChooser extends JavaCallerChooser {
+abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
   private final Project myProject;
 
   public MakeStaticJavaCallerChooser(PsiMethod method, Project project, Consumer<Set<PsiMethod>> consumer) {
@@ -62,24 +67,43 @@ class MakeStaticJavaCallerChooser extends JavaCallerChooser {
     return null;
   }
 
+  protected abstract ArrayList<UsageInfo> getTopLevelItems();
+
   @Override
   protected JavaMethodNode createTreeNode(PsiMethod nodeMethod,
                                           com.intellij.util.containers.HashSet<PsiMethod> called,
                                           Runnable cancelCallback) {
-    return new MakeStaticJavaMethodNode(nodeMethod, called, cancelCallback, nodeMethod != null ? nodeMethod.getProject() : myProject);
+    final MakeStaticJavaMethodNode node =
+      new MakeStaticJavaMethodNode(nodeMethod, called, cancelCallback, nodeMethod != null ? nodeMethod.getProject() : myProject);
+    if (getTopMethod().equals(nodeMethod)) {
+      node.setEnabled(false);
+      node.setChecked(true);
+    }
+    return node;
   }
 
-  private static class MakeStaticJavaMethodNode extends JavaMethodNode {
-
-    private final PsiMethod myCurrentMethod;
-   
+  private class MakeStaticJavaMethodNode extends JavaMethodNode {
     public MakeStaticJavaMethodNode(PsiMethod currentMethod,
                                     HashSet<PsiMethod> called,
                                     Runnable cancelCallback,
                                     Project project) {
       super(currentMethod, called, project, cancelCallback);
-      myCurrentMethod = currentMethod;
     }
+
+    @Override
+    protected List<PsiMethod> computeCallers() {
+      if (getTopMethod().equals(getMethod())) {
+        final ArrayList<UsageInfo> items = getTopLevelItems();
+        return ContainerUtil.map(items, new Function<UsageInfo, PsiMethod>() {
+          @Override
+          public PsiMethod fun(UsageInfo info) {
+            return (PsiMethod)info.getElement();
+          }
+        });
+      }
+      return super.computeCallers();
+    }
+
 
     @Override
     protected MethodNodeBase<PsiMethod> createNode(PsiMethod caller, HashSet<PsiMethod> called) {
@@ -91,7 +115,7 @@ class MakeStaticJavaCallerChooser extends JavaCallerChooser {
       return new Condition<PsiMethod>() {
         @Override
         public boolean value(PsiMethod method) {
-          return !myCurrentMethod.equals(method) && isTheLastClassRef(method, myCurrentMethod) != null;
+          return !myMethod.equals(method) && isTheLastClassRef(method, myMethod) != null;
         }
       };
     }

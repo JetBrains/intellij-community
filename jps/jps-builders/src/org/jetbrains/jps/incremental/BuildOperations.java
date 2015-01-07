@@ -26,6 +26,7 @@ import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -49,7 +50,7 @@ public class BuildOperations {
     final Timestamps timestamps = pd.timestamps.getStorage();
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
     if (context.isProjectRebuild()) {
-      FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
+      FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, timestamps, true, null, null);
       pd.fsState.markInitialScanPerformed(target);
       configuration.save(context);
     }
@@ -68,7 +69,7 @@ public class BuildOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final THashSet<File> currentFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles, null);
+    FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, timestamps, forceMarkDirty, currentFiles, null);
 
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;

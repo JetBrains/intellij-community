@@ -5,6 +5,17 @@ public class TestClassFields {
    private static String[] names = new String[]{"name1", "name2"};
 
    static {
-      sizes = new int[names.length];
+      sizes = new int[names.length];// 26
    }
 }
+
+class 'pkg/TestClassFields' {
+   method '<clinit> ()V' {
+      11      7
+      14      7
+      17      7
+   }
+}
+
+Lines mapping:
+26 <-> 8

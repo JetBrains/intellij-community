@@ -56,7 +56,7 @@ class DomainGenerator {
       public void append(TextOutput out) {
         out.space().append("extends ").append(generator.getNaming().requestClassName);
         if (hasResponse) {
-          out.space().append("implements org.jetbrains.jsonProtocol.RequestWithResponse");
+          out.space().append("implements org.jetbrains.jsonProtocol.Request");
         }
       }
     };

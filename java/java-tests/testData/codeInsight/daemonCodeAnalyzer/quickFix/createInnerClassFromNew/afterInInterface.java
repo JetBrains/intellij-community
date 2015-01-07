@@ -1,4 +1,4 @@
-// "Create Inner Class 'MyCollection'" "true"
+// "Create inner class 'MyCollection'" "true"
 import java.util.*;
 
 public interface I {

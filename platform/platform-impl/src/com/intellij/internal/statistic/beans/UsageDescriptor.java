@@ -15,13 +15,13 @@
  */
 package com.intellij.internal.statistic.beans;
 
-public class UsageDescriptor implements Comparable<UsageDescriptor> {
+import org.jetbrains.annotations.NotNull;
 
+public class UsageDescriptor implements Comparable<UsageDescriptor> {
   private final String myKey;
   private int myValue;
 
-  public UsageDescriptor(String key, int value) {
-    assert key != null;
+  public UsageDescriptor(@NotNull String key, int value) {
     myKey = ConvertUsagesUtil.ensureProperKey(key);
     myValue = value;
   }
@@ -39,6 +39,6 @@ public class UsageDescriptor implements Comparable<UsageDescriptor> {
   }
 
   public int compareTo(UsageDescriptor ud) {
-    return this.getKey().compareTo(ud.myKey);
+    return getKey().compareTo(ud.myKey);
   }
 }

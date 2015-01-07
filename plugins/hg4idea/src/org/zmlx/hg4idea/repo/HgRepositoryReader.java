@@ -19,6 +19,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
@@ -45,6 +46,8 @@ import java.util.regex.Pattern;
  * @author Nadya Zabrodina
  */
 public class HgRepositoryReader {
+
+  private static final Logger LOG = Logger.getInstance(HgRepositoryReader.class);
 
   private static Pattern HASH_NAME = Pattern.compile("\\s*([0-9a-fA-F]+)\\s+(.+)");
   private static Pattern HASH_STATUS_NAME = Pattern.compile("\\s*([0-9a-fA-F]+)\\s+\\w\\s+(.+)");
@@ -114,7 +117,8 @@ public class HgRepositoryReader {
     }
     catch (IOException e) {
       // dirState exists if not fresh,  if we could not load dirState info repository must be corrupted
-      throw new RepoStateException("IOException while trying to read current repository state information.", e);
+      LOG.error("IOException while trying to read current repository state information.", e);
+      return null;
     }
   }
 
@@ -139,7 +143,14 @@ public class HgRepositoryReader {
   @Nullable
   public String readCurrentTipRevision() {
     if (!isBranchInfoAvailable()) return null;
-    String[] branchesWithHeads = DvcsUtil.tryLoadFile(myBranchHeadsFile).split("\n");
+    String[] branchesWithHeads;
+    try {
+      branchesWithHeads = DvcsUtil.tryLoadFile(myBranchHeadsFile).split("\n");
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return null;
+    }
     String head = branchesWithHeads[0];
     Matcher matcher = HASH_NAME.matcher(head);
     if (matcher.matches()) {
@@ -162,7 +173,7 @@ public class HgRepositoryReader {
    */
   @NotNull
   public String readCurrentBranch() {
-    return branchExist() ? DvcsUtil.tryLoadFile(myCurrentBranch) : HgRepository.DEFAULT_BRANCH;
+    return branchExist() ? DvcsUtil.tryLoadFileOrReturn(myCurrentBranch, HgRepository.DEFAULT_BRANCH) : HgRepository.DEFAULT_BRANCH;
   }
 
   @NotNull
@@ -171,7 +182,7 @@ public class HgRepositoryReader {
     // Set<String> branchNames = new HashSet<String>();
     if (isBranchInfoAvailable()) {
       Pattern activeBranchPattern = myStatusInBranchFile ? HASH_STATUS_NAME : HASH_NAME;
-      String[] branchesWithHeads = DvcsUtil.tryLoadFile(myBranchHeadsFile).split("\n");
+      String[] branchesWithHeads = DvcsUtil.tryLoadFileOrReturn(myBranchHeadsFile, "").split("\n");
       // first one - is a head revision: head hash + head number;
       for (int i = 1; i < branchesWithHeads.length; ++i) {
         Matcher matcher = activeBranchPattern.matcher(branchesWithHeads[i]);
@@ -203,10 +214,17 @@ public class HgRepositoryReader {
     return new File(myHgDir, "rebasestate").exists();
   }
 
+  private boolean isCherryPickInProgress() {
+    return new File(myHgDir, "graftstate").exists();
+  }
+
   @NotNull
   public Repository.State readState() {
     if (isRebaseInProgress()) {
       return Repository.State.REBASING;
+    }
+    else if (isCherryPickInProgress()) {
+      return Repository.State.GRAFTING;
     }
     return isMergeInProgress() ? Repository.State.MERGING : Repository.State.NORMAL;
   }
@@ -241,7 +259,7 @@ public class HgRepositoryReader {
     if (!fileWithReferences.exists()) {
       return refs;
     }
-    String[] namesWithHashes = DvcsUtil.tryLoadFile(fileWithReferences).split("\n");
+    String[] namesWithHashes = DvcsUtil.tryLoadFileOrReturn(fileWithReferences, "").split("\n");
     for (String str : namesWithHashes) {
       Matcher matcher = HASH_NAME.matcher(str);
       if (matcher.matches()) {
@@ -253,7 +271,7 @@ public class HgRepositoryReader {
 
   @Nullable
   public String readCurrentBookmark() {
-    return myCurrentBookmark.exists() ? DvcsUtil.tryLoadFile(myCurrentBookmark) : null;
+    return myCurrentBookmark.exists() ? DvcsUtil.tryLoadFileOrReturn(myCurrentBookmark, "") : null;
   }
 
   @NotNull

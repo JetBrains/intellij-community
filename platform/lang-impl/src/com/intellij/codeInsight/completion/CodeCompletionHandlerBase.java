@@ -390,17 +390,7 @@ public class CodeCompletionHandlerBase {
 
   @Nullable
   private static AutoCompletionPolicy getAutocompletionPolicy(LookupElement element) {
-    final AutoCompletionPolicy policy = AutoCompletionPolicy.getPolicy(element);
-    if (policy != null) {
-      return policy;
-    }
-
-    final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
-    if (item != null) {
-      return item.getAutoCompletionPolicy();
-    }
-
-    return null;
+    return element.getAutoCompletionPolicy();
   }
 
   private static boolean isInsideIdentifier(final OffsetMap offsetMap) {
@@ -772,7 +762,7 @@ public class CodeCompletionHandlerBase {
         if (!editor.getCaretModel().supportsMultipleCarets()) { // done later, outside of this method
           context.stopWatching();
         }
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        EditorModificationUtil.scrollToCaret(editor);
       }
     });
     update.addSparedChars(indicator, item, context, completionChar);

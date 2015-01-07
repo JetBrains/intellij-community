@@ -160,11 +160,11 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
     myProject = project;
     Reader reader = null;
     try {
-      reader = new InputStreamReader(new FileInputStream(mySelectedCourseFile));
+      reader = new InputStreamReader(new FileInputStream(mySelectedCourseFile), "UTF-8");
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       final Course course = gson.fromJson(reader, Course.class);
       course.init(false);
-      course.create(baseDir, new File(mySelectedCourseFile.getParent()));
+      course.create(baseDir, new File(mySelectedCourseFile.getParent()), project);
       course.setResourcePath(mySelectedCourseFile.getAbsolutePath());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
       StudyTaskManager.getInstance(project).setCourse(course);
@@ -225,6 +225,9 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       });
     }
     catch (FileNotFoundException e) {
+      LOG.error(e);
+    }
+    catch (UnsupportedEncodingException e) {
       LOG.error(e);
     }
     finally {
@@ -314,7 +317,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
     BufferedReader reader = null;
     try {
       if (courseFile.getName().equals(COURSE_META_FILE)) {
-        reader = new BufferedReader(new InputStreamReader(new FileInputStream(courseFile)));
+        reader = new BufferedReader(new InputStreamReader(new FileInputStream(courseFile), "UTF-8"));
         JsonReader r = new JsonReader(reader);
         JsonParser parser = new JsonParser();
         JsonElement el = parser.parse(r);

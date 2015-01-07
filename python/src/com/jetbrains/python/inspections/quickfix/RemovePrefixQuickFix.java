@@ -17,13 +17,15 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,24 +41,30 @@ public class RemovePrefixQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-
   @Override
   public String getName() {
     return PyBundle.message("INTN.remove.leading.$0", myPrefix);
   }
 
   @NotNull
+  @Override
   public String getFamilyName() {
     return PyBundle.message("INTN.remove.leading.prefix");
   }
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement stringLiteralExpression = descriptor.getPsiElement();
-    if (stringLiteralExpression instanceof PyStringLiteralExpression) {
-      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      final int length = PyStringLiteralExpressionImpl.getPrefixLength(stringLiteralExpression.getText());
-      stringLiteralExpression.replace(elementGenerator.createExpressionFromText(stringLiteralExpression.getText().substring(length)));
+    final PyStringLiteralExpression pyString = as(descriptor.getPsiElement(), PyStringLiteralExpression.class);
+    if (pyString != null) {
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      for (ASTNode node : pyString.getStringNodes()) {
+        final String nodeText = node.getText();
+        final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+        if (nodeText.substring(0, prefixLength).equalsIgnoreCase(myPrefix)) {
+          final PyStringLiteralExpression replacement = elementGenerator.createStringLiteralAlreadyEscaped(nodeText.substring(prefixLength));
+          node.getPsi().replace(replacement.getFirstChild());
+        }
+      }
     }
   }
 }

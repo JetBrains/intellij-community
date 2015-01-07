@@ -74,6 +74,7 @@ public final class NotificationGroup {
     return toolWindowGroup(displayId, toolWindowId, true);
   }
 
+  @NotNull
   public String getDisplayId() {
     return myDisplayId;
   }

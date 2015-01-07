@@ -43,7 +43,6 @@ import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -154,7 +153,7 @@ public class BuildMain {
             final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(fsStateFile)));
             try {
               final int version = in.readInt();
-              if (version == FSState.VERSION) {
+              if (version == BuildFSState.VERSION) {
                 final long savedOrdinal = in.readLong();
                 final boolean hasWorkToDo = in.readBoolean();// must skip "has-work-to-do" flag
                 fsState.load(in, pd.getModel(), pd.getBuildRootIndex());

@@ -53,6 +53,10 @@
     <option name="ENABLED" value="true" />
   </filter>
   <filter>
+    <option name="PATTERN" value="jdk.internal.*" />
+    <option name="ENABLED" value="true" />
+  </filter>
+  <filter>
     <option name="PATTERN" value="junit.*" />
     <option name="ENABLED" value="true" />
   </filter>

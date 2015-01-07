@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.internal.statistic.persistence;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -27,12 +26,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
-import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,33 +60,25 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   @NonNls
   private static final String VALUES_ATTR = "values";
 
-  public ApplicationStatisticsPersistenceComponent() {
-  }
-
   public static ApplicationStatisticsPersistenceComponent getInstance() {
     return ApplicationManager.getApplication().getComponent(ApplicationStatisticsPersistenceComponent.class);
   }
 
   @Override
-  public void loadState(final Element element) {
-    List groups = element.getChildren(GROUP_TAG);
-
-    for (Object group : groups) {
-      Element groupElement = (Element)group;
-      String groupName = groupElement.getAttributeValue(GROUP_NAME_ATTR);
-
-      final GroupDescriptor groupDescriptor = GroupDescriptor.create(groupName);
-
-      List projectsList = groupElement.getChildren(PROJECT_TAG);
-      for (Object project : projectsList) {
-        Element projectElement = (Element)project;
+  public void loadState(Element element) {
+    for (Element groupElement : element.getChildren(GROUP_TAG)) {
+      GroupDescriptor groupDescriptor = GroupDescriptor.create(groupElement.getAttributeValue(GROUP_NAME_ATTR));
+      List<Element> projectsList = groupElement.getChildren(PROJECT_TAG);
+      for (Element projectElement : projectsList) {
         String projectId = projectElement.getAttributeValue(PROJECT_ID_ATTR);
         String frameworks = projectElement.getAttributeValue(VALUES_ATTR);
         if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(frameworks)) {
-          Set<UsageDescriptor> frameworkDescriptors = new HashSet<UsageDescriptor>();
+          Set<UsageDescriptor> frameworkDescriptors = new THashSet<UsageDescriptor>();
           for (String key : StringUtil.split(frameworks, TOKENIZER)) {
-            final UsageDescriptor descriptor = getUsageDescriptor(key);
-            if (descriptor != null) frameworkDescriptors.add(descriptor);
+            UsageDescriptor descriptor = getUsageDescriptor(key);
+            if (descriptor != null) {
+              frameworkDescriptors.add(descriptor);
+            }
           }
           getApplicationData(groupDescriptor).put(projectId, frameworkDescriptors);
         }
@@ -144,7 +133,8 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
         }
       }
       return new UsageDescriptor(usage, 1);
-    } catch (AssertionError e) {
+    }
+    catch (AssertionError e) {
       //escape loading of invalid usages
     }
     return null;
@@ -157,7 +147,6 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
       public String fun(UsageDescriptor usageDescriptor) {
         final String key = usageDescriptor.getKey();
         final int value = usageDescriptor.getValue();
-
         return value > 1 ? key + "=" + value : key;
       }
     }, TOKENIZER);
@@ -172,79 +161,36 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   @Override
   public void initComponent() {
-    onAppClosing();
-    onProjectClosing();
-  }
-
-  private void onProjectClosing() {
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
-      public void projectOpened(Project project) {
+      public void appClosing() {
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          doPersistProjectUsages(project);
+        }
+        persistOnClosing = false;
       }
+    });
 
-      @Override
-      public boolean canCloseProject(Project project) {
-        return true;
-      }
-
-      @Override
-      public void projectClosed(Project project) {
-      }
-
+    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
       public void projectClosing(Project project) {
-        if (project != null && project.isInitialized()) {
-          if (persistOnClosing) {
-            doPersistProjectUsages(project);
-          }
+        if (persistOnClosing && project != null) {
+          doPersistProjectUsages(project);
         }
       }
     });
   }
 
   private static void doPersistProjectUsages(@NotNull Project project) {
-    if (DumbService.isDumb(project)) return;
+    if (!project.isInitialized() || DumbService.isDumb(project)) {
+      return;
+    }
+
     for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
       if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
         ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
       }
     }
-  }
-
-  private void onAppClosing() {
-    final MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
-
-    messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-      }
-
-      @Override
-      public void appStarting(Project projectFromCommandLine) {
-      }
-
-      @Override
-      public void projectFrameClosed() {
-      }
-
-      @Override
-      public void projectOpenFailed() {
-      }
-
-      @Override
-      public void welcomeScreenDisplayed() {
-      }
-
-      @Override
-      public void appClosing() {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          if (project.isInitialized()) {
-            doPersistProjectUsages(project);
-          }
-        }
-        persistOnClosing = false;
-      }
-    });
   }
 
   @Override

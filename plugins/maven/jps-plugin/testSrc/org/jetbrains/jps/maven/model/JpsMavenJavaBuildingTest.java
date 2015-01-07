@@ -38,6 +38,6 @@ public class JpsMavenJavaBuildingTest extends JpsBuildTestCase {
     BuildResult result = doBuild(CompileScopeTestBuilder.rebuild().all());
     result.assertFailed();
     BuildMessage message = assertOneElement(result.getMessages(BuildMessage.Kind.ERROR));
-    assertTrue(message.toString(), message.getMessageText().contains("Maven project configuration isn't available."));
+    assertTrue(message.toString(), message.getMessageText().contains("Maven project configuration") && message.getMessageText().contains("isn't available."));
   }
 }

@@ -16,16 +16,23 @@
 package git4idea.tests;
 
 import git4idea.GitUtil;
-import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * The test for utility classes
- */
+import static git4idea.GitUtil.unescapePath;
+import static org.junit.Assert.assertEquals;
+
 public class GitUtilsTest {
+
   @Test
-  public void testFormatLongRev() {
-    Assert.assertEquals("0000000000000000", GitUtil.formatLongRev(0));
-    Assert.assertEquals("fffffffffffffffe", GitUtil.formatLongRev(-2));
+  public void format_long_rev() {
+    assertEquals("0000000000000000", GitUtil.formatLongRev(0));
+    assertEquals("fffffffffffffffe", GitUtil.formatLongRev(-2));
   }
+
+  @Test
+  public void unescape_cyrillic() throws Exception {
+     assertEquals("Cyrillic folder", "папка/file.txt", unescapePath("\\320\\277\\320\\260\\320\\277\\320\\272\\320\\260/file.txt"));
+     assertEquals("Cyrillic folder and filename", "папка/документ", unescapePath(
+       "\\320\\277\\320\\260\\320\\277\\320\\272\\320\\260/\\320\\264\\320\\276\\320\\272\\321\\203\\320\\274\\320\\265\\320\\275\\321\\202"));
+   }
 }

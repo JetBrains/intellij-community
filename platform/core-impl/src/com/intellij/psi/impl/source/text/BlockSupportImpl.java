@@ -285,18 +285,16 @@ public class BlockSupportImpl extends BlockSupport {
                                    @NotNull final DiffTreeChangeBuilder<ASTNode, T> builder,
                                    @NotNull final ShallowNodeComparator<ASTNode, T> comparator,
                                    @NotNull final FlyweightCapableTreeStructure<T> newTreeStructure,
-                                   final ProgressIndicator indicator) {
+                                   @NotNull ProgressIndicator indicator) {
     TreeUtil.ensureParsedRecursivelyCheckingProgress(oldRoot, indicator);
     DiffTree.diff(createInterruptibleASTStructure(oldRoot, indicator), newTreeStructure, comparator, builder);
   }
 
-  private static ASTStructure createInterruptibleASTStructure(@NotNull final ASTNode oldRoot, @Nullable final ProgressIndicator indicator) {
+  private static ASTStructure createInterruptibleASTStructure(@NotNull final ASTNode oldRoot, @NotNull final ProgressIndicator indicator) {
     return new ASTStructure(oldRoot) {
       @Override
       public int getChildren(@NotNull ASTNode astNode, @NotNull Ref<ASTNode[]> into) {
-        if (indicator != null) {
-          indicator.checkCanceled();
-        }
+        indicator.checkCanceled();
         return super.getChildren(astNode, into);
       }
     };

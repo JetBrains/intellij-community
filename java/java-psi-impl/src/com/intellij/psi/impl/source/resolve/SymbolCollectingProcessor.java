@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
@@ -23,6 +24,7 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +53,7 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
 
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-    if (element instanceof PsiNamedElement) {
+    if (element instanceof PsiNamedElement && element.isValid()) {
       PsiNamedElement named = (PsiNamedElement)element;
       String name = named.getName();
       if (name != null) {
@@ -71,21 +73,21 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
   }
 
   public static class ResultWithContext {
-    private final PsiNamedElement myElement;
-    private final PsiElement myFileContext;
+    private final PsiAnchor myElement;
+    private final PsiAnchor myFileContext;
 
     public ResultWithContext(@NotNull PsiNamedElement element, PsiElement fileContext) {
-      myElement = element;
-      myFileContext = fileContext;
+      myElement = PsiAnchor.create(element);
+      myFileContext = fileContext == null ? null : PsiAnchor.create(fileContext);
     }
 
     @NotNull
     public PsiNamedElement getElement() {
-      return myElement;
+      return (PsiNamedElement)ObjectUtils.assertNotNull(myElement.retrieve());
     }
 
     public PsiElement getFileContext() {
-      return myFileContext;
+      return myFileContext == null ? null : myFileContext.retrieve();
     }
 
     @Override

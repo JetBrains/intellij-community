@@ -22,12 +22,15 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
@@ -36,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.List;
 
 /**
@@ -61,6 +66,7 @@ public class GitVcsPanel {
   private JCheckBox myEnableForcePush;
   private TextFieldWithBrowseButton myProtectedBranchesButton;
   private JBLabel myProtectedBranchesLabel;
+  private JComboBox myUpdateMethodComboBox;
 
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
@@ -81,6 +87,13 @@ public class GitVcsPanel {
     mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Git"));
     myProtectedBranchesLabel.setLabelFor(myProtectedBranchesButton);
+    myEnableForcePush.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        UIUtil.setEnabled(myProtectedBranchesButton, myEnableForcePush.isSelected(), true);
+        UIUtil.setEnabled(myProtectedBranchesLabel, myEnableForcePush.isSelected(), false);
+      }
+    });
   }
 
   /**
@@ -135,6 +148,7 @@ public class GitVcsPanel {
     myWarnAboutCrlf.setSelected(settings.warnAboutCrlf());
     myWarnAboutDetachedHead.setSelected(settings.warnAboutDetachedHead());
     myEnableForcePush.setSelected(settings.isForcePushAllowed());
+    myUpdateMethodComboBox.setSelectedItem(settings.getUpdateType());
     myProtectedBranchesButton.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
   }
 
@@ -152,6 +166,7 @@ public class GitVcsPanel {
            settings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
            settings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
            settings.isForcePushAllowed() != myEnableForcePush.isSelected() ||
+           settings.getUpdateType() != myUpdateMethodComboBox.getModel().getSelectedItem() ||
            !ContainerUtil.sorted(sharedSettings.getForcePushProhibitedPatterns()).equals(
             ContainerUtil.sorted(getProtectedBranchesPatterns())));
   }
@@ -174,6 +189,7 @@ public class GitVcsPanel {
     settings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
     settings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
     settings.setForcePushAllowed(myEnableForcePush.isSelected());
+    settings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
     sharedSettings.setForcePushProhibitedPatters(getProtectedBranchesPatterns());
   }
 
@@ -191,5 +207,6 @@ public class GitVcsPanel {
       }
     });
     myProtectedBranchesButton.setButtonIcon(AllIcons.Actions.ShowViewer);
+    myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<UpdateMethod>(UpdateMethod.class));
   }
 }

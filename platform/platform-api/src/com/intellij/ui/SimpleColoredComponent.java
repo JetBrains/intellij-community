@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
@@ -106,8 +108,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   public SimpleColoredComponent() {
     myFragments = new ArrayList<String>(3);
     myAttributes = new ArrayList<SimpleTextAttributes>(3);
-    myIpad = new Insets(1, 2, 1, 2);
-    myIconTextGap = 2;
+    myIpad = new JBInsets(1, 2, 1, 2);
+    myIconTextGap = JBUI.scale(2);
     myBorder = new MyBorder();
     myFixedWidths = new TIntIntHashMap(10);
     setOpaque(true);
@@ -670,6 +672,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         g.drawString(fragment, offset, textBaseline);
       }
 
+      // for some reason strokeState here may be incorrect, resetting the stroke helps
+      g.setStroke(g.getStroke());
+
       // 1. Strikeout effect
       if (attributes.isStrikeout()) {
         final int strikeOutAt = textBaseline + (metrics.getDescent() - metrics.getAscent()) / 2;
@@ -680,11 +685,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         if (attributes.getWaveColor() != null) {
           g.setColor(attributes.getWaveColor());
         }
-        final int wavedAt = textBaseline + 1;
-        for (int x = offset; x <= offset + fragmentWidth; x += 4) {
-          UIUtil.drawLine(g, x, wavedAt, x + 2, wavedAt + 2);
-          UIUtil.drawLine(g, x + 3, wavedAt + 1, x + 4, wavedAt);
-        }
+        UIUtil.drawWave(g, new Rectangle(offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent())));
       }
       // 3. Underline
       if (attributes.isUnderline()) {
@@ -833,7 +834,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     private Insets myInsets;
 
     public MyBorder() {
-      myInsets = new Insets(1, 1, 1, 1);
+      myInsets = new JBInsets(1, 1, 1, 1);
     }
 
     public void setInsets(final Insets insets) {
@@ -848,7 +849,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      return myInsets;
+      return (Insets)myInsets.clone();
     }
 
     @Override

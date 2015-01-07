@@ -16,9 +16,12 @@
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
 
 /**
  * @author traff
@@ -31,21 +34,68 @@ public abstract class BaseOutputReader extends BaseDataReader {
   private final StringBuilder myTextBuffer = new StringBuilder();
   private boolean skipLF = false;
 
+  public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
+    this(inputStream, charset, null);
+  }
+
+  public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @Nullable SleepingPolicy sleepingPolicy) {
+    super(sleepingPolicy);
+    myReader = createInputStreamReader(inputStream, charset);
+  }
+
   public BaseOutputReader(@NotNull Reader reader) {
     this(reader, null);
   }
 
   public BaseOutputReader(@NotNull Reader reader, SleepingPolicy sleepingPolicy) {
     super(sleepingPolicy);
+    if (sleepingPolicy == SleepingPolicy.BLOCKING && !(reader instanceof BaseInputStreamReader)) {
+      throw new IllegalArgumentException("Blocking policy can be used only with BaseInputStreamReader, that doesn't lock on close");
+    }
     myReader = reader;
   }
 
+  private static Reader createInputStreamReader(final @NotNull InputStream streamToRead, @Nullable Charset charset) {
+    if (charset == null) {
+      return new BaseInputStreamReader(streamToRead);
+    }
+    else {
+      return new BaseInputStreamReader(streamToRead, charset);
+    }
+  }
+
+  private void processLine(char[] buffer, StringBuilder token, int n) {
+    for (int i = 0; i < n; i++) {
+      char c = buffer[i];
+      if (skipLF && c != '\n') {
+        token.append('\r');
+      }
+
+      if (c == '\r') {
+        skipLF = true;
+      }
+      else {
+        skipLF = false;
+        token.append(c);
+      }
+
+      if (c == '\n') {
+        onTextAvailable(token.toString());
+        token.setLength(0);
+      }
+    }
+  }
+
+
   /**
    * Reads as much data as possible without blocking.
+   * Relies on InputStream.ready method.
+   * In case of doubts look at #readAvailableBlocking
+   *
    * @return true if non-zero amount of data has been read
-   * @exception  IOException  If an I/O error occurs
+   * @throws IOException If an I/O error occurs
    */
-  protected final boolean readAvailable() throws IOException {
+  protected final boolean readAvailableNonBlocking() throws IOException {
     char[] buffer = myBuffer;
     StringBuilder token = myTextBuffer;
     token.setLength(0);
@@ -56,25 +106,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
       if (n <= 0) break;
       read = true;
 
-      for (int i = 0; i < n; i++) {
-        char c = buffer[i];
-        if (skipLF && c != '\n') {
-          token.append('\r');
-        }
-
-        if (c == '\r') {
-          skipLF = true;
-        }
-        else {
-          skipLF = false;
-          token.append(c);
-        }
-
-        if (c == '\n') {
-          onTextAvailable(token.toString());
-          token.setLength(0);
-        }
-      }
+      processLine(buffer, token, n);
     }
 
     if (token.length() != 0) {
@@ -82,6 +114,40 @@ public abstract class BaseOutputReader extends BaseDataReader {
       token.setLength(0);
     }
     return read;
+  }
+
+  /**
+   * Reads data with blocking.
+   * Should be used in case when ready method always returns false for your input stream.
+   * Should be used if we want to to make our reader exit when end of stream reached.
+   * Could be used if we prefer IO-blocking over CPU sleeping.
+   *
+   * @return true if non-zero amount of data has been read, false if end of the stream is reached
+   * @throws IOException If an I/O error occurs
+   */
+  protected final boolean readAvailableBlocking() throws IOException {
+    char[] buffer = myBuffer;
+    StringBuilder token = myTextBuffer;
+    token.setLength(0);
+
+    boolean read = false;
+    int n;
+    while ((n = myReader.read(buffer)) > 0) {
+      read = true;
+
+      processLine(buffer, token, n);
+    }
+
+    if (token.length() != 0) {
+      onTextAvailable(token.toString());
+      token.setLength(0);
+    }
+    return read;
+  }
+
+  @Override
+  protected boolean readAvailable() throws IOException {
+    return mySleepingPolicy == SleepingPolicy.BLOCKING ? readAvailableBlocking() : readAvailableNonBlocking();
   }
 
   @Override

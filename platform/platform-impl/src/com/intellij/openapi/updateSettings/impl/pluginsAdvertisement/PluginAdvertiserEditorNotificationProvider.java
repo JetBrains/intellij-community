@@ -118,7 +118,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               try {
-                myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
+                myAllPlugins = RepositoryHelper.loadPlugins(indicator);
                 for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
                   if (plugins.contains(new PluginsAdvertiser.Plugin(loadedPlugin.getPluginId(), null, false))) {
                     myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));

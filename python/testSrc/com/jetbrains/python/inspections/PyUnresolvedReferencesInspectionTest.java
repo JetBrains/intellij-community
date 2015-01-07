@@ -374,7 +374,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
-  // PY-9342
+  // PY-9342, PY-13791
   public void testMethodSpecialAttributes() {
     doTest();
   }
@@ -438,6 +438,26 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-14398
   public void testImportToContainingFileInPackage() {
     doMultiFileTest("p1/__init__.py");
+  }
+
+  // PY-11401
+  public void testNoUnresolvedReferencesForClassesWithBadMRO() {
+    doTest();
+  }
+
+  // PY-11401
+  public void testFallbackToOldStyleMROIfUnresolvedAncestorsAndC3Fails() {
+    doTest();
+  }
+
+  // PY-11401
+  public void testOverriddenMRO() {
+    doTest();
+  }
+
+  // PY-11401
+  public void testOverriddenMROInAncestors() {
+    doTest();
   }
 
   @NotNull

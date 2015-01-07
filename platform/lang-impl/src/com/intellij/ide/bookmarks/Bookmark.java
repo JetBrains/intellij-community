@@ -28,6 +28,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -358,7 +359,11 @@ public class Bookmark implements Navigatable {
   }
 
   private static boolean darkBackground() {
-    return ColorUtil.isDark(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()); // or gutter background?
+    Color gutterBackground = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+    if (gutterBackground == null) {
+      gutterBackground = EditorColors.GUTTER_BACKGROUND.getDefaultColor();
+    }
+    return ColorUtil.isDark(gutterBackground);
   }
 
   private static class MyGutterIconRenderer extends GutterIconRenderer {

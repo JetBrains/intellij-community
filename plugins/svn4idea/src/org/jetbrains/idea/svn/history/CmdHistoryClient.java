@@ -86,9 +86,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     List<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, target);
-    parameters.add("--revision");
-    parameters.add(startRevision + ":" + endRevision);
-
+    CommandUtil.put(parameters, startRevision, endRevision);
     CommandUtil.put(parameters, stopOnCopy, "--stop-on-copy");
     CommandUtil.put(parameters, discoverChangedPaths, "--verbose");
     CommandUtil.put(parameters, includeMergedRevisions, "--use-merge-history");

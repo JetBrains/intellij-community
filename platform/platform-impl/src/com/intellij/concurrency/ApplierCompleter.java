@@ -41,7 +41,7 @@ import java.util.List;
  * reaches the top, in which case it invokes {@link jsr166e.ForkJoinTask#quietlyComplete()} which causes the top level task to wake up and join successfully.
  * The exceptions from the sub tasks bubble up to the top and saved in {@link #throwable}.
  */
-public class ApplierCompleter extends CountedCompleter<Void> {
+class ApplierCompleter extends CountedCompleter<Void> {
   private final boolean runInReadAction;
   private final ProgressIndicator progressIndicator;
   @NotNull

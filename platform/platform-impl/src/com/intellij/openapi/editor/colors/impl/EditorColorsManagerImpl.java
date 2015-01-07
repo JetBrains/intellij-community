@@ -228,19 +228,17 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   @Override
   public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
-    if (setGlobalSchemeInner(scheme)) {
-      fireChanges(scheme);
+    setGlobalSchemeInner(scheme);
 
-      LafManager.getInstance().updateUI();
-      EditorFactory.getInstance().refreshAllEditors();
-    }
+    LafManager.getInstance().updateUI();
+    EditorFactory.getInstance().refreshAllEditors();
+
+    fireChanges(scheme);
   }
 
-  private boolean setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
+  private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
     String newValue = scheme == null ? getDefaultScheme().getName() : scheme.getName();
-    EditorColorsScheme oldValue = mySchemesManager.getCurrentScheme();
     mySchemesManager.setCurrentSchemeName(newValue);
-    return oldValue != null && !Comparing.equal(newValue, oldValue.getName());
   }
 
   @NotNull

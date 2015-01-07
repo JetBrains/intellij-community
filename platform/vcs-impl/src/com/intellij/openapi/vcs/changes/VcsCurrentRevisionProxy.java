@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.CurrentRevisionProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +133,6 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
       throw new VcsException("Failed to create content for current revision");
     }
     Charset charset = myFile.getCharset();
-    charset = charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset;
     return Pair.create(currentRevision, contentRevision.getContent().getBytes(charset));
   }
 }

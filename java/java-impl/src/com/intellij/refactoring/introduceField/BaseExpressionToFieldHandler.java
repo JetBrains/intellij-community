@@ -452,7 +452,14 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
       @Override
       public void pass(final ElementToWorkOn elementToWorkOn) {
-        if (elementToWorkOn == null) return;
+        if (elementToWorkOn == null) {
+          return;
+        }
+
+        if (elementToWorkOn.getExpression() == null && elementToWorkOn.getLocalVariable() == null) {
+          ElementToWorkOn.showNothingSelectedErrorMessage(editor, getRefactoringName(), getHelpID(), project);
+          return;
+        }
 
         final boolean hasRunTemplate = LookupManager.getActiveLookup(editor) == null;
         if (elementToWorkOn.getExpression() == null) {

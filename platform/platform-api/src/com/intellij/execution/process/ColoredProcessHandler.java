@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,7 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
 
   public ColoredProcessHandler(final GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+    setHasPty(commandLine instanceof PtyCommandLine);
   }
 
   public ColoredProcessHandler(Process process, String commandLine) {

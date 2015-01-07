@@ -2,25 +2,25 @@ package pkg;
 
 public class TestClassSimpleBytecodeMapping {
    public int test() {
-      System.out.println("before");
-      this.run(new Runnable() {
+      System.out.println("before");// 12
+      this.run(new Runnable() {// 14
          public void run() {
-            System.out.println("Runnable");
+            System.out.println("Runnable");// 17
          }
       });
-      this.test2("1");
-      if(Math.random() > 0.0D) {
-         System.out.println("0");
-         return 0;
+      this.test2("1");// 21
+      if(Math.random() > 0.0D) {// 23
+         System.out.println("0");// 24
+         return 0;// 25
       } else {
-         System.out.println("1");
-         return 1;
+         System.out.println("1");// 27
+         return 1;// 28
       }
    }
 
    public void test2(String var1) {
       try {
-         Integer.parseInt(var1);
+         Integer.parseInt(var1);// 34
       } catch (Exception var6) {
          System.out.println(var6);
       } finally {
@@ -30,18 +30,18 @@ public class TestClassSimpleBytecodeMapping {
    }
 
    void run(Runnable var1) {
-      var1.run();
+      var1.run();// 49
    }
 
    public class InnerClass2 {
       public void print() {
-         System.out.println("Inner2");
+         System.out.println("Inner2");// 54
       }
    }
 
    public class InnerClass {
       public void print() {
-         System.out.println("Inner");
+         System.out.println("Inner");// 44
       }
    }
 }

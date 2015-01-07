@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 
 @ChannelHandler.Sharable
 class PortUnificationServerHandler extends Decoder {
+  // keytool -genkey -keyalg RSA -alias selfsigned -keystore cert.jks -storepass jetbrains -validity 10000 -keysize 2048
+  @SuppressWarnings("SpellCheckingInspection")
   private static final AtomicNotNullLazyValue<SSLContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SSLContext>() {
     @NotNull
     @Override
@@ -108,6 +110,10 @@ class PortUnificationServerHandler extends Decoder {
       else if (isHttp(magic1, magic2)) {
         NettyUtil.addHttpServerCodec(pipeline);
         pipeline.addLast(delegatingHttpRequestHandler);
+        // added earlier if HTTPS
+        if (pipeline.get(ChunkedWriteHandler.class) == null) {
+          pipeline.addLast(new ChunkedWriteHandler());
+        }
         if (BuiltInServer.LOG.isDebugEnabled()) {
           pipeline.addLast(new ChannelOutboundHandlerAdapter() {
             @Override

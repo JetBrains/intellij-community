@@ -48,10 +48,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
+import javax.swing.text.Document;
+import javax.swing.text.Position;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -156,9 +167,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       int row = rows[0];
       GraphTableModel tableModel = (GraphTableModel)myGraphTable.getModel();
-      Hash hash = tableModel.getHashAtRow(row);
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
-      if (commitData == null || hash == null) {
+      if (commitData == null) {
         showMessage("No commits selected");
         return;
       }
@@ -171,14 +181,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         myLoadingPanel.stopLoading();
         myCommitDetailsPanel.setData(commitData);
-        myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
+        myRefsPanel.setRefs(sortRefs(commitData.getId(), commitData.getRoot()));
         updateDetailsBorder(commitData);
         newCommitDetails = commitData;
       }
 
       List<String> branches = null;
       if (!(commitData instanceof LoadingDetails)) {
-        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), hash);
+        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
       }
       myCommitDetailsPanel.setBranches(branches);
 
@@ -196,14 +206,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     else {
       JBColor color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
       myMainContentPanel.setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
-                                                  new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
-                                                                  new JBColor(new NotNullProducer<Color>() {
-                                                                    @NotNull
-                                                                    @Override
-                                                                    public Color produce() {
-                                                                      return getDetailsBackground();
-                                                                    }
-                                                                  }))));
+                                                      new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
+                                                                      new JBColor(new NotNullProducer<Color>() {
+                                                                        @NotNull
+                                                                        @Override
+                                                                        public Color produce() {
+                                                                          return getDetailsBackground();
+                                                                        }
+                                                                      }))));
     }
   }
 
@@ -216,27 +226,43 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(hash);
-    return ContainerUtil.sorted(refs, myLogDataHolder.getLogProvider(root).getReferenceManager().getComparator());
+    return ContainerUtil.sorted(refs, myLogDataHolder.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
   }
 
   private static class DataPanel extends JEditorPane {
+    public static final int BRANCHES_LIMIT = 6;
+    public static final int BRANCHES_TABLE_COLUMN_COUNT = 3;
+    @NotNull public static final String LEFT_ALIGN = "left";
+    @NotNull private static String SHOW_OR_HIDE_BRANCHES = "Show or Hide Branches";
 
     @NotNull private final Project myProject;
     private final boolean myMultiRoot;
-    @Nullable private String myBranchesText = null;
     private String myMainText;
+    @Nullable private List<String> myBranches;
+    private boolean myExpanded = false;
 
     DataPanel(@NotNull Project project, boolean multiRoot) {
       super(UIUtil.HTML_MIME, "");
       myProject = project;
       myMultiRoot = multiRoot;
       setEditable(false);
-      addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
       setOpaque(false);
       putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
 
-      final DefaultCaret caret = (DefaultCaret)getCaret();
+      DefaultCaret caret = (DefaultCaret)getCaret();
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+
+      addHyperlinkListener(new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && SHOW_OR_HIDE_BRANCHES.equals(e.getDescription())) {
+            myExpanded = !myExpanded;
+            update();
+          }
+          else {
+            BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
+          }
+        }
+      });
     }
 
     void setData(@Nullable VcsFullCommitDetails commit) {
@@ -254,11 +280,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     void setBranches(@Nullable List<String> branches) {
       if (branches == null) {
-        myBranchesText = null;
+        myBranches = null;
       }
       else {
-        myBranchesText = StringUtil.join(branches, ", ");
+        myBranches = branches;
       }
+      myExpanded = false;
       update();
     }
 
@@ -273,12 +300,59 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
                 myMainText +
                 "<br/>" +
                 "<br/>" +
-                "<i>Contained in branches:</i> " +
-                (myBranchesText == null ? "<i>loading...</i>" : myBranchesText) +
+                getBranchesText() +
                 "</body></html>");
       }
       revalidate();
       repaint();
+    }
+
+    @NotNull
+    private String getBranchesText() {
+      if (myBranches == null) {
+        return "<i>In branches: loading...</i>";
+      }
+      if (myExpanded) {
+        int rowCount = (int) Math.ceil((double)myBranches.size() / BRANCHES_TABLE_COLUMN_COUNT);
+        HtmlTableBuilder builder = new HtmlTableBuilder();
+
+        for (int i = 0; i < rowCount; i++) {
+          builder.startRow();
+          if (i == 0) {
+            builder.append("<i>In " + myBranches.size() + " branches, </i><a href=\"" + SHOW_OR_HIDE_BRANCHES + "\"><i>hide</i></a>: ");
+          } else {
+            builder.append("");
+          }
+
+          for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT; j++) {
+            int index = rowCount * j + i;
+            if (index >= myBranches.size()) {
+              builder.append("");
+            } else if (index != myBranches.size() - 1)  {
+              builder.append(myBranches.get(index) + "," + StringUtil.repeat("&nbsp;", 20), LEFT_ALIGN);
+            } else {
+              builder.append(myBranches.get(index), LEFT_ALIGN);
+            }
+          }
+
+          builder.endRow();
+        }
+
+        return builder.build();
+      }
+      else {
+        String branchText;
+        if (myBranches.size() <= BRANCHES_LIMIT) {
+          branchText = StringUtil.join(myBranches, ", ");
+        }
+        else {
+          branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, BRANCHES_LIMIT), ", ") +
+                       ", ... <a href=\"" +
+                       SHOW_OR_HIDE_BRANCHES +
+                       "\"><i>Show All</i></a>";
+        }
+        return "<i>In " + myBranches.size() + StringUtil.pluralize(" branch", myBranches.size()) + ":</i> " + branchText;
+      }
     }
 
     @Override
@@ -293,8 +367,26 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       int separator = fullMessage.indexOf("\n\n");
       String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
       String description = fullMessage.substring(subject.length());
-      return "<b>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject) + "</b>" +
-             IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description);
+      return "<b>" + escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject)) + "</b>" +
+             escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description));
+    }
+
+    private String escapeMultipleSpaces(String text) {
+      StringBuilder result = new StringBuilder();
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == ' ') {
+          if (i == text.length() - 1 || text.charAt(i + 1) != ' ') {
+            result.append(' ');
+          }
+          else {
+            result.append("&nbsp;");
+          }
+        }
+        else {
+          result.append(text.charAt(i));
+        }
+      }
+      return result.toString();
     }
 
     private static String getAuthorText(VcsFullCommitDetails commit) {
@@ -313,6 +405,49 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         authorText += " (committed at " + DateFormatUtil.formatDateTime(commit.getCommitTime()) + ")";
       }
       return authorText;
+    }
+
+    @Override
+    public String getSelectedText() {
+      Document doc = getDocument();
+      int start = getSelectionStart();
+      int end = getSelectionEnd();
+
+      try {
+        Position p0 = doc.createPosition(start);
+        Position p1 = doc.createPosition(end);
+        StringWriter sw = new StringWriter(p1.getOffset() - p0.getOffset());
+        getEditorKit().write(sw, doc, p0.getOffset(), p1.getOffset() - p0.getOffset());
+
+        MyHtml2Text parser = new MyHtml2Text();
+        parser.parse(new StringReader(sw.toString()));
+        return parser.getText();
+      }
+      catch (BadLocationException e) {
+        LOG.warn(e);
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+      return super.getSelectedText();
+    }
+
+    private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {
+      @NotNull private final StringBuilder myBuffer = new StringBuilder();
+
+      public void parse(Reader in) throws IOException {
+        myBuffer.setLength(0);
+        new ParserDelegator().parse(in, this, Boolean.TRUE);
+      }
+
+      public void handleText(char[] text, int pos) {
+        myBuffer.append(text);
+        myBuffer.append("\n");
+      }
+
+      public String getText() {
+        return myBuffer.toString();
+      }
     }
 
     @Override

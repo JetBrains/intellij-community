@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,12 +36,13 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
   public ManageButton(final ManageButtonBuilder builder) {
     myBuilder = builder;
     getTemplatePresentation().setText("Manage");
+    if (SystemInfo.isMac) {
+      setSmallVariant(false);
+    }
   }
 
   public JComponent build() {
-    final JComponent component = createCustomComponent(getTemplatePresentation());
-    component.setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
-    return component;
+    return createCustomComponent(getTemplatePresentation());
   }
 
   @NotNull
@@ -54,7 +56,7 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
     group.add(new CopyAction());
     group.add(new RenameAction());
     group.add(new DeleteAction());
-    group.add(new EditDescriptionAction());
+    group.add(new EditDescriptionAction(myBuilder.hasDescription()));
     group.add(new ExportAction());
     group.addSeparator();
 
@@ -123,8 +125,8 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
   }
 
   private class EditDescriptionAction extends AnAction implements DumbAware {
-    public EditDescriptionAction() {
-      super("Edit description");
+    public EditDescriptionAction(boolean hasDescription) {
+      super(hasDescription ? "Edit description" : "Add description");
     }
 
     @Override

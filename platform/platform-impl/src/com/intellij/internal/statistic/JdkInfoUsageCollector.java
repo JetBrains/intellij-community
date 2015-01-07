@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public class JdkInfoUsageCollector extends UsagesCollector {
+class JdkInfoUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {

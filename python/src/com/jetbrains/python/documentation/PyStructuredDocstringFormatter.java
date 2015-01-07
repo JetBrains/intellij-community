@@ -100,7 +100,6 @@ public class PyStructuredDocstringFormatter {
     if (sdkHome == null) return null;
 
     final Charset charset = EncodingProjectManager.getInstance(module.getProject()).getDefaultCharset();
-    if (charset == null) return null;
 
     final ByteBuffer encoded = charset.encode(docstring);
     final byte[] data = new byte[encoded.limit()];

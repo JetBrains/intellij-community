@@ -36,10 +36,10 @@ import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -154,7 +154,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           }
           else if (buildMessage instanceof BuilderStatisticsMessage) {
             BuilderStatisticsMessage message = (BuilderStatisticsMessage)buildMessage;
-            LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + message.getElapsedTimeMs() + " ms");
+            LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + message.getElapsedTimeMs() + " ms, " + message.getNumberOfProcessedSources() + " sources processed");
             response = null;
           }
           else if (!(buildMessage instanceof BuildingTargetProgressMessage)) {
@@ -445,7 +445,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
       final DataOutputStream out = new DataOutputStream(bytes);
       try {
-        out.writeInt(FSState.VERSION);
+        out.writeInt(BuildFSState.VERSION);
         out.writeLong(ordinal);
         out.writeBoolean(false);
         while (true) {
@@ -475,7 +475,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
       final DataOutputStream out = new DataOutputStream(bytes);
       try {
-        out.writeInt(FSState.VERSION);
+        out.writeInt(BuildFSState.VERSION);
         out.writeLong(myLastEventOrdinal);
         out.writeBoolean(hasWorkToDo(state, pd));
         state.save(out);
@@ -542,7 +542,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
       final int version = in.readInt();
-      if (version != FSState.VERSION) {
+      if (version != BuildFSState.VERSION) {
         return null;
       }
       final long savedOrdinal = in.readLong();
@@ -566,7 +566,13 @@ final class BuildSession implements Runnable, CanceledStatus {
   private void finishBuild(Throwable error, boolean hadBuildErrors, boolean doneSomething) {
     CmdlineRemoteProto.Message lastMessage = null;
     try {
-      if (error != null) {
+      if (error instanceof CannotLoadJpsModelException) {
+        String text = "Failed to load project configuration: " + StringUtil.decapitalize(error.getMessage());
+        String path = ((CannotLoadJpsModelException)error).getFile().getAbsolutePath();
+        lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.ERROR, text, path,
+                                                                                                    -1, -1, -1, -1, -1, -1.0f));
+      }
+      else if (error != null) {
         Throwable cause = error.getCause();
         if (cause == null) {
           cause = error;

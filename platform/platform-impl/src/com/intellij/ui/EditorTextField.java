@@ -493,6 +493,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     if (!isEnabled()) {
       editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
+        @Nullable
         @Override
         public Color getColor(ColorKey key) {
           return super.getColor(key);

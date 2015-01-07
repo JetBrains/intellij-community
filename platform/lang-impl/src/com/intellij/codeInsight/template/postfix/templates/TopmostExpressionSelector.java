@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -41,7 +42,11 @@ public class TopmostExpressionSelector implements PostfixTemplateExpressionSelec
                                @NotNull Document copyDocument,
                                int newOffset) {
     PsiElement topmostExpression = template.getPsiInfo().getTopmostExpression(context);
-    return topmostExpression != null && myCondition.value(topmostExpression);
+
+    return topmostExpression != null &&
+           topmostExpression.getTextRange().getEndOffset() == newOffset &&
+           !PsiTreeUtil.hasErrorElements(topmostExpression) &&
+           myCondition.value(topmostExpression);
   }
 
   @Override

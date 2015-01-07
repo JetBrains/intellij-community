@@ -16,6 +16,7 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
@@ -25,6 +26,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -48,9 +50,18 @@ public class XmlAttributeValueGetter implements ContextGetter {
     if (descriptor == null) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-
-    return descriptor instanceof BasicXmlAttributeDescriptor ?
-                      ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues(attribute) : descriptor.getEnumeratedValues();
+    
+    String [] result;
+    if (descriptor instanceof BasicXmlAttributeDescriptor) {
+      result = ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues(attribute);
+    }
+    else if (descriptor instanceof XmlEnumerationDescriptor) {
+      result = ((XmlEnumerationDescriptor)descriptor).getValuesForCompletion();
+    }
+    else {
+      result = descriptor.getEnumeratedValues();
+    }
+    return result != null ? StringUtil.filterEmptyStrings(result) : null;
   }
 
   private Object[] getApplicableAttributeVariants(PsiElement _context) {

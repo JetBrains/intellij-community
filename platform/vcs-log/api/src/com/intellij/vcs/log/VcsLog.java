@@ -41,15 +41,6 @@ public interface VcsLog {
   List<VcsFullCommitDetails> getSelectedDetails();
 
   /**
-   * Returns details of the given commit, if they have been already loaded.
-   * In most cases they are already in the cache, and will be returned.
-   * Otherwise null is returned.
-   * Asynchronous loading of the details which are not yet available is done automatically from the log table component.
-   */
-  @Nullable
-  VcsFullCommitDetails getDetailsIfAvailable(@NotNull Hash hash);
-
-  /**
    * Returns names of branches which contain the given commit, or null if this information is unavailable.
    */
   @Nullable

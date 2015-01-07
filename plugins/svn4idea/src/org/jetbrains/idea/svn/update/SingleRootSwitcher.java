@@ -18,15 +18,16 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class SingleRootSwitcher extends AutoSvnUpdater {
 
-  @NotNull private String myUrl;
+  @NotNull private final SVNURL myUrl;
 
-  public SingleRootSwitcher(Project project, @NotNull FilePath root, @NotNull String url) {
+  public SingleRootSwitcher(Project project, @NotNull FilePath root, @NotNull SVNURL url) {
     super(project, new FilePath[]{root});
 
     myUrl = url;

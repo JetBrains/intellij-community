@@ -18,10 +18,7 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
@@ -31,7 +28,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -56,7 +52,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.codeStyle.DisplayPriority;
@@ -261,24 +256,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
           DarculaInstaller.install();
         }
       }
-      applyChangesToEditors();
 
       reset();
     }
     finally {
       myApplyCompleted = true;
-    }
-  }
-
-  private static void applyChangesToEditors() {
-    EditorFactory.getInstance().refreshAllEditors();
-
-    TodoConfiguration.getInstance().colorSettingsChanged();
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (Project openProject : openProjects) {
-      FileStatusManager.getInstance(openProject).fileStatusesChanged();
-      DaemonCodeAnalyzer.getInstance(openProject).restart();
-      BookmarkManager.getInstance(openProject).colorsChanged();
     }
   }
 
@@ -728,9 +710,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         try {
           super.disposeUIResources();
           Disposer.dispose(myDisposable);
-          if (myRootSchemesPanel != null) {
-            myRootSchemesPanel.disposeUIResources();
-          }
         }
         finally {
           myDisposeCompleted = true;

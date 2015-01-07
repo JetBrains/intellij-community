@@ -47,7 +47,7 @@ public class StudyIntroductionCourseAction extends AnAction {
       ProjectUtil.openProject(projectDir.getPath(), null, false);
     }
     else {
-      final GenerateProjectCallback callback = new GenerateProjectCallback(null);
+      final GenerateProjectCallback callback = new GenerateProjectCallback();
       final StudyDirectoryProjectGenerator generator = new StudyDirectoryProjectGenerator();
       final Map<CourseInfo, File> courses = generator.getCourses();
       CourseInfo introCourse = null;
@@ -60,7 +60,7 @@ public class StudyIntroductionCourseAction extends AnAction {
         introCourse = StudyUtils.getFirst(courses.keySet());
       }
       generator.setSelectedCourse(introCourse);
-      final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback, true);
+      final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);
 
       step.createPanel(); // initialize panel to set location
       step.setLocation(projectDir.toString());

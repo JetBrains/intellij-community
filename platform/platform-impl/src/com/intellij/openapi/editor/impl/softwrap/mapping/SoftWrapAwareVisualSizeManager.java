@@ -40,11 +40,6 @@ public class SoftWrapAwareVisualSizeManager extends SoftWrapAwareDocumentParsing
 
   private SoftWrapPainter myPainter;
 
-  /**
-   * There is a possible case that particular recalculation finished abruptly
-   * (see {@link #onRecalculationEnd(IncrementalCacheUpdateEvent, boolean)}). We need to know last processed logical line
-   * then in order to correctly notify the listeners.
-   */
   private int myLastLogicalLine;
 
   public SoftWrapAwareVisualSizeManager(@NotNull SoftWrapPainter painter) {
@@ -61,7 +56,7 @@ public class SoftWrapAwareVisualSizeManager extends SoftWrapAwareDocumentParsing
   }
 
   @Override
-  public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event, boolean normal) {
+  public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
     if (myListeners.isEmpty()) {
       return;
     }

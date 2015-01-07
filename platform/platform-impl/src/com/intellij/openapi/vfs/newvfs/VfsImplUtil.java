@@ -310,7 +310,6 @@ public class VfsImplUtil {
       String rootPath = handlerPair.first.convertLocalToRootPath(path);
       NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, handlerPair.first);
       if (root != null) {
-        root.markDirtyRecursively();
         if (rootsToRefresh == null) rootsToRefresh = ContainerUtil.newHashMap();
         rootsToRefresh.put(path, root);
       }
@@ -318,6 +317,9 @@ public class VfsImplUtil {
 
     void scheduleRefresh() {
       if (rootsToRefresh != null) {
+        for(VirtualFile root:rootsToRefresh.values()) {
+          ((NewVirtualFile)root).markDirtyRecursively();
+        }
         ZipFileCache.reset(rootsToRefresh.keySet());
         boolean async = !ApplicationManager.getApplication().isUnitTestMode();
         RefreshQueue.getInstance().refresh(async, true, null, rootsToRefresh.values());

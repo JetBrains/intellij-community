@@ -24,13 +24,13 @@ import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
+public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public XmlNamespacesTest() {
@@ -190,7 +190,7 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
                                        "        xsi:schemaLocation=\"http://www.w3.org/2001/XMLSchema http://www.w3.org/2001/XMLSchema.xsd\n" +
                                        "                http://www.w3.org/2001/XInclude http://www.w3.org/2001/XInclude.xsd\">\n" +
                                        "\n" +
-                                       "    <<error descr=\"An 'include' failed, and no 'fallback' element was found.\">include</error> xmlns=\"http://www.w3.org/2001/XInclude\" href=\"<error descr=\"Cannot resolve file 'a.xml'\">a.xml</error>\"/>\n" +
+                                       "    <include xmlns=\"http://www.w3.org/2001/XInclude\" href=\"a.xml\"/>\n" +
                                        "</x:all>");
     myFixture.testHighlighting();
   }
@@ -288,10 +288,5 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/xml/tests/testData/unusedNs";
-  }
-
-  @Override
-  protected boolean isCommunity() {
-    return true;
   }
 }

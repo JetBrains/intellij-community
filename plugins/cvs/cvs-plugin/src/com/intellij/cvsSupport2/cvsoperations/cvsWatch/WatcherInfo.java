@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsWatch;
 
-
+import com.intellij.openapi.util.text.StringUtil;
 
 /**
  * author: lesya
@@ -28,16 +28,7 @@ public class WatcherInfo {
   public static WatcherInfo createOn(String string){
     String[] strings = string.split("\t");
     if (strings.length < 2) return null;
-    return new WatcherInfo(strings[0], strings[1], createActionsOn(strings));
-  }
-
-  private static String createActionsOn(String[] strings) {
-    StringBuffer result = new StringBuffer();
-    for (int i = 2; i < strings.length; i++) {
-      result.append(strings[i]);
-      if (i < strings.length - 1) result.append(", ");
-    }
-    return result.toString();
+    return new WatcherInfo(strings[0], strings[1], StringUtil.join(strings, ", "));
   }
 
   private WatcherInfo(String file, String user, String actions) {

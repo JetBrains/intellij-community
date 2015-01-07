@@ -191,7 +191,8 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
   private void showPopupMenu() {
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, createActionGroup(),
                                                                           DataManager.getInstance().getDataContext(this),
-                                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+                                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                                          false);
     popup.showUnderneathOf(this);
   }
 

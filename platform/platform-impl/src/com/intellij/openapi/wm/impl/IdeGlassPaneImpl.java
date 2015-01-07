@@ -109,8 +109,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
     if (e instanceof MouseEvent) {
       MouseEvent me = (MouseEvent)e;
-      Window eventWindow =
-        me.getComponent() instanceof Window ? (Window)me.getComponent() : SwingUtilities.getWindowAncestor(me.getComponent());
+      Window eventWindow = UIUtil.getWindow(me.getComponent());
 
       if (isContextMenu(eventWindow)) return false;
 
@@ -155,7 +154,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     MouseEvent me = (MouseEvent)e;
     final Component meComponent = me.getComponent();
     if (!dispatched && meComponent != null) {
-      final Window eventWindow = meComponent instanceof Window ? (Window)meComponent : SwingUtilities.getWindowAncestor(meComponent);
+      final Window eventWindow = UIUtil.getWindow(meComponent);
       if (eventWindow != SwingUtilities.getWindowAncestor(myRootPane)) {
         return false;
       }

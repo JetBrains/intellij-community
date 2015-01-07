@@ -28,7 +28,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DisposableIterator;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -45,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.MarkupModelImpl");
@@ -142,9 +144,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
                                       @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    RangeHighlighterData.ChangeResult changed = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
-    if (changed != RangeHighlighterData.ChangeResult.NOT_CHANGED) {
-      fireAttributesChanged(highlighter, changed == RangeHighlighterData.ChangeResult.RENDERERS_CHANGED);
+    RangeHighlighterImpl.ChangeResult changed = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
+    if (changed != RangeHighlighterImpl.ChangeResult.NOT_CHANGED) {
+      fireAttributesChanged(highlighter, changed == RangeHighlighterImpl.ChangeResult.RENDERERS_CHANGED);
     }
   }
 
@@ -211,7 +213,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     });
   }
 
-  public void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
+  void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
     boolean success = myListeners.remove(listener);
     LOG.assertTrue(success);
   }
@@ -279,53 +281,20 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   @NotNull
-  public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
+  public IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     startOffset = Math.max(0,startOffset);
-    IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> exact = myHighlighterTree.overlappingIterator(new TextRangeInterval(startOffset, Math.max(startOffset, endOffset)));
-    IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> lines = myHighlighterTreeForLines.overlappingIterator(roundToLineBoundaries(startOffset, endOffset));
-    return merge(exact, lines);
-  }
-
-  @NotNull
-  private static <T extends RangeHighlighterEx> DisposableIterator<T> merge(@NotNull final IntervalTreeImpl.PeekableIterator<T> iterator1, @NotNull final IntervalTreeImpl.PeekableIterator<T> iterator2) {
-    return new DisposableIterator<T>() {
-      @Override
-      public void dispose() {
-        iterator1.dispose();
-        iterator2.dispose();
-      }
-
-      @Override
-      public boolean hasNext() {
-        return iterator1.hasNext() || iterator2.hasNext();
-      }
-
-      @Override
-      public T next() {
-        T t1 = iterator1.hasNext() ? iterator1.peek() : null;
-        T t2 = iterator2.hasNext() ? iterator2.peek() : null;
-        if (t1 == null) {
-          return iterator2.next();
-        }
-        if (t2 == null) {
-          return iterator1.next();
-        }
-        int compare = RangeHighlighterEx.BY_AFFECTED_START_OFFSET.compare(t1, t2);
-        return (compare < 0 ? iterator1 : iterator2).next();
-      }
-
-      @Override
-      public void remove() {
-        throw new NoSuchElementException();
-      }
-    };
+    endOffset = Math.max(startOffset, endOffset);
+    return IntervalTreeImpl
+      .mergingOverlappingIterator(myHighlighterTree, new TextRangeInterval(startOffset, endOffset), myHighlighterTreeForLines,
+                                  roundToLineBoundaries(startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
   }
 
   @NotNull
   private TextRangeInterval roundToLineBoundaries(int startOffset, int endOffset) {
     Document document = getDocument();
-    int lineStartOffset = startOffset <= 0 ? 0 : document.getLineStartOffset(document.getLineNumber(startOffset));
-    int lineEndOffset = endOffset <= 0 ? 0 : endOffset >= document.getTextLength() ? document.getTextLength() : document.getLineEndOffset(document.getLineNumber(endOffset));
+    int textLength = document.getTextLength();
+    int lineStartOffset = startOffset <= 0 ? 0 : startOffset > textLength ? textLength : document.getLineStartOffset(document.getLineNumber(startOffset));
+    int lineEndOffset = endOffset <= 0 ? 0 : endOffset >= textLength ? textLength : document.getLineEndOffset(document.getLineNumber(endOffset));
     return new TextRangeInterval(lineStartOffset, lineEndOffset);
   }
 }

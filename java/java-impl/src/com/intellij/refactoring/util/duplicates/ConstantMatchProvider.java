@@ -58,7 +58,7 @@ class ConstantMatchProvider implements MatchProvider {
   }
 
   @Override
-  public boolean hasDuplicates() {
+  public Boolean hasDuplicates() {
     return !myMatches.isEmpty();
   }
 

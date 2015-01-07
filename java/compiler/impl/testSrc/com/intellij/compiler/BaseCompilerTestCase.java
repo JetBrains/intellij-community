@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -266,7 +265,6 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
         };
         myProject.save();
         CompilerTestUtil.saveApplicationSettings();
-        CompilerTestUtil.scanSourceRootsToRecompile(myProject);
         action.run(callback);
       }
     });
@@ -300,10 +298,10 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     changeFile(file, null);
   }
 
-  protected void changeFile(VirtualFile file, final String newText) {
+  protected void changeFile(final VirtualFile file, @Nullable final String newText) {
     try {
       if (newText != null) {
-        VfsUtil.saveText(file, newText);
+        setFileText(file, newText);
       }
       ((NewVirtualFile)file).setTimeStamp(file.getTimeStamp() + 10);
     }

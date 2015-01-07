@@ -80,7 +80,7 @@ public class CreateClassUtil {
         aClass = JavaDirectoryService.getInstance().createClass(directory, rawClassName);
       }
       else {
-        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
+        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
         FileTemplate fileTemplate = fileTemplateManager.getJ2eeTemplate(templateName);
         LOG.assertTrue(fileTemplate != null, templateName + " not found");
         final String text = fileTemplate.getText(attributes);
@@ -132,13 +132,13 @@ public class CreateClassUtil {
 
   @Nullable
   public static PsiClass createClassNamed(String newClassName, String templateName, @NotNull PsiDirectory directory) throws IncorrectOperationException {
-    return createClassNamed(newClassName, FileTemplateManager.getInstance().getDefaultProperties(directory.getProject()), templateName, directory);
+    return createClassNamed(newClassName, FileTemplateManager.getInstance(directory.getProject()).getDefaultProperties(), templateName, directory);
   }
 
   @Nullable
   public static PsiClass createClassNamed(String newClassName, Map classProperties, String templateName, @NotNull PsiDirectory directory)
     throws IncorrectOperationException {
-    Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties(directory.getProject());
+    Properties defaultProperties = FileTemplateManager.getInstance(directory.getProject()).getDefaultProperties();
     Properties properties = new Properties(defaultProperties);
     properties.putAll(classProperties);
 
@@ -179,7 +179,7 @@ public class CreateClassUtil {
     try {
       final Properties properties = ApplicationManager.getApplication().isUnitTestMode() ?
                                     new Properties() :
-                                    FileTemplateManager.getInstance().getDefaultProperties(classDirectory.getProject());
+                                    FileTemplateManager.getInstance(classDirectory.getProject()).getDefaultProperties();
       return createClassNamed(className, new Properties(properties), templateName, classDirectory);
     }
     catch (IncorrectOperationException e) {

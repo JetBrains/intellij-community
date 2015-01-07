@@ -289,6 +289,7 @@ public abstract class TestObject implements JavaCommandLine {
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration, executor);
     final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, myEnvironment, unboundOutputRoot);
+    Disposer.register(myConfiguration.getProject(), consoleView);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
     unboundOutputRoot.setPrinter(consoleView.getPrinter());
@@ -392,6 +393,7 @@ public abstract class TestObject implements JavaCommandLine {
       JUNIT_TEST_FRAMEWORK_NAME,
       testConsoleProperties,
       myEnvironment, null);
+    Disposer.register(myConfiguration.getProject(), consoleView);
     consoleView.attachToProcess(handler);
 
     RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView, testConsoleProperties);

@@ -72,7 +72,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_refresh_with_new_tagged_branch() throws VcsException {
     prepareSomeHistory();
-    Set<VcsRef> prevRefs = readAllRefs();
+    Set<VcsRef> prevRefs = GitTestUtil.readAllRefs(myProjectRoot, myObjectsFactory);
     createTaggedBranch();
 
     List<VcsCommitMetadata> expectedLog = log();
@@ -82,11 +82,11 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_refresh_when_new_tag_moved() throws VcsException {
     prepareSomeHistory();
-    Set<VcsRef> prevRefs = readAllRefs();
+    Set<VcsRef> prevRefs = GitTestUtil.readAllRefs(myProjectRoot, myObjectsFactory);
     git("tag -f ATAG");
 
     List<VcsCommitMetadata> expectedLog = log();
-    Set<VcsRef> refs = readAllRefs();
+    Set<VcsRef> refs = GitTestUtil.readAllRefs(myProjectRoot, myObjectsFactory);
     VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, true, prevRefs));
     assertSameElements(block.getCommits(), expectedLog);
     assertSameElements(block.getRefs(), refs);
@@ -94,23 +94,14 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_new_tag_on_old_commit() throws VcsException {
     prepareSomeHistory();
-    Set<VcsRef> prevRefs = readAllRefs();
+    Set<VcsRef> prevRefs = GitTestUtil.readAllRefs(myProjectRoot, myObjectsFactory);
     List<VcsCommitMetadata> log = log();
     String firstCommit = log.get(log.size() - 1).getId().asString();
     git("tag NEW_TAG " + firstCommit);
 
-    Set<VcsRef> refs = readAllRefs();
+    Set<VcsRef> refs = GitTestUtil.readAllRefs(myProjectRoot, myObjectsFactory);
     VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, true, prevRefs));
     assertSameElements(block.getRefs(), refs);
-  }
-
-  private Set<VcsRef> readAllRefs() {
-    String[] refs = StringUtil.splitByLines(git("log --branches --tags --no-walk --format=%H%d --decorate=full"));
-    Set<VcsRef> result = ContainerUtil.newHashSet();
-    for (String ref : refs) {
-      result.addAll(new RefParser(myObjectsFactory).parseCommitRefs(ref, myProjectRoot));
-    }
-    return result;
   }
 
   public void test_all_log_with_tagged_branch() throws VcsException {
@@ -141,6 +132,29 @@ public class GitLogProviderTest extends GitSingleRepoTest {
       @Override
       public boolean value(VcsRef ref) {
         return ref.getName().equals("origin/HEAD");
+      }
+    }));
+  }
+
+  public void test_support_equally_named_branch_and_tag() throws Exception {
+    prepareSomeHistory();
+    git("branch build");
+    git("tag build");
+
+    VcsLogProvider.DetailedLogData data = myLogProvider.readFirstBlock(myProjectRoot,
+                                                                        new RequirementsImpl(1000, true, Collections.<VcsRef>emptySet()));
+    List<VcsCommitMetadata> expectedLog = log();
+    assertOrderedEquals(data.getCommits(), expectedLog);
+    assertTrue(ContainerUtil.exists(data.getRefs(), new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return ref.getName().equals("build") && ref.getType() == GitRefManager.LOCAL_BRANCH;
+      }
+    }));
+    assertTrue(ContainerUtil.exists(data.getRefs(), new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return ref.getName().equals("build") && ref.getType() == GitRefManager.TAG;
       }
     }));
   }

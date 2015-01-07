@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
+  @NotNull
   protected final Project myProject;
   private final String myName;
   private final VcsKey myKey;
@@ -80,7 +81,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     }
   }
 
-  public AbstractVcs(final Project project, final String name) {
+  public AbstractVcs(@NotNull Project project, final String name) {
     super(project);
 
     myProject = project;
@@ -89,7 +90,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   // for tests only
-  protected AbstractVcs(final Project project, String name, VcsKey key) {
+  protected AbstractVcs(@NotNull Project project, String name, VcsKey key) {
     super();
     myProject = project;
     myName = name;
@@ -493,6 +494,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return scope;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }

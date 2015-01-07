@@ -333,6 +333,11 @@ public class GeneralCommandLine implements UserDataHolder {
         environment.putAll(myEnvParams);
       }
     }
+    if (SystemInfo.isWindows) {
+      // (Windows) An environment variable with empty name is incorrect.
+      // It'll end up in "CreateProcess error=87, The parameter is incorrect".
+      environment.remove("");
+    }
   }
 
   /**

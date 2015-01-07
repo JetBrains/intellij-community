@@ -116,8 +116,10 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
           }
 
           @Override
-          public void visitClass(PsiClass aClass) {
-          }
+          public void visitClass(PsiClass aClass) {}
+
+          @Override
+          public void visitLambdaExpression(PsiLambdaExpression expression) {}
         });
       }
     } else if (myElement instanceof PsiParameter && ((PsiParameter)myElement).getDeclarationScope() instanceof PsiMethod) {

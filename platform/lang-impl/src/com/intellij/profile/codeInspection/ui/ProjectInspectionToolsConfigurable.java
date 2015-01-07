@@ -43,25 +43,13 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   }
 
   @Override
-  public void apply() throws ConfigurationException {
-    super.apply();
-    final InspectionProfileImpl selectedObject = getSelectedObject();
-    final String profileName = selectedObject.getName();
-    final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
-    LOG.assertTrue(selectedPanel != null, "selected profile: " + profileName + " panels: " + Arrays.toString(getKnownNames().toArray()));
-    if (selectedPanel.isProfileShared()) {
-      myProjectProfileManager.setProjectProfile(profileName);
+  protected void applyRootProfile(String name, boolean isShared) {
+    if (isShared) {
+      myProjectProfileManager.setProjectProfile(name);
     } else {
-      myProfileManager.setRootProfile(profileName);
+      myProfileManager.setRootProfile(name);
       myProjectProfileManager.setProjectProfile(null);
     }
     InspectionProfileManagerImpl.onProfilesChanged();
-  }
-
-  @Override
-  public boolean isModified() {
-    final InspectionProfileImpl selectedObject = getSelectedObject();
-    if (!Comparing.strEqual(getCurrentProfile().getName(), selectedObject.getName())) return true;
-    return super.isModified();
   }
 }

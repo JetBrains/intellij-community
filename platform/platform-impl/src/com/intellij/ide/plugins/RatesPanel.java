@@ -52,9 +52,12 @@ public class RatesPanel extends JPanel {
 
   public void setRate(String rating) {
     Double dblRating = 0d;
-    try {
-      dblRating = Double.valueOf(rating);
-    } catch (Exception ignore) {}
+    if (rating != null) {
+      try {
+        dblRating = Double.valueOf(rating);
+      }
+      catch (NumberFormatException ignore) { }
+    }
 
     final int intRating = dblRating.intValue();
 

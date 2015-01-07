@@ -1,6 +1,6 @@
 Properties file:Prop1.properties
   PropertiesList
     Property:xx
-      PsiElement(Properties:KEY_CHARACTERS)('xx')
+      Property key: xx('xx')
       PsiElement(Properties:KEY_VALUE_SEPARATOR)('=')
       Property value: yyy('yyy')

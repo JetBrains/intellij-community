@@ -51,7 +51,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   );
 
   private List<ConfigurableWebBrowser> browsers;
-
+  private boolean myShowBrowserHover = true;
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
 
   public WebBrowserManager() {
@@ -102,6 +102,9 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     Element state = new Element("state");
     if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
       state.setAttribute("default", defaultBrowserPolicy.name().toLowerCase(Locale.ENGLISH));
+    }
+    if (!myShowBrowserHover) {
+      state.setAttribute("showHover", "false");
     }
 
     for (ConfigurableWebBrowser browser : browsers) {
@@ -205,6 +208,8 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
         LOG.warn(e);
       }
     }
+
+    myShowBrowserHover = !"false".equals(element.getAttributeValue("showHover"));
 
     List<ConfigurableWebBrowser> list = new ArrayList<ConfigurableWebBrowser>();
     for (Element child : element.getChildren("browser")) {
@@ -387,5 +392,13 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       }
     }
     return null;
+  }
+
+  public void setShowBrowserHover(boolean showBrowserHover) {
+    myShowBrowserHover = showBrowserHover;
+  }
+
+  public boolean isShowBrowserHover() {
+    return myShowBrowserHover;
   }
 }

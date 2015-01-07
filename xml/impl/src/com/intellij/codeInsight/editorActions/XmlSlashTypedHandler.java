@@ -144,8 +144,21 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  public boolean shouldReplace(XmlTag tag, XmlTag tag1) {
+  private static boolean shouldReplace(XmlTag tag, XmlTag tag1) {
     return tag1 != null && tag1 != tag && tag1.getTextOffset() > tag.getTextOffset() &&
-           XmlUtil.getTokenOfType(tag1, XmlTokenType.XML_EMPTY_ELEMENT_END) == null && XmlTagUtil.getEndTagNameElement(tag1) == null;
+           hasUnclosedParent(tag1);
+  }
+
+  private static boolean hasUnclosedParent(XmlTag tag) {
+    String name = tag.getName();
+    while (tag != null) {
+      if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null &&
+          XmlTagUtil.getEndTagNameElement(tag) == null &&
+          name.equals(tag.getName())) {
+        return true;
+      }
+      tag = tag.getParentTag();
+    }
+    return false;
   }
 }

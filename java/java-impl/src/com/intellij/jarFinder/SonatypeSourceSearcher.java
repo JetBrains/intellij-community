@@ -1,10 +1,7 @@
 package com.intellij.jarFinder;
 
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Pair;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.xpath.XPath;
@@ -18,7 +15,6 @@ import java.util.List;
  * @author Sergey Evdokimov
  */
 public class SonatypeSourceSearcher extends SourceSearcher {
-
   private static final Logger LOG = Logger.getInstance(SonatypeSourceSearcher.class);
 
   @Nullable
@@ -32,11 +28,7 @@ public class SonatypeSourceSearcher extends SourceSearcher {
       indicator.checkCanceled();
 
       String url = "https://oss.sonatype.org/service/local/lucene/search?collapseresults=true&c=sources&a=" + artifactId + "&v=" + version;
-      Document document = readDocumentCancelable(indicator, url);
-
-      indicator.checkCanceled();
-
-      List<Element> artifactList = (List<Element>)XPath.newInstance("/searchNGResponse/data/artifact").selectNodes(document);
+      List<Element> artifactList = (List<Element>)XPath.newInstance("/searchNGResponse/data/artifact").selectNodes(readDocumentCancelable(indicator, url));
       if (artifactList.isEmpty()) {
         return null;
       }
@@ -61,17 +53,11 @@ public class SonatypeSourceSearcher extends SourceSearcher {
       String groupId = element.getChildTextTrim("groupId");
       String repositoryId = artifactHintList.get(0).getChildTextTrim("repositoryId");
 
-      String downloadUrl = "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=" +
-                           repositoryId +
-                           "&g=" +
-                           groupId +
-                           "&a=" +
-                           artifactId +
-                           "&v=" +
-                           version +
-                           "&e=jar&c=sources";
-
-      return downloadUrl;
+      return "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=" +
+                           repositoryId + "&g=" +
+                           groupId + "&a=" +
+                           artifactId + "&v=" +
+                           version + "&e=jar&c=sources";
     }
     catch (JDOMException e) {
       LOG.warn(e);

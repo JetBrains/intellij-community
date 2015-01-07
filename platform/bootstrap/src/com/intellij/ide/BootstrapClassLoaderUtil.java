@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.ide;
 
@@ -41,7 +37,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+/**
+ * @author max
+ */
 public class BootstrapClassLoaderUtil extends ClassUtilCore {
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
@@ -54,19 +52,22 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   }
 
   @NotNull
-  public static UrlClassLoader initClassLoader(boolean updatePlugins) throws Exception {
+  public static ClassLoader initClassLoader(boolean updatePlugins) throws MalformedURLException {
     PathManager.loadProperties();
 
     List<URL> classpath = new ArrayList<URL>();
     addParentClasspath(classpath);
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
+
     UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(classpath))
-      .allowLock().useCache();
+      .allowLock()
+      .useCache();
     if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();
     }
+
     UrlClassLoader newClassLoader = builder.get();
 
     // prepare plugins
@@ -97,78 +98,50 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     return classpathElements;
   }
 
-  private static void addParentClasspath(List<URL> aClasspathElements) throws MalformedURLException {
+  private static void addParentClasspath(List<URL> classpathElements) throws MalformedURLException {
     ClassLoader loader = BootstrapClassLoaderUtil.class.getClassLoader();
     if (loader instanceof URLClassLoader) {
-      URLClassLoader urlClassLoader = (URLClassLoader)loader;
-      ContainerUtil.addAll(aClasspathElements, urlClassLoader.getURLs());
+      ContainerUtil.addAll(classpathElements, ((URLClassLoader)loader).getURLs());
     }
     else {
       String loaderName = loader.getClass().getName();
       try {
         Class<?> antClassLoaderClass = Class.forName("org.apache.tools.ant.AntClassLoader");
         if (antClassLoaderClass.isInstance(loader) ||
-            "org.apache.tools.ant.AntClassLoader".equals(loaderName) || "org.apache.tools.ant.loader.AntClassLoader2".equals(loaderName)) {
+            "org.apache.tools.ant.AntClassLoader".equals(loaderName) ||
+            "org.apache.tools.ant.loader.AntClassLoader2".equals(loaderName)) {
           String classpath = (String)antClassLoaderClass
             .getDeclaredMethod("getClasspath", ArrayUtil.EMPTY_CLASS_ARRAY)
             .invoke(loader, ArrayUtil.EMPTY_OBJECT_ARRAY);
           StringTokenizer tokenizer = new StringTokenizer(classpath, File.separator, false);
           while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
-            aClasspathElements.add(new File(token).toURI().toURL());
+            classpathElements.add(new File(token).toURI().toURL());
           }
         }
         else {
           getLogger().warn("Unknown class loader: " + loaderName);
         }
       }
-      catch (ClassCastException e) {
-        logException(loaderName, e);
-      }
-      catch (ClassNotFoundException e) {
-        logException(loaderName, e);
-      }
-      catch (NoSuchMethodException e) {
-        logException(loaderName, e);
-      }
-      catch (IllegalAccessException e) {
-        logException(loaderName, e);
-      }
-      catch (InvocationTargetException e) {
-        logException(loaderName, e);
-      }
+      catch (ClassCastException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
+      catch (ClassNotFoundException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
+      catch (NoSuchMethodException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
+      catch (IllegalAccessException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
+      catch (InvocationTargetException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
     }
   }
 
-  private static void logException(String loaderName, Exception e) {
-    getLogger().warn("Unknown class loader '" + loaderName + "'", e);
-  }
+  private static void addIDEALibraries(List<URL> classpathElements) throws MalformedURLException {
+    Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
+    String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+    assert selfRoot != null;
+    URL selfRootUrl = new File(selfRoot).getAbsoluteFile().toURI().toURL();
+    classpathElements.add(selfRootUrl);
 
-  private static void addIDEALibraries(List<URL> classpathElements) {
-    final String ideaHomePath = PathManager.getHomePath();
-    addAllFromLibFolder(ideaHomePath, classpathElements);
-  }
-
-  private static void addAllFromLibFolder(String folderPath, List<URL> classPath) {
-    try {
-      Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
-      String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-      assert selfRoot != null;
-      URL selfRootUrl = new File(selfRoot).getAbsoluteFile().toURI().toURL();
-      classPath.add(selfRootUrl);
-
-      File libFolder = new File(folderPath + File.separator + "lib");
-      addLibraries(classPath, libFolder, selfRootUrl);
-
-      File extLib = new File(libFolder, "ext");
-      addLibraries(classPath, extLib, selfRootUrl);
-
-      File antLib = new File(new File(libFolder, "ant"), "lib");
-      addLibraries(classPath, antLib, selfRootUrl);
-    }
-    catch (MalformedURLException e) {
-      getLogger().error(e);
-    }
+    File libFolder = new File(PathManager.getLibPath());
+    addLibraries(classpathElements, libFolder, selfRootUrl);
+    addLibraries(classpathElements, new File(libFolder, "ext"), selfRootUrl);
+    addLibraries(classpathElements, new File(libFolder, "ant/lib"), selfRootUrl);
   }
 
   private static void addLibraries(List<URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {

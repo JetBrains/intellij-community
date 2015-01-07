@@ -97,7 +97,7 @@ public class BegBorders {
     }
 
     public Insets getBorderInsets(Component c) {
-      return borderInsets;
+      return (Insets)borderInsets.clone();
     }
 
     public Insets getBorderInsets(Component c, Insets newInsets) {
@@ -150,7 +150,7 @@ public class BegBorders {
     }
 
     public Insets getBorderInsets(Component c) {
-      return insets;
+      return (Insets)insets.clone();
     }
   }
 

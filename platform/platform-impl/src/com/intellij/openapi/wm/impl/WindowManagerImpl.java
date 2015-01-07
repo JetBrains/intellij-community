@@ -225,7 +225,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
   @Override
   public final Rectangle getScreenBounds() {
-    return ScreenUtil.getAllScreensShape().getBounds();
+    return ScreenUtil.getAllScreensRectangle();
   }
 
   @Override

@@ -165,8 +165,11 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
             return null;
         }
 
-        // must not be an interface
-        return clazz.isInterface() ? null : clazz;
+        //exclude interfaces, non-java classes etc
+        for (GenerateToStringClassFilter filter : GenerateToStringClassFilter.EP_NAME.getExtensions()) {
+            if (!filter.canGenerateToString(clazz)) return null;
+        }
+        return clazz;
     }
 
     public static class MemberChooserHeaderPanel extends JPanel {
@@ -189,7 +192,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
             comboBox = new ComboBox(all);
             settingsButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    final TemplatesPanel ui = new TemplatesPanel();
+                  final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
                   Disposable disposable = Disposer.newDisposable();
                   Configurable composite = new TabbedConfigurable(disposable) {
                         protected List<Configurable> createConfigurables() {

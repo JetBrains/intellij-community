@@ -75,8 +75,10 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
           PsiDocumentManagerBase.addRunOnCommit(document, new Runnable() {
             @Override
             public void run() {
-              updateChangesForDocument(document);
-              document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
+              if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) != null) {
+                updateChangesForDocument(document);
+                document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
+              }
             }
           });
         }
@@ -89,8 +91,9 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
       }
 
       @Override
-      public void transactionCompleted(@NotNull final Document doc, @NotNull final PsiFile file) {
-        updateChangesForDocument(doc);
+      public void transactionCompleted(@NotNull final Document document, @NotNull final PsiFile file) {
+        updateChangesForDocument(document);
+        document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null); // ensure we don't call updateChangesForDocument() twice which can lead to whole file re-highlight
       }
     });
   }

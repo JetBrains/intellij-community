@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,31 +21,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
-import com.intellij.util.io.UrlConnectionUtil;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.Responses;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URL;
 
-/**
- * @author nik
- */
 public class DefaultRemoteContentProvider extends RemoteContentProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.http.DefaultRemoteContentProvider");
-  private static final int CONNECT_TIMEOUT = 60 * 1000;
-  private static final int READ_TIMEOUT = 60 * 1000;
+  private static final Logger LOG = Logger.getInstance(DefaultRemoteContentProvider.class);
 
   @Override
   public boolean canProvideContent(@NotNull Url url) {
@@ -64,92 +55,46 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
 
   private static void downloadContent(@NotNull final Url url, final File file, final DownloadingCallback callback) {
     LOG.debug("Downloading started: " + url);
-    InputStream input = null;
-    OutputStream output = null;
+    final String presentableUrl = StringUtil.trimMiddle(url.trimParameters().toDecodedForm(), 40);
+    callback.setProgressText(VfsBundle.message("download.progress.connecting", presentableUrl), true);
     try {
-      String presentableUrl = StringUtil.trimMiddle(url.trimParameters().toDecodedForm(), 40);
-      callback.setProgressText(VfsBundle.message("download.progress.connecting", presentableUrl), true);
-      HttpURLConnection connection = (HttpURLConnection)new URL(url.toExternalForm()).openConnection();
-      connection.setRequestProperty("User-Agent", Responses.getServerHeaderValue());
-      connection.setConnectTimeout(CONNECT_TIMEOUT);
-      connection.setReadTimeout(READ_TIMEOUT);
-      if (connection instanceof HttpsURLConnection) {
-        try {
-          HttpsURLConnection httpsConnection = (HttpsURLConnection)connection;
-          httpsConnection.setHostnameVerifier(new HostnameVerifier() {
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-              return true;
+      HttpRequests.request(url.toExternalForm())
+        .connectTimeout(60 * 1000)
+        .productNameAsUserAgent()
+        .hostNameVerifier(CertificateManager.HOSTNAME_VERIFIER)
+        .connect(new HttpRequests.RequestProcessor<Object>() {
+          @Override
+          public Object process(@NotNull HttpRequests.Request request) throws IOException {
+            if (!request.isSuccessful()) {
+              throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", ((HttpURLConnection)request.getConnection()).getResponseCode()));
             }
-          });
-          httpsConnection.setSSLSocketFactory(CertificateManager.getInstance().getSslContext().getSocketFactory());
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-      }
-      input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, new EmptyProgressIndicator());
 
-      final int responseCode = connection.getResponseCode();
-      if (responseCode != HttpURLConnection.HTTP_OK) {
-        throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
-      }
+            int size = request.getConnection().getContentLength();
+            callback.setProgressText(VfsBundle.message("download.progress.downloading", presentableUrl), size == -1);
+            request.saveToFile(file, new AbstractProgressIndicatorExBase() {
+              @Override
+              public void setFraction(double fraction) {
+                callback.setProgressFraction(0);
+              }
+            });
 
-      final int size = connection.getContentLength();
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      output = new BufferedOutputStream(new FileOutputStream(file));
-      callback.setProgressText(VfsBundle.message("download.progress.downloading", presentableUrl), size == -1);
-      if (size != -1) {
-        callback.setProgressFraction(0);
-      }
+            FileType fileType = RemoteFileUtil.getFileType(request.getConnection().getContentType());
+            if (fileType == FileTypes.PLAIN_TEXT) {
+              FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(PathUtilRt.getFileName(url.getPath()));
+              if (fileTypeByFileName != FileTypes.UNKNOWN) {
+                fileType = fileTypeByFileName;
+              }
+            }
 
-      FileType fileType = RemoteFileUtil.getFileType(connection.getContentType());
-      if (fileType == FileTypes.PLAIN_TEXT) {
-        FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(PathUtilRt.getFileName(url.getPath()));
-        if (fileTypeByFileName != FileTypes.UNKNOWN) {
-          fileType = fileTypeByFileName;
-        }
-      }
-
-      int len;
-      final byte[] buf = new byte[1024];
-      int count = 0;
-      while ((len = input.read(buf)) > 0) {
-        if (callback.isCancelled()) {
-          return;
-        }
-        count += len;
-        if (size > 0) {
-          callback.setProgressFraction((double)count / size);
-        }
-        output.write(buf, 0, len);
-      }
-      output.close();
-      output = null;
-      LOG.debug("Downloading finished, " + size + " bytes downloaded");
-      callback.finished(fileType);
+            LOG.debug("Downloading finished, " + size + " bytes downloaded");
+            callback.finished(fileType);
+            return null;
+          }
+        });
     }
     catch (IOException e) {
       LOG.info(e);
       callback.errorOccurred(VfsBundle.message("cannot.load.remote.file", url, e.getMessage()), false);
-    }
-    finally {
-      if (input != null) {
-        try {
-          input.close();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-      }
-      if (output != null) {
-        try {
-          output.close();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-      }
     }
   }
 

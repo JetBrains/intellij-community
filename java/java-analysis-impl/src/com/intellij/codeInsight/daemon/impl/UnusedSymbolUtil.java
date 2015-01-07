@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 public class UnusedSymbolUtil {
   private static final ImplicitUsageProvider[] ourImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
 
-  static boolean isInjected(@NotNull Project project, @NotNull PsiModifierListOwner modifierListOwner) {
+  public static boolean isInjected(@NotNull Project project, @NotNull PsiModifierListOwner modifierListOwner) {
     return EntryPointsManagerBase.getInstance(project).isEntryPoint(modifierListOwner);
   }
 
@@ -57,7 +57,7 @@ public class UnusedSymbolUtil {
     return false;
   }
 
-  static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @NotNull ProgressIndicator progress) {
+  public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @NotNull ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
       progress.checkCanceled();
       if (provider.isImplicitRead(element)) {
@@ -67,9 +67,9 @@ public class UnusedSymbolUtil {
     return isInjected(project, element);
   }
 
-  static boolean isImplicitWrite(@NotNull Project project,
-                                 @NotNull PsiVariable element,
-                                 @NotNull ProgressIndicator progress) {
+  public static boolean isImplicitWrite(@NotNull Project project,
+                                        @NotNull PsiVariable element,
+                                        @NotNull ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
       progress.checkCanceled();
       if (provider.isImplicitWrite(element)) {
@@ -119,10 +119,10 @@ public class UnusedSymbolUtil {
                                            @NotNull GlobalUsageHelper helper) {
     if (helper.isLocallyUsed(method)) return true;
 
-    boolean aPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
+    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     PsiClass containingClass = method.getContainingClass();
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return true;
-    if (aPrivate) {
+    if (isPrivate) {
       if (isIntentionalPrivateConstructor(method, containingClass)) {
         return true;
       }
@@ -261,6 +261,7 @@ public class UnusedSymbolUtil {
       options.isSearchForTextOccurrences = true;
     }
     options.isUsages = true;
+    options.searchScope = useScope;
     return JavaFindUsagesHelper.processElementUsages(member, options, usageInfoProcessor);
   }
 
@@ -314,7 +315,6 @@ public class UnusedSymbolUtil {
 
   private static boolean isIntentionalPrivateConstructor(@NotNull PsiMethod method, PsiClass containingClass) {
     return method.isConstructor() &&
-           method.getParameterList().getParametersCount() == 0 &&
            containingClass != null &&
            containingClass.getConstructors().length == 1;
   }

@@ -140,7 +140,7 @@ public class ParametersFolder {
       if (nameInfo.names.length > 0) {
         data.name = nameInfo.names[0];
       }
-      setUniqueName(data);
+      setUniqueName(data, scope, mostRanked);
     }
 
     return mostRanked != null;
@@ -165,12 +165,19 @@ public class ParametersFolder {
     return false;
   }
 
-  private void setUniqueName(VariableData data) {
+  private void setUniqueName(VariableData data, LocalSearchScope scope, PsiExpression expr) {
+    String name = data.name;
     int idx = 1;
-    while (myUsedNames.contains(data.name)) {
-      data.name += idx;
+    while (true) {
+      if (myUsedNames.add(name)) {
+        final PsiVariable definedVariable = PsiResolveHelper.SERVICE.getInstance(expr.getProject()).resolveReferencedVariable(name, expr);
+        if (definedVariable == null || !scope.containsRange(expr.getContainingFile(), definedVariable.getTextRange())) {
+          data.name = name;
+          break;
+        }
+      }
+      name = data.name + idx++;
     }
-    myUsedNames.add(data.name);
   }
 
   private static Set<PsiVariable> findUsedVariables(VariableData data, final List<? extends PsiVariable> inputVariables,
@@ -263,7 +270,7 @@ public class ParametersFolder {
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiVariable) {
           final PsiVariable variable = (PsiVariable)resolved;
-          if (!inputVariables.contains(variable)) {
+          if (!(variable instanceof PsiField) && !inputVariables.contains(variable)) {
             localVarsUsed[0] = true;
             return;
           }

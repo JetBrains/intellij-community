@@ -58,18 +58,23 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
   @Override
   public String[] getEnumeratedValues() {
-    return getEnumeratedValues(null);
+    return getEnumeratedValues(false);
   }
 
-  public String[] getEnumeratedValues(XmlElement context) {
+  @Override
+  public String[] getValuesForCompletion() {
+    return getEnumeratedValues(true);
+  }
+
+  private String[] getEnumeratedValues(boolean forCompletion) {
     final List<String> list = new SmartList<String>();
-    processEnumeration(context, new PairProcessor<PsiElement, String>() {
+    processEnumeration(null, new PairProcessor<PsiElement, String>() {
       @Override
       public boolean process(PsiElement element, String s) {
         list.add(s);
         return true;
       }
-    });
+    }, forCompletion);
     String defaultValue = getDefaultValue();
     if (defaultValue != null) {
       list.add(defaultValue);
@@ -77,12 +82,12 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
     return ArrayUtil.toStringArray(list);
   }
 
-  private boolean processEnumeration(XmlElement context, PairProcessor<PsiElement, String> processor) {
+  private boolean processEnumeration(XmlElement context, PairProcessor<PsiElement, String> processor, boolean forCompletion) {
     XmlTag contextTag = context != null ? PsiTreeUtil.getContextOfType(context, XmlTag.class, false) : null;
     final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(getDeclaration(), contextTag);
 
     if (elementDescriptor!=null && elementDescriptor.getType() instanceof ComplexTypeDescriptor) {
-      return processEnumerationImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration(), processor);
+      return processEnumerationImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration(), processor, forCompletion);
     }
 
     final String namespacePrefix = getDeclaration().getNamespacePrefix();
@@ -91,17 +96,24 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
     );
 
     if (type != null) {
-      return processEnumerationImpl(type, processor);
+      return processEnumerationImpl(type, processor, forCompletion);
     }
 
     return false;
   }
 
-  private boolean processEnumerationImpl(final XmlTag declaration, final PairProcessor<PsiElement, String> pairProcessor) {
-    if ("boolean".equals(declaration.getAttributeValue("name"))) {
-      XmlAttributeValue valueElement = declaration.getAttribute("name").getValueElement();
+  private boolean processEnumerationImpl(final XmlTag declaration,
+                                         final PairProcessor<PsiElement, String> pairProcessor,
+                                         boolean forCompletion) {
+    XmlAttribute name = declaration.getAttribute("name");
+    if (name != null && "boolean".equals(name.getValue())) {
+      XmlAttributeValue valueElement = name.getValueElement();
       pairProcessor.process(valueElement, "true");
       pairProcessor.process(valueElement, "false");
+      if (!forCompletion) {
+        pairProcessor.process(valueElement, "1");
+        pairProcessor.process(valueElement, "0");
+      }
       myExhaustiveEnum = true;
       return true;
     }
@@ -132,7 +144,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
   @Override
   public boolean isEnumerated(@Nullable XmlElement context) {
-    return processEnumeration(context, PairProcessor.TRUE);
+    return processEnumeration(context, PairProcessor.TRUE, false);
   }
 
   @Override
@@ -147,7 +159,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
         }
         return true;
       }
-    });
+    }, false);
     return result.get();
   }
 

@@ -17,6 +17,7 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +50,7 @@ public interface FileTemplate extends Cloneable {
   String ATTRIBUTE_NAME = "NAME";
   String ATTRIBUTE_FILE_NAME = "FILE_NAME";
 
-  @NotNull String[] getUnsetAttributes(@NotNull Properties properties) throws ParseException;
-
+  /** Name without extension */
   @NotNull String getName();
 
   void setName(@NotNull String name);
@@ -82,4 +82,6 @@ public interface FileTemplate extends Cloneable {
   void setReformatCode(boolean reformat);
 
   FileTemplate clone();
+
+  @NotNull String[] getUnsetAttributes(@NotNull Properties properties, Project project) throws ParseException;
 }

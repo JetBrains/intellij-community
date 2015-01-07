@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,16 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.IntegratedSelectedOptionsDialog;
 import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
@@ -196,7 +197,7 @@ public class SvnMergeInfoRootPanelManual {
     gb.gridx = 0;
     gb.gridwidth = 2;
     myMixedRevisions = new JTextArea("Mixed Revision Working Copy");
-    myMixedRevisions.setForeground(Color.red);
+    myMixedRevisions.setForeground(JBColor.RED);
     myMixedRevisions.setBackground(myContentPanel.getBackground());
     myContentPanel.add(myMixedRevisions, gb);
 
@@ -231,7 +232,7 @@ public class SvnMergeInfoRootPanelManual {
   private void calculateBranchPathByBranch(final String url, final String localPath) {
     final String local = url == null ? null : getLocal(url, localPath == null ? myBranchToLocal.get(url) : localPath);
     if (local == null) {
-      myLocalArea.setForeground(Color.red);
+      myLocalArea.setForeground(JBColor.RED);
       myLocalArea.setText(SvnBundle.message("tab.repository.merge.panel.root.panel.select.local"));
     } else {
       myLocalArea.setForeground(UIUtil.getInactiveTextColor());

@@ -75,14 +75,20 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         final Map<Integer, String> names = new LinkedHashMap<Integer, String>();
         final Type[] args = Type.getArgumentTypes(desc);
         methodParamNames.put(methodName, names);
-    
+
+        final boolean isStatic = (access & ACC_STATIC) != 0;
         return new MethodVisitor(api) {
+          int varIndex = 0;
+          
           @Override
           public void visitLocalVariable(String name2, String desc, String signature, Label start, Label end, int index) {
-            int parameterIndex = getParameterIndex(index, access, args);
-            if (parameterIndex >= 0) {
-              names.put(parameterIndex, name2);
+            if (!isStatic && index == 0) {
+              return; //'this' variable
             }
+            if (varIndex >= args.length) {
+              return; // no parameters anymore
+            }
+            names.put(varIndex++, name2);
           }
         };
       }

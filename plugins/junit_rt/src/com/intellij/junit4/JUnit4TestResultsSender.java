@@ -128,10 +128,10 @@ public class JUnit4TestResultsSender extends RunListener {
         notification = createExceptionNotification(assertion, message, "\nExpected: (.*)\n\\s*got: (.*)");
       }
       if (notification == null) {
-        notification = createExceptionNotification(assertion, message, "\\s*expected same:<(.*)> was not:<(.*)>");
+        notification = createExceptionNotification(assertion, message, ".*?\\s*expected same:<(.*)> was not:<(.*)>");
       }
       if (notification == null) {
-        notification = createExceptionNotification(assertion, message, ".*\\s*expected:<(.*)> but was:<(.*)>");
+        notification = createExceptionNotification(assertion, message, ".*?\\s*expected:<(.*?)> but was:<(.*?)>");
       }
       if (notification == null) {
         notification = createExceptionNotification(assertion, message, "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"");
@@ -148,6 +148,13 @@ public class JUnit4TestResultsSender extends RunListener {
 
   private static PacketFactory createExceptionNotification(Throwable assertion, String message, final String regex) {
     final Matcher matcher = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE).matcher(message);
+
+    boolean found = false;
+    while (matcher.find()) {
+      if (found) return null;
+      found = true;
+    }
+
     if (matcher.matches()) {
       return ComparisonDetailsExtractor.create(assertion, matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
     }

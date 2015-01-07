@@ -63,6 +63,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
   private final Project myProject;
+  private ThreadLocal<Boolean> myAlternativeResolution = new ThreadLocal<Boolean>();
 
   public DumbServiceImpl(Project project) {
     myProject = project;
@@ -102,6 +103,17 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public boolean isAlternativeResolveEnabled() {
+    return Boolean.TRUE.equals(myAlternativeResolution.get());
+  }
+
+  @Override
+  public void setAlternativeResolveEnabled(boolean enabled) {
+    assert isAlternativeResolveEnabled() != enabled : "Nested alternative resolution mode is not supported";
+    myAlternativeResolution.set(enabled);
   }
 
   @Override
@@ -269,14 +281,13 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
   @Override
   public void waitForSmartMode() {
-    final Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode()) {
-      assert !application.isDispatchThread();
-      assert !application.isReadAccessAllowed();
-    }
-
     if (!isDumb()) {
       return;
+    }
+
+    final Application application = ApplicationManager.getApplication();
+    if (application.isReadAccessAllowed() || application.isDispatchThread()) {
+      throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
 
     final Semaphore semaphore = new Semaphore();

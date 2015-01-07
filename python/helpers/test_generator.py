@@ -292,7 +292,7 @@ class TestSpecialCases(unittest.TestCase):
             import __builtin__ as the_builtins
 
             self.builtins_name = the_builtins.__name__
-        self.m = ModuleRedeclarator(the_builtins, None, '/dev/null', doing_builtins=True)
+        self.m = ModuleRedeclarator(the_builtins, None, None, doing_builtins=True)
 
     def _testBuiltinFuncName(self, func_name, expected):
         class_name = None
@@ -304,13 +304,23 @@ class TestSpecialCases(unittest.TestCase):
     def testZip(self):
         self._testBuiltinFuncName("zip", "(seq1, seq2, *more_seqs)")
 
+    def testLocalImports(self):
+        if VERSION >= (3, 0):
+            self.m.redo("builtins", False)
+        else:
+            self.m.redo("__builtin__", False)
+        for classes_buff in self.m.classes_buffs:
+            for data in classes_buff.data:
+                self.assertFalse("from object import object" in data)
+                self.assertFalse("from .object import object" in data)
+
     def testRange(self):
         self._testBuiltinFuncName("range", "(start=None, stop=None, step=None)")
 
     def testFilter(self):
         self._testBuiltinFuncName("filter", "(function_or_none, sequence)")
 
-        # we caould want to test a calss without __dict__, but it takes a C extension to really create one,
+        # we could want to test a class without __dict__, but it takes a C extension to really create one,
 
 class TestDataOutput(_DiffPrintingTestCase):
     """

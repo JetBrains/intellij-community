@@ -40,7 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -53,14 +53,12 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.util.*;
 
 public class PluginsAdvertiser implements StartupActivity {
   @NonNls public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
   private static final Logger LOG = Logger.getInstance("#" + PluginsAdvertiser.class.getName());
-  private static final String FEATURE_IMPLEMENTATIONS_URL = "http://plugins.jetbrains.com/feature/getImplementations?";
+  private static final String FEATURE_IMPLEMENTATIONS_URL = "https://plugins.jetbrains.com/feature/getImplementations?";
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 
   public static final String IDEA_ULTIMATE_EDITION = "IntelliJ IDEA Ultimate Edition";
@@ -79,12 +77,10 @@ public class PluginsAdvertiser implements StartupActivity {
                                        "featureType=" + featureType +
                                        "&implementationName=" + implementationName.replaceAll("#", "%23") +
                                        "&build=" + buildNumber;
-    try {
-      HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(pluginRepositoryUrl);
-      connection.connect();
-      final InputStreamReader streamReader = new InputStreamReader(connection.getInputStream());
-      try {
-        final JsonReader jsonReader = new JsonReader(streamReader);
+    return HttpRequests.request(pluginRepositoryUrl).connect(new HttpRequests.RequestProcessor<List<Plugin>>() {
+      @Override
+      public List<Plugin> process(@NotNull HttpRequests.Request request) throws IOException {
+        final JsonReader jsonReader = new JsonReader(request.getReader());
         jsonReader.setLenient(true);
         final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
         final List<Plugin> result = new ArrayList<Plugin>();
@@ -99,14 +95,7 @@ public class PluginsAdvertiser implements StartupActivity {
         }
         return result;
       }
-      finally {
-        streamReader.close();
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      return null;
-    }
+    }, null, LOG);
   }
 
   private static Map<String, Set<Plugin>> loadSupportedExtensions(@NotNull List<IdeaPluginDescriptor> allPlugins) {
@@ -115,12 +104,10 @@ public class PluginsAdvertiser implements StartupActivity {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
     }
     final String pluginRepositoryUrl = FEATURE_IMPLEMENTATIONS_URL + "featureType=" + FileTypeFactory.FILE_TYPE_FACTORY_EP.getName();
-    try {
-      HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(pluginRepositoryUrl);
-      connection.connect();
-      final InputStreamReader streamReader = new InputStreamReader(connection.getInputStream());
-      try {
-        final JsonReader jsonReader = new JsonReader(streamReader);
+    return HttpRequests.request(pluginRepositoryUrl).connect(new HttpRequests.RequestProcessor<Map<String, Set<Plugin>>>() {
+      @Override
+      public Map<String, Set<Plugin>> process(@NotNull HttpRequests.Request request) throws IOException {
+        final JsonReader jsonReader = new JsonReader(request.getReader());
         jsonReader.setLenient(true);
         final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
         final Map<String, Set<Plugin>> result = new HashMap<String, Set<Plugin>>();
@@ -137,7 +124,9 @@ public class PluginsAdvertiser implements StartupActivity {
           if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
 
           if (loadedPlugin != null && fromServerPluginDescription != null &&
-              StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) continue;
+              StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) {
+            continue;
+          }
 
           if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) continue;
 
@@ -154,14 +143,7 @@ public class PluginsAdvertiser implements StartupActivity {
         saveExtensions(result);
         return result;
       }
-      finally {
-        streamReader.close();
-      }
-    }
-    catch (Throwable e) {
-      LOG.info(e);
-      return null;
-    }
+    }, null, LOG);
   }
 
   public static void ensureDeleted() {
@@ -258,7 +240,7 @@ public class PluginsAdvertiser implements StartupActivity {
           @Override
           public void run() {
             try {
-              myAllPlugins = RepositoryHelper.loadPluginsFromRepository(null);
+              myAllPlugins = RepositoryHelper.loadPlugins(null);
               if (project.isDisposed()) return;
               if (extensions == null) {
                 loadSupportedExtensions(myAllPlugins);

@@ -56,6 +56,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
@@ -519,7 +520,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static void createLocatorFile() {
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
     try {
-      byte[] data = PathManager.getHomePath().getBytes("UTF-8");
+      byte[] data = PathManager.getHomePath().getBytes(CharsetToolkit.UTF8_CHARSET);
       FileUtil.writeToFile(locatorFile, data);
     }
     catch (IOException e) {
@@ -671,7 +672,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
-    Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
+    Window window = UIUtil.getWindow(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
   }
@@ -741,7 +742,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static volatile boolean exiting = false;
 
   public void exit(final boolean force, final boolean exitConfirmed, final boolean allowListenersToCancel, final boolean restart) {
-    if (exiting) return;
+    if (!force && exiting) {
+      return;
+    }
 
     exiting = true;
     try {
@@ -1155,35 +1158,50 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return new ReadAccessToken(status);
   }
 
+  private volatile boolean myWriteActionPending;
+
+  @Override
+  public boolean isWriteActionPending() {
+    return myWriteActionPending;
+  }
+
   private void startWrite(Class clazz) {
-    ActivityTracker.getInstance().inc();
-    fireBeforeWriteActionStart(clazz);
+    boolean writeActionPending = myWriteActionPending;
+    myWriteActionPending = true;
 
     try {
-      if (!isWriteAccessAllowed()) {
-        assertNoPsiLock();
-      }
-      if (!myLock.writeLock().tryLock()) {
-        final AtomicBoolean lockAcquired = new AtomicBoolean(false);
-        if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-          executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              while (!lockAcquired.get()) {
-                TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                if (!lockAcquired.get()) {
-                  PerformanceWatcher.getInstance().dumpThreads(true);
+      ActivityTracker.getInstance().inc();
+      fireBeforeWriteActionStart(clazz);
+
+      try {
+        if (!isWriteAccessAllowed()) {
+          assertNoPsiLock();
+        }
+        if (!myLock.writeLock().tryLock()) {
+          final AtomicBoolean lockAcquired = new AtomicBoolean(false);
+          if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
+            executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                while (!lockAcquired.get()) {
+                  TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
+                  if (!lockAcquired.get()) {
+                    PerformanceWatcher.getInstance().dumpThreads(true);
+                  }
                 }
               }
-            }
-          });
+            });
+          }
+          myLock.writeLock().lockInterruptibly();
+          lockAcquired.set(true);
         }
-        myLock.writeLock().lockInterruptibly();
-        lockAcquired.set(true);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
       }
     }
-    catch (InterruptedException e) {
-      throw new RuntimeInterruptedException(e);
+    finally {
+      myWriteActionPending = writeActionPending;
     }
 
     myWriteActionsStack.push(clazz);
@@ -1307,7 +1325,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isWriteActionInProgress() {
-    return myLock.getWriteHoldCount() != 0;
+    return myLock.isWriteLocked();
   }
 
   public void editorPaintStart() {

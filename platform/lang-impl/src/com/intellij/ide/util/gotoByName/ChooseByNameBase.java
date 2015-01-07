@@ -48,6 +48,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -71,8 +72,8 @@ import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -102,7 +103,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class ChooseByNameBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
@@ -1541,18 +1541,18 @@ public abstract class ChooseByNameBase {
       new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myScopeExpanded).scheduleThread();
     }
 
-    public void addElementsByPattern(@NotNull String pattern,
+    private void addElementsByPattern(@NotNull String pattern,
                                       @NotNull final Set<Object> elements,
-                                      @NotNull final ProgressIndicator cancelled,
+                                      @NotNull final ProgressIndicator indicator,
                                       boolean everywhere) {
       long start = System.currentTimeMillis();
       myProvider.filterElements(
         ChooseByNameBase.this, pattern, everywhere,
-        cancelled,
+        indicator,
         new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (cancelled.isCanceled()) return false;
+            if (indicator.isCanceled()) return false;
             elements.add(o);
 
             if (isOverflow(elements)) {
@@ -1653,8 +1653,9 @@ public abstract class ChooseByNameBase {
       cancelListUpdater();
 
       final UsageViewPresentation presentation = new UsageViewPresentation();
-      final String prefixPattern = myFindUsagesTitle + " \'" + myTextField.getText().trim() + "\'";
-      final String nonPrefixPattern = myFindUsagesTitle + " \'*" + myTextField.getText().trim() + "*\'";
+      final String text = myTextField.getText();
+      final String prefixPattern = myFindUsagesTitle + " \'" + text.trim() + "\'";
+      final String nonPrefixPattern = myFindUsagesTitle + " \'*" + text.trim() + "*\'";
       presentation.setCodeUsagesString(prefixPattern);
       presentation.setUsagesInGeneratedCodeString(prefixPattern + " in generated code");
       presentation.setDynamicUsagesString(nonPrefixPattern);
@@ -1667,45 +1668,38 @@ public abstract class ChooseByNameBase {
       fillUsages(Arrays.asList(elements[0]), usages, targets, false);
       fillUsages(Arrays.asList(elements[1]), usages, targets, true);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
-        final String text = myTextField.getText();
         final boolean everywhere = myCheckBox.isSelected();
-        final LinkedHashSet<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
-        final LinkedHashSet<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
+        final Set<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
+        final Set<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
         hideHint();
         ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true) {
           private ChooseByNameBase.CalcElementsThread myCalcUsagesThread;
-
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
+            final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
+            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, false) {
+              @Override
+              protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
+                tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
+                if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+                  int usageCount = elementsArray.size() + myMaximumListSizeLimit;
+                  UsageViewManagerImpl.showTooManyUsagesWarning(getProject(), tooManyUsagesStatus, indicator, presentation, usageCount, null);
+                }
+                return false;
+              }
+            };
 
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
               public void run() {
-                final boolean[] overFlow = {false};
-                myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, false) {
-                  private final AtomicBoolean userAskedToAbort = new AtomicBoolean();
-                  @Override
-                  protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
-                    if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && !userAskedToAbort.getAndSet(true)) {
-                      final UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, UsageViewBundle
-                        .message("find.excessive.usage.count.prompt", elementsArray.size() + myMaximumListSizeLimit, StringUtil.pluralize(presentation.getUsagesWord())), presentation);
-                      if (ret == UsageLimitUtil.Result.ABORT) {
-                        overFlow[0] = true;
-                        return true;
-                      }
-                    }
-                    return false;
-                  }
-                };
-
                 boolean anyPlace = isSearchInAnyPlace();
                 setSearchInAnyPlace(false);
                 myCalcUsagesThread.addElementsByPattern(text, prefixMatchElementsArray, indicator, everywhere);
                 setSearchInAnyPlace(anyPlace);
 
-                if (anyPlace && !overFlow[0]) {
+                if (anyPlace && !indicator.isCanceled()) {
                   myCalcUsagesThread.addElementsByPattern(text, nonPrefixMatchElementsArray, indicator, everywhere);
                   nonPrefixMatchElementsArray.removeAll(prefixMatchElementsArray);
                 }

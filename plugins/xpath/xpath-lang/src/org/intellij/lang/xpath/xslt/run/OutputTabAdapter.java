@@ -21,6 +21,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ class OutputTabAdapter extends ProcessAdapter {
                         return;
                     }
 
-                    final InputStreamReader reader = new InputStreamReader(stream, "UTF-8");
+                    final InputStreamReader reader = new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET);
                     final HighlightingProcessHandler process = new HighlightingProcessHandler(reader) {
                         private boolean mySelectionChanged;
 

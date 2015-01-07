@@ -16,7 +16,6 @@
 package com.intellij.debugger;
 
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.openapi.util.Key;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
@@ -32,12 +31,6 @@ import java.util.List;
  * @see com.intellij.debugger.engine.JSR45PositionManager
  */
 public interface PositionManager {
-  /**
-   * A mapping between lines contained in a byte code and actual source lines
-   * (placed into a user data of a VirtualFile for a .class file).
-   */
-  Key<int[]> LINE_NUMBERS_MAPPING_KEY = Key.create("line.numbers.mapping.key");
-
   /**
    * Returns the source position corresponding to the specified bytecode location.
    *

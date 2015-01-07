@@ -260,7 +260,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
         myBuilder.updateFromRoot();
         myTree.repaint();
       }
-    });
+    }, this);
   }
 
 

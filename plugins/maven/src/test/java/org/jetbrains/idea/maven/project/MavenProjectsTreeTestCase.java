@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -46,9 +49,14 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
     myTree.delete(asList(file), getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
-  protected void updateTimestamps(VirtualFile... files) throws IOException {
-    for (VirtualFile each : files) {
-      each.setBinaryContent(each.contentsToByteArray());
-    }
+  protected void updateTimestamps(final VirtualFile... files) throws IOException {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        for (VirtualFile each : files) {
+          each.setBinaryContent(each.contentsToByteArray());
+        }
+      }
+    }.execute().throwException();
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -39,30 +40,35 @@ public class ProcessOutput {
     myExitCode = exitCode;
   }
 
-  public void appendStdout(String text) {
+  public void appendStdout(@Nullable String text) {
     myStdoutBuilder.append(text);
   }
 
-  public void appendStderr(String text) {
+  public void appendStderr(@Nullable String text) {
     myStderrBuilder.append(text);
   }
 
+  @NotNull
   public String getStdout() {
     return myStdoutBuilder.toString();
   }
 
+  @NotNull
   public String getStderr() {
     return myStderrBuilder.toString();
   }
 
+  @NotNull
   public List<String> getStdoutLines() {
     return splitLines(getStdout());
   }
 
+  @NotNull
   public List<String> getStderrLines() {
     return splitLines(getStderr());
   }
 
+  @NotNull
   private static List<String> splitLines(String s) {
     String converted = StringUtil.convertLineSeparators(s);
     return StringUtil.split(converted, "\n");

@@ -647,12 +647,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     final String refName = ref.getReferenceName();
     final JavaResolveResult[] results = ref.multiResolve(false);
 
+    final PsiElement referenceNameElement = ref.getReferenceNameElement();
     if (results.length == 0) {
       final String description = JavaErrorMessages.message("cannot.resolve.symbol", refName);
-      final PsiElement nameElement = ref.getReferenceNameElement();
-      assert nameElement != null : ref;
+      assert referenceNameElement != null : ref;
       final HighlightInfo info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(nameElement).descriptionAndTooltip(description).create();
+        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(referenceNameElement).descriptionAndTooltip(description).create();
       QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createSetupJDKFix());
       myHolder.add(info);
     }
@@ -687,6 +687,22 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
         if (description != null) {
           myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).create());
+        }
+      }
+    }
+    if (!myHolder.hasErrorResults()) {
+      final PsiElement resolved = results.length == 1 ? results[0].getElement() : null;
+      final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
+      if (resolved instanceof PsiClass) {
+        myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, ref, colorsScheme));
+      }
+      else{
+        myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref, colorsScheme));
+        if (resolved instanceof PsiVariable) {
+          myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)resolved, referenceNameElement, colorsScheme));
+        }
+        else if (resolved instanceof PsiMethod) {
+          myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)resolved, referenceNameElement, false, colorsScheme));
         }
       }
     }

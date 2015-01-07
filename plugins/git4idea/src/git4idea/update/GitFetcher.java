@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitLocalBranch;
@@ -87,7 +88,7 @@ public class GitFetcher {
       return fetchCurrentRemote(repository);
     }
 
-    repository.update();
+    VfsUtil.markDirtyAndRefresh(false, true, false, repository.getGitDir());
     return fetchResult;
   }
 

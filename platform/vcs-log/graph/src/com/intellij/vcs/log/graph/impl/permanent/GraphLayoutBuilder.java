@@ -16,16 +16,19 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class GraphLayoutBuilder {
+
+  private static final Logger LOG = Logger.getInstance(GraphLayoutBuilder.class);
 
   @NotNull
   public static GraphLayoutImpl build(@NotNull LinearGraph graph, @NotNull Comparator<Integer> headerNodeIndexComparator) {
@@ -35,7 +38,13 @@ public class GraphLayoutBuilder {
         heads.add(i);
       }
     }
-    Collections.sort(heads, headerNodeIndexComparator);
+    try {
+      heads = ContainerUtil.sorted(heads, headerNodeIndexComparator);
+    }
+    catch (Exception e) {
+      // protection against possible comparator flaws
+      LOG.error(e);
+    }
     GraphLayoutBuilder builder = new GraphLayoutBuilder(graph, heads, new DfsUtil());
     return builder.build();
   }

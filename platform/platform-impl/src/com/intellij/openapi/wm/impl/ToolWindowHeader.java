@@ -25,13 +25,12 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
@@ -91,7 +90,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
           Component c = getComponent(0);
           Dimension size = c.getPreferredSize();
           if (size.width < (r.width - insets.left - insets.right)) {
-            c.setBounds(insets.left, insets.top, r.width, r.height - insets.top - insets.bottom);
+            c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
           } else {
             c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
           }
@@ -169,7 +168,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     addDefaultActions(eastPanel);
     myButtonPanel = eastPanel;
 
-    addMouseListener(new PopupHandler() {
+    westPanel.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
         toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
       }
@@ -210,12 +209,14 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
         }
       }
     };
-  }
-
-  void switchMaximizedState(Project project) {
-    if (project == null || project.isDisposed()) return;
-    ToolWindowManager mgr = ToolWindowManager.getInstance(project);
-    mgr.setMaximized(myToolWindow, !mgr.isMaximized(myToolWindow));
+    new DoubleClickListener(){
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        ToolWindowManagerImpl mgr = toolWindow.getToolWindowManager();
+        mgr.setMaximized(myToolWindow, !mgr.isMaximized(myToolWindow));
+        return true;
+      }
+    }.installOn(westPanel);
   }
 
   @Override

@@ -66,7 +66,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     final String calculatedTabWidth = calculateTabWidth(tabWidth, indentSize);
     if (!calculatedIndentSize.isEmpty()) {
       if (applyIndentSize(indentOptions, calculatedIndentSize)) {
-        Utils.appliedConfigMessage(project, calculatedIndentSize, indentSizeKey, filePath);
         changed = true;
       } else {
         Utils.invalidConfigMessage(project, calculatedIndentSize, indentSizeKey, filePath);
@@ -74,7 +73,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     }
     if (!calculatedContinuationSize.isEmpty()) {
       if (applyContinuationIndentSize(indentOptions, calculatedContinuationSize)) {
-        Utils.appliedConfigMessage(project, calculatedContinuationSize, continuationSizeKey, filePath);
         changed = true;
       }
       else {
@@ -83,7 +81,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     }
     if (!calculatedTabWidth.isEmpty()) {
       if (applyTabWidth(indentOptions, calculatedTabWidth)) {
-        Utils.appliedConfigMessage(project, calculatedTabWidth, tabWidthKey, filePath);
         changed = true;
       }
       else {
@@ -92,7 +89,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     }
     if (!indentStyle.isEmpty()) {
       if (applyIndentStyle(indentOptions, indentStyle)) {
-        Utils.appliedConfigMessage(project, indentStyle, indentStyleKey, filePath);
         changed = true;
       }
       else {

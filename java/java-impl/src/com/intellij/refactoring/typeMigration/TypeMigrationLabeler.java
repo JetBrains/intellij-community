@@ -689,6 +689,12 @@ public class TypeMigrationLabeler {
             }
           }
         }
+
+        @Override
+        public void visitClass(PsiClass aClass) {}
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {}
       });
     }
   }

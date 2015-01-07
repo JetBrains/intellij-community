@@ -40,15 +40,6 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Jps
   public boolean transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
   private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
 
-  public GroovyCompilerConfiguration(Project project) {
-    GroovyCompilerWorkspaceConfiguration workspaceConfiguration = ServiceManager.getService(project, GroovyCompilerWorkspaceConfiguration.class);
-    loadState(workspaceConfiguration.getState());
-    workspaceConfiguration.myHeapSize = JpsGroovySettings.DEFAULT_HEAP_SIZE;
-    workspaceConfiguration.transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
-    workspaceConfiguration.myInvokeDynamic = JpsGroovySettings.DEFAULT_INVOKE_DYNAMIC;
-    workspaceConfiguration.myExcludeFromStubGeneration.removeAllExcludeEntryDescriptions();
-  }
-
   @Override
   public JpsGroovySettings getState() {
     final JpsGroovySettings bean = new JpsGroovySettings();

@@ -109,20 +109,13 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     }
 
     setLineMarkerRenderer(rangeMarker, fragment, type);
-    setErrorStripes(rangeMarker, fragment, attributes.getErrorStripeColor());
-    saveHighlighter(rangeMarker);
-  }
 
-  private static void setErrorStripes(@NotNull RangeHighlighter rangeMarker, @NotNull Fragment fragment, @Nullable Color stripeBarColor) {
+    rangeMarker.setThinErrorStripeMark(true);
     if (DiffUtil.isInlineWrapper(fragment)) {
       rangeMarker.setErrorStripeMarkColor(null);
     }
-    else {
-      if (stripeBarColor != null) {
-        rangeMarker.setErrorStripeMarkColor(stripeBarColor);
-        rangeMarker.setThinErrorStripeMark(true);
-      }
-    }
+
+    saveHighlighter(rangeMarker);
   }
 
   private static void setLineMarkerRenderer(RangeHighlighter rangeMarker, Fragment fragment, TextDiffType type) {

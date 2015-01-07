@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -192,6 +193,48 @@ public class PyMoveTest extends PyTestCase {
   // PY-14384
   public void testRelativeImportInsideNormalPackage() {
     doMoveFileTest("nspkg/nssubpkg", "");
+  }
+
+  // PY-14432
+  public void testRelativeImportsInsideMovedModule() {
+    doMoveFileTest("pkg1/subpkg1", "");
+  }
+
+
+  // PY-14432
+  public void testRelativeImportSourceWithSpacesInsideMovedModule() {
+    doMoveFileTest("pkg/subpkg1/a.py", "");
+  }
+
+  // PY-14595
+  public void testNamespacePackageUsedInMovedFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doMoveSymbolTest("func", "b.py");
+      }
+    });
+  }
+
+  // PY-14599
+  public void testMoveFunctionFromUnimportableModule() {
+    doMoveSymbolTest("func", "dst.py");
+  }
+
+  // PY-14599
+  public void testMoveUnreferencedFunctionToUnimportableModule() {
+    doMoveSymbolTest("func", "dst-unimportable.py");
+  }
+
+  // PY-14599
+  public void testMoveReferencedFunctionToUnimportableModule() {
+    try {
+      doMoveSymbolTest("func", "dst-unimportable.py");
+      fail();
+    }
+    catch (IncorrectOperationException e) {
+      assertEquals("Cannot use module name 'dst-unimportable.py' in imports", e.getMessage());
+    }
   }
 
   public void testRelativeImportOfNameFromInitPy() {

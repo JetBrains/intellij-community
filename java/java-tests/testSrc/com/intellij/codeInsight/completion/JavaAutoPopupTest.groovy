@@ -247,7 +247,6 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """
   }
 
-
   public void "test popup in javadoc reference"() {
     myFixture.configureByText("a.java", """
     /**
@@ -256,6 +255,19 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       class Foo {}
     """)
     type 'O'
+    assert lookup
+  }
+
+  public void "test popup in javadoc local reference"() {
+    myFixture.configureByText("a.java", """
+    /**
+    * {@link #<caret>}
+    */
+      class Foo {
+        void foo() {}
+      }
+    """)
+    type 'f'
     assert lookup
   }
 
@@ -286,6 +298,19 @@ class Foo {
     """)
     type 'o'
     assert !lookup
+  }
+  
+  public void "test autopopup in javadoc parameter name"() {
+    myFixture.configureByText("a.java", """
+class Foo {
+  /**
+  * @param <caret>
+  */
+  void foo2(Object oooooooo) {}
+}
+    """)
+    type 'o'
+    assert lookup
   }
 
   public void testPrefixLengthDependentSorting() {
@@ -1115,6 +1140,21 @@ public class UTest {
     assert myFixture.lookupElementStrings == ['new', 'nextWord']
   }
 
+  public void testExactMatchesTemplateFirst() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    myFixture.configureByText("a.java", """
+public class Test {
+    void itar() {}
+
+    void foo() {
+        ita<caret>
+    }
+}""")
+    type 'r'
+    assert myFixture.lookupElementStrings == ['itar', 'itar']
+    assert myFixture.lookup.currentItem instanceof LiveTemplateLookupElement
+  }
+
   public void testUpdatePrefixMatchingOnTyping() {
     myFixture.addClass("class CertificateEncodingException {}")
     myFixture.addClass("class CertificateException {}")
@@ -1731,23 +1771,17 @@ class Foo {{
   }
   
   public void "test show popup with single live template if show_live_tempate_in_completion option is enabled"() {
-    def oldValue = LiveTemplateCompletionContributor.ourShowTemplatesInTests
-    try {
-      LiveTemplateCompletionContributor.ourShowTemplatesInTests = false
-      myFixture.configureByText "a.java", """
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, getTestRootDisposable())
+    myFixture.configureByText "a.java", """
 class Foo {{
-  ita<caret>
+ita<caret>
 """
-      type 'r'
-      assert lookup == null
-      
-      LiveTemplateCompletionContributor.ourShowTemplatesInTests = true
-      type '\br'
-      assert lookup
-      assert myFixture.lookupElementStrings == ['itar']
-    }
-    finally {
-      LiveTemplateCompletionContributor.ourShowTemplatesInTests = oldValue
-    }
+    type 'r'
+    assert lookup == null
+    
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    type '\br'
+    assert lookup
+    assert myFixture.lookupElementStrings == ['itar']
   }
 }

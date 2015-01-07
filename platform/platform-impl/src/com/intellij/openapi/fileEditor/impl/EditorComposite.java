@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NullUtils;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -50,10 +51,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class hides internal structure of UI component which represent
@@ -106,6 +105,7 @@ public abstract class EditorComposite implements Disposable {
                   @NotNull final FileEditorManagerEx fileEditorManager) {
     myFile = file;
     myEditors = editors;
+    if (NullUtils.hasNull(editors)) throw new IllegalArgumentException("Must not pass null editors in " + Arrays.asList(editors));
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp     = myFile.getTimeStamp();
 
@@ -482,7 +482,7 @@ public abstract class EditorComposite implements Disposable {
       myWrappee = component;
       setOpaque(false);
 
-      setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP, false) {
+      setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP) {
         @Override
         public Color getLineColor() {
           Color result = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);

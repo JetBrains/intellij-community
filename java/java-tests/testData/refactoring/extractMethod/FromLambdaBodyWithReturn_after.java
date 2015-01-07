@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 class Test {
   interface I {
     String foo();
@@ -8,6 +10,7 @@ class Test {
     };
   }
 
+    @NotNull
     private String newMethod() {
         return "42";
     }

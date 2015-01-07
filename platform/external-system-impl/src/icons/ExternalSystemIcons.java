@@ -29,4 +29,5 @@ public class ExternalSystemIcons {
   }
 
   public static final Icon Task = load("/icons/task.png"); // 16x16
+  public static final Icon TaskGroup = load("/icons/taskGroup.png"); // 16x16
 }

@@ -35,7 +35,7 @@ import java.util.*;
 
 import static com.intellij.refactoring.changeSignature.ChangeSignatureUtil.deepTypeEqual;
 
-class JavaChangeInfoImpl implements JavaChangeInfo {
+public class JavaChangeInfoImpl implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
 
   @PsiModifier.ModifierConstant

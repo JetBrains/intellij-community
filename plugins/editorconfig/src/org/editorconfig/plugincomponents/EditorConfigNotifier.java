@@ -27,8 +27,4 @@ public class EditorConfigNotifier {
     Notifications.Bus.notify(new Notification("editorconfig", "EditorConfig", message, type), project);
     PropertiesComponent.getInstance(project).setValue(LAST_NOTIFICATION_STATUS, id);
   }
-
-  public void info(Project project, String message) {
-    doNotify(project, message, message, NotificationType.INFORMATION);
-  }
 }

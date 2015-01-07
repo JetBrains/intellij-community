@@ -58,8 +58,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
 
-  private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap =
-    new THashMap<String, RunnerAndConfigurationSettings>();
+  private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new TreeMap<String, RunnerAndConfigurationSettings>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<String, RunnerAndConfigurationSettings>(); // template configurations are not included here
   private final Map<String, Boolean> mySharedConfigurations = new THashMap<String, Boolean>();
@@ -558,7 +557,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       addConfigurationElement(parentNode, configuration);
     }
 
-    // temp && stable configurations, !unknown
     JDOMExternalizableStringList order = null;
     for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
       if (each.getType() instanceof UnknownConfigurationType) {

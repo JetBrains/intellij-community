@@ -36,14 +36,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
-import com.intellij.util.pico.IdeaPicoContainer;
+import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
-import org.picocontainer.defaults.CachingComponentAdapter;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -206,7 +205,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Nullable
   protected static ProgressIndicator getProgressIndicator() {
-    boolean isProgressManagerInitialized = ApplicationManager.getApplication().getPicoContainer().getComponentAdapterOfType(ProgressManager.class) != null;
+    PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
+    ComponentAdapter adapter = container.getComponentAdapterOfType(ProgressManager.class);
+    if (adapter == null) return null;
+    ProgressManager progressManager = (ProgressManager)adapter.getComponentInstance(container);
+    boolean isProgressManagerInitialized = progressManager != null;
     return isProgressManagerInitialized ? ProgressIndicatorProvider.getGlobalProgressIndicator() : null;
   }
 
@@ -287,10 +290,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     MutablePicoContainer result;
 
     if (myParentComponentManager != null) {
-      result = new IdeaPicoContainer(myParentComponentManager.getPicoContainer());
+      result = new DefaultPicoContainer(myParentComponentManager.getPicoContainer());
     }
     else {
-      result = new IdeaPicoContainer();
+      result = new DefaultPicoContainer();
     }
 
     return result;
@@ -533,7 +536,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       myConfig = config;
 
       final String componentKey = config.getInterfaceClass();
-      myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, implementationClass, null, true)) {
+      myDelegate = new ConstructorInjectionComponentAdapter(componentKey, implementationClass, null, true) {
         @Override
         public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
           ProgressIndicator indicator = getProgressIndicator();

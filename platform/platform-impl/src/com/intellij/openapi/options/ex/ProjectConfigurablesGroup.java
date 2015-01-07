@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,10 @@ public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements
     myProject = project;
   }
 
+  @Override
   public String getDisplayName() {
     if (isDefault()) return OptionsBundle.message("template.project.settings.display.name");
     return OptionsBundle.message("project.settings.display.name", myProject.getName());
-  }
-
-  public String getShortName() {
-    return isDefault() ? OptionsBundle.message("template.project.settings.short.name") : OptionsBundle
-      .message("project.settings.short.name");
   }
 
   private boolean isDefault() {
@@ -49,6 +45,7 @@ public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements
   @Override
   public ConfigurableFilter getConfigurableFilter() {
     return new ConfigurableFilter() {
+      @Override
       public boolean isIncluded(final Configurable configurable) {
         return !isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
       }

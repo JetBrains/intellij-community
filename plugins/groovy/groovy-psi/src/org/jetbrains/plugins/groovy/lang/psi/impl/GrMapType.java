@@ -22,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -94,7 +94,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   protected abstract List<Couple<PsiType>> getOtherEntries();
 
   @NotNull
-  protected abstract Map<String, PsiType> getStringEntries();
+  protected abstract LinkedHashMap<String, PsiType> getStringEntries();
 
   @Override
   @NotNull
@@ -149,7 +149,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   public static GrMapType merge(GrMapType l, GrMapType r) {
     final GlobalSearchScope scope = l.getScope().intersectWith(r.getResolveScope());
 
-    final Map<String, PsiType> strings = new HashMap<String, PsiType>();
+    final LinkedHashMap<String, PsiType> strings = ContainerUtil.newLinkedHashMap();
     strings.putAll(l.getStringEntries());
     strings.putAll(r.getStringEntries());
 
@@ -162,7 +162,7 @@ public abstract class GrMapType extends GrLiteralClassType {
 
   public static GrMapType create(JavaPsiFacade facade,
                                  GlobalSearchScope scope,
-                                 Map<String, PsiType> stringEntries,
+                                 LinkedHashMap<String, PsiType> stringEntries,
                                  List<Couple<PsiType>> otherEntries) {
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
@@ -170,7 +170,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   public static GrMapType create(GlobalSearchScope scope) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(scope.getProject());
     List<Couple<PsiType>> otherEntries = Collections.emptyList();
-    Map<String, PsiType> stringEntries = Collections.emptyMap();
+    LinkedHashMap<String, PsiType> stringEntries = ContainerUtil.newLinkedHashMap();
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
 

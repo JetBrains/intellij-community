@@ -24,19 +24,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.NetUtils;
+import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URLConnection;
 import java.util.Set;
 
-@SuppressWarnings({"StringEquality"})
 public abstract class DownloadManager {
   private static final ExternalResourceManager resourceManager = ExternalResourceManager.getInstance();
 
@@ -49,57 +49,36 @@ public abstract class DownloadManager {
     myProgress = progress;
 
     myResourcePath = PathManager.getSystemPath() + File.separatorChar + "extResources";
-    final File dir = new File(myResourcePath);
-    dir.mkdirs();
+    //noinspection ResultOfMethodCallIgnored
+    new File(myResourcePath).mkdirs();
   }
 
-  public void fetch(String location) throws DownloadException {
-    if (resourceManager.getResourceLocation(location) == location) {
-      myProgress.setText("Downloading " + location);
-      downloadAndRegister(location);
+  public void fetch(@NotNull final String location) throws DownloadException {
+    if (resourceManager.getResourceLocation(location, myProject) != location) {
+      return;
     }
-  }
 
-  private void downloadAndRegister(final String location) throws DownloadException {
-    final ExternalResourceManager resourceManager = ExternalResourceManager.getInstance();
+    myProgress.setText("Downloading " + location);
 
     File file = null;
     try {
-      final URLConnection urlConnection = HttpConfigurable.getInstance().openConnection(location);
-      urlConnection.connect();
-      final InputStream in = urlConnection.getInputStream();
-
-      final OutputStream out;
-      try {
-        final int total = urlConnection.getContentLength();
-
-        final String name = Integer.toHexString(System.identityHashCode(this)) +
-                            "_" +
-                            Integer.toHexString(location.hashCode()) +
-                            "_" +
-                            location.substring(location.lastIndexOf('/') + 1);
-        file = new File(myResourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name);
-        out = new FileOutputStream(file);
-
-        try {
-          NetUtils.copyStreamContent(myProgress, in, out, total);
+      file = HttpRequests.request(location).connect(new HttpRequests.RequestProcessor<File>() {
+        @Override
+        public File process(@NotNull HttpRequests.Request request) throws IOException {
+          String name = Integer.toHexString(System.identityHashCode(this)) + "_" +
+                        Integer.toHexString(location.hashCode()) + "_" +
+                        location.substring(location.lastIndexOf('/') + 1);
+          return request.saveToFile(new File(myResourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name), myProgress);
         }
-        finally {
-          out.close();
-        }
-      }
-      finally {
-        in.close();
-      }
+      });
 
       try {
         final File _file = file;
-
         //noinspection unchecked
         final Set<String>[] resourceDependencies = new Set[1];
         new WriteAction() {
           @Override
-          protected void run(Result result) throws Throwable {
+          protected void run(@NotNull Result result) throws Throwable {
             final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(_file);
             if (vf != null) {
               final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);
@@ -130,25 +109,19 @@ public abstract class DownloadManager {
       }
       catch (Error err) {
         Throwable e = err.getCause();
-        if  (e instanceof InterruptedException) {
-          // OK
-        }
-        else if (e instanceof InvocationTargetException) {
-          final Throwable targetException = ((InvocationTargetException)e).getTargetException();
+        if (e instanceof InvocationTargetException) {
+          Throwable targetException = ((InvocationTargetException)e).getTargetException();
           if (targetException instanceof RuntimeException) {
             throw (RuntimeException)targetException;
           }
           else if (targetException instanceof IOException) {
             throw (IOException)targetException;
           }
-          else if (targetException instanceof InterruptedException) {
-            // OK
-          }
-          else {
+          else if (!(targetException instanceof InterruptedException)) {
             Logger.getInstance(getClass().getName()).error(e);
           }
         }
-        else {
+        else if (!(e instanceof InterruptedException)) {
           throw err;
         }
       }
@@ -157,9 +130,9 @@ public abstract class DownloadManager {
       throw new DownloadException(location, e);
     }
     finally {
-      if (file != null && resourceManager.getResourceLocation(location) == location) {
+      if (file != null && resourceManager.getResourceLocation(location, myProject) == location) {
         // something went wrong. get rid of the file
-        file.delete();
+        FileUtil.delete(file);
       }
     }
   }

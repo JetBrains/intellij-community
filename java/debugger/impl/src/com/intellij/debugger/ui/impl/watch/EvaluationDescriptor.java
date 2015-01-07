@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
                 ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(myProject,
                                                                      psiFile, fragment, CompilingEvaluator.getGeneratedClassName());
                 if (data != null) {
-                  return new CompilingEvaluator(psiContext, data);
+                  return new CompilingEvaluatorImpl(psiContext, data);
                 }
               }
               catch (PrepareFailedException e) {
@@ -143,10 +143,6 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     catch (ObjectCollectedException ex) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
-  }
-
-  public String calcValueName() {
-    return getName();
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {

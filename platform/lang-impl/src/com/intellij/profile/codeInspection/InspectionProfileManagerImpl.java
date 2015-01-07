@@ -30,10 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.Scheme;
@@ -63,10 +60,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @State(
   name = "InspectionProfileManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
   },
-  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class,
   additionalExportFile = InspectionProfileManager.FILE_SPEC
 )
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
@@ -107,14 +103,14 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
       @Override
       public boolean shouldBeSaved(@NotNull InspectionProfileImpl scheme) {
-        return !scheme.isLocal() && scheme.wasInitialized();
+        return !scheme.isProjectLevel() && scheme.wasInitialized();
       }
 
       @Override
-      public Element writeScheme(@NotNull InspectionProfileImpl scheme) throws WriteExternalException {
+      public Element writeScheme(@NotNull InspectionProfileImpl scheme) {
         Element root = new Element("inspections");
-        root.setAttribute("profile_name", scheme.myName);
-        scheme.writeExternal(root);
+        root.setAttribute("profile_name", scheme.getName());
+        scheme.serializeInto(root, false);
         return root;
       }
 
@@ -148,17 +144,12 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   public static void registerProvidedSeverities() {
-    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
-        final HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(null);
+        HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(null);
         SeverityRegistrar.registerStandard(highlightInfoType, highlightSeverity);
-        final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
-        TextAttributes textAttributes = scheme.getAttributes(attributesKey);
-        if (textAttributes == null) {
-          textAttributes = attributesKey.getDefaultAttributes();
-        }
-        HighlightDisplayLevel.registerSeverity(highlightSeverity, provider.getTrafficRendererColor(textAttributes));
+        TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
+        HighlightDisplayLevel.registerSeverity(highlightSeverity, attributesKey);
       }
     }
   }

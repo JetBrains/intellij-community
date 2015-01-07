@@ -26,7 +26,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
-import com.intellij.util.pico.IdeaPicoContainer;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -45,7 +45,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
-    myPicoContainer = new IdeaPicoContainer(parent) {
+    myPicoContainer = new DefaultPicoContainer(parent) {
       private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
 
       @Override

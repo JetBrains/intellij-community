@@ -2,6 +2,7 @@ package com.jetbrains.python.edu.course;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ public class Course {
   public String author;
   public static final String COURSE_DIR = "course";
   public static final String HINTS_DIR = "hints";
+  public boolean myUpToDate = false;
 
 
   public List<Lesson> getLessons() {
@@ -48,7 +50,8 @@ public class Course {
    * @param baseDir      project directory
    * @param resourceRoot directory where original course is stored
    */
-  public void create(@NotNull final VirtualFile baseDir, @NotNull final File resourceRoot) {
+  public void create(@NotNull final VirtualFile baseDir, @NotNull final File resourceRoot,
+                     @NotNull final Project project) {
     ApplicationManager.getApplication().invokeLater(
       new Runnable() {
         @Override
@@ -60,16 +63,16 @@ public class Course {
                 for (int i = 0; i < lessons.size(); i++) {
                   Lesson lesson = lessons.get(i);
                   lesson.setIndex(i);
-                  lesson.create(baseDir, resourceRoot);
+                  lesson.create(baseDir, resourceRoot, project);
                 }
                 baseDir.createChildDirectory(this, SANDBOX_DIR);
                 File[] files = resourceRoot.listFiles(new FilenameFilter() {
                   @Override
                   public boolean accept(File dir, String name) {
-                   return !name.contains(Lesson.LESSON_DIR) && !name.equals("course.json") && !name.equals("hints");
+                    return !name.contains(Lesson.LESSON_DIR) && !name.equals("course.json") && !name.equals("hints");
                   }
                 });
-                for (File file: files) {
+                for (File file : files) {
                   FileUtil.copy(file, new File(baseDir.getPath(), file.getName()));
                 }
               }
@@ -100,5 +103,13 @@ public class Course {
 
   public String getDescription() {
     return description;
+  }
+
+  public boolean isUpToDate() {
+    return myUpToDate;
+  }
+
+  public void setUpToDate(boolean upToDate) {
+    myUpToDate = upToDate;
   }
 }

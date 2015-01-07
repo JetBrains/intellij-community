@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 class A {
     public String method() {
         try {
@@ -9,6 +11,7 @@ class A {
         return "";
     }
 
+    @NotNull
     private String newMethod() {
         try {
             return "";

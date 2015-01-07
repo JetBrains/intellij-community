@@ -54,7 +54,7 @@ public class SchemaReferenceQuickFixProvider extends UnresolvedReferenceQuickFix
         key = "xml.schema.create.group.intention.name";
       }
 
-      assert key != null && declarationTagName != null;
+      assert key != null;
       registrar.register(new CreateXmlElementIntentionAction(key, declarationTagName, ref));
     }
   }

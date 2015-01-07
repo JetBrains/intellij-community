@@ -117,7 +117,7 @@ class DefiniteAssignment {
   }
 
   public void storeBeforeReturn(PsiReturnStatement returnStatement) {
-    final PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, true, PsiClass.class);
+    final PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
     if (method == null || !method.isConstructor()) {
       return;
     }

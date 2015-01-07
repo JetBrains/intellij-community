@@ -99,7 +99,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myHeader = new ToolWindowHeader(toolWindow, info, new Producer<ActionGroup>() {
       @Override
       public ActionGroup produce() {
-        return createGearPopupGroup();
+        return /*createGearPopupGroup()*/createPopupGroup(true);
       }
     }) {
       @Override
@@ -370,6 +370,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
 
   public final ActionGroup createPopupGroup() {
+    return createPopupGroup(false);
+  }
+
+  public final ActionGroup createPopupGroup(boolean skipHideAction) {
     final DefaultActionGroup group = createGearPopupGroup();
     if (!ToolWindowId.PREVIEW.equals(myInfo.getId())) {
       group.add(myToggleContentUiTypeAction);
@@ -405,9 +409,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     resize.add(ActionManager.getInstance().getAction("MaximizeToolWindow"));
 
     group.add(resize);
-
-    group.addSeparator();
-    group.add(new HideAction());
+    if (!skipHideAction) {
+      group.addSeparator();
+      group.add(new HideAction());
+    }
     return group;
   }
 

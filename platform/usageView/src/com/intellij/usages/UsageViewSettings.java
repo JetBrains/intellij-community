@@ -25,10 +25,9 @@ import java.io.File;
 @State(
   name = "UsageViewSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/usageView.xml")
-  },
-  storageChooser = LastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/usageView.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class UsageViewSettings implements PersistentStateComponent<UsageViewSettings> {
   @NonNls public String EXPORT_FILE_NAME = "report.txt";

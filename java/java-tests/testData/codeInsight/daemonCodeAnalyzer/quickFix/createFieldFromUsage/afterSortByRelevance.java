@@ -1,6 +1,6 @@
 import foo.Foo;
 
-// "Create Field 'field'" "true"
+// "Create field 'field'" "true"
 class A {
 
     private Foo field;

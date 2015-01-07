@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
@@ -854,7 +855,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @NotNull
   private static MultiMap<VirtualFile, RequestWithProcessor> createMultiMap() {
     // usually there is just one request
-    return MultiMap.createSmartList();
+    return MultiMap.createSmart();
   }
 
   @NotNull
@@ -984,7 +985,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull final Collection<IdIndexEntry> keys,
                                                        @NotNull final Processor<VirtualFile> processor) {
     final FileIndexFacade index = FileIndexFacade.getInstance(project);
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    return DumbService.getInstance(project).runReadActionInSmartMode(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         return FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, new Processor<VirtualFile>() {

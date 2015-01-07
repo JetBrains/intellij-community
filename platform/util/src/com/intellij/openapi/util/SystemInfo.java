@@ -49,6 +49,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isAppleJvm = isAppleJvm();
   public static final boolean isOracleJvm = isOracleJvm();
   public static final boolean isSunJvm = isSunJvm();
+  public static final boolean isJetbrainsJvm = isJetbrainsJvm();
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
@@ -222,5 +223,10 @@ public class SystemInfo extends SystemInfoRt {
   private static boolean isAppleJvm() {
     final String vendor = SystemProperties.getJavaVmVendor();
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple");
+  }
+
+  private static boolean isJetbrainsJvm() {
+    final String vendor = SystemProperties.getJavaVendor();
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, "jetbrains");
   }
 }

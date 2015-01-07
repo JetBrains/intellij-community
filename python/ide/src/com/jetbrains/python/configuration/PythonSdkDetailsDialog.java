@@ -285,7 +285,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         myProjectSdksModel.addSdk(sdk);
       }
       refreshSdkList();
-      mySdkList.setSelectedValue(sdk, true);
+      mySdkList.setSelectedValue(myProjectSdksModel.findSdk(sdk.getName()), true);
       mySdkListChanged = true;
     }
   }
@@ -326,8 +326,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       }
     });
     if (dialog.showAndGet()) {
+      mySdkList.repaint();
       final boolean pathChanged = !Comparing.equal(currentSdk.getHomePath(), dialog.getHomePath());
-      if (!currentSdk.getName().equals(dialog.getName()) || pathChanged || dialog.isAssociateChanged()) {
+      if (!modificator.getName().equals(dialog.getName()) || pathChanged || dialog.isAssociateChanged()) {
         myModifiedModificators.add(modificator);
         modificator.setName(dialog.getName());
         modificator.setHomePath(dialog.getHomePath());

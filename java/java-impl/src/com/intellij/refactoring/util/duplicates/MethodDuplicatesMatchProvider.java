@@ -149,7 +149,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
   }
 
   @Override
-  public boolean hasDuplicates() {
+  public Boolean hasDuplicates() {
     return myDuplicates.isEmpty();
   }
 

@@ -37,6 +37,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
 
   private final static String ENTER_REMOTE = "Enter Remote";
   private final HgRepository myRepository;
+  private final String myBranchName;
   private final TextFieldWithAutoCompletion<String> myDestTargetPanel;
   private final VcsEditableTextComponent myTargetRenderedComponent;
 
@@ -44,6 +45,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
     setLayout(new BorderLayout());
     setOpaque(false);
     myRepository = repository;
+    myBranchName = myRepository.getCurrentBranchName();
     final List<String> targetVariants = HgUtil.getTargetNames(repository);
     String defaultText = defaultTarget != null ? defaultTarget.getPresentation() : "";
     myTargetRenderedComponent = new VcsEditableTextComponent("<a href=''>" + defaultText + "</a>", null);
@@ -52,12 +54,13 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   }
 
   @Override
-  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected) {
+  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive) {
     String targetText = myDestTargetPanel.getText();
     if (StringUtil.isEmptyOrSpaces(targetText)) {
       renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, this);
     }
     myTargetRenderedComponent.setSelected(isSelected);
+    myTargetRenderedComponent.setTransparent(!isActive);
     myTargetRenderedComponent.render(renderer);
   }
 
@@ -69,7 +72,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
 
   @NotNull
   private HgTarget createValidPushTarget() {
-    return new HgTarget(myDestTargetPanel.getText());
+    return new HgTarget(myDestTargetPanel.getText(), myBranchName);
   }
 
   @Override

@@ -23,12 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,25 +34,18 @@ public class PackageUtil {
   @NotNull
   public static PsiPackage[] getSubpackages(@NotNull PsiPackage aPackage,
                                             @Nullable Module module,
-                                            @NotNull Project project,
                                             final boolean searchInLibraries) {
-    final PsiDirectory[] dirs = getDirectories(aPackage, project, module, searchInLibraries);
-    final Set<PsiPackage> subpackages = new HashSet<PsiPackage>();
-    for (PsiDirectory dir : dirs) {
-      final PsiDirectory[] subdirectories = dir.getSubdirectories();
-      for (PsiDirectory subdirectory : subdirectories) {
-        final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(subdirectory);
-        if (psiPackage != null) {
-          final String name = psiPackage.getName();
-          // skip "default" subpackages as they should be attributed to other modules
-          // this is the case when contents of one module is nested into contents of another
-          if (name != null && !name.isEmpty()) {
-            subpackages.add(psiPackage);
-          }
-        }
+    final GlobalSearchScope scopeToShow = getScopeToShow(aPackage.getProject(), module, searchInLibraries);
+    List<PsiPackage> result = new ArrayList<PsiPackage>();
+    for (PsiPackage psiPackage : aPackage.getSubPackages(scopeToShow)) {
+      // skip "default" subpackages as they should be attributed to other modules
+      // this is the case when contents of one module is nested into contents of another
+      final String name = psiPackage.getName();
+      if (name != null && !name.isEmpty()) {
+        result.add(psiPackage);
       }
     }
-    return subpackages.toArray(new PsiPackage[subpackages.size()]);
+    return result.toArray(new PsiPackage[result.size()]);
   }
 
   public static void addPackageAsChild(@NotNull Collection<AbstractTreeNode> children,
@@ -70,7 +59,7 @@ public class PackageUtil {
       children.add(new PackageElementNode(project, new PackageElement(module, aPackage, inLibrary), settings));
     }
     if (settings.isFlattenPackages() || shouldSkipPackage) {
-      final PsiPackage[] subpackages = getSubpackages(aPackage, module, project, inLibrary);
+      final PsiPackage[] subpackages = getSubpackages(aPackage, module, inLibrary);
       for (PsiPackage subpackage : subpackages) {
         addPackageAsChild(children, subpackage, module, settings, inLibrary);
       }
@@ -82,26 +71,28 @@ public class PackageUtil {
                                        boolean strictlyEmpty,
                                        final boolean inLibrary) {
     final Project project = aPackage.getProject();
-    final PsiDirectory[] dirs = getDirectories(aPackage, project, module, inLibrary);
-    for (final PsiDirectory dir : dirs) {
-      if (!TreeViewUtil.isEmptyMiddlePackage(dir, strictlyEmpty)) {
-        return false;
-      }
+    final GlobalSearchScope scopeToShow = getScopeToShow(project, module, inLibrary);
+    PsiElement[] children = aPackage.getFiles(scopeToShow);
+    if (children.length > 0) {
+      return false;
     }
-    return true;
+    PsiPackage[] subPackages = aPackage.getSubPackages(scopeToShow);
+    if (strictlyEmpty) {
+      return subPackages.length == 1;
+    }
+    return subPackages.length > 0;
   }
 
   @NotNull
   public static PsiDirectory[] getDirectories(@NotNull PsiPackage aPackage,
-                                              @NotNull Project project,
                                               @Nullable Module module,
                                               boolean inLibrary) {
-    final GlobalSearchScope scopeToShow = getScopeToShow(project, module, inLibrary);
+    final GlobalSearchScope scopeToShow = getScopeToShow(aPackage.getProject(), module, inLibrary);
     return aPackage.getDirectories(scopeToShow);
   }
 
   @NotNull
-  private static GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
+  public static GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
     if (module == null) {
       if (forLibraries) {
         return new ProjectLibrariesSearchScope(project);
@@ -242,7 +233,7 @@ public class PackageUtil {
 
     @Override
     public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      throw new IncorrectOperationException("not implemented");
+      return 0;
     }
 
     @Override

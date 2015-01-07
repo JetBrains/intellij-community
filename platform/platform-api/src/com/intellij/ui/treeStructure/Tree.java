@@ -217,7 +217,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       for (TreePath each : paths) {
         final Rectangle selection = getPathBounds(each);
         if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
-          if (myBusy) {
+          if (myBusy && myBusyIcon != null) {
             Rectangle busyIconBounds = myBusyIcon.getBounds();
             if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
               canHoldSelection = false;
@@ -304,7 +304,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   protected boolean shouldShowBusyIconIfNeeded() {
-    // http://youtrack.jetbrains.com/issue/IDEA-101422 "Rotating wait symbol in Project list whenever typing"
+    // https://youtrack.jetbrains.com/issue/IDEA-101422 "Rotating wait symbol in Project list whenever typing"
     return hasFocus();
   }
 

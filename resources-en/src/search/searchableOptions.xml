@@ -8903,8 +8903,8 @@
     <option name="hierarchy" path="ActionManager" hit="Implement Method (from Method Hierarchy)" />
     <option name="implement" path="ActionManager" hit="Implement Method (from Method Hierarchy)" />
     <option name="method" path="ActionManager" hit="Implement Method (from Method Hierarchy)" />
-    <option name="implement" path="ActionManager" hit="Implement Methods..." />
-    <option name="methods" path="ActionManager" hit="Implement Methods..." />
+    <option name="implement" path="ActionManager" hit="Implement methods..." />
+    <option name="methods" path="ActionManager" hit="Implement methods..." />
     <option name="base" path="ActionManager" hit="Implement base interface/class methods in the current class" />
     <option name="class" path="ActionManager" hit="Implement base interface/class methods in the current class" />
     <option name="current" path="ActionManager" hit="Implement base interface/class methods in the current class" />

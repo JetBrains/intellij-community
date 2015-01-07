@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,16 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,7 +55,7 @@ public class CommittedChangesFilterDialog extends DialogWrapper {
     myPanel.setSettings(settings);
     setTitle(VcsBundle.message("browse.changes.filter.title"));
     init();
-    myErrorLabel.setForeground(Color.red);
+    myErrorLabel.setForeground(JBColor.RED);
     validateInput();
     myValidateAlarm.addRequest(myValidateRunnable, 500, ModalityState.stateForComponent(myPanel.getComponent()));
   }

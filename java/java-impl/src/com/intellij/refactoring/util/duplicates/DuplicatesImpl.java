@@ -59,13 +59,17 @@ public class DuplicatesImpl {
   private DuplicatesImpl() {}
 
   public static void invoke(@NotNull  final Project project, @NotNull Editor editor, @NotNull MatchProvider provider) {
+    invoke(project, editor, provider, true);
+  }
+
+  public static void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull MatchProvider provider, boolean skipPromptWhenOne) {
     final List<Match> duplicates = provider.getDuplicates();
     int idx = 0;
     final Ref<Boolean> showAll = new Ref<Boolean>();
     final String confirmDuplicatePrompt = getConfirmationPrompt(provider, duplicates);
     for (final Match match : duplicates) {
       if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
-      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size(), showAll, confirmDuplicatePrompt, true)) return;
+      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size(), showAll, confirmDuplicatePrompt, skipPromptWhenOne)) return;
     }
   }
 
@@ -186,18 +190,18 @@ public class DuplicatesImpl {
   }
 
   public static void processDuplicates(@NotNull MatchProvider provider, @NotNull Project project, @NotNull Editor editor) {
-    boolean hasDuplicates = provider.hasDuplicates();
-    if (hasDuplicates) {
+    Boolean hasDuplicates = provider.hasDuplicates();
+    if (hasDuplicates == null || hasDuplicates.booleanValue()) {
       List<Match> duplicates = provider.getDuplicates();
       if (duplicates.size() == 1) {
         previewMatch(project, duplicates.get(0), editor);
       }
-      final int answer = ApplicationManager.getApplication().isUnitTestMode() ? Messages.YES : Messages.showYesNoDialog(project,
+      final int answer = ApplicationManager.getApplication().isUnitTestMode() || hasDuplicates == null ? Messages.YES : Messages.showYesNoDialog(project,
         RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
         ApplicationNamesInfo.getInstance().getProductName(), duplicates.size()),
         "Process Duplicates", Messages.getQuestionIcon());
       if (answer == Messages.YES) {
-        invoke(project, editor, provider);
+        invoke(project, editor, provider, hasDuplicates != null);
       }
     }
   }

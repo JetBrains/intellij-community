@@ -21,6 +21,7 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -134,25 +135,14 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   @Nullable
-  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
+  public DiffHyperlink getDiffViewerProvider() {
     return null;
   }
 
-  public interface AssertEqualsDiffViewerProvider {
-    void openDiff(final Project project);
-    String getExpected();
-    String getActual();
-  }
-
   public interface AssertEqualsDiffChain {
-    AssertEqualsMultiDiffViewProvider getPrevious();
-    AssertEqualsMultiDiffViewProvider getCurrent();
-    AssertEqualsMultiDiffViewProvider getNext();
-    void setCurrent(AssertEqualsMultiDiffViewProvider provider);
-  }
-
-  public interface AssertEqualsMultiDiffViewProvider extends AssertEqualsDiffViewerProvider {
-    void openMultiDiff(Project project, AssertEqualsDiffChain chain);
-    String getFilePath();
+    DiffHyperlink getPrevious();
+    DiffHyperlink getCurrent();
+    DiffHyperlink getNext();
+    void setCurrent(DiffHyperlink provider);
   }
 }

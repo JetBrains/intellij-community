@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.ui.JBColor;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -230,7 +231,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                                  BeforeAfter<ConflictSidePresentation> ba, boolean directory) {
     if (description == null) return;
     JLabel descriptionLbl = new JLabel(description.toPresentableString());
-    descriptionLbl.setForeground(Color.red);
+    descriptionLbl.setForeground(JBColor.RED);
     main.add(descriptionLbl, gb);
     ++ gb.gridy;
     //buttons

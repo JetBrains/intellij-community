@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.playback.PlaybackCommand;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 
+import javax.swing.*;
 import java.io.File;
 
 public abstract class AbstractCommand implements PlaybackCommand {
@@ -28,10 +29,16 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   private final String myText;
   private final int myLine;
+  private final boolean myExecuteInAwt;
 
   private File myScriptDir;
   
   public AbstractCommand(String text, int line) {
+    this(text, line, false);
+  }
+  
+  public AbstractCommand(String text, int line, boolean executeInAwt) {
+    myExecuteInAwt = executeInAwt;
     myText = text != null ? text : null;
     myLine = line;
   }
@@ -54,20 +61,34 @@ public abstract class AbstractCommand implements PlaybackCommand {
         dumpCommand(context);
       }
       final ActionCallback result = new ActionCallback();
-      if (isAwtThread()) {
-        _execute(context).notify(result);
-      } else {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
+      Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          try {
             _execute(context).notify(result);
           }
-        });
+          catch (Throwable e) {
+            context.error(e.getMessage(), getLine());
+            result.setRejected();
+          }
+        }
+      };
+      
+      if (isAwtThread()) {
+        // prevent previous action context affecting next action.
+        // E.g. previous action may have called callback.setDone from inside write action, while
+        // next action may not expect that
+        
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(runnable);
+      }
+      else {
+        ApplicationManager.getApplication().executeOnPooledThread(runnable);
       }
 
      return result;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       context.error(e.getMessage(), getLine());
       return new ActionCallback.Rejected();
     }
@@ -78,7 +99,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
   }
 
   protected boolean isAwtThread() {
-    return false;
+    return myExecuteInAwt;
   }
 
   protected abstract ActionCallback _execute(PlaybackContext context);

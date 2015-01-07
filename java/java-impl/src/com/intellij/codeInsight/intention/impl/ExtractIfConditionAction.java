@@ -186,7 +186,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
   private static String createIfString(@NotNull PsiExpression condition,
                                        @NotNull PsiStatement thenBranch,
                                        @Nullable PsiStatement elseBranch) {
-    return createIfString(condition.getText(), toThenBranchString(thenBranch), toElseBranchString(elseBranch));
+    return createIfString(condition.getText(), toThenBranchString(thenBranch), toElseBranchString(elseBranch, false));
   }
 
   @NotNull
@@ -200,7 +200,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
   private static String createIfString(@NotNull PsiExpression condition,
                                        @NotNull String thenBranch,
                                        @Nullable PsiStatement elseBranch) {
-    return createIfString(condition.getText(), thenBranch, toElseBranchString(elseBranch));
+    return createIfString(condition.getText(), thenBranch, toElseBranchString(elseBranch, true));
   }
 
   @NotNull
@@ -221,12 +221,12 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
   }
 
   @Nullable
-  private static String toElseBranchString(@Nullable PsiStatement statement) {
+  private static String toElseBranchString(@Nullable PsiStatement statement, boolean skipElse) {
     if (statement == null) {
       return null;
     }
 
-    if (statement instanceof PsiBlockStatement || statement instanceof PsiIfStatement) {
+    if (statement instanceof PsiBlockStatement || skipElse && statement instanceof PsiIfStatement) {
       return statement.getText();
     }
 

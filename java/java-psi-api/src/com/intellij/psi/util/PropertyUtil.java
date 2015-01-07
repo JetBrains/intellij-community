@@ -345,9 +345,16 @@ public class PropertyUtil {
   }
 
   public static String suggestSetterName(@NonNls String propertyName) {
-    @NonNls StringBuilder name =
-      new StringBuilder(StringUtil.capitalizeWithJavaBeanConvention(StringUtil.sanitizeJavaIdentifier(propertyName)));
-    name.insert(0, "set");
+    return suggestSetterName(propertyName, "set");
+  }
+
+  public static String suggestSetterName(@NonNls String propertyName, String setterPrefix) {
+    final String sanitizeJavaIdentifier = StringUtil.sanitizeJavaIdentifier(propertyName);
+    if (StringUtil.isEmpty(setterPrefix)) {
+      return sanitizeJavaIdentifier;
+    }
+    @NonNls StringBuilder name = new StringBuilder(StringUtil.capitalizeWithJavaBeanConvention(sanitizeJavaIdentifier));
+    name.insert(0, setterPrefix);
     return name.toString();
   }
 

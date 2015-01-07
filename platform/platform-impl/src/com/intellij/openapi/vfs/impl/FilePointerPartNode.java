@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -56,7 +57,11 @@ class FilePointerPartNode {
   }
 
   // returns the node and length of matched characters in that node, or null if there is no match
-  int position(@Nullable VirtualFile parent, boolean separator, @NotNull CharSequence childName, @NotNull FilePointerPartNode[] outNode) {
+  int position(@Nullable VirtualFile parent,
+               @Nullable CharSequence parentName,
+               boolean separator,
+               @NotNull CharSequence childName,
+               @NotNull FilePointerPartNode[] outNode) {
     checkConsistency();
 
     int partStart;
@@ -65,8 +70,9 @@ class FilePointerPartNode {
       outNode[0] = this;
     }
     else {
-      VirtualFile gparent = parent.getParent();
-      partStart = position(gparent, gparent != null && !StringUtil.equals(gparent.getNameSequence(), "/"), parent.getNameSequence(), outNode);
+      VirtualFile gParent = parent.getParent();
+      CharSequence gParentName = gParent == null ? null : gParent.getNameSequence();
+      partStart = position(gParent, gParentName, gParentName != null && !StringUtil.equals(gParentName, "/"), parentName, outNode);
       if (partStart == -1) return -1;
     }
 
@@ -90,7 +96,7 @@ class FilePointerPartNode {
     if (partStart + index == outNode[0].part.length()) {
       // go to children
       for (FilePointerPartNode child : outNode[0].children) {
-        int childPos = child.position(null, childSeparator, childName.subSequence(index, childName.length()), outNode);
+        int childPos = child.position(null, null, childSeparator, childName.subSequence(index, childName.length()), outNode);
         if (childPos != -1) return childPos;
       }
     }
@@ -104,7 +110,8 @@ class FilePointerPartNode {
                         @NotNull CharSequence childName,
                         @NotNull List<FilePointerPartNode> out) {
     FilePointerPartNode[] outNode = new FilePointerPartNode[1];
-    int position = position(parent, separator, childName, outNode);
+    CharSequence parentName = parent == null ? null : parent.getNameSequence();
+    int position = position(parent, parentName, separator, childName, outNode);
     if (position != -1) {
       FilePointerPartNode node = outNode[0];
       addAllPointersUnder(node, out);
@@ -118,6 +125,7 @@ class FilePointerPartNode {
     }
   }
 
+  @TestOnly
   boolean getPointersUnder(@NotNull String path, int start, @NotNull List<FilePointerPartNode> out) {
     checkConsistency();
     if (pointersUnder == 0) return false;

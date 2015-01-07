@@ -1269,7 +1269,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (parentStatement != null) {
         PsiElement parent = ref.getParent();
         while (!parent.equals(parentStatement)) {
-          if (parent instanceof PsiExpressionStatement) {
+          if (parent instanceof PsiExpressionStatement || parent instanceof PsiReturnStatement) {
             String text = "{\n}";
             PsiBlockStatement blockStatement = (PsiBlockStatement)myFactory.createStatementFromText(text, null);
             blockStatement = (PsiBlockStatement)myCodeStyleManager.reformat(blockStatement);
@@ -1288,7 +1288,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           final PsiLambdaExpression newLambdaExpr = (PsiLambdaExpression)myFactory.createExpressionFromText(
             ((PsiLambdaExpression)lambdaExpr).getParameterList().getText() + " -> " + "{\n}", lambdaExpr);
           final PsiStatement statementFromText;
-          if (LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)lambdaExpr) == PsiType.VOID ) {
+          if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)lambdaExpr))) {
             statementFromText = myFactory.createStatementFromText("a;", lambdaExpr);
             ((PsiExpressionStatement)statementFromText).getExpression().replace(parentStatement);
           } else {

@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
@@ -33,8 +32,7 @@ import java.util.List;
  */
 public class XCopyValueAction extends XFetchValueActionBase {
   @Override
-  protected void handle(final Project project, final String value, AnActionEvent e) {
-    XDebuggerTree tree = XDebuggerTree.getTree(e.getDataContext());
+  protected void handle(final Project project, final String value, XDebuggerTree tree) {
     if (tree == null) return;
     List<? extends WatchNode> watchNodes = XWatchesTreeActionBase.getSelectedNodes(tree, WatchNode.class);
     if (watchNodes.isEmpty()) {

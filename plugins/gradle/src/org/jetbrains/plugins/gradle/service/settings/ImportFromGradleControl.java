@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,5 +66,11 @@ public class ImportFromGradleControl
   @Override
   protected void onLinkedProjectPathChange(@NotNull String path) {
     ((GradleProjectSettingsControl)getProjectSettingsControl()).updateWrapperControls(path, false);
+  }
+
+  @Override
+  public void setCurrentProject(@Nullable Project currentProject) {
+    super.setCurrentProject(currentProject);
+    ((GradleProjectSettingsControl)getProjectSettingsControl()).setCurrentProject(currentProject);
   }
 }

@@ -18,24 +18,25 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider;
+import org.jetbrains.annotations.NotNull;
 
 public class CheckForUpdateAction extends AnAction implements DumbAware {
   @Override
-  public void update(AnActionEvent e) {
-    final String place = e.getPlace();
+  public void update(@NotNull AnActionEvent e) {
+    String place = e.getPlace();
     if (ActionPlaces.WELCOME_SCREEN.equals(place) && FlatWelcomeFrameProvider.isAvailable()) {
       e.getPresentation().setEnabledAndVisible(true);
-    } else {
+    }
+    else {
       e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(place));
     }
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    UpdateChecker.updateAndShowResult(e.getData(CommonDataKeys.PROJECT), false, UpdateSettings.getInstance());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    UpdateChecker.updateAndShowResult(e.getProject(), null);
   }
 }
