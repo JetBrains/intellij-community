@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
