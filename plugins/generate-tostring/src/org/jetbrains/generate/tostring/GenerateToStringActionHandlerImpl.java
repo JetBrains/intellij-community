@@ -192,7 +192,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
             comboBox = new ComboBox(all);
             settingsButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    final TemplatesPanel ui = new TemplatesPanel();
+                  final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
                   Disposable disposable = Disposer.newDisposable();
                   Configurable composite = new TabbedConfigurable(disposable) {
                         protected List<Configurable> createConfigurables() {

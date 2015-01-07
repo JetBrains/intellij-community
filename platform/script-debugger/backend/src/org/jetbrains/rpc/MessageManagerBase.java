@@ -8,7 +8,7 @@ public abstract class MessageManagerBase {
 
   protected final boolean rejectIfClosed(RequestCallback<?> callback) {
     if (closed) {
-      callback.onError(Promise.getError("Connection closed"));
+      callback.onError(Promise.createError("Connection closed"));
       return true;
     }
     return false;
@@ -19,6 +19,6 @@ public abstract class MessageManagerBase {
   }
 
   protected static void rejectCallback(@NotNull RequestCallback<?> callback) {
-    callback.onError(Promise.getError("Connection closed"));
+    callback.onError(Promise.createError("Connection closed"));
   }
 }

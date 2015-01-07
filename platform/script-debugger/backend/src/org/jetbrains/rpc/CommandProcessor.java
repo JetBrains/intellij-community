@@ -6,7 +6,7 @@ import org.jetbrains.jsonProtocol.Request;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE, ERROR_DETAILS>
+public abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>
   extends CommandSenderBase<SUCCESS_RESPONSE>
   implements MessageManager.Handler<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>,
              ResultReader<SUCCESS_RESPONSE>,

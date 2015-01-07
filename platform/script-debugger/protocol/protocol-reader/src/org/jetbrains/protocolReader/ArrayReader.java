@@ -4,8 +4,8 @@ class ArrayReader extends ValueReader {
   private final ValueReader componentParser;
   private final boolean isList;
 
-  ArrayReader(ValueReader componentParser, boolean isList, boolean nullable) {
-    super(nullable);
+  ArrayReader(ValueReader componentParser, boolean isList) {
+    super();
 
     this.componentParser = componentParser;
     this.isList = isList;
@@ -31,13 +31,10 @@ class ArrayReader extends ValueReader {
 
   @Override
   void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, TextOutput out) {
-    componentParser.writeArrayReadCode(scope, subtyping, isNullable(), fieldName, out);
+    componentParser.writeArrayReadCode(scope, subtyping, out);
   }
 
   @Override
-  void writeArrayReadCode(ClassScope scope,
-                          boolean subtyping,
-                          boolean nullable,
-                          String fieldName, TextOutput out) {
+  void writeArrayReadCode(ClassScope scope, boolean subtyping, TextOutput out) {
   }
 }

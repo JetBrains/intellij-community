@@ -24,8 +24,8 @@ class Test {
         boolean b1 = as.forAll(s -> ac.forAll<error descr="Cannot resolve method 'forAll(<lambda expression>)'">(c -> false)</error>);
         String s1 = as.forAll(s -> ac.forAll<error descr="Cannot resolve method 'forAll(<lambda expression>)'">(c -> "")</error>);
         boolean b2 = as.forAll(s -> ac.forAll<error descr="Cannot resolve method 'forAll(<lambda expression>)'">(c -> "")</error>);
-        String s2 = as.forAll2(s -> ac.forAll2(<error descr="Incompatible return type boolean in lambda expression">c -> false</error>));
-        boolean b3 = as.forAll((I<String, Boolean>)s -> ac.forAll((I<Character, Boolean>)<error descr="Incompatible return type String in lambda expression">c -> ""</error>));
-        String s3 = as.forAll((II<String, String>)s -> ac.forAll((II<Character, String>)<error descr="Incompatible return type boolean in lambda expression">c -> false</error>));
+        String s2 = as.forAll2(s -> ac.forAll2(c -> <error descr="Bad return type in lambda expression: boolean cannot be converted to String">false</error>));
+        boolean b3 = as.forAll((I<String, Boolean>)s -> ac.forAll((I<Character, Boolean>)c -> <error descr="Bad return type in lambda expression: String cannot be converted to Boolean">""</error>));
+        String s3 = as.forAll((II<String, String>)s -> ac.forAll((II<Character, String>)c -> <error descr="Bad return type in lambda expression: boolean cannot be converted to String">false</error>));
     }
 }

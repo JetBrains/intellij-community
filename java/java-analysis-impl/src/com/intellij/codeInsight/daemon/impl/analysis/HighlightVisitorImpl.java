@@ -319,10 +319,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               myHolder.add(result); //todo[ann] append not inferred type params info
             }
             else {
-              final String incompatibleReturnTypesMessage = LambdaHighlightingUtil
+              final String incompatibleReturnTypesMessage = LambdaUtil
                 .checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
               if (incompatibleReturnTypesMessage != null) {
-                HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(expression);
+                final PsiElement returnStatementToHighlight = returnExpressions.size() == 1 ? returnExpressions.get(0) : expression.getBody();
+                HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(returnStatementToHighlight != null ? returnStatementToHighlight : expression)
                   .descriptionAndTooltip(incompatibleReturnTypesMessage).create();
                 myHolder.add(result);
               }
@@ -331,12 +333,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                 final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
                 if (interfaceMethod != null) {
                   final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-                  PsiElement incompatibleElt = LambdaHighlightingUtil
+                  HighlightInfo result = LambdaHighlightingUtil
                     .checkParametersCompatible(expression, parameters, LambdaUtil.getSubstitutor(interfaceMethod, resolveResult));
-                  if (incompatibleElt != null) {
-                    final String incompatibleTypesMessage = "Incompatible parameter types in lambda expression";
-                    HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(incompatibleElt)
-                      .descriptionAndTooltip(incompatibleTypesMessage).create();
+                  if (result != null) {
                     myHolder.add(result);
                   } else {
                     final PsiClass samClass = resolveResult.getElement();

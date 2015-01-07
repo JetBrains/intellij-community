@@ -211,6 +211,14 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     PsiMethod psiMethod = (PsiMethod)psiResolved;
     RefMethodImpl refMethod = (RefMethodImpl)refResolved;
 
+    if (refExpression instanceof PsiMethodReferenceExpression) {
+      PsiType returnType = psiMethod.getReturnType();
+      if (!psiMethod.isConstructor() && returnType != PsiType.VOID) {
+        refMethod.setReturnValueUsed(true);
+        addTypeReference(psiFrom, returnType, refFrom.getRefManager());
+      }
+      return;
+    }
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(
       refExpression,
       PsiMethodCallExpression.class

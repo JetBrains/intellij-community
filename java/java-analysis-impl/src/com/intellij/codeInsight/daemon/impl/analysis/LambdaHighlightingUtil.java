@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.openapi.util.Computable;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,12 +49,17 @@ public class LambdaHighlightingUtil {
   }
 
   @Nullable
-  public static PsiElement checkParametersCompatible(PsiLambdaExpression expression,
-                                                     PsiParameter[] methodParameters,
-                                                     PsiSubstitutor substitutor) {
+  public static HighlightInfo checkParametersCompatible(PsiLambdaExpression expression,
+                                                        PsiParameter[] methodParameters,
+                                                        PsiSubstitutor substitutor) {
     final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
+    String incompatibleTypesMessage = "Incompatible parameter types in lambda expression: ";
     if (lambdaParameters.length != methodParameters.length) {
-      return expression;
+      incompatibleTypesMessage += "wrong number of parameters: expected " + methodParameters.length + " but found " + lambdaParameters.length;
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(expression.getParameterList())
+        .descriptionAndTooltip(incompatibleTypesMessage)
+        .create();
     }
     else {
       boolean hasFormalParameterTypes = expression.hasFormalParameterTypes();
@@ -61,50 +67,15 @@ public class LambdaHighlightingUtil {
         PsiParameter lambdaParameter = lambdaParameters[i];
         PsiType lambdaParameterType = lambdaParameter.getType();
         PsiType substitutedParamType = substitutor.substitute(methodParameters[i].getType());
-        if (hasFormalParameterTypes) {
-          if (!PsiTypesUtil.compareTypes(lambdaParameterType, substitutedParamType, true)) {
-            return lambdaParameter;
-          }
-        } else {
-          if (!TypeConversionUtil.isAssignable(substitutedParamType, lambdaParameterType)) {
-            return lambdaParameter;
-          }
+        if (hasFormalParameterTypes &&!PsiTypesUtil.compareTypes(lambdaParameterType, substitutedParamType, true) || 
+            !TypeConversionUtil.isAssignable(substitutedParamType, lambdaParameterType)) {
+          final String expectedType = substitutedParamType != null ? substitutedParamType.getPresentableText() : null;
+          final String actualType = lambdaParameterType.getPresentableText();
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(expression.getParameterList())
+            .descriptionAndTooltip(incompatibleTypesMessage + "expected " + expectedType + " but found " + actualType)
+            .create();
         }
-      }
-    }
-    return null;
-  }
-
-  public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
-    if (functionalInterfaceReturnType == PsiType.VOID) {
-      final PsiElement body = lambdaExpression.getBody();
-      if (body instanceof PsiCodeBlock) {
-        if (!LambdaUtil.getReturnExpressions(lambdaExpression).isEmpty()) return "Unexpected return value";
-      } else if (body instanceof PsiExpression) {
-        final PsiType type = ((PsiExpression)body).getType();
-        try {
-          if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
-            return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " in lambda expression";
-          }
-        }
-        catch (IncorrectOperationException ignore) {
-        }
-      }
-    } else if (functionalInterfaceReturnType != null) {
-      final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
-      for (final PsiExpression expression : returnExpressions) {
-        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
-          @Override
-          public PsiType compute() {
-            return expression.getType();
-          }
-        });
-        if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
-          return "Incompatible return type " + expressionType.getPresentableText() + " in lambda expression";
-        }
-      }
-      if (LambdaUtil.getReturnStatements(lambdaExpression).length > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
-        return "Missing return value";
       }
     }
     return null;

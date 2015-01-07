@@ -60,6 +60,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
 
   protected abstract Promise<Breakpoint> doSetBreakpoint(@NotNull BreakpointTarget target, @NotNull T breakpoint);
 
+  @NotNull
   @Override
   public Breakpoint setBreakpoint(@NotNull final BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled) {
     final T breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, enabled);
@@ -81,6 +82,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
     return breakpoint;
   }
 
+  @NotNull
   @Override
   public Promise<Void> remove(@NotNull Breakpoint breakpoint) {
     @SuppressWarnings("unchecked")
@@ -129,6 +131,12 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
   @Nullable
   @Override
   public FunctionSupport getFunctionSupport() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public ScriptRegExpSupport getScriptRegExpSupport() {
     return null;
   }
 }

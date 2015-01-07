@@ -15,15 +15,22 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   @NotNull
   @Override
   public Promise<T> done(@NotNull Consumer<T> done) {
-    done.consume(result);
+    if (!AsyncPromise.isObsolete(done)) {
+      done.consume(result);
+    }
     return this;
   }
 
   @NotNull
   @Override
-  public Promise<T> done(@NotNull AsyncPromise<T> fulfilled) {
+  public Promise<T> processed(@NotNull AsyncPromise<T> fulfilled) {
     fulfilled.setResult(result);
     return this;
+  }
+
+  @Override
+  public void processed(@NotNull Consumer<T> processed) {
+    done(processed);
   }
 
   @NotNull
@@ -32,15 +39,15 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
     return this;
   }
 
-  @Override
-  public void processed(@NotNull Consumer<T> processed) {
-    processed.consume(result);
-  }
-
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done) {
-    return Promise.resolve(done.fun(result));
+    if (done instanceof ObsolescentFunction && ((ObsolescentFunction)done).isObsolete()) {
+      return Promise.reject("obsolete");
+    }
+    else {
+      return Promise.resolve(done.fun(result));
+    }
   }
 
   @NotNull

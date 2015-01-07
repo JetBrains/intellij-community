@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.util.ui;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
@@ -34,12 +32,20 @@ public class JBUI {
     return new JBDimension(width, height);
   }
 
+  public static JBDimension size(Dimension size) {
+    return size instanceof JBDimension ? ((JBDimension)size) : new JBDimension(size.width, size.height);
+  }
+
   public static JBInsets insets(int top, int left, int bottom, int right) {
     return new JBInsets(top, left, bottom, right);
   }
 
-  public static Icon emptyIcon(int i) {
-    return EmptyIcon.create(scale(i));
+  public static JBInsets emptyInsets() {
+    return new JBInsets(0, 0, 0, 0);
+  }
+
+  public static EmptyIcon emptyIcon(int i) {
+    return (EmptyIcon)EmptyIcon.create(scale(i));
   }
 
   public static float scale(float f) {
@@ -56,7 +62,7 @@ public class JBUI {
 
   public static class Fonts {
     public static JBFont label() {
-      return JBFont.create(UIManager.getFont("Label.font"));
+      return JBFont.create(UIManager.getFont("Label.font"), false);
     }
 
     public static JBFont label(float size) {
@@ -65,8 +71,12 @@ public class JBUI {
   }
 
   public static class Borders {
-    public static Border empty(int top, int left, int bottom, int right) {
-      return new EmptyBorder(insets(top, left, bottom, right));
+    public static JBEmptyBorder empty(int top, int left, int bottom, int right) {
+      return new JBEmptyBorder(top, left, bottom, right);
+    }
+
+    public static JBEmptyBorder empty() {
+      return new JBEmptyBorder(0);
     }
   }
 }

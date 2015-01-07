@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm.impl.welcomeScreen;
+package org.jetbrains.jps.incremental.groovy;
 
-public class IdeaJetBrainsTvAction extends JetBrainsTvAction {
-  private static final String CHANNEL = "intellij-idea";
+/**
+ * @author peter
+ */
+public class GreclipseSettings {
+  public static final String COMPONENT_NAME = "GreclipseSettings";
+  public static final String COMPONENT_FILE = "compiler.xml";
 
-  public IdeaJetBrainsTvAction() {
-    super(CHANNEL);
-  }
+  public String greclipsePath = "";
+  public boolean debugInfo = true;
+  public String cmdLineParams = "";
+
+
 }

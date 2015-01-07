@@ -25,10 +25,14 @@ class FileUpdater {
   }
 
   void update() throws IOException {
+    if (builder.length() == 0) {
+      Files.delete(file);
+      return;
+    }
+
     byte[] newContent = builder.toString().getBytes(StandardCharsets.UTF_8);
     if (Files.exists(file)) {
-      byte[] oldContent = Files.readAllBytes(file);
-      if (Arrays.equals(oldContent, newContent)) {
+      if (Arrays.equals(Files.readAllBytes(file), newContent)) {
         return;
       }
     }

@@ -6,8 +6,7 @@ import org.jetbrains.concurrency.Promise;
 
 public interface SuspendContextManager<CALL_FRAME extends CallFrame> {
   /**
-   * Tries to suspend VM. If successful, {@link DebugEventListener#suspended(SuspendContext)}
-   * will be called.
+   * Tries to suspend VM. If successful, {@link DebugEventListener#suspended(SuspendContext)} will be called.
    */
   @NotNull
   Promise<?> suspend();
@@ -28,6 +27,7 @@ public interface SuspendContextManager<CALL_FRAME extends CallFrame> {
    *  @param stepAction to perform
    * @param stepCount steps to perform (not used if {@code stepAction == CONTINUE})
    */
+  @NotNull
   Promise<Void> continueVm(@NotNull StepAction stepAction, int stepCount);
 
   boolean isRestartFrameSupported();

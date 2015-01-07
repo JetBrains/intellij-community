@@ -97,6 +97,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                            ModuleChunk chunk,
                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                            OutputConsumer outputConsumer) throws ProjectBuildException {
+    if (GreclipseBuilder.useGreclipse(context)) return ExitCode.NOTHING_DONE;
+    
     long start = 0;
     try {
       JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());

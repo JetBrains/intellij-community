@@ -8,19 +8,15 @@ class PrimitiveValueReader extends ValueReader {
   private final boolean asRawString;
 
   PrimitiveValueReader(String name) {
-    this(name, false);
-  }
-
-  PrimitiveValueReader(String name, boolean nullable) {
-    this(name, null, nullable, false);
+    this(name, null, false);
   }
 
   PrimitiveValueReader(String name, String defaultValue) {
-    this(name, defaultValue, false, false);
+    this(name, defaultValue, false);
   }
 
-  public PrimitiveValueReader(String name, String defaultValue, boolean nullable, boolean asRawString) {
-    super(nullable);
+  public PrimitiveValueReader(String name, String defaultValue, boolean asRawString) {
+    super();
 
     this.defaultValue = defaultValue;
     this.asRawString = asRawString;
@@ -55,8 +51,7 @@ class PrimitiveValueReader extends ValueReader {
   @Override
   public void writeArrayReadCode(ClassScope scope,
                                  boolean subtyping,
-                                 boolean nullable,
-                                 String fieldName, TextOutput out) {
+                                 TextOutput out) {
     if (readPostfix.equals("String")) {
       out.append("nextList");
     }

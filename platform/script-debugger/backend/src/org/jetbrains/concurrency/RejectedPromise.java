@@ -19,7 +19,7 @@ class RejectedPromise<T> extends Promise<T> {
 
   @NotNull
   @Override
-  public Promise<T> done(@NotNull AsyncPromise<T> fulfilled) {
+  public Promise<T> processed(@NotNull AsyncPromise<T> fulfilled) {
     fulfilled.setError(error);
     return this;
   }

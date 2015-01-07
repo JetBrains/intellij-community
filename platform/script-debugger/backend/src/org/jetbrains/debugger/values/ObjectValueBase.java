@@ -20,7 +20,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
       }
 
       @Override
-      public Promise<List<Variable>> load(@NotNull ObjectValueBase host, @NotNull Promise<List<Variable>> promise) {
+      public Promise<List<Variable>> load(@NotNull ObjectValueBase host) {
         if (host.valueManager.isObsolete()) {
           return ValueManager.reject();
         }

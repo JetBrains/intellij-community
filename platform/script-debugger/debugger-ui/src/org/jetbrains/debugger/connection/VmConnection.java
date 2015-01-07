@@ -1,7 +1,6 @@
 package org.jetbrains.debugger.connection;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
@@ -67,15 +66,15 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     ConnectionState oldState = state.getAndSet(newState);
     if (oldState == null || oldState.getStatus() != status) {
       if (status == ConnectionStatus.CONNECTION_FAILED) {
-        opened.setError(Promise.getError(newState.getMessage()));
+        opened.setError(Promise.createError(newState.getMessage()));
       }
       connectionDispatcher.getMulticaster().statusChanged(status);
     }
   }
 
   @Override
-  public void addListener(@NotNull SocketConnectionListener listener, @NotNull Disposable parentDisposable) {
-    connectionDispatcher.addListener(listener, parentDisposable);
+  public void addListener(@NotNull SocketConnectionListener listener) {
+    connectionDispatcher.addListener(listener);
   }
 
   public DebugEventListener getDebugEventListener() {
@@ -91,7 +90,9 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
       return;
     }
 
-    opened.setError(Promise.getError("closed"));
+    if (opened.getState() == Promise.State.PENDING) {
+      opened.setError(Promise.createError("closed"));
+    }
     setState(status, message);
     Disposer.dispose(this, false);
   }
@@ -101,17 +102,20 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     vm = null;
   }
 
-  public ActionCallback detachAndClose() {
-    opened.setError(Promise.getError("detached and closed"));
+  @NotNull
+  public Promise<Void> detachAndClose() {
+    if (opened.getState() == Promise.State.PENDING) {
+      opened.setError(Promise.createError("detached and closed"));
+    }
 
     Vm currentVm = vm;
-    ActionCallback callback;
+    Promise<Void> callback;
     if (currentVm == null) {
-      callback = new ActionCallback.Done();
+      callback = Promise.DONE;
     }
     else {
       vm = null;
-      callback = currentVm.detach();
+      callback = currentVm.getAttachStateManager().detach();
     }
     close(null, ConnectionStatus.DISCONNECTED);
     return callback;

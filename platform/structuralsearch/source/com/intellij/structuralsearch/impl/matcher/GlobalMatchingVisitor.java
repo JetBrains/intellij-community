@@ -315,4 +315,17 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   protected boolean isRightLooseMatching() {
     return false;
   }
+
+  public boolean matchText(@Nullable PsiElement left, @Nullable PsiElement right) {
+    if (left == null) {
+      return right == null;
+    }
+    else if (right == null) {
+      return false;
+    }
+    final boolean caseSensitiveMatch = matchContext.getOptions().isCaseSensitiveMatch();
+    final String leftText = left.getText();
+    final String rightText = right.getText();
+    return caseSensitiveMatch ? leftText.equals(rightText) : leftText.equalsIgnoreCase(rightText);
+  }
 }

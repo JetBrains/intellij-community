@@ -25,9 +25,9 @@ public abstract class CommandSenderBase<SUCCESS_RESPONSE> implements CommandSend
     }
 
     @Override
-    public void onSuccess(SUCCESS_RESPONSE response, @Nullable ResultReader<SUCCESS_RESPONSE> resultReader) {
+    public void onSuccess(@Nullable SUCCESS_RESPONSE response, @Nullable ResultReader<SUCCESS_RESPONSE> resultReader) {
       try {
-        if (resultReader == null) {
+        if (resultReader == null || response == null) {
           //noinspection unchecked
           setResult((RESULT)response);
         }

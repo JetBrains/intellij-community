@@ -22,7 +22,7 @@ public abstract class PromiseManager<HOST, VALUE> {
     return true;
   }
 
-  public abstract Promise<VALUE> load(@NotNull HOST host, Promise<VALUE> promise);
+  public abstract Promise<VALUE> load(@NotNull HOST host);
 
   public final void reset(HOST host) {
     fieldUpdater.set(host, null);
@@ -52,6 +52,7 @@ public abstract class PromiseManager<HOST, VALUE> {
     return getOrCreateAsyncResult(host, checkFreshness, true);
   }
 
+  @NotNull
   private Promise<VALUE> getOrCreateAsyncResult(HOST host, boolean checkFreshness, boolean load) {
     Promise<VALUE> promise = fieldUpdater.get(host);
     if (promise == null) {
@@ -89,14 +90,14 @@ public abstract class PromiseManager<HOST, VALUE> {
     return getPromise(host, load, promise);
   }
 
+  @NotNull
   private Promise<VALUE> getPromise(HOST host, boolean load, Promise<VALUE> promise) {
-    if (load) {
-      Promise<VALUE> effectivePromise = load(host, promise);
-      if (effectivePromise != promise) {
-        ((AsyncPromise<VALUE>)effectivePromise).notify((AsyncPromise<VALUE>)promise);
-      }
-      return effectivePromise;
+    if (!load) {
+      return promise;
     }
-    return promise;
+
+    Promise<VALUE> effectivePromise = load(host);
+    ((AsyncPromise<VALUE>)effectivePromise).notify((AsyncPromise<VALUE>)promise);
+    return effectivePromise;
   }
 }
