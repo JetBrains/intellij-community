@@ -291,6 +291,15 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
+  public void "test double constant auto-unboxing"() {
+    def c = inferContracts("""
+      static double method() {
+        return 1;
+      }
+    """)
+    assert c == []
+  }
+
   public void "test non-returning delegation"() {
     def c = inferContracts("""
     static void test2(Object o) {
@@ -425,6 +434,15 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
   }
   
   public void "test negative compare with string literal"() {
+    def c = inferContracts("""
+  String s(String s) {
+    return s != "a" ? "b" : null;
+  }
+    """)
+    assert c == ['null -> !null']
+  }
+
+  public void "test primitive return type"() {
     def c = inferContracts("""
   String s(String s) {
     return s != "a" ? "b" : null;

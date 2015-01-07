@@ -115,6 +115,6 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
              returnValue == MethodContract.ValueConstraint.NOT_NULL_VALUE;
     }
 
-    return true;
+    return false;
   }
 }
