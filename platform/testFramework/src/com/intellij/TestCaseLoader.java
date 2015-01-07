@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,7 +171,7 @@ public class TestCaseLoader {
   public void loadTestCases(final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       try {
-        Class candidateClass = Class.forName(className);
+        Class candidateClass = Class.forName(className, false, getClass().getClassLoader());
         addClassIfTestCase(candidateClass);
       }
       catch (ClassNotFoundException e) {
