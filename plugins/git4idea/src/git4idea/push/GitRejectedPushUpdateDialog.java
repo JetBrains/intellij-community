@@ -220,6 +220,12 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     return myRebaseOverMergeProblemDetected;
   }
 
+  @TestOnly
+  @NotNull
+  Action getDefaultAction() {
+    return Boolean.TRUE.equals(myMergeAction.getValue(DEFAULT_ACTION)) ? myMergeAction : myRebaseAction;
+  }
+
   private class MergeAction extends AbstractAction {
     MergeAction() {
       super("&Merge");
