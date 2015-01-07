@@ -55,6 +55,11 @@ public class ExprMatchingStrategy extends MatchingStrategyBase {
     result = true;
   }
 
+  @Override
+  public void visitPackageStatement(PsiPackageStatement statement) {
+    result = true;
+  }
+
   // finding parameters
   @Override public void visitParameterList(final PsiParameterList list) {
     result = true;

@@ -2451,6 +2451,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}\n";
     assertEquals("Find annotated casts", 1, findMatchesCount(source3, "(@'_A 'Cast) '_Expression"));
     assertEquals("Find annotated new expressions", 1, findMatchesCount(source3, "new @'_A 'Type()"));
+
+    // package-info.java
+    final String source4 = "/**\n" +
+                           " * documentation\n" +
+                           " */\n" +
+                           "@Deprecated\n" +
+                           "package one.two;";
+    assertEquals("Find annotation on package statement", 1, findMatchesCount(source4, "@'_Annotation", true));
   }
 
   public void testBoxingAndUnboxing() {
