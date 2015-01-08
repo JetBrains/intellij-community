@@ -420,21 +420,24 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
-      final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+      PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (functionalInterfaceType == null || !functionalInterfaceType.isValid()) return;
       final String methodRefText = createMethodReferenceText(element, functionalInterfaceType,
                                                              lambdaExpression.getParameterList().getParameters());
 
       if (methodRefText != null) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        final PsiExpression psiExpression =
-          factory.createExpressionFromText(methodRefText, lambdaExpression);
+        final PsiExpression psiExpression = factory.createExpressionFromText(methodRefText, lambdaExpression);
+        final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(functionalInterfaceType);
         PsiElement replace = lambdaExpression.replace(psiExpression);
         if (((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType() == null) { //ambiguity
           final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(A)a", replace);
-          cast.getCastType().replace(factory.createTypeElement(functionalInterfaceType));
-          cast.getOperand().replace(replace);
-          replace = replace.replace(cast);
+          functionalInterfaceType = typePointer.getType();
+          if (functionalInterfaceType != null) {
+            cast.getCastType().replace(factory.createTypeElement(functionalInterfaceType));
+            cast.getOperand().replace(replace);
+            replace = replace.replace(cast);
+          }
         }
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(replace);
       }
