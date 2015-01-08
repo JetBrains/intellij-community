@@ -1,5 +1,7 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 class PrimitiveValueReader extends ValueReader {
   private final String className;
   private final String readPostfix;
@@ -30,7 +32,7 @@ class PrimitiveValueReader extends ValueReader {
   }
 
   @Override
-  void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, TextOutput out) {
+  void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, @NotNull TextOutput out) {
     if (asRawString) {
       out.append("readRawString(");
       addReaderParameter(subtyping, out);
@@ -44,14 +46,14 @@ class PrimitiveValueReader extends ValueReader {
   }
 
   @Override
-  void appendFinishedValueTypeName(TextOutput out) {
+  void appendFinishedValueTypeName(@NotNull TextOutput out) {
     out.append(className);
   }
 
   @Override
-  public void writeArrayReadCode(ClassScope scope,
+  public void writeArrayReadCode(@NotNull ClassScope scope,
                                  boolean subtyping,
-                                 TextOutput out) {
+                                 @NotNull TextOutput out) {
     if (readPostfix.equals("String")) {
       out.append("nextList");
     }

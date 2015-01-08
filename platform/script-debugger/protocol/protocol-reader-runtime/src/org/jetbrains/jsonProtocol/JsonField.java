@@ -29,4 +29,6 @@ public @interface JsonField {
   boolean allowAnyPrimitiveValueAndMap() default false;
 
   boolean optional() default false;
+
+  String primitiveValue() default "";
 }

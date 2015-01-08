@@ -146,6 +146,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     return promise;
   }
 
+  @Override
   void notify(@NotNull final AsyncPromise<T> child) {
     switch (state) {
       case PENDING:

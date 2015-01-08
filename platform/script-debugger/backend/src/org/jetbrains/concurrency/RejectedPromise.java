@@ -55,4 +55,9 @@ class RejectedPromise<T> extends Promise<T> {
   public State getState() {
     return State.REJECTED;
   }
+
+  @Override
+  void notify(@NotNull AsyncPromise<T> child) {
+    child.setError(error);
+  }
 }

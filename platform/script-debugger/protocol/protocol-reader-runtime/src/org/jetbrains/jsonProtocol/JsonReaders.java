@@ -7,6 +7,7 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 
 import java.util.ArrayList;
@@ -30,20 +31,10 @@ public final class JsonReaders {
 
   public static Object readRawStringOrMap(JsonReaderEx reader) {
     if (reader.peek() == JsonToken.BEGIN_OBJECT) {
-      return readMap(reader);
+      return readMap(reader, null);
     }
     else {
       return reader.nextString(true);
-    }
-  }
-
-  public static <T extends Enum<T>> T readEnum(JsonReaderEx reader, String fieldName, Class<T> enumClass) {
-    checkIsNull(reader, fieldName);
-    try {
-      return Enum.valueOf(enumClass, readEnumName(reader));
-    }
-    catch (IllegalArgumentException ignored) {
-      return Enum.valueOf(enumClass, "NO_ENUM_CONST");
     }
   }
 
@@ -72,19 +63,21 @@ public final class JsonReaders {
     return builder.toString();
   }
 
-  private static String readEnumName(JsonReaderEx reader) {
-    return convertRawEnumName(reader.nextString());
-  }
-
-  public static <T extends Enum<T>> T readEnum(JsonReaderEx reader, Class<T> enumClass) {
+  public static <T extends Enum<T>> T readEnum(@NotNull JsonReaderEx reader, @NotNull Class<T> enumClass) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();
       return null;
     }
-    return Enum.valueOf(enumClass, readEnumName(reader));
+
+    try {
+      return Enum.valueOf(enumClass, convertRawEnumName(reader.nextString()));
+    }
+    catch (IllegalArgumentException ignored) {
+      return Enum.valueOf(enumClass, "NO_ENUM_CONST");
+    }
   }
 
-  public static <T> List<T> readObjectArray(JsonReaderEx reader, ObjectFactory<T> factory) {
+  public static <T> List<T> readObjectArray(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<T> factory) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();
       return null;
@@ -105,13 +98,30 @@ public final class JsonReaders {
     return result;
   }
 
-  public static Map<?, ?> readMap(JsonReaderEx reader) {
+  public static <T> Map<String, T> readMap(@NotNull JsonReaderEx reader, @Nullable ObjectFactory<T> factory) {
+    if (reader.peek() == JsonToken.NULL) {
+      reader.skipValue();
+      return null;
+    }
+
     reader.beginObject();
     if (!reader.hasNext()) {
       reader.endObject();
       return Collections.emptyMap();
     }
-    return nextObject(reader);
+
+    Map<String, T> map = new THashMap<String, T>();
+    while (reader.hasNext()) {
+      if (factory == null) {
+        //noinspection unchecked
+        map.put(reader.nextName(), (T)read(reader));
+      }
+      else {
+        map.put(reader.nextName(), factory.read(reader));
+      }
+    }
+    reader.endObject();
+    return map;
   }
 
   public static Object read(JsonReaderEx reader) {

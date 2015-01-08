@@ -97,7 +97,8 @@ public abstract class PromiseManager<HOST, VALUE> {
     }
 
     Promise<VALUE> effectivePromise = load(host);
-    ((AsyncPromise<VALUE>)effectivePromise).notify((AsyncPromise<VALUE>)promise);
+    fieldUpdater.compareAndSet(host, promise, effectivePromise);
+    effectivePromise.notify((AsyncPromise<VALUE>)promise);
     return effectivePromise;
   }
 }

@@ -1,7 +1,6 @@
 package org.jetbrains.protocolReader;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jsonProtocol.JsonObjectBased;
 
 import java.lang.reflect.Method;
@@ -10,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 class TypeHandler<T> {
-  private final Class<T> typeClass;
+  final Class<T> typeClass;
 
   private final List<VolatileFieldBinding> volatileFields;
 
@@ -20,7 +19,7 @@ class TypeHandler<T> {
   private final List<FieldLoader> fieldLoaders;
 
   /** Subtype aspects of the type or null */
-  private final ExistingSubtypeAspect subtypeAspect;
+  final ExistingSubtypeAspect subtypeAspect;
 
   private final boolean hasLazyFields;
 
@@ -35,15 +34,6 @@ class TypeHandler<T> {
     this.fieldLoaders = fieldLoaders;
     this.hasLazyFields = hasLazyFields;
     subtypeAspect = jsonSuperClass == null ? null : new ExistingSubtypeAspect(jsonSuperClass);
-  }
-
-  public Class<T> getTypeClass() {
-    return typeClass;
-  }
-
-  @Nullable
-  public ExistingSubtypeAspect getSubtypeSupport() {
-    return subtypeAspect;
   }
 
   public void writeInstantiateCode(@NotNull ClassScope scope, @NotNull TextOutput out) {
@@ -65,7 +55,7 @@ class TypeHandler<T> {
     String valueImplClassName = fileScope.getTypeImplShortName(this);
     out.append("private static final class ").append(valueImplClassName);
 
-    out.append(" implements ").append(getTypeClass().getCanonicalName()).openBlock();
+    out.append(" implements ").append(typeClass.getCanonicalName()).openBlock();
 
     if (hasLazyFields || JsonObjectBased.class.isAssignableFrom(typeClass)) {
       out.append("private ").append(Util.JSON_READER_CLASS_NAME).space().append(Util.PENDING_INPUT_READER_NAME).semi().newLine();
@@ -111,7 +101,7 @@ class TypeHandler<T> {
    * {@link org.jetbrains.jsonProtocol.JsonObjectBased#getDeferredReader()}
    */
   private void writeBaseMethods(TextOutput out) {
-    Class<?> typeClass = getTypeClass();
+    Class<?> typeClass = this.typeClass;
     Method method;
     try {
       method = typeClass.getMethod("getDeferredReader");
@@ -196,9 +186,28 @@ class TypeHandler<T> {
       out.append(operator).append(" (name");
       out.append(".equals(\"").append(fieldName).append("\"))").openBlock();
       {
+        String primitiveValueName = fieldLoader.valueReader instanceof ObjectValueReader ? ((ObjectValueReader)fieldLoader.valueReader).primitiveValueName : null;
+        if (primitiveValueName != null) {
+          out.append("if (reader.peek() == com.google.gson.stream.JsonToken.BEGIN_OBJECT)").openBlock();
+        }
         assignField(out, fieldName);
+
         fieldLoader.valueReader.writeReadCode(classScope, false, fieldName, out);
         out.semi();
+
+        if (primitiveValueName != null) {
+          out.closeBlock();
+          out.newLine().append("else").openBlock();
+
+          assignField(out, primitiveValueName + "Type");
+          out.append("reader.peek()").semi().newLine();
+
+          assignField(out, primitiveValueName);
+          out.append("reader.nextString(true)").semi();
+
+          out.closeBlock();
+        }
+
         if (stopIfAllFieldsWereRead && !isTracedStop) {
           out.newLine().append(Util.READER_NAME).append(".skipValues()").semi().newLine().append("break").semi();
         }
@@ -225,6 +234,7 @@ class TypeHandler<T> {
     out.newLine().append("while ((name = reader.nextNameOrNull()) != null)").semi();
   }
 
+  @NotNull
   private static TextOutput assignField(TextOutput out, String fieldName) {
     return out.append(FieldLoader.FIELD_PREFIX).append(fieldName).append(" = ");
   }

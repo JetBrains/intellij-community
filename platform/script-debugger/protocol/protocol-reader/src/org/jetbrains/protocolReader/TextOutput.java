@@ -104,7 +104,7 @@ public class TextOutput {
   }
 
   public TextOutput comma() {
-    return append(',').append(' ');
+    return append(',').space();
   }
 
   public TextOutput space() {
