@@ -380,7 +380,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file);
       pass.doInspectInBatch(this, inspectionManager, lTools);
 
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(getWrappersFromTools(globalSimpleTools, file), myProgressIndicator, false, new Processor<GlobalInspectionToolWrapper>() {
+      final List<GlobalInspectionToolWrapper> tools = getWrappersFromTools(globalSimpleTools, file);
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, myProgressIndicator, false, new Processor<GlobalInspectionToolWrapper>() {
         @Override
         public boolean process(GlobalInspectionToolWrapper toolWrapper) {
             GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
