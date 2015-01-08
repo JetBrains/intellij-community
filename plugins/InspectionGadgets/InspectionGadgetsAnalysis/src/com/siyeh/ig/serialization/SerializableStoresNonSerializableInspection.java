@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,9 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
       if (!(parent instanceof PsiDeclarationStatement) && !(aClass instanceof PsiAnonymousClass)) {
         return;
       }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
       final LocalVariableReferenceFinder visitor = new LocalVariableReferenceFinder(aClass);
       aClass.accept(visitor);
     }
@@ -77,6 +80,15 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
     @Override
     public void visitLambdaExpression(PsiLambdaExpression lambda) {
       super.visitLambdaExpression(lambda);
+      final PsiType type = lambda.getFunctionalInterfaceType();
+      if (!(type instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass aClass = classType.resolve();
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
       final LocalVariableReferenceFinder visitor = new LocalVariableReferenceFinder(lambda);
       lambda.accept(visitor);
     }
