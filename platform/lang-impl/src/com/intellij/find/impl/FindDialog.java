@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -521,7 +522,7 @@ public class FindDialog extends DialogWrapper {
   }
 
   private boolean haveResultsPreview() {
-    return ApplicationManager.getApplication().isInternal() && myModel.isMultipleFiles();
+    return ApplicationManager.getApplication().isInternal() && Registry.is("ide.find.show.preview") && myModel.isMultipleFiles();
   }
 
   private JPanel createResultsOptionPanel(JPanel optionsPanel, GridBagConstraints gbConstraints) {

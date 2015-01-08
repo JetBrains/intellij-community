@@ -341,7 +341,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
         PsiDirectory psiDir = myFileManager.getCachedDirectory(vFile);
         fire = psiDir != null;
       }
-      if (!fire) {
+      if (!fire && !VirtualFile.PROP_WRITABLE.equals(propertyName)) {
         handleVfsChangeWithoutPsi(vFile);
         return;
       }
