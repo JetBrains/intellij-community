@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,7 +56,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -122,9 +120,11 @@ public class FindDialog extends DialogWrapper {
   protected JLabel myReplacePrompt;
   private HideableTitledPanel myScopePanel;
   private static boolean myPreviousResultsExpandedState;
+  private static boolean myPreviewResultsTabWasSelected;
+  private static final int RESULTS_PREVIEW_TAB_INDEX = 1;
 
   private JBTable myResultsPreviewTable;
-  private JBPopup myResultsPopup;
+  private TabbedPane myContent;
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
   public FindDialog(@NotNull Project project, @NotNull FindModel model, @NotNull Consumer<FindModel> myOkHandler){
@@ -178,6 +178,7 @@ public class FindDialog extends DialogWrapper {
     }
     myComboBoxListeners.clear();
     if (myScopePanel != null) myPreviousResultsExpandedState = myScopePanel.isExpanded();
+    if (myResultsPreviewTable != null) myPreviewResultsTabWasSelected = myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX;
     super.dispose();
   }
 
@@ -341,13 +342,9 @@ public class FindDialog extends DialogWrapper {
 
       myResultsPreviewTable.setModel(model);
       myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new UsageTableCellRenderer());
-      myResultsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(new JBScrollPane(myResultsPreviewTable),
-                                                                                myResultsPreviewTable)
-        .setRequestFocus(false).createPopup();
 
       myResultsPreviewTable.getEmptyText().setText("Searching...");
 
-      myResultsPopup.show(new RelativePoint(myInputComboBox, new Point(0, myInputComboBox.getHeight())));
       final AtomicInteger resultsCount = new AtomicInteger();
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
@@ -399,7 +396,6 @@ public class FindDialog extends DialogWrapper {
   private void finishPreviousPreviewSearch() {
     if (myResultsPreviewSearchProgress != null && !myResultsPreviewSearchProgress.isCanceled()) {
       myResultsPreviewSearchProgress.cancel();
-      if (myResultsPopup != null) myResultsPopup.cancel();
     }
   }
 
@@ -517,11 +513,21 @@ public class FindDialog extends DialogWrapper {
       resultsOptionPanel.add(myCbToOpenInNewTab);
     }
 
+    if (myResultsPreviewTable != null) {
+      TabbedPane pane = new TabbedPaneImpl(SwingConstants.TOP);
+      pane.insertTab("Options", null, optionsPanel, null, 0);
+      pane.insertTab("Preview", null, new JBScrollPane(myResultsPreviewTable), null, RESULTS_PREVIEW_TAB_INDEX);
+      myContent = pane;
+      if (myPreviewResultsTabWasSelected) myContent.setSelectedIndex(RESULTS_PREVIEW_TAB_INDEX);
+
+      return pane.getComponent();
+    }
+
     return optionsPanel;
   }
 
   private boolean haveResultsPreview() {
-    return ApplicationManager.getApplication().isInternal() && myModel.isMultipleFiles();
+    return ApplicationManager.getApplication().isInternal() && Registry.is("ide.find.show.preview") && myModel.isMultipleFiles();
   }
 
   private JPanel createResultsOptionPanel(JPanel optionsPanel, GridBagConstraints gbConstraints) {
@@ -1396,6 +1402,7 @@ public class FindDialog extends DialogWrapper {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       myUsageRenderer.clear();
       myFileAndLineNumber.clear();
+      setBackground(isSelected && hasFocus ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
 
       if (value instanceof UsageInfo2UsageAdapter) {
         UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
