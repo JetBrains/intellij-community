@@ -1,15 +1,11 @@
-// Copyright (c) 2009 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 package org.jetbrains.protocolReader;
 
 class ObjectValueReader<T> extends ValueReader {
   private final TypeRef<T> refToType;
   private final boolean isSubtyping;
 
-  ObjectValueReader(TypeRef<T> refToType, boolean nullable, boolean isSubtyping) {
-    super(nullable);
+  ObjectValueReader(TypeRef<T> refToType, boolean isSubtyping) {
+    super();
 
     this.refToType = refToType;
     this.isSubtyping = isSubtyping;
@@ -51,9 +47,9 @@ class ObjectValueReader<T> extends ValueReader {
   }
 
   @Override
-  public void writeArrayReadCode(ClassScope scope, boolean subtyping, boolean nullable, String fieldName, TextOutput out) {
-    beginReadCall("ObjectArray", subtyping, out, fieldName);
+  public void writeArrayReadCode(ClassScope scope, boolean subtyping, TextOutput out) {
+    beginReadCall("ObjectArray", subtyping, out);
     out.comma().append("new ").append(scope.requireFactoryGenerationAndGetName(refToType.get())).append(Util.TYPE_FACTORY_NAME_POSTFIX).append("()");
-    out.comma().append(nullable).append(')');
+    out.append(')');
   }
 }

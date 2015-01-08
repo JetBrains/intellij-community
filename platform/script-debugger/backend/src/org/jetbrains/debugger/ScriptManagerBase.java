@@ -13,7 +13,7 @@ public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements Sc
   @SuppressWarnings("unchecked")
   private final PromiseManager<ScriptBase, String> scriptSourceLoader = new PromiseManager<ScriptBase, String>(ScriptBase.class) {
     @Override
-    public Promise<String> load(@NotNull ScriptBase script, @NotNull Promise<String> result) {
+    public Promise<String> load(@NotNull ScriptBase script) {
       //noinspection unchecked
       return loadScriptSource((SCRIPT)script);
     }

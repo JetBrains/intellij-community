@@ -2,7 +2,7 @@ package org.jetbrains.protocolReader;
 
 public class StringIntPairValueReader extends ValueReader {
   StringIntPairValueReader() {
-    super(false);
+    super();
   }
 
   @Override
@@ -17,8 +17,7 @@ public class StringIntPairValueReader extends ValueReader {
   @Override
   void writeArrayReadCode(ClassScope scope,
                           boolean subtyping,
-                          boolean nullable,
-                          String fieldName, TextOutput out) {
+                          TextOutput out) {
     out.append("read").append("IntStringPairs").append('(');
     addReaderParameter(subtyping, out);
     out.append(')');
