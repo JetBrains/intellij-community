@@ -55,7 +55,7 @@ final class FieldProcessor<T> {
         }
         methodHandlerMap.put(method, methodHandler);
       }
-      catch (JsonProtocolModelParseException e) {
+      catch (Exception e) {
         throw new JsonProtocolModelParseException("Problem with method " + method, e);
       }
     }
@@ -79,7 +79,13 @@ final class FieldProcessor<T> {
       }
     }
 
-    ValueReader fieldTypeParser = reader.getFieldTypeParser(genericReturnType, false, method);
+    ValueReader fieldTypeParser;
+    try {
+      fieldTypeParser = reader.getFieldTypeParser(genericReturnType, false, method);
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Cannot create field type parser for method " + method, e);
+    }
     if (fieldTypeParser != InterfaceReader.VOID_PARSER) {
       fieldLoaders.add(new FieldLoader(fieldName, fieldTypeParser));
     }
@@ -130,6 +136,7 @@ final class FieldProcessor<T> {
     return methodHandlerMap;
   }
 
+  @NotNull
   private VolatileFieldBinding allocateVolatileField(final ValueReader fieldTypeParser, boolean internalType) {
     int position = volatileFields.size();
     FieldTypeInfo fieldTypeInfo;

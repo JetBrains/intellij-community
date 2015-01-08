@@ -15,16 +15,16 @@ class ExistingSubtypeAspect {
   }
 
   void writeGetSuperMethodJava(@NotNull TextOutput out) {
-    out.newLine().append("@Override").newLine().append("public ").append(jsonSuperClass.get().getTypeClass().getCanonicalName() ).append(" getSuper()").openBlock();
+    out.newLine().append("@Override").newLine().append("public ").append(jsonSuperClass.type.typeClass.getCanonicalName() ).append(" getSuper()").openBlock();
     out.append("return ").append(Util.BASE_VALUE_PREFIX).semi().closeBlock();
   }
 
   void writeSuperFieldJava(@NotNull TextOutput out) {
-    out.newLine().append("private final ").append(jsonSuperClass.get().getTypeClass().getCanonicalName()).append(' ').append(Util.BASE_VALUE_PREFIX).semi().newLine();
+    out.newLine().append("private final ").append(jsonSuperClass.type.typeClass.getCanonicalName()).append(' ').append(Util.BASE_VALUE_PREFIX).semi().newLine();
   }
 
   void writeSuperConstructorParamJava(@NotNull TextOutput out) {
-    out.comma().append(jsonSuperClass.get().getTypeClass().getCanonicalName()).append(' ').append(Util.BASE_VALUE_PREFIX);
+    out.comma().append(jsonSuperClass.type.typeClass.getCanonicalName()).append(' ').append(Util.BASE_VALUE_PREFIX);
   }
 
   void writeSuperConstructorInitialization(@NotNull TextOutput out) {
@@ -34,7 +34,7 @@ class ExistingSubtypeAspect {
   void writeParseMethod(@NotNull String className, @NotNull ClassScope scope, @NotNull TextOutput out) {
     out.newLine().append("public static ").append(className).space().append("parse").append('(').append(Util.JSON_READER_PARAMETER_DEF).append(", String name").append(')').openBlock();
     out.append("return ");
-    jsonSuperClass.get().writeInstantiateCode(scope, out);
+    jsonSuperClass.type.writeInstantiateCode(scope, out);
     out.append('(').append(Util.READER_NAME).append(", name)").append('.');
     subtypeCaster.writeJava(out);
     out.semi().closeBlock();

@@ -1,10 +1,12 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 class ArrayReader extends ValueReader {
   private final ValueReader componentParser;
   private final boolean isList;
 
-  ArrayReader(ValueReader componentParser, boolean isList) {
+  ArrayReader(@NotNull ValueReader componentParser, boolean isList) {
     super();
 
     this.componentParser = componentParser;
@@ -12,7 +14,7 @@ class ArrayReader extends ValueReader {
   }
 
   @Override
-  public void appendFinishedValueTypeName(TextOutput out) {
+  public void appendFinishedValueTypeName(@NotNull TextOutput out) {
     if (isList) {
       out.append("java.util.List<");
       componentParser.appendFinishedValueTypeName(out);
@@ -25,16 +27,7 @@ class ArrayReader extends ValueReader {
   }
 
   @Override
-  public void appendInternalValueTypeName(FileScope scope, TextOutput out) {
-    appendFinishedValueTypeName(out);
-  }
-
-  @Override
-  void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, TextOutput out) {
+  void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, @NotNull TextOutput out) {
     componentParser.writeArrayReadCode(scope, subtyping, out);
-  }
-
-  @Override
-  void writeArrayReadCode(ClassScope scope, boolean subtyping, TextOutput out) {
   }
 }

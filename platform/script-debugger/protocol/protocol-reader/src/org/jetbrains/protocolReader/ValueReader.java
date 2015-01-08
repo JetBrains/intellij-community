@@ -1,5 +1,7 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A parser that accepts value of JSON field and outputs value in another form (e.g. string
  * is converted to enum constant) to serve field getters in JsonType interfaces.
@@ -9,15 +11,17 @@ abstract class ValueReader {
     return null;
   }
 
-  abstract void appendFinishedValueTypeName(TextOutput out);
+  abstract void appendFinishedValueTypeName(@NotNull TextOutput out);
 
-  void appendInternalValueTypeName(FileScope scope, TextOutput out) {
+  void appendInternalValueTypeName(@NotNull FileScope scope, @NotNull TextOutput out) {
     appendFinishedValueTypeName(out);
   }
 
-  abstract void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, TextOutput out);
+  abstract void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, @NotNull TextOutput out);
 
-  abstract void writeArrayReadCode(ClassScope scope, boolean subtyping, TextOutput out);
+  void writeArrayReadCode(@NotNull ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
+    throw new UnsupportedOperationException();
+  }
 
   protected void beginReadCall(String readPostfix, boolean subtyping, TextOutput out) {
     out.append("read");

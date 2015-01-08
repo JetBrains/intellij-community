@@ -184,4 +184,6 @@ public abstract class Promise<T> {
       return this;
     }
   }
+
+  abstract void notify(@NotNull AsyncPromise<T> child);
 }
