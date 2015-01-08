@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 public class VfsRootAccess {
-  private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
+  public static boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
   // we don't want test subclasses to accidentally remove allowed files, added by base classes
   private static final Set<String> ourAdditionalRoots = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
   private static boolean insideGettingRoots;
