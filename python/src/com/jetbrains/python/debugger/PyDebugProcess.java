@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -59,6 +58,9 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -816,27 +818,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Nullable
   @Override
-  public XSourcePosition getSourcePosition(String name) {
+  public XSourcePosition getSourcePositionForName(String name) {
     XSourcePosition currentPosition = getCurrentFrameSourcePosition();
 
-    if (currentPosition == null) {
-      return null;
-    }
+    final PsiFile file = getPsiFile(currentPosition);
 
-    VirtualFile virtualFile = currentPosition.getFile();
-
-    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    if (document == null) {
-      return null;
-    }
-    final FileViewProvider viewProvider = PsiManager.getInstance(getProject()).findViewProvider(virtualFile);
-    if (viewProvider == null) {
-      return null;
-    }
-    final PsiFile file = viewProvider.getPsi(PythonLanguage.getInstance());
-    if (file == null) {
-      return null;
-    }
+    if (file == null) return null;
 
     PsiElement currentElement = file.findElementAt(currentPosition.getOffset());
 
@@ -865,9 +852,50 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       }
     }, currentElement, name, null);
 
-    return elementRef.isNull()
-           ?
-           null
-           : XSourcePositionImpl.createByOffset(elementRef.get().getContainingFile().getVirtualFile(), elementRef.get().getTextOffset());
+    return elementRef.isNull() ? null
+                               : XSourcePositionImpl.createByElement(elementRef.get());
+  }
+
+  @Nullable
+  private PsiFile getPsiFile(XSourcePosition currentPosition) {
+    if (currentPosition == null) {
+      return null;
+    }
+
+    VirtualFile virtualFile = currentPosition.getFile();
+
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) {
+      return null;
+    }
+    final FileViewProvider viewProvider = PsiManager.getInstance(getProject()).findViewProvider(virtualFile);
+    if (viewProvider == null) {
+      return null;
+    }
+    final PsiFile file = viewProvider.getPsi(PythonLanguage.getInstance());
+    if (file == null) {
+      return null;
+    }
+    return file;
+  }
+
+
+  @Nullable
+  @Override
+  public XSourcePosition getSourcePositionForType(String typeName) {
+    XSourcePosition currentPosition = getCurrentFrameSourcePosition();
+
+    final PsiFile file = getPsiFile(currentPosition);
+
+    if (file == null) return null;
+
+
+    PyType type = PyTypeParser.getTypeByName(file, typeName);
+
+    if (type instanceof PyClassType) {
+      return XSourcePositionImpl.createByElement(((PyClassType)type).getPyClass());
+    }
+
+    return null;
   }
 }

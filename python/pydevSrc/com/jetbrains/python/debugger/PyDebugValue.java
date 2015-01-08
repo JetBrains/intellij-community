@@ -237,7 +237,22 @@ public class PyDebugValue extends XNamedValue {
   }
 
   @Override
+  public boolean canNavigateToSource() {
+    return true;
+  }
+
+  @Override
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
-    navigatable.setSourcePosition(myFrameAccessor.getSourcePosition(myName));
+    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName));
+  }
+
+  @Override
+  public boolean canNavigateToTypeSource() {
+    return true;
+  }
+
+  @Override
+  public void computeTypeSourcePosition(@NotNull XNavigatable navigatable) {
+    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(myType));
   }
 }
