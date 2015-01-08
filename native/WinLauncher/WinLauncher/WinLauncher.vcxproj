@@ -134,6 +134,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)WinLauncher64.exe</OutputFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

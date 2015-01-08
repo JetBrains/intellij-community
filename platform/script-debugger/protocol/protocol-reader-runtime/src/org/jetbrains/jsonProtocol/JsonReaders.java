@@ -38,6 +38,7 @@ public final class JsonReaders {
     }
   }
 
+  // Don't use Guava CaseFormat.*! ObjectWithURL must be converted to OBJECT_WITH_URL
   public static String convertRawEnumName(@NotNull String enumValue) {
     StringBuilder builder = new StringBuilder(enumValue.length() + 4);
     boolean prevIsLowerCase = false;
@@ -50,10 +51,11 @@ public final class JsonReaders {
 
       if (Character.isUpperCase(c)) {
         // second check handle "CSPViolation" (transform to CSP_VIOLATION)
-        if (prevIsLowerCase || ((i + 1) < enumValue.length() && Character.isLowerCase(enumValue.charAt(i + 1)))) {
+        if (prevIsLowerCase || (i != 0 && (i + 1) < enumValue.length() && Character.isLowerCase(enumValue.charAt(i + 1)))) {
           builder.append('_');
         }
         builder.append(c);
+        prevIsLowerCase = false;
       }
       else {
         builder.append(Character.toUpperCase(c));
