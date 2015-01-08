@@ -50,12 +50,12 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
-    return isPopupElement ? JBUI.insets(1, 2, 1, 2) : JBUI.emptyInsets();
+    return isPopupElement ? JBUI.insets(1, 2) : JBUI.emptyInsets();
   }
 
   @Override
   public JBInsets getElementPadding() {
-    return JBUI.insets(3, 3, 3, 3);
+    return JBUI.insets(3);
   }
 
   @Override
@@ -270,11 +270,11 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   private int getDecorationOffset() {
-     return 8;
+     return JBUI.scale(8);
    }
 
    private int getFirstElementLeftOffset() {
-     return 6;
+     return JBUI.scale(6);
    }
 
   @Override
@@ -289,7 +289,11 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getWrapperPanelInsets(Insets insets) {
-    return new Insets(insets.top + (shouldPaintWrapperPanel() ? 1 : 0), insets.left, insets.bottom, insets.right);
+    final JBInsets result = JBUI.insets(insets);
+    if (shouldPaintWrapperPanel()) {
+      result.top += JBUI.scale(1);
+    }
+    return result;
   }
 
   private static boolean shouldPaintWrapperPanel() {
@@ -315,6 +319,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public int getPopupOffset(@NotNull NavBarItem item) {
-    return item.isFirstElement() ? 0 : 5;
+    return item.isFirstElement() ? 0 : JBUI.scale(5);
   }
 }
