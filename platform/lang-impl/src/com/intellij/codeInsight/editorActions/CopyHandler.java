@@ -90,7 +90,7 @@ public class CopyHandler extends EditorActionHandler {
 
     List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
     CopyPastePostProcessor<? extends TextBlockTransferableData>[] postProcessors = Extensions.getExtensions(CopyPastePostProcessor.EP_NAME);
-    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : DumbService.getInstance(project).filterByDumbAwareness( Arrays.asList(postProcessors))) {
+    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : DumbService.getInstance(project).filterByDumbAwareness(Arrays.asList(postProcessors))) {
       transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
     }
 
