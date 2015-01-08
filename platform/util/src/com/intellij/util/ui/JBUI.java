@@ -40,6 +40,14 @@ public class JBUI {
     return new JBInsets(top, left, bottom, right);
   }
 
+  public static JBInsets insets(int all) {
+    return insets(all, all, all, all);
+  }
+
+  public static JBInsets insets(int topBottom, int leftRight) {
+    return insets(topBottom, leftRight, topBottom, leftRight);
+  }
+
   public static JBInsets emptyInsets() {
     return new JBInsets(0, 0, 0, 0);
   }
