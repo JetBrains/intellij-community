@@ -3,7 +3,6 @@ package com.jetbrains.python.debugger;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.*;
 import com.jetbrains.python.debugger.pydev.PyVariableLocator;
 import org.jetbrains.annotations.NotNull;
@@ -235,5 +234,10 @@ public class PyDebugValue extends XNamedValue {
 
   public void setId(String id) {
     myId = id;
+  }
+
+  @Override
+  public void computeSourcePosition(@NotNull XNavigatable navigatable) {
+    navigatable.setSourcePosition(myFrameAccessor.getSourcePosition(myName));
   }
 }
