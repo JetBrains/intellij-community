@@ -17,6 +17,8 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 def home = guessHome(this)
 
+setProperty("testcases", ["com.intellij.AllTests"])
+
 includeTargets << new File("${home}/build/scripts/common_tests.gant")
 
 if ("GIT_TESTS".equalsIgnoreCase(System.getProperty("idea.test.group"))) {
@@ -38,5 +40,3 @@ if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
 };
 
 setProperty("jvm_args", args)
-
-setProperty("testcases", ["com.intellij.AllTests"])
