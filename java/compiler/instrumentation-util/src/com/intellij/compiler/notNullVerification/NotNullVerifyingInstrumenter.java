@@ -266,15 +266,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     };
   }
 
-  private static int getParameterIndex(int localVarIndex, int methodAccess, Type[] paramTypes) {
-    final boolean isStatic = (methodAccess & ACC_STATIC) != 0;
-    int parameterIndex = isStatic ? localVarIndex : localVarIndex - 1;
-    if (parameterIndex >= paramTypes.length) {
-      parameterIndex = -1;
-    }
-    return parameterIndex;
-  }
-
   private static boolean isReferenceType(final Type type) {
     return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
   }
