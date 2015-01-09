@@ -59,7 +59,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public static UISettings getShadowInstance() {
     Application application = ApplicationManager.getApplication();
-    UISettings settings = application == null ? null : application.getComponent(UISettings.class);
+    UISettings settings = application == null ? null : getInstance();
     return settings == null ? new UISettings() : settings;
   }
 
