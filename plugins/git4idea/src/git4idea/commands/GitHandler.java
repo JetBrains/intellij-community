@@ -31,10 +31,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IdeaWideProxySelector;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
@@ -122,7 +125,7 @@ public abstract class GitHandler {
     myCommand = command;
     myAppSettings = GitVcsApplicationSettings.getInstance();
     myProjectSettings = GitVcsSettings.getInstance(myProject);
-    myEnv = new HashMap<String, String>(System.getenv());
+    myEnv = new HashMap<String, String>(EnvironmentUtil.getEnvironmentMap());
     myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
@@ -135,6 +138,7 @@ public abstract class GitHandler {
     }
     myCommandLine.addParameter(command.name());
     myStdoutSuppressed = true;
+    mySilent = myCommand.lockingPolicy() == GitCommand.LockingPolicy.READ;
   }
 
   /**
@@ -442,7 +446,7 @@ public abstract class GitHandler {
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
 
         final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY;
+        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, myUrl);
         myEnv.put(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
 
         if (useHttpProxy) {
@@ -485,13 +489,19 @@ public abstract class GitHandler {
     }
   }
 
+  protected static boolean isSshUrlExcluded(@NotNull HttpConfigurable httpConfigurable, @NotNull String url) {
+    String host = URLUtil.parseHostFromSshUrl(url);
+    return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
+  }
+
   private void addAuthListener(@NotNull final GitHttpAuthenticator authenticator) {
     // TODO this code should be located in GitLineHandler, and the other remote code should be move there as well
     if (this instanceof GitLineHandler) {
       ((GitLineHandler)this).addLineListener(new GitLineHandlerAdapter() {
         @Override
-        public void onLineAvailable(String line, Key outputType) {
-          if (line.toLowerCase().contains("authentication failed")) {
+        public void onLineAvailable(@NonNls String line, Key outputType) {
+          String lowerCaseLine = line.toLowerCase();
+          if (lowerCaseLine.contains("authentication failed") || lowerCaseLine.contains("403 forbidden")) {
             myHttpAuthFailed = true;
           }
         }

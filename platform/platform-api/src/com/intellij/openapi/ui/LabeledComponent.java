@@ -54,7 +54,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   }
 
   public void setText(String textWithMnemonic) {
-    if (!StringUtil.endsWithChar(textWithMnemonic, ':')) textWithMnemonic += ":";
+    if (!StringUtil.isEmpty(textWithMnemonic) && !StringUtil.endsWithChar(textWithMnemonic, ':')) textWithMnemonic += ":";
     TextWithMnemonic withMnemonic = TextWithMnemonic.fromTextWithMnemonic(textWithMnemonic);
     withMnemonic.setToLabel(myLabel);
   }

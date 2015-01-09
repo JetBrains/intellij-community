@@ -17,17 +17,12 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,10 +42,10 @@ public class ContractInference {
 
   @NotNull
   public static List<MethodContract> inferContracts(@NotNull final PsiMethod method) {
-    if (isLibraryCode(method)) {
+    if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
       return Collections.emptyList();
     }
-
+    
     return CachedValuesManager.getCachedValue(method, new CachedValueProvider<List<MethodContract>>() {
       @Nullable
       @Override
@@ -65,12 +60,6 @@ public class ContractInference {
         return Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     });
-  }
-
-  static boolean isLibraryCode(@NotNull PsiMethod method) {
-    if (method instanceof PsiCompiledElement) return true;
-    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(method);
-    return virtualFile != null && FileIndexFacade.getInstance(method.getProject()).isInLibrarySource(virtualFile);
   }
 }
 
@@ -101,7 +90,7 @@ class ContractInferenceInterpreter {
         if (notNull && contract.returnValue == NOT_NULL_VALUE) {
           return false;
         }
-        return ContractInspection.isReturnTypeCompatible(returnType, contract.returnValue);
+        return InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue);
       }
     });
   }
@@ -277,7 +266,7 @@ class ContractInferenceInterpreter {
         if (state[paramIndex] != ANY_VALUE) {
           // the second 'o' reference in cases like: if (o != null) return o;
           result.add(new MethodContract(state, state[paramIndex]));
-        } else if (textMatches(myMethod.getParameterList().getParameters()[paramIndex].getTypeElement(), PsiKeyword.BOOLEAN)) {
+        } else if (textMatches(getParameter(paramIndex).getTypeElement(), PsiKeyword.BOOLEAN)) {
           // if (boolValue) ...
           ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, TRUE_VALUE, TRUE_VALUE));
           ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, FALSE_VALUE, FALSE_VALUE));
@@ -311,16 +300,26 @@ class ContractInferenceInterpreter {
       parameter = resolveParameter(op2);
       constraint = getLiteralConstraint(op1);
     }
-    if (parameter >= 0 && constraint != null && constraint != NOT_NULL_VALUE) {
+    if (parameter >= 0 && constraint != null) {
       List<MethodContract> result = ContainerUtil.newArrayList();
       for (ValueConstraint[] state : states) {
-        ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint, equality ? TRUE_VALUE : FALSE_VALUE));
-        ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, negateConstraint(constraint),
-                                                                  equality ? FALSE_VALUE : TRUE_VALUE));
+        if (constraint == NOT_NULL_VALUE) {
+          if (!(getParameter(parameter).getType() instanceof PsiPrimitiveType)) {
+            ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, NULL_VALUE, equality ? FALSE_VALUE : TRUE_VALUE));
+          }
+        } else {
+          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint, equality ? TRUE_VALUE : FALSE_VALUE));
+          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, negateConstraint(constraint),
+                                                                    equality ? FALSE_VALUE : TRUE_VALUE));
+        }
       }
       return result;
     }
     return Collections.emptyList();
+  }
+
+  private PsiParameter getParameter(int parameter) {
+    return myMethod.getParameterList().getParameters()[parameter];
   }
 
   private static List<MethodContract> toContracts(List<ValueConstraint[]> states,
@@ -465,7 +464,7 @@ class ContractInferenceInterpreter {
       return null;
     }
 
-    if (constraint == NULL_VALUE && NullableNotNullManager.isNotNull(myMethod.getParameterList().getParameters()[index])) {
+    if (constraint == NULL_VALUE && NullableNotNullManager.isNotNull(getParameter(index))) {
       return null;
     }
 

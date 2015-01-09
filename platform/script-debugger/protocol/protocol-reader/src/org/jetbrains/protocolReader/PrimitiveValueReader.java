@@ -1,5 +1,7 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 class PrimitiveValueReader extends ValueReader {
   private final String className;
   private final String readPostfix;
@@ -8,19 +10,15 @@ class PrimitiveValueReader extends ValueReader {
   private final boolean asRawString;
 
   PrimitiveValueReader(String name) {
-    this(name, false);
-  }
-
-  PrimitiveValueReader(String name, boolean nullable) {
-    this(name, null, nullable, false);
+    this(name, null, false);
   }
 
   PrimitiveValueReader(String name, String defaultValue) {
-    this(name, defaultValue, false, false);
+    this(name, defaultValue, false);
   }
 
-  public PrimitiveValueReader(String name, String defaultValue, boolean nullable, boolean asRawString) {
-    super(nullable);
+  public PrimitiveValueReader(String name, String defaultValue, boolean asRawString) {
+    super();
 
     this.defaultValue = defaultValue;
     this.asRawString = asRawString;
@@ -34,7 +32,7 @@ class PrimitiveValueReader extends ValueReader {
   }
 
   @Override
-  void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, TextOutput out) {
+  void writeReadCode(ClassScope methodScope, boolean subtyping, @NotNull TextOutput out) {
     if (asRawString) {
       out.append("readRawString(");
       addReaderParameter(subtyping, out);
@@ -43,20 +41,19 @@ class PrimitiveValueReader extends ValueReader {
     else {
       ValueReader.addReaderParameter(subtyping, out);
       out.append(".next").append(readPostfix).append("()");
-      //beginReadCall(readPostfix, subtyping, out, fieldName);
+      //beginReadCall(readPostfix, subtyping, out, name);
     }
   }
 
   @Override
-  void appendFinishedValueTypeName(TextOutput out) {
+  void appendFinishedValueTypeName(@NotNull TextOutput out) {
     out.append(className);
   }
 
   @Override
-  public void writeArrayReadCode(ClassScope scope,
+  public void writeArrayReadCode(@NotNull ClassScope scope,
                                  boolean subtyping,
-                                 boolean nullable,
-                                 String fieldName, TextOutput out) {
+                                 @NotNull TextOutput out) {
     if (readPostfix.equals("String")) {
       out.append("nextList");
     }

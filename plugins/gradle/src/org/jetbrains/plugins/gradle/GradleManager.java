@@ -44,6 +44,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -60,7 +61,6 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
-import org.jetbrains.plugins.gradle.remote.GradleJavaHelper;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -146,8 +146,6 @@ public class GradleManager
   public Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
     return new Function<Pair<Project, String>, GradleExecutionSettings>() {
 
-      private final GradleJavaHelper myJavaHelper = new GradleJavaHelper();
-
       @Override
       public GradleExecutionSettings fun(Pair<Project, String> pair) {
         GradleSettings settings = GradleSettings.getInstance(pair.first);
@@ -183,7 +181,9 @@ public class GradleManager
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
           result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
         }
-        String javaHome = myJavaHelper.getJdkHome(pair.first);
+
+        final Sdk gradleJdk = myInstallationManager.getGradleJdk(pair.first, pair.second);
+        final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
         if (!StringUtil.isEmpty(javaHome)) {
           LOG.info("Instructing gradle to use java from " + javaHome);
         }

@@ -23,7 +23,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -117,9 +116,6 @@ public class RefusedBequestInspectionBase extends BaseInspection {
         if (!AnnotationUtil.isAnnotated(leastConcreteSuperMethod, annotations)) {
           return;
         }
-      }
-      if (TestUtils.isJUnit4BeforeOrAfterMethod(method)) {
-        return;
       }
       if (containsSuperCall(body, leastConcreteSuperMethod)) {
         return;

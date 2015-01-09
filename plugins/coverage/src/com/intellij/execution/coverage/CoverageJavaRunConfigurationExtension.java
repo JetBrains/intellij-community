@@ -73,7 +73,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (runnerSettings instanceof CoverageRunnerData && coverageRunner != null) {
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
       coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
-      coverageConfig.appendCoverageArgument(params);
+      coverageConfig.appendCoverageArgument(configuration, params);
 
       final Sdk jdk = params.getJdk();
       if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7) && coverageRunner instanceof JavaCoverageRunner && !((JavaCoverageRunner)coverageRunner).isJdk7Compatible()) {

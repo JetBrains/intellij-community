@@ -53,7 +53,7 @@ public class RefsModel implements VcsLogRefs {
 
   @NotNull
   private static MultiMap<Hash, VcsRef> prepareRefsMap(@NotNull Collection<VcsRef> refs) {
-    MultiMap<Hash, VcsRef> map = MultiMap.createSmartList();
+    MultiMap<Hash, VcsRef> map = MultiMap.createSmart();
     for (VcsRef ref : refs) {
       map.putValue(ref.getCommitHash(), ref);
     }
@@ -68,6 +68,7 @@ public class RefsModel implements VcsLogRefs {
     return Collections.emptyList();
   }
 
+  @Override
   @NotNull
   public Collection<VcsRef> refsToCommit(int index) {
     return myRefsToIndices.containsKey(index) ? myRefsToIndices.get(index) : Collections.<VcsRef>emptyList();

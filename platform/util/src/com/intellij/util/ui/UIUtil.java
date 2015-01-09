@@ -19,6 +19,7 @@ import com.intellij.BundleBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,6 +58,7 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.GeneralPath;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -76,6 +78,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
@@ -226,6 +229,8 @@ public class UIUtil {
   private static final Color INACTIVE_HEADER_COLOR = Gray._128;
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
+  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
   public static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 0);
@@ -239,11 +244,9 @@ public class UIUtil {
 
 
   public static final Border DEBUG_MARKER_BORDER = new Border() {
-    private final Insets empty = new Insets(0, 0, 0, 0);
-
     @Override
     public Insets getBorderInsets(Component c) {
-      return empty;
+      return new Insets(0, 0, 0, 0);
     }
 
     @Override
@@ -382,6 +385,14 @@ public class UIUtil {
       }
 
       return false;
+    }
+  }
+
+  public static boolean isRetina (GraphicsDevice device) {
+    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
+      return DetectRetinaKit.isOracleMacRetinaDevice(device);
+    } else {
+      return isRetina();
     }
   }
 
@@ -582,6 +593,26 @@ public class UIUtil {
     }
   }
 
+  public static void drawWave(Graphics2D g, Rectangle rectangle) {
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    Stroke oldStroke = g.getStroke();
+    try {
+      g.setStroke(new BasicStroke(0.7F));
+      double cycle = 4;
+      final double wavedAt = rectangle.y + (double)rectangle.height /2 - .5;
+      GeneralPath wavePath = new GeneralPath();
+      wavePath.moveTo(rectangle.x, wavedAt -  Math.cos(rectangle.x * 2 * Math.PI / cycle));
+      for (int x = rectangle.x + 1; x <= rectangle.x + rectangle.width; x++) {
+        wavePath.lineTo(x, wavedAt - Math.cos(x * 2 * Math.PI / cycle) );
+      }
+      g.draw(wavePath);
+    }
+    finally {
+      config.restore();
+      g.setStroke(oldStroke);
+    }
+  }
+
   @NotNull
   public static String[] splitText(String text, FontMetrics fontMetrics, int widthLimit, char separator) {
     ArrayList<String> lines = new ArrayList<String>();
@@ -652,9 +683,9 @@ public class UIUtil {
     int defSize = getLabelFont().getSize();
     switch (size) {
       case SMALL:
-        return Math.max(defSize - 2f, 11f);
+        return Math.max(defSize - JBUI.scale(2f), JBUI.scale(11f));
       case MINI:
-        return Math.max(defSize - 4f, 9f);
+        return Math.max(defSize - JBUI.scale(4f), JBUI.scale(9f));
       default:
         return defSize;
     }
@@ -667,6 +698,64 @@ public class UIUtil {
         defColor.getBlue() + 50, 255)), defColor.darker());
     }
     return defColor;
+  }
+
+  private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<Class, Ref<Method>>();
+  public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
+    // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint 
+    ButtonUI ui = cb.getUI();
+    String text = cb.getText();
+
+    Icon buttonIcon = cb.getIcon();
+    if (buttonIcon == null && ui != null) {
+      if (ui instanceof BasicRadioButtonUI) {
+        buttonIcon = ((BasicRadioButtonUI)ui).getDefaultIcon();
+      }
+      else if (isUnderAquaLookAndFeel()) {
+        // inheritors of AquaButtonToggleUI
+        Ref<Method> cached = ourDefaultIconMethodsCache.get(ui.getClass());
+        if (cached == null) {
+          cached = Ref.create(ReflectionUtil.findMethod(Arrays.asList(ui.getClass().getMethods()), "getDefaultIcon", JComponent.class));
+          ourDefaultIconMethodsCache.put(ui.getClass(), cached);
+          if (!cached.isNull()) {
+            cached.get().setAccessible(true);
+          }
+        }
+        Method method = cached.get();
+        if (method != null) {
+          try {
+            buttonIcon = (Icon)method.invoke(ui, cb);
+          }
+          catch (Exception e) {
+            cached.set(null);
+          }
+        }
+      }
+    }
+
+    Dimension size = new Dimension();
+    Rectangle viewRect = new Rectangle();
+    Rectangle iconRect = new Rectangle();
+    Rectangle textRect = new Rectangle();
+
+    Insets i = cb.getInsets();
+
+    size = cb.getSize(size);
+    viewRect.x = i.left;
+    viewRect.y = i.top;
+    viewRect.width = size.width - (i.right + viewRect.x);
+    viewRect.height = size.height - (i.bottom + viewRect.y);
+    iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
+    textRect.x = textRect.y = textRect.width = textRect.height = 0;
+
+    SwingUtilities.layoutCompoundLabel(
+      cb, cb.getFontMetrics(cb.getFont()), text, buttonIcon,
+      cb.getVerticalAlignment(), cb.getHorizontalAlignment(),
+      cb.getVerticalTextPosition(), cb.getHorizontalTextPosition(),
+      viewRect, iconRect, textRect,
+      text == null ? 0 : cb.getIconTextGap());
+
+    return textRect.x;
   }
 
   public static int getScrollBarWidth() {
@@ -1673,14 +1762,49 @@ public class UIUtil {
   }
 
   public static void applyRenderingHints(final Graphics g) {
+    Graphics2D g2d = (Graphics2D)g;
     Toolkit tk = Toolkit.getDefaultToolkit();
     //noinspection HardCodedStringLiteral
     Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
     if (map != null) {
-      ((Graphics2D)g).addRenderingHints(map);
+      g2d.addRenderingHints(map);
+      setHintingForLCDText(g2d);
     }
   }
 
+  private static int THEME_BASED_TEXT_LCD_CONTRAST = 0;
+  private static int BEST_DARK_LCD_CONTRAST = 100;
+  private static int BEST_LIGHT_LCD_CONTRAST = 250;
+
+
+  public static void setHintingForLCDText(Graphics2D g2d) {
+    if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+
+      // According to JavaDoc we can set values form 100 to 250
+      // So we can use 0 as a special flag
+      int registryLcdContrastValue = Registry.intValue("lcd.contrast.value");
+      if (registryLcdContrastValue == THEME_BASED_TEXT_LCD_CONTRAST) {
+          if (isUnderDarcula()) {
+            registryLcdContrastValue = BEST_DARK_LCD_CONTRAST;
+          } else {
+            registryLcdContrastValue = BEST_LIGHT_LCD_CONTRAST;
+          }
+      }
+
+      // Wrong values prevent IDE from start
+      // So we have to be careful
+      if (registryLcdContrastValue < 140) {
+        LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
+        registryLcdContrastValue = 140;
+      } else if (registryLcdContrastValue > 250) {
+        LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
+        registryLcdContrastValue = 250;
+      }
+
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, registryLcdContrastValue);
+    }
+  }
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
@@ -3206,10 +3330,6 @@ public class UIUtil {
     return new EmptyBorder(0, leftGap, 0, 0);
   }
 
-  public static Color getSidePanelColor() {
-    return new JBColor(0xD2D6DD, 0x3C4447);
-  }
-
   /**
    * It is your responsibility to set correct horizontal align (left in case of UI Designer)
    */
@@ -3235,5 +3355,14 @@ public class UIUtil {
    */
   public static Window getWindow(Component component) {
     return component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
+  }
+
+  public static Image getDebugImage(Component component) {
+    BufferedImage image = createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D graphics = image.createGraphics();
+    graphics.setColor(Color.RED);
+    graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);
+    component.paint(graphics);
+    return image;
   }
 }

@@ -48,13 +48,12 @@ public class UsageLimitUtil {
   public static Result showTooManyUsagesWarning(@NotNull final Project project,
                                                 @NotNull final String message,
                                                 @NotNull final UsageViewPresentation usageViewPresentation) {
-    final String[] buttons = {UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort")};
     int result = runOrInvokeAndWait(new Computable<Integer>() {
       @Override
       public Integer compute() {
         String title = UsageViewBundle.message("find.excessive.usages.title", StringUtil.capitalize(StringUtil.pluralize(usageViewPresentation.getUsagesWord())));
         return Messages.showOkCancelDialog(project, message,
-                                           title, buttons[0], buttons[1],
+                                           title, UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort"),
                                            Messages.getWarningIcon());
       }
     });

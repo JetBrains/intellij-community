@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
 
   private Editor myEditor = null;
-  private ParameterInfoController myParameterInfoController;
   private final Alarm myUpdateDocAlarm;
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
@@ -265,6 +264,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public void showJavaDocInfo(@NotNull final PsiElement element,
                               final PsiElement original,
                               @Nullable Runnable closeCallback) {
+    if (!element.isValid()) {
+      return;
+    }
+
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       @Override
       public void updatePopup(Object lookupItemObject) {
@@ -291,26 +294,21 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     final PsiElement list =
       ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
+    PsiElement expressionList = null;
     if (list != null) {
       LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
       if (lookup != null) {
-        myParameterInfoController = null; // take completion variants for documentation then
+        expressionList = null; // take completion variants for documentation then
       } else {
-        myParameterInfoController = ParameterInfoController.findControllerAtOffset(editor, list.getTextRange().getStartOffset());
+        expressionList = list;
       }
     }
 
     final PsiElement originalElement = getContextElement(editor, file);
     PsiElement element = assertSameProject(findTargetElement(editor, file));
 
-    if (element == null && myParameterInfoController != null) {
-      final Object[] objects = myParameterInfoController.getSelectedElements();
-
-      if (objects != null && objects.length > 0) {
-        if (objects[0] instanceof PsiElement) {
-          element = assertSameProject((PsiElement)objects[0]);
-        }
-      }
+    if (element == null && expressionList != null) {
+      element = expressionList;
     }
 
     if (element == null && file == null) return; //file == null for text field editor
@@ -493,7 +491,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           Disposer.dispose(component);
           myEditor = null;
           myPreviouslyFocused = null;
-          myParameterInfoController = null;
           return Boolean.TRUE;
         }
       })
@@ -1065,17 +1062,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             }
           }
       );
-      if (myParameterInfoController != null) {
-        final String doc = ApplicationManager.getApplication().runReadAction(
-            new NullableComputable<String>() {
-              @Override
-              public String compute() {
-                return generateParameterInfoDocumentation(provider);
-              }
-            }
-        );
-        if (doc != null) return doc;
-      }
+
       if (provider instanceof ExternalDocumentationProvider) {
         final List<String> urls = ApplicationManager.getApplication().runReadAction(
             new NullableComputable<List<String>>() {
@@ -1110,38 +1097,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             }
           }
       );
-    }
-
-    @Nullable
-    private String generateParameterInfoDocumentation(DocumentationProvider provider) {
-      final Object[] objects = myParameterInfoController.getSelectedElements();
-
-      if (objects.length > 0) {
-        @NonNls StringBuffer sb = null;
-
-        for (Object o : objects) {
-          PsiElement parameter = null;
-          if (o instanceof PsiElement) {
-            parameter = (PsiElement)o;
-          }
-
-          if (parameter != null) {
-            final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
-            final String str2 = provider.generateDoc(parameter, originalElement != null ? originalElement.getElement() : null);
-            if (str2 == null) continue;
-            if (sb == null) sb = new StringBuffer();
-            sb.append(str2);
-            sb.append("<br>");
-          }
-          else {
-            sb = null;
-            break;
-          }
-        }
-
-        if (sb != null) return sb.toString();
-      }
-      return null;
     }
 
     @Override

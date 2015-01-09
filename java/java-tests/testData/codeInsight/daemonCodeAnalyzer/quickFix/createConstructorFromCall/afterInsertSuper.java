@@ -1,4 +1,4 @@
-// "Create Constructor" "true"
+// "Create constructor" "true"
 class Test extends A{
 
     public Test(String a) {

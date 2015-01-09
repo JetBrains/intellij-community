@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.compiler
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.compiler.CompilerWorkspaceConfiguration
+import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
@@ -880,21 +880,14 @@ class AppTest {
     protected void setUp() {
       super.setUp()
 
-      def conf = CompilerWorkspaceConfiguration.getInstance(project)
-      assert conf.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS == CompilerWorkspaceConfiguration.DEFAULT_COMPILE_PROCESS_VM_OPTIONS
+      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).defaultCompiler = new GreclipseIdeaCompiler(project)
 
       def jarName = "groovy-eclipse-batch-2.3.4-01.jar"
       def jarPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/lib/" + jarName)
-      conf.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "-Dgroovy.eclipse.batch.jar=" + jarPath
+
+      GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-      def conf = CompilerWorkspaceConfiguration.getInstance(project)
-      conf.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = CompilerWorkspaceConfiguration.DEFAULT_COMPILE_PROCESS_VM_OPTIONS
-
-      super.tearDown()
-    }
   }
 
 }

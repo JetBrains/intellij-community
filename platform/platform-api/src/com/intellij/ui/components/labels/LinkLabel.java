@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicLabelUI;
+import javax.swing.plaf.synth.SynthGraphicsUtils;
+import javax.swing.plaf.synth.SynthStyle;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
@@ -43,10 +45,10 @@ import java.util.Set;
 public class LinkLabel<T> extends JLabel {
   protected boolean myUnderline;
 
-  private LinkListener myLinkListener;
+  private LinkListener<T> myLinkListener;
   private T myLinkData;
 
-  private static final Set ourVisitedLinks = new HashSet();
+  private static final Set<String> ourVisitedLinks = new HashSet<String>();
 
   private boolean myIsLinkActive;
 
@@ -68,11 +70,11 @@ public class LinkLabel<T> extends JLabel {
     this(text, icon, null, null, null);
   }
 
-  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener aListener) {
+  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
     this(text, icon, aListener, null, null);
   }
 
-  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener aListener, @Nullable T aLinkData) {
+  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
@@ -100,7 +102,7 @@ public class LinkLabel<T> extends JLabel {
     myHoveringIcon = iconForHovering;
   }
 
-  public void setListener(LinkListener listener, @Nullable T linkData) {
+  public void setListener(LinkListener<T> listener, @Nullable T linkData) {
     myLinkListener = listener;
     myLinkData = linkData;
   }
@@ -145,7 +147,7 @@ public class LinkLabel<T> extends JLabel {
 
       boolean underline = myUnderline && myPaintUnderline;
       if (underline) {
-        Rectangle bounds = getTextBounds();
+        Rectangle bounds = getBounds(false); // get calculated text bounds
         if (bounds != null) {
           int lineY = bounds.y + bounds.height - 1;
           g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
@@ -226,7 +228,7 @@ public class LinkLabel<T> extends JLabel {
       }
     }
     if (getText() != null) {
-      Rectangle bounds = getTextBounds();
+      Rectangle bounds = getBounds(false); // get calculated text bounds
       if (bounds != null) {
         return bounds.contains(pt.x + insets.left, pt.y + insets.top);
       }
@@ -346,14 +348,32 @@ public class LinkLabel<T> extends JLabel {
     myPaintDefaultIcon = paintDefaultIcon;
   }
 
-  private Rectangle getTextBounds() {
+  private Rectangle getBounds(boolean icon) {
     try {
-      Field field = BasicLabelUI.class.getDeclaredField("paintTextR");
-      field.setAccessible(true);
-      return (Rectangle)field.get(getUI());
+      Object ui = getUI();
+      Class<?> type = ui.getClass();
+      String name = type.getSimpleName();
+      if (name.equals("AlloyIdeaLabelUI")) {
+        return getValue(ui, type.getSuperclass(), icon ? "b" : "c");
+      }
+      if (name.equals("AlloyLabelUI")) {
+        return getValue(ui, type, icon ? "b" : "c");
+      }
+      if (name.equals("SynthLabelUI")) {
+        SynthStyle style = getValue(ui, type, "style");
+        return getValue(style.getGraphicsUtils(null), SynthGraphicsUtils.class, icon ? "paintIconR" : "paintTextR");
+      }
+      return getValue(ui, BasicLabelUI.class, icon ? "paintIconR" : "paintTextR");
     }
     catch (Exception ignored) {
       return null;
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T getValue(Object object, Class<?> type, String name) throws Exception {
+    Field field = type.getDeclaredField(name);
+    field.setAccessible(true);
+    return (T)field.get(object);
   }
 }

@@ -63,6 +63,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.IllegalArgumentException;
+import java.lang.String;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -240,7 +242,7 @@ public abstract class DialogWrapper {
    *                specified <code>project</code>. This parameter can be <code>null</code>. In this case parent window
    *                will be suggested based on current focused window.
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
-   * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(com.intellij.openapi.project.Project, boolean)
+   * @see DialogWrapper#DialogWrapper(Project, boolean)
    */
   protected DialogWrapper(@Nullable Project project) {
     this(project, true);
@@ -263,7 +265,7 @@ public abstract class DialogWrapper {
    * when we do not have a project to figure out which window
    * is more suitable as an owner for the dialog.
    * <p/>
-   * Instead, use {@link DialogWrapper#DialogWrapper(com.intellij.openapi.project.Project, boolean, boolean)}
+   * Instead, use {@link DialogWrapper#DialogWrapper(Project, boolean, boolean)}
    */
   @Deprecated
   protected DialogWrapper(boolean canBeParent, boolean applicationModalIfPossible) {
@@ -669,7 +671,7 @@ public abstract class DialogWrapper {
    *
    * @param action action for the button
    * @return button with action specified
-   * @see com.intellij.openapi.ui.DialogWrapper#DEFAULT_ACTION
+   * @see DialogWrapper#DEFAULT_ACTION
    */
   protected JButton createJButtonForAction(Action action) {
     JButton button;
@@ -826,14 +828,14 @@ public abstract class DialogWrapper {
   protected abstract JComponent createCenterPanel();
 
   /**
-   * @see java.awt.Window#toFront()
+   * @see Window#toFront()
    */
   public void toFront() {
     myPeer.toFront();
   }
 
   /**
-   * @see java.awt.Window#toBack()
+   * @see Window#toBack()
    */
   public void toBack() {
     myPeer.toBack();
@@ -989,7 +991,7 @@ public abstract class DialogWrapper {
    * By default "OK" and "Cancel" actions are returned. The "Help" action is automatically added if
    * {@link #getHelpId()} returns non-null value.
    * <p/>
-   * Each action is represented by <code>JButton</code> created by {@link #createJButtonForAction(javax.swing.Action)}.
+   * Each action is represented by <code>JButton</code> created by {@link #createJButtonForAction(Action)}.
    * These buttons are then placed into {@link #createSouthPanel() south panel} of dialog.
    *
    * @return dialog actions
@@ -1060,21 +1062,21 @@ public abstract class DialogWrapper {
    * Returns content pane
    *
    * @return content pane
-   * @see javax.swing.JDialog#getContentPane
+   * @see JDialog#getContentPane
    */
   public Container getContentPane() {
     return myPeer.getContentPane();
   }
 
   /**
-   * @see javax.swing.JDialog#validate
+   * @see JDialog#validate
    */
   public void validate() {
     myPeer.validate();
   }
 
   /**
-   * @see javax.swing.JDialog#repaint
+   * @see JDialog#repaint
    */
   public void repaint() {
     myPeer.repaint();
@@ -1139,7 +1141,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return window owner
-   * @see java.awt.Window#getOwner
+   * @see Window#getOwner
    */
   public Window getOwner() {
     return myPeer.getOwner();
@@ -1155,7 +1157,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return root pane
-   * @see javax.swing.JDialog#getRootPane
+   * @see JDialog#getRootPane
    */
   public JRootPane getRootPane() {
     return myPeer.getRootPane();
@@ -1163,7 +1165,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return dialog size
-   * @see java.awt.Window#getSize
+   * @see Window#getSize
    */
   public Dimension getSize() {
     return myPeer.getSize();
@@ -1171,7 +1173,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return dialog title
-   * @see java.awt.Dialog#getTitle
+   * @see Dialog#getTitle
    */
   public String getTitle() {
     return myPeer.getTitle();
@@ -1344,7 +1346,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @see java.awt.Window#pack
+   * @see Window#pack
    */
   public void pack() {
     myPeer.pack();
@@ -1360,7 +1362,7 @@ public abstract class DialogWrapper {
    * @param alignment alignment of the buttons. Acceptable values are
    *                  <code>SwingConstants.CENTER</code> and <code>SwingConstants.RIGHT</code>.
    *                  The <code>SwingConstants.RIGHT</code> is the default value.
-   * @throws java.lang.IllegalArgumentException if <code>alignment</code> isn't acceptable
+   * @throws IllegalArgumentException if <code>alignment</code> isn't acceptable
    */
   protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     if (SwingConstants.CENTER != alignment && SwingConstants.RIGHT != alignment) {
@@ -1416,8 +1418,8 @@ public abstract class DialogWrapper {
 
   /**
    * @param text action without mnemonic. If mnemonic is set, presentation would be shifted by one to the left
-   *             {@link javax.swing.AbstractButton#setText(java.lang.String)}
-   *             {@link javax.swing.AbstractButton#updateDisplayedMnemonicIndex(java.lang.String, int)}
+   *             {@link AbstractButton#setText(String)}
+   *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
    */
   protected final void setOKButtonText(String text) {
     myOKAction.putValue(Action.NAME, text);
@@ -1466,7 +1468,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return <code>true</code> if and only if visible
-   * @see java.awt.Component#isVisible
+   * @see Component#isVisible
    */
   public boolean isVisible() {
     return myPeer.isVisible();
@@ -1474,7 +1476,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return <code>true</code> if and only if showing
-   * @see java.awt.Window#isShowing
+   * @see Window#isShowing
    */
   public boolean isShowing() {
     return myPeer.isShowing();
@@ -1483,7 +1485,7 @@ public abstract class DialogWrapper {
   /**
    * @param width  width
    * @param height height
-   * @see javax.swing.JDialog#setSize
+   * @see JDialog#setSize
    */
   public void setSize(int width, int height) {
     myPeer.setSize(width, height);
@@ -1491,14 +1493,14 @@ public abstract class DialogWrapper {
 
   /**
    * @param title title
-   * @see javax.swing.JDialog#setTitle
+   * @see JDialog#setTitle
    */
   public void setTitle(String title) {
     myPeer.setTitle(title);
   }
 
   /**
-   * @see javax.swing.JDialog#isResizable
+   * @see JDialog#isResizable
    */
   public void isResizable() {
     myPeer.isResizable();
@@ -1506,7 +1508,7 @@ public abstract class DialogWrapper {
 
   /**
    * @param resizable is resizable
-   * @see javax.swing.JDialog#setResizable
+   * @see JDialog#setResizable
    */
   public void setResizable(boolean resizable) {
     myPeer.setResizable(resizable);
@@ -1514,7 +1516,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return dialog location
-   * @see javax.swing.JDialog#getLocation
+   * @see JDialog#getLocation
    */
   @NotNull
   public Point getLocation() {
@@ -1523,7 +1525,7 @@ public abstract class DialogWrapper {
 
   /**
    * @param p new dialog location
-   * @see javax.swing.JDialog#setLocation(Point)
+   * @see JDialog#setLocation(Point)
    */
   public void setLocation(@NotNull Point p) {
     myPeer.setLocation(p);
@@ -1532,7 +1534,7 @@ public abstract class DialogWrapper {
   /**
    * @param x x
    * @param y y
-   * @see javax.swing.JDialog#setLocation(int, int)
+   * @see JDialog#setLocation(int, int)
    */
   public void setLocation(int x, int y) {
     myPeer.setLocation(x, y);
@@ -1773,8 +1775,8 @@ public abstract class DialogWrapper {
 
     /**
      * Do actual work for the action. This method is called only if no other action
-     * is performed in parallel (checked using {@link com.intellij.openapi.ui.DialogWrapper#myPerformAction}),
-     * and dialog is active (checked using {@link com.intellij.openapi.ui.DialogWrapper#myClosed})
+     * is performed in parallel (checked using {@link DialogWrapper#myPerformAction}),
+     * and dialog is active (checked using {@link DialogWrapper#myClosed})
      *
      * @param e action
      */
@@ -1856,7 +1858,7 @@ public abstract class DialogWrapper {
   private Dimension myActualSize = null;
   private String myLastErrorText = null;
 
-  protected final void setErrorText(@Nullable final String text) {
+  public void setErrorText(@Nullable final String text) {
     if (Comparing.equal(myLastErrorText, text)) {
       return;
     }

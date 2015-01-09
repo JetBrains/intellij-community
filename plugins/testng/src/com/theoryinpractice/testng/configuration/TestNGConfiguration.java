@@ -225,6 +225,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
      this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
    }
 
+   @Nullable
    public String getAlternativeJrePath() {
      return ALTERNATIVE_JRE_PATH;
    }

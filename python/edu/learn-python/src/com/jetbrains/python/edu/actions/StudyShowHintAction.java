@@ -28,7 +28,7 @@ import java.io.File;
 public class StudyShowHintAction extends DumbAwareAction {
   public static final String ACTION_ID = "ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
-  public static final String OUTSIDE_TASK_WINDOW_MESSAGE = "Put caret to answer placeholder to get hint";
+  public static final String OUTSIDE_TASK_WINDOW_MESSAGE = "Put the caret in the answer placeholder to get hint";
   public static final String HINT_NOT_AVAILABLE = "There is no hint for this answer placeholder";
 
   public StudyShowHintAction() {
@@ -81,7 +81,7 @@ public class StudyShowHintAction extends DumbAwareAction {
       if (resourceRoot != null && resourceRoot.exists()) {
         File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
         if (hintsDir.exists()) {
-          hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hintFileName, true);
+          hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hintFileName, true, "UTF-8");
         }
       }
     }

@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import org.jetbrains.annotations.NotNull;
@@ -34,4 +35,7 @@ public abstract class XmlQuickFixFactory {
   public abstract LocalQuickFix createNSDeclarationIntentionFix(@NotNull final PsiElement element,
                                            @NotNull String namespacePrefix,
                                            @Nullable final XmlToken token);
+
+  @NotNull
+  public abstract LocalQuickFixAndIntentionActionOnPsiElement addAttributeValueFix(@NotNull XmlAttribute attribute);
 }

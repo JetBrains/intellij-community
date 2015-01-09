@@ -42,6 +42,7 @@ import java.util.List;
  */
 class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
+  private final boolean myForceHttps;
   private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myLatestBuild;
   private final PatchInfo myPatch;
@@ -49,10 +50,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   protected UpdateInfoDialog(@NotNull UpdateChannel channel,
                              boolean enableLink,
+                             boolean forceHttps,
                              Collection<PluginDownloader> updatedPlugins,
                              Collection<IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
+    myForceHttps = forceHttps;
     myUpdatedPlugins = updatedPlugins;
     myLatestBuild = channel.getLatestBuild();
     myPatch = myLatestBuild != null ? myLatestBuild.findPatchForCurrentBuild() : null;
@@ -64,17 +67,13 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
-      final boolean onePluginFound = incompatiblePlugins.size() == 1;
-      String incompatibilityError = "Incompatible with new version plugin";
-      incompatibilityError += (onePluginFound ? " is" : "s are") + " detected: ";
-      incompatibilityError += onePluginFound ? "" : "<br>";
-      incompatibilityError += StringUtil.join(incompatiblePlugins, new Function<IdeaPluginDescriptor, String>() {
+      String list = StringUtil.join(incompatiblePlugins, new Function<IdeaPluginDescriptor, String>() {
         @Override
         public String fun(IdeaPluginDescriptor downloader) {
           return downloader.getName();
         }
       }, "<br/>");
-      setErrorText(incompatibilityError);
+      setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
     }
   }
 
@@ -89,7 +88,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     List<Action> actions = ContainerUtil.newArrayList();
 
     if (myPatch != null) {
-      final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+      boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
       String button = IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.download.and.install.button");
       actions.add(new AbstractAction(button) {
         {
@@ -98,7 +97,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          downloadPatch(canRestart);
+          downloadPatch();
         }
       });
     }
@@ -139,21 +138,11 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     return IdeBundle.message("updates.remind.later.button");
   }
 
-  private void downloadPatch(final boolean canRestart) {
-    final UpdateChecker.DownloadPatchResult result = UpdateChecker.downloadAndInstallPatch(myLatestBuild);
+  private void downloadPatch() {
+    UpdateChecker.DownloadPatchResult result = UpdateChecker.installPlatformUpdate(myPatch, myLatestBuild.getNumber(), myForceHttps);
     if (result == UpdateChecker.DownloadPatchResult.SUCCESS) {
       if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
-        new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins, true){
-          @Override
-          protected boolean downloadModal() {
-            return true;
-          }
-
-          @Override
-          protected String getOkButtonText() {
-            return IdeBundle.message(canRestart ? "update.restart.plugins.update.action" : "update.shutdown.plugins.update.action");
-          }
-        }.show();
+        new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).show();
       }
       restart();
     }
@@ -233,7 +222,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         configureMessageArea(myMessageArea);
       }
 
-      if (mySubscribtionLicense && myLicenseInfo != null) {
+      if (myLicenseInfo != null) {
         configureMessageArea(myLicenseArea, myLicenseInfo, myPaidUpgrade ? JBColor.RED : null, null);
       }
     }

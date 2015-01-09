@@ -136,6 +136,12 @@ class GitBekParentFixer {
         return null;
       }
 
+      @Nullable
+      @Override
+      public VcsLogRootFilter getRootFilter() {
+        return null;
+      }
+
       @Override
       public boolean isEmpty() {
         return false;

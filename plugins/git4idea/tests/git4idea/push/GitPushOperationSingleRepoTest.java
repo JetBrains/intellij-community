@@ -17,6 +17,8 @@ package git4idea.push;
 
 import com.intellij.dvcs.push.PushSpec;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,10 +31,13 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import git4idea.test.TestDialogHandler;
+import git4idea.test.TestMessageHandler;
+import git4idea.update.GitRebaseOverMergeProblem;
 import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -41,8 +46,10 @@ import java.util.List;
 
 import static git4idea.push.GitPushRepoResult.Type.*;
 import static git4idea.test.GitExecutor.*;
+import static git4idea.test.GitTestUtil.makeCommit;
 import static java.util.Collections.singletonMap;
 
+@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
 
   protected GitRepository myRepository;
@@ -117,9 +124,9 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     pushCommitFromBro();
 
     final Ref<Boolean> dialogShown = Ref.create(false);
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler() {
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
       @Override
-      public int handleDialog(DialogWrapper dialog) {
+      public int handleDialog(GitRejectedPushUpdateDialog dialog) {
         dialogShown.set(true);
         return DialogWrapper.CANCEL_EXIT_CODE;
       }
@@ -137,9 +144,9 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     git("checkout -b feature");
 
     final Ref<Boolean> dialogShown = Ref.create(false);
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler() {
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
       @Override
-      public int handleDialog(DialogWrapper dialog) {
+      public int handleDialog(GitRejectedPushUpdateDialog dialog) {
         dialogShown.set(true);
         return DialogWrapper.CANCEL_EXIT_CODE;
       }
@@ -161,11 +168,13 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     refresh();
     PushSpec<GitPushSource, GitPushTarget> pushSpec = makePushSpec(myRepository, "master", "origin/master");
 
-    GitPushResult result = new GitPushOperation(myProject, singletonMap(myRepository, pushSpec), null, false) {
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false) {
       @NotNull
       @Override
-      protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
-        GitUpdateResult updateResult = super.update(rootsToUpdate, updateMethod);
+      protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate,
+                                       @NotNull UpdateMethod updateMethod,
+                                       boolean checkForRebaseOverMergeProblem) {
+        GitUpdateResult updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem);
         try {
           pushCommitFromBro();
         }
@@ -180,6 +189,50 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     cd(myParentRepo.getPath());
     String history = git("log --all --pretty=%H ");
     assertFalse("The commit shouldn't be pushed", history.contains(hash));
+  }
+
+  public void test_use_selected_update_method_for_all_consecutive_updates() throws IOException {
+    pushCommitFromBro();
+    cd(myRepository);
+    makeCommit("afile.txt");
+
+    agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE);
+
+    refresh();
+    PushSpec<GitPushSource, GitPushTarget> pushSpec = makePushSpec(myRepository, "master", "origin/master");
+
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false) {
+      boolean updateHappened;
+
+      @NotNull
+      @Override
+      protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate,
+                                       @NotNull UpdateMethod updateMethod,
+                                       boolean checkForRebaseOverMergeProblem) {
+        GitUpdateResult updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem);
+        try {
+          if (!updateHappened) {
+            updateHappened = true;
+            pushCommitFromBro();
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        return updateResult;
+      }
+    }.execute();
+
+    assertResult(SUCCESS, 1, "master", "origin/master", GitUpdateResult.SUCCESS, result.getResults().get(myRepository));
+    cd(myRepository);
+    String[] commitMessages = StringUtil.splitByLines(log("--pretty=%s"));
+    boolean mergeCommitsInTheLog = ContainerUtil.exists(commitMessages, new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return s.toLowerCase().contains("merge");
+      }
+    });
+    assertFalse("Unexpected merge commits when rebase method is selected", mergeCommitsInTheLog);
   }
 
   public void test_force_push() throws IOException {
@@ -239,11 +292,132 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
 
     refresh();
     PushSpec<GitPushSource, GitPushTarget> spec = makePushSpec(myRepository, "master", "origin/master");
-    GitPushResult pushResult = new GitPushOperation(myProject, singletonMap(myRepository, spec), GitPushTagMode.ALL, false).execute();
+    GitPushResult pushResult = new GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, spec),
+                                                    GitPushTagMode.ALL, false).execute();
     GitPushRepoResult result = pushResult.getResults().get(myRepository);
     List<String> pushedTags = result.getPushedTags();
     assertEquals(1, pushedTags.size());
     assertEquals("refs/tags/v1", pushedTags.get(0));
+  }
+
+  public void test_warn_if_rebasing_over_merge() throws IOException {
+    generateUnpushedMergedCommitProblem();
+
+    final Ref<Boolean> rebaseOverMergeProblemDetected = Ref.create(false);
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
+      @Override
+      public int handleDialog(@NotNull GitRejectedPushUpdateDialog dialog) {
+        rebaseOverMergeProblemDetected.set(dialog.warnsAboutRebaseOverMerge());
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
+    push("master", "origin/master");
+    assertTrue(rebaseOverMergeProblemDetected.get());
+  }
+
+  public void test_warn_if_silently_rebasing_over_merge() throws IOException {
+    generateUnpushedMergedCommitProblem();
+
+    myGitSettings.setAutoUpdateIfPushRejected(true);
+    myGitSettings.setUpdateType(UpdateMethod.REBASE);
+
+    final Ref<Boolean> rebaseOverMergeProblemDetected = Ref.create(false);
+    myDialogManager.registerMessageHandler(new TestMessageHandler() {
+      @Override
+      public int handleMessage(@NotNull String description) {
+        rebaseOverMergeProblemDetected.set(description.contains(GitRebaseOverMergeProblem.DESCRIPTION));
+        return Messages.CANCEL;
+      }
+    });
+    push("master", "origin/master");
+    assertTrue(rebaseOverMergeProblemDetected.get());
+  }
+
+  public void test_dont_overwrite_rebase_setting_when_chose_to_merge_due_to_unpushed_merge_commits() throws IOException {
+    generateUnpushedMergedCommitProblem();
+
+    myGitSettings.setUpdateType(UpdateMethod.REBASE);
+
+    final Ref<Boolean> rebaseOverMergeProblemDetected = Ref.create(false);
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
+      @Override
+      public int handleDialog(@NotNull GitRejectedPushUpdateDialog dialog) {
+        rebaseOverMergeProblemDetected.set(dialog.warnsAboutRebaseOverMerge());
+        return GitRejectedPushUpdateDialog.MERGE_EXIT_CODE;
+      }
+    });
+    push("master", "origin/master");
+    assertTrue(rebaseOverMergeProblemDetected.get());
+    assertEquals("Update method was overwritten by temporary update-via-merge decision",
+                 UpdateMethod.REBASE, myGitSettings.getUpdateType());
+  }
+
+  public void test_respect_branch_default_setting_for_rejected_push_dialog() throws IOException {
+    generateUpdateNeeded();
+    myGitSettings.setUpdateType(UpdateMethod.BRANCH_DEFAULT);
+    git("config branch.master.rebase true");
+
+    final Ref<String> defaultActionName = Ref.create();
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
+      @Override
+      public int handleDialog(@NotNull GitRejectedPushUpdateDialog dialog) {
+        defaultActionName.set((String)dialog.getDefaultAction().getValue(Action.NAME));
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
+
+    push("master", "origin/master");
+    assertTrue("Default action in rejected-push dialog is incorrect: " + defaultActionName.get(),
+               defaultActionName.get().toLowerCase().contains("rebase"));
+
+    git("config branch.master.rebase false");
+    push("master", "origin/master");
+    assertTrue("Default action in rejected-push dialog is incorrect: " + defaultActionName.get(),
+               defaultActionName.get().toLowerCase().contains("merge"));
+  }
+
+  public void test_respect_branch_default_setting_for_silent_update_when_rejected_push() throws IOException {
+    generateUpdateNeeded();
+    myGitSettings.setUpdateType(UpdateMethod.BRANCH_DEFAULT);
+    git("config branch.master.rebase true");
+    myGitSettings.setAutoUpdateIfPushRejected(true);
+
+    push("master", "origin/master");
+    assertFalse("Unexpected merge commit: rebase should have happened", log("-1 --pretty=%s").toLowerCase().startsWith("merge"));
+  }
+
+  // there is no "branch default" choice in the rejected push dialog
+  // => simply don't rewrite the setting if the same value is chosen, as was default value initially
+  public void test_dont_overwrite_branch_default_setting_when_agree_in_rejected_push_dialog() throws IOException {
+    generateUpdateNeeded();
+    myGitSettings.setUpdateType(UpdateMethod.BRANCH_DEFAULT);
+    git("config branch.master.rebase true");
+
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
+      @Override
+      public int handleDialog(@NotNull GitRejectedPushUpdateDialog dialog) {
+        return GitRejectedPushUpdateDialog.REBASE_EXIT_CODE;
+      }
+    });
+
+    push("master", "origin/master");
+    assertEquals(UpdateMethod.BRANCH_DEFAULT, myGitSettings.getUpdateType());
+  }
+
+  private void generateUpdateNeeded() throws IOException {
+    pushCommitFromBro();
+    cd(myRepository);
+    makeCommit("file.txt");
+  }
+
+  private void generateUnpushedMergedCommitProblem() throws IOException {
+    pushCommitFromBro();
+    cd(myRepository);
+    git("checkout -b branch1");
+    makeCommit("branch1.txt");
+    git("checkout master");
+    makeCommit("master.txt");
+    git("merge branch1");
   }
 
   @NotNull
@@ -255,7 +429,7 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
   private GitPushResult push(@NotNull String from, @NotNull String to, boolean force) {
     refresh();
     PushSpec<GitPushSource, GitPushTarget> spec = makePushSpec(myRepository, from, to);
-    return new GitPushOperation(myProject, singletonMap(myRepository, spec), null, force).execute();
+    return new GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, spec), null, force).execute();
   }
 
   private String pushCommitFromBro() throws IOException {

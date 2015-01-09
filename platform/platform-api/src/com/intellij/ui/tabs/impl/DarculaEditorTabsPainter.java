@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-class DarculaEditorTabsPainter implements JBEditorTabsPainter {
+class DarculaEditorTabsPainter extends JBEditorTabsPainter {
   @Override
   public void doPaintInactive(Graphics2D g2d,
                               Rectangle effectiveBounds,
@@ -52,7 +52,7 @@ class DarculaEditorTabsPainter implements JBEditorTabsPainter {
     g.setColor(UIUtil.getPanelBackground());
     g.fill(clip);
 
-    g.setColor(new Color(0, 0, 0, 80));
+    g.setColor(Gray._0.withAlpha(80));
     g.fill(clip);
 
     final int x = rectangle.x;
@@ -68,78 +68,33 @@ class DarculaEditorTabsPainter implements JBEditorTabsPainter {
     }
   }
 
-  public void paintSelectionAndBorder(Graphics2D g2d,
-                                      Rectangle rect,
-                                      JBTabsImpl.ShapeInfo selectedShape,
-                                      Insets insets,
-                                      Color tabColor,
-                                      boolean horizontalTabs) {
-    Insets i = selectedShape.path.transformInsets(insets);
-    int _x = rect.x;
-    int _y = rect.y;
-    int _height = rect.height;
-    if (!horizontalTabs) {
-      g2d.setColor(new Color(0, 0, 0, 45));
-      g2d.draw(
-        selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
-                                                      - selectedShape.labelPath.deltaY(4), selectedShape.path.getMaxX(),
-                                              selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(4)));
 
-      g2d.setColor(new Color(0, 0, 0, 15));
-      g2d.draw(
-        selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
-                                                      - selectedShape.labelPath.deltaY(5), selectedShape.path.getMaxX(),
-                                              selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(5)));
-    }
-
+  public void fillSelectionAndBorder(Graphics2D g, JBTabsImpl.ShapeInfo selectedShape, Color tabColor, int x, int y, int height) {
     if (tabColor != null) {
-      g2d.setColor(tabColor);
-      g2d.fill(selectedShape.fillPath.getShape());
+      g.setColor(tabColor);
+      g.fill(selectedShape.fillPath.getShape());
 
-      g2d.setPaint(UIUtil.getGradientPaint(_x, _y, Gray._255.withAlpha(50), _x, _y + _height, Gray._255.withAlpha(0)));
+      g.setPaint(UIUtil.getGradientPaint(x, y, Gray._255.withAlpha(50), x, y + height, Gray._255.withAlpha(0)));
     } else {
-      g2d.setPaint(UIUtil.getGradientPaint(_x, _y, Gray._85, _x, _y + _height, Gray._60));
+      g.setPaint(UIUtil.getGradientPaint(x, y, Gray._85, x, y + height, Gray._60));
     }
 
-    g2d.fill(selectedShape.fillPath.getShape());
+    g.fill(selectedShape.fillPath.getShape());
 
-    g2d.setColor(Gray._135.withAlpha(90));
-    g2d.draw(selectedShape.fillPath.getShape());
+    g.setColor(Gray._135.withAlpha(90));
+    g.draw(selectedShape.fillPath.getShape());
 
     // fix right side due to swing stupidity (fill & draw will occupy different shapes)
-    g2d.draw(selectedShape.labelPath
+    g.draw(selectedShape.labelPath
                .transformLine(selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getY() +
                                                                                                      selectedShape.labelPath.deltaY(1),
                               selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() -
                                                                                                      selectedShape.labelPath.deltaY(4)));
-
-    if (!horizontalTabs) {
-      // side shadow
-      g2d.setColor(Gray._0.withAlpha(30));
-      g2d.draw(selectedShape.labelPath
-                 .transformLine(selectedShape.labelPath.getMaxX() + selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getY() +
-                                                                                                       selectedShape.labelPath.deltaY(1),
-                                selectedShape.labelPath.getMaxX() + selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() -
-                                                                                                       selectedShape.labelPath.deltaY(4)));
-
-
-      g2d.draw(selectedShape.labelPath
-                 .transformLine(selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontalTabs ? 2 : 1),
-                                selectedShape.labelPath.getY() +
-                                selectedShape.labelPath.deltaY(1),
-                                selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontalTabs ? 2 : 1),
-                                selectedShape.labelPath.getMaxY() -
-                                selectedShape.labelPath.deltaY(4)));
-    }
-
-    g2d.setColor(new Color(0, 0, 0, 50));
-    g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
-                                                   selectedShape.path.getMaxX(),
-                                                   selectedShape.labelPath.getMaxY()));
   }
 
   @Override
   public Color getBackgroundColor() {
+    //noinspection UseJBColor
     return new Color(0x3C3F41);
   }
 }

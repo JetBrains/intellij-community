@@ -8,18 +8,21 @@ import org.jetbrains.annotations.Nullable;
 public class PathInfo {
   private final VirtualFile child;
   private final VirtualFile root;
+  private final boolean isLibrary;
+
   String moduleName;
 
   private String computedPath;
 
-  public PathInfo(@NotNull VirtualFile child, @NotNull VirtualFile root, @Nullable String moduleName) {
+  public PathInfo(@NotNull VirtualFile child, @NotNull VirtualFile root, @Nullable String moduleName, boolean isLibrary) {
     this.child = child;
     this.root = root;
     this.moduleName = moduleName;
+    this.isLibrary = isLibrary;
   }
 
   public PathInfo(@NotNull VirtualFile child, @NotNull VirtualFile root) {
-    this(child, root, null);
+    this(child, root, null, false);
   }
 
   @NotNull
@@ -40,7 +43,16 @@ public class PathInfo {
   @NotNull
   public String getPath() {
     if (computedPath == null) {
-      computedPath = (moduleName == null ? "" : moduleName + '/') + VfsUtilCore.getRelativePath(child, root, '/');
+      StringBuilder builder = new StringBuilder();
+      if (moduleName != null) {
+        builder.append(moduleName).append('/');
+      }
+
+      if (isLibrary) {
+        builder.append(root.getName()).append('/');
+      }
+
+      computedPath = builder.append(VfsUtilCore.getRelativePath(child, root, '/')).toString();
     }
     return computedPath;
   }

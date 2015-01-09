@@ -31,7 +31,6 @@ import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.text.DecimalFormat;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -51,7 +50,7 @@ public class ApplicationImplTest extends PlatformTestCase {
 
   private volatile Throwable exception;
   public void testAcquireReadActionLockVsRunReadActionPerformance() throws Throwable {
-    final int N = 10000000;
+    final int N = 100000000;
     final Application application = ApplicationManager.getApplication();
     String err = null;
 
@@ -79,21 +78,20 @@ public class ApplicationImplTest extends PlatformTestCase {
             long l1 = PlatformTestUtil.measure(new Runnable() {
               @Override
               public void run() {
-                Runnable action = new Runnable() {
-                  @Override
-                  public void run() {
-                  }
-                };
                 for (int i=0; i<N; i++) {
-                  application.runReadAction(action);
+                  application.runReadAction(new Runnable() {
+                    @Override
+                    public void run() {
+                    }
+                  });
                 }
               }
             });
 
             assertFalse(application.isReadAccessAllowed());
-            double ratioPercent = (l1 - l2) * 100.0 / l1;
-            if (Math.abs(ratioPercent) > 8) {
-              return "Suspiciously different times for acquireReadActionLock(" +l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: "+ new DecimalFormat("00.0").format(ratioPercent) + "%";
+            int ratioPercent = (int)((l1 - l2) * 100.0 / l1);
+            if (Math.abs(ratioPercent) > 20) {
+              return "Suspiciously different times for acquireReadActionLock(" +l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: "+ ratioPercent + "%";
             }
           }
           catch (Throwable e) {

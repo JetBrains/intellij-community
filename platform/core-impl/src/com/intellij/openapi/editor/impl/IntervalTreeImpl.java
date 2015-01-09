@@ -17,8 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -30,9 +28,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * User: cdr
  */
-public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<T> implements IntervalTree<T> {
+abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<T> implements IntervalTree<T> {
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
   protected final ReadWriteLock l = new ReentrantReadWriteLock();
 
@@ -48,12 +48,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   private final ReferenceQueue<T> myReferenceQueue = new ReferenceQueue<T>();
   private int deadReferenceCount;
 
-  protected static class IntervalNode<E extends MutableInterval> extends RedBlackTree.Node<E> implements MutableInterval {
+  static class IntervalNode<E extends MutableInterval> extends RedBlackTree.Node<E> implements MutableInterval {
     private volatile int myStart;
     private volatile int myEnd;
     private static final int ATTACHED_TO_TREE_FLAG = COLOR_FLAG+1; // true if the node is inserted to the tree
     protected final List<Getter<E>> intervals;
-    protected int maxEnd; // max of all intervalEnd()s among all children.
+    int maxEnd; // max of all intervalEnd()s among all children.
     protected int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
 
     private volatile long cachedDeltaUpToRoot; // field (packed to long for atomicity) containing deltaUpToRoot, node modCount and allDeltasUpAreNull flag
@@ -148,7 +148,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       setFlag(ATTACHED_TO_TREE_FLAG, attached);
     }
 
-    public void removeIntervalInternal(int i) {
+    void removeIntervalInternal(int i) {
       intervals.remove(i);
       if (isAttachedToTree()) {   // for detached node, do not update tree node count
         assert myIntervalTree.keySize > 0 : myIntervalTree.keySize;
@@ -156,7 +156,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       }
     }
 
-    public void addInterval(@NotNull E interval) {
+    void addInterval(@NotNull E interval) {
       myIntervalTree.assertUnderWriteLock();
       intervals.add(createGetter(interval));
       if (isAttachedToTree()) { // for detached node, do not update tree node count
@@ -170,7 +170,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
 
     private static class WeakReferencedGetter<T> extends WeakReference<T> implements Getter<T> {
-      public WeakReferencedGetter(T referent, ReferenceQueue<? super T> q) {
+      private WeakReferencedGetter(T referent, ReferenceQueue<? super T> q) {
         super(referent, q);
       }
 
@@ -181,7 +181,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       }
     }
 
-    protected int computeDeltaUpToRoot() {
+    int computeDeltaUpToRoot() {
       restart:
       while (true) { // have to restart on failure to update cached offsets in case of concurrent modification
         if (!isValid()) return 0;
@@ -244,14 +244,14 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       }
     }
 
-    protected int changeDelta(int change) {
+    int changeDelta(int change) {
       if (change != 0) {
         setCachedValues(0, false, 0); // deltaUpToRoot is not valid anymore
         return delta += change;
       }
       return delta;
     }
-    protected void clearDelta() {
+    void clearDelta() {
       if (delta != 0) {
         setCachedValues(0, false, 0); // deltaUpToRoot is not valid anymore
         delta = 0;
@@ -268,7 +268,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       return myEnd = end;
     }
 
-    protected static final int VALID_FLAG = ATTACHED_TO_TREE_FLAG + 1;
+    static final int VALID_FLAG = ATTACHED_TO_TREE_FLAG + 1;
     @Override
     public boolean isValid() {
       return isFlagSet(VALID_FLAG);
@@ -476,7 +476,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return processOverlappingWith(root.getRight(), start, end, processor, modCountBefore, delta);
   }
 
-  public boolean processOverlappingWithOutside(int start, int end, @NotNull Processor<? super T> processor) {
+  boolean processOverlappingWithOutside(int start, int end, @NotNull Processor<? super T> processor) {
     try {
       l.readLock().lock();
       checkMax(true);
@@ -558,7 +558,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return processContaining(root.getRight(), offset, processor, modCountBefore, delta);
   }
 
-  public interface PeekableIterator<T> extends DisposableIterator<T> {
+  interface PeekableIterator<T> extends DisposableIterator<T> {
     T peek();
     PeekableIterator EMPTY = new PeekableIterator() {
       @Override
@@ -589,8 +589,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   @NotNull
-  PeekableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
-
+  private PeekableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
     l.readLock().lock();
 
     try {
@@ -599,6 +598,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), rangeInterval, modCount, 0);
       if (firstOverlap == null) {
         l.readLock().unlock();
+        //noinspection unchecked
         return PeekableIterator.EMPTY;
       }
       final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
@@ -725,7 +725,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return rangeInterval.intersects(start, end);
   }
 
-  protected IntervalNode<T> findOrInsert(@NotNull IntervalNode<T> node) {
+  IntervalNode<T> findOrInsert(@NotNull IntervalNode<T> node) {
     assertUnderWriteLock();
     node.setRed();
     node.setParent(null);
@@ -814,15 +814,15 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   // returns true if all markers are valid
-  public boolean checkMax(boolean assertInvalid) {
+  boolean checkMax(boolean assertInvalid) {
     return VERIFY && doCheckMax(assertInvalid);
   }
 
-  protected boolean doCheckMax(boolean assertInvalid) {
+  private boolean doCheckMax(boolean assertInvalid) {
     try {
       l.readLock().lock();
 
-      Ref<Boolean> allValid = new Ref<Boolean>(true);
+      AtomicBoolean allValid = new AtomicBoolean(true);
       int[] keyCounter = new int[1];
       int[] nodeCounter = new int[1];
       TLongHashSet ids = new TLongHashSet(keySize);
@@ -853,12 +853,13 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   // returns real (minStart, maxStart, maxEnd)
   private IntTrinity checkMax(IntervalNode<T> root,
-                                                    int deltaUpToRootExclusive,
-                                                    boolean assertInvalid,
-                                                    Ref<Boolean> allValid,
-                                                    int[] keyCounter,
-                                                    int[] nodeCounter,
-                                                    TLongHashSet ids, boolean allDeltasUpAreNull) {
+                              int deltaUpToRootExclusive,
+                              boolean assertInvalid,
+                              AtomicBoolean allValid,
+                              int[] keyCounter,
+                              int[] nodeCounter,
+                              TLongHashSet ids,
+                              boolean allDeltasUpAreNull) {
     if (root == null) return new IntTrinity(Integer.MAX_VALUE,Integer.MIN_VALUE,Integer.MIN_VALUE);
     long packedOffsets = root.cachedDeltaUpToRoot;
     if (IntervalNode.modCount(packedOffsets) == modCount) {
@@ -1004,7 +1005,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   // returns true if all deltas involved are still 0
-  protected boolean pushDelta(IntervalNode<T> root) {
+  boolean pushDelta(IntervalNode<T> root) {
     if (root == null || !root.isValid()) return true;
     IntervalNode<T> parent = root.getParent();
     assertAllDeltasAreNull(parent);
@@ -1113,7 +1114,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   // max of n.left's maxend, n.right's maxend and its own interval endOffset
-  protected void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
+  void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
     if (!node.isValid()) return;
     int realMax = Math.max(Math.max(maxEndOf(node.getLeft(), deltaUpToRoot), maxEndOf(node.getRight(), deltaUpToRoot)),
                            deltaUpToRoot + node.intervalEnd());
@@ -1234,7 +1235,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return findMinOverlappingWith(root.getRight(), interval, modCountBefore, delta);
   }
 
-  public void changeData(T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  void changeData(T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     try {
       l.writeLock().lock();
 
@@ -1359,5 +1360,64 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   private int maxHeight(Node<T> root) {
     return root == null ? 0 : 1 + Math.max(maxHeight(root.left), maxHeight(root.right));
+  }
+
+  // combines iterators for two trees in one using specified comparator
+  @NotNull
+  static <T extends MutableInterval> PeekableIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
+                                                                                    @NotNull TextRangeInterval tree1Range,
+                                                                                    @NotNull IntervalTreeImpl<T> tree2,
+                                                                                    @NotNull TextRangeInterval tree2Range,
+                                                                                    @NotNull Comparator<? super T> comparator) {
+    PeekableIterator<T> exact = tree1.overlappingIterator(tree1Range);
+    PeekableIterator<T> lines = tree2.overlappingIterator(tree2Range);
+    return mergeIterators(exact, lines, comparator);
+  }
+
+  @NotNull
+  static <T extends MutableInterval> PeekableIterator<T> mergeIterators(@NotNull final PeekableIterator<T> iterator1,
+                                                                        @NotNull final PeekableIterator<T> iterator2,
+                                                                        @NotNull final Comparator<? super T> comparator) {
+    return new PeekableIterator<T>() {
+      @Override
+      public void dispose() {
+        iterator1.dispose();
+        iterator2.dispose();
+      }
+
+      @Override
+      public boolean hasNext() {
+        return iterator1.hasNext() || iterator2.hasNext();
+      }
+
+      @Override
+      public T next() {
+        return choose().next();
+      }
+
+      @NotNull
+      private PeekableIterator<T> choose() {
+        T t1 = iterator1.hasNext() ? iterator1.peek() : null;
+        T t2 = iterator2.hasNext() ? iterator2.peek() : null;
+        if (t1 == null) {
+          return iterator2;
+        }
+        if (t2 == null) {
+          return iterator1;
+        }
+        int compare = comparator.compare(t1, t2);
+        return compare < 0 ? iterator1 : iterator2;
+      }
+
+      @Override
+      public void remove() {
+        throw new NoSuchElementException();
+      }
+
+      @Override
+      public T peek() {
+        return choose().peek();
+      }
+    };
   }
 }

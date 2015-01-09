@@ -111,7 +111,7 @@ public class MarkerType {
 
   private static PsiElement getParentMethod(PsiElement element) {
     final PsiElement parent = element.getParent();
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(parent);
     return interfaceMethod != null ? interfaceMethod : parent;
   }
 

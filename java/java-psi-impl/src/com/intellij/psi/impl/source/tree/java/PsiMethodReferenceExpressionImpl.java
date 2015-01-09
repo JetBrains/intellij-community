@@ -84,14 +84,20 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                                                    MethodSignature signature) {
         return DuplicateConflictResolver.INSTANCE;
       }
-
-      @Override
-      protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
-        return functionalInterfaceType;
-      }
     };
 
-    final ResolveResult[] result = resolver.resolve(this, getContainingFile(), false);
+    final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
+    final PsiType added = map.put(this, functionalInterfaceType);
+    final ResolveResult[] result;
+    try {
+      result = resolver.resolve(this, getContainingFile(), false);
+    }
+    finally {
+      if (added == null) {
+        map.remove(this);
+      }
+    }
+
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
     final int interfaceArity = interfaceMethod.getParameterList().getParametersCount();
     for (ResolveResult resolveResult : result) {

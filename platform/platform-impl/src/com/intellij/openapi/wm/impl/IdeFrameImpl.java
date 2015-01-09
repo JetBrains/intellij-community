@@ -41,7 +41,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -57,6 +56,7 @@ import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.PowerSupplyKit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,11 +90,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx,
                       ActionManagerEx actionManager,
-                      UISettings uiSettings,
                       DataManager dataManager,
                       Application application) {
     super(applicationInfoEx.getFullApplicationName());
-    myRootPane = createRootPane(actionManager, uiSettings, dataManager, application);
+    myRootPane = createRootPane(actionManager, UISettings.getInstance(), dataManager, application);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateWindowIcon(this);
@@ -142,6 +141,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
   }
 
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    PowerSupplyKit.checkPowerSupply();
+  }
+
+
+
   private void updateBorder() {
     int state = getExtendedState();
     if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS() || !SystemInfo.isWindows || myRootPane == null) {
@@ -163,7 +170,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
           if (insets.left != 0) mask |= SideBorder.LEFT;
           if (insets.bottom != 0) mask |= SideBorder.BOTTOM;
           if (insets.right != 0) mask |= SideBorder.RIGHT;
-          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, false, 3));
+          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, 3));
           break;
         }
       }
@@ -484,6 +491,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
     if (myProject != null) {
       PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, String.valueOf(state));
+      doLayout();
     }
   }
 

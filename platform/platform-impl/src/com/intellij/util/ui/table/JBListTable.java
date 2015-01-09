@@ -483,10 +483,12 @@ public abstract class JBListTable {
        * @return whether this row animation is complete
        */
       public boolean doAnimationStep(long currentTime) {
+        if (myRow >= myTable.getRowCount()) return true;
+
         int currentRowHeight = myTable.getRowHeight(myRow);
         int resizeAbs = (int) (RESIZE_AMOUNT_PER_STEP * ((currentTime - myLastUpdateTime) / (double)ANIMATION_STEP_MILLIS));
         int leftToAnimate = myTargetHeight - currentRowHeight;
-        int newHeight = Math.abs(leftToAnimate) <= Math.abs(resizeAbs) ? myTargetHeight :
+        int newHeight = Math.abs(leftToAnimate) <= resizeAbs ? myTargetHeight :
                         currentRowHeight + (leftToAnimate < 0 ? -resizeAbs : resizeAbs);
         myTable.setRowHeight(myRow, newHeight);
         myLastUpdateTime = currentTime;

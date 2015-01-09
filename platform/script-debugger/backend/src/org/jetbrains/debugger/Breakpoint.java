@@ -63,7 +63,9 @@ public abstract class Breakpoint {
    * Be aware! V8 doesn't provide reliable debugger API, so, sometimes actual locations is empty - in this case this methods return "true".
    * V8 debugger doesn't report about resolved breakpoint if it is happened after initial breakpoint set. So, you cannot trust "actual locations".
    */
-  public abstract boolean isActualLineCorrect();
+  public boolean isActualLineCorrect() {
+    return true;
+  }
 
   /**
    * Visitor interface that includes all extensions.

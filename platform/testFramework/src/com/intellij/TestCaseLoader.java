@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,8 +103,8 @@ public class TestCaseLoader {
     }
   }
 
-  void addClassIfTestCase(Class testCaseClass) {
-    if (shouldAddTestCase(testCaseClass, true) &&
+  void addClassIfTestCase(Class testCaseClass, String moduleName) {
+    if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         PlatformTestUtil.canRunTest(testCaseClass)) {
       myClassList.add(testCaseClass);
@@ -113,19 +113,19 @@ public class TestCaseLoader {
 
   void addFirstTest(Class aClass) {
     assert myFirstTestClass == null : "already added: "+aClass;
-    assert shouldAddTestCase(aClass, false) : "not a test: "+aClass;
+    assert shouldAddTestCase(aClass, null, false) : "not a test: "+aClass;
     myFirstTestClass = aClass;
   }
 
   void addLastTest(Class aClass) {
     assert myLastTestClass == null : "already added: "+aClass;
-    assert shouldAddTestCase(aClass, false) : "not a test: "+aClass;
+    assert shouldAddTestCase(aClass, null, false) : "not a test: "+aClass;
     myLastTestClass = aClass;
   }
 
-  private boolean shouldAddTestCase(final Class<?> testCaseClass, boolean testForExcluded) {
+  private boolean shouldAddTestCase(final Class<?> testCaseClass, String moduleName, boolean testForExcluded) {
     if ((testCaseClass.getModifiers() & Modifier.ABSTRACT) != 0) return false;
-    if (testForExcluded && shouldExcludeTestClass(testCaseClass)) return false;
+    if (testForExcluded && shouldExcludeTestClass(moduleName, testCaseClass)) return false;
 
     if (TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) {
       return true;
@@ -141,11 +141,11 @@ public class TestCaseLoader {
     return TestRunnerUtil.isJUnit4TestClass(testCaseClass);
   }
 
-  private boolean shouldExcludeTestClass(Class testCaseClass) {
+  private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
+    if (TestAll.isPerformanceTest(testCaseClass) && !myIsPerformanceTestsRun) return true;
     String className = testCaseClass.getName();
-    if (className.toLowerCase(Locale.US).contains("performance") && !myIsPerformanceTestsRun) return true;
 
-    return !myTestClassesFilter.matches(className) || isBombed(testCaseClass);
+    return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass);
   }
 
   public static boolean isBombed(final Method method) {
@@ -168,11 +168,11 @@ public class TestCaseLoader {
     return !PlatformTestUtil.bombExplodes(bombedAnnotation);
   }
 
-  public void loadTestCases(final Collection<String> classNamesIterator) {
+  public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       try {
-        Class candidateClass = Class.forName(className);
-        addClassIfTestCase(candidateClass);
+        Class candidateClass = Class.forName(className, false, getClass().getClassLoader());
+        addClassIfTestCase(candidateClass, moduleName);
       }
       catch (ClassNotFoundException e) {
         System.err.println("Cannot load class " + className + ": " + e.getMessage());

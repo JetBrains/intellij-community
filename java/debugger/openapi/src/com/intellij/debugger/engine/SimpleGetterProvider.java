@@ -19,8 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
 
 /**
- * Nikolay.Tropin
- * 2014-11-25
+ * @author Nikolay.Tropin
  */
 public interface SimpleGetterProvider {
   ExtensionPointName<SimpleGetterProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.simpleGetterProvider");

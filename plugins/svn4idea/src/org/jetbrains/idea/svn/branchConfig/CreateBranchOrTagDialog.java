@@ -38,6 +38,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -109,9 +110,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     });
     myRepositoryField.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        String url = SelectLocationDialog.selectLocation(project, mySrcURL);
+        SVNURL url = SelectLocationDialog.selectLocation(project, mySrcURL);
         if (url != null) {
-          myRepositoryField.setText(url);
+          myRepositoryField.setText(url.toString());
         }
       }
     });
@@ -198,15 +199,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   }
 
   private void updateBranchTagBases() {
-    try {
-      myBranchConfiguration = SvnBranchConfigurationManager.getInstance(myProject).get(mySrcVirtualFile);
-      final String[] strings = ArrayUtil.toStringArray(myBranchConfiguration.getBranchUrls());
-      myBranchTagBaseComboBox.getComboBox().setModel(new DefaultComboBoxModel(strings));
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      myBranchTagBaseComboBox.setEnabled(false);
-    }
+    myBranchConfiguration = SvnBranchConfigurationManager.getInstance(myProject).get(mySrcVirtualFile);
+    final String[] strings = ArrayUtil.toStringArray(myBranchConfiguration.getBranchUrls());
+    myBranchTagBaseComboBox.getComboBox().setModel(new DefaultComboBoxModel(strings));
   }
 
   private void updateToURL() {

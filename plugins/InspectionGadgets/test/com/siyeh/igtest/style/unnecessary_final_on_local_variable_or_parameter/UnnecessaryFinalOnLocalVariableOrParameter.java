@@ -13,5 +13,11 @@ public class UnnecessaryFinalOnLocalVariableOrParameter {
         Object b = o;
       };
     }
+    
+    void fx(final Object o) {
+      new XX(new XX(null) {
+        Object b = o;
+      });
+    }
   }
 }

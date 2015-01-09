@@ -55,7 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
-  private static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
+  public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   private XWatchesViewImpl myWatchesView;
   private final List<XDebugView> myViews = new ArrayList<XDebugView>();
@@ -63,6 +63,15 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   @Nullable
   private XDebugSessionImpl mySession;
   private XDebugSessionData mySessionData;
+
+  private Runnable myRebuildWatchesRunnable = new Runnable() {
+    @Override
+    public void run() {
+      if (myWatchesView != null && myWatchesView.rebuildNeeded()) {
+        myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
+      }
+    }
+  };
 
   @NotNull
   public static XDebugSessionTab create(@NotNull XDebugSessionImpl session,
@@ -115,9 +124,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         Content content = event.getContent();
         XDebugSessionImpl session = mySession;
         if (session != null && content.isSelected() && DebuggerContentInfo.WATCHES_CONTENT.equals(ViewImpl.ID.get(content))) {
-          if (myWatchesView.rebuildNeeded()) {
-            myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
-          }
+          myRebuildWatchesRunnable.run();
         }
       }
     }, myRunContentDescriptor);
@@ -130,7 +137,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     mySession = session;
     mySessionData = session.getSessionData();
     myConsole = session.getConsoleView();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(),
+                                                      myUi.getComponent(), session.getSessionName(), icon, myRebuildWatchesRunnable);
     Disposer.register(myRunContentDescriptor, this);
     Disposer.register(myProject, myRunContentDescriptor);
   }

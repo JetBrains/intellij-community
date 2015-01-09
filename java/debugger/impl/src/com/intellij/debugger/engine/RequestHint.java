@@ -134,6 +134,18 @@ public class RequestHint {
     return myMethodFilter instanceof BreakpointStepMethodFilter || myTargetMethodMatched;
   }
 
+  private boolean isTheSameDepth(SuspendContextImpl context) {
+    final ThreadReferenceProxyImpl contextThread = context.getThread();
+    if (contextThread != null) {
+      try {
+        return myFrameCount == contextThread.frameCount();
+      }
+      catch (EvaluateException ignored) {
+      }
+    }
+    return false;
+  }
+
   private boolean isOnTheSameLine(SourcePosition locationPosition) {
     if (myMethodFilter == null) {
       return myPosition.getLine() == locationPosition.getLine();
@@ -145,7 +157,6 @@ public class RequestHint {
   }
 
   public int getNextStepDepth(final SuspendContextImpl context) {
-    int res = STOP;
     try {
       final StackFrameProxyImpl frameProxy = context.getFrameProxy();
 
@@ -153,7 +164,9 @@ public class RequestHint {
       if (myMethodFilter != null &&
           frameProxy != null &&
           !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
-          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location())) {
+          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location()) &&
+          !isTheSameDepth(context)
+        ) {
         myTargetMethodMatched = true;
         return STOP;
       }
@@ -162,39 +175,16 @@ public class RequestHint {
         final Integer resultDepth = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
           public Integer compute() {
             final SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
-            if (locationPosition == null) {
-              return null;
-            }
-            int frameCount = -1;
-            final ThreadReferenceProxyImpl contextThread = context.getThread();
-            if (contextThread != null) {
-              try {
-                frameCount = contextThread.frameCount();
-              }
-              catch (EvaluateException ignored) {
-              }
-            }
-            final boolean filesEqual = myPosition.getFile().equals(locationPosition.getFile());
-            if (filesEqual && isOnTheSameLine(locationPosition) && myFrameCount == frameCount) {
-              return myDepth;
-            }
-            if (myDepth == StepRequest.STEP_INTO) {
-              if (filesEqual) {
-                // we are actually one or more frames upper than the original frame, should stop
-                if (myFrameCount > frameCount) {
-                  return STOP;
-                }
-                // check if we are still at the line from which the stepping begun
-                if (myFrameCount == frameCount && !isOnTheSameLine(locationPosition)) {
-                  return STOP;
-                }
+            if (locationPosition != null) {
+              if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameDepth(context)) {
+                return isOnTheSameLine(locationPosition) ? myDepth : STOP;
               }
             }
             return null;
           }
         });
         if (resultDepth != null) {
-          res = resultDepth.intValue();
+          return resultDepth.intValue();
         }
       }
 
@@ -202,7 +192,7 @@ public class RequestHint {
 
       final DebuggerSettings settings = DebuggerSettings.getInstance();
 
-      if ((settings.SKIP_SYNTHETIC_METHODS || myMethodFilter != null)&& frameProxy != null) {
+      if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters))&& frameProxy != null) {
         final Location location = frameProxy.location();
         if (location != null) {
           if (DebuggerUtils.isSynthetic(location.method())) {
@@ -243,9 +233,13 @@ public class RequestHint {
             }
           }
         }
+
+        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
+          if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
+        }
       }
       // smart step feature
-      if (res == STOP && myMethodFilter != null) {
+      if (myMethodFilter != null) {
         return StepRequest.STEP_OUT;
       }
     }
@@ -254,7 +248,7 @@ public class RequestHint {
     catch (EvaluateException e) {
       LOG.error(e);
     }
-    return res;
+    return STOP;
   }
 
 }

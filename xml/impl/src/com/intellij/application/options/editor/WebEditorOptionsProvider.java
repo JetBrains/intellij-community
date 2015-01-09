@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.editor;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.xml.XmlBundle;
@@ -34,7 +35,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JBCheckBox mySelectWholeCssIdentifierOnDoubleClick;
   private JBCheckBox myAddQuotasForAttributeValue;
   private JBCheckBox myAutoCloseTagCheckBox;
-
+  private JBCheckBox mySyncTagEditing;
 
   @Override
   public String getDisplayName() {
@@ -48,6 +49,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
 
   @Override
   public JComponent createComponent() {
+    mySyncTagEditing.setVisible(ApplicationManager.getApplication().isInternal());
     return myWholePanel;
   }
 
@@ -60,7 +62,8 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
            xmlEditorOptions.isSelectWholeCssIdentifierOnDoubleClick() != mySelectWholeCssIdentifierOnDoubleClick.isSelected() ||
            xmlEditorOptions.isAutomaticallyInsertRequiredSubTags() != myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected() ||
            xmlEditorOptions.isInsertQuotesForAttributeValue() != myAddQuotasForAttributeValue.isSelected() ||
-           xmlEditorOptions.isAutoCloseTag() != myAutoCloseTagCheckBox.isSelected();
+           xmlEditorOptions.isAutoCloseTag() != myAutoCloseTagCheckBox.isSelected() ||
+           xmlEditorOptions.isSyncTagEditing() != mySyncTagEditing.isSelected();
   }
 
   @Override
@@ -73,6 +76,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setSelectWholeCssIdentifierOnDoubleClick(mySelectWholeCssIdentifierOnDoubleClick.isSelected());
     xmlEditorOptions.setInsertQuotesForAttributeValue(myAddQuotasForAttributeValue.isSelected());
     xmlEditorOptions.setAutoCloseTag(myAutoCloseTagCheckBox.isSelected());
+    xmlEditorOptions.setSyncTagEditing(mySyncTagEditing.isSelected());
   }
 
   @Override
@@ -85,6 +89,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     mySelectWholeCssIdentifierOnDoubleClick.setSelected(xmlEditorOptions.isSelectWholeCssIdentifierOnDoubleClick());
     myAddQuotasForAttributeValue.setSelected(xmlEditorOptions.isInsertQuotesForAttributeValue());
     myAutoCloseTagCheckBox.setSelected(xmlEditorOptions.isAutoCloseTag());
+    mySyncTagEditing.setSelected(xmlEditorOptions.isSyncTagEditing());
   }
 
   @Override

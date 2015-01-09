@@ -30,6 +30,9 @@ import java.util.Map;
 /**
  * A flavor of GeneralCommandLine to start processes with Pseudo-Terminal (PTY).
  *
+ * Warning: PtyCommandLine works with ProcessHandler only in blocking read mode.
+ * Please make sure that you use appropriate ProcessHandler implementation.
+ *
  * Note: this works only on Unix, on Windows regular processes are used instead.
  */
 public class PtyCommandLine extends GeneralCommandLine {

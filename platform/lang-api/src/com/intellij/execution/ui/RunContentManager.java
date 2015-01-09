@@ -28,6 +28,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * The manager of tabs in the Run/Debug toolwindows.
+ *
+ * @see com.intellij.execution.ExecutionManager#getContentManager()
+ */
 public interface RunContentManager {
   Topic<RunContentWithExecutorListener> TOPIC =
     Topic.create("Run Content", RunContentWithExecutorListener.class);
@@ -39,12 +44,27 @@ public interface RunContentManager {
    */
   DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
+  /**
+   * Returns the content descriptor for the selected run configuration in the last activated Run/Debug toolwindow.
+   *
+   * @return the content descriptor, or null if there are no active run or debug configurations.
+   */
   @Nullable
   RunContentDescriptor getSelectedContent();
 
+  /**
+   * Returns the content descriptor for the selected run configuration in the toolwindow corresponding to the specified executor.
+   *
+   * @param executor the executor (e.g. {@link com.intellij.execution.executors.DefaultRunExecutor#getRunExecutorInstance()} or
+   *                 {@link com.intellij.execution.executors.DefaultDebugExecutor#getDebugExecutorInstance()})
+   * @return the content descriptor, or null if there is no selected run configuration in the specified toolwindow.
+   */
   @Nullable
-  RunContentDescriptor getSelectedContent(Executor runnerInfo);
+  RunContentDescriptor getSelectedContent(Executor executor);
 
+  /**
+   * Returns the list of content descriptors for all currently displayed run/debug configurations.
+   */
   @NotNull
   List<RunContentDescriptor> getAllDescriptors();
 

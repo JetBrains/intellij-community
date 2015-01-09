@@ -178,7 +178,7 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
     }
 
     public Insets getBorderInsets(Component c) {
-      return INSETS;
+      return (Insets)INSETS.clone();
     }
 
     public boolean isBorderOpaque() {

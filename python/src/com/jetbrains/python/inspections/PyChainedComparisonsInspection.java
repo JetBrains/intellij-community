@@ -51,6 +51,9 @@ public class PyChainedComparisonsInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
+    /**
+     * @see ChainedComparisonsQuickFix#ChainedComparisonsQuickFix(boolean, boolean, boolean)
+     */
     boolean myIsLeft;
     boolean myIsRight;
     PyElementType myOperator;
@@ -61,22 +64,22 @@ public class PyChainedComparisonsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyBinaryExpression(final PyBinaryExpression node){
+    public void visitPyBinaryExpression(final PyBinaryExpression node) {
       myIsLeft = false;
       myIsRight = false;
       myOperator = null;
       getInnerRight = false;
 
-      PyExpression leftExpression = node.getLeftExpression();
-      PyExpression rightExpression = node.getRightExpression();
+      final PyExpression leftExpression = node.getLeftExpression();
+      final PyExpression rightExpression = node.getRightExpression();
 
       if (leftExpression instanceof PyBinaryExpression &&
-                        rightExpression instanceof PyBinaryExpression) {
+          rightExpression instanceof PyBinaryExpression) {
         if (node.getOperator() == PyTokenTypes.AND_KEYWORD) {
           if (isRightSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression) ||
-              isLeftSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression))
-            registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight,
-                                                                                                getInnerRight));
+              isLeftSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression)) {
+            registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
+          }
         }
       }
     }
@@ -92,9 +95,10 @@ public class PyChainedComparisonsInspection extends PyInspection {
       }
 
       if (leftRight instanceof PyBinaryExpression &&
-          PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftRight).getOperator())){
-        if (isRightSimplified((PyBinaryExpression)leftRight, rightExpression))
+          PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftRight).getOperator())) {
+        if (isRightSimplified((PyBinaryExpression)leftRight, rightExpression)) {
           return true;
+        }
       }
 
       myOperator = leftExpression.getOperator();
@@ -118,11 +122,12 @@ public class PyChainedComparisonsInspection extends PyInspection {
     }
 
     private static boolean isOpposite(final PyElementType op1, final PyElementType op2) {
-      if ((op1 == PyTokenTypes.GT || op1 == PyTokenTypes.GE) && (op2 == PyTokenTypes.LT || op2 == PyTokenTypes.LE))
+      if ((op1 == PyTokenTypes.GT || op1 == PyTokenTypes.GE) && (op2 == PyTokenTypes.LT || op2 == PyTokenTypes.LE)) {
         return true;
-      if ((op2 == PyTokenTypes.GT || op2 == PyTokenTypes.GE) && (op1 == PyTokenTypes.LT || op1 == PyTokenTypes.LE))
+      }
+      if ((op2 == PyTokenTypes.GT || op2 == PyTokenTypes.GE) && (op1 == PyTokenTypes.LT || op1 == PyTokenTypes.LE)) {
         return true;
-
+      }
       return false;
     }
 
@@ -139,9 +144,10 @@ public class PyChainedComparisonsInspection extends PyInspection {
       }
 
       if (leftLeft instanceof PyBinaryExpression &&
-        PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftLeft).getOperator())){
-        if (isLeftSimplified((PyBinaryExpression)leftLeft, rightExpression))
+          PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftLeft).getOperator())) {
+        if (isLeftSimplified((PyBinaryExpression)leftLeft, rightExpression)) {
           return true;
+        }
       }
 
       myOperator = leftExpression.getOperator();
@@ -165,13 +171,14 @@ public class PyChainedComparisonsInspection extends PyInspection {
 
     private PyExpression getLeftExpression(PyBinaryExpression expression, boolean isRight) {
       PyExpression result = expression;
-      while (result instanceof PyBinaryExpression && (
-        PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)result).getOperator())
-        || PyTokenTypes.EQUALITY_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()))) {
+      while (result instanceof PyBinaryExpression &&
+             (PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()) ||
+              PyTokenTypes.EQUALITY_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()))) {
 
         final boolean opposite = isOpposite(((PyBinaryExpression)result).getOperator(), myOperator);
-        if ((isRight && opposite) || (!isRight && !opposite))
+        if ((isRight && opposite) || (!isRight && !opposite)) {
           break;
+        }
         result = ((PyBinaryExpression)result).getLeftExpression();
       }
       return result;
@@ -180,13 +187,14 @@ public class PyChainedComparisonsInspection extends PyInspection {
     @Nullable
     private PyExpression getSmallestRight(PyBinaryExpression expression, boolean isRight) {
       PyExpression result = expression;
-      while (result instanceof PyBinaryExpression && (
-        PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)result).getOperator())
-        || PyTokenTypes.EQUALITY_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()))) {
+      while (result instanceof PyBinaryExpression &&
+             (PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()) ||
+              PyTokenTypes.EQUALITY_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()))) {
 
         final boolean opposite = isOpposite(((PyBinaryExpression)result).getOperator(), myOperator);
-        if ((isRight && !opposite) || (!isRight && opposite))
+        if ((isRight && !opposite) || (!isRight && opposite)) {
           break;
+        }
         result = ((PyBinaryExpression)result).getRightExpression();
       }
       return result;

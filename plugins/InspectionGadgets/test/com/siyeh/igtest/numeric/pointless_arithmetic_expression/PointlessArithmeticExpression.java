@@ -129,6 +129,8 @@ class Expanded {{
   int minus = 2 - 1 - 1;
   int div = 3 / 2 / 2;
   int mod = 3 % 2 % 2;
+
+  long typePromotion = <warning descr="'1L * Integer.MAX_VALUE * Integer.MAX_VALUE' can be replaced with '(long) Integer.MAX_VALUE * Integer.MAX_VALUE'">1L * Integer.MAX_VALUE * Integer.MAX_VALUE</warning>;
 }}
 class SideEffects {
   public static void main( String args[] ){

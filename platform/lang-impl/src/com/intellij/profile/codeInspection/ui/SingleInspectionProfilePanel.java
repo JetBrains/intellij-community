@@ -800,6 +800,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     TreeUtil.sort(myRoot, new InspectionsConfigTreeComparator());
   }
 
+  // TODO 134099: see IntentionDescriptionPanel#readHTML
   private boolean readHTML(String text) {
     try {
       myBrowser.read(new StringReader(text), null);
@@ -810,6 +811,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
+  // TODO 134099: see IntentionDescriptionPanel#toHTML
   private String toHTML(String text) {
     final HintHint hintHint = new HintHint(myBrowser, new Point(0, 0));
     hintHint.setFont(UIUtil.getLabelFont());

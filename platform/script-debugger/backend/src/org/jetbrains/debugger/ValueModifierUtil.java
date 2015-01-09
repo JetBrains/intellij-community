@@ -26,18 +26,19 @@ public final class ValueModifierUtil {
 
   @NotNull
   public static Promise<Value> evaluateGet(@NotNull final Variable variable,
-                                           @NotNull EvaluateContextAdditionalParameter host,
+                                           @NotNull Object host,
                                            @NotNull EvaluateContext evaluateContext,
                                            @NotNull String selfName) {
     StringBuilder builder = new StringBuilder(selfName);
     appendName(builder, variable.getName(), false);
-    return evaluateContext.evaluate(builder.toString(), Collections.singletonMap(selfName, host)).then(new Function<EvaluateResult, Value>() {
-      @Override
-      public Value fun(EvaluateResult result) {
-        variable.setValue(result.value);
-        return result.value;
-      }
-    });
+    return evaluateContext.evaluate(builder.toString(), Collections.singletonMap(selfName, host), false)
+      .then(new Function<EvaluateResult, Value>() {
+        @Override
+        public Value fun(EvaluateResult result) {
+          variable.setValue(result.value);
+          return result.value;
+        }
+      });
   }
 
   public static String propertyNamesToString(List<String> list, boolean quotedAware) {

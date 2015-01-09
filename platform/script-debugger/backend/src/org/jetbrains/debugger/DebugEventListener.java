@@ -6,10 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
-/**
- * This interface is used by the SDK to report debug events for a certain {@link Vm} to
- * the clients.
- */
 public interface DebugEventListener extends EventListener {
   /**
    * Reports the virtual machine has suspended (on hitting
@@ -32,18 +28,16 @@ public interface DebugEventListener extends EventListener {
   void disconnected();
 
   /**
-   * Reports that a new script has been loaded into a tab.
-   *
-   * @param script loaded into the tab
+   * Reports that a new script has been loaded.
    */
-  void scriptLoaded(@NotNull Script script, @Nullable String sourceMapData);
+  void scriptAdded(@NotNull Script script, @Nullable String sourceMapData);
 
   void sourceMapFound(@NotNull Script script, @Nullable Url sourceMapUrl, @NotNull String sourceMapData);
 
   /**
    * Reports that the script has been collected and is no longer used in VM.
    */
-  void scriptCollected(Script script);
+  void scriptRemoved(@NotNull Script script);
 
   void scriptsCleared();
 

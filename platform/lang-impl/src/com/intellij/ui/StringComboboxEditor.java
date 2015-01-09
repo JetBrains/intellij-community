@@ -18,7 +18,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -58,7 +57,7 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
     if (usePlainMatcher) {
       document.putUserData(USE_PLAIN_PREFIX_MATCHER, true);
     }
-    document.putUserData(UndoConstants.DONT_RECORD_UNDO, true);
+
     super.setItem(document);
   }
 

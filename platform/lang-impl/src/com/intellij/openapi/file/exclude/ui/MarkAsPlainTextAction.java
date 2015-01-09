@@ -18,6 +18,7 @@ package com.intellij.openapi.file.exclude.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -27,7 +28,7 @@ import java.util.Collection;
 /**
  * @author Rustam Vishnyakov
  */
-public class MarkAsPlainTextAction extends AnAction {
+public class MarkAsPlainTextAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();

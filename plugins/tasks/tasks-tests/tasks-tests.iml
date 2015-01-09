@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="jira" scope="TEST" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="git4idea" scope="TEST" />
+    <orderEntry type="module" module-name="hg4idea" scope="TEST" />
   </component>
 </module>

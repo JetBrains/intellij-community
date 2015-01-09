@@ -1,4 +1,4 @@
-// "Create Enum 'Foo'" "true"
+// "Create enum 'Foo'" "true"
 public class Test {
   void f(Class<? extends Enum> e) {}
   {

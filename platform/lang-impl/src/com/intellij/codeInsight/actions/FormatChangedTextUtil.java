@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.actions;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -42,6 +44,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -51,8 +54,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FormatChangedTextUtil {
+  public static final Key<String> TEST_REVISION_CONTENT = Key.create("test.revision.content");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.FormatChangedTextUtil");
-  
+
   private FormatChangedTextUtil() {
   }
 
@@ -229,20 +233,34 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  public static List<PsiFile> getChangedFiles(@NotNull Project project, @NotNull Collection<Change> changes) {
-    List<PsiFile> files = ContainerUtil.newArrayList();
-    for (Change change : changes) {
-      VirtualFile vFile = change.getVirtualFile();
-      if (vFile != null) {
-        PsiFile file = PsiManager.getInstance(project).findFile(vFile);
-        if (file != null) files.add(file);
+  public static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<Change> changes) {
+    Function<Change, PsiFile> changeToPsiFileMapper = new Function<Change, PsiFile>() {
+      private PsiManager myPsiManager = PsiManager.getInstance(project);
+
+      @Override
+      public PsiFile fun(Change change) {
+        VirtualFile vFile = change.getVirtualFile();
+        return vFile != null ? myPsiManager.findFile(vFile) : null;
       }
-    }
-    return files;
+    };
+
+    return ContainerUtil.mapNotNull(changes, changeToPsiFileMapper);
   }
 
   @NotNull
   public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
+    List<TextRange> cachedChangedLines = getCachedChangedLines(project, file);
+    if (cachedChangedLines != null) {
+      return cachedChangedLines;
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      String testContent = file.getUserData(TEST_REVISION_CONTENT);
+      if (testContent != null) {
+        return calculateChangedTextRanges(file.getProject(), file, testContent);
+      }
+    }
+
     Change change = ChangeListManager.getInstance(project).getChange(file.getVirtualFile());
     if (change == null) {
       return ContainerUtilRt.emptyList();
@@ -254,6 +272,22 @@ public class FormatChangedTextUtil {
     String contentFromVcs = getRevisionedContentFrom(change);
     return contentFromVcs != null ? calculateChangedTextRanges(project, file, contentFromVcs)
                                   : ContainerUtil.<TextRange>emptyList();
+  }
+
+  @Nullable
+  private static List<TextRange> getCachedChangedLines(@NotNull Project project, @NotNull PsiFile file) {
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) {
+      return ContainerUtil.emptyList();
+    }
+
+    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+    if (tracker != null) {
+      List<Range> ranges = tracker.getRanges();
+      return getChangedTextRanges(document, ranges);
+    }
+
+    return null;
   }
 
   @Nullable
@@ -284,15 +318,7 @@ public class FormatChangedTextUtil {
       return ContainerUtil.emptyList();
     }
 
-    List<Range> changedRanges;
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
-    if (tracker != null) {
-      changedRanges = tracker.getRanges();
-    }
-    else {
-      changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
-    }
-
+    List<Range> changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
     return getChangedTextRanges(document, changedRanges);
   }
 

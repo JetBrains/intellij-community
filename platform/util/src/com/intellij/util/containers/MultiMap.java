@@ -26,7 +26,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Consider to use factory methods {@link #createLinked()}, {@link #createSet()}, {@link #createSmartList()}, {@link #create(gnu.trove.TObjectHashingStrategy)} instead of override.
+ * Consider to use factory methods {@link #createLinked()}, {@link #createSet()}, {@link #createSmart()}, {@link #create(gnu.trove.TObjectHashingStrategy)} instead of override.
  * @see com.intellij.util.containers.BidirectionalMultiMap
  * @see com.intellij.util.containers.ConcurrentMultiMap
  * @author Dmitry Avdeev
@@ -248,6 +248,9 @@ public class MultiMap<K, V> implements Serializable {
     return empty;
   }
 
+  /**
+   * Null keys supported.
+   */
   @NotNull
   public static <K, V> MultiMap<K, V> create() {
     return new MultiMap<K, V>();
@@ -280,8 +283,18 @@ public class MultiMap<K, V> implements Serializable {
     };
   }
 
+  @Deprecated
+  @SuppressWarnings("unused")
   @NotNull
+  /**
+   * @deprecated Use {@link #createSmart()}
+   */
   public static <K, V> MultiMap<K, V> createSmartList() {
+    return createSmart();
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createSmart() {
     return new MultiMap<K, V>() {
       @NotNull
       @Override

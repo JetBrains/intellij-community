@@ -26,10 +26,9 @@ import java.util.Map;
 @State(
   name = "HgGlobalSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/hg.xml", roamingType = RoamingType.PER_PLATFORM)
-  },
-  storageChooser = LastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/hg.xml", roamingType = RoamingType.PER_PLATFORM),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml", deprecated = true)
+  }
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
   @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = {"C:\\Program Files\\Mercurial",

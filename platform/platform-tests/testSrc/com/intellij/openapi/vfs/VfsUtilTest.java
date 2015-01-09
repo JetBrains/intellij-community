@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.testFramework.PlatformLangTestCase;
@@ -43,7 +43,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -51,6 +54,11 @@ public class VfsUtilTest extends PlatformLangTestCase {
   @Override
   protected void runBareRunnable(Runnable runnable) throws Throwable {
     runnable.run();
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 
   @Override
@@ -169,7 +177,6 @@ public class VfsUtilTest extends PlatformLangTestCase {
     }
   }
 
-  @Bombed(user = "Roman Shevchenko", year = 2014, month = Calendar.JANUARY, day = 21)
   public void testAsyncRefresh() throws Throwable {
     final File tempDir = createTempDirectory();
 
@@ -410,6 +417,52 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   }
 
+  public void testGetParentPerformance() throws IOException {
+    File tempDir = createTempDirectory();
+    final VirtualFile vDir = refreshAndFindFile(tempDir);
+    assertNotNull(vDir);
+    assertTrue(vDir.isDirectory());
+    final int depth = 10;
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        VirtualFile dir = vDir;
+        for (int i=0; i<depth; i++) {
+          dir = dir.createChildDirectory(this, "foo");
+        }
+        final VirtualFile leafDir = dir;
+        ThrowableRunnable checkPerformance = new ThrowableRunnable() {
+          private VirtualFile findRoot(VirtualFile file) {
+            while (true) {
+              VirtualFile parent = file.getParent();
+              if (parent == null) {
+                return file;
+              }
+              file = parent;
+            }
+          }
+          @Override
+          public void run() throws Throwable {
+            for (int i = 0; i < 5000000; i++) {
+              checkRootsEqual();
+            }
+          }
+          private void checkRootsEqual() {
+            assertEquals(findRoot(vDir), findRoot(leafDir));
+          }
+        };
+        int time = 1200;
+        PlatformTestUtil.startPerformanceTest("getParent is slow before movement", time, checkPerformance).assertTiming();
+        VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
+        VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
+        for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
+          dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
+        }
+        PlatformTestUtil.startPerformanceTest("getParent is slow after movement", time, checkPerformance).assertTiming();
+      }
+    }.execute();
+  }
+
   public void testFindRootWithDenormalizedPath() throws IOException {
     File tempJar = IoTestUtil.createTestJar();
     VirtualFile jar = refreshAndFindFile(tempJar);
@@ -473,5 +526,27 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertNull(vDir.findChild("/xxx/extFiles"));
     assertNull(vDir.findChild("xxx/extFiles"));
     assertNull(vDir.findChild("xxx//extFiles"));
+  }
+
+  public void testGetPathPerformance() throws IOException, InterruptedException {
+    final File dir = createTempDirectory();
+
+    String path = dir.getPath() + StringUtil.repeat("/xxx", 50) + "/fff.txt";
+    File ioFile = new File(path);
+    boolean b = ioFile.getParentFile().mkdirs();
+    assertTrue(b);
+    boolean c = ioFile.createNewFile();
+    assertTrue(c);
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(ioFile.getPath().replace(File.separatorChar, '/'));
+    assertNotNull(file);
+
+    PlatformTestUtil.startPerformanceTest("VF.getPath() performance failed", 4000, new ThrowableRunnable() {
+      @Override
+      public void run() {
+        for (int i = 0; i < 1000000; ++i) {
+          file.getPath();
+        }
+      }
+    }).cpuBound().assertTiming();
   }
 }

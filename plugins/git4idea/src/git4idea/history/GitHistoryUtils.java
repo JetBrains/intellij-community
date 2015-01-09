@@ -43,6 +43,7 @@ import com.intellij.vcs.log.util.StopWatch;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
@@ -376,7 +377,15 @@ public class GitHistoryUtils {
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
-    h.endOptions();
+    GitVcs vcs = GitVcs.getInstance(project);
+    if (vcs != null && !GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(vcs.getVersion())) {
+      h.addParameters("--follow");
+      h.endOptions();
+      h.addRelativePaths(filePath);
+    }
+    else {
+      h.endOptions();
+    }
     final String output = h.run();
     final List<GitLogRecord> records = parser.parse(output);
 
@@ -726,7 +735,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return LogDataImpl.empty();
     }
-    final Set<VcsRef> refs = new OpenTHashSet<VcsRef>(GitLogProvider.REF_ONLY_NAME_STRATEGY);
+    final Set<VcsRef> refs = new OpenTHashSet<VcsRef>(GitLogProvider.DONT_CONSIDER_SHA);
     final List<VcsCommitMetadata> commits =
       loadDetails(project, root, withRefs, false, new NullableFunction<GitLogRecord, VcsCommitMetadata>() {
         @Nullable

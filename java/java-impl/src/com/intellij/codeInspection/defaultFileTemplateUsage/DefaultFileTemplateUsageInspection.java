@@ -97,7 +97,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
+      final FileTemplateConfigurable configurable = new FileTemplateConfigurable(project);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {

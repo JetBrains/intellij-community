@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.gant;
 
+import com.intellij.openapi.diagnostic.CompositeLogger;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -52,6 +53,7 @@ public class JpsGantProjectBuilder {
   private final Project myProject;
   private final JpsModel myModel;
   private boolean myCompressJars;
+  private boolean myBuildIncrementally;
   private File myDataStorageRoot;
   private JpsModelLoader myModelLoader;
   private boolean myDryRun;
@@ -59,6 +61,7 @@ public class JpsGantProjectBuilder {
   private Set<String> myCompiledModules = new HashSet<String>();
   private Set<String> myCompiledModuleTests = new HashSet<String>();
   private boolean myStatisticsReported;
+  private Logger.Factory myFileLoggerFactory;
 
   public JpsGantProjectBuilder(Project project, JpsModel model) {
     myProject = project;
@@ -87,6 +90,14 @@ public class JpsGantProjectBuilder {
 
   public void setCompressJars(boolean compressJars) {
     myCompressJars = compressJars;
+  }
+
+  public boolean isBuildIncrementally() {
+    return myBuildIncrementally;
+  }
+
+  public void setBuildIncrementally(boolean buildIncrementally) {
+    myBuildIncrementally = buildIncrementally;
   }
 
   public void setBuildInfoPrinter(BuildInfoPrinter printer) {
@@ -129,11 +140,28 @@ public class JpsGantProjectBuilder {
     myDataStorageRoot = dataStorageRoot;
   }
 
+  public void setupAdditionalLogging(File buildLogFile, String categoriesWithDebugLevel) {
+    categoriesWithDebugLevel = StringUtil.notNullize(categoriesWithDebugLevel);
+    try {
+      myFileLoggerFactory = new Log4jFileLoggerFactory(buildLogFile, categoriesWithDebugLevel);
+      info("Build log (" + (!categoriesWithDebugLevel.isEmpty() ? "debug level for " + categoriesWithDebugLevel : "info") + ") will be written to " + buildLogFile.getAbsolutePath());
+    }
+    catch (Throwable t) {
+      myProject.log("Cannot setup additional logging to " + buildLogFile.getAbsolutePath() + ": " + t.getMessage(), t, Project.MSG_WARN);
+    }
+  }
+
   public void cleanOutput() {
     if (myDryRun) {
       info("Cleaning skipped as we're running dry");
       return;
     }
+    if (myBuildIncrementally) {
+      info("Cleaning skipped for incremental build");
+      return;
+    }
+
+    long cleanOutputStart = System.currentTimeMillis();
 
     for (JpsModule module : myModel.getProject().getModules()) {
       for (boolean test : new boolean[]{false, true}) {
@@ -143,6 +171,10 @@ public class JpsGantProjectBuilder {
         }
       }
     }
+
+    myBuildInfoPrinter.printStatisticsMessage(this, "Cleaning output time, ms",
+                                              String.valueOf(System.currentTimeMillis() - cleanOutputStart));
+
     myCompiledModules.clear();
     myCompiledModuleTests.clear();
   }
@@ -205,8 +237,9 @@ public class JpsGantProjectBuilder {
       final AntMessageHandler messageHandler = new AntMessageHandler();
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       AntLoggerFactory.ourMessageHandler = new AntMessageHandler();
+      AntLoggerFactory.ourFileLoggerFactory = myFileLoggerFactory;
       Logger.setFactory(AntLoggerFactory.class);
-      boolean forceBuild = true;
+      boolean forceBuild = !myBuildIncrementally;
 
       List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
       for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
@@ -232,7 +265,8 @@ public class JpsGantProjectBuilder {
         }
       }
 
-      info("Starting build; cache directory: " + myDataStorageRoot.getAbsolutePath());
+      info("Starting build; incremental: " + myBuildIncrementally + ", cache directory: " + myDataStorageRoot.getAbsolutePath());
+      info("Build scope: " + (allModules ? "all" : modulesSet.size()) + " modules, " + (includeTests ? "including tests" : "production only"));
       try {
         long compilationStart = System.currentTimeMillis();
         Standalone.runBuild(myModelLoader, myDataStorageRoot, messageHandler, scopes, false);
@@ -298,8 +332,16 @@ public class JpsGantProjectBuilder {
         case INFO:
           if (msg instanceof BuilderStatisticsMessage) {
             BuilderStatisticsMessage message = (BuilderStatisticsMessage)msg;
-            myBuildInfoPrinter.printStatisticsMessage(JpsGantProjectBuilder.this, "Compilation time '" + message.getBuilderName() + "', ms",
+            String buildKind = myBuildIncrementally ? " (incremental)" : "";
+            myBuildInfoPrinter.printStatisticsMessage(JpsGantProjectBuilder.this, "Compilation time '" + message.getBuilderName() + "'" + buildKind + ", ms",
                                                       String.valueOf(message.getElapsedTimeMs()));
+            int sources = message.getNumberOfProcessedSources();
+            myBuildInfoPrinter.printStatisticsMessage(JpsGantProjectBuilder.this, "Processed files by '" + message.getBuilderName() + "'" + buildKind,
+                                                      String.valueOf(sources));
+            if (!myBuildIncrementally && sources > 0) {
+              myBuildInfoPrinter.printStatisticsMessage(JpsGantProjectBuilder.this, "Compilation time per file for '" + message.getBuilderName() + "', ms",
+                                                        String.format(Locale.US, "%.2f", (double)message.getElapsedTimeMs() / sources));
+            }
           }
           else if (!text.isEmpty()) {
             info(text);
@@ -331,12 +373,12 @@ public class JpsGantProjectBuilder {
 
   private static class AntLoggerFactory implements Logger.Factory {
     private static final String COMPILER_NAME = "build runner";
-
     private static AntMessageHandler ourMessageHandler;
+    private static Logger.Factory ourFileLoggerFactory;
 
     @Override
     public Logger getLoggerInstance(String category) {
-      return new DefaultLogger(category) {
+      DefaultLogger antLogger = new DefaultLogger(category) {
         @Override
         public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
           if (t != null) {
@@ -352,6 +394,10 @@ public class JpsGantProjectBuilder {
           ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message));
         }
       };
+      if (ourFileLoggerFactory != null) {
+        return new CompositeLogger(antLogger, ourFileLoggerFactory.getLoggerInstance(category));
+      }
+      return antLogger;
     }
   }
 }

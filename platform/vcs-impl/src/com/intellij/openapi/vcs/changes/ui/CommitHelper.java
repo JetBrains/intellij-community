@@ -101,7 +101,11 @@ public class CommitHelper {
   }
 
   public boolean doCommit() {
-    return doCommit(new CommitProcessor());
+    return doCommit((AbstractVcs)null);
+  }
+
+  public boolean doCommit(@Nullable AbstractVcs vcs) {
+    return doCommit(new CommitProcessor(vcs));
   }
 
   public boolean doAlienCommit(final AbstractVcs vcs) {
@@ -374,8 +378,10 @@ public class CommitHelper {
     private LocalHistoryAction myAction;
     private ChangeListsModificationAfterCommit myAfterVcsRefreshModification;
     private boolean myCommitSuccess;
+    @Nullable private final AbstractVcs myVcs;
 
-    private CommitProcessor() {
+    private CommitProcessor(@Nullable AbstractVcs vcs) {
+      myVcs = vcs;
       myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.NOTHING;
       if (myChangeList instanceof LocalChangeList) {
         final LocalChangeList localList = (LocalChangeList) myChangeList;
@@ -391,6 +397,9 @@ public class CommitHelper {
     }
 
     public void callSelf() {
+      if (myVcs != null && myIncludedChanges.isEmpty()) {
+        process(myVcs, myIncludedChanges);
+      }
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, this);
     }
 

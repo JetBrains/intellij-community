@@ -35,8 +35,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.remote.RemoteProcessHandlerBase;
 import com.intellij.util.ui.UIUtil;
@@ -47,12 +50,15 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -589,6 +595,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return PyDebugSupportUtils.canSaveToTemp(project, name);
   }
 
+  @Nullable
   private PyStackFrame currentFrame() throws PyDebuggerException {
     if (!isConnected()) {
       throw new PyDebuggerException("Disconnected");
@@ -788,5 +795,79 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   public int getConnectTimeout() {
     return CONNECTION_TIMEOUT;
+  }
+
+
+  @Nullable
+  public XSourcePosition getCurrentFrameSourcePosition() {
+    try {
+      PyStackFrame frame = currentFrame();
+
+      return frame != null ? frame.getSourcePosition() : null;
+    }
+    catch (PyDebuggerException e) {
+      return null;
+    }
+  }
+
+  public Project getProject() {
+    return getSession().getProject();
+  }
+
+  @Nullable
+  @Override
+  public XSourcePosition getSourcePosition(String name) {
+    XSourcePosition currentPosition = getCurrentFrameSourcePosition();
+
+    if (currentPosition == null) {
+      return null;
+    }
+
+    VirtualFile virtualFile = currentPosition.getFile();
+
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) {
+      return null;
+    }
+    final FileViewProvider viewProvider = PsiManager.getInstance(getProject()).findViewProvider(virtualFile);
+    if (viewProvider == null) {
+      return null;
+    }
+    final PsiFile file = viewProvider.getPsi(PythonLanguage.getInstance());
+    if (file == null) {
+      return null;
+    }
+
+    PsiElement currentElement = file.findElementAt(currentPosition.getOffset());
+
+    if (currentElement == null) {
+      return null;
+    }
+
+    final Ref<PsiElement> elementRef = Ref.create();
+
+    PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+        elementRef.set(element);
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public <T> T getHint(@NotNull Key<T> hintKey) {
+        return null;
+      }
+
+      @Override
+      public void handleEvent(@NotNull Event event, @Nullable Object associated) {
+
+      }
+    }, currentElement, name, null);
+
+    return elementRef.isNull()
+           ?
+           null
+           : XSourcePositionImpl.createByOffset(elementRef.get().getContainingFile().getVirtualFile(), elementRef.get().getTextOffset());
   }
 }

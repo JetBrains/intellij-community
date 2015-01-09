@@ -108,7 +108,7 @@ public final class ReaderGenerator {
 
     Map<Class<?>, String> typeToImplClassName = new THashMap<>();
     for (TypeHandler<?> typeHandler : configuration.typeToTypeHandler.values()) {
-      typeToImplClassName.put(typeHandler.getTypeClass(), configuration.packageName + "." + configuration.className + "." + fileScope.getTypeImplShortName(typeHandler));
+      typeToImplClassName.put(typeHandler.typeClass, configuration.packageName + "." + configuration.className + "." + fileScope.getTypeImplShortName(typeHandler));
     }
     return typeToImplClassName;
   }
@@ -144,7 +144,7 @@ public final class ReaderGenerator {
         out.newLine();
       }
 
-      String originName = typeHandler.getTypeClass().getCanonicalName();
+      String originName = typeHandler.typeClass.getCanonicalName();
       out.newLine().append("private static final class ").append(globalScope.getTypeImplShortName(typeHandler)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append(" extends ObjectFactory<");
       out.append(originName).append('>').openBlock();
       out.append("@Override").newLine().append("public ").append(originName).append(" read(").append(Util.JSON_READER_PARAMETER_DEF);

@@ -9,12 +9,7 @@ public class ClassScope extends FileScope {
   }
 
   public ClassScope getRootClassScope() {
-    if (parentClass == null) {
-      return this;
-    }
-    else {
-      return parentClass.getRootClassScope();
-    }
+    return parentClass == null ? this : parentClass.getRootClassScope();
   }
 
   @Override

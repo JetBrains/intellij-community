@@ -274,12 +274,12 @@ public class SplitterTest extends TestCase {
   }
 
   public void testUrl() {
-    String text = "http://www.jetbrains.com/idea";
+    String text = "https://www.jetbrains.com/idea";
     correctListToCheck(PlainTextSplitter.getInstance(), text);
   }
 
   public void testUrlThenSpaces() {
-    String text = "http://www.jetbrains.com/idea asdasdasd sdfsdf";
+    String text = "https://www.jetbrains.com/idea asdasdasd sdfsdf";
     correctListToCheck(PlainTextSplitter.getInstance(), text, "asdasdasd", "sdfsdf");
   }
 

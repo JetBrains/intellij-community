@@ -41,7 +41,7 @@ class EventsTestListener implements PsiTreeChangeListener {
 
   @Override
   public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
-    myBuffer.append("beforePropertyChange\n");
+    myBuffer.append("beforePropertyChange " + event.getPropertyName() + "\n");
   }
 
   @Override
@@ -71,6 +71,6 @@ class EventsTestListener implements PsiTreeChangeListener {
 
   @Override
   public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-    myBuffer.append("propertyChanged\n");
+    myBuffer.append("propertyChanged " + event.getPropertyName() + "\n");
   }
 }

@@ -36,7 +36,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     @Override
        public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
        PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
-       PsiTestUtil.addLibrary(module, model, "groovy", PluginPathManager.getPluginHomePath("groovy") + "/testdata/mockGroovyLib1.8", "groovy-1.8.0-beta-2.jar");
+       PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
        super.configureModule(module, model, contentEntry);
      }
    };
@@ -48,21 +48,21 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCreateControllerMethod() throws Exception {
-    doTest("Create Method 'void bar(ActionEvent)'", ".java");
+    doTest("Create method 'void bar(ActionEvent)'", ".java");
   }
 
   public void testCreateControllerMethodInGroovy() throws Exception {
-    doTest("Create Method 'void bar(ActionEvent)'", ".groovy");
+    doTest("Create method 'void bar(ActionEvent)'", ".groovy");
   }
 
   public void testCreateField() throws Exception {
-    doTest("Create Field 'btn'", ".java");
+    doTest("Create field 'btn'", ".java");
   }
 
   public void testCreateFieldEmptyName() throws Exception {
     String path = getTestName(true) + ".fxml";
     final IntentionAction intention =
-      myFixture.getAvailableIntention("Create Field 'btn'", path, getTestName(false) + ".java");
+      myFixture.getAvailableIntention("Create field 'btn'", path, getTestName(false) + ".java");
     assertNull(intention);
   }
 
@@ -70,7 +70,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(true) + ".fxml");
     final IntentionAction intention = myFixture.findSingleIntention("Specify page language");
     assertNotNull(intention);
-    Set<String> languages = JavaFxInjectPageLanguageIntention.getAvailableLanguages();
+    Set<String> languages = JavaFxInjectPageLanguageIntention.getAvailableLanguages(getProject());
     assertContainsElements(languages, "groovy");
     JavaFxInjectPageLanguageIntention languageIntention = (JavaFxInjectPageLanguageIntention)intention;
     languageIntention.registerPageLanguage(getProject(), (XmlFile)myFixture.getFile(), "groovy");

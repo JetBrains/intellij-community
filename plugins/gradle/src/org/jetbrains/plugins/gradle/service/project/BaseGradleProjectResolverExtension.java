@@ -330,6 +330,23 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final Collection<TaskData> tasks = ContainerUtil.newArrayList();
     final String moduleConfigPath = ideModule.getData().getLinkedExternalProjectPath();
 
+    ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
+
+    if (externalProject != null) {
+      for (ExternalTask task : externalProject.getTasks().values()) {
+        String taskName = task.getName();
+        if (taskName.trim().isEmpty() || isIdeaTask(taskName)) {
+          continue;
+        }
+        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, moduleConfigPath, task.getDescription());
+        taskData.setGroup(task.getGroup());
+        ideModule.createChild(ProjectKeys.TASK, taskData);
+        tasks.add(taskData);
+      }
+
+      return tasks;
+    }
+
     for (GradleTask task : gradleModule.getGradleProject().getTasks()) {
       String taskName = task.getName();
       if (taskName == null || taskName.trim().isEmpty() || isIdeaTask(taskName)) {
@@ -641,7 +658,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
       if (unresolved) {
         // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
-        libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
+        libraryName = binaryPath.getPath().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
         int i = libraryName.indexOf(' ');
         if (i >= 0) {
           i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
@@ -668,6 +685,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           if (matcher.matches()) {
             final String classifier = matcher.group(1);
             libraryName += (":" + classifier);
+          }
+          else {
+            final String artifactId = StringUtil.trimEnd(StringUtil.trimEnd(libraryFileName, moduleVersion.getVersion()), "-");
+            libraryName = String.format("%s:%s:%s",
+                                        moduleVersion.getGroup(),
+                                        artifactId,
+                                        moduleVersion.getVersion());
           }
         }
       }

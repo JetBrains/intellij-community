@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.WaitFor;
@@ -162,6 +163,9 @@ public class PsiEventsTest extends PsiTestCase {
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
 
+    PsiDirectory directory = fileManager.findDirectory(myPrjDir1);
+    assertNotNull(directory);
+
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
 
@@ -169,8 +173,29 @@ public class PsiEventsTest extends PsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange\n" +
-            "propertyChanged\n";
+            "beforePropertyChange fileName\n" +
+            "propertyChanged fileName\n";
+    assertEquals(psiFile.getName(), expected, string);
+  }
+
+  public void testRenameFileWithoutDir() throws Exception {
+    FileManager fileManager = myPsiManager.getFileManager();
+    VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
+    PsiFile psiFile = fileManager.findFile(file);
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+
+    assertNull(((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1));
+
+    EventsTestListener listener = new EventsTestListener();
+    myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
+
+    file.rename(null, "b.txt");
+
+    String string = listener.getEventsString();
+    String expected =
+            "beforePropertyChange fileName\n" +
+            "propertyChanged fileName\n";
     assertEquals(psiFile.getName(), expected, string);
   }
 
@@ -226,7 +251,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
-  public void testRenameDirectory() throws Exception {
+  public void testRenameDirectory_WithPsiDir() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "dir1");
     PsiDirectory psiDirectory = fileManager.findDirectory(file);
@@ -238,9 +263,29 @@ public class PsiEventsTest extends PsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange\n" +
-            "propertyChanged\n";
+            "beforePropertyChange directoryName\n" +
+            "propertyChanged directoryName\n";
     assertEquals(psiDirectory.getName(), expected, string);
+  }
+
+  public void testRenameDirectory_WithoutPsiDir() throws Exception {
+    FileManager fileManager = myPsiManager.getFileManager();
+    VirtualFile file = myPrjDir1.createChildDirectory(null, "dir1");
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+
+    assertNull(((FileManagerImpl)fileManager).getCachedDirectory(file));
+
+    EventsTestListener listener = new EventsTestListener();
+    myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
+
+    file.rename(null, "dir2");
+
+    String string = listener.getEventsString();
+    String expected =
+            "beforePropertyChange propUnloadedPsi\n" +
+            "propertyChanged propUnloadedPsi\n";
+    assertEquals(fileManager.findDirectory(file).getName(), expected, string);
   }
 
   public void testRenameDirectoryToIgnored() throws Exception {
@@ -289,15 +334,15 @@ public class PsiEventsTest extends PsiTestCase {
     ReadOnlyAttributeUtil.setReadOnlyAttribute(file, true);
 
     final String expected =
-            "beforePropertyChange\n" +
-            "propertyChanged\n";
+            "beforePropertyChange writable\n" +
+            "propertyChanged writable\n";
 
     new WaitFor(500){
       @Override
       protected boolean condition() {
         return expected.equals(listener.getEventsString());
       }
-    }.assertCompleted(expected);
+    }.assertCompleted(listener.getEventsString());
 
     ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
   }
@@ -469,8 +514,8 @@ public class PsiEventsTest extends PsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange\n" +
-            "propertyChanged\n";
+            "beforePropertyChange roots\n" +
+            "propertyChanged roots\n";
     assertEquals(expected, string);
   }
 
@@ -484,8 +529,8 @@ public class PsiEventsTest extends PsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange\n" +
-            "propertyChanged\n";
+            "beforePropertyChange roots\n" +
+            "propertyChanged roots\n";
     assertEquals(expected, string);
   }
 
@@ -504,8 +549,8 @@ public class PsiEventsTest extends PsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-      "beforePropertyChange\n" +
-      "propertyChanged\n";
+      "beforePropertyChange propFileTypes\n" +
+      "propertyChanged propFileTypes\n";
     assertEquals(expected, string);
   }
 

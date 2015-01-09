@@ -22,6 +22,8 @@ import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.refactoring.classMembers.AbstractMemberInfoModel;
@@ -33,6 +35,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.generate.psi.PsiAdapter;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -263,12 +266,15 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       public String getTooltip(MemberInfo memberInfo) {
         if (checkForProblems(memberInfo) == OK) return null;
         if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
-        final PsiType type = ((PsiField)memberInfo.getMember()).getType();
-        if (GenerateEqualsHelper.isNestedArray(type)) {
-          return CodeInsightBundle .message("generate.equals.warning.equals.for.nested.arrays.not.supported");
-        }
-        if (GenerateEqualsHelper.isArrayOfObjects(type)) {
-          return CodeInsightBundle.message("generate.equals.warning.generated.equals.could.be.incorrect");
+        final PsiField field = (PsiField)memberInfo.getMember();
+        if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
+          final PsiType type = field.getType();
+          if (PsiAdapter.isNestedArray(type)) {
+            return CodeInsightBundle .message("generate.equals.warning.equals.for.nested.arrays.not.supported");
+          }
+          if (GenerateEqualsHelper.isArrayOfObjects(type)) {
+            return CodeInsightBundle.message("generate.equals.warning.generated.equals.could.be.incorrect");
+          }
         }
         return null;
       }
@@ -277,16 +283,20 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
       if (!(member.getMember() instanceof PsiField)) return false;
-      final PsiType type = ((PsiField)member.getMember()).getType();
-      return !GenerateEqualsHelper.isNestedArray(type);
+      final PsiField field = (PsiField)member.getMember();
+      final PsiType type = field.getType();
+      return JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5) || !PsiAdapter.isNestedArray(type);
     }
 
     @Override
     public int checkForProblems(@NotNull MemberInfo member) {
       if (!(member.getMember() instanceof PsiField)) return ERROR;
-      final PsiType type = ((PsiField)member.getMember()).getType();
-      if (GenerateEqualsHelper.isNestedArray(type)) return ERROR;
-      if (GenerateEqualsHelper.isArrayOfObjects(type)) return WARNING;
+      final PsiField field = (PsiField)member.getMember();
+      final PsiType type = field.getType();
+      if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
+        if (PsiAdapter.isNestedArray(type)) return ERROR;
+        if (GenerateEqualsHelper.isArrayOfObjects(type)) return WARNING;
+      }
       return OK;
     }
 
@@ -302,8 +312,9 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       public String getTooltip(MemberInfo memberInfo) {
         if (isMemberEnabled(memberInfo)) return null;
         if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
-        final PsiType type = ((PsiField)memberInfo.getMember()).getType();
-        if (!(type instanceof PsiArrayType)) return null;
+        final PsiField field = (PsiField)memberInfo.getMember();
+        final PsiType type = field.getType();
+        if (!(type instanceof PsiArrayType) || JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) return null;
         return CodeInsightBundle.message("generate.equals.hashcode.warning.hashcode.for.arrays.is.not.supported");
       }
     });

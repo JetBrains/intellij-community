@@ -18,14 +18,22 @@ package com.intellij.openapi.components.impl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.JDOMBuilder;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformLangTestCase;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 
 public abstract class ProjectStoreBaseTestCase extends PlatformLangTestCase {
+  @Override
+  protected Project doCreateProject(File projectFile) throws Exception {
+    return ProjectManagerEx.getInstanceEx().loadProject(projectFile.getAbsolutePath());
+  }
+
   protected byte[] getIprFileContent() throws UnsupportedEncodingException {
     final String iprContent = JDOMUtil.writeDocument(
       JDOMBuilder.document(JDOMBuilder.tag("project",

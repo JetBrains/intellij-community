@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -62,10 +61,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
         return value;
       }
 
-      @NonNls final String annoText = "@interface _Dummy_ { " + getReturnType() + " " + getName() + "() default " + text + "; }";
-      final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
-      final PsiJavaFile file = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, annoText);
-      value = ((PsiAnnotationMethod)file.getClasses()[0].getMethods()[0]).getDefaultValue();
+      value = JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText("@Foo(" + text + ")", this).findAttributeValue(null);
       myCachedDefaultValue = new SoftReference<PsiAnnotationMemberValue>(value);
       return value;
     }

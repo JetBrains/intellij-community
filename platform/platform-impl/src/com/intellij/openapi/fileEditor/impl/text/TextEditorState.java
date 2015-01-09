@@ -32,8 +32,6 @@ public final class TextEditorState implements FileEditorState {
   public CaretState[] CARETS;
 
   public float VERTICAL_SCROLL_PROPORTION;
-  public int   VERTICAL_SCROLL_OFFSET;
-  public int   MAX_VERTICAL_SCROLL_OFFSET;
 
   /**
    * State which describes how editor is folded.

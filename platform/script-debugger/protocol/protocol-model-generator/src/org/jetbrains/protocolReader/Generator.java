@@ -25,15 +25,11 @@ class Generator {
   final TypeMap typeMap = new TypeMap();
 
   private final FileSet fileSet;
-  private final Naming naming;
+  final Naming naming;
 
   Generator(String outputDir, String rootPackage, String requestClassName) throws IOException {
     fileSet = new FileSet(FileSystems.getDefault().getPath(outputDir));
     naming = new Naming(rootPackage, requestClassName);
-  }
-
-  public Naming getNaming() {
-    return naming;
   }
 
   public static final class Naming {
@@ -172,7 +168,7 @@ class Generator {
   }
 
   private void generateParserInterfaceList() throws IOException {
-    FileUpdater fileUpdater = startJavaFile(getNaming().inputPackage, PARSER_INTERFACE_LIST_CLASS_NAME + ".java");
+    FileUpdater fileUpdater = startJavaFile(naming.inputPackage, PARSER_INTERFACE_LIST_CLASS_NAME + ".java");
     // Write classes in stable order.
     Collections.sort(jsonProtocolParserClassNames);
 
@@ -189,7 +185,7 @@ class Generator {
   }
 
   private void generateParserRoot(List<ParserRootInterfaceItem> parserRootInterfaceItems) throws IOException {
-    FileUpdater fileUpdater = startJavaFile(getNaming().inputPackage, READER_INTERFACE_NAME + ".java");
+    FileUpdater fileUpdater = startJavaFile(naming.inputPackage, READER_INTERFACE_NAME + ".java");
     // Write classes in stable order.
     Collections.sort(parserRootInterfaceItems);
 
@@ -217,7 +213,7 @@ class Generator {
       item.appendReadMethodName(out);
       out.append("(reader)").semi().newLine();
     }
-    out.append("else throw new IllegalArgumentException(methodName)").semi();
+    out.append("else return null").semi();
     out.closeBlock();
 
     out.closeBlock();
@@ -258,11 +254,11 @@ class Generator {
     return s;
   }
 
-  FileUpdater startJavaFile(ClassNameScheme nameScheme, Domain domain, String baseName) throws IOException {
+  FileUpdater startJavaFile(@NotNull ClassNameScheme nameScheme, Domain domain, String baseName) throws IOException {
     return startJavaFile(nameScheme.getPackageNameVirtual(domain.domain()), nameScheme.getShortName(baseName) + ".java");
   }
 
-  private FileUpdater startJavaFile(String packageName, String filename) {
+  public FileUpdater startJavaFile(@NotNull String packageName, @NotNull String filename) {
     FileUpdater fileUpdater = fileSet.createFileUpdater(packageName.replace('.', '/') + '/' + filename);
     fileUpdater.out.append("// Generated source").newLine().append("package ").append(packageName).semi().newLine().newLine();
     return fileUpdater;

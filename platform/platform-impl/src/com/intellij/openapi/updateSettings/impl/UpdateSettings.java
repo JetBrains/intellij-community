@@ -30,16 +30,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
 @State(
   name = "UpdatesConfigurable",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/updates.xml", roamingType = RoamingType.DISABLED)
-  },
-  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/updates.xml", roamingType = RoamingType.DISABLED),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class UpdateSettings implements PersistentStateComponent<Element>, UserUpdateSettings {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateSettings");
@@ -53,6 +49,7 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   public long LAST_TIME_CHECKED = 0;
   public String LAST_BUILD_CHECKED = "";
   public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;
+  public boolean SECURE_CONNECTION = false;
 
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
@@ -128,7 +125,7 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
 
   public List<String> getPluginHosts() {
     List<String> hosts = new ArrayList<String>(myPluginHosts);
-    final String pluginHosts = System.getProperty("idea.plugin.hosts");
+    String pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
     }
@@ -141,7 +138,6 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
 
   public void saveLastCheckedInfo() {
     LAST_TIME_CHECKED = System.currentTimeMillis();
-    ApplicationInfo appInfo = ApplicationInfo.getInstance();
-    LAST_BUILD_CHECKED = appInfo.getBuild().asString();
+    LAST_BUILD_CHECKED = ApplicationInfo.getInstance().getBuild().asString();
   }
 }

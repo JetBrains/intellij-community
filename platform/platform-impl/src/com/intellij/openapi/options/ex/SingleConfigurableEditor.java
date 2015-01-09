@@ -43,7 +43,6 @@ import java.util.List;
 public class SingleConfigurableEditor extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.SingleConfigurableEditor");
   private Project myProject;
-  private Component myParentComponent;
   private Configurable myConfigurable;
   private JComponent myCenterPanel;
   private final String myDimensionKey;
@@ -58,7 +57,9 @@ public class SingleConfigurableEditor extends DialogWrapper {
     super(project, true, ideModalityType);
     myDimensionKey = dimensionKey;
     myShowApplyButton = showApplyButton;
-    setTitle(createTitleString(configurable));
+    String title = createTitleString(configurable);
+    if (project != null && project.isDefault()) title = "Default " + title;
+    setTitle(title);
 
     myProject = project;
     myConfigurable = configurable;
@@ -76,7 +77,6 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myShowApplyButton = showApplyButton;
     setTitle(createTitleString(configurable));
 
-    myParentComponent = parent;
     myConfigurable = configurable;
     init();
     myConfigurable.reset();

@@ -646,6 +646,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public PsiClass getInnerClass() {
     return myInnerClass;
   }
+  
+  protected boolean isFoldingApplicable() {
+    return true;
+  }
 
   public class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
@@ -814,6 +818,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       else {
         super.declareNecessaryVariablesAfterCall(outputVariable);
       }
+    }
+
+    @Override
+    protected boolean isFoldingApplicable() {
+      return ExtractMethodObjectProcessor.this.isFoldingApplicable();
     }
 
     private void rebindExitStatement(final String objectName) {

@@ -160,6 +160,14 @@
     </context>
   </template>
   <template description="&lt;link rel=&quot;import&quot; href=&quot;&quot;&gt;"
+            name="link:import" toReformat="true" toShortenFQNames="true"
+            value="&lt;link rel=&quot;import&quot; href=&quot;$HTML$.html&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="HTML"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;link rel=&quot;import&quot; href=&quot;&quot;&gt;"
             name="link:im" toReformat="true" toShortenFQNames="true"
             value="&lt;link rel=&quot;import&quot; href=&quot;$HTML$.html&quot;/&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="HTML"/>
@@ -249,7 +257,7 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;script&gt;...&lt;/script&gt;" name="script" toReformat="true" toShortenFQNames="true" value="&lt;script&gt;$END$&lt;/script&gt;">
+  <template description="&lt;script&gt;...&lt;/script&gt;" name="script" toReformat="true" toShortenFQNames="true" value="&lt;script !src=&quot;&quot;&gt;$END$&lt;/script&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -263,6 +271,192 @@
             value="&lt;img src=&quot;$VAR0$&quot; alt=&quot;$VAR1$&quot;/&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;img srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img:s" toReformat="true" toShortenFQNames="true"
+            value="&lt;img srcset=&quot;$VAR0$&quot; src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;img srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img:srcset" toReformat="true" toShortenFQNames="true"
+            value="&lt;img srcset=&quot;$VAR0$&quot; src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;img sizes=&quot;...&quot; srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img:z" toReformat="true" toShortenFQNames="true"
+            value="&lt;img sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;img sizes=&quot;...&quot; srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img:sizes" toReformat="true" toShortenFQNames="true"
+            value="&lt;img sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;picture&gt;&lt;/picture&gt;" name="picture" toReformat="true" toShortenFQNames="true" value="&lt;picture&gt;&lt;/picture&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+
+  <template description="&lt;source/&gt;" name="src" toReformat="true" toShortenFQNames="true" value="&lt;source/&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;source/&gt;" name="source" toReformat="true" toShortenFQNames="true" value="&lt;source/&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;source src=&quot;...&quot; type=&quot;...&quot;/&gt;" name="src:sc" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source src=&quot;$VAR0$&quot; type=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;source src=&quot;...&quot; type=&quot;...&quot;/&gt;" name="source:src" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source src=&quot;$VAR0$&quot; type=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source srcset=&quot;...&quot;/&gt;" name="src:s" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source srcset=&quot;$VAR0$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;source srcset=&quot;...&quot;/&gt;" name="source:srcset" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source srcset=&quot;$VAR0$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;source media=&quot;(...)&quot; srcset=&quot;...&quot;/&gt;" name="src:m" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source media=&quot;($VAR0$)&quot; srcset=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;source media=&quot;(...)&quot; srcset=&quot;...&quot;/&gt;" name="source:media" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source media=&quot;($VAR0$)&quot; srcset=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source srcset=&quot;...&quot; type=&quot;...&quot;/&gt;" name="src:t" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source srcset=&quot;$VAR0$&quot; type=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;image/&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source srcset=&quot;...&quot; type=&quot;...&quot;/&gt;" name="source:type" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source srcset=&quot;$VAR0$&quot; type=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;image/&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source sizes=&quot;...&quot; srcset=&quot;...&quot;/&gt;" name="src:z" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;source sizes=&quot;...&quot; srcset=&quot;...&quot;/&gt;" name="source:sizes" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source media=&quot;(...)&quot; srcset=&quot;...&quot; type=&quot;...&quot;/&gt;" name="src:mt" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source media=&quot;($VAR0$)&quot; srcset=&quot;$VAR1$&quot; type=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;image/&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source media=&quot;(...)&quot; srcset=&quot;...&quot; type=&quot;...&quot;/&gt;" name="source:media:type" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source media=&quot;($VAR0$)&quot; srcset=&quot;$VAR1$&quot; type=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;image/&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source media=&quot;(...)&quot; sizes=&quot;...&quot; srcset=&quot;...&quot;/&gt;" name="src:mz" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source media=&quot;($VAR0$)&quot; sizes=&quot;$VAR1$&quot; srcset=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source media=&quot;(...)&quot; sizes=&quot;...&quot; srcset=&quot;...&quot;/&gt;" name="source:media:sizes" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source media=&quot;($VAR0$)&quot; sizes=&quot;$VAR1$&quot; srcset=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source sizes=&quot;...&quot; srcset=&quot;...&quot; type=&quot;...&quot;/&gt;" name="src:zt" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; type=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;image/&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source sizes=&quot;...&quot; srcset=&quot;...&quot; type=&quot;...&quot;/&gt;" name="source:sizes:type" toReformat="true" toShortenFQNames="true" 
+            value="&lt;source sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; type=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;image/&quot;" expression="" name="VAR2"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -397,13 +591,13 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;input name=&quot;...&quot; type=&quot;hidden&quot;/&gt;" name="input:hidden" toReformat="true" toShortenFQNames="true" value="&lt;input name=&quot;$VAR0$&quot; type=&quot;hidden&quot;/&gt;">
+  <template description="&lt;input type=&quot;hidden&quot; name=&quot;...&quot;/&gt;" name="input:hidden" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;hidden&quot; name=&quot;$VAR0$&quot; /&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;input name=&quot;...&quot; type=&quot;hidden&quot;/&gt;" name="input:h" toReformat="true" toShortenFQNames="true" value="&lt;input name=&quot;$VAR0$&quot; type=&quot;hidden&quot;/&gt;">
+  <template description="&lt;input type=&quot;hidden&quot; name=&quot;...&quot;/&gt;" name="input:h" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;hidden&quot; name=&quot;$VAR0$&quot;/&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
@@ -511,6 +705,15 @@
   </template>
   <template description="&lt;input type=&quot;time&quot; name=&quot;...&quot; id=&quot;...&quot;/&gt;" name="input:time" toReformat="true"
             toShortenFQNames="true" value="&lt;input type=&quot;time&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;tel&quot; name=&quot;...&quot; id=&quot;...&quot;/&gt;" name="input:tel"
+            toReformat="true" toShortenFQNames="true"
+            value="&lt;input type=&quot;tel&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;/&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <context>
@@ -655,20 +858,18 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;select name=&quot;...&quot; id=&quot;...&quot; disabled=&quot;...&quot;&gt;...&lt;/select&gt;" name="select:disabled" toReformat="true"
-            toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot; disabled=&quot;$VAR2$&quot;&gt;$END$&lt;/select&gt;">
+  <template description="&lt;select name=&quot;...&quot; id=&quot;...&quot; disabled&gt;...&lt;/select&gt;" name="select:disabled" toReformat="true"
+            toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot; disabled&gt;$END$&lt;/select&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;select name=&quot;...&quot; id=&quot;...&quot; disabled=&quot;...&quot;&gt;...&lt;/select&gt;" name="select:d" toReformat="true"
-            toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot; disabled=&quot;$VAR2$&quot;&gt;$END$&lt;/select&gt;">
+  <template description="&lt;select name=&quot;...&quot; id=&quot;...&quot; disabled&gt;...&lt;/select&gt;" name="select:d" toReformat="true"
+            toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot; disabled&gt;$END$&lt;/select&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -778,30 +979,26 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;button disabled=&quot;&quot;&gt;...&lt;/button&gt;" name="button:disabled" toReformat="true" toShortenFQNames="true"
-            value="&lt;button disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/button&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;button disabled&gt;...&lt;/button&gt;" name="button:disabled" toReformat="true" toShortenFQNames="true"
+            value="&lt;button disabled&gt;$END$&lt;/button&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;button disabled=&quot;&quot;&gt;...&lt;/button&gt;" name="button:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;button disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/button&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;button disabled&gt;...&lt;/button&gt;" name="button:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;button disabled&gt;$END$&lt;/button&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;fieldset disabled=&quot;&quot;&gt;...&lt;/fieldset&gt;" name="fieldset:disabled" toReformat="true" toShortenFQNames="true"
-            value="&lt;fieldset disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/fieldset&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;fieldset disabled&gt;...&lt;/fieldset&gt;" name="fieldset:disabled" toReformat="true" toShortenFQNames="true"
+            value="&lt;fieldset disabled&gt;$END$&lt;/fieldset&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;fieldset disabled=&quot;&quot;&gt;...&lt;/fieldset&gt;" name="fieldset:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;fieldset disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/fieldset&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;fieldset disabled&gt;...&lt;/fieldset&gt;" name="fieldset:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;fieldset disabled&gt;$END$&lt;/fieldset&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -831,6 +1028,11 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
+  <template description="&lt;picture&gt;&lt;/picture&gt;" name="pic" toReformat="true" toShortenFQNames="true" value="&lt;picture&gt;&lt;/picture&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
   <template description="&lt;iframe src=&quot;...&quot; frameborder=&quot;0&quot;&gt;...&lt;/iframe&gt;" name="ifr" toReformat="true"
             toShortenFQNames="true" value="&lt;iframe src=&quot;$VAR0$&quot; frameborder=&quot;0&quot;&gt;$END$&lt;/iframe&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
@@ -854,12 +1056,6 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;source&gt;...&lt;/source&gt;" name="src" toReformat="true" toShortenFQNames="true"
-            value="&lt;source&gt;$END$&lt;/source&gt;">
-    <context>
-      <option name="HTML_TEXT" value="true"/>
-    </context>
-  </template>
   <template description="&lt;caption&gt;...&lt;/caption&gt;" name="cap" toReformat="true" toShortenFQNames="true"
             value="&lt;caption&gt;$END$&lt;/caption&gt;">
     <context>
@@ -878,9 +1074,8 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;fieldset disabled=&quot;&quot;&gt;...&lt;/fieldset&gt;" name="fst:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;fieldset disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/fieldset&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;fieldset disabled&gt;...&lt;/fieldset&gt;" name="fst:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;fieldset disabled&gt;$END$&lt;/fieldset&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -909,9 +1104,8 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;button disabled=&quot;&quot;&gt;...&lt;/button&gt;" name="btn:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;button disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/button&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;button disabled&gt;...&lt;/button&gt;" name="btn:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;button disabled&gt;$END$&lt;/button&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -994,15 +1188,26 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
+  <template description="&lt;main&gt;...&lt;/main&gt;" name="mn" toReformat="true" toShortenFQNames="true"
+            value="&lt;main&gt;$END$&lt;/main&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;template&gt;...&lt;/template&gt;" name="tem" toReformat="true" toShortenFQNames="true"
+            value="&lt;template&gt;$END$&lt;/template&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
   <template description="&lt;fieldset&gt;...&lt;/fieldset&gt;" name="fset" toReformat="true" toShortenFQNames="true"
             value="&lt;fieldset&gt;$END$&lt;/fieldset&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;fieldset disabled=&quot;&quot;&gt;...&lt;/fieldset&gt;" name="fset:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;fieldset disabled=&quot;$VAR0$&quot;&gt;$END$&lt;/fieldset&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+  <template description="&lt;fieldset disabled&gt;...&lt;/fieldset&gt;" name="fset:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;fieldset disabled&gt;$END$&lt;/fieldset&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -1053,6 +1258,90 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
+  
+  <template description="&lt;img srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="ri:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;img srcset=&quot;$VAR0$&quot; src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;img srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="ri:dpr" toReformat="true" toShortenFQNames="true"
+            value="&lt;img srcset=&quot;$VAR0$&quot; src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;img sizes=&quot;...&quot; srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="ri:v" toReformat="true" toShortenFQNames="true"
+            value="&lt;img sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;img sizes=&quot;...&quot; srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="ri:viewport" toReformat="true" toShortenFQNames="true"
+            value="&lt;img sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;/&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;picture&gt;&lt;source media=&quot;(...)&quot; srcset=&quot;...&quot;/&gt;&lt;img src=&quot;...&quot; alt=&quot;...&quot;/&gt;&lt;/picture&gt;" 
+            name="ri:a" toReformat="true" toShortenFQNames="true" 
+            value="&lt;picture&gt;&#10;&lt;source media=&quot;($VAR0$)&quot; srcset=&quot;$VAR1$&quot;/&gt;&#10;&lt;img src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;/&gt;&lt;/picture&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;picture&gt;&lt;source media=&quot;(...)&quot; srcset=&quot;...&quot;/&gt;&lt;img src=&quot;...&quot; alt=&quot;...&quot;/&gt;&lt;/picture&gt;" 
+            name="ri:art" toReformat="true" toShortenFQNames="true" 
+            value="&lt;picture&gt;&#10;&lt;source media=&quot;($VAR0$)&quot; srcset=&quot;$VAR1$&quot;/&gt;&#10;&lt;img src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;/&gt;&lt;/picture&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;picture&gt;&lt;source srcset=&quot;...&quot; type=&quot;...&quot;/&gt;&lt;img src=&quot;...&quot; alt=&quot;...&quot;/&gt;&lt;/picture&gt;" 
+            name="ri:t" toReformat="true" toShortenFQNames="true" 
+            value="&lt;picture&gt;&#10;&lt;source srcset=&quot;$VAR0$&quot; type=&quot;$VAR1$&quot;/&gt;&#10;&lt;img src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;/&gt;&lt;/picture&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;image/&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>  
+  <template description="&lt;picture&gt;&lt;source srcset=&quot;...&quot; type=&quot;...&quot;/&gt;&lt;img src=&quot;...&quot; alt=&quot;...&quot;/&gt;&lt;/picture&gt;" 
+            name="ri:type" toReformat="true" toShortenFQNames="true" 
+            value="&lt;picture&gt;&#10;&lt;source srcset=&quot;$VAR0$&quot; type=&quot;$VAR1$&quot;/&gt;&#10;&lt;img src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;/&gt;&lt;/picture&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;image/&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  
   <template description="" name="html:4t" toReformat="true" toShortenFQNames="true"
             value="&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;&#10;&lt;html lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
@@ -1163,6 +1452,15 @@
   </template>
   <template description="" name="optg+" toReformat="true" toShortenFQNames="true" value="&lt;optgroup&gt;&#10;&lt;option value=&quot;$VAR0$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/optgroup&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="" name="pic+" toReformat="true" toShortenFQNames="true" 
+            value="&lt;picture&gt;&#10;&lt;source srcset=&quot;$VAR0$&quot;/&gt;&#10;&lt;img src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;/&gt;&lt;/picture&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>

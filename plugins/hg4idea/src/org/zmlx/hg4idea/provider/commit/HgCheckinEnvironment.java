@@ -60,6 +60,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   private boolean myNextCommitIsPushed;
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private boolean myShouldCommitSubrepos;
+  private boolean myCloseBranch;
+  @Nullable private Collection<HgRepository> myRepos;
 
   public HgCheckinEnvironment(Project project) {
     myProject = project;
@@ -67,8 +69,15 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
+    reset();
+    return new HgCommitAdditionalComponent(myProject, panel);
+  }
+
+  public void reset() {
     myNextCommitIsPushed = false;
-    return new HgCommitAdditionalComponent(myProject,panel);
+    myShouldCommitSubrepos = false;
+    myCloseBranch = false;
+    myRepos = null;
   }
 
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
@@ -83,19 +92,19 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return HgVcsMessages.message("hg4idea.commit");
   }
 
-  @SuppressWarnings({"ThrowableInstanceNeverThrown"})
   public List<VcsException> commit(List<Change> changes,
                                    String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
     List<VcsException> exceptions = new LinkedList<VcsException>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
+    addRepositoriesWithoutChanges(repositoriesMap);
     for (Map.Entry<HgRepository, Set<HgFile>> entry : repositoriesMap.entrySet()) {
 
       HgRepository repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
       HgCommitCommand command =
-        new HgCommitCommand(myProject, repo.getRoot(), preparedComment, myNextCommitAmend);
+        new HgCommitCommand(myProject, repo, preparedComment, myNextCommitAmend, myCloseBranch);
 
       if (isMergeCommit(repo.getRoot())) {
         //partial commits are not allowed during merges
@@ -255,7 +264,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
   private void addFile(Map<HgRepository, Set<HgFile>> result, ContentRevision contentRevision) {
     FilePath filePath = contentRevision.getFile();
-    // try to find repository from hgFile from change
+    // try to find repository from hgFile from change: to be able commit sub repositories as expected
     HgRepository repo = HgUtil.getRepositoryForFile(myProject, contentRevision instanceof HgCurrentBinaryContentRevision
                                                                ? ((HgCurrentBinaryContentRevision)contentRevision).getRepositoryRoot()
                                                                : ChangesUtil.findValidParentAccurately(filePath));
@@ -274,6 +283,23 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
   public void setNextCommitIsPushed() {
     myNextCommitIsPushed = true;
+  }
+
+  public void setCloseBranch(boolean closeBranch) {
+    myCloseBranch = closeBranch;
+  }
+
+  public void setRepos(@NotNull Collection<HgRepository> repos) {
+    myRepos = repos;
+  }
+
+  private void addRepositoriesWithoutChanges(@NotNull Map<HgRepository, Set<HgFile>> repositoryMap) {
+    if (myRepos == null) return;
+    for (HgRepository repository : myRepos) {
+      if (!repositoryMap.keySet().contains(repository)) {
+        repositoryMap.put(repository, Collections.<HgFile>emptySet());
+      }
+    }
   }
 
   /**

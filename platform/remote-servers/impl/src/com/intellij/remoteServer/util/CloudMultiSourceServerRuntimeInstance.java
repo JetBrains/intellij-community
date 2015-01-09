@@ -7,6 +7,7 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
 import com.intellij.remoteServer.agent.util.CloudAgentLogger;
 import com.intellij.remoteServer.agent.util.CloudGitAgent;
+import com.intellij.remoteServer.agent.util.CloudRemoteApplication;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnector;
@@ -175,8 +176,8 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   }
 
   @Override
-  protected CloudApplicationRuntime createApplicationRuntime(String applicationName) {
-    return new CloudGitApplicationRuntime(this, applicationName, null);
+  protected CloudApplicationRuntime createApplicationRuntime(CloudRemoteApplication application) {
+    return new CloudGitApplicationRuntime(this, application.getName(), null);
   }
 
   protected abstract void doConnect(SC configuration, CloudAgentLogger logger);

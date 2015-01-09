@@ -239,6 +239,9 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     @Override
     public boolean isApplicable(@NotNull PsiElement[] elements) {
       if (elements.length == 0) return false;
+      if (elements[0].getContainingFile() instanceof PsiCodeFragment) {
+        return false;
+      }
       for (FoldingBuilder each : LanguageFolding.INSTANCE.allForLanguage(elements[0].getLanguage())) {
         if (each instanceof CustomFoldingBuilder) return true;
       }

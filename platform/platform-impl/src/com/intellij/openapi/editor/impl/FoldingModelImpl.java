@@ -133,6 +133,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return getCollapsedRegionAtOffset(offset) != null;
   }
 
+  private boolean isOffsetInsideCollapsedRegion(int offset) {
+    assertReadAccess();
+    FoldRegion region = getCollapsedRegionAtOffset(offset);
+    return region != null && region.getStartOffset() < offset;
+  }
+
   private static void assertIsDispatchThreadForEditor() {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
   }
@@ -348,11 +354,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       }
     }
 
-    int selectionStart = myEditor.getSelectionModel().getSelectionStart();
-    int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
-
-    if (FoldRegionsTree.contains(region, selectionStart-1) || FoldRegionsTree.contains(region, selectionEnd)) myEditor.getSelectionModel().removeSelection();
-
     myFoldRegionsProcessed = true;
     ((FoldRegionImpl) region).setExpandedInternal(false);
     notifyListenersOnFoldRegionStateChange(region);
@@ -421,7 +422,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myCaretPositionSaved = oldCaretPositionSaved;
 
-    if (!hasBlockSelection && selectionStart < myEditor.getDocument().getTextLength()) {
+    if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
+      myEditor.getSelectionModel().removeSelection();
+    } else if (!hasBlockSelection && selectionStart < myEditor.getDocument().getTextLength()) {
       myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
 

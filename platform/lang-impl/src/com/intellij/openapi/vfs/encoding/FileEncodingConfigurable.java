@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -33,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +42,7 @@ import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class FileEncodingConfigurable implements SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll {
+public class FileEncodingConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private EncodingFileTreeTable myTreeView;
   private JScrollPane myTreePanel;
@@ -204,11 +202,5 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
 
   private void createUIComponents() {
     myTreePanel = ScrollPaneFactory.createScrollPane(new JBTable());
-  }
-
-  @Override
-  public boolean needDisplay() {
-    // TODO[yole] cleaner API
-    return !PlatformUtils.isRubyMine();
   }
 }

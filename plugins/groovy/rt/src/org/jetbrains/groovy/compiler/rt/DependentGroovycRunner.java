@@ -94,11 +94,6 @@ public class DependentGroovycRunner {
     System.out.println();
     reportCompiledItems(compiledFiles);
 
-    System.out.println();
-    if (compiledFiles.isEmpty()) {
-      reportNotCompiledItems(srcFiles);
-    }
-
     int errorCount = 0;
     for (CompilerMessage message : compilerMessages) {
       if (message.getCategory() == GroovyCompilerMessageCategories.ERROR) {
@@ -225,15 +220,6 @@ public class DependentGroovycRunner {
           addExceptionInfo(compilerMessages, e, "Couldn't run " + patcher.getClass().getName());
         }
       }
-    }
-  }
-
-  private static void reportNotCompiledItems(Collection<File> toRecompile) {
-    for (File file : toRecompile) {
-      System.out.print(GroovyRtConstants.TO_RECOMPILE_START);
-      System.out.print(file.getAbsolutePath());
-      System.out.print(GroovyRtConstants.TO_RECOMPILE_END);
-      System.out.println();
     }
   }
 
@@ -403,7 +389,7 @@ public class DependentGroovycRunner {
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration, final AstAwareResourceLoader resourceLoader) {
     GroovyClassLoader classLoader = AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
       public GroovyClassLoader run() {
-        return new GroovyClassLoader(getClass().getClassLoader(), compilerConfiguration) {
+        return new GroovyClassLoader(Thread.currentThread().getContextClassLoader(), compilerConfiguration) {
           public Class loadClass(String name, boolean lookupScriptFiles, boolean preferClassOverScript)
             throws ClassNotFoundException, CompilationFailedException {
             Class aClass;

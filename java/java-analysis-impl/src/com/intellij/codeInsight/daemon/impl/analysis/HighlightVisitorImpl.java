@@ -319,10 +319,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               myHolder.add(result); //todo[ann] append not inferred type params info
             }
             else {
-              final String incompatibleReturnTypesMessage = LambdaHighlightingUtil
+              final String incompatibleReturnTypesMessage = LambdaUtil
                 .checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
               if (incompatibleReturnTypesMessage != null) {
-                HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(expression);
+                final PsiElement returnStatementToHighlight = returnExpressions.size() == 1 ? returnExpressions.get(0) : expression.getBody();
+                HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(returnStatementToHighlight != null ? returnStatementToHighlight : expression)
                   .descriptionAndTooltip(incompatibleReturnTypesMessage).create();
                 myHolder.add(result);
               }
@@ -331,12 +333,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                 final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
                 if (interfaceMethod != null) {
                   final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-                  PsiElement incompatibleElt = LambdaHighlightingUtil
+                  HighlightInfo result = LambdaHighlightingUtil
                     .checkParametersCompatible(expression, parameters, LambdaUtil.getSubstitutor(interfaceMethod, resolveResult));
-                  if (incompatibleElt != null) {
-                    final String incompatibleTypesMessage = "Incompatible parameter types in lambda expression";
-                    HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(incompatibleElt)
-                      .descriptionAndTooltip(incompatibleTypesMessage).create();
+                  if (result != null) {
                     myHolder.add(result);
                   } else {
                     final PsiClass samClass = resolveResult.getElement();
@@ -647,12 +646,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     final String refName = ref.getReferenceName();
     final JavaResolveResult[] results = ref.multiResolve(false);
 
+    final PsiElement referenceNameElement = ref.getReferenceNameElement();
     if (results.length == 0) {
       final String description = JavaErrorMessages.message("cannot.resolve.symbol", refName);
-      final PsiElement nameElement = ref.getReferenceNameElement();
-      assert nameElement != null : ref;
+      assert referenceNameElement != null : ref;
       final HighlightInfo info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(nameElement).descriptionAndTooltip(description).create();
+        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(referenceNameElement).descriptionAndTooltip(description).create();
       QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createSetupJDKFix());
       myHolder.add(info);
     }
@@ -687,6 +686,22 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
         if (description != null) {
           myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).create());
+        }
+      }
+    }
+    if (!myHolder.hasErrorResults()) {
+      final PsiElement resolved = results.length == 1 ? results[0].getElement() : null;
+      final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
+      if (resolved instanceof PsiClass) {
+        myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, ref, colorsScheme));
+      }
+      else{
+        myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref, colorsScheme));
+        if (resolved instanceof PsiVariable) {
+          myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)resolved, referenceNameElement, colorsScheme));
+        }
+        else if (resolved instanceof PsiMethod) {
+          myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)resolved, referenceNameElement, false, colorsScheme));
         }
       }
     }

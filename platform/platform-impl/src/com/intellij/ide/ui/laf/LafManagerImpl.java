@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -61,6 +62,7 @@ import sun.security.action.GetPropertyAction;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.DimensionUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
@@ -81,17 +83,12 @@ import java.security.AccessController;
 import java.util.*;
 import java.util.List;
 
-/**
- * @author Eugene Belyaev
- * @author Vladimir Kondratyev
- */
 @State(
   name = "LafManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM)
-  },
-  storageChooser = LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", deprecated = true)
+  }
 )
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
@@ -118,7 +115,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private final UIManager.LookAndFeelInfo[] myLaFs;
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
-  private final UISettings myUiSettings;
   private String myLastWarning = null;
   private PropertyChangeListener myThemeChangeListener = null;
   private static final Map<String, String> ourLafClassesAliases = ContainerUtil.newHashMap();
@@ -130,8 +126,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Invoked via reflection.
    */
-  LafManagerImpl(UISettings uiSettings) {
-    myUiSettings = uiSettings;
+  LafManagerImpl() {
     myListenerList = new EventListenerList();
 
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
@@ -535,6 +530,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     patchLafFonts(uiDefaults);
 
+    patchHiDPI(uiDefaults);
+
     patchGtkDefaults(uiDefaults);
 
     fixSeparatorColor(uiDefaults);
@@ -555,6 +552,17 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       updateUI(frame);
     }
     fireLookAndFeelChanged();
+  }
+
+  private static void patchHiDPI(UIDefaults defaults) {
+    if (JBUI.isHiDPI()) {
+      for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
+        if (entry.getValue() instanceof DimensionUIResource) {
+          DimensionUIResource size = (DimensionUIResource)entry.getValue();
+          entry.setValue(JBUI.size(size).asUIResource());
+        }
+      }
+    }
   }
 
   public static void updateToolWindows() {
@@ -718,9 +726,22 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private void patchLafFonts(UIDefaults uiDefaults) {
-    if (UISettings.getInstance().OVERRIDE_NONIDEA_LAF_FONTS) {
+    //if (JBUI.isHiDPI()) {
+    //  HashMap<Object, Font> newFonts = new HashMap<Object, Font>();
+    //  for (Object key : uiDefaults.keySet().toArray()) {
+    //    Object val = uiDefaults.get(key);
+    //    if (val instanceof Font) {
+    //      newFonts.put(key, JBFont.create((Font)val));
+    //    }
+    //  }
+    //  for (Map.Entry<Object, Font> entry : newFonts.entrySet()) {
+    //    uiDefaults.put(entry.getKey(), entry.getValue());
+    //  }
+    //} else
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
-      initFontDefaults(uiDefaults, myUiSettings.FONT_FACE, myUiSettings.FONT_SIZE);
+      initFontDefaults(uiDefaults, uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);

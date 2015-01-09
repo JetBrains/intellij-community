@@ -2,11 +2,21 @@
   <extensionPoints>
     <extensionPoint name="pushSupport"
                     interface="com.intellij.dvcs.push.PushSupport" area="IDEA_PROJECT"/>
+    <extensionPoint name="cherryPicker"
+                    interface="com.intellij.dvcs.cherrypick.VcsCherryPicker" area="IDEA_PROJECT"/>
   </extensionPoints>
   <actions>
-    <!--<action id="Vcs.Push" class="">-->
-      <!--<keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>-->
-    <!--</action>-->
+    <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
+    <group id="Dvcs.Log.ContextMenu">
+      <separator/>
+      <reference id="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+    </group>
+
+    <group id="Dvcs.Log.Toolbar">
+      <reference id="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.Log.Toolbar"/>
+    </group>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>

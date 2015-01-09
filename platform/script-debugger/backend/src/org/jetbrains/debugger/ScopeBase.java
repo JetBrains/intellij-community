@@ -14,13 +14,13 @@ public abstract class ScopeBase implements Scope {
 
   @Nullable
   @Override
-  public String getDescription() {
+  public final String getDescription() {
     return description;
   }
 
   @NotNull
   @Override
-  public Type getType() {
+  public final Type getType() {
     return type;
   }
 

@@ -22,6 +22,8 @@ import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgCommitCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 
 import java.util.List;
 
@@ -37,7 +39,8 @@ public class HgEncodingTest extends HgPlatformTest {
   public void testCommitUtfMessage() throws HgCommandException, VcsException {
     cd(myRepository);
     echo("file.txt", "lalala");
-    HgCommitCommand commitCommand = new HgCommitCommand(myProject, myRepository, "сообщение");
+    HgRepository hgRepo = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
+    HgCommitCommand commitCommand = new HgCommitCommand(myProject, hgRepo, "сообщение");
     commitCommand.execute();
   }
 
@@ -47,9 +50,11 @@ public class HgEncodingTest extends HgPlatformTest {
     String fileName = "file.txt";
     echo(fileName, "lalala");
     String comment = "öäüß";
-    HgCommitCommand commitCommand = new HgCommitCommand(myProject, myRepository, comment);
+    HgRepository hgRepo = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
+    HgCommitCommand commitCommand = new HgCommitCommand(myProject, hgRepo, comment);
     commitCommand.execute();
     HgLogCommand logCommand = new HgLogCommand(myProject);
+    myRepository.refresh(false, true);
     VirtualFile file = myRepository.findChild(fileName);
     assert file != null;
     List<HgFileRevision> revisions = logCommand.execute(new HgFile(myProject, file), 1, false);

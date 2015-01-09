@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- Components and extensions declared in this file work ONLY in the Python plugin,
        both Community and Professional versions. -->
 

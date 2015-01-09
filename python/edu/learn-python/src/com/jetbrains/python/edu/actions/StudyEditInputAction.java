@@ -79,8 +79,8 @@ public class StudyEditInputAction extends DumbAwareAction {
       List<UserTest> userTests = currentTask.getUserTests();
       int i = 1;
       for (UserTest userTest : userTests) {
-        String inputFileText = StudyUtils.getFileText(null, userTest.getInput(), false);
-        String outputFileText = StudyUtils.getFileText(null, userTest.getOutput(), false);
+        String inputFileText = StudyUtils.getFileText(null, userTest.getInput(), false, "UTF-8");
+        String outputFileText = StudyUtils.getFileText(null, userTest.getOutput(), false, "UTF-8");
         StudyTestContentPanel myContentPanel = new StudyTestContentPanel(userTest);
         myContentPanel.addInputContent(inputFileText);
         myContentPanel.addOutputContent(outputFileText);

@@ -3,57 +3,23 @@ package org.jetbrains.debugger.values;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.PromiseManager;
 import org.jetbrains.debugger.Variable;
+import org.jetbrains.debugger.VariablesHost;
 
 import java.util.List;
 
 public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends ValueBase implements ObjectValue {
-  @SuppressWarnings("unchecked")
-  private static final PromiseManager<ObjectValueBase, List<Variable>> PROPERTIES_LOADER =
-    new PromiseManager<ObjectValueBase, List<Variable>>(ObjectValueBase.class) {
-      @Override
-      public boolean isUpToDate(@NotNull ObjectValueBase host, @NotNull List<Variable> data) {
-        return host.valueManager.getCacheStamp() == host.cacheStamp;
-      }
+  protected VariablesHost<VALUE_LOADER> childrenManager;
 
-      @Override
-      public Promise<List<Variable>> load(@NotNull ObjectValueBase host, @NotNull Promise<List<Variable>> promise) {
-        if (host.valueManager.isObsolete()) {
-          return ValueManager.reject();
-        }
-        else {
-          return ((AsyncPromise<List<Variable>>)host.loadProperties());
-        }
-      }
-    };
-
-  @SuppressWarnings("UnusedDeclaration")
-  private volatile Promise<List<? extends Variable>> properties;
-
-  private volatile int cacheStamp = -1;
-
-  protected final VALUE_LOADER valueManager;
-
-  public ObjectValueBase(@NotNull ValueType type, @NotNull VALUE_LOADER valueManager) {
+  public ObjectValueBase(@NotNull ValueType type) {
     super(type);
-
-    this.valueManager = valueManager;
-  }
-
-  @NotNull
-  protected abstract Promise<List<Variable>> loadProperties();
-
-  protected final void updateCacheStamp() {
-    cacheStamp = valueManager.getCacheStamp();
   }
 
   @NotNull
   @Override
   public final Promise<List<Variable>> getProperties() {
-    return PROPERTIES_LOADER.get(this);
+    return childrenManager.get();
   }
 
   @Nullable
@@ -80,14 +46,9 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
     return Promise.REJECTED;
   }
 
+  @NotNull
   @Override
-  public int getCacheStamp() {
-    return cacheStamp;
-  }
-
-  @Override
-  public void clearCaches() {
-    cacheStamp = -1;
-    PROPERTIES_LOADER.reset(this);
+  public VariablesHost getVariablesHost() {
+    return childrenManager;
   }
 }

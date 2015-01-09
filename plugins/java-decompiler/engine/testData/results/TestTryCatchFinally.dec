@@ -3,10 +3,10 @@ package pkg;
 public class TestTryCatchFinally {
    public void test1(String var1) {
       try {
-         System.out.println("sout1");
+         System.out.println("sout1");// 24
       } catch (Exception var9) {
          try {
-            System.out.println("sout2");
+            System.out.println("sout2");// 27
          } catch (Exception var8) {
             ;
          }
@@ -16,9 +16,19 @@ public class TestTryCatchFinally {
 
    }
 
+   int foo(int var1) throws Exception {
+      if(var1 < 1) {// 39
+         throw new RuntimeException();// 40
+      } else if(var1 < 5) {// 41
+         return var1;// 42
+      } else {
+         throw new Exception();// 45
+      }
+   }
+
    public int test(String var1) {
       try {
-         int var2 = Integer.parseInt(var1);
+         int var2 = Integer.parseInt(var1);// 51
          return var2;
       } catch (Exception var6) {
          System.out.println("Error" + var6);
@@ -29,3 +39,39 @@ public class TestTryCatchFinally {
       return -1;
    }
 }
+
+class 'pkg/TestTryCatchFinally' {
+   method 'test1 (Ljava/lang/String;)V' {
+      0      5
+      3      5
+      5      5
+      14      8
+      17      8
+      19      8
+   }
+
+   method 'foo (I)I' {
+      1      19
+      2      19
+      c      20
+      e      21
+      f      21
+      13      22
+      1b      24
+   }
+
+   method 'test (Ljava/lang/String;)I' {
+      1      30
+      4      30
+   }
+}
+
+Lines mapping:
+24 <-> 6
+27 <-> 9
+39 <-> 20
+40 <-> 21
+41 <-> 22
+42 <-> 23
+45 <-> 25
+51 <-> 31

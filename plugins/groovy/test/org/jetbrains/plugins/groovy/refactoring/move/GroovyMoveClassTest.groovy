@@ -37,7 +37,7 @@ public class GroovyMoveClassTest extends GroovyMoveTestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final FileTemplateManager templateManager = FileTemplateManager.instance
+    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject())
     FileTemplate temp = templateManager.getTemplate("GroovyClass.groovyForTest");
     if (temp != null) templateManager.removeTemplate(temp);
 
@@ -61,7 +61,7 @@ class ${NAME} {
 
   @Override
   protected void tearDown() throws Exception {
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject());
     FileTemplate temp = templateManager.getTemplate(GroovyTemplates.GROOVY_CLASS);
     templateManager.removeTemplate(temp);
 

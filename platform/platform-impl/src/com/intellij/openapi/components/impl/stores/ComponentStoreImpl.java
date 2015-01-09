@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,8 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -27,11 +24,13 @@ import com.intellij.openapi.components.impl.stores.StateStorageManager.Externali
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
@@ -40,12 +39,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.xmlb.JDOMXIncluder;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
+import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -55,11 +57,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
   private final List<SettingsSavingComponent> mySettingsSavingComponents = new CopyOnWriteArrayList<SettingsSavingComponent>();
 
-  @Nullable
-  protected abstract StateStorage getDefaultsStorage();
-
   @Override
-  public void initComponent(@NotNull final Object component, boolean service) {
+  public void initComponent(@NotNull Object component, boolean service) {
     if (component instanceof SettingsSavingComponent) {
       mySettingsSavingComponents.add((SettingsSavingComponent)component);
     }
@@ -68,25 +67,27 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return;
     }
 
-    ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (component instanceof PersistentStateComponent) {
-            initPersistentComponent((PersistentStateComponent<?>)component, null, false);
-          }
-          else {
-            initJdomExternalizable((JDOMExternalizable)component);
-          }
-        }
-        catch (StateStorageException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    AccessToken token = ReadAction.start();
+    try {
+      if (component instanceof PersistentStateComponent) {
+        initPersistentComponent((PersistentStateComponent<?>)component, null, false);
       }
-    });
+      else {
+        initJdomExternalizable((JDOMExternalizable)component);
+      }
+    }
+    catch (StateStorageException e) {
+      throw e;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    finally {
+      token.finish();
+    }
   }
 
   @Override
@@ -159,7 +160,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return;
     }
 
-    Element element = getJdomState(component, componentName, stateStorage);
+    Element element = stateStorage.getState(component, componentName, Element.class, null);
     if (element == null) {
       return;
     }
@@ -186,28 +187,16 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     myComponents.put(componentName, component);
   }
 
-  private void loadJdomDefaults(@NotNull Object component, @NotNull String componentName) {
+  private void loadJdomDefaults(@NotNull JDOMExternalizable component, @NotNull String componentName) {
     try {
-      StateStorage defaultsStorage = getDefaultsStorage();
-      if (defaultsStorage == null) {
-        return;
+      Element defaultState = getDefaultState(component, componentName, Element.class);
+      if (defaultState != null) {
+        component.readExternal(defaultState);
       }
-
-      Element defaultState = getJdomState(component, componentName, defaultsStorage);
-      if (defaultState == null) {
-        return;
-      }
-
-      ((JDOMExternalizable)component).readExternal(defaultState);
     }
     catch (Exception e) {
       LOG.error("Cannot load defaults for " + component.getClass(), e);
     }
-  }
-
-  @Nullable
-  private static Element getJdomState(final Object component, @NotNull String componentName, @NotNull StateStorage defaultsStorage) {
-    return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
   @Nullable
@@ -239,13 +228,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return name;
     }
 
-    Class<T> stateClass = getComponentStateClass(component);
-    T state = null;
-    //todo: defaults merging
-    StateStorage defaultsStorage = getDefaultsStorage();
-    if (defaultsStorage != null) {
-      state = defaultsStorage.getState(component, name, stateClass, null);
-    }
+    Class<T> stateClass = ComponentSerializationUtil.getStateClass(component.getClass());
+    T state = getDefaultState(component, name, stateClass);
 
     Storage[] storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ);
     for (Storage storageSpec : storageSpecs) {
@@ -253,12 +237,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       if (stateStorage != null && (stateStorage.hasState(component, name, stateClass, reloadData) ||
                                    (changedStorages != null && changedStorages.contains(stateStorage)))) {
         state = stateStorage.getState(component, name, stateClass, state);
-        if (state instanceof Element) {
-          // actually, our DefaultStateSerializer.deserializeState doesn't perform merge states if state is Element,
-          // storages are ordered by priority (first has higher priority), so, in this case we must just use first state
-          // https://youtrack.jetbrains.com/issue/IDEA-130930. More robust solution must be implemented later.
-          break;
-        }
+        break;
       }
     }
 
@@ -271,27 +250,32 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     return name;
   }
 
-  @NotNull
-  private static <T> Class<T> getComponentStateClass(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
-    final Class persistentStateComponentClass = PersistentStateComponent.class;
+  @Nullable
+  protected abstract PathMacroManager getPathMacroManagerForDefaults();
 
-    Class componentClass = persistentStateComponent.getClass();
-
-    nextSuperClass:
-    while (true) {
-      for (Class anInterface : componentClass.getInterfaces()) {
-        if (anInterface.equals(persistentStateComponentClass)) {
-          break nextSuperClass;
-        }
-      }
-
-      componentClass = componentClass.getSuperclass();
+  @Nullable
+  protected <T> T getDefaultState(@NotNull Object component, @NotNull String componentName, @NotNull final Class<T> stateClass) {
+    URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
+    if (url == null) {
+      return null;
     }
 
-    final Type type = ReflectionUtil.resolveVariable(persistentStateComponentClass.getTypeParameters()[0], componentClass);
-    assert type != null;
-    //noinspection unchecked
-    return (Class<T>)ReflectionUtil.getRawType(type);
+    try {
+      Element documentElement = JDOMXIncluder.resolve(JDOMUtil.loadDocument(url), url.toExternalForm()).detachRootElement();
+
+      PathMacroManager pathMacroManager = getPathMacroManagerForDefaults();
+      if (pathMacroManager != null) {
+        pathMacroManager.expandPaths(documentElement);
+      }
+
+      return DefaultStateSerializer.deserializeState(documentElement, stateClass, null);
+    }
+    catch (IOException e) {
+      throw new StateStorageException("Error loading state from " + url, e);
+    }
+    catch (JDOMException e) {
+      throw new StateStorageException("Error loading state from " + url, e);
+    }
   }
 
   @NotNull
@@ -312,11 +296,46 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
     if (storageChooserClass == StateStorageChooser.class) {
       StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
-      assert defaultStateStorageChooser != null : "State chooser not specified for: " + persistentStateComponent.getClass();
-      return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
-    }
-    else if (storageChooserClass == LastStorageChooserForWrite.class) {
-      return LastStorageChooserForWrite.INSTANCE.selectStorages(storages, persistentStateComponent, operation);
+      if (defaultStateStorageChooser == null) {
+        int actualStorageCount = 0;
+        for (Storage storage : storages) {
+          if (!storage.deprecated()) {
+            actualStorageCount++;
+          }
+        }
+
+        if (actualStorageCount > 1) {
+          LOG.error("State chooser not specified for: " + persistentStateComponent.getClass());
+        }
+
+        if (!storages[0].deprecated()) {
+          boolean othersAreDeprecated = true;
+          for (int i = 1; i < storages.length; i++) {
+            if (!storages[i].deprecated()) {
+              othersAreDeprecated = false;
+              break;
+            }
+          }
+
+          if (othersAreDeprecated) {
+            return storages;
+          }
+        }
+
+        Storage[] sorted = Arrays.copyOf(storages, storages.length);
+        Arrays.sort(sorted, new Comparator<Storage>() {
+          @Override
+          public int compare(Storage o1, Storage o2) {
+            int w1 = o1.deprecated() ? 1 : 0;
+            int w2 = o2.deprecated() ? 1 : 0;
+            return w1 - w2;
+          }
+        });
+        return sorted;
+      }
+      else {
+        return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
+      }
     }
     else {
       @SuppressWarnings("unchecked")

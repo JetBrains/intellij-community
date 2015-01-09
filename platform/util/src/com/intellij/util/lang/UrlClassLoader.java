@@ -29,6 +29,7 @@ import sun.misc.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -37,8 +38,29 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
+/**
+ * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
+ * Should be constructed using {@link #build()} method.
+ */
 public class UrlClassLoader extends ClassLoader {
   @NonNls static final String CLASS_EXTENSION = ".class";
+
+  static {
+    // Since Java 7 classloading is parallel on parallel capable classloader (http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html)
+    // Parallel classloading avoids deadlocks like https://youtrack.jetbrains.com/issue/IDEA-131621
+    // Unless explicitly disabled, request parallel loading capability via reflection due to current platform's Java 6 baseline
+    // todo[r.sh] drop condition in IDEA 15
+    // todo[r.sh] drop reflection after migrating to Java 7+
+    boolean parallelLoader = Boolean.parseBoolean(System.getProperty("idea.parallel.class.loader", "true"));
+    if (parallelLoader) {
+      try {
+        Method registerAsParallelCapable = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
+        registerAsParallelCapable.setAccessible(true);
+        registerAsParallelCapable.invoke(null);
+      }
+      catch (Exception ignored) { }
+    }
+  }
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtil.emptyList();
@@ -48,6 +70,8 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myAcceptUnescaped = false;
     private boolean myPreload = true;
     private boolean myAllowBootstrapResources = false;
+    @Nullable private CachePoolImpl myCachePool = null;
+    @Nullable private CachingCondition myCachingCondition = null;
 
     private Builder() { }
 
@@ -58,6 +82,24 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
     public Builder useCache() { myUseCache = true; return this; }
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
+
+    /**
+     * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
+     * that can be shared between several loaders.  
+
+     * @param pool cache pool
+     * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
+     * @return this instance
+     * 
+     * @see #createCachePool() 
+     */
+    public Builder useCache(@NotNull CachePool pool, @NotNull CachingCondition condition) { 
+      myUseCache = true;
+      myCachePool = (CachePoolImpl)pool;
+      myCachingCondition = condition; 
+      return this; 
+    }
+    
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
     public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
@@ -102,7 +144,7 @@ public class UrlClassLoader extends ClassLoader {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload);
+    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload, null, null);
     myAllowBootstrapResources = false;
   }
 
@@ -114,7 +156,7 @@ public class UrlClassLoader extends ClassLoader {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload);
+    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload, builder.myCachePool, builder.myCachingCondition);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
   }
 
@@ -271,5 +313,41 @@ public class UrlClassLoader extends ClassLoader {
     else if (SystemInfo.isMac) return "mac/";
     else if (SystemInfo.isLinux) return "linux/";
     else return "";
+  }
+
+  /**
+   * An interface for a pool to store internal class loader caches, that can be shared between several different class loaders,
+   * if they contain the same URLs in their classpaths.<p/>
+   * 
+   * The implementation is subject to change so one shouldn't rely on it.
+   * 
+   * @see #createCachePool()
+   * @see Builder#useCache(CachePool, CachingCondition) 
+   */
+  public interface CachePool {}
+
+  /**
+   * A condition to customize the caching policy when using {@link CachePool}. This might be needed when a class loader is used on a directory
+   * that's being written into, to avoid the situation when a resource path is cached as nonexistent but then a file actually appears there,
+   * and other class loaders with the same caching pool should have access to these new resources. This can happen during compilation process
+   * with several module outputs.
+   */
+  public interface CachingCondition {
+
+    /**
+     * @param url
+     * @return whether the internal information should be cached for files in a specific classpath component URL: inside the directory or
+     * a jar.
+     */
+    boolean shouldCacheData(@NotNull URL url);
+  }
+
+  /**
+   * @return a new pool to be able to share internal class loader caches between several different class loaders, if they contain the same URLs
+   * in their classpaths.
+   */
+  @NotNull 
+  public static CachePool createCachePool() {
+    return new CachePoolImpl();
   }
 }

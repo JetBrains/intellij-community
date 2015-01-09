@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,11 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     }
     else if (parent instanceof PsiThisExpression) {
       expression = parent;
+    }
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
+      if (allowMethodCalls) {
+        expression = parent.getParent();
+      }
     }
     else if (parent instanceof PsiArrayInitializerExpression) {
       if (allowMethodCalls) {

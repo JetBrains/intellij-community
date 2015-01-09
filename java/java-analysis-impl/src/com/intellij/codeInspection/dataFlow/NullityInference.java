@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class NullityInference {
 
   public static Nullness inferNullity(final PsiMethod method) {
-    if (ContractInference.isLibraryCode(method)) {
+    if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
       return Nullness.UNKNOWN;
     }
 
@@ -83,14 +83,15 @@ public class NullityInference {
               hasNotNulls.set(true);
             }
           }
-          else if (value.getType() instanceof PsiPrimitiveType) {
+          else if (value instanceof PsiLambdaExpression || value.getType() instanceof PsiPrimitiveType) {
             hasNotNulls.set(true);
           }
           else if (value instanceof PsiMethodCallExpression) {
             PsiMethod target = ((PsiMethodCallExpression)value).resolveMethod();
             if (target == null) {
               hasUnknowns.set(true);
-            } else {
+            }
+            else {
               delegates.add(target);
             }
           }
@@ -98,6 +99,14 @@ public class NullityInference {
             hasUnknowns.set(true);
           }
           super.visitReturnStatement(statement);
+        }
+
+        @Override
+        public void visitClass(PsiClass aClass) {
+        }
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {
         }
 
         @Override
@@ -111,7 +120,7 @@ public class NullityInference {
         return Nullness.NULLABLE;
       }
       
-      if (hasErrors.get() || delegates.size() > 1) {
+      if (hasErrors.get() || hasUnknowns.get() || delegates.size() > 1) {
         return Nullness.UNKNOWN;
       }
 
@@ -119,10 +128,6 @@ public class NullityInference {
         if (NullableNotNullManager.isNotNull(delegates.iterator().next())) {
           return Nullness.NOT_NULL;
         }
-        return Nullness.UNKNOWN;
-      }
-
-      if (hasUnknowns.get()) {
         return Nullness.UNKNOWN;
       }
 

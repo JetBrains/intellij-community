@@ -238,6 +238,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return getStateStore().getProjectBaseDir();
   }
 
+  @Nullable
   @Override
   public String getBasePath() {
     return getStateStore().getProjectBasePath();

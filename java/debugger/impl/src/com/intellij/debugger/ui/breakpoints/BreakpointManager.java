@@ -680,7 +680,6 @@ public class BreakpointManager {
   public void fireBreakpointChanged(Breakpoint breakpoint) {
     breakpoint.reload();
     breakpoint.updateUI();
-    RequestManagerImpl.updateRequests(breakpoint);
   }
 
   public void setBreakpointEnabled(@NotNull final Breakpoint breakpoint, final boolean enabled) {

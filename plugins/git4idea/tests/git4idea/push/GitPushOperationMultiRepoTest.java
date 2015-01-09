@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -91,7 +90,7 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
                                  @Nullable String tagMode,
                                  GitLineHandlerListener... listeners) {
       if (myPushShouldFail.value(repository)) {
-        return new GitCommandResult(false, 128, Arrays.asList("Failed to push to " + target.getName()),
+        return new GitCommandResult(false, 128, Collections.singletonList("Failed to push to " + target.getName()),
                                     Collections.<String>emptyList(), null);
       }
       return super.push(repository, source, target, force, updateTracking, tagMode, listeners);
@@ -109,16 +108,16 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
     };
 
     cd(myRepository);
-    makeCommit("file.txt");
+    GitTestUtil.makeCommit("file.txt");
     cd(myCommunity);
-    makeCommit("com.txt");
+    GitTestUtil.makeCommit("com.txt");
 
     PushSpec<GitPushSource, GitPushTarget> spec1 = makePushSpec(myRepository, "master", "origin/master");
     PushSpec<GitPushSource, GitPushTarget> spec2 = makePushSpec(myCommunity, "master", "origin/master");
     Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> map = ContainerUtil.newHashMap();
     map.put(myRepository, spec1);
     map.put(myCommunity, spec2);
-    GitPushResult result = new GitPushOperation(myProject, map, null, false).execute();
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport, map, null, false).execute();
 
     GitPushRepoResult result1 = result.getResults().get(myRepository);
     GitPushRepoResult result2 = result.getResults().get(myCommunity);
@@ -130,18 +129,19 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
 
   public void test_update_all_roots_on_reject_when_needed_even_if_only_one_in_push_spec() throws IOException {
     cd(myBro);
-    String broHash = makeCommit("bro.txt");
+    String broHash = GitTestUtil.makeCommit("bro.txt");
     git("push");
     cd(myBroCommunity);
-    String broCommunityHash = makeCommit("bro_com.txt");
+    String broCommunityHash = GitTestUtil.makeCommit("bro_com.txt");
     git("push");
 
     cd(myRepository);
-    makeCommit("file.txt");
+    GitTestUtil.makeCommit("file.txt");
 
     PushSpec<GitPushSource, GitPushTarget> mainSpec = makePushSpec(myRepository, "master", "origin/master");
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE); // auto-update-all-roots is selected by default
-    GitPushResult result = new GitPushOperation(myProject, Collections.singletonMap(myRepository, mainSpec), null, false).execute();
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport,
+                                                Collections.singletonMap(myRepository, mainSpec), null, false).execute();
 
     GitPushRepoResult result1 = result.getResults().get(myRepository);
     GitPushRepoResult result2 = result.getResults().get(myCommunity);

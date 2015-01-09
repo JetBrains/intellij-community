@@ -71,3 +71,4 @@ public class TestConstants {
       Class<?> value();
    }
 }
+

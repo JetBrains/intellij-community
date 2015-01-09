@@ -16,6 +16,8 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.dataFlow.ContractInference
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -289,6 +291,15 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
+  public void "test double constant auto-unboxing"() {
+    def c = inferContracts("""
+      static double method() {
+        return 1;
+      }
+    """)
+    assert c == []
+  }
+
   public void "test non-returning delegation"() {
     def c = inferContracts("""
     static void test2(Object o) {
@@ -415,11 +426,29 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
 
   public void "test compare with string literal"() {
     def c = inferContracts("""
-  String cast(String s) {
+  String s(String s) {
     return s == "a" ? "b" : null;
   }
     """)
-    assert c == []
+    assert c == ['null -> null']
+  }
+  
+  public void "test negative compare with string literal"() {
+    def c = inferContracts("""
+  String s(String s) {
+    return s != "a" ? "b" : null;
+  }
+    """)
+    assert c == ['null -> !null']
+  }
+
+  public void "test primitive return type"() {
+    def c = inferContracts("""
+  String s(String s) {
+    return s != "a" ? "b" : null;
+  }
+    """)
+    assert c == ['null -> !null']
   }
 
   public void "test return after if without else"() {
@@ -437,6 +466,27 @@ public static boolean isBlank(String s) {
         return true;
     }    """)
     assert c == ['null -> true']
+  }
+
+  public void "test no inference for unused anonymous class methods where annotations won't be used anyway"() {
+    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+class Foo {{
+  new Object() {
+    Object foo() { return null;}
+  };
+}}"""), PsiAnonymousClass).methods[0]
+    assert ContractInference.inferContracts(method).collect { it as String } == []
+  }
+
+  public void "test inference for used anonymous class methods"() {
+    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+class Foo {{
+  new Object() {
+    Object foo() { return null;}
+    Object bar() { return foo();}
+  };
+}}"""), PsiAnonymousClass).methods[0]
+    assert ContractInference.inferContracts(method).collect { it as String } == [' -> null']
   }
 
   private String inferContract(String method) {

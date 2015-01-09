@@ -21,8 +21,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +110,9 @@ public class HighlightDisplayLevel {
     }
   }
 
-  public static final int EMPTY_ICON_DIM = 13;
+  public static int getEmptyIconDim() {
+    return JBUI.scale(13);
+  }
 
   public static Icon createIconByKey(@NotNull TextAttributesKey key) {
     return new SingleColorIcon(key);
@@ -115,11 +120,11 @@ public class HighlightDisplayLevel {
 
   @NotNull
   public static Icon createIconByMask(final Color renderColor) {
-    return new TheColorIcon(EMPTY_ICON_DIM, renderColor);
+    return new MyColorIcon(getEmptyIconDim(), renderColor);
   }
 
-  public static class TheColorIcon extends ColorIcon implements ColoredIcon {
-    public TheColorIcon(int size, @NotNull Color color) {
+  private static class MyColorIcon extends ColorIcon implements ColoredIcon {
+    public MyColorIcon(int size, @NotNull Color color) {
       super(size, color);
     }
 
@@ -127,12 +132,12 @@ public class HighlightDisplayLevel {
     public Color getColor() {
       return getIconColor();
     }
-  } 
-  
+  }
+
   public interface ColoredIcon {
     Color getColor();
   }
-  
+
   public static class SingleColorIcon implements Icon, ColoredIcon {
     private final TextAttributesKey myKey;
 
@@ -140,7 +145,13 @@ public class HighlightDisplayLevel {
       myKey = key;
     }
 
+    @NotNull
     public Color getColor() {
+      return ObjectUtils.notNull(getColorInner(), JBColor.GRAY);
+    }
+
+    @Nullable
+    public Color getColorInner() {
       final EditorColorsManager manager = EditorColorsManager.getInstance();
       if (manager != null) {
         TextAttributes attributes = manager.getGlobalScheme().getAttributes(myKey);
@@ -157,18 +168,18 @@ public class HighlightDisplayLevel {
     public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
       g.setColor(getColor());
       g.translate(x, y);
-      g.fillPolygon(new int[]{0, EMPTY_ICON_DIM, EMPTY_ICON_DIM}, new int[]{0, 0, EMPTY_ICON_DIM}, 3);
+      g.fillPolygon(new int[]{0, getEmptyIconDim(), getEmptyIconDim()}, new int[]{0, 0, getEmptyIconDim()}, 3);
       g.translate(-x, -y);
     }
 
     @Override
     public int getIconWidth() {
-      return EMPTY_ICON_DIM;
+      return getEmptyIconDim();
     }
 
     @Override
     public int getIconHeight() {
-      return EMPTY_ICON_DIM;
+      return getEmptyIconDim();
     }
   }
 }

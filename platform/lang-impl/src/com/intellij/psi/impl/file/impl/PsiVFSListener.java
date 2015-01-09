@@ -215,8 +215,10 @@ public class PsiVFSListener extends VirtualFileAdapter {
     final VirtualFile vFile = event.getFile();
     final String propertyName = event.getPropertyName();
 
+    final FileViewProvider viewProvider = myFileManager.findCachedViewProvider(vFile);
+
     VirtualFile parent = vFile.getParent();
-    final PsiDirectory parentDir = getCachedDirectory(parent);
+    final PsiDirectory parentDir = viewProvider != null && parent != null ? myFileManager.findDirectory(parent) : getCachedDirectory(parent);
     if (parent != null && parentDir == null) return; // do not notifyListeners event if parent directory was never accessed via PSI
 
     ApplicationManager.getApplication().runWriteAction(
@@ -324,7 +326,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     }
 
     VirtualFile parent = vFile.getParent();
-    final PsiDirectory parentDir = getCachedDirectory(parent);
+    final PsiDirectory parentDir = oldPsiFile != null && parent != null ? myFileManager.findDirectory(parent) : getCachedDirectory(parent);
 
     if (oldFileViewProvider != null // there is no need to rebuild if there were no PSI in the first place
         && FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
@@ -339,7 +341,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
         PsiDirectory psiDir = myFileManager.getCachedDirectory(vFile);
         fire = psiDir != null;
       }
-      if (!fire) {
+      if (!fire && !VirtualFile.PROP_WRITABLE.equals(propertyName)) {
         handleVfsChangeWithoutPsi(vFile);
         return;
       }

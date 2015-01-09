@@ -18,7 +18,6 @@ package git4idea.push;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -39,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, GitPushTarget> {
-
-  private static final Logger LOG = Logger.getInstance(GitPushSupport.class);
 
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitVcs myVcs;
@@ -182,8 +179,8 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
 
   @Override
   public boolean isSilentForcePushAllowed(@NotNull GitPushTarget target) {
-    return myCommonPushSettings
-      .containsForcePushTarget(target.getBranch().getRemote().getName(), target.getBranch().getNameForRemoteOperations());
+    return myCommonPushSettings.containsForcePushTarget(target.getBranch().getRemote().getName(),
+                                                        target.getBranch().getNameForRemoteOperations());
   }
 
   @Override

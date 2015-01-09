@@ -117,9 +117,7 @@ public class Utils{
       actionManager,
       0
     );
-    if (!doUpdate(group, e, presentation)) {
-      return;
-    }
+    if (!doUpdate(group, e, presentation)) return;
 
     if (!presentation.isVisible()) { // don't process invisible groups
       return;
@@ -138,9 +136,7 @@ public class Utils{
       e1.setInjectedContext(child.isInInjectedContext());
 
       if (transparentOnly && child.isTransparentUpdate() || !transparentOnly) {
-        if (!doUpdate(child, e1, presentation)) {
-          continue;
-        }
+        if (!doUpdate(child, e1, presentation)) continue;
       }
 
       if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
@@ -180,7 +176,6 @@ public class Utils{
         list.add(child);
       }
     }
-    int i = 1;
   }
 
   // returns false if exception was thrown and handled

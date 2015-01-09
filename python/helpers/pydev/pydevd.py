@@ -123,7 +123,6 @@ DONT_TRACE = {
               '_pydev_pkgutil_old.py':1,
               '_pydev_uuid_old.py':1,
 
-
               #things from pydev that we don't want to trace
               '_pydev_execfile.py':1,
               '_pydev_jython_execfile.py':1,
@@ -245,14 +244,22 @@ def killAllPydevThreads():
 
 
 #=======================================================================================================================
-# PyDBCheckAliveThread
+# CheckOutputThread
+# Non-daemonic thread guaranties that all data is written even if program is finished
 #=======================================================================================================================
-class PyDBCheckAliveThread(PyDBDaemonThread):
+class CheckOutputThread(PyDBDaemonThread):
 
     def __init__(self, pyDb):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
         self.setName('pydevd.CheckAliveThread')
+        pyDb.output_checker = self
+
+    def start(self):
+        # it should be non daemon
+        thread = threading.Thread(target=self.run)
+        thread.daemon = False
+        thread.start()
 
     def OnRun(self):
             if self.dontTraceMe:
@@ -270,7 +277,8 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
                     pydevd_tracing.SetTrace(None)  # no debugging on this thread
                     
             while not self.killReceived:
-                if not self.pyDb.haveAliveThreads():
+                if not self.pyDb.haveAliveThreads() and self.pyDb.writer.empty() \
+                        and not has_data_to_redirect():
                     try:
                         pydev_log.debug("No alive threads, finishing debug session")
                         self.pyDb.FinishDebuggingSession()
@@ -279,12 +287,13 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
                         traceback.print_exc()
 
                     self.killReceived = True
-                    return
+
+                self.pyDb.checkOutputRedirect()
 
                 time.sleep(0.3)
 
     def doKillPydevThread(self):
-        pass
+        self.killReceived = True
 
 
 
@@ -311,6 +320,7 @@ class PyDB:
         pydevd_tracing.ReplaceSysSetTraceFunc()
         self.reader = None
         self.writer = None
+        self.output_checker = None
         self.quitting = None
         self.cmdFactory = NetCommandFactory()
         self._cmd_queue = {}  # the hash of Queues. Key is thread id, value is thread
@@ -1453,10 +1463,8 @@ class PyDB:
             if self._finishDebuggingSession and not self._terminationEventSent:
                 #that was not working very well because jython gave some socket errors
                 try:
-                    threads = DictKeys(PyDBDaemonThread.created_pydb_daemon_threads)
-                    for t in threads:
-                        if hasattr(t, 'doKillPydevThread'):
-                            t.doKillPydevThread()
+                    if self.output_checker is None:
+                        killAllPydevThreads()
                 except:
                     traceback.print_exc()
                 self._terminationEventSent = True
@@ -1577,7 +1585,9 @@ class PyDB:
 
 
         PyDBCommandThread(self).start()
-        PyDBCheckAliveThread(self).start()
+        if self.signature_factory is not None:
+            # we need all data to be sent to IDE even after program finishes
+            CheckOutputThread(self).start()
 
 
     def patch_threads(self):
@@ -1736,12 +1746,25 @@ def usage(doExit=0):
 def initStdoutRedirect():
     if not getattr(sys, 'stdoutBuf', None):
         sys.stdoutBuf = pydevd_io.IOBuf()
+        sys.stdout_original = sys.stdout
         sys.stdout = pydevd_io.IORedirector(sys.stdout, sys.stdoutBuf) #@UndefinedVariable
 
 def initStderrRedirect():
     if not getattr(sys, 'stderrBuf', None):
         sys.stderrBuf = pydevd_io.IOBuf()
+        sys.stderr_original = sys.stderr
         sys.stderr = pydevd_io.IORedirector(sys.stderr, sys.stderrBuf) #@UndefinedVariable
+
+
+def has_data_to_redirect():
+    if getattr(sys, 'stdoutBuf', None):
+        if not sys.stdoutBuf.empty():
+            return True
+    if getattr(sys, 'stderrBuf', None):
+        if not sys.stderrBuf.empty():
+            return True
+
+    return False
 
 #=======================================================================================================================
 # settrace
@@ -1881,7 +1904,7 @@ def _locked_settrace(
             debugger.setSuspend(t, CMD_THREAD_SUSPEND)
 
         PyDBCommandThread(debugger).start()
-        PyDBCheckAliveThread(debugger).start()
+        CheckOutputThread(debugger).start()
 
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break

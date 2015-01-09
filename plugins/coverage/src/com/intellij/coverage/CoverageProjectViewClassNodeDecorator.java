@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProvejctViewNodeDecorator {
+public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
   public CoverageProjectViewClassNodeDecorator(final CoverageDataManager coverageDataManager) {
     super(coverageDataManager);
   }

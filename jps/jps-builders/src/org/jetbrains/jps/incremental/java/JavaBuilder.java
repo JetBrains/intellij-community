@@ -39,8 +39,6 @@ import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -58,6 +56,8 @@ import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import javax.tools.*;
@@ -252,9 +252,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
 
     // begin compilation round
-    final Mappings delta = pd.dataManager.getMappings().createDelta();
-    final Callbacks.Backend mappingsCallback = delta.getCallback();
-    final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback, chunk.getPresentableShortName());
+    final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, JavaBuilderUtil.getDependenciesRegistrar(context), chunk.getPresentableShortName());
     try {
       if (hasSourcesToCompile) {
         final AtomicReference<String> ref = COMPILER_VERSION_INFO.get(context);
@@ -323,9 +321,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     finally {
-      if (JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, files, outputSink.getSuccessfullyCompiled())) {
-        exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
-      }
+      JavaBuilderUtil.registerFilesToCompile(context, files);
+      JavaBuilderUtil.registerSuccessfullyCompiled(context, outputSink.getSuccessfullyCompiled());
     }
 
     return exitCode;
@@ -599,7 +596,21 @@ public class JavaBuilder extends ModuleLevelBuilder {
       assert cached != null : context;
     }
 
-    List<String> options = new ArrayList<String>(cached);
+    List<String> options = new ArrayList<String>();
+    JpsModule module = chunk.representativeTarget().getModule();
+    File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
+    if (baseDirectory != null) {
+      //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
+      // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
+      String stringToReplace = "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$";
+      String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.getAbsolutePath());
+      for (String s : cached) {
+        options.add(StringUtil.replace(s, stringToReplace, moduleDirPath));
+      }
+    }
+    else {
+      options.addAll(cached);
+    }
     addCompilationOptions(options, context, chunk, profile);
     return options;
   }

@@ -63,14 +63,14 @@ public class StudyUtils {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
-  public static String getFileText(String parentDir, String fileName, boolean wrapHTML) {
+  public static String getFileText(String parentDir, String fileName, boolean wrapHTML, String encoding) {
 
     File inputFile = parentDir != null ? new File(parentDir, fileName) : new File(fileName);
     if (!inputFile.exists()) return null;
     StringBuilder taskText = new StringBuilder();
     BufferedReader reader = null;
     try {
-      reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile)));
+      reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile), encoding));
       String line;
       while ((line = reader.readLine()) != null) {
         taskText.append(line).append("\n");

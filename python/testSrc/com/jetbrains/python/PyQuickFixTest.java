@@ -251,6 +251,12 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
+  // PY-14002
+  public void testChainedComparisonWithCommonBinaryExpression() {
+    doInspectionTest("ChainedComparisonWithCommonBinaryExpression.py", PyChainedComparisonsInspection.class,
+                     PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
   public void testStatementEffect() {  // PY-1362, PY-2585
     doInspectionTest("StatementEffect.py", PyStatementEffectInspection.class,
                      PyBundle.message("QFIX.statement.effect"), true, true);
@@ -462,6 +468,34 @@ public class PyQuickFixTest extends PyTestCase {
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"));
+  }
+
+  // PY-8991
+  public void testRemoveUnicodePrefixFromGluedStringNodesWithSlash() {
+    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
+      public void run() {
+        myFixture.configureByFile(getTestName(false) + ".py");
+        myFixture.checkHighlighting(true, false, false);
+        final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+        assertNotNull(intentionAction);
+        myFixture.launchAction(intentionAction);
+        myFixture.checkResultByFile(getTestName(false) + "_after.py");
+      }
+    });
+  }
+
+  // PY-8990
+  public void testRemoveUnicodePrefixFromGluedStringNodesInParenthesis() {
+    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
+      public void run() {
+        myFixture.configureByFile(getTestName(false) + ".py");
+        myFixture.checkHighlighting(true, false, false);
+        final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+        assertNotNull(intentionAction);
+        myFixture.launchAction(intentionAction);
+        myFixture.checkResultByFile(getTestName(false) + "_after.py");
+      }
+    });
   }
 
   @Override

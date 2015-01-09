@@ -94,11 +94,4 @@ public interface Configurable extends UnnamedConfigurable {
    */
   interface NoMargin {
   }
-
-  /**
-   * Provides a way to sort children of a configurables
-   */
-  interface SortingConfigurable {
-    Comparator<Configurable> getChildComparator();
-  }
 }

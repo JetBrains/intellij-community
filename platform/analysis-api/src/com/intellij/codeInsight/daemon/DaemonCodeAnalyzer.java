@@ -24,6 +24,9 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Manages the background highlighting and auto-import for files displayed in editors.
+ */
 public abstract class DaemonCodeAnalyzer {
   public static DaemonCodeAnalyzer getInstance(Project project) {
     return project.getComponent(DaemonCodeAnalyzer.class);
@@ -46,9 +49,14 @@ public abstract class DaemonCodeAnalyzer {
   public abstract boolean isAutohintsAvailable(@Nullable PsiFile file);
 
   /**
-   * Force rehighlighting for all files
+   * Force rehighlighting for all files.
    */
   public abstract void restart();
+
+  /**
+   * Force rehighlighting for a specific file.
+   * @param file the file to rehighlight.
+   */
   public abstract void restart(@NotNull PsiFile file);
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);

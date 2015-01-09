@@ -1,4 +1,4 @@
-// "Create Class 'Abc'" "true"
+// "Create class 'Abc'" "true"
 public class Test {
   public foo(int ppp) {
     Abc.foo();

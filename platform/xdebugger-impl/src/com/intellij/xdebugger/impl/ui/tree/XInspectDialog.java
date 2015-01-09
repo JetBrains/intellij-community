@@ -49,7 +49,7 @@ public class XInspectDialog extends DialogWrapper {
                         @NotNull String name,
                         @NotNull XValue value,
                         XValueMarkers<?, ?> markers,
-                        @NotNull XDebugSession session,
+                        @Nullable XDebugSession session,
                         boolean rebuildOnSessionEvents) {
     super(project, false);
     myRebuildOnSessionEvents = rebuildOnSessionEvents;
@@ -58,7 +58,7 @@ public class XInspectDialog extends DialogWrapper {
     setModal(false);
 
     XInstanceEvaluator instanceEvaluator = value.getInstanceEvaluator();
-    if (instanceEvaluator != null && myRebuildOnSessionEvents) {
+    if (instanceEvaluator != null && myRebuildOnSessionEvents && session != null) {
       Pair<XInstanceEvaluator, String> initialItem = Pair.create(instanceEvaluator, name);
       XDebuggerInstanceTreeCreator creator = new XDebuggerInstanceTreeCreator(project, editorsProvider, sourcePosition, markers, session);
       myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XInstanceEvaluator, String>>(initialItem, creator, project, myDisposable);
@@ -69,24 +69,26 @@ public class XInspectDialog extends DialogWrapper {
       myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project, myDisposable);
     }
 
-    session.addSessionListener(new XDebugSessionAdapter() {
-      @Override
-      public void sessionPaused() {
-        if (myRebuildOnSessionEvents) {
-          myDebuggerTreePanel.rebuild();
-        }
-      }
-
-      @Override
-      public void sessionStopped() {
-        DebuggerUIUtil.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            close(OK_EXIT_CODE);
+    if (session != null) {
+      session.addSessionListener(new XDebugSessionAdapter() {
+        @Override
+        public void sessionPaused() {
+          if (myRebuildOnSessionEvents) {
+            myDebuggerTreePanel.rebuild();
           }
-        });
-      }
-    }, myDisposable);
+        }
+
+        @Override
+        public void sessionStopped() {
+          DebuggerUIUtil.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              close(OK_EXIT_CODE);
+            }
+          });
+        }
+      }, myDisposable);
+    }
 
     init();
   }

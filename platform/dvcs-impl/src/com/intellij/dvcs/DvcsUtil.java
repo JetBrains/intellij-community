@@ -50,8 +50,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.images.editor.ImageFileEditor;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,10 +62,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-/**
- * @author Kirill Likhodedov
- */
 public class DvcsUtil {
+
+  private static final Logger LOG = Logger.getInstance(DvcsUtil.class);
 
   private static final Logger LOGGER = Logger.getInstance(DvcsUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
@@ -219,9 +220,9 @@ public class DvcsUtil {
     }
   };
 
-  public static void assertFileExists(File file, String message) {
+  public static void assertFileExists(File file, String message) throws IllegalStateException {
     if (!file.exists()) {
-      throw new RepoStateException(message);
+      throw new IllegalStateException(message);
     }
   }
 
@@ -234,13 +235,25 @@ public class DvcsUtil {
    * @return file content.
    */
   @NotNull
-  public static String tryLoadFile(@NotNull final File file) {
+  public static String tryLoadFile(@NotNull final File file) throws RepoStateException {
     return tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        return StringUtil.convertLineSeparators(FileUtil.loadFile(file).trim());
+        return StringUtil.convertLineSeparators(FileUtil.loadFile(file)).trim();
       }
     }, file);
+  }
+
+  @Nullable
+  @Contract("_ , !null -> !null")
+  public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable String defaultValue) {
+    try {
+      return tryLoadFile(file);
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return defaultValue;
+    }
   }
 
   /**
@@ -249,14 +262,14 @@ public class DvcsUtil {
    * If an other exception happens, rethrows it as a {@link RepoStateException}.
    * In the case of success returns the result of the task execution.
    */
-  public static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) {
+  public static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) throws RepoStateException {
     IOException cause = null;
     for (int i = 0; i < IO_RETRIES; i++) {
       try {
         return actionToTry.call();
       }
       catch (IOException e) {
-        LOGGER.info("IOException while loading " + fileToLoad, e);
+        LOG.info("IOException while loading " + fileToLoad, e);
         cause = e;
       }
       catch (Exception e) {    // this shouldn't happen since only IOExceptions are thrown in clients.
@@ -283,7 +296,7 @@ public class DvcsUtil {
   }
 
   public static void addMappingIfSubRoot(@NotNull Project project, @NotNull String newRepositoryPath, @NotNull String vcsName) {
-    if (FileUtil.isAncestor(project.getBasePath(), newRepositoryPath, true)) {
+    if (project.getBasePath() != null && FileUtil.isAncestor(project.getBasePath(), newRepositoryPath, true)) {
       ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
       manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), newRepositoryPath, vcsName));
     }
@@ -367,5 +380,25 @@ public class DvcsUtil {
       }
     }
     return root;
+  }
+
+  @NotNull
+  public static <R extends Repository> Map<R, List<VcsFullCommitDetails>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
+                                                                                              @NotNull List<? extends VcsFullCommitDetails> commits) {
+    Map<R, List<VcsFullCommitDetails>> groupedCommits = ContainerUtil.newHashMap();
+    for (VcsFullCommitDetails commit : commits) {
+      R repository = repoManager.getRepositoryForRoot(commit.getRoot());
+      if (repository == null) {
+        LOGGER.info("No repository found for commit " + commit);
+        continue;
+      }
+      List<VcsFullCommitDetails> commitsInRoot = groupedCommits.get(repository);
+      if (commitsInRoot == null) {
+        commitsInRoot = ContainerUtil.newArrayList();
+        groupedCommits.put(repository, commitsInRoot);
+      }
+      commitsInRoot.add(commit);
+    }
+    return groupedCommits;
   }
 }

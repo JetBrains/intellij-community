@@ -170,7 +170,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     myWrapper = wrapper;
-    if (!parent.isShowing() && parent != JOptionPane.getRootFrame()) {
+    if (!parent.isShowing()) {
       throw new IllegalArgumentException("parent must be showing: " + parent);
     }
     myWindowManager = null;

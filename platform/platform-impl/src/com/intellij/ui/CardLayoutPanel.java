@@ -26,13 +26,34 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 /**
+ * @param <K>  the type of an object used as a key
+ * @param <UI> the type of an object used to create a component
+ * @param <V>  the type of a component to create
+ *
  * @author Sergey.Malenkov
  */
-public abstract class CardLayoutPanel<K, V extends Component> extends JComponent {
+public abstract class CardLayoutPanel<K, UI, V extends Component> extends JComponent {
   private final IdentityHashMap<K, V> myContent = new IdentityHashMap<K, V>();
   private K myKey;
 
-  protected abstract V create(K key);
+  /**
+   * Prepares the specified key object to return the temporary object
+   * that can be used to create a component view.
+   * This method may be called on a pooled thread.
+   *
+   * @param key the key object
+   * @return the object used to create a component
+   */
+  protected abstract UI prepare(K key);
+
+  /**
+   * Creates a component view from the temporary object.
+   * This method is usually called on the EDT.
+   *
+   * @param ui
+   * @return
+   */
+  protected abstract V create(UI ui);
 
   protected void dispose(K key) {
   }
@@ -44,12 +65,12 @@ public abstract class CardLayoutPanel<K, V extends Component> extends JComponent
   public V getValue(K key, boolean create) {
     V value = myContent.get(key);
     return create && value == null && !myContent.containsKey(key)
-           ? createValue(key)
+           ? createValue(key, prepare(key))
            : value;
   }
 
-  private V createValue(K key) {
-    V value = create(key);
+  private V createValue(K key, UI ui) {
+    V value = create(ui);
     myContent.put(key, value);
     if (value != null) {
       value.setVisible(false);
@@ -61,39 +82,44 @@ public abstract class CardLayoutPanel<K, V extends Component> extends JComponent
   public ActionCallback select(K key, boolean now) {
     myKey = key;
     ActionCallback callback = new ActionCallback();
-    select(callback, key, now);
+    if (now) {
+      select(callback, key, prepare(key));
+    }
+    else {
+      selectLater(callback, key);
+    }
     return callback;
   }
 
-  private void select(ActionCallback callback, K key, boolean now) {
+  private void select(ActionCallback callback, K key, UI ui) {
     if (myKey != key) {
       callback.setRejected();
     }
     else {
       V value = myContent.get(key);
-      boolean create = value == null && !myContent.containsKey(key);
-      if (create && !now) {
-        selectLater(callback, key, true);
+      if (value == null && !myContent.containsKey(key)) {
+        value = createValue(key, ui);
       }
-      else {
-        if (create) {
-          value = createValue(key);
-        }
-        for (Component component : getComponents()) {
-          component.setVisible(component == value);
-        }
-        callback.setDone();
+      for (Component component : getComponents()) {
+        component.setVisible(component == value);
       }
+      callback.setDone();
     }
   }
 
-  private void selectLater(final ActionCallback callback, final K key, final boolean create) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+  private void selectLater(final ActionCallback callback, final K key) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        select(callback, key, create);
+        final UI ui = prepare(key);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            select(callback, key, ui);
+          }
+        }, ModalityState.any());
       }
-    }, ModalityState.any());
+    });
   }
 
   @Override
@@ -113,6 +139,9 @@ public abstract class CardLayoutPanel<K, V extends Component> extends JComponent
 
   @Override
   public Dimension getPreferredSize() {
+    if (isPreferredSizeSet()) {
+      return super.getPreferredSize();
+    }
     for (Component component : getComponents()) {
       if (component.isVisible()) {
         return component.getPreferredSize();
@@ -123,6 +152,9 @@ public abstract class CardLayoutPanel<K, V extends Component> extends JComponent
 
   @Override
   public Dimension getMinimumSize() {
+    if (isMinimumSizeSet()) {
+      return super.getMinimumSize();
+    }
     for (Component component : getComponents()) {
       if (component.isVisible()) {
         return component.getMinimumSize();

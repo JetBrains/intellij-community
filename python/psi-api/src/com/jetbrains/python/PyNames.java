@@ -472,7 +472,7 @@ public class PyNames {
   }
 
   public static boolean isRightOperatorName(@Nullable String name) {
-    return name != null && name.matches("__r[a-z]+__");
+    return name != null && (name.matches("__r[a-z]+__") || CONTAINS.equals(name));
   }
 
   /**
@@ -503,4 +503,6 @@ public class PyNames {
   public static final ImmutableSet<String> METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("__func__", "__self__");
 
   public static final ImmutableSet<String> LEGACY_METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("im_func", "im_self", "im_class");
+
+  public static final String MRO = "mro";
 }

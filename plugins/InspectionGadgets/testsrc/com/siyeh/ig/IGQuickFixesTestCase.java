@@ -144,7 +144,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     String hint,
     @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String before,
     @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String after) {
-    doTest(hint, "class $X$ {" + before + "}", "class $X$ {\n    " + after + "\n}");
+    doTest(hint, "class $X$ {" + before + "}", "class $X$ {" + after + "}");
   }
 
   protected void doTest(String hint, @Language("JAVA") @NotNull @NonNls String before, @Language("JAVA") @NotNull @NonNls String after) {

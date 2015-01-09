@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -54,7 +53,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
+public class JavaLineMarkerProvider implements LineMarkerProvider {
 
   protected final DaemonCodeAnalyzerSettings myDaemonSettings;
   protected final EditorColorsManager myColorsManager;
@@ -68,8 +67,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   @Nullable
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     PsiElement parent;
-    if (element instanceof PsiIdentifier && (parent = element.getParent()) instanceof PsiMethod && 
-        !DumbService.getInstance(element.getProject()).isDumb()) {
+    if (element instanceof PsiIdentifier && (parent = element.getParent()) instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;
       MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superSignature != null) {
@@ -83,13 +81,14 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     }
 
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
-    if (interfaceMethod != null) {
+    final PsiElement firstChild = element.getFirstChild();
+    if (interfaceMethod != null && firstChild != null) {
       final Icon icon = AllIcons.Gutter.ImplementingMethod;
       final MarkerType type = MarkerType.OVERRIDING_METHOD;
-      return new ArrowUpLineMarkerInfo(element, icon, type);
+      return new ArrowUpLineMarkerInfo(firstChild, icon, type);
     }
 
-    if (myDaemonSettings.SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
+    if (myDaemonSettings.SHOW_METHOD_SEPARATORS && firstChild == null) {
       PsiElement element1 = element;
       boolean isMember = false;
       while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {
@@ -149,10 +148,6 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    if (elements.isEmpty() || DumbService.getInstance(elements.get(0).getProject()).isDumb()) {
-      return;
-    }
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     //noinspection ForLoopReplaceableByForEach

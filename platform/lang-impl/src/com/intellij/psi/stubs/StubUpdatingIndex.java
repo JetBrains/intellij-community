@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
   // todo remove once we don't need this for stub-ast mismatch debug info
-  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 0, false);
+  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 2, false);
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
@@ -126,7 +127,13 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             if (rootStub == null) return;
 
             VirtualFile file = inputData.getFile();
-            int contentLength = file.getFileType().isBinary() ? -1 : inputData.getContentAsText().length();
+            int contentLength;
+            if (file.getFileType().isBinary()) {
+              contentLength = -1;
+            }
+            else {
+              contentLength = ((FileContentImpl)inputData).getPsiFileForPsiDependentIndex().getTextLength();
+            }
             rememberIndexingStamp(file, contentLength);
 
             final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
@@ -145,8 +152,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static void rememberIndexingStamp(final VirtualFile file, long contentLength) {
     try {
       DataOutputStream stream = INDEXED_STAMP.writeAttribute(file);
-      stream.writeLong(file.getTimeStamp());
-      stream.writeLong(contentLength);
+      DataInputOutputUtil.writeTIME(stream, file.getTimeStamp());
+      DataInputOutputUtil.writeLONG(stream, contentLength);
       stream.close();
     }
     catch (IOException e) {
@@ -161,8 +168,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         return "no data";
       }
 
-      long stamp = stream.readLong();
-      long size = stream.readLong();
+      long stamp = DataInputOutputUtil.readTIME(stream);
+      long size = DataInputOutputUtil.readLONG(stream);
       stream.close();
       return "indexed at " + stamp + " with size " + size;
     }
@@ -341,7 +348,10 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       if (!data.isEmpty()) {
         final SerializedStubTree stub = data.values().iterator().next();
         ObjectStubBase root = (ObjectStubBase)stub.getStub(true);
-        Map<StubIndexKey, Map<Object, int[]>> map = new ObjectStubTree(root, false).indexStubTree();
+
+        ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
+                                        new ObjectStubTree(root, false);
+        Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree();
 
         // xxx:fix refs inplace
         stubTree = (Map)map;

@@ -32,6 +32,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 public class EditorModificationUtil {
@@ -483,5 +485,48 @@ public class EditorModificationUtil {
     if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
+  }
+  
+  @NotNull
+  public static List<CaretState> calcBlockSelectionState(@NotNull Editor editor, 
+                                                         @NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
+    int startLine = Math.max(Math.min(blockStart.line, editor.getDocument().getLineCount() - 1), 0);
+    int endLine = Math.max(Math.min(blockEnd.line, editor.getDocument().getLineCount() - 1), 0);
+    int step = endLine < startLine ? -1 : 1;
+    int count = 1 + Math.abs(endLine - startLine);
+    List<CaretState> caretStates = new LinkedList<CaretState>();
+    boolean hasSelection = false;
+    for (int line = startLine, i = 0; i < count; i++, line += step) {
+      int startColumn = blockStart.column;
+      int endColumn = blockEnd.column;
+      int lineEndOffset = editor.getDocument().getLineEndOffset(line);
+      LogicalPosition lineEndPosition = editor.offsetToLogicalPosition(lineEndOffset);
+      int lineWidth = lineEndPosition.column;
+      if (startColumn > lineWidth && endColumn > lineWidth && !editor.isColumnMode()) {
+        LogicalPosition caretPos = new LogicalPosition(line, Math.min(startColumn, endColumn));
+        caretStates.add(new CaretState(caretPos,
+                                       lineEndPosition,
+                                       lineEndPosition));
+      }
+      else {
+        LogicalPosition startPos = new LogicalPosition(line, editor.isColumnMode() ? startColumn : Math.min(startColumn, lineWidth));
+        LogicalPosition endPos = new LogicalPosition(line, editor.isColumnMode() ? endColumn : Math.min(endColumn, lineWidth));
+        int startOffset = editor.logicalPositionToOffset(startPos);
+        int endOffset = editor.logicalPositionToOffset(endPos);
+        caretStates.add(new CaretState(endPos, startPos, endPos));
+        hasSelection |= startOffset != endOffset;
+      }
+    }
+    if (hasSelection && !editor.isColumnMode()) { // filtering out lines without selection
+      Iterator<CaretState> caretStateIterator = caretStates.iterator();
+      while(caretStateIterator.hasNext()) {
+        CaretState state = caretStateIterator.next();
+        //noinspection ConstantConditions
+        if (state.getSelectionStart().equals(state.getSelectionEnd())) {
+          caretStateIterator.remove();
+        }
+      }
+    }
+    return caretStates;
   }
 }

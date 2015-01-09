@@ -17,6 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 
@@ -31,23 +32,20 @@ import java.util.Set;
  * @author stathik
  * @author Konstantin Bulenkov
  */
-abstract public class PluginTableModel extends AbstractTableModel implements SortableColumnModel {
+public abstract class PluginTableModel extends AbstractTableModel implements SortableColumnModel {
   protected static final String NAME = "Name";
+
   protected ColumnInfo[] columns;
-  protected List<IdeaPluginDescriptor> view;
+  protected final List<IdeaPluginDescriptor> view = ContainerUtil.newArrayList();
+  protected final List<IdeaPluginDescriptor> filtered = ContainerUtil.newArrayList();
+
   private RowSorter.SortKey myDefaultSortKey;
-  protected final List<IdeaPluginDescriptor> filtered = new ArrayList<IdeaPluginDescriptor>();
   private boolean mySortByStatus;
   private boolean mySortByRating;
   private boolean mySortByDownloads;
   private boolean mySortByUpdated;
 
-  protected PluginTableModel() {
-  }
-
-  public PluginTableModel(ColumnInfo... columns) {
-    this.columns = columns;
-  }
+  protected PluginTableModel() { }
 
   public void setSortKey(final RowSorter.SortKey sortKey) {
     myDefaultSortKey = sortKey;
@@ -113,8 +111,8 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     fireTableCellUpdated(rowIndex, columnIndex);
   }
 
-  public ArrayList<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
-    ArrayList<IdeaPluginDescriptorImpl> list = new ArrayList<IdeaPluginDescriptorImpl>();
+  public List<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
+    List<IdeaPluginDescriptorImpl> list = new ArrayList<IdeaPluginDescriptorImpl>();
     for (IdeaPluginDescriptor any : getAllPlugins()) {
       if (any instanceof IdeaPluginDescriptorImpl) {
         PluginId[] dep = any.getDependentPluginIds();
@@ -131,37 +129,23 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
 
   public abstract void updatePluginsList(List<IdeaPluginDescriptor> list);
 
-  public void filter(List<IdeaPluginDescriptor> filtered){
-    fireTableDataChanged();
-  }
-
   protected void filter(String filter) {
-    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final Set<String> search = optionsRegistrar.getProcessedWords(filter);
+    Set<String> search = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
+    List<IdeaPluginDescriptor> allPlugins = getAllPlugins();
 
-    final ArrayList<IdeaPluginDescriptor> desc = new ArrayList<IdeaPluginDescriptor>();
-
-    final List<IdeaPluginDescriptor> toProcess = toProcess();
-    for (IdeaPluginDescriptor descriptor : filtered) {
-      if (!toProcess.contains(descriptor)) {
-        toProcess.add(descriptor);
-      }
-    }
+    view.clear();
     filtered.clear();
-    for (IdeaPluginDescriptor descriptor : toProcess) {
-      if (isPluginDescriptorAccepted(descriptor) &&
-          PluginManagerMain.isAccepted(filter, search, descriptor)) {
-        desc.add(descriptor);
+
+    for (IdeaPluginDescriptor descriptor : allPlugins) {
+      if (isPluginDescriptorAccepted(descriptor) && PluginManagerMain.isAccepted(filter, search, descriptor)) {
+        view.add(descriptor);
       }
       else {
         filtered.add(descriptor);
       }
     }
-    filter(desc);
-  }
 
-  protected ArrayList<IdeaPluginDescriptor> toProcess() {
-    return new ArrayList<IdeaPluginDescriptor>(view);
+    fireTableDataChanged();
   }
 
   public abstract int getNameColumn();
@@ -206,7 +190,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
   }
 
   public List<IdeaPluginDescriptor> getAllPlugins() {
-    final ArrayList<IdeaPluginDescriptor> list = new ArrayList<IdeaPluginDescriptor>();
+    List<IdeaPluginDescriptor> list = ContainerUtil.newArrayListWithCapacity(view.size() + filtered.size());
     list.addAll(view);
     list.addAll(filtered);
     return list;

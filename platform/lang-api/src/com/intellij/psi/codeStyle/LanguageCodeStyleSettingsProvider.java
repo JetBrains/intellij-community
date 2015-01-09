@@ -223,10 +223,6 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return fieldCollector.getCollectedFields();
   }
 
-  public boolean isIndentBasedLanguageSemantics() {
-    return false;
-  }
-
   private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {
     private final Set<String> myCollectedFields = new HashSet<String>();
     private SettingsType myCurrSettingsType;

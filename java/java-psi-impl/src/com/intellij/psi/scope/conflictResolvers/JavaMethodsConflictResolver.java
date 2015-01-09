@@ -308,9 +308,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return ((MethodCandidateInfo)info).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
   }
 
-  private static boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,
-                                               final int argumentsCount,
-                                               boolean ignoreIfStaticsProblem) {
+  public static boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,
+                                              final int argumentsCount,
+                                              boolean ignoreIfStaticsProblem) {
     boolean atLeastOneMatch = false;
     TIntArrayList unmatchedIndices = null;
     for (int i = 0; i < conflicts.size(); i++) {

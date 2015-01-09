@@ -11,10 +11,24 @@ public class RemoteSdkException extends ExecutionException {
   private final boolean myNoRouteToHost;
   private final boolean myAuthFailed;
 
+  private Throwable myCause;
+
   public RemoteSdkException(String s, Throwable throwable) {
     super(s, throwable);
-    myNoRouteToHost = throwable instanceof NoRouteToHostException;
+
     myAuthFailed = false;
+    Throwable t = throwable;
+    while (t != null) {
+      if (t instanceof NoRouteToHostException) {
+        myCause = t;
+        myNoRouteToHost = true;
+        return;
+      }
+
+      t = t.getCause();
+    }
+    myNoRouteToHost = false;
+    myCause = throwable;
   }
 
   public RemoteSdkException(String s) {
@@ -33,7 +47,7 @@ public class RemoteSdkException extends ExecutionException {
 
   public String getMessage() {
     if (myNoRouteToHost) {
-      return getCause().getMessage();
+      return myCause.getMessage();
     }
     else if (myAuthFailed) {
       return "Authentication failed";

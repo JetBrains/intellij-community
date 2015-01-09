@@ -495,6 +495,10 @@
     <localInspection language="JAVA" shortName="UtilityClass" bundle="com.siyeh.InspectionGadgetsBundle" key="utility.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.classlayout.UtilityClassInspection"/>
+    <localInspection language="JAVA" shortName="UtilityClassCanBeEnum" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="utility.class.can.be.enum.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.classlayout.UtilityClassCanBeEnumInspection"/>
     <localInspection language="JAVA" shortName="UtilityClassWithPublicConstructor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="utility.class.with.public.constructor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
@@ -724,7 +728,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.SwitchStatementsWithoutDefaultInspection"/>
     <localInspection language="JAVA" suppressId="RedundantIfStatement" shortName="TrivialIf" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="trivial.if.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.controlflow.TrivialIfInspection"/>
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.controlflow.TrivialIfInspection" cleanupTool="true"/>
     <localInspection language="JAVA" suppressId="RedundantConditionalExpression" shortName="UnnecessaryConditionalExpression"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.conditional.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
@@ -1530,9 +1534,6 @@
                      key="printstacktrace.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.maturity.ThrowablePrintStackTraceInspection"/>
-    <localInspection language="JAVA" shortName="TodoComment" bundle="com.siyeh.InspectionGadgetsBundle" key="todo.comment.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.maturity.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.maturity.TodoCommentInspection"/>
     <localInspection language="JAVA" suppressId="CallToThreadDumpStack" shortName="ThreadDumpStack" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="dumpstack.call.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.maturity.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.maturity.ThreadDumpStackInspection"/>
@@ -2314,7 +2315,7 @@
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.style.ExtendsObjectInspection"/>
     <localInspection language="JAVA" shortName="FieldMayBeFinal" bundle="com.siyeh.InspectionGadgetsBundle" key="field.may.be.final.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" runForWholeFile="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.style.FieldMayBeFinalInspection"/>
+                     level="WARNING" implementationClass="com.siyeh.ig.style.FieldMayBeFinalInspection" cleanupTool="true"/>
     <localInspection language="JAVA" shortName="ImplicitCallToSuper" bundle="com.siyeh.InspectionGadgetsBundle" key="implicit.call.to.super.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" runForWholeFile="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.ImplicitCallToSuperInspection"/>
@@ -2695,7 +2696,7 @@
                      groupKey="group.names.visibility.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.visibility.TypeParameterHidesVisibleTypeInspection"/>
     <localInspection language="JAVA" suppressId="ParameterHidesMemberVariable" shortName="ParameterHidingMemberVariable"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="parameter.hides.member.variable.display.name"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="parameter.hides.member.variable.display.name" alternativeId="hiding"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.ParameterHidingMemberVariableInspection"/>
     <localInspection language="JAVA" suppressId="LambdaParameterHidesMemberVariable" shortName="LambdaParameterHidingMemberVariable"

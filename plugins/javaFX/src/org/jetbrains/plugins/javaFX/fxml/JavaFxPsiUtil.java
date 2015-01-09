@@ -93,20 +93,20 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static PsiClass findPsiClass(String name, XmlTag tag) {
-    final Project project = tag.getProject();
+  public static PsiClass findPsiClass(String name, PsiElement context) {
+    final Project project = context.getProject();
     if (!StringUtil.getShortName(name).equals(name)) {
       return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
     }
-    return findPsiClass(name, parseImports((XmlFile)tag.getContainingFile()), tag, project);
+    return findPsiClass(name, parseImports((XmlFile)context.getContainingFile()), context, project);
   }
 
-  private static PsiClass findPsiClass(String name, List<String> imports, XmlTag tag, Project project) {
+  private static PsiClass findPsiClass(String name, List<String> imports, PsiElement context, Project project) {
     PsiClass psiClass = null;
     if (imports != null) {
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
 
-      PsiFile file = tag.getContainingFile();
+      PsiFile file = context.getContainingFile();
       for (String anImport : imports) {
         if (StringUtil.getShortName(anImport).equals(name)) {
           psiClass = psiFacade.findClass(anImport, file.getResolveScope());

@@ -145,8 +145,20 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
                                                         @Nullable final Collection<String> recursiveRoots,
                                                         @Nullable final Collection<String> flatRoots);
 
+  /**
+   * Registers a handler that allows a version control system plugin to intercept file operations in the local file system
+   * and to perform them through the VCS tool.
+   *
+   * @param handler the handler instance.
+   */
   public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
+  /**
+   * Unregisters a handler that allows a version control system plugin to intercept file operations in the local file system
+   * and to perform them through the VCS tool.
+   *
+   * @param handler the handler instance.
+   */
   public abstract void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
   public abstract boolean processCachedFilesInSubtree(@NotNull VirtualFile file, @NotNull Processor<VirtualFile> processor);

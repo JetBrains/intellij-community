@@ -45,6 +45,14 @@ import java.util.List;
 public class PythonConsoleToolWindow {
   public static final Key<RunContentDescriptor> CONTENT_DESCRIPTOR = Key.create("CONTENT_DESCRIPTOR");
 
+  public static final Function<Content, RunContentDescriptor>
+    CONTENT_TO_DESCRIPTOR_FUNCTION = new Function<Content, RunContentDescriptor>() {
+    @Override
+    public RunContentDescriptor apply(@Nullable Content input) {
+      return input != null ? input.getUserData(CONTENT_DESCRIPTOR) : null;
+    }
+  };
+
   private final Project myProject;
 
   private boolean myInitialized = false;
@@ -61,18 +69,13 @@ public class PythonConsoleToolWindow {
 
   public List<RunContentDescriptor> getConsoleContentDescriptors() {
     return FluentIterable.from(Lists.newArrayList(getToolWindow().getContentManager().getContents()))
-      .transform(new Function<Content, RunContentDescriptor>() {
-        @Override
-        public RunContentDescriptor apply(@Nullable Content input) {
-          return input != null ? input.getUserData(CONTENT_DESCRIPTOR) : null;
-        }
-      }).filter(
+      .transform(CONTENT_TO_DESCRIPTOR_FUNCTION).filter(
         Predicates.notNull()).toList();
   }
 
 
   public void init(final @NotNull ToolWindow toolWindow, final @NotNull RunContentDescriptor contentDescriptor) {
-    addContent(toolWindow, contentDescriptor);
+    setContent(toolWindow, contentDescriptor);
 
     if (!myInitialized) {
       doInit(toolWindow);
@@ -103,7 +106,7 @@ public class PythonConsoleToolWindow {
     });
   }
 
-  private static void addContent(ToolWindow toolWindow, RunContentDescriptor contentDescriptor) {
+  private static void setContent(ToolWindow toolWindow, RunContentDescriptor contentDescriptor) {
     toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
 
     Content content = toolWindow.getContentManager().findContent(contentDescriptor.getDisplayName());
@@ -171,5 +174,10 @@ public class PythonConsoleToolWindow {
   public void activate(@NotNull Runnable runnable) {
     myActivation.doWhenDone(runnable);
     getToolWindow().activate(null);
+  }
+
+  @Nullable
+  public RunContentDescriptor getSelectedContentDescriptor() {
+    return CONTENT_TO_DESCRIPTOR_FUNCTION.apply(getToolWindow().getContentManager().getSelectedContent());
   }
 }

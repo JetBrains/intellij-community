@@ -295,7 +295,7 @@ class FindInProjectTask {
             }
           }
 
-          final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+          private final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
 
           private boolean isCoveredByIndex(VirtualFile file) {
             FileType fileType = file.getFileType();

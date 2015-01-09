@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -147,8 +148,9 @@ public class NewRootBunch {
       }
       result.set(myMap.get(root).getValue().getWorkingBranch(svnurl));
     }
-    catch (SVNException e) {
-      //
+    catch (SVNException ignore) {
+    }
+    catch (SvnBindException ignore) {
     }
     return result.get();
   }

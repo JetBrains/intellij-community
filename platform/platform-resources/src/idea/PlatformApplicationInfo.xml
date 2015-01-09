@@ -11,6 +11,6 @@
                   caption-url="/general/welcomeCaption.png" 
                   slogan-url="/general/developSlogan.png"/>
 
-  <update-urls check="http://www.jetbrains.com/updates/update.xml" download="http://www.jetbrains.com/idea/download/"/>
-  <eap-update-urls check="http://www.jetbrains.com/updates/eap-update.xml" download="http://www.intellij.net/eap/products/idea/download.jsp"/>
+  <update-urls check="http://www.jetbrains.com/updates/update.xml"
+               download="http://www.jetbrains.com/idea/download/"/>
 </component>

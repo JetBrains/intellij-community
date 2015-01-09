@@ -72,12 +72,6 @@ public class VcsLogImpl implements VcsLog {
     return details;
   }
 
-  @Override
-  @Nullable
-  public VcsFullCommitDetails getDetailsIfAvailable(@NotNull final Hash hash) {
-    return myDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(hash);
-  }
-
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash) {

@@ -130,7 +130,7 @@ public class IntentionUtils {
                   ((GrMethod)method).setReturnType(PsiType.VOID);
                 }
                 if (method.getBody() != null) {
-                  FileTemplateManager templateManager = FileTemplateManager.getInstance();
+                  FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
                   FileTemplate fileTemplate = templateManager.getCodeTemplate(GroovyTemplates.GROOVY_FROM_USAGE_METHOD_BODY);
 
                   PsiClass containingClass = method.getContainingClass();

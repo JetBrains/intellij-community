@@ -69,7 +69,7 @@ public final class NettyUtil {
   }
 
   @Nullable
-  public static Channel connect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @Nullable ActionCallback asyncResult, int maxAttemptCount) {
+  public static Channel connect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @Nullable ActionCallback promise, int maxAttemptCount) {
     try {
       int attemptCount = 0;
 
@@ -86,8 +86,8 @@ public final class NettyUtil {
           else {
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             Throwable cause = future.cause();
-            if (asyncResult != null) {
-              asyncResult.reject("Cannot connect: " + (cause == null ? "unknown error" : cause.getMessage()));
+            if (promise != null) {
+              promise.reject("Cannot connect: " + (cause == null ? "unknown error" : cause.getMessage()));
             }
             return null;
           }
@@ -107,8 +107,8 @@ public final class NettyUtil {
             Thread.sleep(attemptCount * MIN_START_TIME);
           }
           else {
-            if (asyncResult != null) {
-              asyncResult.reject("Cannot connect: " + e.getMessage());
+            if (promise != null) {
+              promise.reject("Cannot connect: " + e.getMessage());
             }
             return null;
           }
@@ -120,8 +120,8 @@ public final class NettyUtil {
       return channel;
     }
     catch (Throwable e) {
-      if (asyncResult != null) {
-        asyncResult.reject("Cannot connect: " + e.getMessage());
+      if (promise != null) {
+        promise.reject("Cannot connect: " + e.getMessage());
       }
       return null;
     }

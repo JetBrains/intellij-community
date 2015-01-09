@@ -20,7 +20,6 @@ import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -39,17 +38,16 @@ public class PyKeywordArgumentSearchExecutor extends QueryExecutorBase<PsiRefere
     if (!(element instanceof PyNamedParameter)) {
       return;
     }
-    final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+    final ScopeOwner owner = ApplicationManager.getApplication().runReadAction(new Computable<ScopeOwner>() {
+      @Override
+      public ScopeOwner compute() {
+        return ScopeUtil.getScopeOwner(element);
+      }
+    });
     if (!(owner instanceof PyFunction)) {
       return;
     }
-    SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        return queryParameters.getEffectiveSearchScope();
-      }
-    });
-    ReferencesSearch.search(owner, scope).forEach(new Processor<PsiReference>() {
+    ReferencesSearch.search(owner, queryParameters.getScopeDeterminedByUser()).forEach(new Processor<PsiReference>() {
       @Override
       public boolean process(PsiReference reference) {
         final PsiElement refElement = reference.getElement();

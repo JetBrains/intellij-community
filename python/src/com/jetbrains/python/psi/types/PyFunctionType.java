@@ -88,7 +88,7 @@ public class PyFunctionType implements PyCallableType {
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(location.getProject(), location.getContainingFile());
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(location.getProject(), location.getContainingFile());
     final PyClassType delegate;
     if (location instanceof PyReferenceExpression) {
       delegate = selectFakeType(((PyReferenceExpression)location).getQualifier(), typeEvalContext);

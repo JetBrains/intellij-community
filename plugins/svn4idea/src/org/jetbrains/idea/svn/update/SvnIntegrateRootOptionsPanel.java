@@ -22,6 +22,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
+import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -86,9 +87,9 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
 
   private boolean chooseUrl(final TextFieldWithBrowseButton textField, final SvnVcs vcs) {
     String url = textField.getText();
-    final String selectedUrl = SelectLocationDialog.selectLocation(vcs.getProject(), url);
+    SVNURL selectedUrl = SelectLocationDialog.selectLocation(vcs.getProject(), url);
     if (selectedUrl != null) {
-      textField.setText(selectedUrl);
+      textField.setText(selectedUrl.toString());
       return true;
     } else {
       return false;

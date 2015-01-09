@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@ package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.plaf.UIResource;
 import java.awt.*;
+
+import static com.intellij.util.ui.JBUI.scale;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JBInsets extends Insets {
-  public static final JBInsets NONE = new JBInsets(0, 0, 0, 0);
   /**
    * Creates and initializes a new <code>Insets</code> object with the
    * specified top, left, bottom, and right insets.
@@ -34,7 +36,7 @@ public class JBInsets extends Insets {
    * @param right  the inset from the right.
    */
   public JBInsets(int top, int left, int bottom, int right) {
-    super(top, left, bottom, right);
+    super(scale(top), scale(left), scale(bottom), scale(right));
   }
   
   public int width() {
@@ -48,5 +50,19 @@ public class JBInsets extends Insets {
   public static JBInsets create(@NotNull Insets insets) {
     return insets instanceof JBInsets ? (JBInsets)insets
                                       : new JBInsets(insets.top, insets.left, insets.bottom, insets.right);
+  }
+
+  public JBInsetsUIResource asUIResource() {
+    return new JBInsetsUIResource(this);
+  }
+
+  public static class JBInsetsUIResource extends JBInsets implements UIResource {
+    public JBInsetsUIResource(JBInsets insets) {
+      super(0, 0, 0, 0);
+      top = insets.top;
+      left = insets.left;
+      bottom = insets.bottom;
+      right = insets.right;
+    }
   }
 }

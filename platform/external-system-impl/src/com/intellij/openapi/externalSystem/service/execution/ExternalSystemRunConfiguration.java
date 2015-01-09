@@ -151,7 +151,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       if (myProject.isDisposed()) return null;
 
-      ExternalSystemUtil.updateRecentTasks(new ExternalTaskExecutionInfo(mySettings.clone(), executor.getId()), myProject);
       final List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
       for (String taskName : mySettings.getTaskNames()) {
         tasks.add(new ExternalTaskPojo(taskName, mySettings.getExternalProjectPath(), null));
@@ -188,11 +187,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
           final String greeting;
           if (mySettings.getTaskNames().size() > 1) {
             greeting = ExternalSystemBundle
-              .message("run.text.starting.multiple.task", startDateTime, StringUtil.join(mySettings.getTaskNames(), " "));
+              .message("run.text.starting.multiple.task", startDateTime, mySettings.toString());
           }
           else {
             greeting =
-              ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, StringUtil.join(mySettings.getTaskNames(), " "));
+              ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, mySettings.toString());
           }
           processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
           task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
@@ -223,11 +222,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
               final String farewell;
               if (mySettings.getTaskNames().size() > 1) {
                 farewell = ExternalSystemBundle
-                  .message("run.text.ended.multiple.task", endDateTime, StringUtil.join(mySettings.getTaskNames(), " "));
+                  .message("run.text.ended.multiple.task", endDateTime, mySettings.toString());
               }
               else {
                 farewell =
-                  ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, StringUtil.join(mySettings.getTaskNames(), " "));
+                  ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, mySettings.toString());
               }
               processHandler.notifyTextAvailable(farewell, ProcessOutputTypes.SYSTEM);
               processHandler.notifyProcessTerminated(0);
@@ -243,7 +242,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
 
   private static class MyProcessHandler extends ProcessHandler {
     private final ExternalSystemExecuteTaskTask myTask;
-    @Nullable private volatile OutputStream myOutputStream;
 
     public MyProcessHandler(ExternalSystemExecuteTaskTask task) {
       myTask = task;

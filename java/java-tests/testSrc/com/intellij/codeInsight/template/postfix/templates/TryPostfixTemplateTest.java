@@ -39,4 +39,24 @@ public class TryPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testNotResolvedExpression() {
     doTest();
   }
+
+  public void testDeclarationStatement() {
+    doTest();
+  }
+
+  public void testExpressionInMethodBody() {
+    doTest();
+  }
+
+  public void testSimpleWithThrowsCheckedException() {
+    doTest();
+  }
+
+  public void testIncompleteStatement() {
+    doTest();
+  }
+
+  public void testConstructorStatement() {
+    doTest();
+  }
 }

@@ -719,6 +719,7 @@
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
+      <separator/>
       <reference ref="Resume"/>
       <reference ref="Pause"/>
       <reference ref="Stop"/>

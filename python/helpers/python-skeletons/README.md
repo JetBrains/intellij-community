@@ -67,6 +67,7 @@ should import it explicitly. For example, in a skeleton for the `foo` module:
 ```python
 import foo
 
+
 class C(foo.B):
     def bar():
         """Do bar and return Bar.
@@ -144,6 +145,7 @@ class C(object):
         pass
 ```
 
+
 ### Versioning
 
 The recommended way of checking the version of Python is:
@@ -151,10 +153,12 @@ The recommended way of checking the version of Python is:
 ```python
 import sys
 
+
 if sys.version_info >= (2, 7) and sys.version_info < (3,):
     def from_27_until_30():
         pass
 ```
+
 A skeleton should document the most recently released version of a library. Use
 deprecation warnings for functions that have been removed from the API.
 
@@ -214,6 +218,7 @@ the skeletons GitHub repository into your PyCharm/IntelliJ config directory:
 cd <config directory>
 git clone https://github.com/JetBrains/python-skeletons.git
 ```
+
 where `<config directory>` is:
 
 * PyCharm
@@ -226,7 +231,7 @@ where `<config directory>` is:
     * Windows: `<User home>\.IntelliJIdeaXX\config`
 
 Please send your PyCharm/IntelliJ-related bug reports and feature requests to
-[PyCharm issue tracker](http://youtrack.jetbrains.com/issues/PY).
+[PyCharm issue tracker](https://youtrack.jetbrains.com/issues/PY).
 
 
 Feedback

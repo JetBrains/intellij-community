@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -97,6 +98,35 @@ public abstract class PsiElementFinder {
   @NotNull
   public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
+  }
+
+  /**
+   * Returns a list of files belonging to the specified package which are not located in any of the package directories.
+   *
+   * @param psiPackage the package to return the list of files for.
+   * @param scope      the scope in which files are searched.
+   * @return the list of files.
+   * @since 14.1
+   */
+  @NotNull
+  public PsiFile[] getPackageFiles(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return PsiFile.EMPTY_ARRAY;
+  }
+
+  /**
+   * Returns the filter to use for filtering the list of files in the directories belonging to a package to exclude files
+   * that actually belong to a different package. (For example, in Kotlin the package of a file is determined by its
+   * package statement and not by its location in the directory structure, so the files which have a differring package
+   * statement need to be excluded.)
+   *
+   * @param psiPackage the package for which the list of files is requested.
+   * @param scope      the scope in which children are requested.
+   * @return the filter to use, or null if no additional filtering is necessary.
+   * @since 14.1
+   */
+  @Nullable
+  public Condition<PsiFile> getPackageFilesFilter(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return null;
   }
 
   /**

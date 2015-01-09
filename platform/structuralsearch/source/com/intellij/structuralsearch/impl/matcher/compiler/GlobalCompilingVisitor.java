@@ -62,7 +62,6 @@ public class GlobalCompilingVisitor {
   }
 
   public final void handle(PsiElement element) {
-
     if ((!ourFilter.accepts(element) ||
          StructuralSearchUtil.isIdentifier(element)) &&
         context.getPattern().isRealTypedVar(element) &&
@@ -71,14 +70,12 @@ public class GlobalCompilingVisitor {
       String name = context.getPattern().getTypedVarString(element);
       // name is the same for named element (clazz,methods, etc) and token (name of ... itself)
       // @todo need fix this
-      final SubstitutionHandler handler;
 
-      context.getPattern().setHandler(
-        element,
-        handler = (SubstitutionHandler)context.getPattern().getHandler(name)
-      );
+      final SubstitutionHandler handler = (SubstitutionHandler)context.getPattern().getHandler(name);
+      if (handler == null) return;
+      context.getPattern().setHandler(element, handler);
 
-      if (handler != null && context.getOptions().getVariableConstraint(handler.getName()).isPartOfSearchResults()) {
+      if (context.getOptions().getVariableConstraint(handler.getName()).isPartOfSearchResults()) {
         handler.setTarget(true);
         context.getPattern().setTargetNode(element);
       }

@@ -36,16 +36,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author spleaner
- */
 public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
 
   public HtmlUnknownTagInspection() {
     super();
   }
 
-  protected HtmlUnknownTagInspection(@NonNls @NotNull final String defaultValues) {
+  public HtmlUnknownTagInspection(@NonNls @NotNull final String defaultValues) {
     super(defaultValues);
   }
 
@@ -56,7 +53,7 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
   }
 
   @NotNull
-  protected static JComponent createOptionsPanel(@NotNull final HtmlUnknownTagInspectionBase inspection) {
+  protected static JComponent createOptionsPanel(@NotNull final HtmlUnknownElementInspection inspection) {
     final JPanel result = new JPanel(new BorderLayout());
 
     final JPanel internalPanel = new JPanel(new BorderLayout());
@@ -66,7 +63,8 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     final FieldPanel additionalAttributesPanel = new FieldPanel(null, null, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        Messages.showTextAreaDialog(panelRef.get().getTextField(), inspection.getPanelTitle(), "HtmlUnknownTagInspection",
+        Messages.showTextAreaDialog(panelRef.get().getTextField(), StringUtil.wordsToBeginFromUpperCase(inspection.getPanelTitle()), 
+                                    inspection.getClass().getSimpleName(),
                                     new Function<String, List<String>>() {
                                       @Override
                                       public List<String> fun(String s) {
@@ -90,7 +88,7 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
         try {
           final String text = document.getText(0, document.getLength());
           if (text != null) {
-            inspection.myValues = reparseProperties(text.trim());
+            inspection.updateAdditionalEntries(text.trim());
           }
         }
         catch (BadLocationException e1) {
@@ -100,14 +98,14 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     });
 
     final JCheckBox checkBox = new JCheckBox(inspection.getCheckboxTitle());
-    checkBox.setSelected(inspection.myCustomValuesEnabled);
+    checkBox.setSelected(inspection.isCustomValuesEnabled());
     checkBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final boolean b = checkBox.isSelected();
-        if (b != inspection.myCustomValuesEnabled) {
-          inspection.myCustomValuesEnabled = b;
-          additionalAttributesPanel.setEnabled(inspection.myCustomValuesEnabled);
+        if (b != inspection.isCustomValuesEnabled()) {
+          inspection.enableCustomValues(b);
+          additionalAttributesPanel.setEnabled(inspection.isCustomValuesEnabled());
         }
       }
     });
@@ -116,8 +114,8 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     internalPanel.add(additionalAttributesPanel, BorderLayout.CENTER);
 
     additionalAttributesPanel.setPreferredSize(new Dimension(150, additionalAttributesPanel.getPreferredSize().height));
-    additionalAttributesPanel.setEnabled(inspection.myCustomValuesEnabled);
-    additionalAttributesPanel.setText(inspection.createPropertiesString());
+    additionalAttributesPanel.setEnabled(inspection.isCustomValuesEnabled());
+    additionalAttributesPanel.setText(inspection.getAdditionalEntries());
 
     return result;
   }

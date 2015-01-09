@@ -105,28 +105,6 @@ public class ExternalSystemUiUtil {
     component.add(Box.createVerticalGlue(), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
   }
 
-  /**
-   * Applies data from the given settings object to the given model.
-   * 
-   * @param settings  target settings to use
-   * @param model     UI model to be synced with the given settings
-   */
-  public static void apply(@NotNull final AbstractExternalSystemLocalSettings settings, @NotNull final ExternalSystemTasksTreeModel model) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Map<ExternalProjectPojo,Collection<ExternalProjectPojo>> projects = settings.getAvailableProjects();
-        for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : projects.entrySet()) {
-          model.ensureSubProjectsStructure(entry.getKey(), entry.getValue());
-        }
-        Map<String, Collection<ExternalTaskPojo>> tasks = settings.getAvailableTasks();
-        for (Map.Entry<String, Collection<ExternalTaskPojo>> entry : tasks.entrySet()) {
-          model.ensureTasks(entry.getKey(), entry.getValue());
-        } 
-      }
-    });
-  }
-
   public static void showUi(@NotNull Object o, boolean show) {
     for (Class<?> clazz = o.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
       for (Field field : clazz.getDeclaredFields()) {

@@ -254,9 +254,6 @@ public class BuildManager implements ApplicationComponent{
           if (!eventFile.isValid()) {
             return true; // should be deleted
           }
-          if (ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
-            continue;
-          }
 
           if (project == null) {
             // lazy init
@@ -268,6 +265,10 @@ public class BuildManager implements ApplicationComponent{
           }
 
           if (fileIndex.isInContent(eventFile)) {
+            if (ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
+              continue;
+            }
+
             return true;
           }
         }
@@ -387,9 +388,9 @@ public class BuildManager implements ApplicationComponent{
 
   public void clearState(Project project) {
     final String projectPath = getProjectPath(project);
-    
+
     cancelPreloadedBuilds(projectPath);
-    
+
     synchronized (myProjectDataMap) {
       final ProjectData data = myProjectDataMap.get(projectPath);
       if (data != null) {
@@ -733,7 +734,7 @@ public class BuildManager implements ApplicationComponent{
                 myBuildsInProgress.remove(projectPath);
                 notifySessionTerminationIfNeeded(sessionId, execFailure);
 
-                if (Registry.is("compiler.process.preload") && !project.isDisposed()) {
+                if (isProcessPreloadingEnabled() && !project.isDisposed()) {
                   runCommand(new Runnable() {
                     public void run() {
                       if (!myPreloadedBuilds.containsKey(projectPath)) {
@@ -760,6 +761,11 @@ public class BuildManager implements ApplicationComponent{
     });
 
     return _future;
+  }
+
+  private static boolean isProcessPreloadingEnabled() {
+    // automatically disable process preloading when debugging
+    return Registry.is("compiler.process.preload") && Registry.intValue("compiler.process.debug.port") <= 0 ;
   }
 
   private void notifySessionTerminationIfNeeded(UUID sessionId, @Nullable Throwable execFailure) {
@@ -823,10 +829,13 @@ public class BuildManager implements ApplicationComponent{
 
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, SequentialTaskExecutor projectTaskQueue) throws Exception {
     ensureListening();
-    
+
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
     return projectTaskQueue.submit(new Callable<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>() {
       public Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> call() throws Exception {
+        if (project.isDisposed()) {
+          throw new Exception("project " + project.getName()+ " already disposed");
+        }
         final RequestFuture<PreloadedProcessMessageHandler> future = new RequestFuture<PreloadedProcessMessageHandler>(new PreloadedProcessMessageHandler(), UUID.randomUUID(), new CancelBuildSessionAction<PreloadedProcessMessageHandler>());
         try {
           myMessageDispatcher.registerBuildMessageHandler(future, null);
@@ -838,14 +847,14 @@ public class BuildManager implements ApplicationComponent{
           processHandler.startNotify();
           return Pair.create(future, processHandler);
         }
-        catch (ExecutionException e) {
+        catch (Throwable e) {
           handleProcessExecutionFailure(future.getRequestID(), e);
-          throw e;
+          throw e instanceof Exception? (Exception)e : new RuntimeException(e);
         }
       }
     });
   }
-  
+
   private OSProcessHandler launchBuildProcess(Project project, final int port, final UUID sessionId, boolean requestProjectPreload) throws ExecutionException {
     final String compilerPath;
     final String vmExecutablePath;
@@ -941,7 +950,10 @@ public class BuildManager implements ApplicationComponent{
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
-    cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all jre customizations for predictable behaviour
+    if (sdkVersion != null && sdkVersion.ordinal() < JavaSdkVersion.JDK_1_9.ordinal()) {
+      //-Djava.endorsed.dirs is not supported in JDK 9+, may result in abnormal process termination
+      cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all jre customizations for predictable behaviour
+    }
     if (IS_UNIT_TEST_MODE) {
       cmdLine.addParameter("-Dtest.mode=true");
     }
@@ -951,7 +963,7 @@ public class BuildManager implements ApplicationComponent{
       cmdLine.addParameter("-Dpreload.project.path=" + FileUtil.toCanonicalPath(getProjectPath(project)));
       cmdLine.addParameter("-Dpreload.config.path=" + FileUtil.toCanonicalPath(PathManager.getOptionsPath()));
     }
-    
+
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
@@ -975,11 +987,11 @@ public class BuildManager implements ApplicationComponent{
         cmdLine.addParameter(option);
       }
     }
-    
+
     if (isProfilingMode) {
       cmdLine.addParameter("-agentlib:yjpagent=disablej2ee,disablealloc,delay=10000,sessionname=ExternalBuild");
     }
-    
+
     // debugging
     final int debugPort = Registry.intValue("compiler.process.debug.port");
     if (debugPort > 0) {
@@ -1016,10 +1028,10 @@ public class BuildManager implements ApplicationComponent{
       final List<String> args = provider.getVMArguments();
       cmdLine.addParameters(args);
     }
-    
-    @SuppressWarnings("UnnecessaryFullyQualifiedName") 
+
+    @SuppressWarnings("UnnecessaryFullyQualifiedName")
     final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
-    
+
     final List<String> launcherCp = new ArrayList<String>();
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
     launcherCp.add(compilerPath);
@@ -1027,7 +1039,7 @@ public class BuildManager implements ApplicationComponent{
     launcherCp.addAll(BuildProcessClasspathManager.getLauncherClasspath(project));
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
-    
+
     cmdLine.addParameter(launcherClass.getName());
 
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath(true);
@@ -1064,7 +1076,7 @@ public class BuildManager implements ApplicationComponent{
         }
       }
     });
-    
+
     return processHandler;
   }
 
@@ -1239,7 +1251,7 @@ public class BuildManager implements ApplicationComponent{
     @Override
     public void onTextAvailable(ProcessEvent event, Key outputType) {
       String text;
-      
+
       synchronized (this) {
         if (myStoredLength > 2048) {
           return;
@@ -1250,7 +1262,7 @@ public class BuildManager implements ApplicationComponent{
         }
         myStoredLength += text.length();
       }
-      
+
       try {
         myOutput.append(text);
       }
@@ -1454,7 +1466,7 @@ public class BuildManager implements ApplicationComponent{
       }
       myPath = list.toArray();
     }
-    
+
     public abstract String getValue();
 
     @Override
@@ -1473,12 +1485,12 @@ public class BuildManager implements ApplicationComponent{
     public int hashCode() {
       return Arrays.hashCode(myPath);
     }
-    
+
     public static InternedPath create(String path) {
-      return path.startsWith("/")? new XInternedPath(path) : new WinInternedPath(path); 
+      return path.startsWith("/")? new XInternedPath(path) : new WinInternedPath(path);
     }
   }
-  
+
   private static class WinInternedPath extends InternedPath {
     private WinInternedPath(String path) {
       super(path);
@@ -1491,7 +1503,7 @@ public class BuildManager implements ApplicationComponent{
         // handle case of windows drive letter
         return name.length() == 2 && name.endsWith(":")? name + "/" : name;
       }
-      
+
       final StringBuilder buf = new StringBuilder();
       for (int element : myPath) {
         if (buf.length() > 0) {

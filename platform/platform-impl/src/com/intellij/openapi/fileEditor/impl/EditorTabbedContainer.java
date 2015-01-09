@@ -31,11 +31,13 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
@@ -61,6 +63,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -86,6 +90,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this);
+    myTabs.setTransferHandler(new MyTransferHandler());
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       @Override
       public ActionGroup get() {
@@ -96,7 +101,8 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       @Override
       @NotNull
       public UiDecoration getDecoration() {
-        return new UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 10, TabsUtil.TAB_VERTICAL_PADDING, 10));
+        int sideInset = Registry.is("editor.use.compressible.tabs") ? 2 : 10;
+        return new UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, sideInset, TabsUtil.TAB_VERTICAL_PADDING, sideInset));
       }
     }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
@@ -717,5 +723,22 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       return myPinned;
     }
   }
+  
+  private final class MyTransferHandler extends TransferHandler {
+    private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
 
+    @Override
+    public boolean importData(JComponent comp, Transferable t) {
+      if (myFileDropHandler.canHandleDrop(t.getTransferDataFlavors())) {
+        myFileDropHandler.handleDrop(t, myProject, myWindow);
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+      return myFileDropHandler.canHandleDrop(transferFlavors);
+    }
+  }
 }

@@ -29,57 +29,58 @@ public final class Variables {
                                                     @NotNull final XCompositeNode node,
                                                     @NotNull final VariableContext context,
                                                     final boolean isLast) {
-    return scope.getVariables().then(new AsyncFunction<List<Variable>, Void>() {
-      @NotNull
-      @Override
-      public Promise<Void> fun(List<Variable> variables) {
-        if (node.isObsolete()) {
-          return Promise.REJECTED;
-        }
+    return scope.getVariablesHost().get()
+      .then(new AsyncFunction<List<Variable>, Void>() {
+        @NotNull
+        @Override
+        public Promise<Void> fun(List<Variable> variables) {
+          if (node.isObsolete()) {
+            return Promise.REJECTED;
+          }
 
-        final MemberFilter memberFilter = context.createMemberFilter();
-        Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
-        List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
-        List<Variable> functions = new SmartList<Variable>();
-        for (Variable variable : variables) {
-          if (memberFilter.isMemberVisible(variable, false)) {
-            Value value = variable.getValue();
-            if (value != null &&
-                value.getType() == ValueType.FUNCTION &&
-                value.getValueString() != null &&
-                !UNNAMED_FUNCTION_PATTERN.matcher(value.getValueString()).lookingAt()) {
-              functions.add(variable);
-            }
-            else {
-              properties.add(variable);
+          final MemberFilter memberFilter = context.createMemberFilter();
+          Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
+          List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
+          List<Variable> functions = new SmartList<Variable>();
+          for (Variable variable : variables) {
+            if (memberFilter.isMemberVisible(variable, false)) {
+              Value value = variable.getValue();
+              if (value != null &&
+                  value.getType() == ValueType.FUNCTION &&
+                  value.getValueString() != null &&
+                  !UNNAMED_FUNCTION_PATTERN.matcher(value.getValueString()).lookingAt()) {
+                functions.add(variable);
+              }
+              else {
+                properties.add(variable);
+              }
             }
           }
-        }
 
-        Collections.sort(properties, memberFilter.hasNameMappings() ? new Comparator<Variable>() {
-          @Override
-          public int compare(@NotNull Variable o1, @NotNull Variable o2) {
-            return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
+          Collections.sort(properties, memberFilter.hasNameMappings() ? new Comparator<Variable>() {
+            @Override
+            public int compare(@NotNull Variable o1, @NotNull Variable o2) {
+              return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
+            }
+          } : NATURAL_NAME_COMPARATOR);
+          sort(functions);
+
+          addAditionalVariables(variables, additionalVariables, properties, memberFilter);
+
+          if (!properties.isEmpty()) {
+            node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast);
           }
-        } : NATURAL_NAME_COMPARATOR);
-        sort(functions);
 
-        addAditionalVariables(variables, additionalVariables, properties, memberFilter);
+          if (!functions.isEmpty()) {
+            node.addChildren(XValueChildrenList.bottomGroup(new VariablesGroup("Functions", functions, context)), isLast);
+          }
+          else if (isLast && properties.isEmpty()) {
+            node.addChildren(XValueChildrenList.EMPTY, true);
+          }
 
-        if (!properties.isEmpty()) {
-          node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast);
+          return Promise.DONE;
         }
-
-        if (!functions.isEmpty()) {
-          node.addChildren(XValueChildrenList.bottomGroup(new VariablesGroup("Functions", functions, context)), isLast);
-        }
-        else if (isLast && properties.isEmpty()) {
-          node.addChildren(XValueChildrenList.EMPTY, true);
-        }
-
-        return Promise.DONE;
-      }
-    });
+      });
   }
 
   @Nullable

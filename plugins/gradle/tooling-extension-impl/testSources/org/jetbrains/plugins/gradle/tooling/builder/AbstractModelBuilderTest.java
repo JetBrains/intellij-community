@@ -29,6 +29,7 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
@@ -52,6 +53,7 @@ import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeThat;
 
 /**
  * @author Vladislav.Soroka
@@ -70,11 +72,12 @@ public abstract class AbstractModelBuilderTest {
   private static File ourTempDir;
 
   @NotNull
-  private final String gradleVersion;
+  protected final String gradleVersion;
   protected File testDir;
   protected ProjectImportAction.AllModels allModels;
 
   @Rule public TestName name = new TestName();
+  @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
 
   public AbstractModelBuilderTest(@NotNull String gradleVersion) {
     this.gradleVersion = gradleVersion;
@@ -88,6 +91,8 @@ public abstract class AbstractModelBuilderTest {
 
   @Before
   public void setUp() throws Exception {
+    assumeThat(gradleVersion, versionMatcherRule.getMatcher());
+
     ensureTempDirCreated();
 
     String methodName = name.getMethodName();

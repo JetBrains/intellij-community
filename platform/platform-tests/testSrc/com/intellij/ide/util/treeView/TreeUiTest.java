@@ -1063,7 +1063,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
 
-    new WaitFor(60000) {
+    new WaitFor(2000) {
       @Override
       protected boolean condition() {
         return done[0] && getMyBuilder().getUi().isReady();
@@ -2026,7 +2026,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public void testSelectionOnDeleteButKeepRef() throws Exception {
     doTestSelectionOnDelete(true);
   }
-  
+
   public void testMultipleSelectionOnDelete() throws Exception {
     buildStructure(myRoot);
     select(new NodeElement("fabrique"), false);
@@ -2252,7 +2252,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
   public void testSelectWhenUpdatesArePending() throws Exception {
-    notNull(getBuilder().getUpdater()).setDelay(1000);
+    notNull(getBuilder().getUpdater()).setDelay(100);
 
     buildStructure(myRoot);
 
@@ -2570,7 +2570,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     buildAction.run();
 
-    boolean released = new WaitFor(15000) {
+    boolean released = new WaitFor(1000) {
       @Override
       protected boolean condition() {
         return getBuilder().getUi() == null;
@@ -2654,12 +2654,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     @Override
     protected int getChildrenLoadingDelay() {
-      return 100;
+      return 50;
     }
 
     @Override
     protected int getNodeDescriptorUpdateDelay() {
-      return 100;
+      return 50;
     }
 
     @Override
@@ -2685,7 +2685,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     @Override
     protected int getNodeDescriptorUpdateDelay() {
-      return 300;
+      return 30;
     }
 
     @Override

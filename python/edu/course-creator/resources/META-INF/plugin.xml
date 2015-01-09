@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.plugins.coursecreator</id>
   <name>Course Creator for PyCharm Educational</name>
-  <version>1.1</version>
+  <version>1.2</version>
 
   <description><![CDATA[
       Plugin allows you to create new course for PyCharm Education Edition.
@@ -10,9 +10,9 @@
   <change-notes><![CDATA[
     ]]>
   </change-notes>
-  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
 
-  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
        on how to target different products -->
   <!-- uncomment to enable plugin in all products
   <depends>com.intellij.modules.lang</depends>

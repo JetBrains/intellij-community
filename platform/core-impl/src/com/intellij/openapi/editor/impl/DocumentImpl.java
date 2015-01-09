@@ -34,10 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
@@ -61,6 +58,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private final Ref<DocumentListener[]> myCachedDocumentListeners = Ref.create(null);
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
+  private final RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
@@ -138,6 +136,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     finally {
       myAcceptSlashR = accept;
     }
+  }
+
+  public boolean acceptsSlashR() {
+    return myAcceptSlashR;
   }
 
   private LineSet getLineSet() {
@@ -330,11 +332,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler() {
+  ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler() {
     return myReadonlyFragmentModificationHandler;
   }
 
-  public void setReadonlyFragmentModificationHandler(final ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
+  void setReadonlyFragmentModificationHandler(final ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
     myReadonlyFragmentModificationHandler = readonlyFragmentModificationHandler;
   }
 
@@ -343,9 +345,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return !myIsReadOnly;
   }
 
+  private  RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
+    return rangeMarker instanceof PersistentRangeMarker ? myPersistentRangeMarkers : myRangeMarkers;
+  }
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
-    return myRangeMarkers.removeInterval(rangeMarker);
+    return treeFor(rangeMarker).removeInterval(rangeMarker);
   }
 
   @Override
@@ -355,17 +360,17 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                                   boolean greedyToLeft,
                                   boolean greedyToRight,
                                   int layer) {
-    myRangeMarkers.addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
+    treeFor(rangeMarker).addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   @TestOnly
-  public int getRangeMarkersSize() {
-    return myRangeMarkers.size();
+  int getRangeMarkersSize() {
+    return myRangeMarkers.size() + myPersistentRangeMarkers.size();
   }
 
   @TestOnly
-  public int getRangeMarkersNodeSize() {
-    return myRangeMarkers.nodeSize();
+  int getRangeMarkersNodeSize() {
+    return myRangeMarkers.nodeSize()+myPersistentRangeMarkers.nodeSize();
   }
 
   @Override
@@ -688,7 +693,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     getLineSet().clearModificationFlags();
   }
 
-  public void clearLineModificationFlagsExcept(@NotNull int[] caretLines) {
+  void clearLineModificationFlagsExcept(@NotNull int[] caretLines) {
     IntArrayList modifiedLines = new IntArrayList(caretLines.length);
     LineSet lineSet = getLineSet();
     for (int line : caretLines) {
@@ -711,8 +716,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assertNotNestedModification();
     boolean enableRecursiveModifications = Registry.is("enable.recursive.document.changes"); // temporary property, to remove in IDEA 16
     myChangeInProgress = true;
-    final DocumentEvent event;
     try {
+      final DocumentEvent event;
       try {
         event = doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
       }
@@ -737,11 +742,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     Application app = ApplicationManager.getApplication();
     if (app != null) {
       FileDocumentManager manager = FileDocumentManager.getInstance();
-      if (manager != null) {
-        VirtualFile file = manager.getFile(this);
-        if (file != null && !file.isValid()) {
-          LOG.error("File of this document has been deleted.");
-        }
+      VirtualFile file = manager.getFile(this);
+      if (file != null && !file.isValid()) {
+        LOG.error("File of this document has been deleted.");
       }
     }
     assertInsideCommand();
@@ -873,9 +876,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     private final Ref<DocumentListener[]> myCachedDocumentListenersRef;
     private final List<DocumentListener> myDocumentListeners;
 
-    public DocumentListenerDisposable(@NotNull DocumentListener listener,
-                                      @NotNull Ref<DocumentListener[]> cachedDocumentListenersRef,
-                                      @NotNull List<DocumentListener> documentListeners) {
+    private DocumentListenerDisposable(@NotNull DocumentListener listener,
+                                       @NotNull Ref<DocumentListener[]> cachedDocumentListenersRef,
+                                       @NotNull List<DocumentListener> documentListeners) {
       myListener = listener;
       myCachedDocumentListenersRef = cachedDocumentListenersRef;
       myDocumentListeners = documentListeners;
@@ -945,7 +948,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private DocumentListener[] getCachedListeners() {
     DocumentListener[] cachedListeners = myCachedDocumentListeners.get();
     if (cachedListeners == null) {
-      DocumentListener[] listeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
+      DocumentListener[] listeners = ArrayUtil.stripTrailingNulls(myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]));
       Arrays.sort(listeners, PrioritizedDocumentListener.COMPARATOR);
       cachedListeners = listeners;
       myCachedDocumentListeners.set(cachedListeners);
@@ -1045,12 +1048,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
-    return myRangeMarkers.process(processor);
+    return processRangeMarkersOverlappingWith(0, getTextLength(), processor);
   }
 
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
-    return myRangeMarkers.processOverlappingWith(start, end, processor);
+    TextRangeInterval interval = new TextRangeInterval(start, end);
+    IntervalTreeImpl.PeekableIterator<RangeMarkerEx> iterator = IntervalTreeImpl
+      .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET);
+    try {
+      return ContainerUtil.process(iterator, processor);
+    }
+    finally {
+      iterator.dispose();
+    }
   }
 
   @NotNull
@@ -1072,7 +1083,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) + "]";
   }
 
-  public void requestTabTracking() {
+  void requestTabTracking() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myTabTrackingRequestors++ == 0) {
       myMightContainTabs = false;
@@ -1080,14 +1091,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  public void giveUpTabTracking() {
+  void giveUpTabTracking() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (--myTabTrackingRequestors == 0) {
       myMightContainTabs = true;
     }
   }
 
-  public boolean mightContainTabs() {
+  boolean mightContainTabs() {
     return myMightContainTabs;
   }
 

@@ -14,7 +14,6 @@ import sys
 
 from pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON
 
-
 if IS_PY24:
     from _pydev_imps._pydev_uuid_old import uuid4
 else:
@@ -423,15 +422,19 @@ class _ImportHook(ModuleType):
     def plugin_import(self, name, globals=None, locals=None,
                       fromlist=None, level=-2):
         import_name = name
-        if self.enabled:
-            ref_globals = globals
-            if ref_globals is None:
-                ref_globals = sys._getframe(1).f_globals
-            space = _discover_space(name, ref_globals)
-            if space is not None:
-                actual_name = space._rewrite_module_path(name)
-                if actual_name is not None:
-                    import_name = actual_name
+        try:
+            if self.enabled:
+                ref_globals = globals
+                if ref_globals is None:
+                    ref_globals = sys._getframe(1).f_globals
+                space = _discover_space(name, ref_globals)
+                if space is not None:
+                    actual_name = space._rewrite_module_path(name)
+                    if actual_name is not None:
+                        import_name = actual_name
+        except:
+            sys.stderr.write("Failed to get import name for name %s\n" % name)
+
         if level == -2:
             # fake impossible value; default value depends on version
             if IS_PY24:
@@ -448,13 +451,26 @@ class _ImportHook(ModuleType):
         return self._system_import(import_name, globals, locals,
                                    fromlist, level)
 
-
 try:
     import __builtin__ as builtins
 except ImportError:
     import builtins
 
+
 import_hook = _ImportHook(__name__ + '.import_hook', builtins.__import__)
 builtins.__import__ = import_hook.plugin_import
 sys.modules[import_hook.__name__] = import_hook
 del builtins
+
+
+def patched_exc_info():
+    type, value, traceback = sys.system_exc_info()
+    if type == ImportError:
+        #we should not show frame added by plugin_import call
+        return type, value, traceback.tb_next
+    return type, value, traceback
+
+
+system_exc_info = sys.exc_info
+sys.exc_info = patched_exc_info
+sys.system_exc_info = system_exc_info

@@ -29,6 +29,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   public static final IStubFileElementType TYPE = new IStubFileElementType(Language.ANY);
   private volatile T myFile;
   private volatile String myInvalidationReason;
+  private volatile PsiFileStub[] myStubRoots;
 
   public PsiFileStubImpl(final T file) {
     super(null, null);
@@ -63,5 +64,15 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   @Override
   public IStubFileElementType getType() {
     return TYPE;
+  }
+
+  @NotNull
+  @Override
+  public PsiFileStub[] getStubRoots() {
+    return myStubRoots != null ? myStubRoots : new PsiFileStub[]{this};
+  }
+
+  public void setStubRoots(@NotNull PsiFileStub[] roots) {
+    myStubRoots = roots;
   }
 }

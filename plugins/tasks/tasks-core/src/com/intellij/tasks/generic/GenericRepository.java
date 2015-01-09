@@ -15,7 +15,6 @@
  */
 package com.intellij.tasks.generic;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +23,6 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -50,7 +48,6 @@ import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
  */
 @Tag("Generic")
 public class GenericRepository extends BaseRepositoryImpl {
-  private static final Logger LOG = Logger.getInstance(GenericRepository.class);
 
   @NonNls public static final String SERVER_URL = "serverUrl";
   @NonNls public static final String USERNAME = "username";
@@ -217,7 +214,6 @@ public class GenericRepository extends BaseRepositoryImpl {
   }
 
   private String executeMethod(HttpMethod method) throws Exception {
-    LOG.debug("URI is " + method.getURI());
     String responseBody;
     getHttpClient().executeMethod(method);
     Header contentType = method.getResponseHeader("Content-Type");
@@ -229,17 +225,6 @@ public class GenericRepository extends BaseRepositoryImpl {
       InputStream stream = method.getResponseBodyAsStream();
       responseBody = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
     }
-    switch (getResponseType()) {
-      case XML:
-        TaskUtil.prettyFormatXmlToLog(LOG, responseBody);
-        break;
-      case JSON:
-        TaskUtil.prettyFormatJsonToLog(LOG, responseBody);
-        break;
-      default:
-        LOG.debug(responseBody);
-    }
-    LOG.debug("Status code is " + method.getStatusCode());
     if (method.getStatusCode() != HttpStatus.SC_OK) {
       throw new Exception("Request failed with HTTP error: " + method.getStatusText());
     }

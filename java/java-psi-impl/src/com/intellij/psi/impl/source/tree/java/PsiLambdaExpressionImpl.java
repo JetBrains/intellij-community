@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.Map;
 
 public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements PsiLambdaExpression {
@@ -185,7 +184,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
       if (candidateProperties != null) {
         final PsiMethod method = candidateProperties.getMethod();
-        if (!InferenceSession.isPertinentToApplicability(this, method) && hasFormalParameterTypes()) {
+        if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
           return true;
         }
 
@@ -231,7 +230,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
         if (map.put(this, leftType) != null) {
           return false;
         }
-        return LambdaHighlightingUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null;
+        return LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null;
       }
       finally {
         map.remove(this);

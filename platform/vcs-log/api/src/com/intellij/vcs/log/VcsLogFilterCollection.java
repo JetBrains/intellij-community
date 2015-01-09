@@ -45,6 +45,9 @@ public interface VcsLogFilterCollection {
   @Nullable
   VcsLogStructureFilter getStructureFilter();
 
+  @Nullable
+  VcsLogRootFilter getRootFilter();
+
   /**
    * Returns true if there are no filters in this collection.
    */

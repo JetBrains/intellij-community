@@ -20,6 +20,7 @@ import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.editor.StudyEditor;
+import com.jetbrains.python.run.PythonTracebackFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -27,8 +28,10 @@ import java.io.File;
 public class StudyRunAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(StudyRunAction.class.getName());
   public static final String ACTION_ID = "StudyRunAction";
+  private ProcessHandler myHandler;
 
   public void run(@NotNull final Project project, @NotNull final Sdk sdk) {
+    if (myHandler != null && !myHandler.isProcessTerminated()) return;
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     assert selectedEditor != null;
@@ -48,17 +51,16 @@ public class StudyRunAction extends DumbAwareAction {
             cmd.addParameter(new File(project.getBaseDir().getPath(), StudyResourceManger.USER_TESTER).getPath());
             cmd.addParameter(pythonPath);
             cmd.addParameter(filePath);
-            Process p;
+            Process process;
             try {
-              p = cmd.createProcess();
+              process = cmd.createProcess();
             }
             catch (ExecutionException e) {
               LOG.error(e);
               return;
             }
-            ProcessHandler handler = new OSProcessHandler(p);
-
-            RunContentExecutor executor = new RunContentExecutor(project, handler);
+            myHandler = new OSProcessHandler(process);
+            RunContentExecutor executor = new RunContentExecutor(project, myHandler).withFilter(new PythonTracebackFilter(project));
             Disposer.register(project, executor);
             executor.run();
             return;
@@ -66,9 +68,9 @@ public class StudyRunAction extends DumbAwareAction {
           try {
             cmd.addParameter(filePath);
             Process p = cmd.createProcess();
-            ProcessHandler handler = new OSProcessHandler(p);
+            myHandler = new OSProcessHandler(p);
 
-            RunContentExecutor executor = new RunContentExecutor(project, handler);
+            RunContentExecutor executor = new RunContentExecutor(project, myHandler).withFilter(new PythonTracebackFilter(project));
             Disposer.register(project, executor);
             executor.run();
           }

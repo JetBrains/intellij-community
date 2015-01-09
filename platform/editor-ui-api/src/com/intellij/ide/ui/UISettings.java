@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package com.intellij.ide.ui;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -39,24 +37,20 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.Map;
 
 import static com.intellij.util.ui.UIUtil.isValidFont;
 
 @State(
   name = "UISettings",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/ui.lnf.xml"
-    )}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/ui.lnf.xml")
 )
-public class UISettings extends SimpleModificationTracker implements PersistentStateComponent<UISettings>, ExportableApplicationComponent {
+public class UISettings extends SimpleModificationTracker implements PersistentStateComponent<UISettings> {
   /** Not tabbed pane. */
   public static final int TABS_NONE = 0;
 
   public static UISettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(UISettings.class);
+    return ServiceManager.getService(UISettings.class);
   }
 
   /**
@@ -65,7 +59,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public static UISettings getShadowInstance() {
     Application application = ApplicationManager.getApplication();
-    UISettings settings = application == null ? null : application.getComponent(UISettings.class);
+    UISettings settings = application == null ? null : getInstance();
     return settings == null ? new UISettings() : settings;
   }
 
@@ -76,7 +70,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int EDITOR_TAB_LIMIT = 10;
   public int EDITOR_TAB_TITLE_LIMIT = 100;
   public boolean ANIMATE_WINDOWS = true;
-  public int ANIMATION_SPEED = 2000; // Pixels per second
+  @Deprecated //todo remove in IDEA 16
+  public int ANIMATION_SPEED = 4000; // Pixels per second
+  public int ANIMATION_DURATION = 300; // Milliseconds
   public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
   public boolean HIDE_TOOL_STRIPES = true;
   public boolean WIDESCREEN_SUPPORT = false;
@@ -131,7 +127,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     setSystemFontFaceAndSize();
 
     Boolean scrollToSource = WelcomeWizardUtil.getAutoScrollToSource();
-    if (scrollToSource != null) DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
+    if (scrollToSource != null) {
+      DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
+    }
   }
 
   private void tweakPlatformDefaults() {
@@ -293,6 +291,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
       }
     }
+    UIUtil.setHintingForLCDText(g2d);
   }
 
   /**
@@ -306,29 +305,4 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
     return false;
   }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("ui.lnf")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return IdeBundle.message("ui.settings");
-  }
-
-  @NonNls
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "UISettings";
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() { }
 }

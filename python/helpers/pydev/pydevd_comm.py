@@ -454,6 +454,8 @@ class WriterThread(PyDBDaemonThread):
             if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
                 traceback.print_exc()
 
+    def empty(self):
+        return self.cmdQueue.empty()
 
 
 

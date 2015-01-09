@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ class Paths {
   final artifacts
   final artifacts_core
   final artifacts_jps
+  final ideaSystem
+  final ideaConfig
 
   def Paths(String out) {
     sandbox = out
@@ -39,6 +41,8 @@ class Paths {
     artifacts = "$sandbox/artifacts"
     artifacts_core = "$artifacts/core"
     artifacts_jps = "$artifacts/jps"
+    ideaSystem = "$sandbox/system"
+    ideaConfig = "$sandbox/config"
   }
 }
 
@@ -75,6 +79,8 @@ target('default': 'The default target') {
 
   zipSources(home, paths.artifacts)
 
+  indexSearchableOptions()
+
   layoutAll([buildNumber: "IC-$snapshot",
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
@@ -83,13 +89,26 @@ target('default': 'The default target') {
 
 target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
   loadProject()
+
   // load ApplicationInfo.xml properties
   ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
+
+  indexSearchableOptions()
 
   layoutAll([buildNumber: "IC-$snapshot",
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
              home, null, paths)
+}
+
+private void indexSearchableOptions() {
+  buildSearchableOptions("${projectBuilder.moduleOutput(findModule("resources-en"))}/search", [], {
+    ant.pathelement(location: "$jdkHome/lib/tools.jar")
+    ant.pathelement(location: "$home/lib/junit.jar")
+    projectBuilder.moduleRuntimeClasspath(findModule("community-main"), false).each {
+      ant.pathelement(location: it)
+    }
+  })
 }
 
 def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps = false) {

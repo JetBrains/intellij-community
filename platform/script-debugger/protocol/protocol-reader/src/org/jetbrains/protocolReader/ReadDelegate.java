@@ -28,7 +28,7 @@ class ReadDelegate {
     out.openBlock();
     out.append("return ");
     if (isList) {
-      out.append("readObjectArray(").append(Util.READER_NAME).append(", null, new ").append(scope.requireFactoryGenerationAndGetName(typeHandler)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append("()").append(", false)");
+      out.append("readObjectArray(").append(Util.READER_NAME).append(", new ").append(scope.requireFactoryGenerationAndGetName(typeHandler)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append("()").append(")");
     }
     else {
       typeHandler.writeInstantiateCode(scope, out);
