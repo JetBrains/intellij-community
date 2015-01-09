@@ -17,7 +17,7 @@ public interface EvaluateContext {
    * additionalContext parameter.
    */
   @NotNull
-  Promise<EvaluateResult> evaluate(@NotNull String expression, @Nullable Map<String, EvaluateContextAdditionalParameter> additionalContext, boolean enableBreak);
+  Promise<EvaluateResult> evaluate(@NotNull String expression, @Nullable Map<String, Object> additionalContext, boolean enableBreak);
 
   @NotNull
   Promise<EvaluateResult> evaluate(@NotNull String expression);

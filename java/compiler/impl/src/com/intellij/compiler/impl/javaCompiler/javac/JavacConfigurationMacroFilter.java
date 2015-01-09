@@ -30,7 +30,7 @@ public class JavacConfigurationMacroFilter extends PathMacroFilter {
       if (parent != null && "option".equals(parent.getName()) && "ADDITIONAL_OPTIONS_STRING".equals(parent.getAttributeValue("name"))) {
         Element grandParent = parent.getParentElement();
         return grandParent != null && grandParent.getName().equals("component")
-               && grandParent.getAttributeValue("name").equals("JavacSettings");
+               && "JavacSettings".equals(grandParent.getAttributeValue("name"));
       }
     }
     return false;

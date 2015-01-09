@@ -30,7 +30,7 @@ class InterfaceReader {
   private static final PrimitiveValueReader RAW_STRING_PARSER = new PrimitiveValueReader("String", null, true);
   private static final PrimitiveValueReader RAW_STRING_OR_MAP_PARSER = new PrimitiveValueReader("Object", null, true) {
     @Override
-    void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, @NotNull TextOutput out) {
+    void writeReadCode(ClassScope methodScope, boolean subtyping, @NotNull TextOutput out) {
       out.append("readRawStringOrMap(");
       addReaderParameter(subtyping, out);
       out.append(')');
@@ -50,7 +50,7 @@ class InterfaceReader {
     }
 
     @Override
-    void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, @NotNull TextOutput out) {
+    void writeReadCode(ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
       out.append("null");
     }
   };

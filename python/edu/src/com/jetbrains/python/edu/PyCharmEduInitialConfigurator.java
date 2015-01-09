@@ -81,7 +81,6 @@ public class PyCharmEduInitialConfigurator {
    * @noinspection UnusedParameters
    */
   public PyCharmEduInitialConfigurator(MessageBus bus,
-                                       UISettings uiSettings,
                                        CodeInsightSettings codeInsightSettings,
                                        final PropertiesComponent propertiesComponent,
                                        FileTypeManager fileTypeManager,
@@ -90,7 +89,8 @@ public class PyCharmEduInitialConfigurator {
     if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
-      UISettings.getInstance().HIDE_TOOL_STRIPES = false;
+      UISettings uiSettings = UISettings.getInstance();
+      uiSettings.HIDE_TOOL_STRIPES = false;
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MAIN_TOOLBAR = false;
@@ -105,8 +105,8 @@ public class PyCharmEduInitialConfigurator {
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
       settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-      UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
-      UISettings.getInstance().SHOW_MEMORY_INDICATOR = false;
+      uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
+      uiSettings.SHOW_MEMORY_INDICATOR = false;
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override

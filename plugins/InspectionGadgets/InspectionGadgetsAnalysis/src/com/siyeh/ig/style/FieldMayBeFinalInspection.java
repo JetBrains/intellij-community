@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalHandler;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -26,7 +27,7 @@ import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import com.siyeh.ig.psiutils.FinalUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class FieldMayBeFinalInspection extends BaseInspection {
+public class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

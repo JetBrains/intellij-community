@@ -39,9 +39,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   // context of matching
   private MatchContext matchContext;
 
-  private MatchingHandler myLastHandler;
-
-  private Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<Language, PsiElementVisitor>(1);
+  private final Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<Language, PsiElementVisitor>(1);
 
   public PsiElement getElement() {
     return myElement;
@@ -162,8 +160,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       return nodes.hasNext() == nodes2.hasNext();
     }
 
-    myLastHandler = matchContext.getPattern().getHandler(nodes.current());
-    return myLastHandler.matchSequentially(
+    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(
       nodes,
       nodes2,
       matchContext
