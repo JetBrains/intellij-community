@@ -27,7 +27,7 @@ import java.util.ArrayList;
 /**
  * @author peter
  */
-public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> implements DumbAware {
+public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor");
 
   @Override

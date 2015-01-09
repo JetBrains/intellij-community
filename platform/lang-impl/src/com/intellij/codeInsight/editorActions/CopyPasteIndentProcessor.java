@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTransferableData> implements DumbAware {
+public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTransferableData> {
   @NotNull
   @Override
   public List<IndentTransferableData> collectTransferableData(PsiFile file,

@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> implements DumbAware {
+public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> {
   @NotNull
   @Override
   public List<FoldingTransferableData> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
