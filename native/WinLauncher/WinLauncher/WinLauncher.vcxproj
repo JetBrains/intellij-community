@@ -89,6 +89,9 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableDPIAwareness>true</EnableDPIAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
