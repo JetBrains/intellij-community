@@ -69,7 +69,7 @@ public abstract class VagrantSupport {
   @NotNull
   public abstract RemoteCredentials getCredentials(@NotNull String vagrantFolder, @Nullable String machineName) throws IOException;
 
-  public abstract boolean checkVagrantRunning(String folder, boolean runIfDown);
+  public abstract boolean checkVagrantRunning(String folder, boolean askToRunIfDown);
 
   public abstract void runVagrant(String folder) throws ExecutionException;
 
