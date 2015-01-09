@@ -45,6 +45,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
@@ -120,8 +121,9 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     ZenCodingGenerator defaultGenerator = null;
     ZenCodingGenerator[] generators = ZenCodingGenerator.getInstances();
     for (ZenCodingGenerator generator : generators) {
-      if (defaultGenerator == null && generator.isMyContext(context, wrapping) && generator.isAppliedByDefault(context)) {
+      if (generator.isMyContext(context, wrapping) && generator.isAppliedByDefault(context)) {
         defaultGenerator = generator;
+        break;
       }
     }
     while (node instanceof FilterNode) {
@@ -188,7 +190,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     }
 
     PsiElement context = callback.getContext();
-    ZenCodingGenerator generator = findApplicableGenerator(node, context, false);
+    ZenCodingGenerator generator = ObjectUtils.notNull(findApplicableGenerator(node, context, false), defaultGenerator);
     List<ZenCodingFilter> filters = getFilters(node, context);
     filters.addAll(extraFilters);
 
