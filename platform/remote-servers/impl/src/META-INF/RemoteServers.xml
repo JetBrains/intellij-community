@@ -52,5 +52,6 @@
       <action id="Servers.DeployWithDebug" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployWithDebugAction"/>
       <action id="RemoteServers.EditDeploymentConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeploymentConfigAction"/>
     </group>
+    <group id="RemoteServersViewPopup"/>
   </actions>
 </idea-plugin>

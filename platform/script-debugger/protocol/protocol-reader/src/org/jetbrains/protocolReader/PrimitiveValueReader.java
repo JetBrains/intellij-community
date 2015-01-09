@@ -32,7 +32,7 @@ class PrimitiveValueReader extends ValueReader {
   }
 
   @Override
-  void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, @NotNull TextOutput out) {
+  void writeReadCode(ClassScope methodScope, boolean subtyping, @NotNull TextOutput out) {
     if (asRawString) {
       out.append("readRawString(");
       addReaderParameter(subtyping, out);
@@ -41,7 +41,7 @@ class PrimitiveValueReader extends ValueReader {
     else {
       ValueReader.addReaderParameter(subtyping, out);
       out.append(".next").append(readPostfix).append("()");
-      //beginReadCall(readPostfix, subtyping, out, fieldName);
+      //beginReadCall(readPostfix, subtyping, out, name);
     }
   }
 

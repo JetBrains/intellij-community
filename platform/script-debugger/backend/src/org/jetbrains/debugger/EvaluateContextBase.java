@@ -38,7 +38,7 @@ public abstract class EvaluateContextBase<VALUE_MANAGER extends ValueManager> im
 
   @NotNull
   @Override
-  public abstract Promise<EvaluateResult> evaluate(@NotNull String expression, @Nullable Map<String, EvaluateContextAdditionalParameter> additionalContext, boolean enableBreak);
+  public abstract Promise<EvaluateResult> evaluate(@NotNull String expression, @Nullable Map<String, Object> additionalContext, boolean enableBreak);
 
   @NotNull
   public final VALUE_MANAGER getValueManager() {

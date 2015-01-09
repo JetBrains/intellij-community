@@ -33,7 +33,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.junit.Assert;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -83,7 +82,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     final HashMap<Method, boolean[]> map = new HashMap<Method, boolean[]>();
 
     // collecting leakedParameters
-    final ClassReader classReader = new ClassReader(new FileInputStream(jClass.getResource("/" + jClass.getName().replace('.', '/') + ".class").getFile()));
+    final ClassReader classReader = new ClassReader(jClass.getResourceAsStream("/" + jClass.getName().replace('.', '/') + ".class"));
     classReader.accept(new ClassVisitor(Opcodes.ASM5) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -213,8 +212,8 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     Assert.assertEquals(asmKey, psiKey);
   }
 
-  private void setUpDataClasses() throws IOException {
-    File classesDir = new File(Test01.class.getResource("/" + Test01.class.getPackage().getName().replace('.', '/')).getFile());
+  private void setUpDataClasses() throws Exception {
+    File classesDir = new File(Test01.class.getResource("/" + Test01.class.getPackage().getName().replace('.', '/')).toURI());
     File destDir = new File(myModule.getProject().getBaseDir().getPath() + myClassesProjectRelativePath);
     FileUtil.copyDir(classesDir, destDir);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destDir);

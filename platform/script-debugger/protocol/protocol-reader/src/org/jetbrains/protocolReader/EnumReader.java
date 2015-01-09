@@ -20,7 +20,7 @@ class EnumReader<T extends Enum<T>> extends ValueReader {
   }
 
   @Override
-  void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, @NotNull TextOutput out) {
+  void writeReadCode(ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
     beginReadCall("Enum", subtyping, out);
     out.comma().append(enumClass.getCanonicalName()).append(".class").append(')');
   }

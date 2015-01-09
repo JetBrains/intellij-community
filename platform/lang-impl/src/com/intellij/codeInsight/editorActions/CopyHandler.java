@@ -35,7 +35,6 @@ import com.intellij.psi.PsiFile;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
@@ -89,9 +88,15 @@ public class CopyHandler extends EditorActionHandler {
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
     List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
-    CopyPastePostProcessor<? extends TextBlockTransferableData>[] postProcessors = Extensions.getExtensions(CopyPastePostProcessor.EP_NAME);
-    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : DumbService.getInstance(project).filterByDumbAwareness( Arrays.asList(postProcessors))) {
-      transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+    
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+    try {
+      for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+        transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+      }
+    }
+    finally {
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
 
     String text = editor.getCaretModel().supportsMultipleCarets()

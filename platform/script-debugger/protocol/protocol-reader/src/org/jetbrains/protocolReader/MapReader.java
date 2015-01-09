@@ -30,7 +30,7 @@ public class MapReader extends ValueReader {
   }
 
   @Override
-  void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, @NotNull TextOutput out) {
+  void writeReadCode(ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
     beginReadCall("Map", subtyping, out);
     if (componentParser == null) {
       out.comma().append("null");

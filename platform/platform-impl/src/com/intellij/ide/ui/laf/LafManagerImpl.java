@@ -115,7 +115,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private final UIManager.LookAndFeelInfo[] myLaFs;
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
-  private final UISettings myUiSettings;
   private String myLastWarning = null;
   private PropertyChangeListener myThemeChangeListener = null;
   private static final Map<String, String> ourLafClassesAliases = ContainerUtil.newHashMap();
@@ -127,8 +126,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Invoked via reflection.
    */
-  LafManagerImpl(UISettings uiSettings) {
-    myUiSettings = uiSettings;
+  LafManagerImpl() {
     myListenerList = new EventListenerList();
 
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
@@ -740,9 +738,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     //    uiDefaults.put(entry.getKey(), entry.getValue());
     //  }
     //} else
-    if (UISettings.getInstance().OVERRIDE_NONIDEA_LAF_FONTS) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
-      initFontDefaults(uiDefaults, myUiSettings.FONT_FACE, myUiSettings.FONT_SIZE);
+      initFontDefaults(uiDefaults, uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
