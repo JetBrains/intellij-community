@@ -16,6 +16,8 @@
 package org.jetbrains.java.generate.psi;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -668,9 +670,16 @@ public class PsiAdapter {
     }
 
   public static int getJavaVersion(PsiElement element) {
-    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
+    final JavaSdkVersion sdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(element);
     int version = 0;
-    switch (languageLevel) {
+    switch (sdkVersion) {
+      case JDK_1_0:
+      case JDK_1_1:
+        version = 1;
+        break;
+      case JDK_1_2:
+        version = 2;
+        break;
       case JDK_1_3:
         version = 3;
         break;
@@ -694,5 +703,11 @@ public class PsiAdapter {
         break;
     }
     return version;
+  }
+
+  public static boolean isNestedArray(PsiType aType) {
+    if (!(aType instanceof PsiArrayType)) return false;
+    final PsiType componentType = ((PsiArrayType)aType).getComponentType();
+    return componentType instanceof PsiArrayType;
   }
 }

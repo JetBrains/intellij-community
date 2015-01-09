@@ -37,13 +37,6 @@ public class RunConfigurationPathMacroFilter extends PathMacroFilter {
       return true;
     }
 
-    if (tagName.equals("option")) {
-      String optionName = parent.getAttributeValue("name");
-      if ("MAIN_CLASS_NAME".equals(optionName) || "METHOD_NAME".equals(optionName)) {
-        return true;
-      }
-    }
-    
     return false;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.javaCompiler.javac;
+package com.intellij.execution.configuration;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
 /**
- * @author nik
+ * @author peter
  */
-public class JavacConfigurationMacroFilter extends PathMacroFilter {
+public class JavaRunConfigurationPathMacroFilter extends PathMacroFilter {
   @Override
-  public boolean recursePathMacros(Attribute attribute) {
-    if (attribute.getName().equals("value")) {
-      Element parent = attribute.getParent();
-      if (parent != null && "option".equals(parent.getName()) && "ADDITIONAL_OPTIONS_STRING".equals(parent.getAttributeValue("name"))) {
-        Element grandParent = parent.getParentElement();
-        return grandParent != null && grandParent.getName().equals("component")
-               && "JavacSettings".equals(grandParent.getAttributeValue("name"));
+  public boolean skipPathMacros(Attribute attribute) {
+    final Element parent = attribute.getParent();
+
+    if (parent.getName().equals("option")) {
+      String optionName = parent.getAttributeValue("name");
+      if ("MAIN_CLASS_NAME".equals(optionName) || "METHOD_NAME".equals(optionName)) {
+        return true;
       }
     }
+
     return false;
   }
+
 }

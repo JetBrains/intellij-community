@@ -63,7 +63,7 @@ class InProcessGroovyc {
         @Override
         public boolean shouldCacheData(@NotNull URL url) {
           try {
-            String file = new File(url.toURI()).getPath();
+            String file = FileUtil.toCanonicalPath(new File(url.toURI()).getPath());
             for (String output : outputs) {
               if (FileUtil.startsWith(output, file)) {
                 return false;
@@ -106,7 +106,7 @@ class InProcessGroovyc {
 
   @Nullable
   private static ClassLoader obtainParentLoader(Collection<String> compilationClassPath) throws MalformedURLException {
-    if (!"true".equals(System.getProperty("groovyc.reuse.compiler.classes"))) {
+    if (!"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
       return null;
     }
 
