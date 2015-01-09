@@ -278,8 +278,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
   }
 
+  @NotNull
   private static XValuePresentation createNumberPresentation(@NotNull String value) {
-    return value.equals("NaN") || value.equals("Infinity") ? new XKeywordValuePresentation(value) : new XNumericValuePresentation(value);
+    return value.equals(PrimitiveValue.NA_N_VALUE) || value.equals(PrimitiveValue.INFINITY_VALUE) ? new XKeywordValuePresentation(value) : new XNumericValuePresentation(value);
   }
 
   @Override

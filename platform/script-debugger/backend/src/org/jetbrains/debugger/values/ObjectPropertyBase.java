@@ -1,25 +1,29 @@
 package org.jetbrains.debugger.values;
 
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.ObjectProperty;
 import org.jetbrains.debugger.ValueModifier;
 import org.jetbrains.debugger.VariableImpl;
 
-public abstract class ObjectPropertyBase extends VariableImpl implements ObjectProperty {
+public class ObjectPropertyBase extends VariableImpl implements ObjectProperty {
+  public static final byte WRITABLE = 0x01;
+  public static final byte CONFIGURABLE = 0x02;
+  public static final byte ENUMERABLE = 0x04;
+
   private final FunctionValue getter;
   private final FunctionValue setter;
 
-  protected ObjectPropertyBase(@NotNull String name, @Nullable Value value, @Nullable FunctionValue getter, @Nullable FunctionValue setter, @Nullable ValueModifier valueModifier) {
+  private final int flags;
+
+  public ObjectPropertyBase(@NotNull String name, @Nullable Value value, @Nullable FunctionValue getter, @Nullable FunctionValue setter, @Nullable ValueModifier valueModifier, int flags) {
     super(name, value, valueModifier);
 
     this.getter = getter;
     this.setter = setter;
-  }
 
-  @Override
-  public boolean isWritable() {
-    return true;
+    this.flags = flags;
   }
 
   @Nullable
@@ -30,17 +34,22 @@ public abstract class ObjectPropertyBase extends VariableImpl implements ObjectP
 
   @Nullable
   @Override
-  public FunctionValue getSetter() {
+  public final FunctionValue getSetter() {
     return setter;
   }
 
   @Override
-  public boolean isConfigurable() {
-    return true;
+  public final boolean isWritable() {
+    return BitUtil.isSet(flags, WRITABLE);
   }
 
   @Override
-  public boolean isEnumerable() {
-    return true;
+  public final boolean isConfigurable() {
+    return BitUtil.isSet(flags, CONFIGURABLE);
+  }
+
+  @Override
+  public final boolean isEnumerable() {
+    return BitUtil.isSet(flags, ENUMERABLE);
   }
 }
