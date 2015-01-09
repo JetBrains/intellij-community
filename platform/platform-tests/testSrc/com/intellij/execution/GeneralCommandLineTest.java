@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
@@ -257,7 +258,7 @@ public class GeneralCommandLineTest {
     return output;
   }
 
-  private GeneralCommandLine makeJavaCommand(Class<?> testClass, @Nullable File copyTo) throws IOException {
+  private GeneralCommandLine makeJavaCommand(Class<?> testClass, @Nullable File copyTo) throws IOException, URISyntaxException {
     String className = testClass.getName();
     URL url = getClass().getClassLoader().getResource(className.replace(".", "/") + ".class");
     assertNotNull(url);
@@ -272,7 +273,7 @@ public class GeneralCommandLineTest {
 
     commandLine.addParameter("-cp");
     String[] packages = className.split("\\.");
-    File classFile = new File(url.getFile());
+    File classFile = new File(url.toURI());
     if (copyTo == null) {
       File dir = classFile;
       for (String ignored : packages) dir = dir.getParentFile();
