@@ -33,7 +33,7 @@ import java.io.IOException;
     )}
 )
 public class ToStringTemplatesManager extends TemplatesManager {
-  private static final String DEFAULT_CONCAT = "/org/jetbrains/java/generate/template/toString/DefaultConcatMember.vm";
+  private static final String DEFAULT_CONCAT = "DefaultConcatMember.vm";
   private static final String DEFAULT_CONCAT_GROOVY = "/org/jetbrains/java/generate/template/toString/DefaultConcatMemberGroovy.vm";
   private static final String DEFAULT_CONCAT_SUPER = "/org/jetbrains/java/generate/template/toString/DefaultConcatMemberSuper.vm";
   private static final String DEFAULT_BUFFER = "/org/jetbrains/java/generate/template/toString/DefaultBuffer.vm";
@@ -46,11 +46,8 @@ public class ToStringTemplatesManager extends TemplatesManager {
     return ServiceManager.getService(ToStringTemplatesManager.class);
   }
 
-  public ToStringTemplatesManager() {
-    super(getDefaultTemplates());
-  }
-
-  public static TemplateResource[] getDefaultTemplates() {
+  @Override
+  public TemplateResource[] getDefaultTemplates() {
     try {
       return new TemplateResource[]{
         new TemplateResource("String concat (+)", readFile(DEFAULT_CONCAT), true),

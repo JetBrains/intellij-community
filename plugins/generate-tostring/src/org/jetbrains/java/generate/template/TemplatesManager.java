@@ -32,14 +32,9 @@ import java.util.*;
 
 public abstract class TemplatesManager implements PersistentStateComponent<TemplatesState> {
 
-    private TemplatesState myState = new TemplatesState();
+  private TemplatesState myState = new TemplatesState();
 
-    public TemplatesManager(TemplateResource[] resources) {
-        for (TemplateResource o : resources) {
-            addTemplate(o);
-        }
-    }
-
+  public abstract TemplateResource[] getDefaultTemplates();
   /**
    * Reads the content of the resource and return it as a String.
    * <p/>Uses the class loader that loaded this class to find the resource in its classpath.
@@ -77,7 +72,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
 
   public Collection<TemplateResource> getAllTemplates() {
     HashSet<String> names = new HashSet<String>();
-    Collection<TemplateResource> templates = new LinkedHashSet<TemplateResource>();
+    Collection<TemplateResource> templates = new LinkedHashSet<TemplateResource>(Arrays.asList(getDefaultTemplates()));
     for (TemplateResource template : myState.templates) {
       if (names.add(template.getFileName())) {
         templates.add(template);

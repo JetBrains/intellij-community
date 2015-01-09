@@ -41,11 +41,8 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
     return ServiceManager.getService(EqualsHashCodeTemplatesManager.class);
   }
 
-  public EqualsHashCodeTemplatesManager() {
-    super(getDefaultTemplates());
-  }
-
-  private static TemplateResource[] getDefaultTemplates() {
+  @Override
+  public TemplateResource[] getDefaultTemplates() {
     try {
       return new TemplateResource[] {
         new TemplateResource("Default equals", readFile(DEFAULT_EQUALS), true),
