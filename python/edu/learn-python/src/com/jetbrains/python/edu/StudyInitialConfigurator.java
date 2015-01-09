@@ -2,7 +2,6 @@ package com.jetbrains.python.edu;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +26,6 @@ public class StudyInitialConfigurator {
    * @noinspection UnusedParameters
    */
   public StudyInitialConfigurator(MessageBus bus,
-                                  UISettings uiSettings,
                                   CodeInsightSettings codeInsightSettings,
                                   final PropertiesComponent propertiesComponent,
                                   FileTypeManager fileTypeManager,
