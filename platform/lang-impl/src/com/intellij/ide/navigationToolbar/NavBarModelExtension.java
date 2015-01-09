@@ -25,6 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * The interface has a default implementation ({@link DefaultNavBarExtension}) which is normally registered as last.
+ * That means that custom implementations are called before the default one - with the exception of {@link #adjustElement(PsiElement)}
+ * method, for which the order is reverse.
+ *
  * @author anna
  * @since 04-Feb-2008
  */
