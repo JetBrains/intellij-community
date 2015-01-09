@@ -36,7 +36,7 @@ public class ElementUtils {
      * @param members a list of {@link com.intellij.psi.PsiMember} objects.
      * @return a filtered list of only the fields as {@link FieldElement} objects.
      */
-    public static List<FieldElement> getOnlyAsFieldElements(Collection<PsiMember> members) {
+    public static List<FieldElement> getOnlyAsFieldElements(Collection<? extends PsiMember> members) {
         List<FieldElement> fieldElementList = new ArrayList<FieldElement>();
 
         for (PsiMember member : members) {
@@ -56,7 +56,7 @@ public class ElementUtils {
      * @param members a list of {@link com.intellij.psi.PsiMember} objects.
      * @return a filtered list of only the methods as a {@link MethodElement} objects.
      */
-    public static List<MethodElement> getOnlyAsMethodElements(Collection<PsiMember> members) {
+    public static List<MethodElement> getOnlyAsMethodElements(Collection<? extends PsiMember> members) {
         List<MethodElement> methodElementList = new ArrayList<MethodElement>();
 
         for (PsiMember member : members) {
@@ -76,7 +76,7 @@ public class ElementUtils {
      * @param members a list of {@link com.intellij.psi.PsiMember} objects.
      * @return a filtered list of only the methods as a {@link FieldElement} or {@link MethodElement} objects.
      */
-    public static List<Element> getOnlyAsFieldAndMethodElements(Collection<PsiMember> members) {
+    public static List<Element> getOnlyAsFieldAndMethodElements(Collection<? extends PsiMember> members) {
         List<Element> elementList = new ArrayList<Element>();
 
         for (PsiMember member : members) {

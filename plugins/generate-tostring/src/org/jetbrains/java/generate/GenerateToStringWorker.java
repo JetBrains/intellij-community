@@ -19,16 +19,20 @@
  */
 package org.jetbrains.java.generate;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.config.*;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
 import org.jetbrains.java.generate.psi.PsiAdapter;
@@ -52,6 +56,70 @@ public class GenerateToStringWorker {
     this.hasOverrideAnnotation = insertAtOverride;
   }
 
+  /**
+   * Creates the <code>toString</code> method.
+   *
+   * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
+   * @param policy          conflict resolution policy
+   * @param params          additional parameters stored with key/value in the map.
+   * @param template        the template to use
+   * @return the created method, null if the method is not created due the user cancels this operation
+   * @throws GenerateCodeException       is thrown when there is an error generating the javacode.
+   * @throws IncorrectOperationException is thrown by IDEA.
+   */
+  @Nullable
+  private PsiMethod createToStringMethod(Collection<PsiMember> selectedMembers,
+                                         ConflictResolutionPolicy policy,
+                                         Map<String, String> params,
+                                         TemplateResource template) throws IncorrectOperationException, GenerateCodeException {
+    // generate code using velocity
+    String body = GenerationUtil.velocityGenerateCode(clazz, selectedMembers, params, template.getMethodBody(), config.getSortElements(), config.isUseFullyQualifiedName());
+    if (logger.isDebugEnabled()) logger.debug("Method body generated from Velocity:\n" + body);
+
+    // fix weird linebreak problem in IDEA #3296 and later
+    body = StringUtil.convertLineSeparators(body);
+
+    // create psi newMethod named toString()
+    final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
+    if (topLevelFactory == null) {
+      return null;
+    }
+    PsiMethod newMethod;
+    try {
+      newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
+      CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
+    } catch (IncorrectOperationException ignore) {
+      HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
+                                                      template.getFileName() + '\'');
+      return null;
+    }
+
+    // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
+    PsiMethod existingMethod = clazz.findMethodBySignature(newMethod, false);
+    PsiMethod toStringMethod = policy.applyMethod(clazz, existingMethod, newMethod, editor);
+    if (toStringMethod == null) {
+      return null; // user cancelled so return null
+    }
+
+    if (hasOverrideAnnotation) {
+      toStringMethod.getModifierList().addAnnotation("java.lang.Override");
+    }
+
+    // applyJavaDoc conflict resolution policy (add or keep existing)
+    String existingJavaDoc = params.get("existingJavaDoc");
+    String newJavaDoc = template.getJavaDoc();
+    if (existingJavaDoc != null || newJavaDoc != null) {
+      // generate javadoc using velocity
+      newJavaDoc = GenerationUtil.velocityGenerateCode(clazz, selectedMembers, params, newJavaDoc, config.getSortElements(), config.isUseFullyQualifiedName());
+      if (logger.isDebugEnabled()) logger.debug("JavaDoc body generated from Velocity:\n" + newJavaDoc);
+
+      GenerationUtil.applyJavaDoc(toStringMethod, existingJavaDoc, newJavaDoc);
+    }
+
+    // return the created method
+    return toStringMethod;
+  }
+
   public void execute(Collection<PsiMember> members, TemplateResource template) throws IncorrectOperationException, GenerateCodeException {
     // decide what to do if the method already exists
     ConflictResolutionPolicy resolutionPolicy = exitsMethodDialog(template);
@@ -65,9 +133,8 @@ public class GenerateToStringWorker {
     beforeCreateToStringMethod(params, template);
 
     // generate method
-    PsiMethod method = GenerationUtil
-      .createMethodByTemplate(template, clazz, editor, members, params, resolutionPolicy, hasOverrideAnnotation,
-                              config.getSortElements(), config.isUseFullyQualifiedName());
+    PsiMethod method =
+      createToStringMethod(members, resolutionPolicy, params, template);
 
     // after, if method was generated (not cancel policy)
     if (method != null) {

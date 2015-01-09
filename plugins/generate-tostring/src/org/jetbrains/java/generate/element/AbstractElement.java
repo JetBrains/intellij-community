@@ -38,6 +38,13 @@ public abstract class AbstractElement implements Element {
     protected boolean isDate;
     protected boolean isCalendar;
     protected boolean isBoolean;
+    protected boolean isLong;
+    protected boolean isFloat;
+    protected boolean isDouble;
+    protected boolean isVoid;
+    protected boolean isChar;
+    protected boolean isByte;
+    protected boolean isShort;
     protected String typeName;
     protected String typeQualifiedName;
     protected boolean isModifierStatic;
@@ -117,6 +124,69 @@ public abstract class AbstractElement implements Element {
 
     public boolean isBoolean() {
         return isBoolean;
+    }
+
+    @Override
+    public boolean isLong() {
+        return isLong;
+    }
+
+    public void setLong(boolean isLong) {
+        this.isLong = isLong;
+    }
+
+    @Override
+    public boolean isFloat() {
+        return isFloat;
+    }
+
+    public void setFloat(boolean isFloat) {
+        this.isFloat = isFloat;
+    }
+
+    @Override
+    public boolean isDouble() {
+        return isDouble;
+    }
+
+    public void setDouble(boolean isDouble) {
+        this.isDouble = isDouble;
+    }
+
+    @Override
+    public boolean isVoid() {
+        return isVoid;
+    }
+
+    public void setVoid(boolean isVoid) {
+        this.isVoid = isVoid;
+    }
+
+    @Override
+    public boolean isChar() {
+        return isChar;
+    }
+
+    public void setChar(boolean isChar) {
+        this.isChar = isChar;
+    }
+
+    @Override
+    public boolean isByte() {
+        return isByte;
+    }
+
+    public void setByte(boolean isByte) {
+        this.isByte = isByte;
+    }
+
+    @Override
+    public boolean isShort() {
+        return isShort;
+    }
+
+    public void setShort(boolean isShort) {
+        this.isShort = isShort;
     }
 
     public void setBoolean(boolean aBoolean) {

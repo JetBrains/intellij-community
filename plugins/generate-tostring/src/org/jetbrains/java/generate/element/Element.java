@@ -146,6 +146,14 @@ public interface Element {
      */
     boolean isBoolean();
 
+    boolean isLong();
+    boolean isShort();
+    boolean isChar();
+    boolean isFloat();
+    boolean isDouble();
+    boolean isByte();
+    boolean isVoid();
+
     /**
      * Get's the elements type classname (etc. Object, String, List)
      *

@@ -18,24 +18,21 @@ package org.jetbrains.java.generate;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.generate.config.ConflictResolutionPolicy;
 import org.jetbrains.java.generate.element.*;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
 import org.jetbrains.java.generate.exception.PluginException;
 import org.jetbrains.java.generate.psi.PsiAdapter;
-import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.velocity.VelocityFactory;
 
 import java.io.StringWriter;
@@ -115,75 +112,7 @@ public class GenerationUtil {
       return psiMemberList;
   }
 
-  /**
-   * Creates the <code>toString</code> method.
-   * @param template        the template to use
-   * @param params          additional parameters stored with key/value in the map.
-   * @param policy          conflict resolution policy
-   * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
-   * @return the created method, null if the method is not created due the user cancels this operation
-   * @throws org.jetbrains.java.generate.exception.GenerateCodeException       is thrown when there is an error generating the javacode.
-   * @throws com.intellij.util.IncorrectOperationException is thrown by IDEA.
-   */
-  @Nullable
-  public static PsiMethod createMethodByTemplate(TemplateResource template,
-                                                 PsiClass clazz,
-                                                 Editor editor,
-                                                 Collection<PsiMember> selectedMembers,
-                                                 Map<String, String> params,
-                                                 ConflictResolutionPolicy policy,
-                                                 boolean hasOverrideAnnotation,
-                                                 int sortElements,
-                                                 boolean useFullyQualifiedName) throws IncorrectOperationException, GenerateCodeException {
-    // generate code using velocity
-    String body = velocityGenerateCode(clazz, selectedMembers, params, template.getMethodBody(), sortElements, useFullyQualifiedName);
-    if (logger.isDebugEnabled()) logger.debug("Method body generated from Velocity:\n" + body);
-
-    // fix weird linebreak problem in IDEA #3296 and later
-    body = StringUtil.convertLineSeparators(body);
-
-    // create psi newMethod named toString()
-    final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
-    if (topLevelFactory == null) {
-      return null;
-    }
-    PsiMethod newMethod;
-    try {
-      newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
-      CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
-    } catch (IncorrectOperationException ignore) {
-      HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
-                                                      template.getFileName() + '\'');
-      return null;
-    }
-
-    // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
-    PsiMethod existingMethod = clazz.findMethodBySignature(newMethod, false);
-    PsiMethod createdMethod = policy.applyMethod(clazz, existingMethod, newMethod, editor);
-    if (createdMethod == null) {
-      return null; // user cancelled so return null
-    }
-
-    if (hasOverrideAnnotation) {
-      createdMethod.getModifierList().addAnnotation("java.lang.Override");
-    }
-
-    // applyJavaDoc conflict resolution policy (add or keep existing)
-    String existingJavaDoc = params.get("existingJavaDoc");
-    String newJavaDoc = template.getJavaDoc();
-    if (existingJavaDoc != null || newJavaDoc != null) {
-      // generate javadoc using velocity
-      newJavaDoc = velocityGenerateCode(clazz, selectedMembers, params, newJavaDoc, sortElements, useFullyQualifiedName);
-      if (logger.isDebugEnabled()) logger.debug("JavaDoc body generated from Velocity:\n" + newJavaDoc);
-
-      applyJavaDoc(createdMethod, existingJavaDoc, newJavaDoc);
-    }
-
-    // return the created method
-    return createdMethod;
-  }
-
-  private static void applyJavaDoc(PsiMethod newMethod, String existingJavaDoc, String newJavaDoc) {
+  public static void applyJavaDoc(PsiMethod newMethod, String existingJavaDoc, String newJavaDoc) {
     String text = newJavaDoc != null ? newJavaDoc : existingJavaDoc; // prefer to use new javadoc
     PsiAdapter.addOrReplaceJavadoc(newMethod, text, true);
   }
@@ -199,12 +128,12 @@ public class GenerationUtil {
    * @return code (usually javacode). Returns null if templateMacro is null.
    * @throws org.jetbrains.java.generate.exception.GenerateCodeException is thrown when there is an error generating the javacode.
    */
-  private static String velocityGenerateCode(PsiClass clazz,
-                                             Collection<PsiMember> selectedMembers,
-                                             Map<String, String> params,
-                                             String templateMacro,
-                                             int sortElements,
-                                             boolean useFullyQualifiedName)
+  public static String velocityGenerateCode(PsiClass clazz,
+                                            Collection<? extends PsiMember> selectedMembers,
+                                            Map<String, String> params,
+                                            String templateMacro,
+                                            int sortElements,
+                                            boolean useFullyQualifiedName)
     throws GenerateCodeException {
     if (templateMacro == null) {
       return null;
@@ -241,6 +170,7 @@ public class GenerationUtil {
       // information to keep as it is to avoid breaking compatibility with prior releases
       vc.put("classname", useFullyQualifiedName ? ce.getQualifiedName() : ce.getName());
       vc.put("FQClassname", ce.getQualifiedName());
+      vc.put("settings", CodeStyleSettingsManager.getSettings(clazz.getProject()));
 
       if (logger.isDebugEnabled()) logger.debug("Velocity Macro:\n" + templateMacro);
 

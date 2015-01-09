@@ -170,6 +170,13 @@ public class ElementFactory {
     if (PsiAdapter.isDateType(factory, type)) element.setDate(true);
     if (PsiAdapter.isCalendarType(factory, type)) element.setCalendar(true);
     if (PsiAdapter.isBooleanType(factory, type)) element.setBoolean(true);
+    if (PsiType.VOID.equals(type)) element.setVoid(true);
+    if (PsiType.LONG.equals(type)) element.setLong(true);
+    if (PsiType.FLOAT.equals(type)) element.setFloat(true);
+    if (PsiType.DOUBLE.equals(type)) element.setDouble(true);
+    if (PsiType.BYTE.equals(type)) element.setByte(true);
+    if (PsiType.CHAR.equals(type)) element.setChar(true);
+    if (PsiType.SHORT.equals(type)) element.setShort(true);
 
     // modifiers
     if (modifiers != null) {
