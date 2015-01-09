@@ -17,7 +17,7 @@ abstract class ValueReader {
     appendFinishedValueTypeName(out);
   }
 
-  abstract void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, @NotNull TextOutput out);
+  abstract void writeReadCode(ClassScope methodScope, boolean subtyping, @NotNull TextOutput out);
 
   void writeArrayReadCode(@NotNull ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
     throw new UnsupportedOperationException();
