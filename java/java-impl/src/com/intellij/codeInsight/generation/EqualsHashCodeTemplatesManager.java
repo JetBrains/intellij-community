@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.java.generate.exception.TemplateResourceException;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
@@ -33,11 +34,11 @@ import java.io.IOException;
     )}
 )
 public class EqualsHashCodeTemplatesManager extends TemplatesManager {
-  private static final String DEFAULT_EQUALS = "com/intellij/codeInsight/generation/defaultEquals.vm";
-  private static final String DEFAULT_HASH_CODE = "com/intellij/codeInsight/generation/defaultHashCode.vm";
+  private static final String DEFAULT_EQUALS = "/com/intellij/codeInsight/generation/defaultEquals.vm";
+  private static final String DEFAULT_HASH_CODE = "/com/intellij/codeInsight/generation/defaultHashCode.vm";
 
 
-  public static TemplatesManager getInstance() {
+  public static EqualsHashCodeTemplatesManager getInstance() {
     return ServiceManager.getService(EqualsHashCodeTemplatesManager.class);
   }
 
@@ -56,5 +57,29 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
 
   private static String readFile(String resourceName) throws IOException {
     return readFile(resourceName, EqualsHashCodeTemplatesManager.class);
+  }
+
+  public TemplateResource getDefaultEqualsTemplate() {
+    return getDefaultEqualsTemplate("equals", "hashCode");
+  }
+
+  public TemplateResource getDefaultHashcodeTemplate() {
+    return getDefaultEqualsTemplate("hashCode", "equals");
+  }
+
+  private TemplateResource getDefaultEqualsTemplate(String selfSuffix, String oppositeSuffix) {
+    final TemplateResource defaultTemplate = getDefaultTemplate();
+    final String fileName = defaultTemplate.getFileName();
+    if (fileName.endsWith(selfSuffix)) {
+      return defaultTemplate;
+    }
+    final String equalsTemplateName = StringUtil.trimEnd(fileName, oppositeSuffix) + selfSuffix;
+    for (TemplateResource resource : getAllTemplates()) {
+      if (equalsTemplateName.equals(resource.getFileName())) {
+        return resource;
+      }
+    }
+    assert false : selfSuffix + " template for " + fileName + " not found"; 
+    return null;
   }
 }

@@ -53,8 +53,10 @@ public abstract class AbstractElement implements Element {
     protected boolean isModifierPackageLocal;
     protected boolean isModifierPrivate;
     protected boolean isModifierFinal;
+    private boolean isNotNull;
+    private boolean isNestedArray;
 
-    public String getName() {
+  public String getName() {
         return name;
     }
 
@@ -62,6 +64,15 @@ public abstract class AbstractElement implements Element {
         return isArray;
     }
 
+    @Override
+    public boolean isNestedArray() {
+      return isNestedArray;
+    }
+  
+    public void setNestedArray(boolean isNestedArray) {
+      this.isNestedArray = isNestedArray;
+    }
+  
     public boolean isCollection() {
         return isCollection;
     }
@@ -158,7 +169,16 @@ public abstract class AbstractElement implements Element {
         return isVoid;
     }
 
-    public void setVoid(boolean isVoid) {
+    @Override
+    public boolean isNotNull() {
+      return isNotNull;
+    }
+
+  public void setNotNull(boolean isNotNull) {
+    this.isNotNull = isNotNull;
+  }
+
+  public void setVoid(boolean isVoid) {
         this.isVoid = isVoid;
     }
 

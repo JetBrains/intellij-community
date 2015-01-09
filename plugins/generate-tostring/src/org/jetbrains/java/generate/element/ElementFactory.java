@@ -177,7 +177,7 @@ public class ElementFactory {
     if (PsiType.BYTE.equals(type)) element.setByte(true);
     if (PsiType.CHAR.equals(type)) element.setChar(true);
     if (PsiType.SHORT.equals(type)) element.setShort(true);
-
+    element.setNestedArray(PsiAdapter.isNestedArray(type));
     // modifiers
     if (modifiers != null) {
       if (modifiers.hasModifierProperty(PsiModifier.STATIC)) element.setModifierStatic(true);

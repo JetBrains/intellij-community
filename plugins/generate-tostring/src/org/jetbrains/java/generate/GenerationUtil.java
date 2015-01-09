@@ -21,11 +21,11 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.jetbrains.annotations.Nullable;
@@ -119,18 +119,43 @@ public class GenerationUtil {
 
   /**
    * Generates the code using Velocity.
-   * <p/>
+   * <p>
    * This is used to create the <code>toString</code> method body and it's javadoc.
    *
-   * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
-   * @param params          additional parameters stored with key/value in the map.
-   * @param templateMacro   the velocity macro template
-   * @return code (usually javacode). Returns null if templateMacro is null.
-   * @throws org.jetbrains.java.generate.exception.GenerateCodeException is thrown when there is an error generating the javacode.
+   * @param clazz
+   * @param selectedMembers       the selected members as both {@link PsiField} and {@link PsiMethod}.
+   * @param params                additional parameters stored with key/value in the map.
+   * @param templateMacro         the velocity macro template
+   * @param sortElements
+   * @param useFullyQualifiedName @return code (usually javacode). Returns null if templateMacro is null.
+   * @throws GenerateCodeException is thrown when there is an error generating the javacode.
    */
   public static String velocityGenerateCode(PsiClass clazz,
                                             Collection<? extends PsiMember> selectedMembers,
                                             Map<String, String> params,
+                                            String templateMacro,
+                                            int sortElements,
+                                            boolean useFullyQualifiedName)
+    throws GenerateCodeException {
+    return velocityGenerateCode(clazz, selectedMembers, Collections.<PsiMember>emptyList(), params, Collections.<String, Object>emptyMap(), templateMacro, sortElements, useFullyQualifiedName);
+  }
+
+  /**
+   * Generates the code using Velocity.
+   * <p/>
+   * This is used to create the <code>toString</code> method body and it's javadoc.
+   *
+   * @param selectedMembers the selected members as both {@link PsiField} and {@link PsiMethod}.
+   * @param params          additional parameters stored with key/value in the map.
+   * @param templateMacro   the velocity macro template
+   * @return code (usually javacode). Returns null if templateMacro is null.
+   * @throws GenerateCodeException is thrown when there is an error generating the javacode.
+   */
+  public static String velocityGenerateCode(PsiClass clazz,
+                                            Collection<? extends PsiMember> selectedMembers,
+                                            Collection<? extends PsiMember> selectedNotNullMembers,
+                                            Map<String, String> params,
+                                            Map<String, Object> contextMap,
                                             String templateMacro,
                                             int sortElements,
                                             boolean useFullyQualifiedName)
@@ -155,7 +180,7 @@ public class GenerationUtil {
 
       // element information (both fields and methods)
       logger.debug("Velocity Context - adding members (fields and methods)");
-      List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(selectedMembers);
+      List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(selectedMembers, selectedNotNullMembers);
       // sort elements if enabled and not using chooser dialog
       if (sortElements != 0) {
         Collections.sort(elements, new ElementComparator(sortElements));
@@ -171,6 +196,11 @@ public class GenerationUtil {
       vc.put("classname", useFullyQualifiedName ? ce.getQualifiedName() : ce.getName());
       vc.put("FQClassname", ce.getQualifiedName());
       vc.put("settings", CodeStyleSettingsManager.getSettings(clazz.getProject()));
+      vc.put("helper", GenerationHelper.class);
+
+      for (String paramName : contextMap.keySet()) {
+        vc.put(paramName, contextMap.get(paramName));
+      }
 
       if (logger.isDebugEnabled()) logger.debug("Velocity Macro:\n" + templateMacro);
 
