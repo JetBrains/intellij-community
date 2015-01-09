@@ -1,11 +1,10 @@
-package org.jetbrains.debugger.values;
+package org.jetbrains.debugger;
 
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.ObjectProperty;
-import org.jetbrains.debugger.ValueModifier;
-import org.jetbrains.debugger.VariableImpl;
+import org.jetbrains.debugger.values.FunctionValue;
+import org.jetbrains.debugger.values.Value;
 
 public class ObjectPropertyImpl extends VariableImpl implements ObjectProperty {
   public static final byte WRITABLE = 0x01;

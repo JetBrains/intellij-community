@@ -158,7 +158,7 @@ final class FieldProcessor<T> {
     }
     JsonField fieldAnnotation = method.getAnnotation(JsonField.class);
     if (fieldAnnotation != null) {
-      String jsonLiteralName = fieldAnnotation.jsonLiteralName();
+      String jsonLiteralName = fieldAnnotation.name();
       if (!jsonLiteralName.isEmpty()) {
         return jsonLiteralName;
       }
