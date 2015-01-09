@@ -9,7 +9,7 @@ import java.util.List;
 
 public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
   @SuppressWarnings("unchecked")
-  public static final PromiseManager<VariablesHost, List<Variable>> VARIABLES_LOADER =
+  private static final PromiseManager<VariablesHost, List<Variable>> VARIABLES_LOADER =
     new PromiseManager<VariablesHost, List<Variable>>(VariablesHost.class) {
       @Override
       public boolean isUpToDate(@NotNull VariablesHost host, @NotNull List<Variable> data) {
@@ -44,6 +44,11 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
   @NotNull
   public final Promise<List<Variable>> get() {
     return VARIABLES_LOADER.get(this);
+  }
+
+  public final void set(@NotNull List<Variable> result) {
+    updateCacheStamp();
+    VARIABLES_LOADER.set(this, result);
   }
 
   @NotNull

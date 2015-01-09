@@ -9,7 +9,7 @@ class RawValueReader extends ValueReader {
   }
 
   @Override
-  void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, @NotNull TextOutput out) {
+  void writeReadCode(ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
     addReaderParameter(subtyping, out);
     out.append(".subReader();").newLine();
     addReaderParameter(subtyping, out);

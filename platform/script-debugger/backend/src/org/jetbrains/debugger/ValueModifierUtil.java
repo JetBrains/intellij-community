@@ -26,7 +26,7 @@ public final class ValueModifierUtil {
 
   @NotNull
   public static Promise<Value> evaluateGet(@NotNull final Variable variable,
-                                           @NotNull EvaluateContextAdditionalParameter host,
+                                           @NotNull Object host,
                                            @NotNull EvaluateContext evaluateContext,
                                            @NotNull String selfName) {
     StringBuilder builder = new StringBuilder(selfName);

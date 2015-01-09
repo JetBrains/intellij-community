@@ -182,17 +182,16 @@ class TypeHandler<T> {
         out.newLine();
       }
 
-      String fieldName = fieldLoader.getFieldName();
       out.append(operator).append(" (name");
-      out.append(".equals(\"").append(fieldName).append("\"))").openBlock();
+      out.append(".equals(\"").append(fieldLoader.jsonName).append("\"))").openBlock();
       {
         String primitiveValueName = fieldLoader.valueReader instanceof ObjectValueReader ? ((ObjectValueReader)fieldLoader.valueReader).primitiveValueName : null;
         if (primitiveValueName != null) {
           out.append("if (reader.peek() == com.google.gson.stream.JsonToken.BEGIN_OBJECT)").openBlock();
         }
-        assignField(out, fieldName);
+        assignField(out, fieldLoader.name);
 
-        fieldLoader.valueReader.writeReadCode(classScope, false, fieldName, out);
+        fieldLoader.valueReader.writeReadCode(classScope, false, out);
         out.semi();
 
         if (primitiveValueName != null) {
