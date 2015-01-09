@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 23-Jan-2008
  */
 package com.intellij.ide.projectView.impl;
 
@@ -35,6 +30,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+/**
+ * @author anna
+ * @since 23-Jan-2008
+ */
 public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   public JavaProjectViewDirectoryHelper(Project project, DirectoryIndex index) {
     super(project, index);
@@ -52,12 +51,11 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   @Override
   public boolean isShowFQName(final ViewSettings settings, final Object parentValue, final PsiDirectory value) {
     PsiPackage aPackage;
-        return value != null
-               && !(parentValue instanceof Project)
-               && settings.isFlattenPackages()
-               && (aPackage = JavaDirectoryService.getInstance().getPackage(value)) != null
-               && !aPackage.getQualifiedName().isEmpty();
-
+    return value != null &&
+           !(parentValue instanceof Project) &&
+           settings.isFlattenPackages() &&
+           (aPackage = JavaDirectoryService.getInstance().getPackage(value)) != null &&
+           !aPackage.getQualifiedName().isEmpty();
   }
 
   @Nullable
@@ -66,9 +64,7 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
 
     PsiPackage parentPackage;
-    if (!ProjectRootsUtil.isSourceRoot(directory) && aPackage != null && !aPackage.getQualifiedName().isEmpty() &&
-                              parentValue instanceof PsiDirectory) {
-
+    if (!ProjectRootsUtil.isSourceRoot(directory) && aPackage != null && !aPackage.getQualifiedName().isEmpty() && parentValue instanceof PsiDirectory) {
       parentPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)parentValue));
     }
     else if (ProjectRootsUtil.isSourceRoot(directory) && aPackage != null) {   //package prefix
@@ -80,7 +76,6 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
     }
 
     return PackageUtil.getNodeName(settings, aPackage, parentPackage, directory.getName(), isShowFQName(settings, parentValue, directory));
-
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 04-Feb-2008
- */
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * @author anna
+ * @since 04-Feb-2008
+ */
 public interface NavBarModelExtension {
   ExtensionPointName<NavBarModelExtension> EP_NAME = ExtensionPointName.create("com.intellij.navbar");
 
@@ -40,5 +40,6 @@ public interface NavBarModelExtension {
   @Nullable
   PsiElement adjustElement(PsiElement psiElement);
 
+  @NotNull
   Collection<VirtualFile> additionalRoots(Project project);
 }
