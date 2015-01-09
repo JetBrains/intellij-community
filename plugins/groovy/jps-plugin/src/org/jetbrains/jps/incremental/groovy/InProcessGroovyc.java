@@ -106,7 +106,7 @@ class InProcessGroovyc {
 
   @Nullable
   private static ClassLoader obtainParentLoader(Collection<String> compilationClassPath) throws MalformedURLException {
-    if (!"true".equals(System.getProperty("groovyc.reuse.compiler.classes"))) {
+    if (!"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
       return null;
     }
 
