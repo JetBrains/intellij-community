@@ -40,6 +40,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
   private JBCheckBox myEnablePreviewJBCheckBox;
   private CheckBoxList<ZenCodingFilter> myFiltersCheckBoxList;
   private JPanel myFiltersListPanel;
+  private JBCheckBox myEnableHrefAutodetectJBCheckBox;
 
   public XmlEmmetConfigurable() {
     myEnableEmmetJBCheckBox.addActionListener(new ActionListener() {
@@ -48,6 +49,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
         boolean selected = myEnableEmmetJBCheckBox.isSelected();
         myEnablePreviewJBCheckBox.setEnabled(selected);
         myFiltersCheckBoxList.setEnabled(selected);
+        myEnableHrefAutodetectJBCheckBox.setEnabled(selected);
       }
     });
     myFiltersListPanel.setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("emmet.filters.enabled.by.default"), false));
@@ -74,6 +76,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     return emmetOptions.isEmmetEnabled() != myEnableEmmetJBCheckBox.isSelected() ||
            emmetOptions.isPreviewEnabled() != myEnablePreviewJBCheckBox.isSelected() ||
+           emmetOptions.isHrefAutoDetectEnabled() != myEnableHrefAutodetectJBCheckBox.isSelected() ||
            !emmetOptions.getFiltersEnabledByDefault().equals(enabledFilters());
   }
 
@@ -82,6 +85,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     emmetOptions.setEmmetEnabled(myEnableEmmetJBCheckBox.isSelected());
     emmetOptions.setPreviewEnabled(myEnablePreviewJBCheckBox.isSelected());
+    emmetOptions.setHrefAutoDetectEnabled(myEnableHrefAutodetectJBCheckBox.isSelected());
     emmetOptions.setFiltersEnabledByDefault(enabledFilters());
   }
 
@@ -92,6 +96,8 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
     myEnableEmmetJBCheckBox.setSelected(emmetOptions.isEmmetEnabled());
     myEnablePreviewJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
     myEnablePreviewJBCheckBox.setSelected(emmetOptions.isPreviewEnabled());
+    myEnableHrefAutodetectJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
+    myEnableHrefAutodetectJBCheckBox.setSelected(emmetOptions.isHrefAutoDetectEnabled());
 
     Set<String> enabledByDefault = emmetOptions.getFiltersEnabledByDefault();
     for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
