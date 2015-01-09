@@ -57,7 +57,9 @@ public abstract class StructuralSearchProfile {
     return fileType.getName().toLowerCase();
   }
 
-  public abstract boolean canProcess(@NotNull FileType fileType);
+  public final boolean canProcess(@NotNull FileType fileType) {
+    return fileType instanceof LanguageFileType && isMyLanguage(((LanguageFileType)fileType).getLanguage());
+  }
 
   public abstract boolean isMyLanguage(@NotNull Language language);
 
@@ -137,9 +139,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Nullable
-  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
-    return null;
-  }
+  public abstract Class<? extends TemplateContextType> getTemplateContextTypeClass();
 
   public final TemplateContextType getTemplateContextType() {
     final Class<? extends TemplateContextType> clazz = getTemplateContextTypeClass();
