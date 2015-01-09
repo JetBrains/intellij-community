@@ -69,9 +69,9 @@ public abstract class VagrantSupport {
   @NotNull
   public abstract RemoteCredentials getCredentials(@NotNull String vagrantFolder, @Nullable String machineName) throws IOException;
 
-  public abstract boolean checkVagrantRunning(String folder, boolean askToRunIfDown);
+  public abstract boolean checkVagrantRunning(@NotNull String vagrantFolder, @Nullable String machineName, boolean askToRunIfDown);
 
-  public abstract void runVagrant(String folder) throws ExecutionException;
+  public abstract void runVagrant(@NotNull String vagrantFolder, @Nullable String machineName) throws ExecutionException;
 
   public abstract Collection<? extends RemoteConnector> getVagrantInstancesConnectors(@NotNull Project project);
 
