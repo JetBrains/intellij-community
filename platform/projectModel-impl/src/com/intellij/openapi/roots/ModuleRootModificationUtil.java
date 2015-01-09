@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,15 @@ import java.util.List;
  * @author nik
  */
 public class ModuleRootModificationUtil {
+  public static void addContentRoot(Module module, final String path) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        model.addContentEntry(VfsUtilCore.pathToUrl(path));
+      }
+    });
+  }
+
   public static void addModuleLibrary(Module module, String libName, List<String> classesRoots, List<String> sourceRoots) {
     addModuleLibrary(module, libName, classesRoots, sourceRoots, DependencyScope.COMPILE);
   }
@@ -169,10 +179,10 @@ public class ModuleRootModificationUtil {
     }
   }
 
-  public static void updateExcludedFolders(final Module module,
-                                                        @NotNull final VirtualFile contentRoot,
-                                                        final Collection<String> urlsToUnExclude,
-                                                        final Collection<String> urlsToExclude) {
+  public static void updateExcludedFolders(@NotNull Module module,
+                                           @NotNull final VirtualFile contentRoot,
+                                           @NotNull final Collection<String> urlsToUnExclude,
+                                           @NotNull final Collection<String> urlsToExclude) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel modifiableModel) {
