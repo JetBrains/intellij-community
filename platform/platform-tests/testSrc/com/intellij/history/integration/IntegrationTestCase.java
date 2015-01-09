@@ -62,6 +62,9 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
+    LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
+    
     Clock.reset();
     Paths.useSystemCaseSensitivity();
 
