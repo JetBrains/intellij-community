@@ -19,6 +19,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
@@ -29,6 +30,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * An extension to collect and apply additional transferable data when performing copy-paste in editors.<p/>
+ * 
+ * Can be {@link DumbAware}
+ * 
  * @author yole
  */
 public abstract class CopyPastePostProcessor<T extends TextBlockTransferableData> {
