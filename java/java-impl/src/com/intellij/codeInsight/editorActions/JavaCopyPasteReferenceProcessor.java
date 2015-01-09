@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -26,7 +27,7 @@ import java.util.ArrayList;
 /**
  * @author peter
  */
-public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
+public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor");
 
   @Override
