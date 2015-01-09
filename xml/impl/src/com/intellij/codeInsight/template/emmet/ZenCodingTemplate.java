@@ -36,7 +36,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -409,19 +408,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
     ZenCodingGenerator generator = findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, offset), false);
     if (generator != null && generator.hasCompletionItem()) {
-      final Ref<TemplateImpl> generatedTemplate = new Ref<TemplateImpl>();
-      final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file) {
-        @Override
-        public void deleteTemplateKey(@NotNull String key) {
-        }
-
-        @Override
-        public void startTemplate(@NotNull Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
-          if (template instanceof TemplateImpl && !((TemplateImpl)template).isDeactivated()) {
-            generatedTemplate.set((TemplateImpl)template);
-          }
-        }
-      };
+      final CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
 
       final String templatePrefix = computeTemplateKeyWithoutContextChecking(callback);
 
@@ -442,11 +429,10 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           try {
             expand(templatePrefix, callback, generator, extraFilters, false, 0);
           }
-          catch (EmmetException e) {
-            generatedTemplate.set(null);
+          catch (EmmetException ignore) {
           }
-          if (!generatedTemplate.isNull()) {
-            final TemplateImpl template = generatedTemplate.get();
+          final TemplateImpl template = callback.getGeneratedTemplate();
+          if (template != null) {
             template.setKey(templatePrefix);
             template.setDescription(template.getTemplateText());
 
