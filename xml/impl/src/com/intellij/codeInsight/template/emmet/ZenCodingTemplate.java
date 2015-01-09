@@ -31,39 +31,27 @@ import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.*;
-import java.util.List;
 
 
 public class ZenCodingTemplate extends CustomLiveTemplateBase {
@@ -308,78 +296,16 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
   @Override
   public void wrap(@NotNull final String selection, @NotNull final CustomTemplateCallback callback) {
-    final TextFieldWithStoredHistory field = new TextFieldWithStoredHistory(EMMET_RECENT_WRAP_ABBREVIATIONS_KEY);
-    final Dimension fieldPreferredSize = field.getPreferredSize();
-    field.setPreferredSize(new Dimension(Math.max(220, fieldPreferredSize.width), fieldPreferredSize.height));
-    field.setHistorySize(10);
-    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final BalloonImpl balloon = (BalloonImpl)popupFactory.createDialogBalloonBuilder(field, XmlBundle.message("emmet.title"))
-      .setCloseButtonEnabled(false)
-      .setBlockClicksThroughBalloon(true)
-      .setAnimationCycle(0)
-      .setHideOnKeyOutside(true)
-      .setHideOnClickOutside(true)
-      .createBalloon();
-    
-    field.addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        validateTemplateKey(field, balloon, field.getText(), callback);
-      }
-    });
-    field.addKeyboardListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(@NotNull KeyEvent e) {
-        if (!field.isPopupVisible()) {
-          switch (e.getKeyCode()) {
-            case KeyEvent.VK_ENTER:
-              final String abbreviation = field.getText();
-              if (validateTemplateKey(field, balloon, abbreviation, callback)) {
-                doWrap(abbreviation, callback);
-                PropertiesComponent.getInstance().setValue(EMMET_LAST_WRAP_ABBREVIATIONS_KEY, abbreviation);
-                field.addCurrentTextToHistory();
-                balloon.hide(true);
-              }
-              break;
-            case KeyEvent.VK_ESCAPE:
-              balloon.hide(false);
-              break;
-          }
-        }
-      }
-    });
-
-    balloon.addListener(new JBPopupListener.Adapter() {
-      @Override
-      public void beforeShown(LightweightWindowEvent event) {
-        field.setText(PropertiesComponent.getInstance().getValue(EMMET_LAST_WRAP_ABBREVIATIONS_KEY, ""));
-      }
-    });
-    balloon.show(popupFactory.guessBestPopupLocation(callback.getEditor()), Balloon.Position.below);
-
-    final IdeFocusManager focusManager = IdeFocusManager.getInstance(callback.getProject());
-    focusManager.doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        focusManager.requestFocus(field, true);
-        field.selectText();
-      }
-    });
+    new EmmetAbbreviationBalloon(EMMET_RECENT_WRAP_ABBREVIATIONS_KEY, EMMET_LAST_WRAP_ABBREVIATIONS_KEY,
+                                 new EmmetAbbreviationBalloon.Callback() {
+                                   @Override
+                                   public void onEnter(@NotNull String abbreviation) {
+                                     doWrap(abbreviation, callback);
+                                   }
+                                 }).show(callback);
   }
-
-  private static boolean validateTemplateKey(@NotNull TextFieldWithHistory field,
-                                             @Nullable Balloon balloon,
-                                             @NotNull String abbreviation,
-                                             @NotNull CustomTemplateCallback callback) {
-    final boolean correct = checkTemplateKey(abbreviation, callback);
-    field.getTextEditor().setBackground(correct ? LightColors.SLIGHTLY_GREEN : LightColors.RED);
-    if (balloon != null && !balloon.isDisposed()) {
-      balloon.revalidate();
-    }
-    return correct;
-  }
-
-  static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
+  
+  public static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
     ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), true);
     if (generator == null) {
       int offset = callback.getEditor().getCaretModel().getOffset();
