@@ -83,4 +83,8 @@ public abstract class VagrantSupport {
   }
 
   public abstract List<String> getMachineNames(@NotNull String instanceFolder);
+
+  public boolean isNotReadyForSsh(Throwable t) {
+    return t.getMessage().contains("not yet ready for SSH");
+  }
 }
