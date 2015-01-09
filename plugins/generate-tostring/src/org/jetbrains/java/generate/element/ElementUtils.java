@@ -73,21 +73,27 @@ public class ElementUtils {
     /**
      * Gets the list of members to be put in the VelocityContext.
      *
-     * @param members a list of {@link com.intellij.psi.PsiMember} objects.
+     * @param members                  a list of {@link PsiMember} objects.
+     * @param selectedNotNullMembers  a list of @NotNull objects
      * @return a filtered list of only the methods as a {@link FieldElement} or {@link MethodElement} objects.
      */
-    public static List<Element> getOnlyAsFieldAndMethodElements(Collection<? extends PsiMember> members) {
+    public static List<Element> getOnlyAsFieldAndMethodElements(Collection<? extends PsiMember> members,
+                                                                Collection<? extends PsiMember> selectedNotNullMembers) {
         List<Element> elementList = new ArrayList<Element>();
 
         for (PsiMember member : members) {
+            AbstractElement element = null;
             if (member instanceof PsiField) {
-                PsiField field = (PsiField) member;
-                FieldElement fe = ElementFactory.newFieldElement(field);
-                elementList.add(fe);
+              element = ElementFactory.newFieldElement((PsiField) member);
             } else if (member instanceof PsiMethod) {
-                PsiMethod method = (PsiMethod) member;
-                MethodElement me = ElementFactory.newMethodElement(method);
-                elementList.add(me);
+              element = ElementFactory.newMethodElement((PsiMethod) member);
+            }
+
+            if (element != null) {
+              if (selectedNotNullMembers.contains(member)) {
+                element.setNotNull(true);
+              }
+              elementList.add(element);
             }
         }
         return elementList;

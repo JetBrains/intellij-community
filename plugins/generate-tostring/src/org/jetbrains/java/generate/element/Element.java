@@ -48,6 +48,8 @@ public interface Element {
      */
     boolean isArray();
 
+    boolean isNestedArray();
+
     /**
      * Is this element a {@link java.util.Collection} type (isAssignableFrom java.util.Collection)
      *
@@ -153,6 +155,7 @@ public interface Element {
     boolean isDouble();
     boolean isByte();
     boolean isVoid();
+    boolean isNotNull();
 
     /**
      * Get's the elements type classname (etc. Object, String, List)

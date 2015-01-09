@@ -223,7 +223,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension" order="after defaultNavbar"/>
+    <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
 
     <fileTypeDetector implementation="org.jetbrains.plugins.groovy.GroovyHashBangFileTypeDetector"/>
 

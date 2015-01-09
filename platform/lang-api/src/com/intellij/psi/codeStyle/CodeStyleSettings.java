@@ -765,6 +765,18 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return getIndentOptions(fileType).USE_TAB_CHARACTER;
   }
 
+  //used in generate equals/hashCode
+  @SuppressWarnings("unused")
+  public boolean isGenerateFinalLocals() {
+    return GENERATE_FINAL_LOCALS;
+  }
+
+  //used in generate equals/hashCode
+  @SuppressWarnings("unused")
+  public boolean isGenerateFinalParameters() {
+    return GENERATE_FINAL_PARAMETERS;
+  }
+
   public static class TypeToNameMap implements JDOMExternalizable {
     private final List<String> myPatterns = new ArrayList<String>();
     private final List<String> myNames = new ArrayList<String>();

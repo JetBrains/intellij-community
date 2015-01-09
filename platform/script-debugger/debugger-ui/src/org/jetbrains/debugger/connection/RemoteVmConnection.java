@@ -75,7 +75,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
           .rejected(new Consumer<Throwable>() {
             @Override
             public void consume(Throwable error) {
-              if (!(error instanceof Promise.MessageError)) {
+              if (ApplicationManager.getApplication().isUnitTestMode() || !(error instanceof Promise.MessageError)) {
                 CommandProcessor.LOG.error(error);
               }
               setState(ConnectionStatus.CONNECTION_FAILED, error.getMessage());
@@ -122,6 +122,9 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
   public static <T> Promise<T> chooseDebuggee(@NotNull final Collection<T> targets, final int selectedIndex, @NotNull final Function<T, String> itemToString) {
     if (targets.size() == 1) {
       return Promise.resolve(ContainerUtil.getFirstItem(targets));
+    }
+    else if (targets.isEmpty()) {
+      return Promise.reject("No tabs to inspect");
     }
 
     final AsyncPromise<T> result = new AsyncPromise<T>();
