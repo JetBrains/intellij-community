@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,6 +43,7 @@ import java.util.regex.Pattern;
  * @author peter
  */
 class InProcessGroovyc {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.InProcessGroovyc");
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
   private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
@@ -59,13 +62,19 @@ class InProcessGroovyc {
       useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
         @Override
         public boolean shouldCacheData(@NotNull URL url) {
-          String file = url.getFile();
-          for (String output : outputs) {
-            if (FileUtil.startsWith(output + "/", file)) {
-              return false;
+          try {
+            String file = new File(url.toURI()).getPath();
+            for (String output : outputs) {
+              if (FileUtil.startsWith(output, file)) {
+                return false;
+              }
             }
+            return true;
           }
-          return true;
+          catch (URISyntaxException e) {
+            LOG.info(e);
+            return false;
+          }
         }
       }).get();
 
