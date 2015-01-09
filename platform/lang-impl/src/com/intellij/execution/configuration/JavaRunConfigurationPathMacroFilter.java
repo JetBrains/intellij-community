@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,33 +20,21 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 
 /**
- * @author yole
+ * @author peter
  */
-public class RunConfigurationPathMacroFilter extends PathMacroFilter {
+public class JavaRunConfigurationPathMacroFilter extends PathMacroFilter {
   @Override
   public boolean skipPathMacros(Attribute attribute) {
     final Element parent = attribute.getParent();
-    final String attrName = attribute.getName();
-    String tagName = parent.getName();
-    if (tagName.equals(EnvironmentVariablesComponent.ENV) &&
-        (attrName.equals(EnvironmentVariablesComponent.NAME) || attrName.equals(EnvironmentVariablesComponent.VALUE))) {
-      return true;
-    }
 
-    if (tagName.equals("configuration") && attrName.equals("name")) {
-      return true;
+    if (parent.getName().equals("option")) {
+      String optionName = parent.getAttributeValue("name");
+      if ("MAIN_CLASS_NAME".equals(optionName) || "METHOD_NAME".equals(optionName)) {
+        return true;
+      }
     }
 
     return false;
   }
 
-  @Override
-  public boolean recursePathMacros(Attribute attribute) {
-    final Element parent = attribute.getParent();
-    if (parent != null && "option".equals(parent.getName())) {
-      final Element grandParent = parent.getParentElement();
-      return grandParent != null && "configuration".equals(grandParent.getName());
-    }
-    return false;
-  }
 }
