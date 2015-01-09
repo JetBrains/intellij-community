@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij;
+package com.siyeh.ig.fixes.bugs;
 
-import java.util.List;
-import java.util.regex.Pattern;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.bugs.ClassNewInstanceInspection;
 
 /**
- * @author yole
+ * @author Bas
  */
-public class PatternListTestClassFilter extends TestClassesFilter {
-  private final List<Pattern> myPatterns;
+public class ClassNewInstanceFixTest extends IGQuickFixesTestCase {
 
-  public PatternListTestClassFilter(List<String> patterns) {
-    myPatterns = compilePatterns(patterns);
-  }
+  public void testLambda() { doTest(); }
 
   @Override
-  public boolean matches(String className, String moduleName) {
-    return TestClassesFilter.matchesAnyPattern(myPatterns, className);
+  public void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new ClassNewInstanceInspection());
+    myRelativePath = "bugs/class_new_instance";
+    myDefaultHint = InspectionGadgetsBundle.message("class.new.instance.quickfix");
   }
 }

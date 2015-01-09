@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final JavaFileManager myFileManager;
 
   public JavaPsiFacadeImpl(Project project,
-                           PsiManagerImpl psiManager,
+                           PsiManager psiManager,
                            JavaFileManager javaFileManager,
                            MessageBus bus) {
     myProject = project;
@@ -157,7 +157,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   @NotNull
-  private PsiElementFinder[] calcFinders() {
+  protected PsiElementFinder[] calcFinders() {
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
     ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
     return elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);

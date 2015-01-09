@@ -62,4 +62,23 @@ public class AutoBoxing {
     void polymorphicSignature(java.lang.invoke.MethodHandle meh) throws Throwable {
         meh.invokeExact(1);
     }
+
+  void lambdas() {
+    R r = () -> <warning descr="Auto-boxing '1'">1</warning>;
+    R s = () -> {
+      return <warning descr="Auto-boxing '2'">2</warning>;
+    };
+    R t = AutoBoxing::<warning descr="Auto-boxing 'bla'">bla</warning>;
+    Runnable z = () -> {
+      System.out.println();
+    };
+  }
+
+  static int bla() {
+    return 1;
+  }
+
+  interface R {
+    Integer box();
+  }
 }

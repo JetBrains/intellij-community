@@ -1181,11 +1181,6 @@
         <option name="FOREGROUND" value="3387CC" />
       </value>
     </option>
-    <option name="OC_FORMAT_TOKEN">
-      <value>
-        <option name="FOREGROUND" value="66CC33" />
-      </value>
-    </option>
     <option name="PARAMETER_ATTRIBUTES">
       <value />
     </option>
@@ -1289,7 +1284,7 @@
         <option name="FOREGROUND" value="CC7833" />
       </value>
     </option>
-    <option name="PROTOCOL_REFERENCE">
+    <option name="OC.PROTOCOL_REFERENCE">
       <value />
     </option>
     <option name="PUPPET_BAD_CHARACTER">
