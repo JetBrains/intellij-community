@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.WebModuleTypeBase;
@@ -82,6 +83,7 @@ import java.util.List;
  */
 @SuppressWarnings("unchecked")
 public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
+  private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
 
   public static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
     new Convertor<FrameworkSupportInModuleProvider, String>() {
@@ -575,14 +577,21 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       ClassLoader classLoader = ep.getLoaderForClass();
       URL url = classLoader.getResource(ep.templatePath);
       if (url != null) {
-        LocalArchivedTemplate template = new LocalArchivedTemplate(url, classLoader);
-        if (ep.category) {
-          TemplateBasedCategory category = new TemplateBasedCategory(template, ep.projectType);
-          myTemplatesMap.putValue(new TemplatesGroup(category), template);
+        try {
+          LocalArchivedTemplate template = new LocalArchivedTemplate(url, classLoader);
+          if (ep.category) {
+            TemplateBasedCategory category = new TemplateBasedCategory(template, ep.projectType);
+            myTemplatesMap.putValue(new TemplatesGroup(category), template);
+          }
+          else {
+            map.putValue(ep.projectType, template);
+          }
         }
-        else {
-          map.putValue(ep.projectType, template);
+        catch(Exception e) {
+          LOG.error("Error loading template from URL " + ep.templatePath, e);
         }
+      } else {
+        LOG.error("Can't find resource for project template " + ep.templatePath);
       }
     }
     return map;
