@@ -98,7 +98,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       node.setPresentation(icon, null, valueString, true);
     }
     else {
-      context.getEvaluateContext().evaluate("a.length", Collections.<String, EvaluateContextAdditionalParameter>singletonMap("a", value), false)
+      context.getEvaluateContext().evaluate("a.length", Collections.<String, Object>singletonMap("a", value), false)
         .done(new Consumer<EvaluateResult>() {
           @Override
           public void consume(EvaluateResult result) {
