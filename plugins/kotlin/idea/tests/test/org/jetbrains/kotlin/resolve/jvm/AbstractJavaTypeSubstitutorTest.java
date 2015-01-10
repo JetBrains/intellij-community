@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 JetBrains s.r.o.
+ * Copyright 2010-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package org.jetbrains.jet.lang.resolve.java;
+package org.jetbrains.kotlin.resolve.jvm;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jet.lang.resolve.java.structure.JavaClassifierType;
-import org.jetbrains.jet.lang.resolve.java.structure.JavaType;
-import org.jetbrains.jet.lang.resolve.java.structure.JavaTypeParameter;
-import org.jetbrains.jet.lang.resolve.java.structure.impl.JavaTypeImpl;
-import org.jetbrains.jet.lang.resolve.java.structure.impl.JavaTypeParameterImpl;
 import org.jetbrains.jet.plugin.JetLightCodeInsightFixtureTestCase;
 import org.jetbrains.jet.plugin.JetLightProjectDescriptor;
+import org.jetbrains.kotlin.load.java.structure.JavaClassifierType;
+import org.jetbrains.kotlin.load.java.structure.JavaType;
+import org.jetbrains.kotlin.load.java.structure.JavaTypeParameter;
+import org.jetbrains.kotlin.load.java.structure.impl.JavaTypeImpl;
+import org.jetbrains.kotlin.load.java.structure.impl.JavaTypeParameterImpl;
 
 public abstract class AbstractJavaTypeSubstitutorTest extends JetLightCodeInsightFixtureTestCase {
     @NotNull
