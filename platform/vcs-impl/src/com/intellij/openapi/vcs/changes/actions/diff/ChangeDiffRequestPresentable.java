@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -62,6 +63,11 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull private final Project myProject;
   @NotNull private final Change myChange;
   @NotNull private final Map<Key, Object> myChangeContext;
+
+  @Nullable
+  public static ChangeDiffRequestPresentable create(@NotNull Project project, @NotNull Change change) {
+    return create(project, change, Collections.<Key, Object>emptyMap());
+  }
 
   @Nullable
   public static ChangeDiffRequestPresentable create(@NotNull Project project,
