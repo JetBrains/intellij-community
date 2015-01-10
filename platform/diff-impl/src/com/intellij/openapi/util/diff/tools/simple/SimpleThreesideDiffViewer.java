@@ -99,6 +99,11 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     group.add(new ToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
 
+    group.add(Separator.getInstance());
+    group.add(new ShowLeftBasePartialDiffAction());
+    group.add(new ShowBaseRightPartialDiffAction());
+    group.add(new ShowLeftRightPartialDiffAction());
+
     return group;
   }
 

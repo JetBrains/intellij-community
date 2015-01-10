@@ -1,28 +1,34 @@
 package com.intellij.openapi.util.diff.tools.util.threeside;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.diff.DiffDialogHints;
+import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport;
 import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport.ThreesideSyncScrollSupport;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
-import com.intellij.openapi.util.diff.util.CalledInAwt;
-import com.intellij.openapi.util.diff.util.DiffUtil;
-import com.intellij.openapi.util.diff.util.Side;
-import com.intellij.openapi.util.diff.util.ThreeSide;
+import com.intellij.openapi.util.diff.util.*;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -291,6 +297,46 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   //
   // Actions
   //
+
+  protected class ShowLeftBasePartialDiffAction extends ShowPartialDiffAction {
+    public ShowLeftBasePartialDiffAction() {
+      super(ThreeSide.LEFT, ThreeSide.BASE, DiffBundle.message("merge.partial.diff.action.name.0.1"), null, AllIcons.Diff.LeftDiff);
+    }
+  }
+
+  protected class ShowBaseRightPartialDiffAction extends ShowPartialDiffAction {
+    public ShowBaseRightPartialDiffAction() {
+      super(ThreeSide.BASE, ThreeSide.RIGHT, DiffBundle.message("merge.partial.diff.action.name.1.2"), null, AllIcons.Diff.RightDiff);
+    }
+  }
+
+  protected class ShowLeftRightPartialDiffAction extends ShowPartialDiffAction {
+    public ShowLeftRightPartialDiffAction() {
+      super(ThreeSide.LEFT, ThreeSide.RIGHT, DiffBundle.message("merge.partial.diff.action.name"), null, AllIcons.Diff.BranchDiff);
+    }
+  }
+
+  protected class ShowPartialDiffAction extends DumbAwareAction {
+    @NotNull private final ThreeSide mySide1;
+    @NotNull private final ThreeSide mySide2;
+
+    public ShowPartialDiffAction(@NotNull ThreeSide side1, @NotNull ThreeSide side2,
+                                 @NotNull String text, @Nullable String description, @NotNull Icon icon) {
+      super(text, description, icon);
+      mySide1 = side1;
+      mySide2 = side2;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      DiffContent[] contents = myRequest.getContents();
+      String[] titles = myRequest.getContentTitles();
+
+      DiffRequest request = new SimpleDiffRequest(myRequest.getTitle(), mySide1.selectN(contents), mySide2.selectN(contents),
+                                                  mySide1.selectN(titles), mySide1.selectN(titles));
+      DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
+    }
+  }
 
   //
   // Helpers
