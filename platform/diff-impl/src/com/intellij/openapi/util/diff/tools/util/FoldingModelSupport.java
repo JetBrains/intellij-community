@@ -1,6 +1,7 @@
 package com.intellij.openapi.util.diff.tools.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -8,6 +9,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
@@ -492,11 +494,16 @@ public class FoldingModelSupport {
 
     @NotNull
     private FoldingCache getFoldingCache() {
-      List<FoldedRange>[] result = new List[myCount];
-      for (int i = 0; i < myCount; i++) {
-        result[i] = getFoldedRanges(i);
-      }
-      return new FoldingCache(result);
+      return ApplicationManager.getApplication().runReadAction(new Computable<FoldingCache>() {
+        @Override
+        public FoldingCache compute() {
+          List<FoldedRange>[] result = new List[myCount];
+          for (int i = 0; i < myCount; i++) {
+            result[i] = getFoldedRanges(i);
+          }
+          return new FoldingCache(result);
+        }
+      });
     }
 
     @NotNull
