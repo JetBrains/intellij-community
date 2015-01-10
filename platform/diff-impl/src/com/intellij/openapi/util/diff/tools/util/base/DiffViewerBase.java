@@ -88,6 +88,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @CalledInAwt
   public final void scheduleRediff() {
+    if (myDisposed) return;
     final int modificationStamp = myModificationStamp;
 
     myAlarm.cancelAllRequests();
