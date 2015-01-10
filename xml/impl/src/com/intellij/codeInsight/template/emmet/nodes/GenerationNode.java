@@ -322,7 +322,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private static String prepareVariableName(@NotNull String attributeName) {
-    return StringUtil.replaceChar(attributeName, '-', '_');
+    return StringUtil.replaceChar(StringUtil.replaceChar(attributeName, '-', '_'), '+', '_');
   }
 
   @NotNull
