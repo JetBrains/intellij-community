@@ -20,6 +20,7 @@ import com.intellij.history.core.Content;
 import com.intellij.history.core.StoredContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.util.io.DataInputOutputUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -40,14 +41,14 @@ public class ContentChange extends StructuralChange {
   public ContentChange(DataInput in) throws IOException {
     super(in);
     myOldContent = new StoredContent(in);
-    myOldTimestamp = in.readLong();
+    myOldTimestamp = DataInputOutputUtil.readTIME(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
     myOldContent.write(out);
-    out.writeLong(myOldTimestamp);
+    DataInputOutputUtil.writeTIME(out, myOldTimestamp);
   }
 
   public Content getOldContent() {

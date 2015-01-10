@@ -43,7 +43,7 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 
 public class ChangeListStorageImpl implements ChangeListStorage {
-  private static final int VERSION = 5;
+  private static final int VERSION = 6;
   private static final String STORAGE_FILE = "changes";
 
   private final File myStorageDir;
