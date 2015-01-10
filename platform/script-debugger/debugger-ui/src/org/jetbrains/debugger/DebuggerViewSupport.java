@@ -54,7 +54,7 @@ public interface DebuggerViewSupport {
   Promise<Void> computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node);
 
   @NotNull
-  MemberFilter createMemberFilter(@NotNull VariableContext context);
+  Promise<MemberFilter> createMemberFilter(@NotNull VariableContext context);
 
   @NotNull
   String normalizeMemberName(@NotNull Variable variable);

@@ -88,8 +88,8 @@ public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilt
 
   @NotNull
   @Override
-  public MemberFilter createMemberFilter(@NotNull VariableContext context) {
-    return this;
+  public Promise<MemberFilter> createMemberFilter(@NotNull VariableContext context) {
+    return Promise.<MemberFilter>resolve(this);
   }
 
   @Override

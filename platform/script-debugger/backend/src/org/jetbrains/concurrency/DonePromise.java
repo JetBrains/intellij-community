@@ -42,7 +42,7 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done) {
-    if (done instanceof ObsolescentFunction && ((ObsolescentFunction)done).isObsolete()) {
+    if (done instanceof Obsolescent && ((Obsolescent)done).isObsolete()) {
       return Promise.reject("obsolete");
     }
     else {

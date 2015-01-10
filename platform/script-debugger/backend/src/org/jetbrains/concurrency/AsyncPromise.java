@@ -126,7 +126,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
       @Override
       public void consume(T result) {
         try {
-          if (fulfilled instanceof ObsolescentFunction && ((ObsolescentFunction)fulfilled).isObsolete()) {
+          if (fulfilled instanceof Obsolescent && ((Obsolescent)fulfilled).isObsolete()) {
             promise.setError(createError("Obsolete"));
           }
           else {
@@ -293,7 +293,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   static boolean isObsolete(@Nullable Consumer<?> done) {
-    return done instanceof ObsolescentConsumer && ((ObsolescentConsumer)done).isObsolete();
+    return done instanceof Obsolescent && ((Obsolescent)done).isObsolete();
   }
 
   public void setError(@NotNull Throwable error) {

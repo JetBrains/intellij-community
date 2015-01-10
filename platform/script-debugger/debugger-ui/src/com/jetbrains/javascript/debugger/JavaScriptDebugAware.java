@@ -16,7 +16,9 @@ public abstract class JavaScriptDebugAware {
   public static final ExtensionPointName<JavaScriptDebugAware> EP_NAME = ExtensionPointName.create("com.jetbrains.javaScriptDebugAware");
 
   @Nullable
-  public abstract FileType getFileType();
+  public FileType getFileType() {
+    return null;
+  }
 
   @Nullable
   public XLineBreakpointType<?> getBreakpointTypeClass(@NotNull Project project) {
@@ -60,7 +62,7 @@ public abstract class JavaScriptDebugAware {
   }
 
   @Nullable
-  public MemberFilter createMemberFilter(@NotNull PsiElement element, int end) {
+  public MemberFilter createMemberFilter(@Nullable NameMapper nameMapper, @NotNull PsiElement element, int end) {
     return null;
   }
 }
