@@ -337,6 +337,15 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     myShowActionGroupPopupAction.setActionGroup(group);
   }
 
+  private void setTitle(@NotNull String title) {
+    if (myTitleLabel != null) {
+      myTitleLabel.setText(title);
+    }
+    else {
+      setWindowTitle(title);
+    }
+  }
+
   //
   // Getters
   //
@@ -838,12 +847,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
 
-      if (myTitleLabel != null) {
-        myTitleLabel.setText(myActiveRequest.getWindowTitle());
-      }
-      else {
-        setWindowTitle(myActiveRequest.getWindowTitle());
-      }
+      setTitle(myActiveRequest.getWindowTitle());
 
       myPanel.validate();
 
@@ -900,12 +904,7 @@ public abstract class CacheDiffRequestChainProcessor implements Disposable {
     public void init() {
       myContentPanel.setContent(myWrapperViewer.getComponent());
 
-      if (myTitleLabel != null) {
-        myTitleLabel.setText(myActiveRequest.getWindowTitle());
-      }
-      else {
-        setWindowTitle(myActiveRequest.getWindowTitle());
-      }
+      setTitle(myActiveRequest.getWindowTitle());
 
       myPanel.validate();
 
