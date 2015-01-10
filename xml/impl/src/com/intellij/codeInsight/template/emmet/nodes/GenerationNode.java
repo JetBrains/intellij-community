@@ -519,7 +519,7 @@ public class GenerationNode extends UserDataHolderBase {
     if (XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE.equals(attributeValue)) {
       return true;
     }
-    if (ZenCodingUtil.isHtml(callback)) {
+    if (ZenCodingUtil.isHtml(callback) && StringUtil.isEmpty(attributeValue)) {
       final XmlAttributeDescriptor descriptor = xmlAttribute.getDescriptor();
       return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, callback.getContext());
     }
