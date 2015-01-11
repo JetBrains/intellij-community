@@ -161,7 +161,7 @@ public final class UpdateChecker {
     }
     else if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
       Exception e = result.getError();
-      if (e != null) LOG.warn(e);
+      if (e != null) LOG.info(e);
       showErrorMessage(manualCheck, IdeBundle.message(e instanceof InterruptedIOException ? "updates.timeout.error" : "updates.error.connection.failed"));
       return;
     }
@@ -372,7 +372,7 @@ public final class UpdateChecker {
       });
     }
     else {
-      LOG.warn(message);
+      LOG.info(message);
     }
   }
 
