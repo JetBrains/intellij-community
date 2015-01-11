@@ -1,11 +1,23 @@
 package com.siyeh.ig.style;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryCallToStringValueOfInspectionTest extends IGInspectionTestCase {
+public class UnnecessaryCallToStringValueOfInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/style/unnecessary_valueof",
-           new UnnecessaryCallToStringValueOfInspection());
+  public void testUnnecessaryCallToStringValueOf() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new UnnecessaryCallToStringValueOfInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/style/unnecessary_valueof";
   }
 }
