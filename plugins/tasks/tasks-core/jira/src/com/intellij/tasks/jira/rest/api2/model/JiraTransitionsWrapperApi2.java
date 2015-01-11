@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.tasks.CustomTaskState;
-import com.intellij.tasks.jira.rest.model.JiraCustomTaskState;
+import com.intellij.tasks.impl.SimpleTaskState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -42,14 +42,14 @@ public class JiraTransitionsWrapperApi2 {
           if (fieldName.equals("resolution") && fieldInfo.get("required").getAsBoolean()) {
             for (JsonElement allowedValue : fieldInfo.getAsJsonArray("allowedValues")) {
               final String resolutionName = allowedValue.getAsJsonObject().get("name").getAsString();
-              result.add(new JiraCustomTaskState(transitionName + " (" + resolutionName + ")", transitionId, resolutionName));
+              result.add(new SimpleTaskState(transitionName + " (" + resolutionName + ")", transitionId + resolutionName));
             }
             break;
           }
         }
       }
       if (fieldName == null) {
-        result.add(new JiraCustomTaskState(transitionName, transitionId, null));
+        result.add(new SimpleTaskState(transitionName, String.valueOf(transitionId)));
       }
     }
     return result;

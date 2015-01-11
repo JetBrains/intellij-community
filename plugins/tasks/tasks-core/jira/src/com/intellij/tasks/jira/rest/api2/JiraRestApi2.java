@@ -10,7 +10,6 @@ import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.rest.api2.model.JiraIssueApi2;
 import com.intellij.tasks.jira.rest.api2.model.JiraTransitionsWrapperApi2;
-import com.intellij.tasks.jira.rest.model.JiraCustomTaskState;
 import com.intellij.tasks.jira.rest.model.JiraIssue;
 import com.intellij.tasks.jira.rest.model.JiraResponseWrapper;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -70,14 +69,17 @@ public class JiraRestApi2 extends JiraRestApi {
   @NotNull
   @Override
   protected String getRequestForStateTransition(@NotNull CustomTaskState state) {
-    final JiraCustomTaskState transition = (JiraCustomTaskState)state;
     assert StringUtil.isNotEmpty(state.getId());
-    final String resolutionName = transition.getResolutionName();
-    if (resolutionName != null) {
-      return "{\"transition\": {\"id\": \"" + state.getId() + "\"}, \"fields\": {\"resolution\": {\"name\": \"" + resolutionName + "\"}}}";
+    final String stateId = state.getId();
+    final int index = stateId.indexOf(':');
+    if (index >= 0) {
+      return "{" +
+             "  \"transition\": {\"id\": \"" + stateId.substring(0, index) + "\"}, " +
+             "  \"fields\": {\"resolution\": {\"name\": \"" + stateId.substring(index + 1) + "\"}}" +
+             "}";
     }
     else {
-      return "{\"transition\": {\"id\": \"" + state.getId() + "\"}}";
+      return "{\"transition\": {\"id\": \"" + stateId + "\"}}";
     }
   }
 
