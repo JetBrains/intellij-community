@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.generators.test.evaluate
+package org.jetbrains.jet.plugin.refactoring.move
 
-import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.kotlin.test.JetTestUtils
-import org.jetbrains.kotlin.generators.evaluate
+import com.google.gson.JsonObject
 
-public class GenerateOperationsMapTest : UsefulTestCase() {
-    public fun testGeneratedDataIsUpToDate(): Unit {
-        val text = evaluate.generate()
-        JetTestUtils.assertEqualsToFile(evaluate.DEST_FILE, text)
-    }
+fun JsonObject.getString(name: String): String {
+    return getNullableString(name) ?: throw IllegalStateException("Member with name '$name' is expected in '$this'")
+}
+
+fun JsonObject.getNullableString(name: String): String? {
+    return this[name]?.getAsString()
 }
