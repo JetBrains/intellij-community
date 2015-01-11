@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 JetBrains s.r.o.
+ * Copyright 2010-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.jet.lang.resolve.lazy;
+package org.jetbrains.kotlin.resolve.lazy;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.descriptors.annotations.Annotations;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.jet.lang.resolve.*;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo;
-import org.jetbrains.jet.lang.resolve.lazy.descriptors.LazyClassDescriptor;
-import org.jetbrains.jet.lang.resolve.lazy.descriptors.LazyPackageDescriptor;
+import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor;
+import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyPackageDescriptor;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.jet.lang.resolve.scopes.ChainedScope;

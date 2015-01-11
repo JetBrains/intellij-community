@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 JetBrains s.r.o.
+ * Copyright 2010-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-package org.jetbrains.jet.lang.resolve.lazy
+package org.jetbrains.kotlin.resolve.lazy
 
-public enum class BodyResolveMode {
-    FULL
-    PARTIAL
-    PARTIAL_FOR_COMPLETION
+public trait ProbablyNothingCallableNames {
+    public fun functionNames(): Set<String>
+    public fun propertyNames(): Set<String>
+}
+
+public object DefaultNothingCallableNames : ProbablyNothingCallableNames {
+    private val hardcodedNames = setOf("error")
+
+    override fun functionNames() = hardcodedNames
+    override fun propertyNames(): Set<String> = setOf()
 }
