@@ -3,7 +3,7 @@ package com.siyeh.igtest.style.unnecessary_tostring;
 public class UnnecessaryToString {
 
     String foo(Object o) {
-        return "star" + o.toString();
+        return "star" + o.<warning descr="Unnecessary 'toString()' call">toString</warning>();
     }
 
     String bar() {
@@ -17,15 +17,15 @@ public class UnnecessaryToString {
     }
 
     void polyadic(Object s) {
-      s = "abc" + s.toString() + "efg";
+      s = "abc" + s.<warning descr="Unnecessary 'toString()' call">toString</warning>() + "efg";
     }
 
     void printStream(Object o) {
-        System.out.print(o.toString());
+        System.out.print(o.<warning descr="Unnecessary 'toString()' call">toString</warning>());
     }
 
     void builder(StringBuilder builder, Object o) {
-        builder.append(o.toString());
+        builder.append(o.<warning descr="Unnecessary 'toString()' call">toString</warning>());
     }
 
   public static void main22(String[] args) {
