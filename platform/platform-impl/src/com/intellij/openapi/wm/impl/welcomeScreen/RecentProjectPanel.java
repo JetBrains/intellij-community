@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,7 @@ public class RecentProjectPanel extends JPanel {
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
   protected AnAction removeRecentProjectAction;
   private int myHoverIndex = -1;
-  private static final int closeButtonInset = 7;
+  private final int closeButtonInset = JBUI.scale(7);
   private Icon currentIcon = AllIcons.Welcome.RemoveRecentProject;
 
   private final JPanel myCloseButtonForEditor = new JPanel() {
@@ -202,7 +203,7 @@ public class RecentProjectPanel extends JPanel {
   }
 
   protected Dimension getPreferredScrollableViewportSize() {
-    return new Dimension(250, 400);
+    return JBUI.size(250, 400);
   }
   
   protected void addMouseMotionListener() {
@@ -264,7 +265,7 @@ public class RecentProjectPanel extends JPanel {
     JPanel title = new JPanel() {
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(super.getPreferredSize().width, 28);
+        return new Dimension(super.getPreferredSize().width, JBUI.scale(28));
       }
     };
     title.setBorder(new BottomLineBorder());
@@ -305,7 +306,7 @@ public class RecentProjectPanel extends JPanel {
     protected RecentProjectItemRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
       super(new VerticalFlowLayout());
       myShortener = pathShortener;
-      myPath.setFont(myPath.getFont().deriveFont(SystemInfo.isMac ? 10f : 11f));
+      myPath.setFont(JBUI.Fonts.label(SystemInfo.isMac ? 10f : 11f));
       setFocusable(true);
       layoutComponents();
     }
@@ -360,7 +361,7 @@ public class RecentProjectPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      return new Dimension(Math.min(size.width, 245), size.height);
+      return new Dimension(Math.min(size.width, JBUI.scale(245)), size.height);
     }
   }
 }
