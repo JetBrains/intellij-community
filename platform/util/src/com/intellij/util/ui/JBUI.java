@@ -76,6 +76,18 @@ public class JBUI {
     public static JBFont label(float size) {
       return label().deriveFont(scale(size));
     }
+
+    public static JBFont smallFont() {
+      return label().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
+    }
+
+    public static JBFont miniFont() {
+      return label().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.MINI));
+    }
+
+    public static JBFont create(String fontFamily, int size) {
+      return JBFont.create(new Font(fontFamily, Font.PLAIN, size));
+    }
   }
 
   public static class Borders {
