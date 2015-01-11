@@ -83,7 +83,7 @@ public class JiraRestApi2 extends JiraRestApi {
 
   @NotNull
   @Override
-  public Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception {
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     final GetMethod method = new GetMethod(myRepository.getRestUrl("issue", task.getId(), "transitions"));
     method.setQueryString("expand=transitions.fields");
     final String response = myRepository.executeMethod(method);

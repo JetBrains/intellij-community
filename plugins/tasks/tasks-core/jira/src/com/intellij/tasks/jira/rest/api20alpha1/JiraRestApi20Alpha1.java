@@ -34,7 +34,7 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
 
   @NotNull
   @Override
-  public Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception {
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     final HashSet<CustomTaskState> result = new HashSet<CustomTaskState>();
     result.add(TaskState.IN_PROGRESS);
     result.add(TaskState.RESOLVED);

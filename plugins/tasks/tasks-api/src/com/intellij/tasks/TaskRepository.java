@@ -18,6 +18,8 @@ package com.intellij.tasks;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.impl.CancellableRunnable;
+import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -35,7 +37,7 @@ import java.util.concurrent.Callable;
  *
  * @author Dmitry Avdeev
  * @see TaskRepositoryType
- * @see com.intellij.tasks.impl.BaseRepository
+ * @see BaseRepository
  */
 @Tag("server")
 public abstract class TaskRepository {
@@ -110,7 +112,7 @@ public abstract class TaskRepository {
 
   /**
    * Returns an object that can test connection.
-   * {@link com.intellij.openapi.vcs.impl.CancellableRunnable#cancel()} should cancel the process.
+   * {@link CancellableRunnable#cancel()} should cancel the process.
    *
    * @return null if not supported
    */
@@ -171,7 +173,7 @@ public abstract class TaskRepository {
    * @return set of available states
    */
   @NotNull
-  public Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception {
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     //noinspection unchecked
     return getRepositoryType().getPossibleTaskStates();
   }
@@ -201,15 +203,15 @@ public abstract class TaskRepository {
   }
 
   /**
-   * Update state of the task on server. It's guaranteed that only issues returned by {@link #getPossibleStates(Task)}
+   * Update state of the task on server. It's guaranteed that only issues returned by {@link #getAvailableTaskStates(Task)}
    * will be passed here.
    * <p/>
-   * Don't forget to add {@link #STATE_UPDATING} in {@link #getFeatures()} and supported states in {@link #getPossibleStates(Task)}.
+   * Don't forget to add {@link #STATE_UPDATING} in {@link #getFeatures()} and supported states in {@link #getAvailableTaskStates(Task)}.
    *
    * @param task  issue to update
    * @param state new state of the issue
-   * @see com.intellij.tasks.TaskRepositoryType#getPossibleTaskStates()
-   * @see com.intellij.tasks.TaskRepository#getFeatures()
+   * @see TaskRepositoryType#getPossibleTaskStates()
+   * @see TaskRepository#getFeatures()
    */
   public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
     setTaskState(task, ((TaskState)state));

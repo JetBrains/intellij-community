@@ -106,7 +106,7 @@ public class JiraLegacyApi extends JiraRemoteApi {
 
   @NotNull
   @Override
-  public Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception {
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     return Collections.emptySet();
   }
 

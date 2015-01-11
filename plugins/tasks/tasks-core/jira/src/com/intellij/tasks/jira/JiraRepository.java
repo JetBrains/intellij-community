@@ -355,8 +355,8 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @NotNull
   @Override
-  public Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception {
-    return myApiVersion.getPossibleStates(task);
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    return myApiVersion.getAvailableTaskStates(task);
   }
 
   public void setSearchQuery(String searchQuery) {

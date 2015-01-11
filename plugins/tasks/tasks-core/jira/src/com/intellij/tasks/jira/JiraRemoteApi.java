@@ -31,7 +31,7 @@ public abstract class JiraRemoteApi {
   public abstract Task findTask(@NotNull String key) throws Exception;
 
   @NotNull
-  public abstract Set<CustomTaskState> getPossibleStates(@NotNull Task task) throws Exception;
+  public abstract Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception;
 
   public abstract void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception;
 

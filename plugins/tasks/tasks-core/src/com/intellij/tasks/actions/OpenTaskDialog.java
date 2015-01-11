@@ -119,7 +119,7 @@ public class OpenTaskDialog extends DialogWrapper {
         @NotNull
         @Override
         protected Set<CustomTaskState> fetch(@NotNull ProgressIndicator indicator) throws Exception {
-          return repository.getPossibleStates(myTask);
+          return repository.getAvailableTaskStates(myTask);
         }
 
         @Nullable
