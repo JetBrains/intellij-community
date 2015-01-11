@@ -36,9 +36,9 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
   @Override
   public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     final HashSet<CustomTaskState> result = new HashSet<CustomTaskState>();
-    result.add(TaskState.IN_PROGRESS);
-    result.add(TaskState.RESOLVED);
-    result.add(TaskState.REOPENED);
+    result.add(TaskState.IN_PROGRESS.asCustomTaskState());
+    result.add(TaskState.RESOLVED.asCustomTaskState());
+    result.add(TaskState.REOPENED.asCustomTaskState());
     return result;
   }
 
@@ -72,17 +72,21 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
   protected String getRequestForStateTransition(@NotNull CustomTaskState state) {
     // REST API of JIRA 4.x for retrieving possible transitions is very limited: we can't fetch possible resolutions and
     // names of transition destinations. So we have no other options than to hardcode them.
-    switch ((TaskState)state) {
-      case IN_PROGRESS:
-        return  "{\"transition\": \"4\"}";
-      case RESOLVED:
-        // 5 for "Resolved", 2 for "Closed"
-        return  "{\"transition\": \"5\", \"resolution\": \"Fixed\"}";
-      case REOPENED:
-        return  "{\"transition\": \"3\"}";
-      default:
-        return null;
+    final TaskState taskState = state.asPredefinedTaskState();
+    if (taskState != null) {
+      switch (taskState) {
+        case IN_PROGRESS:
+          return  "{\"transition\": \"4\"}";
+        case RESOLVED:
+          // 5 for "Resolved", 2 for "Closed"
+          return  "{\"transition\": \"5\", \"resolution\": \"Fixed\"}";
+        case REOPENED:
+          return  "{\"transition\": \"3\"}";
+        default:
+          return null;
+      }
     }
+    return null;
   }
 
   @Override

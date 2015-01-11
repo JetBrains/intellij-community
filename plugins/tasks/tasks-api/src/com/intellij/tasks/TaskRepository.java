@@ -20,6 +20,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.CancellableRunnable;
 import com.intellij.tasks.impl.BaseRepository;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -175,8 +177,26 @@ public abstract class TaskRepository {
   @NotNull
   public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     //noinspection unchecked
-    return getRepositoryType().getPossibleTaskStates();
+    return ContainerUtil.map2Set(getRepositoryType().getPossibleTaskStates(), new Function<TaskState, CustomTaskState>() {
+      @Override
+      public CustomTaskState fun(TaskState state) {
+        return state.asCustomTaskState();
+      }
+    });
   }
+
+  /**
+   * Remember state used for opening of task.
+   * @param state preferred task state
+   */
+  public abstract void setPreferredOpenTaskState(@Nullable CustomTaskState state);
+
+  /**
+   * Task state used last time for opening task.
+   * @return preferred task state
+   */
+  @Nullable
+  public abstract CustomTaskState getPreferredOpenTaskState();
 
   /**
    * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
@@ -214,7 +234,15 @@ public abstract class TaskRepository {
    * @see TaskRepository#getFeatures()
    */
   public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
-    setTaskState(task, ((TaskState)state));
+    TaskState predefinedState = null;
+    try {
+      predefinedState = TaskState.valueOf(state.getId());
+    }
+    catch (IllegalArgumentException ignored) {
+    }
+    if (predefinedState != null) {
+      setTaskState(task, predefinedState);
+    }
   }
 
 

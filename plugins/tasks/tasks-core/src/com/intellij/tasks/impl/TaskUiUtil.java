@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public class TaskUiUtil {
 
     /**
      * {@link #onSuccess()} can't be used for this purpose, because it doesn't consider current modality state
-     * which will prevent UI updating in modal dialog (e.g. in {@link com.intellij.tasks.config.TaskRepositoryEditor}).
+     * which will prevent UI updating in modal dialog (e.g. in {@link TaskRepositoryEditor}).
      */
     @Nullable
     @Override
@@ -104,12 +105,21 @@ public class TaskUiUtil {
 
     /**
      * Return item to select after every combo box update. Default implementation select item, returned by {@link #getExtraItem()}.
+     * If returned value is not present in the list it will be added depending on policy set by {@link #addSelectedItemIfMissing()}.
      *
      * @return selected combo box item
+     * @see #addSelectedItemIfMissing()
      */
     @Nullable
     public T getSelectedItem() {
       return getExtraItem();
+    }
+
+    /**
+     * @return whether value returned by {@link #getSelectedItem()} should be forcibly added to the combo box.
+     */
+    protected boolean addSelectedItemIfMissing() {
+      return false;
     }
 
     @SuppressWarnings("unchecked")
@@ -127,7 +137,7 @@ public class TaskUiUtil {
 
         final T selected = getSelectedItem();
         if (selected != null) {
-          if (!selected.equals(extra) && !myResult.contains(selected)) {
+          if (!selected.equals(extra) && !myResult.contains(selected) && addSelectedItemIfMissing()) {
             myComboBox.addItem(selected);
           }
           myComboBox.setSelectedItem(selected);
@@ -147,7 +157,7 @@ public class TaskUiUtil {
   }
 
   /**
-   * Very simple wrapper around {@link com.intellij.ui.ListCellRendererWrapper} useful for
+   * Very simple wrapper around {@link ListCellRendererWrapper} useful for
    * combo boxes where each item has plain text representation with special message for
    * {@code null} value.
    */

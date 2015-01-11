@@ -260,6 +260,11 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       super.handleError();
       myListComboBox.removeAllItems();
     }
+
+    @Override
+    protected boolean addSelectedItemIfMissing() {
+      return true;
+    }
   }
 
   private class ListsComboBoxUpdater extends TaskUiUtil.ComboBoxUpdater<TrelloList> {
@@ -283,6 +288,11 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     @Override
     public TrelloList getSelectedItem() {
       return myRepository.getCurrentList();
+    }
+
+    @Override
+    protected boolean addSelectedItemIfMissing() {
+      return true;
     }
   }
 }

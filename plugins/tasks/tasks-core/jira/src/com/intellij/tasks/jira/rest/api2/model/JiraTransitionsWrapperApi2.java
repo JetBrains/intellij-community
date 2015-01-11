@@ -3,8 +3,8 @@ package com.intellij.tasks.jira.rest.api2.model;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.CustomTaskState;
-import com.intellij.tasks.impl.SimpleTaskState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -12,7 +12,9 @@ import java.util.*;
 /**
  * @author Mikhail Golubev
  */
+@SuppressWarnings({"unused", "FieldMayBeFinal"})
 public class JiraTransitionsWrapperApi2 {
+  private static final Logger LOG = Logger.getInstance(JiraTransitionsWrapperApi2.class);
   private List<JiraTransition> transitions = Collections.emptyList();
 
   static class JiraTransition {
@@ -31,25 +33,34 @@ public class JiraTransitionsWrapperApi2 {
   @NotNull
   public Set<CustomTaskState> getTransitions() {
     final Set<CustomTaskState> result = new LinkedHashSet<CustomTaskState>();
+    nextTransition:
     for (JiraTransition transition : transitions) {
-      final int transitionId = transition.id;
-      final String transitionName = transition.target.name;
-      String fieldName = null;
+      final String stateName = transition.target.name;
+      final List<String> resolutions = new ArrayList<String>();
       if (transition.fields != null) {
         for (Map.Entry<String, JsonElement> field : transition.fields.entrySet()) {
-          fieldName = field.getKey();
+          final String fieldName = field.getKey();
           final JsonObject fieldInfo = field.getValue().getAsJsonObject();
-          if (fieldName.equals("resolution") && fieldInfo.get("required").getAsBoolean()) {
-            for (JsonElement allowedValue : fieldInfo.getAsJsonArray("allowedValues")) {
-              final String resolutionName = allowedValue.getAsJsonObject().get("name").getAsString();
-              result.add(new SimpleTaskState(transitionName + " (" + resolutionName + ")", transitionId + resolutionName));
+          if (fieldInfo.get("required").getAsBoolean()) {
+            if (fieldName.equals("resolution")) {
+              for (JsonElement allowedValue : fieldInfo.getAsJsonArray("allowedValues")) {
+                resolutions.add(allowedValue.getAsJsonObject().get("name").getAsString());
+              }
             }
-            break;
+            else {
+              LOG.info("Unknown required field '" + fieldName + "' for transition '" + stateName + "'");
+              continue nextTransition;
+            }
           }
         }
       }
-      if (fieldName == null) {
-        result.add(new SimpleTaskState(transitionName, String.valueOf(transitionId)));
+      if (resolutions.isEmpty()) {
+        result.add(new CustomTaskState(String.valueOf(transition.id), stateName));
+      }
+      else {
+        for (String resolution : resolutions) {
+          result.add(new CustomTaskState(transition.id + ":" + resolution, stateName + " (" + resolution + ")"));
+        }
       }
     }
     return result;

@@ -54,19 +54,7 @@ public class OpenTaskDialog extends DialogWrapper {
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.SimpleOpenTaskDialog");
   public static final String START_FROM_BRANCH = "start.from.branch";
 
-  private static final CustomTaskState DO_NOT_UPDATE_STATE = new CustomTaskState() {
-    @NotNull
-    @Override
-    public String getId() {
-      return "";
-    }
-
-    @NotNull
-    @Override
-    public String getPresentableName() {
-      return "-- do not update --";
-    }
-  };
+  private static final CustomTaskState DO_NOT_UPDATE_STATE = new CustomTaskState("", "-- do not update --");
 
   private JPanel myPanel;
   @BindControl(value = "clearContext", instant = true)
@@ -120,6 +108,12 @@ public class OpenTaskDialog extends DialogWrapper {
         @Override
         protected Set<CustomTaskState> fetch(@NotNull ProgressIndicator indicator) throws Exception {
           return repository.getAvailableTaskStates(myTask);
+        }
+
+        @Nullable
+        @Override
+        public CustomTaskState getSelectedItem() {
+          return repository.getPreferredOpenTaskState();
         }
 
         @Nullable
@@ -232,11 +226,12 @@ public class OpenTaskDialog extends DialogWrapper {
     taskManager.getState().createChangelist = myCreateChangelist.isSelected();
     taskManager.getState().createBranch = myCreateBranch.isSelected();
 
-    TaskRepository repository = myTask.getRepository();
-    final CustomTaskState selectedItem = (CustomTaskState)myStateComboBox.getSelectedItem();
-    if (repository != null && selectedItem != null && selectedItem != DO_NOT_UPDATE_STATE) {
+    final TaskRepository repository = myTask.getRepository();
+    final CustomTaskState taskState = (CustomTaskState)myStateComboBox.getSelectedItem();
+    if (repository != null && taskState != null && taskState != DO_NOT_UPDATE_STATE) {
       try {
-        repository.setTaskState(myTask, selectedItem);
+        repository.setTaskState(myTask, taskState);
+        repository.setPreferredOpenTaskState(taskState);
       }
       catch (Exception ex) {
         Messages.showErrorDialog(myProject, ex.getMessage(), "Cannot Set State For Issue");

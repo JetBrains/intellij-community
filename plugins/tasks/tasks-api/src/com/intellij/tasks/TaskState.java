@@ -18,9 +18,11 @@ package com.intellij.tasks;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Predefined common task states used before {@link CustomTaskState} was introduced.
+ *
  * @author Dmitry Avdeev
  */
-public enum TaskState implements CustomTaskState {
+public enum TaskState {
   SUBMITTED("Submitted"),
   OPEN("Open"),
   IN_PROGRESS("In Progress"),
@@ -36,14 +38,9 @@ public enum TaskState implements CustomTaskState {
   }
 
   @NotNull
-  @Override
-  public String getId() {
-    return "";
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return myPresentableName;
+  public CustomTaskState asCustomTaskState() {
+    final CustomTaskState result = new CustomTaskState(name(), myPresentableName);
+    result.setPredefined(true);
+    return result;
   }
 }
