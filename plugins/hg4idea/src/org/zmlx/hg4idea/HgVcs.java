@@ -257,7 +257,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
    */
   @NotNull
   public File getPromptHooksExtensionFile() {
-    if (myPromptHooksExtensionFile == null) {
+    if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
       // check that hooks are available
       myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
       if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
