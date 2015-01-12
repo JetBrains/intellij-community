@@ -4,6 +4,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -12,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.edu.StudyUtils;
+import com.jetbrains.python.edu.TaskWindowDeleteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +104,11 @@ public class TaskFile implements Stateful {
     for (TaskWindow taskWindow : taskWindows) {
       taskWindow.draw(editor, false, false);
     }
+    final Document document = editor.getDocument();
+    EditorActionManager.getInstance()
+      .setReadonlyFragmentModificationHandler(document, new TaskWindowDeleteHandler(editor));
+    createGuardedBlocks(document, editor);
+    editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
   }
 
   /**
