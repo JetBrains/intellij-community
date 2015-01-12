@@ -19,13 +19,13 @@ import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Set;
 
-public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Configurable.NoScroll {
+public class XmlEmmetConfigurable implements Configurable, Disposable, Configurable.NoScroll {
   private JPanel myPanel;
   private JBCheckBox myEnableEmmetJBCheckBox;
   private JBCheckBox myEnablePreviewJBCheckBox;
@@ -118,5 +118,17 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
       }
     }
     return result;
+  }
+
+  @Nls
+  @Override
+  public String getDisplayName() {
+    return "XML";
+  }
+
+  @Nullable
+  @Override
+  public String getHelpTopic() {
+    return XmlBundle.message("emmet.configuration.title");
   }
 }
