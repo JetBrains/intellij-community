@@ -64,7 +64,8 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import):
         type, value, traceback = original_exc_info()
         if type == ImportError:
             #we should not show frame added by patched_import call
-            return type, value, traceback.tb_next
+            if traceback and hasattr(traceback, "tb_next"):
+                return type, value, traceback.tb_next
         return type, value, traceback
 
     def patched_import(name, *args, **kwargs):
