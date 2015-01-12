@@ -19,10 +19,8 @@ import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
@@ -30,17 +28,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class XmlEmmetConfigurable implements Configurable, Disposable, Configurable.NoScroll {
   private JPanel myPanel;
   private JBCheckBox myEnableEmmetJBCheckBox;
   private JBCheckBox myEnablePreviewJBCheckBox;
-  private CheckBoxList<ZenCodingFilter> myFiltersCheckBoxList;
   private JPanel myFiltersListPanel;
   private JBCheckBox myEnableHrefAutodetectJBCheckBox;
+
+  private Map<String, JBCheckBox> myFilterCheckboxes = ContainerUtil.newHashMap();
 
   public XmlEmmetConfigurable() {
     myEnableEmmetJBCheckBox.addActionListener(new ActionListener() {
@@ -48,17 +50,28 @@ public class XmlEmmetConfigurable implements Configurable, Disposable, Configura
       public void actionPerformed(ActionEvent e) {
         boolean selected = myEnableEmmetJBCheckBox.isSelected();
         myEnablePreviewJBCheckBox.setEnabled(selected);
-        myFiltersCheckBoxList.setEnabled(selected);
+        myFiltersListPanel.setEnabled(selected);
         myEnableHrefAutodetectJBCheckBox.setEnabled(selected);
       }
     });
-    myFiltersListPanel.setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("emmet.filters.enabled.by.default"), false));
-    myFiltersCheckBoxList.setItems(ZenCodingFilter.getInstances(), new Function<ZenCodingFilter, String>() {
-      @Override
-      public String fun(ZenCodingFilter filter) {
-        return filter.getDisplayName();
-      }
-    });
+    myFiltersListPanel.setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("emmet.filters.enabled.by.default")));
+    createFiltersCheckboxes();
+  }
+
+  public void createFiltersCheckboxes() {
+    final List<ZenCodingFilter> filters = ZenCodingFilter.getInstances();
+    final GridBagLayout layoutManager = new GridBagLayout();
+    final GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 
+                                                                  new Insets(0, 0, 0, 0), 0, 0);
+    myFiltersListPanel.setLayout(layoutManager);
+    for (int i = 0; i < filters.size(); i++) {
+      ZenCodingFilter filter = filters.get(i);
+      final JBCheckBox checkBox = new JBCheckBox(filter.getDisplayName());
+      myFilterCheckboxes.put(filter.getSuffix(), checkBox);
+      constraints.gridy = i;
+      myFiltersListPanel.add(checkBox, constraints);
+    }
+    myFiltersListPanel.revalidate();
   }
 
   @Override
@@ -101,7 +114,11 @@ public class XmlEmmetConfigurable implements Configurable, Disposable, Configura
 
     Set<String> enabledByDefault = emmetOptions.getFiltersEnabledByDefault();
     for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
-      myFiltersCheckBoxList.setItemSelected(filter, enabledByDefault.contains(filter.getSuffix()));
+      final String filterSuffix = filter.getSuffix();
+      final JBCheckBox checkBox = myFilterCheckboxes.get(filterSuffix);
+      if (checkBox != null) {
+        checkBox.setSelected(enabledByDefault.contains(filterSuffix));
+      }
     }
   }
 
@@ -112,9 +129,9 @@ public class XmlEmmetConfigurable implements Configurable, Disposable, Configura
   @NotNull
   private Set<String> enabledFilters() {
     Set<String> result = ContainerUtil.newHashSet();
-    for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
-      if (myFiltersCheckBoxList.isItemSelected(filter)) {
-        result.add(filter.getSuffix());
+    for (Map.Entry<String, JBCheckBox> checkbox : myFilterCheckboxes.entrySet()) {
+      if (checkbox.getValue().isSelected()) {
+        result.add(checkbox.getKey());
       }
     }
     return result;

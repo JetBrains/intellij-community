@@ -31,14 +31,7 @@
         </constraints>
         <properties/>
         <border type="none"/>
-        <children>
-          <component id="3282c" class="com.intellij.ui.CheckBoxList" binding="myFiltersCheckBoxList">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-          </component>
-        </children>
+        <children/>
       </grid>
       <component id="d49b0" class="com.intellij.ui.components.JBCheckBox" binding="myEnableHrefAutodetectJBCheckBox">
         <constraints>
