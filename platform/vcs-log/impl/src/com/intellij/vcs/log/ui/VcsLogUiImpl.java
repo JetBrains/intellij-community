@@ -238,7 +238,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   private <T> void jumpTo(@NotNull final T commitId, @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter) {
     GraphTableModel model = getModel();
     if (model == null) {
-      showMessage(MessageType.WARNING, "The log is not ready to search yet");
+      invokeOnChange(new Runnable() {
+        @Override
+        public void run() {
+          jumpTo(commitId, rowGetter);
+        }
+      });
       return;
     }
 
