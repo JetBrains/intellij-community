@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.exception.TemplateResourceException;
 import org.jetbrains.java.generate.template.TemplateResource;
@@ -51,6 +52,11 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   private static final String EQUALS_SUFFIX = "equals";
   private static final String HASH_CODE_SUFFIX = "hashCode";
 
+  @NonNls public static final String INTELLI_J_DEFAULT = "IntelliJ Default";
+  @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG = "Equals/HashCodeBuilder (Apache commons-lang)";
+  @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3 = "Equals/HashCodeBuilder (Apache commons-lang 3)";
+  @NonNls public static final String OBJECTS_EQUAL_AND_HASH_CODE_GUAVA = "Objects.equal and hashCode (Guava)";
+
 
   public static EqualsHashCodeTemplatesManager getInstance() {
     return ServiceManager.getService(EqualsHashCodeTemplatesManager.class);
@@ -60,17 +66,17 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   public TemplateResource[] getDefaultTemplates() {
     try {
       return new TemplateResource[] {
-        new TemplateResource("IntelliJ Default equals", readFile(DEFAULT_EQUALS), true),
-        new TemplateResource("IntelliJ Default hashCode", readFile(DEFAULT_HASH_CODE), true),
+        new TemplateResource(toEqualsName(INTELLI_J_DEFAULT), readFile(DEFAULT_EQUALS), true),
+        new TemplateResource(toHashCodeName(INTELLI_J_DEFAULT), readFile(DEFAULT_HASH_CODE), true),
 
-        new TemplateResource("Equals/HashCodeBuilder (Apache commons-lang) equals", readFile(APACHE_EQUALS), true),
-        new TemplateResource("Equals/HashCodeBuilder (Apache commons-lang) hashCode", readFile(APACHE_HASH_CODE), true),
+        new TemplateResource(toEqualsName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG), readFile(APACHE_EQUALS), true),
+        new TemplateResource(toHashCodeName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG), readFile(APACHE_HASH_CODE), true),
 
-        new TemplateResource("Equals/HashCodeBuilder (Apache commons-lang 3) equals", readFile(APACHE3_EQUALS), true),
-        new TemplateResource("Equals/HashCodeBuilder (Apache commons-lang 3) hashCode", readFile(APACHE3_HASH_CODE), true),
+        new TemplateResource(toEqualsName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3), readFile(APACHE3_EQUALS), true),
+        new TemplateResource(toHashCodeName(EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3), readFile(APACHE3_HASH_CODE), true),
 
-        new TemplateResource("Objects.equal and hashCode (Guava) equals", readFile(GUAVA_EQUALS), true),
-        new TemplateResource("Objects.equal and hashCode (Guava) hashCode", readFile(GUAVA_HASH_CODE), true),
+        new TemplateResource(toEqualsName(OBJECTS_EQUAL_AND_HASH_CODE_GUAVA), readFile(GUAVA_EQUALS), true),
+        new TemplateResource(toHashCodeName(OBJECTS_EQUAL_AND_HASH_CODE_GUAVA), readFile(GUAVA_HASH_CODE), true),
       };
     }
     catch (IOException e) {
@@ -127,7 +133,7 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   }
 
   public void setDefaultTemplate(String name) {
-    Set<String> fullNames = ContainerUtil.newHashSet(name + " " + EQUALS_SUFFIX, name + " " + HASH_CODE_SUFFIX);
+    Set<String> fullNames = ContainerUtil.newHashSet(toEqualsName(name), toHashCodeName(name));
     for (TemplateResource resource : getAllTemplates()) {
       if (fullNames.contains(resource.getFileName())) {
         setDefaultTemplate(resource);
