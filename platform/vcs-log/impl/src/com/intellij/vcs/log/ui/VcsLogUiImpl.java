@@ -81,8 +81,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
     boolean permGraphChanged = previousPermGraph != myVisiblePack.getPermanentGraph();
 
-    GraphTableModel newModel = new GraphTableModel(myVisiblePack, myLogDataHolder, this);
-    setModel(newModel, myVisiblePack.getVisibleGraph(), previouslySelected);
+    GraphTableModel currentModel = getModel();
+    if (currentModel == null) {
+      GraphTableModel newModel = new GraphTableModel(myVisiblePack, myLogDataHolder, this);
+      setModel(newModel, myVisiblePack.getVisibleGraph(), previouslySelected);
+    }
+    else {
+      currentModel.setVisiblePack(myVisiblePack);
+    }
     myMainFrame.updateDataPack(myVisiblePack);
     setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
     fireFilterChangeEvent(myVisiblePack, permGraphChanged);
@@ -232,6 +238,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   private <T> void jumpTo(@NotNull final T commitId, @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter) {
     GraphTableModel model = getModel();
     if (model == null) {
+      invokeOnChange(new Runnable() {
+        @Override
+        public void run() {
+          jumpTo(commitId, rowGetter);
+        }
+      });
       return;
     }
 
@@ -266,7 +278,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     if (model instanceof GraphTableModel) {
       return (GraphTableModel)model;
     }
-    showMessage(MessageType.WARNING, "The log is not ready to search yet");
     return null;
   }
 
