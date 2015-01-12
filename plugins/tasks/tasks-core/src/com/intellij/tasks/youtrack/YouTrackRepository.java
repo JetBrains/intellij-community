@@ -25,6 +25,7 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -47,10 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.util.Date;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -198,12 +196,23 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
-    String s = myCustomStateNames.get(state);
-    if (StringUtil.isEmpty(s)) {
-      s = state.name();
-    }
-    doREST("/rest/issue/execute/" + task.getId() + "?command=" + encodeUrl("state " + s), true);
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
+    doREST("/rest/issue/execute/" + task.getId() + "?command=" + encodeUrl("state " + state.getId()), true);
+  }
+
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    final HttpMethod method = doREST("/rest/issue/" + task.getId() + "/execute/intellisense?command=" + encodeUrl("state "), false);
+    final InputStream stream = method.getResponseBodyAsStream();
+    final Element element = new SAXBuilder(false).build(stream).getRootElement();
+    return ContainerUtil.map2Set(element.getChild("suggest").getChildren("item"), new Function<Element, CustomTaskState>() {
+      @Override
+      public CustomTaskState fun(Element element) {
+        final String stateName = element.getChildText("option");
+        return new CustomTaskState(stateName, stateName);
+      }
+    });
   }
 
   @Nullable
