@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositoryType;
@@ -41,16 +42,20 @@ import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestWrapper;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -244,7 +249,12 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     if (myCurrentBoard == null || myCurrentBoard == UNSPECIFIED_BOARD) {
       throw new IllegalStateException("Board not set");
     }
-    final URIBuilder url = new URIBuilder(getRestApiUrl("boards", myCurrentBoard.getId(), "lists"))
+    return fetchBoardLists(myCurrentBoard.getId());
+  }
+
+  @NotNull
+  private List<TrelloList> fetchBoardLists(@NotNull String boardId) throws Exception {
+    final URIBuilder url = new URIBuilder(getRestApiUrl("boards", boardId, "lists"))
       .addParameter("fields", TrelloList.REQUIRED_FIELDS);
     return makeRequestAndDeserializeJsonResponse(url.build(), TrelloUtil.LIST_OF_LISTS_TYPE);
   }
@@ -424,8 +434,36 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     return "https://api.trello.com";
   }
 
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    final TrelloCard card = fetchCardById(task.getId());
+    if (card != null) {
+      final List<TrelloList> lists = fetchBoardLists(card.getIdBoard());
+      final Set<CustomTaskState> result = new HashSet<CustomTaskState>();
+      for (TrelloList list : lists) {
+        if (!list.getId().equals(card.getIdList())) {
+          result.add(new CustomTaskState(list.getId(), list.getName()));
+        }
+      }
+      return result;
+    }
+    return Collections.emptySet();
+  }
+
+  @Override
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
+    final URI url = new URIBuilder(getRestApiUrl("cards", task.getId(), "idList")).addParameter("value", state.getId()).build();
+    final HttpResponse response = getHttpClient().execute(new HttpPut(url));
+    if (response.getStatusLine() != null &&
+        response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED &&
+        EntityUtils.toString(response.getEntity()).trim().equals("unauthorized card permission requested")) {
+      throw new Exception(TaskBundle.message("trello.failure.write.access.required"));
+    }
+  }
+
   @Override
   protected int getFeatures() {
-    return super.getFeatures() & ~NATIVE_SEARCH;
+    return super.getFeatures() & ~NATIVE_SEARCH | STATE_UPDATING;
   }
 }
