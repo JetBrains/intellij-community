@@ -1,9 +1,9 @@
 public int hashCode() {
-  return com.google.common.base.Objects.hashCode(##
+  return java.util.Objects.hash(##
     #set($i = 0)
     #if($superHasHashCode)
-      super.hashCode() ##
-      #set($i = 1)
+     super.hashCode() ##
+     #set($i = 1)
     #end
     #foreach($member in $members)
       #if (!$member.static)

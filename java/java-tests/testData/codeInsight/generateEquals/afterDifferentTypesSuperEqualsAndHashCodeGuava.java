@@ -54,6 +54,6 @@ class A extends B {
 
     @Override
     public int hashCode() {
-        return com.google.common.base.Objects.hashCode(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14);
+        return com.google.common.base.Objects.hashCode(super.hashCode(), a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14);
     }
 }

@@ -48,6 +48,8 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   private static final String APACHE_HASH_CODE = "/com/intellij/codeInsight/generation/apacheHashCodeBuilder.vm";
   private static final String GUAVA_EQUALS = "/com/intellij/codeInsight/generation/guavaEquals.vm";
   private static final String GUAVA_HASH_CODE = "/com/intellij/codeInsight/generation/guavaHashCode.vm";
+  private static final String OBJECTS_EQUALS = "/com/intellij/codeInsight/generation/objectsEquals.vm";
+  private static final String OBJECTS_HASH_CODE = "/com/intellij/codeInsight/generation/objectsHashCode.vm";
 
   private static final String EQUALS_SUFFIX = "equals";
   private static final String HASH_CODE_SUFFIX = "hashCode";
@@ -56,6 +58,7 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG = "Equals/HashCodeBuilder (Apache commons-lang)";
   @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3 = "Equals/HashCodeBuilder (Apache commons-lang 3)";
   @NonNls public static final String OBJECTS_EQUAL_AND_HASH_CODE_GUAVA = "Objects.equal and hashCode (Guava)";
+  @NonNls public static final String JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE = "java.util.Objects.equals and hashCode (java 7+)";
 
 
   public static EqualsHashCodeTemplatesManager getInstance() {
@@ -77,6 +80,9 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
 
         new TemplateResource(toEqualsName(OBJECTS_EQUAL_AND_HASH_CODE_GUAVA), readFile(GUAVA_EQUALS), true),
         new TemplateResource(toHashCodeName(OBJECTS_EQUAL_AND_HASH_CODE_GUAVA), readFile(GUAVA_HASH_CODE), true),
+
+        new TemplateResource(toEqualsName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE), readFile(OBJECTS_EQUALS), true),
+        new TemplateResource(toHashCodeName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE), readFile(OBJECTS_HASH_CODE), true)
       };
     }
     catch (IOException e) {
