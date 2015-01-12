@@ -1036,7 +1036,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;
-    public boolean markAsInProgress = false;
 
     public String changelistNameFormat = "{id} {summary}";
     public String branchNameFormat = "{id}";
