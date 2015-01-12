@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -55,7 +56,7 @@ public class IdeaMenuUI extends BasicMenuUI{
   }
 
   public IdeaMenuUI() {
-    myMaxGutterIconWidth = 18;
+    myMaxGutterIconWidth = JBUI.scale(18);
 
     if (UIUtil.isUnderAquaLookAndFeel()) {
       if (myAquaSelectedBackgroundPainter == null) myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");

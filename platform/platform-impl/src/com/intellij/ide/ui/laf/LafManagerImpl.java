@@ -557,9 +557,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private static void patchHiDPI(UIDefaults defaults) {
     if (JBUI.isHiDPI()) {
       for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
-        if (entry.getValue() instanceof DimensionUIResource) {
-          DimensionUIResource size = (DimensionUIResource)entry.getValue();
-          entry.setValue(JBUI.size(size).asUIResource());
+        Object value = entry.getValue();
+        if (value instanceof DimensionUIResource) {
+          entry.setValue(JBUI.size((DimensionUIResource)value).asUIResource());
+        } else if (value instanceof Integer && entry.getKey().toString().endsWith(".maxGutterIconWidth")) {
+          entry.setValue(Integer.valueOf(JBUI.scale((Integer)value)));
         }
       }
     }
