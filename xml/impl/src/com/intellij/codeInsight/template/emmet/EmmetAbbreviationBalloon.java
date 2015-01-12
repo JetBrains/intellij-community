@@ -2,14 +2,18 @@ package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
@@ -22,9 +26,13 @@ public class EmmetAbbreviationBalloon {
   private final Callback myCallback;
   private final String myTitle;
 
+  @Nullable
+  private static String ourTestingAbbreviation;
+
+
   public EmmetAbbreviationBalloon(@NotNull String abbreviationsHistoryKey,
                                   @NotNull String lastAbbreviationKey,
-                                  @NotNull Callback callback, 
+                                  @NotNull Callback callback,
                                   @NotNull String title) {
     myAbbreviationsHistoryKey = abbreviationsHistoryKey;
     myLastAbbreviationKey = lastAbbreviationKey;
@@ -32,7 +40,28 @@ public class EmmetAbbreviationBalloon {
     myTitle = title;
   }
 
+
+  @TestOnly
+  public static void setTestingAbbreviation(@NotNull String testingAbbreviation, @NotNull Disposable parentDisposable) {
+    ourTestingAbbreviation = testingAbbreviation;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourTestingAbbreviation = null;
+      }
+    });
+  }
+
   public void show(@NotNull final CustomTemplateCallback customTemplateCallback) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ourTestingAbbreviation == null) {
+        throw new RuntimeException("Testing abbreviation is not set. See EmmetAbbreviationBalloon#setTestingAbbreviation");
+      }
+      myCallback.onEnter(ourTestingAbbreviation);
+      return;
+    }
+    
     final TextFieldWithStoredHistory field = new TextFieldWithStoredHistory(myAbbreviationsHistoryKey);
     final Dimension fieldPreferredSize = field.getPreferredSize();
     field.setPreferredSize(new Dimension(Math.max(220, fieldPreferredSize.width), fieldPreferredSize.height));
