@@ -79,6 +79,7 @@ class FTManager {
   public void setScheme(FileTemplatesScheme scheme) {
     mySortedTemplates = null;
     myScheme = scheme;
+    loadCustomizedContent();
   }
 
   @NotNull
@@ -215,7 +216,6 @@ class FTManager {
                                      " [" + template.getTemplateURL() + ", " + previous + ']');
     return bundled;
   }
-
 
   void loadCustomizedContent() {
     final File configRoot = getConfigRoot(false);

@@ -76,11 +76,6 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     }
 
     try {
-      SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasBlockSelection()) {
-        return Collections.emptyList(); // unsupported legacy mode
-      }
-
       RichCopySettings settings = RichCopySettings.getInstance();
       List<Caret> carets = editor.getCaretModel().getAllCarets();
       Caret firstCaret = carets.get(0);

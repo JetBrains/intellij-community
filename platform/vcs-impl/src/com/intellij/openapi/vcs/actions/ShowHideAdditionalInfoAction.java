@@ -18,13 +18,14 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.project.DumbAware;
 
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowHideAdditionalInfoAction extends AnAction {
+public class ShowHideAdditionalInfoAction extends AnAction implements DumbAware {
   private boolean showAdditionalInfo = false;
   private final List<AnnotationFieldGutter> myGutters;
   private final EditorGutterComponentEx myGutter;

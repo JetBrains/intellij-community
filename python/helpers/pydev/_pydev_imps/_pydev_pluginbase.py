@@ -467,7 +467,8 @@ def patched_exc_info():
     type, value, traceback = sys.system_exc_info()
     if type == ImportError:
         #we should not show frame added by plugin_import call
-        return type, value, traceback.tb_next
+        if traceback and hasattr(traceback, "tb_next"):
+            return type, value, traceback.tb_next
     return type, value, traceback
 
 

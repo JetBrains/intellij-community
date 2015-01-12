@@ -25,7 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -208,5 +210,11 @@ public class GitVcsPanel {
     });
     myProtectedBranchesButton.setButtonIcon(AllIcons.Actions.ShowViewer);
     myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<UpdateMethod>(UpdateMethod.class));
+    myUpdateMethodComboBox.setRenderer(new ListCellRendererWrapper<UpdateMethod>() {
+      @Override
+      public void customize(JList list, UpdateMethod value, int index, boolean selected, boolean hasFocus) {
+        setText(StringUtil.capitalize(StringUtil.toLowerCase(value.name().replace('_', ' '))));
+      }
+    });
   }
 }

@@ -110,21 +110,18 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
       return;
     }
+    else if (PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) != null || LangDataKeys.MODULE_CONTEXT.getData(dataContext) != null) {
+      Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
+      ReformatFilesOptions selectedFlags = getLayoutProjectOptions(project, moduleContext);
+      if (selectedFlags != null) {
+        reformatModule(project, moduleContext, selectedFlags);
+      }
+      return;
+    }
     else if (files != null && files.length == 1) {
       file = PsiManager.getInstance(project).findFile(files[0]);
     }
     else {
-      Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
-      Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
-
-      if (projectContext != null || moduleContext != null) {
-        ReformatFilesOptions selectedFlags = getLayoutProjectOptions(project, moduleContext); // module menu - only 2 options available
-        if (selectedFlags != null) {
-          reformatModule(project, moduleContext, selectedFlags);
-        }
-        return;
-      }
-
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) return;
       if (element instanceof PsiDirectoryContainer) {

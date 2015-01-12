@@ -28,6 +28,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -59,10 +60,7 @@ import javax.swing.text.Position;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -441,8 +439,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
 
       public void handleText(char[] text, int pos) {
+        if (myBuffer.length() > 0) myBuffer.append(SystemProperties.getLineSeparator());
+
         myBuffer.append(text);
-        myBuffer.append("\n");
       }
 
       public String getText() {
