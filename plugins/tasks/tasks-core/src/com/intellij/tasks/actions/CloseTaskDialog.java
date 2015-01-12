@@ -16,45 +16,90 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsType;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
  */
 public class CloseTaskDialog extends DialogWrapper {
+  private static final CustomTaskState DO_NOT_UPDATE_STATE = new CustomTaskState("", "-- do not update --");
 
   private JCheckBox myCommitChanges;
-  private JCheckBox myCloseIssue;
   private JPanel myPanel;
   private JLabel myTaskLabel;
   private JBCheckBox myMergeBranches;
   private JPanel myVcsPanel;
+  private ComboBox myStateComboBox;
+  private JLabel myStateComboBoxLabel;
   private final TaskManagerImpl myTaskManager;
 
-  public CloseTaskDialog(Project project, LocalTask task) {
+  public CloseTaskDialog(Project project, final LocalTask task) {
     super(project, false);
 
     setTitle("Close Task");
     myTaskLabel.setText(TaskUtil.getTrimmedSummary(task));
     myTaskLabel.setIcon(task.getIcon());
 
-    TaskRepository repository = task.getRepository();
-    boolean visible = task.isIssue() && TaskUtil.isStateSupported(repository, TaskState.RESOLVED);
-    myCloseIssue.setVisible(visible);
+    final TaskRepository repository = task.getRepository();
+    myStateComboBox.setRenderer(new ListCellRendererWrapper<CustomTaskState>() {
+      @Override
+      public void customize(JList list, CustomTaskState value, int index, boolean selected, boolean hasFocus) {
+        if (value != null) {
+          setText(value.getPresentableName());
+        }
+        else {
+          setText("-- no states available --");
+        }
+      }
+    });
+
+    // Capture correct modality state
+    if (task.isIssue() && repository != null && repository.isSupported(TaskRepository.STATE_UPDATING)) {
+      // Find out proper way to determine modality state here
+      new TaskUiUtil.ComboBoxUpdater<CustomTaskState>(project, "Fetching available task states...", myStateComboBox) {
+        @NotNull
+        @Override
+        protected Set<CustomTaskState> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+          return repository.getAvailableTaskStates(task);
+        }
+
+        @Nullable
+        @Override
+        public CustomTaskState getSelectedItem() {
+          return repository.getPreferredCloseTaskState();
+        }
+
+        @Nullable
+        @Override
+        public CustomTaskState getExtraItem() {
+          return DO_NOT_UPDATE_STATE;
+        }
+      }.queue();
+    }
+    else {
+      myStateComboBoxLabel.setVisible(false);
+      myStateComboBox.setVisible(false);
+    }
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);
-    myCloseIssue.setSelected(visible && myTaskManager.getState().closeIssue);
 
     if (myTaskManager.isVcsEnabled()) {
       myCommitChanges.setEnabled(!task.getChangeLists().isEmpty());
@@ -78,8 +123,10 @@ public class CloseTaskDialog extends DialogWrapper {
     return myPanel;
   }
 
-  boolean isCloseIssue() {
-    return myCloseIssue.isSelected();
+  @Nullable
+  CustomTaskState getCloseIssueState() {
+    final CustomTaskState selected = (CustomTaskState)myStateComboBox.getSelectedItem();
+    return selected == null || selected == DO_NOT_UPDATE_STATE ? null : selected;
   }
 
   boolean isCommitChanges() {
@@ -92,7 +139,6 @@ public class CloseTaskDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myTaskManager.getState().closeIssue = isCloseIssue();
     if (myCommitChanges.isEnabled()) {
       myTaskManager.getState().commitChanges = isCommitChanges();
     }
@@ -100,5 +146,9 @@ public class CloseTaskDialog extends DialogWrapper {
       myTaskManager.getState().mergeBranch = isMergeBranch();
     }
     super.doOKAction();
+  }
+
+  private void createUIComponents() {
+    myStateComboBox = new ComboBox(300);
   }
 }

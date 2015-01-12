@@ -68,6 +68,7 @@ public class OpenTaskDialog extends DialogWrapper {
   private JBLabel myFromLabel;
   private ComboBox myBranchFrom;
   private ComboBox myStateComboBox;
+  private JLabel myStateComboBoxLabel;
 
   private final Project myProject;
   private final Task myTask;
@@ -101,7 +102,7 @@ public class OpenTaskDialog extends DialogWrapper {
 
     // Capture correct modality state
     final TaskRepository repository = myTask.getRepository();
-    if (repository != null) {
+    if (myTask.isIssue() && repository != null && repository.isSupported(TaskRepository.STATE_UPDATING)) {
       // Find out proper way to determine modality state here
       new ComboBoxUpdater<CustomTaskState>(myProject, "Fetching available task states...", myStateComboBox) {
         @NotNull
@@ -122,6 +123,10 @@ public class OpenTaskDialog extends DialogWrapper {
           return DO_NOT_UPDATE_STATE;
         }
       }.queue();
+    }
+    else {
+      myStateComboBoxLabel.setVisible(false);
+      myStateComboBox.setVisible(false);
     }
 
     TaskManagerImpl.Config state = taskManager.getState();

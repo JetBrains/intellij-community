@@ -1030,7 +1030,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean createBranch = true;
 
     // close task options
-    public boolean closeIssue = true;
     public boolean commitChanges = true;
     public boolean mergeBranch = true;
 

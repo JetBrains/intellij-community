@@ -42,6 +42,7 @@ public abstract class BaseRepository extends TaskRepository {
   protected boolean myUseHttpAuthentication;
   protected boolean myLoginAnonymously;
   protected CustomTaskState myPreferredOpenTaskState;
+  private CustomTaskState myPreferredCloseTaskState;
 
   public BaseRepository(TaskRepositoryType type) {
     super(type);
@@ -146,6 +147,17 @@ public abstract class BaseRepository extends TaskRepository {
   @Override
   public CustomTaskState getPreferredOpenTaskState() {
     return myPreferredOpenTaskState;
+  }
+
+  @Override
+  public void setPreferredCloseTaskState(@Nullable CustomTaskState state) {
+    myPreferredCloseTaskState = state;
+  }
+
+  @Nullable
+  @Override
+  public CustomTaskState getPreferredCloseTaskState() {
+    return myPreferredCloseTaskState;
   }
 
   @Nullable

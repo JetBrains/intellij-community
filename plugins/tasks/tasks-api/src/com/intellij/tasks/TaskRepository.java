@@ -186,17 +186,30 @@ public abstract class TaskRepository {
   }
 
   /**
-   * Remember state used for opening of task.
+   * Remember state used when opening task most recently.
    * @param state preferred task state
    */
   public abstract void setPreferredOpenTaskState(@Nullable CustomTaskState state);
 
   /**
-   * Task state used last time for opening task.
+   * Task state that was used last time when opening task.
    * @return preferred task state
    */
   @Nullable
   public abstract CustomTaskState getPreferredOpenTaskState();
+
+  /**
+   * Remember state used when closing task most recently.
+   * @param state preferred task state
+   */
+  public abstract void setPreferredCloseTaskState(@Nullable CustomTaskState state);
+
+  /**
+   * Task state that was used last time when closing task.
+   * @return preferred task state
+   */
+  @Nullable
+  public abstract CustomTaskState getPreferredCloseTaskState();
 
   /**
    * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
