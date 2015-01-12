@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,8 +29,7 @@ import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.io.IOException;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 @State(
   name = "EqualsHashCodeTemplates",
@@ -83,11 +83,19 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   }
 
   public TemplateResource getDefaultEqualsTemplate() {
-    return getDefaultTemplate(EQUALS_SUFFIX, HASH_CODE_SUFFIX);
+    return getEqualsTemplate(getDefaultTemplate());
   }
 
   public TemplateResource getDefaultHashcodeTemplate() {
-    return getDefaultTemplate(HASH_CODE_SUFFIX, EQUALS_SUFFIX);
+    return getHashcodeTemplate(getDefaultTemplate());
+  }
+
+  public TemplateResource getEqualsTemplate(TemplateResource template) {
+    return getDefaultTemplate(EQUALS_SUFFIX, HASH_CODE_SUFFIX, template);
+  }
+
+  public TemplateResource getHashcodeTemplate(TemplateResource template) {
+    return getDefaultTemplate(HASH_CODE_SUFFIX, EQUALS_SUFFIX, template);
   }
 
   public String[] getTemplateNames() {
@@ -99,12 +107,11 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   }
 
   @NotNull
-  private String getTemplateBaseName(TemplateResource resource) {
+  public static String getTemplateBaseName(TemplateResource resource) {
     return StringUtil.trimEnd(StringUtil.trimEnd(resource.getFileName(), EQUALS_SUFFIX), HASH_CODE_SUFFIX).trim();
   }
 
-  private TemplateResource getDefaultTemplate(String selfSuffix, String oppositeSuffix) {
-    final TemplateResource defaultTemplate = getDefaultTemplate();
+  private TemplateResource getDefaultTemplate(String selfSuffix, String oppositeSuffix, TemplateResource defaultTemplate) {
     final String fileName = defaultTemplate.getFileName();
     if (fileName.endsWith(selfSuffix)) {
       return defaultTemplate;
@@ -131,5 +138,31 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
 
   public String getDefaultTemplateBaseName() {
     return getTemplateBaseName(getDefaultTemplate());
+  }
+
+  public static String toEqualsName(String name) {
+    return name + " " + EQUALS_SUFFIX;
+  }
+  
+  public static String toHashCodeName(String name) {
+    return name + " " + HASH_CODE_SUFFIX;
+  }
+
+  public Collection<Couple<TemplateResource>> getTemplateCouples() {
+    final LinkedHashMap<String, Couple<TemplateResource>> resources = new LinkedHashMap<String, Couple<TemplateResource>>();
+    for (TemplateResource resource : getAllTemplates()) {
+      final String baseName = getTemplateBaseName(resource);
+      TemplateResource eq = toEqualsName(baseName).equals(resource.getFileName()) ? resource : null;
+      TemplateResource hc = toHashCodeName(baseName).equals(resource.getFileName()) ? resource : null;
+      final Couple<TemplateResource> couple = resources.get(baseName);
+      if (couple != null) {
+        resources.put(baseName, Couple.of(couple.first != null ? couple.first : eq,
+                                          couple.second != null ? couple.second : hc));
+      }
+      else {
+        resources.put(baseName, Couple.of(eq, hc));
+      }
+    }
+    return resources.values();
   }
 }
