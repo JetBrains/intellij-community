@@ -63,7 +63,7 @@ public class TextBlockTransferable implements Transferable {
   @NotNull
   private static String cleanFromNullsIfNeeded(@NotNull String text) {
     // Clipboard on Windows and Linux works with null-terminated strings, on Mac nulls are not treated in a special way.
-    return SystemInfo.isMac ? text : StringUtil.replace(text, "\000", " "); 
+    return SystemInfo.isMac ? text : text.replace('\000', ' '); 
   }
 
   @Override
