@@ -18,6 +18,7 @@ package com.intellij.openapi.util.diff.tools.util;
 import com.intellij.openapi.diff.impl.splitter.Transformation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.diff.util.DiffDrawUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -36,10 +37,11 @@ public class DividerPolygonUtil {
                                      @NotNull DividerSeparatorPaintable paintable) {
     List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable);
 
-    GraphicsUtil.setupAAPainting(gg);
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
     for (DividerSeparator polygon : polygons) {
       polygon.paint(gg, width);
     }
+    config.restore();
   }
 
   public static void paintSeparatorsOnScrollbar(@NotNull Graphics2D gg,
@@ -49,10 +51,11 @@ public class DividerPolygonUtil {
                                                 @NotNull DividerSeparatorPaintable paintable) {
     List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable);
 
-    GraphicsUtil.setupAAPainting(gg);
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
     for (DividerSeparator polygon : polygons) {
       polygon.paintOnScrollbar(gg, width);
     }
+    config.restore();
   }
 
   public static void paintPolygons(@NotNull Graphics2D gg,
@@ -62,10 +65,11 @@ public class DividerPolygonUtil {
                                    @NotNull DividerPaintable paintable) {
     List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
 
-    GraphicsUtil.setupAAPainting(gg);
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
     for (DividerPolygon polygon : polygons) {
       polygon.paint(gg, width);
     }
+    config.restore();
   }
 
   public static void paintSimplePolygons(@NotNull Graphics2D gg,
@@ -75,10 +79,11 @@ public class DividerPolygonUtil {
                                          @NotNull DividerPaintable paintable) {
     List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
 
-    GraphicsUtil.setupAAPainting(gg);
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
     for (DividerPolygon polygon : polygons) {
       polygon.paintSimple(gg, width);
     }
+    config.restore();
   }
 
   public static void paintPolygonsOnScrollbar(@NotNull Graphics2D g,

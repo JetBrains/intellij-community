@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -126,21 +127,23 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     // FIXME: painting of hundreds of AA lines lead to heavy UI slowdown. Each line is drew by ~(DISPLAY_WIDTH / 2) lines.
     // TODO: We should paint somehow else, faster. Dotlines?
 
-    GraphicsUtil.setupAAPainting(g);
-
     int y = r.y;
     final int gutterWidth = ((EditorEx)editor).getGutterComponentEx().getWidth();
     final int editorWidth = editor.getScrollingModel().getVisibleArea().width;
     int lineHeight = myEditor.getLineHeight();
 
     myTornLine.ensureLastX(editorWidth + gutterWidth);
-
     TIntArrayList pointsX = myTornLine.getPointsX();
     TIntArrayList pointsY = myTornLine.getPointsY();
+
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+
     g.setColor(getOuterColor());
     drawCurved(g, pointsX, pointsY, 0, gutterWidth, 0, y, lineHeight, TornLine.ourOuterRadius);
     g.setColor(getInnerColor());
     drawCurved(g, pointsX, pointsY, 0, gutterWidth, 0, y, lineHeight, TornLine.ourInnerRadius);
+
+    config.restore();
   }
 
   /*
@@ -152,8 +155,6 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
 
     y++; // we want y to be line's top position
 
-    GraphicsUtil.setupAAPainting(g);
-
     Rectangle clip = g.getClipBounds();
     x2 = clip.x + clip.width;
 
@@ -162,13 +163,17 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     int lineHeight = myEditor.getLineHeight();
 
     myTornLine.ensureLastX(lineWidth + gutterWidth);
-
     TIntArrayList pointsX = myTornLine.getPointsX();
     TIntArrayList pointsY = myTornLine.getPointsY();
+
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+
     g.setColor(getOuterColor());
     drawCurved(g, pointsX, pointsY, x1, x2, -gutterWidth, y, lineHeight, TornLine.ourOuterRadius);
     g.setColor(getInnerColor());
     drawCurved(g, pointsX, pointsY, x1, x2, -gutterWidth, y, lineHeight, TornLine.ourInnerRadius);
+
+    config.restore();
   }
 
   private static void drawCurved(@NotNull Graphics g,
