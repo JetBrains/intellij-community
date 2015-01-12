@@ -364,6 +364,7 @@
     <!-- Live Templates -->
     <applicationConfigurable groupId="editor" groupWeight="130" instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable" id="editing.templates"
                              key="templates.settings.page.title" bundle="messages.CodeInsightBundle"/>
+    <search.optionContributor implementation="com.intellij.codeInsight.template.impl.TemplateSearchableOptionContributor"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateLookupActionProvider"/>
     <documentationProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateDocumentationProvider"/>
     <projectService serviceInterface="com.intellij.codeInsight.template.TemplateManager"
@@ -891,6 +892,8 @@
     <previewPanelProvider implementation="com.intellij.find.UsagesPreviewPanelProvider"/>
     <projectService serviceInterface="com.intellij.openapi.preview.PreviewManager"
                     serviceImplementation="com.intellij.openapi.preview.impl.PreviewManagerImpl"/>
+    
+    <search.optionContributor implementation="com.intellij.codeInspection.ex.InspectionSearchableOptionContributor"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
   </extensions>

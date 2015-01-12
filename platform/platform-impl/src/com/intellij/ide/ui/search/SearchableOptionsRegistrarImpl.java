@@ -87,6 +87,36 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     catch (IOException e) {
       LOG.error(e);
     }
+
+    loadExtensions();
+  }
+
+  private void loadExtensions() {
+    final SearchableOptionProcessor processor = new SearchableOptionProcessor() {
+      @Override
+      public void addOptions(@NotNull String text,
+                             @Nullable String path,
+                             @Nullable String hit,
+                             @NotNull String configurableId,
+                             @Nullable String configurableDisplayName,
+                             boolean applyStemming) {
+        Set<String> words = applyStemming ? getProcessedWords(text) : getProcessedWordsWithoutStemming(text);
+        for (String word : words) {
+          addOption(word, path, hit, configurableId, configurableDisplayName);
+        }
+      }
+
+    };
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        //todo what if application is disposed?
+        for (SearchableOptionContributor contributor : SearchableOptionContributor.EP_NAME.getExtensions()) {
+          contributor.processOptions(processor);
+        }
+      }
+    });
   }
 
   private void loadHugeFilesIfNecessary() {
@@ -180,7 +210,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     }
   }
 
-  private synchronized void putOptionWithHelpId(String option, final String id, final String groupName, String hit, final String path) {
+  private synchronized void putOptionWithHelpId(@NotNull String option, @NotNull final String id, @Nullable final String groupName, @Nullable String hit, @Nullable final String path) {
     if (isStopWord(option)) return;
     String stopWord = PorterStemmerUtil.stem(option);
     if (stopWord == null) return;

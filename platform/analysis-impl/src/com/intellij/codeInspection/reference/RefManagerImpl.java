@@ -44,7 +44,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -342,6 +341,11 @@ public class RefManagerImpl extends RefManager {
   }
 
   @NotNull
+  public Map<PsiAnchor, RefElement> getRefTable() {
+    return myRefTable;
+  }
+
+  @NotNull
   public List<RefElement> getSortedElements() {
     LOG.assertTrue(myRefTable != null);
     List<RefElement> answer = new ArrayList<RefElement>(myRefTable.values());
@@ -367,7 +371,7 @@ public class RefManagerImpl extends RefManager {
   public void removeReference(@NotNull RefElement refElem) {
     myLock.writeLock().lock();
     try {
-      final Map<PsiAnchor, RefElement> refTable = myRefTable;
+      final Map<PsiAnchor, RefElement> refTable = getRefTable();
       final PsiElement element = refElem.getElement();
       final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
       if (extension != null) {
@@ -456,42 +460,47 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
 
-    return getFromRefTableOrCache(elem, new NullableFactory<RefElement>() {
+    RefElement ref = getFromRefTable(elem);
+    if (ref != null) return ref;
+    if (!isValidPointForReference()) {
+      //LOG.assertTrue(true, "References may become invalid after process is finished");
+      return null;
+    }
+
+    final RefElementImpl refElement = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
       @Override
-      public RefElement create() {
-        return ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
-          @Override
-          @Nullable
-          public RefElementImpl compute() {
-            RefElementImpl result = null;
-
-            final RefManagerExtension extension = getExtension(elem.getLanguage());
-            if (extension != null) {
-              final RefElement refElement = extension.createRefElement(elem);
-              result = (RefElementImpl)refElement;
-            }
-            else if (elem instanceof PsiFile) {
-              result = new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
-            }
-            else if (elem instanceof PsiDirectory) {
-              result = new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
-            }
-            
-            if (result == null) {
-              return null;
-            }
-
-            result.initialize();
-            for (RefManagerExtension each : myExtensions.values()) {
-              each.onEntityInitialized(result, elem);
-            }
-            fireNodeInitialized(result);
-
-            return result;
-          }
-        });
+      @Nullable
+      public RefElementImpl compute() {
+        final RefManagerExtension extension = getExtension(elem.getLanguage());
+        if (extension != null) {
+          final RefElement refElement = extension.createRefElement(elem);
+          if (refElement != null) return (RefElementImpl)refElement;
+        }
+        if (elem instanceof PsiFile) {
+          return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+        }
+        if (elem instanceof PsiDirectory) {
+          return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
+        }
+        return null;
       }
     });
+    if (refElement == null) return null;
+
+    putToRefTable(elem, refElement);
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        refElement.initialize();
+        for (RefManagerExtension extension : myExtensions.values()) {
+          extension.onEntityInitialized(refElement, elem);
+        }
+        fireNodeInitialized(refElement);
+      }
+    });
+
+    return refElement;
   }
 
   private RefManagerExtension getExtension(final Language language) {
@@ -526,57 +535,34 @@ public class RefManagerImpl extends RefManager {
     return null;
   }
 
-  @Nullable
-  protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, NullableFactory<T> factory) {
-    T result;
-
+  protected RefElement getFromRefTable(final PsiElement element) {
     myLock.readLock().lock();
     try {
-      //noinspection unchecked
-      result = (T)myRefTable.get(ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiAnchor>() {
-          @Override
-          public PsiAnchor compute() {
-            return PsiAnchor.create(element);
+      return getRefTable().get(ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiAnchor>() {
+            @Override
+            public PsiAnchor compute() {
+              return PsiAnchor.create(element);
+            }
           }
-        }
       ));
-      if (result != null) return result;
     }
     finally {
       myLock.readLock().unlock();
     }
+  }
 
-    if (!isValidPointForReference()) {
-      //LOG.assertTrue(true, "References may become invalid after process is finished");
-      return null;
-    }
-
+  protected void putToRefTable(final PsiElement element, final RefElement ref) {
     myLock.writeLock().lock();
     try {
-      //noinspection unchecked
-      result = (T)myRefTable.get(ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiAnchor>() {
-          @Override
-          public PsiAnchor compute() {
-            return PsiAnchor.create(element);
+      getRefTable().put(ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiAnchor>() {
+            @Override
+            public PsiAnchor compute() {
+              return PsiAnchor.create(element);
+            }
           }
-        }
-      ));
-      if (result != null) return result;
-
-      result = factory.create();
-      if (result == null) return null;
-
-      myRefTable.put(ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiAnchor>() {
-          @Override
-          public PsiAnchor compute() {
-            return PsiAnchor.create(element);
-          }
-        }
-      ), result);
-      return result;
+      ), ref);
     }
     finally {
       myLock.writeLock().unlock();
