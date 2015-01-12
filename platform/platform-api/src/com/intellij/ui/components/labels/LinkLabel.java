@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UI;
+import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,10 +174,13 @@ public class LinkLabel<T> extends JLabel {
 
   }
 
+  private final JBRectangle iconR = new JBRectangle();
+  private final JBRectangle textR = new JBRectangle();
+  private final JBRectangle viewR = new JBRectangle();
+
   private boolean isInClickableArea(Point pt) {
-    final Rectangle iconR = new Rectangle();
-    final Rectangle textR = new Rectangle();
-    final Rectangle viewR = new Rectangle();
+    iconR.clear();
+    textR.clear();
     final Insets insets = getInsets(null);
     viewR.x = insets.left;
     viewR.y = insets.top;
