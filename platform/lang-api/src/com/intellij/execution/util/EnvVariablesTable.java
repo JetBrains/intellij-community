@@ -19,12 +19,12 @@ package com.intellij.execution.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +36,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
+  public EnvVariablesTable() {
+    getTableView().getEmptyText().setText("No variables");
+  }
+  
   @Override
   protected ListTableModel createListModel() {
     final ColumnInfo name = new ElementsColumnInfoBase<EnvironmentVariable>("Name") {
