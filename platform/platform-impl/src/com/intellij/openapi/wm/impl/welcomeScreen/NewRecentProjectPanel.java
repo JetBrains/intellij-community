@@ -144,12 +144,10 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
           if (myHovered) {
             add(myCloseThisItem, closeButtonCell);
             list.revalidate();
-            list.repaint();
           }
           else {
             remove(myCloseThisItem);
             list.revalidate();
-            list.repaint();
           }
         }
 

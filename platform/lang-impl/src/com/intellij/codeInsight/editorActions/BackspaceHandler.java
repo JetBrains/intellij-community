@@ -166,7 +166,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
   @Nullable
   public static LogicalPosition getBackspaceUnindentPosition(final PsiFile file, final Editor editor) {
-    if (editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection()) return null;
+    if (editor.getSelectionModel().hasSelection()) return null;
 
     final LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
     if (caretPos.column == 0) {

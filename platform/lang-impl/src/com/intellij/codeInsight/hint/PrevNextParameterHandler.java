@@ -18,13 +18,15 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -36,33 +38,40 @@ public class PrevNextParameterHandler extends EditorActionHandler {
 
   private final boolean myIsNextParameterHandler;
 
-  private static PsiElement getExpressionList(Editor editor, Project project) {
-    int offset = editor.getCaretModel().getOffset();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file == null) return null;
-    return ParameterInfoController.findArgumentList(file, offset, -1);
-  }
-
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
+  protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
+
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    PsiElement exprList = getExpressionList(editor, project);
-    return exprList != null && ParameterInfoController.isAlreadyShown(editor, exprList.getTextRange().getStartOffset());
+    PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
+    if (exprList == null) return false;
+
+    int lbraceOffset = exprList.getTextRange().getStartOffset();
+    return ParameterInfoController.isAlreadyShown(editor, lbraceOffset) &&
+           ParameterInfoController.hasPrevOrNextParameter(editor, lbraceOffset, myIsNextParameterHandler);
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext) {
+  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    int offset = caret != null ? caret.getOffset() : editor.getCaretModel().getOffset();
+    PsiElement exprList = getExpressionList(editor, offset, dataContext);
+    if (exprList != null) {
+      int listOffset = exprList.getTextRange().getStartOffset();
+      ParameterInfoController.prevOrNextParameter(editor, listOffset, myIsNextParameterHandler);
+    }
+  }
+
+  @Nullable
+  private static PsiElement getExpressionList(@NotNull Editor editor, int offset, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    PsiElement exprList = getExpressionList(editor, project);
-    int listOffset = exprList.getTextRange().getStartOffset();
-    if (myIsNextParameterHandler) {
-      ParameterInfoController.nextParameter(editor, listOffset);
-    }
-    else {
-      ParameterInfoController.prevParameter(editor, listOffset);
-    }
+    return project != null ? getExpressionList(editor, offset, project) : null;
+  }
+
+  @Nullable
+  private static PsiElement getExpressionList(@NotNull Editor editor, int offset, @NotNull Project project) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    return file != null ? ParameterInfoController.findArgumentList(file, offset, -1) : null;
   }
 }

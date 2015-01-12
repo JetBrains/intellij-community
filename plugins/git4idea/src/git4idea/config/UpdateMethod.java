@@ -15,8 +15,6 @@
  */
 package git4idea.config;
 
-import com.intellij.openapi.util.text.StringUtil;
-
 /**
  * The type of update to perform
  */
@@ -32,10 +30,5 @@ public enum UpdateMethod {
   /**
    * Rebase local commits upon the fetched branch
    */
-  REBASE;
-
-  @Override
-  public String toString() {
-    return StringUtil.capitalize(StringUtil.toLowerCase(name().replace('_', ' ')));
-  }
+  REBASE
 }

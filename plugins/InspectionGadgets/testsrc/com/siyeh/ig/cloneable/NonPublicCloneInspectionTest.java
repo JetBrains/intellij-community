@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.siyeh.ig.cloneable;
 
-package com.intellij.lang;
-
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
-
 /**
- * @author Dmitry Avdeev
+ * @author Bas Leijdekkers
  */
-public interface PerFileMappings<T> {
-  
-  Map<VirtualFile, T> getMappings();
+public class NonPublicCloneInspectionTest extends LightInspectionTestCase {
 
-  void setMappings(Map<VirtualFile, T> mappings);
-
-  Collection<T> getAvailableValues(final VirtualFile file);
+  public void testNonPublicClone() {
+    doTest();
+  }
 
   @Nullable
-  T getMapping(final VirtualFile file);
-
-  @Nullable
-  T getDefaultMapping(@Nullable VirtualFile file);
-
-  T chosenToStored(final VirtualFile file, final T value);
-
-  boolean isSelectable(final T value);
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new NonPublicCloneInspection();
+  }
 }

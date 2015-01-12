@@ -34,6 +34,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
   private boolean myPreviewEnabled = false;
   private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
+  private boolean myHrefAutoDetectEnabled = true;
 
   @NotNull
   public Set<String> getFiltersEnabledByDefault() {
@@ -70,6 +71,14 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
 
   public void setEmmetEnabled(boolean emmetEnabled) {
     myEmmetEnabled = emmetEnabled;
+  }
+  
+  public void setHrefAutoDetectEnabled(boolean hrefAutoDetectEnabled) {
+    myHrefAutoDetectEnabled = hrefAutoDetectEnabled;
+  }
+
+  public boolean isHrefAutoDetectEnabled() {
+    return myHrefAutoDetectEnabled;
   }
 
   @Nullable

@@ -73,12 +73,9 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
       }
     }
     else {
-      boolean hasSelection = selectionModel.hasBlockSelection();
-      final LogicalPosition blockStart = selectionModel.getBlockStart();
-      final LogicalPosition blockEnd = selectionModel.getBlockEnd();
-
-      int selStart = hasSelection && blockStart != null ? editor.logicalPositionToOffset(blockStart) : 0;
-      int selEnd = hasSelection && blockEnd != null ? editor.logicalPositionToOffset(blockEnd) : 0;
+      boolean hasSelection = false;
+      int selStart = 0;
+      int selEnd = 0;
 
       if (caretModel.supportsMultipleCarets()) {
         hasSelection = true;

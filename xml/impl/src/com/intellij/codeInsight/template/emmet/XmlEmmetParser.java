@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -90,18 +91,29 @@ public class XmlEmmetParser extends EmmetParser {
   }
 
   @Nullable
-  private String getAttributeNameByToken(ZenCodingToken token) {
-    if (!(token instanceof IdentifierToken)) {
-      return null;
+  private String parseAttributeName() {
+    String name = "";
+    ZenCodingToken token = getToken();
+    while (token != null) {
+      if ((token instanceof IdentifierToken)) {
+        name += ((IdentifierToken)token).getText();
+      }
+      else if (token instanceof OperationToken && 
+               (((OperationToken)token).getSign() == '+' || ((OperationToken)token).getSign() == '-')) {
+        name += ((OperationToken)token).getSign();
+      }
+      else {
+        break;
+      }
+      advance();
+      token = getToken();
     }
-
-    String name = ((IdentifierToken)token).getText();
 
     if (name.isEmpty()) {
       return null;
     }
 
-    final XmlTag tag = XmlElementFactory.getInstance(myCallback.getProject()).createTagFromText("<tag " + name + "=''/>");
+    final XmlTag tag = XmlElementFactory.getInstance(myCallback.getProject()).createTagFromText("<tag " + name + "=''/>", StdLanguages.HTML);
     XmlAttribute[] attributes = tag.getAttributes();
     if (attributes.length == 1) {
       return attributes[0].getName();
@@ -341,20 +353,18 @@ public class XmlEmmetParser extends EmmetParser {
 
   @Nullable
   private Couple<String> parseAttribute() {
-    String attributeName = getAttributeNameByToken(getToken());
-    
+    final int position = getCurrentPosition();
+    String attributeName = parseAttributeName();
     if (attributeName != null && !attributeName.isEmpty()) {
-      if (nextToken(1) == ZenCodingTokens.DOT) {
-        if (isEndOfAttribute(nextToken(2))) {
+      if (getToken() == ZenCodingTokens.DOT) {
+        if (isEndOfAttribute(nextToken(1))) {
           // boolean attribute
-          advance(); //id
           advance(); // dot
           return Couple.of(attributeName, BOOLEAN_ATTRIBUTE_VALUE);
         }
       }
       else {
         // attribute with value
-        advance();
         if (getToken() == ZenCodingTokens.EQ) {
           advance();
           return Couple.of(attributeName, parseAttributeValue());
@@ -364,6 +374,7 @@ public class XmlEmmetParser extends EmmetParser {
         }
       }
     }
+    restorePosition(position);
 
     final String impliedValue = parseAttributeValue();
     if (!impliedValue.isEmpty()) {

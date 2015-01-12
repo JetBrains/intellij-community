@@ -19,8 +19,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.MockDocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
@@ -48,16 +46,6 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
       @Override
       public void run() {
         final Document doc = editor.getDocument();
-        final SelectionModel selectionModel = editor.getSelectionModel();
-        if (selectionModel.hasBlockSelection()) {
-          RangeMarker guard = selectionModel.getBlockSelectionGuard();
-          if (guard != null) {
-            DocumentEvent evt = new MockDocumentEvent(editor.getDocument(), editor.getCaretModel().getOffset());
-            ReadOnlyFragmentModificationException e = new ReadOnlyFragmentModificationException(evt, guard);
-            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-            return;
-          }
-        }
 
         doc.startGuardedBlockChecking();
         try {

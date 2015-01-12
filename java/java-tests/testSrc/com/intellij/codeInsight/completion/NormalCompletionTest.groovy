@@ -23,12 +23,10 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.testFramework.EditorTestUtil
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -1394,30 +1392,6 @@ class XInternalError {}
   public void testDoForceBraces() {
     codeStyleSettings.DOWHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
     doTest('\n')
-  }
-
-  public void "test block selection from bottom to top with single-item insertion"() {
-    EditorTestUtil.disableMultipleCarets()
-    try {
-      myFixture.configureByText "a.java", """
-  class Foo {{
-    ret<caret>;
-    ret;
-  }}"""
-      edt {
-        def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
-        myFixture.editor.selectionModel.setBlockSelection(new LogicalPosition(caret.line + 1, caret.column), caret)
-      }
-      myFixture.completeBasic()
-      myFixture.checkResult '''
-  class Foo {{
-    return<caret>;
-    return;
-  }}'''
-    }
-    finally {
-      EditorTestUtil.enableMultipleCarets()
-    }
   }
 
   public void testMulticaretSingleItemInsertion() {

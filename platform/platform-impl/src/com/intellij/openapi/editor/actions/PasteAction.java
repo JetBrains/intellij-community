@@ -42,7 +42,7 @@ public class PasteAction extends EditorAction {
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       Producer<Transferable> producer = TRANSFERABLE_PROVIDER.getData(dataContext);
-      if (!editor.getCaretModel().supportsMultipleCarets() && (editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection())) {
+      if (!editor.getCaretModel().supportsMultipleCarets() && editor.isColumnMode()) {
         EditorModificationUtil.pasteTransferableAsBlock(editor, producer);
       }
       else {

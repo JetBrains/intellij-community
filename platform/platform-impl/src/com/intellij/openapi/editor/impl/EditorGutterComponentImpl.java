@@ -98,6 +98,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ANNOTATIONS = 5;
   private String myLastGutterToolTip = null;
   @NotNull private TIntFunction myLineNumberConvertor;
+  private TIntFunction myLineNumberAreaWidthFunction;
   private boolean myShowDefaultGutterPopup = true;
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
 
@@ -560,6 +561,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void updateSizeInner(boolean onLayout) {
     if (!onLayout) {
+      calcLineNumberAreaWidth();
       calcIconAreaWidth();
       calcAnnotationsSize();
     }
@@ -570,6 +572,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int result = myLineMarkerAreaWidth;
     result = 31 * result + myTextAnnotationGuttersSize;
     result = 31 * result + myTextAnnotationExtraSize;
+    result = 31 * result + getLineNumberAreaWidth();
     return result;
   }
 
@@ -612,7 +615,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     int width = editorLocationX + editorComponent.getWidth();
     if (rightMarginX < width && editorLocationX < width - rightMarginX) {
-      int centeredSize = (width - rightMarginX - editorLocationX) / 2 - (myLineMarkerAreaWidth + myLineNumberAreaWidth);
+      int centeredSize = (width - rightMarginX - editorLocationX) / 2 - (myLineMarkerAreaWidth + getLineNumberAreaWidth());
       myTextAnnotationExtraSize = Math.max(0, centeredSize - myTextAnnotationGuttersSize);
     }
   }
@@ -1043,7 +1046,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return isLineMarkersShown() ? myLineMarkerAreaWidth : 0;
   }
 
-  public void setLineNumberAreaWidth(@NotNull TIntFunction calculator) {
+  public void setLineNumberAreaWidthFunction(@NotNull TIntFunction calculator) {
+    myLineNumberAreaWidthFunction = calculator;
+  }
+  
+  private void calcLineNumberAreaWidth() {
+    if (myLineNumberAreaWidthFunction == null || !isLineNumbersShown()) return;
     int maxLineNumber = 0;
     for (int i = endLineNumber(); i >= 0; i--) {
       int number = myLineNumberConvertor.execute(i);
@@ -1053,11 +1061,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
 
-    final int lineNumberAreaWidth = calculator.execute(maxLineNumber) + 4;
-    if (myLineNumberAreaWidth != lineNumberAreaWidth) {
-      myLineNumberAreaWidth = lineNumberAreaWidth;
-      fireResized();
-    }
+    myLineNumberAreaWidth = myLineNumberAreaWidthFunction.execute(maxLineNumber) + 4;
   }
 
   @Nullable

@@ -237,4 +237,12 @@ public abstract class EmmetParser {
     }
     return null;
   }
+
+  protected int getCurrentPosition() {
+    return myIndex;
+  }
+
+  protected void restorePosition(int position) {
+    myIndex = position;
+  }
 }
