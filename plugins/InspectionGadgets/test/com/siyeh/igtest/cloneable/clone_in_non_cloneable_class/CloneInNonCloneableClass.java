@@ -7,7 +7,7 @@ public class CloneInNonCloneableClass {
 }
 class AB {
   @Override
-  protected Object <warning descr="'clone()' defined in non-Cloneable class 'AB'">clone</warning>() throws CloneNotSupportedException {
+  public Object <warning descr="'clone()' defined in non-Cloneable class 'AB'">clone</warning>() throws CloneNotSupportedException {
     return super.clone();
   }
 }
