@@ -21,6 +21,7 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -219,6 +220,6 @@ public class GenerationUtil {
       throw new GenerateCodeException("Error in Velocity code generator", e);
     }
 
-    return sw.getBuffer().toString();
+    return StringUtil.convertLineSeparators(sw.getBuffer().toString());
   }
 }
