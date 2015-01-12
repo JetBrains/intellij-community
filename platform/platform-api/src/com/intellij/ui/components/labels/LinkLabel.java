@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,16 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UI;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.basic.BasicLabelUI;
-import javax.swing.plaf.synth.SynthGraphicsUtils;
-import javax.swing.plaf.synth.SynthStyle;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -128,11 +124,9 @@ public class LinkLabel<T> extends JLabel {
   protected void paintComponent(Graphics g) {
     final Border border = getBorder();
     int shiftX = 0;
-    int shiftY = 0;
 
     if (border != null) {
       shiftX = border.getBorderInsets(this).left;
-      shiftY = border.getBorderInsets(this).top;
     }
 
     setForeground(getTextColor());
@@ -142,37 +136,11 @@ public class LinkLabel<T> extends JLabel {
 
     if (getText() != null) {
       g.setColor(getTextColor());
-      int x = myIconWidth;
-      int y = getTextBaseLine();
 
-      boolean underline = myUnderline && myPaintUnderline;
-      if (underline) {
-        Rectangle bounds = getBounds(false); // get calculated text bounds
-        if (bounds != null) {
-          int lineY = bounds.y + bounds.height - 1;
-          g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
-          underline = false;
-        }
-      }
-      if (underline) {
-        int k = 1;
-        if (getFont().getSize() > 11) {
-          k += (getFont().getSize() - 11);
-        }
-
-        y += k;
-
-        int lineY = y + shiftY;
-        if (lineY >= getSize().height) {
-          lineY = getSize().height - 1;
-        }
-
-        if (getHorizontalAlignment() == LEFT) {
-          UIUtil.drawLine(g, x + shiftX, lineY, x + getFontMetrics(getFont()).stringWidth(getText()) + shiftX, lineY);
-        } else {
-          UIUtil.drawLine(g, getWidth() - 1 - getFontMetrics(getFont()).stringWidth(getText()) + shiftX, lineY,
-                          getWidth() - 1 + shiftX, lineY);
-        }
+      if (myUnderline && myPaintUnderline) {
+        Rectangle bounds = getTextBounds();
+        int lineY = bounds.y + bounds.height - 1;
+        g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
       }
 
       if (myPaintDefaultIcon) {
@@ -182,6 +150,25 @@ public class LinkLabel<T> extends JLabel {
         AllIcons.Ide.Link.paintIcon(this, g, endX + shiftX + DEFAULT_ICON_GAP, endY);
       }
     }
+  }
+
+  @NotNull
+  protected Rectangle getTextBounds() {
+    final Dimension size = getPreferredSize();
+    Icon icon = getIcon();
+    final Point point = new Point(0, 0);
+    final Insets insets = getInsets();
+    if (icon != null) {
+      point.x += getIconTextGap();
+      point.x += icon.getIconWidth();
+      point.x += insets.left;
+      point.y += insets.top;
+    }
+    size.width -= point.x;
+    size.width -= insets.right;
+    size.height -= insets.bottom;
+
+    return new Rectangle(point, size);
   }
 
   protected Color getTextColor() {
@@ -228,24 +215,8 @@ public class LinkLabel<T> extends JLabel {
       }
     }
     if (getText() != null) {
-      Rectangle bounds = getBounds(false); // get calculated text bounds
-      if (bounds != null) {
-        return bounds.contains(pt.x + insets.left, pt.y + insets.top);
-      }
-      FontMetrics fm = getFontMetrics(getFont());
-      int height = fm.getHeight() + 1;
-      int y = getHeight() / 2 - fm.getHeight() / 2;
-      int width = fm.stringWidth(getText());
-      if (myPaintDefaultIcon) {
-        width += AllIcons.Ide.Link.getIconWidth() + DEFAULT_ICON_GAP;
-      }
-
-      if (getHorizontalAlignment() == LEFT) {
-        return (new Rectangle(myIconWidth, y, width, height).contains(pt));
-      }
-      else {
-        return (new Rectangle(getWidth() - width - 1, y, getWidth() - 1, height).contains(pt));
-      }
+      Rectangle bounds = getTextBounds(); // get calculated text bounds
+      return bounds.contains(pt.x + insets.left, pt.y + insets.top);
     }
 
     return false;
@@ -346,34 +317,5 @@ public class LinkLabel<T> extends JLabel {
 
   public void setDefaultIconPainted(boolean paintDefaultIcon) {
     myPaintDefaultIcon = paintDefaultIcon;
-  }
-
-  private Rectangle getBounds(boolean icon) {
-    try {
-      Object ui = getUI();
-      Class<?> type = ui.getClass();
-      String name = type.getSimpleName();
-      if (name.equals("AlloyIdeaLabelUI")) {
-        return getValue(ui, type.getSuperclass(), icon ? "b" : "c");
-      }
-      if (name.equals("AlloyLabelUI")) {
-        return getValue(ui, type, icon ? "b" : "c");
-      }
-      if (name.equals("SynthLabelUI")) {
-        SynthStyle style = getValue(ui, type, "style");
-        return getValue(style.getGraphicsUtils(null), SynthGraphicsUtils.class, icon ? "paintIconR" : "paintTextR");
-      }
-      return getValue(ui, BasicLabelUI.class, icon ? "paintIconR" : "paintTextR");
-    }
-    catch (Exception ignored) {
-      return null;
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <T> T getValue(Object object, Class<?> type, String name) throws Exception {
-    Field field = type.getDeclaredField(name);
-    field.setAccessible(true);
-    return (T)field.get(object);
   }
 }
