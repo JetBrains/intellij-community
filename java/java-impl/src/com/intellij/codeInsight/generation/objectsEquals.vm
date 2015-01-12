@@ -1,4 +1,4 @@
-#parse("com/intellij/codeInsight/generation/commonEqualsMacros.vm")
+#parse("equalsHelper.vm")
 public boolean equals(##
 #if ($settings.generateFinalParameters)
   final ##
