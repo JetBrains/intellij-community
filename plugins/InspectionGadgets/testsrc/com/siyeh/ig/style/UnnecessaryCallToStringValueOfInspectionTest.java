@@ -20,4 +20,11 @@ public class UnnecessaryCallToStringValueOfInspectionTest extends LightInspectio
   protected String getBasePath() {
     return "/plugins/InspectionGadgets/test/com/siyeh/igtest/style/unnecessary_valueof";
   }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[]{
+      "package org.slf4j; public interface Logger { void info(String format, Object... arguments); }",
+      "package org.slf4j; public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}"};
+  }
 }

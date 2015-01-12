@@ -28,6 +28,10 @@ public class UnnecessaryToString {
         builder.append(o.<warning descr="Unnecessary 'toString()' call">toString</warning>());
     }
 
+  String self() {
+    return toString();
+  }
+
   public static void main22(String[] args) {
     foo(args[0].toString());
   }
@@ -44,6 +48,14 @@ public class UnnecessaryToString {
   class B extends A {
     public String toString() {
       return "B" + super.toString();
+    }
+  }
+
+  void exception() {
+    try {
+
+    } catch (RuntimeException e) {
+      org.slf4j.LoggerFactory.getLogger(UnnecessaryToString.class).info("this: {}", e.toString());
     }
   }
 }

@@ -36,4 +36,12 @@ public class UnnecessaryCallToStringValueOf {
     static void foo(String s) {
         System.out.println(s);
     }
+
+  void exception() {
+    try {
+
+    } catch (RuntimeException e) {
+      org.slf4j.LoggerFactory.getLogger(UnnecessaryCallToStringValueOf.class).info("this: {}", String.valueOf(e));
+    }
+  }
 }

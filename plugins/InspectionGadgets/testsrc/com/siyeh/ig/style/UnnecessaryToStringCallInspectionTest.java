@@ -20,4 +20,11 @@ public class UnnecessaryToStringCallInspectionTest extends LightInspectionTestCa
   protected String getBasePath() {
     return "/plugins/InspectionGadgets/test/com/siyeh/igtest/style/unnecessary_tostring";
   }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[]{
+      "package org.slf4j; public interface Logger { void info(String format, Object... arguments); }",
+      "package org.slf4j; public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}"};
+  }
 }
