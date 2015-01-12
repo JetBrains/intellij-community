@@ -3,10 +3,8 @@ package com.intellij.tasks.youtrack;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.youtrack.lang.YouTrackLanguage;
 import com.intellij.ui.EditorTextField;
@@ -17,14 +15,12 @@ import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepository> {
   private static final Logger LOG = Logger.getInstance(YouTrackRepository.class);
-  private final YouTrackOptionsTab myOptions;
 
   private EditorTextField myDefaultSearch;
   private JBLabel mySearchLabel;
@@ -36,17 +32,6 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDefaultSearch.getDocument());
     assert file != null;
     file.putUserData(YouTrackIntellisense.INTELLISENSE_KEY, new YouTrackIntellisense(myRepository));
-
-    myOptions = new YouTrackOptionsTab();
-
-    Map<TaskState, String> states = myRepository.getCustomStateNames();
-    myOptions.getInProgressState().setText(StringUtil.notNullize(states.get(TaskState.IN_PROGRESS)));
-    myOptions.getResolvedState().setText(StringUtil.notNullize(states.get(TaskState.RESOLVED)));
-
-    installListener(myOptions.getInProgressState());
-    installListener(myOptions.getResolvedState());
-
-    myTabbedPane.add("Options", myOptions.getRootPanel());
   }
 
   @Override
@@ -61,8 +46,6 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
   @Override
   public void apply() {
     myRepository.setDefaultSearch(myDefaultSearch.getText());
-    myRepository.setCustomStateName(TaskState.IN_PROGRESS, myOptions.getInProgressState().getText());
-    myRepository.setCustomStateName(TaskState.RESOLVED, myOptions.getResolvedState().getText());
     super.apply();
   }
 

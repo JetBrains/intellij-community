@@ -29,8 +29,6 @@ import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.utils.XMLChar;
 import org.apache.commons.httpclient.HttpClient;
@@ -48,7 +46,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -57,13 +57,6 @@ import java.util.*;
 public class YouTrackRepository extends BaseRepositoryImpl {
 
   private String myDefaultSearch = "Assignee: me sort by: updated #Unresolved";
-  private Map<TaskState, String> myCustomStateNames = new EnumMap<TaskState, String>(TaskState.class);
-
-  // Default names for supported issues states
-  {
-    myCustomStateNames.put(TaskState.IN_PROGRESS, "In Progress");
-    myCustomStateNames.put(TaskState.RESOLVED, "Fixed");
-  }
 
   /**
    * for serialization
@@ -85,7 +78,6 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   private YouTrackRepository(YouTrackRepository other) {
     super(other);
     myDefaultSearch = other.getDefaultSearch();
-    myCustomStateNames = new EnumMap<TaskState, String>(other.getCustomStateNames());
   }
 
   public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
@@ -324,9 +316,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
     YouTrackRepository repository = (YouTrackRepository)o;
-    if (!Comparing.equal(repository.getDefaultSearch(), getDefaultSearch())) return false;
-    if (!Comparing.equal(repository.getCustomStateNames(), getCustomStateNames())) return false;
-    return true;
+    return Comparing.equal(repository.getDefaultSearch(), getDefaultSearch());
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.youtrack.YouTrackRepository");
@@ -355,27 +345,5 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   @Override
   protected int getFeatures() {
     return super.getFeatures() | TIME_MANAGEMENT | STATE_UPDATING;
-  }
-
-  public void setCustomStateNames(Map<TaskState, String> customStateNames) {
-    myCustomStateNames.putAll(customStateNames);
-  }
-
-  @Tag("customStates")
-  @Property(surroundWithTag = false)
-  @MapAnnotation(
-    surroundWithTag = false,
-    keyAttributeName = "state",
-    valueAttributeName = "name",
-    surroundKeyWithTag = false,
-    surroundValueWithTag = false
-  )
-
-  public Map<TaskState, String> getCustomStateNames() {
-    return myCustomStateNames;
-  }
-
-  public void setCustomStateName(TaskState state, String name) {
-    myCustomStateNames.put(state, name);
   }
 }
