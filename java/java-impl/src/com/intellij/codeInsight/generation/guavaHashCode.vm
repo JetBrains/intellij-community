@@ -1,0 +1,14 @@
+public int hashCode() {
+  return com.google.common.base.Objects.hashCode(##
+    #set($i = 0)
+    #foreach($member in $members)
+      #if (!$member.static)
+        #if ($i > 0)
+        , ##
+        #end
+        $member.name ##
+        #set($i = $i + 1)
+      #end
+    #end
+  );
+}

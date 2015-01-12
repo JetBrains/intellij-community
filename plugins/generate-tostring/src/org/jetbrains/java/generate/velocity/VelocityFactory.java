@@ -16,9 +16,12 @@
 package org.jetbrains.java.generate.velocity;
 
 import org.apache.commons.collections.ExtendedProperties;
+import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.SimpleLog4JLogSystem;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.apache.velocity.runtime.resource.loader.FileResourceLoader;
 
 /**
  * Velocity factory.
@@ -47,6 +50,8 @@ public class VelocityFactory {
     ExtendedProperties prop = new ExtendedProperties();
     prop.addProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, SimpleLog4JLogSystem.class.getName());
     prop.addProperty("runtime.log.logsystem.log4j.category", "GenerateToString");
+    prop.addProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
+    prop.addProperty("includes.resource.loader.class", ClasspathResourceLoader.class.getName());
     VelocityEngine velocity = new VelocityEngine();
     velocity.setExtendedProperties(prop);
     velocity.init();

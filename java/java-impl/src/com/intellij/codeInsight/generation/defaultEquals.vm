@@ -1,5 +1,4 @@
-#set($classInstanceName = $helper.getUniqueLocalVarName($instanceName, $members, $settings))
-#set($paramName = $helper.getUniqueLocalVarName($baseParamName, $members, $settings))
+#parse("com/intellij/codeInsight/generation/commonEqualsMacros.vm")
 public boolean equals(##
 #if ($settings.generateFinalParameters)
   final ##
@@ -31,31 +30,6 @@ Object $paramName){
 
   return true;
 }
-##
-#macro(addClassInstance)
-  #if ($settings.generateFinalLocals)
-    final ##
-  #end
-  $classname $classInstanceName = ($classname)$paramName;
-#end
-##
-#macro(addEqualsPrologue)
-  if(this == $paramName) return true;
-  #if (!$superHasEquals)
-    #addInstanceOfToText()
-  #else 
-    #addInstanceOfToText()
-    if(!super.equals($paramName)) return false;
-  #end
-#end
-##
-#macro(addInstanceOfToText)
-  #if ($checkParameterWithInstanceof)
-    if(!($paramName instanceof $classname)) return false;
-  #else 
-    if($paramName == null || getClass() != ${paramName}.getClass()) return false;
-  #end
-#end
 ##
 #macro(addPrimitiveFieldComparison $field)
  if($field.name != ${classInstanceName}.$field.name) return false;

@@ -1,0 +1,12 @@
+public int hashCode() {
+  return new org.apache.commons.lang3.builder.HashCodeBuilder(17, 37)
+  #if($superHasHashCode)
+    .appendSuper(super.hashCode())
+  #end
+  #foreach($field in $members)
+    #if (!$field.static)
+    .append($field.name)
+    #end
+  #end
+    .toHashCode();
+}
