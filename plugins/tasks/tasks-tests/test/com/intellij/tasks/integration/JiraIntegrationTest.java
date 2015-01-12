@@ -18,18 +18,13 @@ package com.intellij.tasks.integration;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskBundle;
-import com.intellij.tasks.TaskManagerTestCase;
-import com.intellij.tasks.TaskState;
+import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
 import com.intellij.tasks.jira.JiraVersion;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NonNls;
 
@@ -52,6 +47,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * JIRA 5.0.6, REST API 2.0
    */
   @NonNls private static final String JIRA_5_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8015";
+  public static final CustomTaskState REOPENED_CUSTOM_STATE = new CustomTaskState("3", "Reopened");
+  public static final CustomTaskState RESOLVED_CUSTOM_STATE = new CustomTaskState("5:Fixed", "Fixed");
 
   private JiraRepository myRepository;
 
@@ -167,18 +164,18 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     assertNotNull("Test task not found", task);
     // set required initial state, if was left wrong
     if (task.getState() != TaskState.REOPENED) {
-      myRepository.setTaskState(task, TaskState.REOPENED);
+      myRepository.setTaskState(task, REOPENED_CUSTOM_STATE);
     }
     try {
       //assertEquals("Wrong initial state of test issue: " + key, TaskState.REOPENED, task.getState());
-      myRepository.setTaskState(task, TaskState.RESOLVED);
+      myRepository.setTaskState(task, RESOLVED_CUSTOM_STATE);
       task = myRepository.findTask(key);
       assertEquals(task.getState(), TaskState.RESOLVED);
     }
     finally {
       try {
         // always attempt to restore original state of the issue
-        myRepository.setTaskState(task, TaskState.REOPENED);
+        myRepository.setTaskState(task, REOPENED_CUSTOM_STATE);
       }
       catch (Exception ignored) {
         // empty
