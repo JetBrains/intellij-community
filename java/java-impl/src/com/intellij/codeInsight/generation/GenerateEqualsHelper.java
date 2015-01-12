@@ -159,8 +159,16 @@ public class GenerateEqualsHelper implements Runnable {
       .velocityGenerateCode(myClass, equalsFields, myNonNullSet, new HashMap<String, String>(), contextMap,
                             EqualsHashCodeTemplatesManager.getInstance().getDefaultEqualsTemplate().getTemplate(), 0, false);
     buffer.append(methodText);
-    PsiMethod result = myFactory.createMethodFromText(buffer.toString(), myClass);
-    final PsiParameter parameter = result.getParameterList().getParameters()[0];
+    PsiMethod result;
+    try {
+      result = myFactory.createMethodFromText(buffer.toString(), myClass);
+    }
+    catch (IncorrectOperationException e) {
+      return null;
+    }
+    final PsiParameter[] parameters = result.getParameterList().getParameters();
+    if (parameters.length != 1) return null;
+    final PsiParameter parameter = parameters[0];
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, styleSettings.GENERATE_FINAL_PARAMETERS);
 
     PsiMethod method = (PsiMethod)myCodeStyleManager.reformat(result);
@@ -190,7 +198,13 @@ public class GenerateEqualsHelper implements Runnable {
       .velocityGenerateCode(myClass, Arrays.asList(myHashCodeFields), myNonNullSet, new HashMap<String, String>(), contextMap, 
                             EqualsHashCodeTemplatesManager.getInstance().getDefaultHashcodeTemplate().getTemplate(), 0, false);
     buffer.append(methodText);
-    PsiMethod hashCode = myFactory.createMethodFromText(buffer.toString(), null);
+    PsiMethod hashCode;
+    try {
+      hashCode = myFactory.createMethodFromText(buffer.toString(), null);
+    }
+    catch (IncorrectOperationException e) {
+      return null;
+    }
     hashCode = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(hashCode);
     return (PsiMethod)myCodeStyleManager.reformat(hashCode);
   }

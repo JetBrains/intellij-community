@@ -1,5 +1,4 @@
-#set($classInstanceName = $helper.getUniqueLocalVarName($instanceName, $members, $settings))
-#set($paramName = $helper.getUniqueLocalVarName($baseParamName, $members, $settings))
+#parse("equalsHelper.vm")
 public boolean equals(##
 #if ($settings.generateFinalParameters)
   final ##
@@ -11,51 +10,24 @@ Object $paramName){
   #addClassInstance()
 
   #foreach($field in $members)
-    #if (!$field.static)
-      #if ($field.array)
-        #addArrayEquals($field)
-      #elseif ($field.primitive)
-        #if ($field.double || $field.float)
-          #addDoubleFieldComparison($field)
-        #else 
-          #addPrimitiveFieldComparison($field)
-        #end
-      #elseif ($field.enum)
+    #if ($field.array)
+      #addArrayEquals($field)
+    #elseif ($field.primitive)
+      #if ($field.double || $field.float)
+        #addDoubleFieldComparison($field)
+      #else 
         #addPrimitiveFieldComparison($field)
-      #else
-        #addFieldComparison($field)
       #end
+    #elseif ($field.enum)
+      #addPrimitiveFieldComparison($field)
+    #else
+      #addFieldComparison($field)
     #end
   #end
 #end
 
   return true;
 }
-##
-#macro(addClassInstance)
-  #if ($settings.generateFinalLocals)
-    final ##
-  #end
-  $classname $classInstanceName = ($classname)$paramName;
-#end
-##
-#macro(addEqualsPrologue)
-  if(this == $paramName) return true;
-  #if (!$superHasEquals)
-    #addInstanceOfToText()
-  #else 
-    #addInstanceOfToText()
-    if(!super.equals($paramName)) return false;
-  #end
-#end
-##
-#macro(addInstanceOfToText)
-  #if ($checkParameterWithInstanceof)
-    if(!($paramName instanceof $classname)) return false;
-  #else 
-    if($paramName == null || getClass() != ${paramName}.getClass()) return false;
-  #end
-#end
 ##
 #macro(addPrimitiveFieldComparison $field)
  if($field.name != ${classInstanceName}.$field.name) return false;

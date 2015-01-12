@@ -852,7 +852,7 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
     launcherProperties = launcherPropertiesTemp
   }
 
-  ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
+  ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
     sysproperty(key: "java.awt.headless", value: "true")
     arg(value: inputPath)
     arg(value: appInfo)

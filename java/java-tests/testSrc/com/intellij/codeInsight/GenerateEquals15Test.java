@@ -1,5 +1,6 @@
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.psi.PsiField;
 import com.intellij.util.Function;
 
@@ -35,6 +36,24 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
 
   public void testNameConflicts() throws Exception {
     doTest(Function.ID, Function.ID, Function.ID, true);
+  }
+
+  public void testDifferentTypesSuperEqualsAndHashCodeApache3() throws Exception {
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3);
+  }
+
+  public void testDifferentTypesSuperEqualsAndHashCodeGuava() throws Exception {
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.OBJECTS_EQUAL_AND_HASH_CODE_GUAVA);
+  }
+
+  private void doTestWithTemplate(String templateName) throws Exception {
+    try {
+      EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(templateName);
+      doTest(Function.ID, Function.ID, Function.ID, true);
+    }
+    finally {
+      EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
+    }
   }
 
 }

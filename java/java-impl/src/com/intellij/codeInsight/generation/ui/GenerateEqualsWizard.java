@@ -18,12 +18,16 @@ package com.intellij.codeInsight.generation.ui;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.refactoring.classMembers.AbstractMemberInfoModel;
@@ -38,9 +42,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author dsl
@@ -247,7 +253,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   @Override
   protected void addSteps() {
     if (myEqualsPanel != null) {
-      addStep(new InstanceofOptionStep(myClass.hasModifierProperty(PsiModifier.FINAL)));
+      addStep(new TemplateChooserStep(myClass.hasModifierProperty(PsiModifier.FINAL), myClass.getProject()));
     }
     super.addSteps();
   }
@@ -331,10 +337,10 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
   }
 
-  private static class InstanceofOptionStep extends StepAdapter {
+  private static class TemplateChooserStep extends StepAdapter {
     private final JComponent myPanel;
 
-    private InstanceofOptionStep(boolean isFinal) {
+    private TemplateChooserStep(boolean isFinal, Project project) {
       final JCheckBox checkbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses"));
       checkbox.setSelected(!isFinal && CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
       checkbox.setEnabled(!isFinal);
@@ -345,6 +351,24 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       });
 
       myPanel = new JPanel(new VerticalFlowLayout());
+      final JPanel templateChooserPanel = new JPanel(new BorderLayout());
+      final JLabel templateChooserLabel = new JLabel("Template:");
+      templateChooserPanel.add(templateChooserLabel, BorderLayout.WEST);
+
+      final ComboBox comboBox = new ComboBox();
+      final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton = new ComponentWithBrowseButton<ComboBox>(comboBox,
+                                                                                                                   new MyEditTemplatesListener(project, myPanel, comboBox));
+      final EqualsHashCodeTemplatesManager manager = EqualsHashCodeTemplatesManager.getInstance();
+      comboBox.setModel(new DefaultComboBoxModel(manager.getTemplateNames()));
+      comboBox.setSelectedItem(manager.getDefaultTemplateBaseName());
+      comboBox.addActionListener(new ActionListener() {
+        public void actionPerformed(@NotNull final ActionEvent M) {
+          manager.setDefaultTemplate((String)comboBox.getSelectedItem());
+        }
+      });
+
+      templateChooserPanel.add(comboBoxWithBrowseButton, BorderLayout.CENTER);
+      myPanel.add(templateChooserPanel);
       myPanel.add(checkbox);
       myPanel.add(new JLabel(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses.explanation")));
     }
@@ -352,6 +376,28 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     @Override
     public JComponent getComponent() {
       return myPanel;
+    }
+
+    private static class MyEditTemplatesListener implements ActionListener {
+      private final Project myProject;
+      private final JComponent myParent;
+      private final ComboBox myComboBox;
+
+      public MyEditTemplatesListener(Project project, JComponent panel, ComboBox comboBox) {
+        myProject = project;
+        myParent = panel;
+        myComboBox = comboBox;
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final EqualsHashCodeTemplatesManager templatesManager = EqualsHashCodeTemplatesManager.getInstance();
+        final EqualsHashCodeTemplatesPanel ui = new EqualsHashCodeTemplatesPanel(myProject, EqualsHashCodeTemplatesManager.getInstance());
+        ui.selectNodeInTree(templatesManager.getDefaultTemplateBaseName());
+        ShowSettingsUtil.getInstance().editConfigurable(myParent, ui);
+        myComboBox.setModel(new DefaultComboBoxModel(templatesManager.getTemplateNames()));
+        myComboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
+      }
     }
   }
 }
