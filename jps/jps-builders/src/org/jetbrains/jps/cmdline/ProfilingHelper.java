@@ -33,9 +33,9 @@ class ProfilingHelper {
 
   public void startProfiling() {
     try {
-      final Method startMethod = myControllerClass.getDeclaredMethod("startCPUProfiling", long.class, String.class);
+      final Method startMethod = myControllerClass.getDeclaredMethod("startCPUSampling", String.class);
       if (startMethod != null) {
-        startMethod.invoke(myController, 4L/*ProfilingModes.CPU_SAMPLING*/, null);
+        startMethod.invoke(myController, new Object[] {null});
       }
       else {
         System.err.println("Cannot find method 'startCPUProfiling' in class " + myControllerClass.getName());
