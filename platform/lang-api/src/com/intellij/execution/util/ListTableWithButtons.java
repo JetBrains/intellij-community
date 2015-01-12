@@ -137,6 +137,11 @@ public abstract class ListTableWithButtons<T> extends Observable {
     myTableView.getComponent().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
   }
 
+  @NotNull
+  public TableView<T> getTableView() {
+    return myTableView;
+  }
+
   protected abstract ListTableModel createListModel();
 
   protected void setModified() {
