@@ -20,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NOT_PRIMITIVE;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class SynchronizedStatementPostfixTemplate extends StringBasedPostfixTemplate {
   public SynchronizedStatementPostfixTemplate() {
-    super("synchronized", "synchronized (expr)", JAVA_PSI_INFO, IS_NOT_PRIMITIVE);
+    super("synchronized", "synchronized (expr)", selectorTopmost(IS_NOT_PRIMITIVE));
   }
 
 

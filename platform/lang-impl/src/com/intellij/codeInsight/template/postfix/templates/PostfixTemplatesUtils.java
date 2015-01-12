@@ -21,8 +21,6 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -31,22 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class PostfixTemplatesUtils {
   private PostfixTemplatesUtils() {
-  }
-
-  public static PostfixTemplateExpressionSelector selectorWithChooser() {
-    return selectorWithChooser(Conditions.<PsiElement>alwaysTrue());
-  }
-
-  public static PostfixTemplateExpressionSelector selectorTopmost() {
-    return selectorTopmost(Conditions.<PsiElement>alwaysTrue());
-  }
-
-  public static PostfixTemplateExpressionSelector selectorWithChooser(Condition<PsiElement> condition) {
-    return new ChooserExpressionSelector(condition);
-  }
-
-  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> condition) {
-    return new TopmostExpressionSelector(condition);
   }
 
   @Nullable

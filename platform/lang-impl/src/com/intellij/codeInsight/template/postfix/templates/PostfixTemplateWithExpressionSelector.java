@@ -15,69 +15,88 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.IntroduceTargetChooser;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorTopmost;
+import java.util.List;
 
 public abstract class PostfixTemplateWithExpressionSelector extends PostfixTemplate {
-
-  @NotNull
-  protected final PostfixTemplatePsiInfo myPsiInfo;
   @NotNull
   private final PostfixTemplateExpressionSelector mySelector;
 
   protected PostfixTemplateWithExpressionSelector(@NotNull String name,
                                                   @NotNull String key,
                                                   @NotNull String example,
-                                                  @NotNull PostfixTemplatePsiInfo psiInfo,
                                                   @NotNull PostfixTemplateExpressionSelector selector) {
     super(name, key, example);
-    myPsiInfo = psiInfo;
     mySelector = selector;
   }
 
 
   protected PostfixTemplateWithExpressionSelector(@NotNull String name,
                                                   @NotNull String example,
-                                                  @NotNull PostfixTemplatePsiInfo psiInfo,
                                                   @NotNull PostfixTemplateExpressionSelector selector) {
     super(name, example);
-    myPsiInfo = psiInfo;
     mySelector = selector;
-  }
-
-  protected PostfixTemplateWithExpressionSelector(@NotNull String name,
-                                                  @NotNull String example,
-                                                  @NotNull PostfixTemplatePsiInfo psiInfo,
-                                                  @NotNull Condition<PsiElement> typeChecker) {
-    this(name, example, psiInfo, selectorTopmost(typeChecker));
-  }
-
-  protected PostfixTemplateWithExpressionSelector(@NotNull String name,
-                                                  @NotNull String example,
-                                                  @NotNull PostfixTemplatePsiInfo psiInfo) {
-    this(name, example, psiInfo, selectorTopmost());
   }
 
 
   @Override
   public final boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    return mySelector.hasExpression(this, context, copyDocument, newOffset);
+    return mySelector.hasExpression(context, copyDocument, newOffset);
   }
 
   @Override
-  public final void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    mySelector.expandTemplate(this, context, editor);
+  public final void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
+    List<PsiElement> expressions = mySelector.getExpressions(context,
+                                                             editor.getDocument(),
+                                                             editor.getCaretModel().getOffset());
+
+    if (expressions.isEmpty()) {
+      PostfixTemplatesUtils.showErrorHint(context.getProject(), editor);
+      return;
+    }
+
+    if (expressions.size() == 1) {
+      expandForChooseExpression(expressions.get(0), editor);
+      return;
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      PsiElement item = ContainerUtil.getLastItem(expressions);
+      assert item != null;
+      expandForChooseExpression(item, editor);
+      return;
+    }
+
+    IntroduceTargetChooser.showChooser(
+      editor, expressions,
+      new Pass<PsiElement>() {
+        public void pass(@NotNull final PsiElement e) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              CommandProcessor.getInstance().executeCommand(e.getProject(), new Runnable() {
+                public void run() {
+                  expandForChooseExpression(e, editor);
+                }
+              }, "Expand postfix template", PostfixLiveTemplate.POSTFIX_TEMPLATE_ID);
+            }
+          });
+        }
+      },
+      mySelector.getRenderer(),
+      "Expressions", 0, ScopeHighlighter.NATURAL_RANGER
+    );
   }
 
   protected abstract void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor);
-
-  @NotNull
-  PostfixTemplatePsiInfo getPsiInfo() {
-    return myPsiInfo;
-  }
 }
