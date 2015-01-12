@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -33,9 +34,10 @@ import java.util.List;
  */
 public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTemplateExpressionSelector {
 
+  @NotNull
   protected final Condition<PsiElement> myAdditionalCondition;
 
-  public PostfixTemplateExpressionSelectorBase(Condition<PsiElement> condition) {
+  public PostfixTemplateExpressionSelectorBase(@Nullable Condition<PsiElement> condition) {
     myAdditionalCondition = condition != null ? condition : Conditions.<PsiElement>alwaysTrue();
   }
 
