@@ -32,8 +32,8 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   @NotNull private final SoftHardCacheMap<DiffRequestPresentable, DiffRequest> myRequestCache =
     new SoftHardCacheMap<DiffRequestPresentable, DiffRequest>(5, 5);
 
-  public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain, boolean useShortHeader) {
-    super(project, useShortHeader);
+  public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
+    super(project);
     myRequestChain = requestChain;
 
     init();

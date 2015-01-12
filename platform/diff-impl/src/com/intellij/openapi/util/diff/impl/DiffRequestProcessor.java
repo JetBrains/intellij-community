@@ -63,13 +63,12 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final ModifiablePanel myContentPanel;
   @NotNull private final ModifiablePanel myToolbarPanel; // TODO: allow to call 'updateToolbar' from Viewer ?
   @NotNull private final ModifiablePanel myToolbarStatusPanel;
-  @Nullable private final JLabel myTitleLabel;
 
   @NotNull private DiffRequest myActiveRequest;
 
   @NotNull private ViewerState myState = new EmptyState();
 
-  public DiffRequestProcessor(@Nullable Project project, boolean useShortHeader) {
+  public DiffRequestProcessor(@Nullable Project project) {
     myProject = project;
 
     myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
@@ -88,21 +87,9 @@ public abstract class DiffRequestProcessor implements Disposable {
     myToolbarStatusPanel = new ModifiablePanel();
 
     JPanel topPanel = new JPanel(new BorderLayout());
-    if (!useShortHeader) {
-      myTitleLabel = null;
-      topPanel.add(myToolbarPanel, BorderLayout.WEST);
-      topPanel.add(myToolbarStatusPanel, BorderLayout.EAST);
-    }
-    else {
-      JPanel toolbarPanel = new JPanel(new BorderLayout());
-      toolbarPanel.add(myToolbarPanel, BorderLayout.WEST);
-      toolbarPanel.add(myToolbarStatusPanel, BorderLayout.EAST);
+    topPanel.add(myToolbarPanel, BorderLayout.WEST);
+    topPanel.add(myToolbarStatusPanel, BorderLayout.EAST);
 
-      myTitleLabel = new JLabel();
-      myTitleLabel.setBorder(BorderFactory.createEmptyBorder(1, 2, 0, 0));
-      topPanel.add(myTitleLabel, BorderLayout.WEST);
-      topPanel.add(toolbarPanel, BorderLayout.EAST);
-    }
 
     myPanel.add(topPanel, BorderLayout.NORTH);
     myPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -315,14 +302,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private void setTitle(@Nullable String title) {
-    if (myTitleLabel != null) {
-      if (title == null) title = "";
-      myTitleLabel.setText(title);
-    }
-    else {
-      if (title == null) title = "Diff";
-      setWindowTitle(title);
-    }
+    if (title == null) title = "Diff";
+    setWindowTitle(title);
   }
 
   //

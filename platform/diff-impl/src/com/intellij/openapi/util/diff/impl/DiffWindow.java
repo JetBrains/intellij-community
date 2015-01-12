@@ -49,7 +49,7 @@ public class DiffWindow {
 
   private class MyCacheDiffRequestChainProcessor extends CacheDiffRequestChainProcessor {
     public MyCacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
-      super(project, requestChain, false);
+      super(project, requestChain);
     }
 
     @Override

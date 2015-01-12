@@ -68,7 +68,7 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
     @Nullable private final Window myWindow;
 
     public MyCacheDiffRequestChainProcessor(@Nullable Project project, @Nullable Window window, @NotNull DiffRequestChain requestChain) {
-      super(project, requestChain, window == null);
+      super(project, requestChain);
       myWindow = window;
     }
 

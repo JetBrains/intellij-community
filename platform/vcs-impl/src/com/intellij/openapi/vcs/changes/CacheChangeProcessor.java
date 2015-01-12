@@ -53,7 +53,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   private int myModificationStamp;
 
   public CacheChangeProcessor(@NotNull Project project) {
-    super(project, true);
+    super(project);
     myProject = project;
 
     init();
