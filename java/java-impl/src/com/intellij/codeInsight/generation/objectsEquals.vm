@@ -9,20 +9,18 @@ Object $paramName){
   return ##
    #set($i = 0)
    #foreach($field in $members)
-     #if (!$field.static)
-       #if ($i > 0)
-       &&
-       #end
-       #set($i = $i + 1)
-       #if ($field.array)
-         #if ($field.nestedArray)
+     #if ($i > 0)
+     &&
+     #end
+     #set($i = $i + 1)
+     #if ($field.array)
+       #if ($field.nestedArray)
 java.util.Arrays.deepEquals($field.name, ${classInstanceName}.$field.name)##
-         #else
-java.util.Arrays.equals($field.name, ${classInstanceName}.$field.name)##
-         #end
        #else
-java.util.Objects.equals($field.name, ${classInstanceName}.$field.name)##
+java.util.Arrays.equals($field.name, ${classInstanceName}.$field.name)##
        #end
+     #else
+java.util.Objects.equals($field.name, ${classInstanceName}.$field.name)##
      #end
    #end
   ;

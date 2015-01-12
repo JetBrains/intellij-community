@@ -15,9 +15,7 @@ Object $paramName){
     .appendSuper(super.equals($paramName))
   #end
   #foreach($field in $members)
-    #if (!$field.static)
-      .append($field.name, ${classInstanceName}.$field.name)
-    #end
+    .append($field.name, ${classInstanceName}.$field.name)
   #end
     .isEquals();
 }

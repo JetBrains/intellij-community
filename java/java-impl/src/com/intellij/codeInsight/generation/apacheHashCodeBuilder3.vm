@@ -4,9 +4,7 @@ public int hashCode() {
     .appendSuper(super.hashCode())
   #end
   #foreach($field in $members)
-    #if (!$field.static)
     .append($field.name)
-    #end
   #end
     .toHashCode();
 }

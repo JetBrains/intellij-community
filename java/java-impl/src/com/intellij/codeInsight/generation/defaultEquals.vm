@@ -10,20 +10,18 @@ Object $paramName){
   #addClassInstance()
 
   #foreach($field in $members)
-    #if (!$field.static)
-      #if ($field.array)
-        #addArrayEquals($field)
-      #elseif ($field.primitive)
-        #if ($field.double || $field.float)
-          #addDoubleFieldComparison($field)
-        #else 
-          #addPrimitiveFieldComparison($field)
-        #end
-      #elseif ($field.enum)
+    #if ($field.array)
+      #addArrayEquals($field)
+    #elseif ($field.primitive)
+      #if ($field.double || $field.float)
+        #addDoubleFieldComparison($field)
+      #else 
         #addPrimitiveFieldComparison($field)
-      #else
-        #addFieldComparison($field)
       #end
+    #elseif ($field.enum)
+      #addPrimitiveFieldComparison($field)
+    #else
+      #addFieldComparison($field)
     #end
   #end
 #end
