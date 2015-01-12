@@ -2,8 +2,10 @@ package com.intellij.tasks.integration.live;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.trello.TrelloRepository;
 import com.intellij.tasks.trello.TrelloRepositoryType;
+import com.intellij.tasks.trello.TrelloTask;
 import com.intellij.tasks.trello.model.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,14 +24,26 @@ import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor.*;
  */
 public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloRepository> {
 
-  private static final String BOARD_1_NAME = "Board 1";
-  private static final String BOARD_1_ID = "53c416a8a6e5a78753562043";
+  // Basic functionality (searching, filtering, etc.)
+  private static final String BASIC_FUNCTIONALITY_BOARD_NAME = "Basic Functionality";
+  private static final String BASIC_FUNCTIONALITY_BOARD_ID = "53c416a8a6e5a78753562043";
 
   private static final String LIST_1_1_NAME = "List 1-1";
   private static final String LIST_1_1_ID = "53c416a8a6e5a78753562044";
 
   private static final String CARD_1_1_1_NAME = "Card 1-1-1";
   private static final String CARD_1_1_1_ID = "53c416d8b4bd36fb078446e5";
+
+  // Labels and colors
+  private static final String LABELS_AND_COLORS_BOARD_NAME = "Labels and Colors";
+  private static final String COLORED_CARD_ID = "548591e00f3d598512ced37b";
+
+  // State updates
+  private static final String STATE_UPDATES_BOARD_NAME = "State Updates";
+  private static final String STATE_UPDATES_BOARD_ID = "54b3e0e3b4f415b3c9d03449";
+  private static final String BACKLOG_LIST_ID = "54b3e0e849e831746351e063";
+  private static final String IN_PROGRESS_LIST_ID = "54b3e0ebf5035aaddcbe15b4";
+  private static final String FEATURE_CARD_ID = "54b3e0efed4db033b634cd39";
 
   @Override
   protected TrelloRepository createRepository() throws Exception {
@@ -53,9 +67,9 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
   // TODO Check various cards visibility corner cases
 
   public void testFetchBoard() throws Exception {
-    TrelloBoard board = myRepository.fetchBoardById(BOARD_1_ID);
+    TrelloBoard board = myRepository.fetchBoardById(BASIC_FUNCTIONALITY_BOARD_ID);
     assertNotNull(board);
-    assertEquals(BOARD_1_NAME, board.getName());
+    assertEquals(BASIC_FUNCTIONALITY_BOARD_NAME, board.getName());
   }
 
   public void testFetchList() throws Exception {
@@ -72,12 +86,13 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
 
   public void testFetchBoardsOfUser() throws Exception {
     List<TrelloBoard> boards = myRepository.fetchUserBoards();
-    assertEquals(2, boards.size());
-    assertObjectsNamed("All boards of the user should be included", boards, "Board 1", "Board 2");
+    assertEquals(3, boards.size());
+    assertObjectsNamed("All boards of the user should be included", boards,
+                       BASIC_FUNCTIONALITY_BOARD_NAME, LABELS_AND_COLORS_BOARD_NAME, STATE_UPDATES_BOARD_NAME);
   }
 
   public void testFetchListsOfBoard() throws Exception {
-    TrelloBoard selectedBoard = myRepository.fetchBoardById(BOARD_1_ID);
+    TrelloBoard selectedBoard = myRepository.fetchBoardById(BASIC_FUNCTIONALITY_BOARD_ID);
     assertNotNull(selectedBoard);
     myRepository.setCurrentBoard(selectedBoard);
     List<TrelloList> lists = myRepository.fetchBoardLists();
@@ -88,7 +103,7 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
   @NotNull
   private List<TrelloCard> fetchCards(@Nullable String boardId, @Nullable String listId, boolean withClosed) throws Exception {
     if (boardId != null) {
-      TrelloBoard selectedBoard = myRepository.fetchBoardById(BOARD_1_ID);
+      TrelloBoard selectedBoard = myRepository.fetchBoardById(BASIC_FUNCTIONALITY_BOARD_ID);
       assertNotNull(selectedBoard);
       myRepository.setCurrentBoard(selectedBoard);
     }
@@ -108,24 +123,24 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
 
   public void testFetchingCardsOfBoard() throws Exception {
     myRepository.setIncludeAllCards(true);
-    List<TrelloCard> cards = fetchCards(BOARD_1_ID, null, true);
+    List<TrelloCard> cards = fetchCards(BASIC_FUNCTIONALITY_BOARD_ID, null, true);
     assertObjectsNamed("All cards of the board should be included",
                        cards, "Card 1-1-1", "Card 1-1-2", "Card 1-2-1", "Card 1-3-1", "Archived Card");
   }
 
   public void testCardsFilteringByMembership() throws Exception {
     myRepository.setIncludeAllCards(true);
-    List<TrelloCard> allCards = fetchCards(BOARD_1_ID, LIST_1_1_ID, true);
+    List<TrelloCard> allCards = fetchCards(BASIC_FUNCTIONALITY_BOARD_ID, LIST_1_1_ID, true);
     assertObjectsNamed("All cards of the list should be included", allCards, "Card 1-1-1", "Card 1-1-2", "Archived Card");
 
     myRepository.setIncludeAllCards(false);
-    List<TrelloCard> assignedCards = fetchCards(BOARD_1_ID, LIST_1_1_ID, true);
+    List<TrelloCard> assignedCards = fetchCards(BASIC_FUNCTIONALITY_BOARD_ID, LIST_1_1_ID, true);
     assertObjectsNamed("Only cards of the list assigned to user should be included", assignedCards, "Card 1-1-1");
   }
 
   public void testCardsFilteringByStatus() throws Exception {
     myRepository.setIncludeAllCards(true);
-    List<TrelloCard> allCards = fetchCards(BOARD_1_ID, LIST_1_1_NAME, true);
+    List<TrelloCard> allCards = fetchCards(BASIC_FUNCTIONALITY_BOARD_ID, LIST_1_1_NAME, true);
     assertObjectsNamed("All cards of the list should be included", allCards, "Card 1-1-1", "Card 1-1-2", "Archived Card");
 
     TrelloCard card = ContainerUtil.find(allCards, new Condition<TrelloCard>() {
@@ -139,8 +154,17 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     assertFalse(card.isVisible());
   }
 
+  public void testTestConnection() throws Exception {
+    assertNull(myRepository.createCancellableConnection().call());
+
+    myRepository.setPassword("illegal password");
+    final Exception error = myRepository.createCancellableConnection().call();
+    assertNotNull(error);
+    assertTrue(error.getMessage().contains("Unauthorized"));
+  }
+
   public void testLabelsAndColors() throws Exception {
-    final TrelloCard card = myRepository.fetchCardById("548591e00f3d598512ced37b");
+    final TrelloCard card = myRepository.fetchCardById(COLORED_CARD_ID);
     assertNotNull(card);
     final List<TrelloLabel> labels = card.getLabels();
 
@@ -156,13 +180,41 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     assertEquals(EnumSet.of(SKY, LIME, PINK, BLACK), card.getColors());
   }
 
-  public void testTestConnection() throws Exception {
-    assertNull(myRepository.createCancellableConnection().call());
+  public void testStateUpdates() throws Exception {
+    TrelloCard card = myRepository.fetchCardById(FEATURE_CARD_ID);
+    assertNotNull(card);
+    assertEquals(STATE_UPDATES_BOARD_ID, card.getIdBoard());
+    assertEquals(BACKLOG_LIST_ID, card.getIdList());
 
-    myRepository.setPassword("illegal password");
-    final Exception error = myRepository.createCancellableConnection().call();
-    assertNotNull(error);
-    assertTrue(error.getMessage().contains("Unauthorized"));
+    // Discover "In Progress" list
+    TrelloTask task = new TrelloTask(card, myRepository);
+    Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
+    assertEquals(1, states.size());
+    final CustomTaskState inProgressState = states.iterator().next();
+    assertEquals(IN_PROGRESS_LIST_ID, inProgressState.getId());
+    assertEquals("In Progress", inProgressState.getPresentableName());
+
+    // Backlog -> In Progress
+    myRepository.setTaskState(task, inProgressState);
+    card = myRepository.fetchCardById(FEATURE_CARD_ID);
+    assertNotNull(card);
+    assertEquals(STATE_UPDATES_BOARD_ID, card.getIdBoard());
+    assertEquals(IN_PROGRESS_LIST_ID, card.getIdList());
+
+    // Discover "Backlog" list
+    task = new TrelloTask(card, myRepository);
+    states = myRepository.getAvailableTaskStates(task);
+    assertEquals(1, states.size());
+    final CustomTaskState backlogState = states.iterator().next();
+    assertEquals(BACKLOG_LIST_ID, backlogState.getId());
+    assertEquals("Backlog", backlogState.getPresentableName());
+
+    // In Progress -> Backlog
+    myRepository.setTaskState(task, backlogState);
+    card = myRepository.fetchCardById(FEATURE_CARD_ID);
+    assertNotNull(card);
+    assertEquals(STATE_UPDATES_BOARD_ID, card.getIdBoard());
+    assertEquals(BACKLOG_LIST_ID, card.getIdList());
   }
 
   static void assertObjectsNamed(@NotNull String message, @NotNull Collection<? extends TrelloModel> objects, @NotNull String... names) {
