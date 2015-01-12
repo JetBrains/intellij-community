@@ -139,7 +139,7 @@ public class LinkLabel<T> extends JLabel {
 
       if (myUnderline && myPaintUnderline) {
         Rectangle bounds = getTextBounds();
-        int lineY = bounds.y + bounds.height - 1;
+        int lineY = getUI().getBaseline(this, getWidth(), getHeight()) + 1;
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
       }
 
