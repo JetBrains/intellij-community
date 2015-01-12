@@ -64,6 +64,7 @@ import javax.swing.event.EventListenerList;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.DimensionUIResource;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.synth.Region;
@@ -560,6 +561,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         Object value = entry.getValue();
         if (value instanceof DimensionUIResource) {
           entry.setValue(JBUI.size((DimensionUIResource)value).asUIResource());
+        } else if (value instanceof InsetsUIResource) {
+          entry.setValue(JBUI.insets(((InsetsUIResource)value)).asUIResource());
         } else if (value instanceof Integer && entry.getKey().toString().endsWith(".maxGutterIconWidth")) {
           entry.setValue(Integer.valueOf(JBUI.scale((Integer)value)));
         }
