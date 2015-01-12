@@ -104,13 +104,6 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
       if (selectionModel.hasSelection()) {
         changedLines = performAction(editor, new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
       }
-      else if (selectionModel.hasBlockSelection()) {
-        final int[] starts = selectionModel.getBlockSelectionStarts();
-        final int[] ends = selectionModel.getBlockSelectionEnds();
-        for (int i = 0; i < starts.length; i++) {
-          changedLines += performAction(editor, new TextRange(starts [i], ends [i]));
-        }
-      }
       else {
         changedLines += performAction(editor, new TextRange(0, editor.getDocument().getTextLength()));
       }

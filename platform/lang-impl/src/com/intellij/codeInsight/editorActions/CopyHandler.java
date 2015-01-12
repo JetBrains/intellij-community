@@ -63,7 +63,7 @@ public class CopyHandler extends EditorActionHandler {
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection(true) && !selectionModel.hasBlockSelection()) {
+    if (!selectionModel.hasSelection(true)) {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }

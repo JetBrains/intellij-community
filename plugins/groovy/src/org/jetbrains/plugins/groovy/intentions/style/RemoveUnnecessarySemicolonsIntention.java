@@ -67,7 +67,6 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!(file instanceof GroovyFileBase)) return false;
-    if (selectionModel.hasBlockSelection()) return false;
 
     if (selectionModel.hasSelection()) {
       final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(selectionModel.getSelectionStart());
@@ -99,7 +98,6 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasBlockSelection()) return;
 
     Document document = editor.getDocument();
     if (selectionModel.hasSelection()) {
