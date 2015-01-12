@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,13 +20,16 @@ public class EmmetAbbreviationBalloon {
   private final String myAbbreviationsHistoryKey;
   private final String myLastAbbreviationKey;
   private final Callback myCallback;
+  private final String myTitle;
 
   public EmmetAbbreviationBalloon(@NotNull String abbreviationsHistoryKey,
                                   @NotNull String lastAbbreviationKey,
-                                  @NotNull Callback callback) {
+                                  @NotNull Callback callback, 
+                                  @NotNull String title) {
     myAbbreviationsHistoryKey = abbreviationsHistoryKey;
     myLastAbbreviationKey = lastAbbreviationKey;
     myCallback = callback;
+    myTitle = title;
   }
 
   public void show(@NotNull final CustomTemplateCallback customTemplateCallback) {
@@ -36,7 +38,7 @@ public class EmmetAbbreviationBalloon {
     field.setPreferredSize(new Dimension(Math.max(220, fieldPreferredSize.width), fieldPreferredSize.height));
     field.setHistorySize(10);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final BalloonImpl balloon = (BalloonImpl)popupFactory.createDialogBalloonBuilder(field, XmlBundle.message("emmet.title"))
+    final BalloonImpl balloon = (BalloonImpl)popupFactory.createDialogBalloonBuilder(field, myTitle)
       .setCloseButtonEnabled(false)
       .setBlockClicksThroughBalloon(true)
       .setAnimationCycle(0)

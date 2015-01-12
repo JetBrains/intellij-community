@@ -303,7 +303,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                                    public void onEnter(@NotNull String abbreviation) {
                                      doWrap(abbreviation, callback);
                                    }
-                                 }).show(callback);
+                                 }, XmlBundle.message("emmet.title")).show(callback);
   }
   
   public static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
