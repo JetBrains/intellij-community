@@ -207,19 +207,33 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private boolean isInClickableArea(Point pt) {
-    Insets insets = getInsets(); // border is set
-    pt.translate(-insets.left, -insets.top);
+    final Rectangle iconR = new Rectangle();
+    final Rectangle textR = new Rectangle();
+    final Rectangle viewR = new Rectangle();
+    final Insets insets = getInsets(null);
+    viewR.x = insets.left;
+    viewR.y = insets.top;
+    viewR.width = getWidth() - (insets.left + insets.right);
+    viewR.height = getHeight() - (insets.top + insets.bottom);
+    SwingUtilities.layoutCompoundLabel(this,
+                                       getFontMetrics(getFont()),
+                                       getText(),
+                                       isEnabled() ? getIcon() : getDisabledIcon(),
+                                       getVerticalAlignment(),
+                                       getHorizontalAlignment(),
+                                       getVerticalTextPosition(),
+                                       getHorizontalTextPosition(),
+                                       viewR,
+                                       iconR,
+                                       textR,
+                                       getIconTextGap());
     if (getIcon() != null) {
-      if (pt.getX() < getIcon().getIconWidth() && pt.getY() < getIcon().getIconHeight()) {
+      iconR.width += getIconTextGap(); //todo[kb] icon at right?
+      if (iconR.contains(pt)) {
         return true;
       }
     }
-    if (getText() != null) {
-      Rectangle bounds = getTextBounds(); // get calculated text bounds
-      return bounds.contains(pt.x + insets.left, pt.y + insets.top);
-    }
-
-    return false;
+    return textR.contains(pt);
   }
 
   private void enableUnderline() {
