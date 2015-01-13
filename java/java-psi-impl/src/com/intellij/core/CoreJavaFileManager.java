@@ -84,7 +84,7 @@ public class CoreJavaFileManager implements JavaFileManager {
   @Override
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     for (VirtualFile root : roots()) {
-      final PsiClass psiClass = findClassInClasspathRoot(qName, root, myPsiManager);
+      final PsiClass psiClass = findClassInClasspathRoot(qName, root, myPsiManager, scope);
       if (psiClass != null) {
         return psiClass;
       }
@@ -93,7 +93,10 @@ public class CoreJavaFileManager implements JavaFileManager {
   }
 
   @Nullable
-  public static PsiClass findClassInClasspathRoot(String qName, VirtualFile root, PsiManager psiManager) {
+  public static PsiClass findClassInClasspathRoot(@NotNull String qName,
+                                                  @NotNull VirtualFile root,
+                                                  @NotNull PsiManager psiManager,
+                                                  @NotNull GlobalSearchScope scope) {
     String pathRest = qName;
     VirtualFile cur = root;
 
@@ -120,6 +123,9 @@ public class CoreJavaFileManager implements JavaFileManager {
     }
     if (!vFile.isValid()) {
       LOG.error("Invalid child of valid parent: " + vFile.getPath() + "; " + root.isValid() + " path=" + root.getPath());
+      return null;
+    }
+    if (!scope.contains(vFile)) {
       return null;
     }
 
@@ -176,7 +182,7 @@ public class CoreJavaFileManager implements JavaFileManager {
   public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     List<PsiClass> result = new ArrayList<PsiClass>();
     for (VirtualFile file : roots()) {
-      final PsiClass psiClass = findClassInClasspathRoot(qName, file, myPsiManager);
+      final PsiClass psiClass = findClassInClasspathRoot(qName, file, myPsiManager, scope);
       if (psiClass != null) {
         result.add(psiClass);
       }

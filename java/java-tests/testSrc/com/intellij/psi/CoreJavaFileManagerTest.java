@@ -174,6 +174,13 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     assertCannotFind(manager, "foo.Three");
   }
 
+  public void testScopeCheck() throws Exception {
+    CoreJavaFileManager manager = configureManager("package foo;\n\n" + "public class Test {}\n", "Test");
+
+    assertNotNull("Should find class in all scope", manager.findClass("foo.Test", GlobalSearchScope.allScope(getProject())));
+    assertNull("Should not find class in empty scope", manager.findClass("foo.Test", GlobalSearchScope.EMPTY_SCOPE));
+  }
+
   @NotNull
   private CoreJavaFileManager configureManager(@Language("JAVA") @NotNull String text, @NotNull String className) throws Exception {
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
