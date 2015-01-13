@@ -101,6 +101,9 @@ public class ExternalDiffToolUtil {
                              @NotNull String[] titles,
                              @Nullable String windowTitle)
     throws IOException, ExecutionException {
+    assert contents.length == 2 || contents.length == 3;
+    assert titles.length == contents.length;
+
     List<String> files = new ArrayList<String>();
     for (int i = 0; i < contents.length; i++) {
       files.add(createFile(contents[i], titles[i], windowTitle));
@@ -112,13 +115,18 @@ public class ExternalDiffToolUtil {
     while (parameterTokenizer.hasMoreTokens()) {
       String arg = parameterTokenizer.nextToken();
       if ("%1".equals(arg)) {
-        if (files.size() > 0) args.add(files.get(0));
+        args.add(files.get(0));
       }
       else if ("%2".equals(arg)) {
-        if (files.size() > 1) args.add(files.get(1));
+        if (files.size() == 3) {
+          args.add(files.get(2));
+        }
+        else {
+          args.add(files.get(1));
+        }
       }
       else if ("%3".equals(arg)) {
-        if (files.size() > 2) args.add(files.get(2));
+        if (files.size() == 3) args.add(files.get(1));
       }
       else {
         args.add(arg);
