@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet.tokens;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -99,7 +100,7 @@ public class TemplateToken extends ZenCodingToken {
     String templateString = template.getString();
     final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(callback.getProject());
     if (!containsAttrsVar(template)) {
-      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.HTML, templateString);
+      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", HtmlFileType.INSTANCE, templateString);
       dummyRootTag = dummyFile.getRootTag();
       if (dummyRootTag != null) {
         addMissingAttributes(dummyRootTag, attributes);
