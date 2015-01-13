@@ -26,22 +26,22 @@ class A {
 
         final A a = (A) o;
 
-        if (a10 != a.a10) return false;
-        if (Float.compare(a.a11, a11) != 0) return false;
-        if (Double.compare(a.a12, a12) != 0) return false;
         if (a7 != a.a7) return false;
         if (a8 != a.a8) return false;
         if (a9 != a.a9) return false;
+        if (a10 != a.a10) return false;
+        if (Float.compare(a.a11, a11) != 0) return false;
+        if (Double.compare(a.a12, a12) != 0) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(a1, a.a1)) return false;
-        if (!a13.equals(a.a13)) return false;
-        if (!a14.equals(a.a14)) return false;
         if (!Arrays.deepEquals(a2, a.a2)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(a3, a.a3)) return false;
         if (!Arrays.deepEquals(a4, a.a4)) return false;
         if (!Arrays.equals(a5, a.a5)) return false;
         if (!Arrays.deepEquals(a6, a.a6)) return false;
+        if (!a13.equals(a.a13)) return false;
+        if (!a14.equals(a.a14)) return false;
 
         return true;
     }

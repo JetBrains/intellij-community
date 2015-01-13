@@ -74,22 +74,22 @@ class A {
 
         final A a = (A) o;
 
-        if (getA10() != a.getA10()) return false;
-        if (Float.compare(a.getA11(), getA11()) != 0) return false;
-        if (Double.compare(a.getA12(), getA12()) != 0) return false;
         if (getA7() != a.getA7()) return false;
         if (getA8() != a.getA8()) return false;
         if (getA9() != a.getA9()) return false;
+        if (getA10() != a.getA10()) return false;
+        if (Float.compare(a.getA11(), getA11()) != 0) return false;
+        if (Double.compare(a.getA12(), getA12()) != 0) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(getA1(), a.getA1())) return false;
-        if (a13 != null ? !a13.equals(a.a13) : a.a13 != null) return false;
-        if (a14 != null ? !a14.equals(a.a14) : a.a14 != null) return false;
         if (!Arrays.deepEquals(getA2(), a.getA2())) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(getA3(), a.getA3())) return false;
         if (!Arrays.deepEquals(getA4(), a.getA4())) return false;
         if (!Arrays.equals(getA5(), a.getA5())) return false;
         if (!Arrays.deepEquals(getA6(), a.getA6())) return false;
+        if (a13 != null ? !a13.equals(a.a13) : a.a13 != null) return false;
+        if (a14 != null ? !a14.equals(a.a14) : a.a14 != null) return false;
 
         return true;
     }
