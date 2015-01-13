@@ -30,9 +30,10 @@ public class FieldElement extends AbstractElement implements Element {
 
     private boolean isModifierTransient;
     private boolean isModifierVolatile;
+    private String accessor;
 
-    public String getAccessor() {
-        return name;
+  public String getAccessor() {
+        return accessor;
     }
 
     /**
@@ -103,4 +104,8 @@ public class FieldElement extends AbstractElement implements Element {
                 ", isModifierVolatile=" + isModifierVolatile +
                 "}";
     }
+
+  public void setAccessor(String accessor) {
+    this.accessor = accessor;
+  }
 }

@@ -47,18 +47,30 @@ public class GenerateEqualsHelper implements Runnable {
   private final JavaCodeStyleManager myJavaCodeStyleManager;
   private final Project myProject;
   private final boolean myCheckParameterWithInstanceof;
+  private final boolean myUseAccessors;
+
+  public GenerateEqualsHelper(Project project,
+                            PsiClass aClass,
+                            PsiField[] equalsFields,
+                            PsiField[] hashCodeFields,
+                            PsiField[] nonNullFields,
+                            boolean useInstanceofToCheckParameterType) {
+    this(project, aClass, equalsFields, hashCodeFields, nonNullFields, useInstanceofToCheckParameterType, false);
+  }
 
   public GenerateEqualsHelper(Project project,
                               PsiClass aClass,
                               PsiField[] equalsFields,
                               PsiField[] hashCodeFields,
                               PsiField[] nonNullFields,
-                              boolean useInstanceofToCheckParameterType) {
+                              boolean useInstanceofToCheckParameterType,
+                              boolean useAccessors) {
     myClass = aClass;
     myEqualsFields = equalsFields;
     myHashCodeFields = hashCodeFields;
     myProject = project;
     myCheckParameterWithInstanceof = useInstanceofToCheckParameterType;
+    myUseAccessors = useAccessors;
 
     myNonNullSet = new HashSet<PsiField>();
     ContainerUtil.addAll(myNonNullSet, nonNullFields);
@@ -157,7 +169,7 @@ public class GenerateEqualsHelper implements Runnable {
 
     final String methodText = GenerationUtil
       .velocityGenerateCode(myClass, equalsFields, myNonNullSet, new HashMap<String, String>(), contextMap,
-                            EqualsHashCodeTemplatesManager.getInstance().getDefaultEqualsTemplate().getTemplate(), 0, false);
+                            EqualsHashCodeTemplatesManager.getInstance().getDefaultEqualsTemplate().getTemplate(), 0, false, myUseAccessors);
     buffer.append(methodText);
     PsiMethod result;
     try {
@@ -196,7 +208,7 @@ public class GenerateEqualsHelper implements Runnable {
 
     final String methodText = GenerationUtil
       .velocityGenerateCode(myClass, Arrays.asList(myHashCodeFields), myNonNullSet, new HashMap<String, String>(), contextMap, 
-                            EqualsHashCodeTemplatesManager.getInstance().getDefaultHashcodeTemplate().getTemplate(), 0, false);
+                            EqualsHashCodeTemplatesManager.getInstance().getDefaultHashcodeTemplate().getTemplate(), 0, false, myUseAccessors);
     buffer.append(methodText);
     PsiMethod hashCode;
     try {

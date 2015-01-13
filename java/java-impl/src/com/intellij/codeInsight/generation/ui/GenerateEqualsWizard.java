@@ -341,23 +341,15 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     private final JComponent myPanel;
 
     private TemplateChooserStep(boolean isFinal, Project project) {
-      final JCheckBox checkbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses"));
-      checkbox.setSelected(!isFinal && CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
-      checkbox.setEnabled(!isFinal);
-      checkbox.addActionListener(new ActionListener() {
-        public void actionPerformed(@NotNull final ActionEvent M) {
-          CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = checkbox.isSelected();
-        }
-      });
-
       myPanel = new JPanel(new VerticalFlowLayout());
       final JPanel templateChooserPanel = new JPanel(new BorderLayout());
-      final JLabel templateChooserLabel = new JLabel("Template:");
+      final JLabel templateChooserLabel = new JLabel(CodeInsightBundle.message("generate.equals.hashcode.template"));
       templateChooserPanel.add(templateChooserLabel, BorderLayout.WEST);
 
       final ComboBox comboBox = new ComboBox();
-      final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton = new ComponentWithBrowseButton<ComboBox>(comboBox,
-                                                                                                                   new MyEditTemplatesListener(project, myPanel, comboBox));
+      final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton = 
+        new ComponentWithBrowseButton<ComboBox>(comboBox, new MyEditTemplatesListener(project, myPanel, comboBox));
+      templateChooserLabel.setLabelFor(comboBox);
       final EqualsHashCodeTemplatesManager manager = EqualsHashCodeTemplatesManager.getInstance();
       comboBox.setModel(new DefaultComboBoxModel(manager.getTemplateNames()));
       comboBox.setSelectedItem(manager.getDefaultTemplateBaseName());
@@ -369,8 +361,26 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
       templateChooserPanel.add(comboBoxWithBrowseButton, BorderLayout.CENTER);
       myPanel.add(templateChooserPanel);
+
+      final JCheckBox checkbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses"));
+      checkbox.setSelected(!isFinal && CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
+      checkbox.setEnabled(!isFinal);
+      checkbox.addActionListener(new ActionListener() {
+        public void actionPerformed(@NotNull final ActionEvent M) {
+          CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = checkbox.isSelected();
+        }
+      });
       myPanel.add(checkbox);
       myPanel.add(new JLabel(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses.explanation")));
+
+      final JCheckBox gettersCheckbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.use.getters"));
+      gettersCheckbox.setSelected(CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE);
+      gettersCheckbox.addActionListener(new ActionListener() {
+        public void actionPerformed(@NotNull final ActionEvent M) {
+          CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE = gettersCheckbox.isSelected();
+        }
+      });
+      myPanel.add(gettersCheckbox);
     }
 
     @Override

@@ -138,7 +138,7 @@ public class GenerationUtil {
                                             int sortElements,
                                             boolean useFullyQualifiedName)
     throws GenerateCodeException {
-    return velocityGenerateCode(clazz, selectedMembers, Collections.<PsiMember>emptyList(), params, Collections.<String, Object>emptyMap(), templateMacro, sortElements, useFullyQualifiedName);
+    return velocityGenerateCode(clazz, selectedMembers, Collections.<PsiMember>emptyList(), params, Collections.<String, Object>emptyMap(), templateMacro, sortElements, useFullyQualifiedName, false);
   }
 
   /**
@@ -149,6 +149,7 @@ public class GenerationUtil {
    * @param selectedMembers the selected members as both {@link PsiField} and {@link PsiMethod}.
    * @param params          additional parameters stored with key/value in the map.
    * @param templateMacro   the velocity macro template
+   * @param useAccessors    if true, accessor property for FieldElement bean would be assigned to field getter name append with () 
    * @return code (usually javacode). Returns null if templateMacro is null.
    * @throws GenerateCodeException is thrown when there is an error generating the javacode.
    */
@@ -159,7 +160,8 @@ public class GenerationUtil {
                                             Map<String, Object> contextMap,
                                             String templateMacro,
                                             int sortElements,
-                                            boolean useFullyQualifiedName)
+                                            boolean useFullyQualifiedName, 
+                                            boolean useAccessors)
     throws GenerateCodeException {
     if (templateMacro == null) {
       return null;
@@ -173,7 +175,7 @@ public class GenerationUtil {
 
       // field information
       logger.debug("Velocity Context - adding fields");
-      vc.put("fields", ElementUtils.getOnlyAsFieldElements(selectedMembers));
+      vc.put("fields", ElementUtils.getOnlyAsFieldElements(selectedMembers, selectedNotNullMembers, useAccessors));
 
       // method information
       logger.debug("Velocity Context - adding methods");
@@ -181,7 +183,7 @@ public class GenerationUtil {
 
       // element information (both fields and methods)
       logger.debug("Velocity Context - adding members (fields and methods)");
-      List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(selectedMembers, selectedNotNullMembers);
+      List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(selectedMembers, selectedNotNullMembers, useAccessors);
       // sort elements if enabled and not using chooser dialog
       if (sortElements != 0) {
         Collections.sort(elements, new ElementComparator(sortElements));

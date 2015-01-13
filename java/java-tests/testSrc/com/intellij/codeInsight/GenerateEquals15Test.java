@@ -22,6 +22,15 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
     );
   }
 
+  public void testDifferentTypesGetters() throws Exception {
+    doTest(Function.ID, Function.ID, new Function<PsiField[], PsiField[]>() {
+             @Override
+             public PsiField[] fun(PsiField[] fields) {
+               return new PsiField[0];
+             }
+           }, true, true);
+  }
+
   public void testDifferentTypesAllNotNull() throws Exception {
     doTest(Function.ID, Function.ID, Function.ID, true);
   }
