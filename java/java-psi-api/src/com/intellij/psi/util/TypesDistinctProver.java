@@ -260,7 +260,11 @@ public class TypesDistinctProver {
     }
     else if (bound instanceof PsiWildcardType) {
       final PsiType boundBound = ((PsiWildcardType)bound).getBound();
-      return boundBound != null && !boundBound.equals(type);
+      if (boundBound != null && !boundBound.equals(type)) {
+        final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(boundBound);
+        return psiClass == null || !(((PsiWildcardType)bound).isExtends() && possibleClasses.contains(psiClass));
+      }
+      return false;
     }
     return true;
   }

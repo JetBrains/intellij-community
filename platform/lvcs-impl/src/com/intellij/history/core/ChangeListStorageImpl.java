@@ -24,6 +24,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,7 +43,7 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 
 public class ChangeListStorageImpl implements ChangeListStorage {
-  private static final int VERSION = 5;
+  private static final int VERSION = 6;
   private static final String STORAGE_FILE = "changes";
 
   private final File myStorageDir;
@@ -59,6 +60,8 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   private synchronized void initStorage(File storageDir) throws IOException {
     String path = storageDir.getPath() + "/" + STORAGE_FILE;
 
+    boolean fromScratch = ApplicationManager.getApplication().isUnitTestMode() && !new File(path).exists();
+    
     LocalHistoryStorage result = new LocalHistoryStorage(path);
 
     long fsTimestamp = getVFSTimestamp();
@@ -67,16 +70,18 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     boolean versionMismatch = storedVersion != VERSION;
     boolean timestampMismatch = result.getFSTimestamp() != fsTimestamp;
     if (versionMismatch || timestampMismatch) {
-      if (versionMismatch) {
-        LocalHistoryLog.LOG.info(MessageFormat.format(
-          "local history version mismatch (was: {0}, expected: {1}), rebuilding...", storedVersion, VERSION));
+      if (!fromScratch) {
+        if (versionMismatch) {
+          LocalHistoryLog.LOG.info(MessageFormat.format(
+            "local history version mismatch (was: {0}, expected: {1}), rebuilding...", storedVersion, VERSION));
+        }
+        if (timestampMismatch) LocalHistoryLog.LOG.info("FS has been rebuild, rebuilding local history...");
+        result.dispose();
+        if (!FileUtil.delete(storageDir)) {
+          throw new IOException("cannot clear storage dir: " + storageDir);
+        }
+        result = new LocalHistoryStorage(path);
       }
-      if (timestampMismatch) LocalHistoryLog.LOG.info("FS has been rebuild, rebuilding local history...");
-      result.dispose();
-      if (!FileUtil.delete(storageDir)) {
-        throw new IOException("cannot clear storage dir: " + storageDir);
-      }
-      result = new LocalHistoryStorage(path);
       result.setVersion(VERSION);
       result.setFSTimestamp(fsTimestamp);
     }

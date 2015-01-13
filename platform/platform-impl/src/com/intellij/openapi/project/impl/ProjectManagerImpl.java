@@ -94,6 +94,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
+  private boolean myDefaultProjectConfigurationChanged;
 
   private final List<Project> myOpenProjects = new ArrayList<Project>();
   private Project[] myOpenProjectsArrayCache = {};
@@ -257,6 +258,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       }
     }
 
+    File projectFile = new File(filePath);
+    if (projectFile.isFile()) {
+      FileUtil.delete(projectFile);
+    }
+    else {
+      File[] files = new File(projectFile, Project.DIRECTORY_STORE_FOLDER).listFiles();
+      if (files != null) {
+        for (File file : files) {
+          FileUtil.delete(file);
+        }
+      }
+    }
     ProjectImpl project = createProject(projectName, filePath, false, optimiseTestLoadSpeed);
     try {
       initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null);
@@ -387,7 +400,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
           try {
             myDefaultProject = createProject(null, "", true, ApplicationManager.getApplication().isUnitTestMode());
             initProject(myDefaultProject, null);
-            myDefaultProjectRootElement = null;
           }
           catch (Throwable t) {
             PluginManager.processException(t);
@@ -990,7 +1002,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       myDefaultProject.save();
     }
 
-    if (myDefaultProjectRootElement == null) {
+    if (!myDefaultProjectConfigurationChanged) {
       // we are not ready to save
       return null;
     }
@@ -1007,10 +1019,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     if (myDefaultProjectRootElement != null) {
       myDefaultProjectRootElement.detach();
     }
+    myDefaultProjectConfigurationChanged = false;
   }
 
   public void setDefaultProjectRootElement(@NotNull Element defaultProjectRootElement) {
     myDefaultProjectRootElement = defaultProjectRootElement;
+    myDefaultProjectConfigurationChanged = true;
   }
 
   @Override

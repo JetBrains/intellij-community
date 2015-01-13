@@ -1,28 +1,25 @@
-// Copyright (c) 2009 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 package org.jetbrains.protocolReader;
+
+import org.jetbrains.annotations.NotNull;
 
 class FieldLoader {
   public static final char FIELD_PREFIX = '_';
 
-  private final String fieldName;
+  final String name;
+  final String jsonName;
+
   final ValueReader valueReader;
 
-  FieldLoader(String fieldName, ValueReader valueReader) {
-    this.fieldName = fieldName;
+  FieldLoader(@NotNull String name, @NotNull String jsonName, @NotNull ValueReader valueReader) {
+    this.name = name;
+    this.jsonName = jsonName;
     this.valueReader = valueReader;
   }
 
-  public String getFieldName() {
-    return fieldName;
-  }
-
-  public void writeFieldDeclaration(TextOutput out) {
-    out.append("private ");
+  public void writeFieldDeclaration(@NotNull TextOutput out) {
+    out.append("private").space();
     valueReader.appendFinishedValueTypeName(out);
-    out.append(' ').append(FIELD_PREFIX).append(fieldName);
+    out.space().append(FIELD_PREFIX).append(name);
     if (valueReader instanceof PrimitiveValueReader) {
       String defaultValue = ((PrimitiveValueReader)valueReader).defaultValue;
       if (defaultValue != null) {

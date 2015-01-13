@@ -110,9 +110,9 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   private static void updateStatus(final IdeaPluginDescriptor descr) {
     if (descr instanceof PluginNode) {
-      final PluginNode node = (PluginNode)descr;
       IdeaPluginDescriptor existing = PluginManager.getPlugin(descr.getPluginId());
       if (existing != null) {
+        PluginNode node = (PluginNode)descr;
         node.setStatus(PluginNode.STATUS_INSTALLED);
         node.setInstalledVersion(existing.getVersion());
       }
@@ -133,7 +133,8 @@ public class AvailablePluginsTableModel extends PluginTableModel {
       final String category = descr.getCategory();
       if (category != null) {
         myAvailableCategories.add(category);
-      } else {
+      }
+      else {
         myAvailableCategories.add(AvailablePluginsManagerMain.N_A);
       }
     }

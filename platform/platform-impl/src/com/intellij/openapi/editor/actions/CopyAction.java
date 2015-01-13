@@ -43,7 +43,7 @@ public class CopyAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
     @Override
     public void execute(final Editor editor, DataContext dataContext) {
-      if (!editor.getSelectionModel().hasSelection(true) && !editor.getSelectionModel().hasBlockSelection()) {
+      if (!editor.getSelectionModel().hasSelection(true)) {
         if (Registry.is(SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
           return;
         }

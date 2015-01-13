@@ -1,15 +1,18 @@
 package org.jetbrains.plugins.ipnb.configuration;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -19,8 +22,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.util.Alarm;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -33,11 +39,13 @@ import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
-import java.io.BufferedReader;
+import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +53,6 @@ import java.util.Map;
 public final class IpnbConnectionManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(IpnbConnectionManager.class);
   private final Project myProject;
-  private static final String DEFAULT_URL = "http://127.0.0.1:8888";
   private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
   private KillableColoredProcessHandler myProcessHandler;
@@ -65,32 +72,50 @@ public final class IpnbConnectionManager implements ProjectComponent {
     if (!myKernels.containsKey(path)) {
       String url = IpnbSettings.getInstance(myProject).getURL();
       if (StringUtil.isEmptyOrSpaces(url)) {
-        url = DEFAULT_URL;
-      }
-      if (!isAvailable(url)) {
-        url = showDialogUrl(url);
-        if (url == null) return;
-        final boolean serverStarted = startIpythonServer(url, fileEditor);
-        if (myProcessHandler != null) {
-          waitForIpythonServer();
-          boolean connectionStarted = startConnection(codePanel, path, url);
-          if (connectionStarted && serverStarted) {
-            final Notification notification = new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + url +
-                                                                                      "\">" + url + "</a></html>", NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER);
-            notification.notify(myProject);
-            IpnbSettings.getInstance(myProject).setURL(url);
-          }
-          return;
-        }
-        else {
-          return;
-        }
-      }
-      if (StringUtil.isEmptyOrSpaces(url)) {
-        showWarning(fileEditor, "Please, specify IPython Notebook URL in <a href=\"\">Settings->IPython Notebook</a>");
+        showWarning(fileEditor, "Please, specify IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+                    new HyperlinkAdapter() {
+                      @Override
+                      protected void hyperlinkActivated(HyperlinkEvent e) {
+                        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "IPython Notebook");
+                      }
+                    });
         return;
       }
-      startConnection(codePanel, path, url);
+      if (startConnection(codePanel, path, url, false)) {
+        return;
+      }
+      url = showDialogUrl(url);
+      if (url == null) return;
+      IpnbSettings.getInstance(myProject).setURL(url);
+      boolean connectionStarted = startConnection(codePanel, path, url, false);
+      if (!connectionStarted) {
+        final String finalUrl = url;
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            final boolean serverStarted = startIpythonServer(finalUrl, fileEditor);
+            if (!serverStarted) {
+              return;
+            }
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                new Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(new Runnable() {
+                  @Override
+                  public void run() {
+                    final Notification notification =
+                      new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + finalUrl +
+                                                              "\">" + finalUrl + "</a></html>", NotificationType.INFORMATION,
+                                       NotificationListener.URL_OPENING_LISTENER);
+                    notification.notify(myProject);
+                    startConnection(codePanel, path, finalUrl, true);
+                  }
+                }, 3000);
+              }
+            });
+          }
+        });
+      }
     }
     else {
       final IpnbConnection connection = myKernels.get(path);
@@ -101,56 +126,30 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  private void waitForIpythonServer() {
-    final long startTime = System.currentTimeMillis();
-
-    final InputStream stream = myProcessHandler.getProcess().getErrorStream();
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-
-    try {
-      long time = System.currentTimeMillis() - startTime;
-      while (time < 5000) {
-        final String line = reader.readLine();
-        if (line != null && line.contains("The IPython Notebook is running")) {
-          break;
-        }
-        time = System.currentTimeMillis() - startTime;
-      }
-    }
-    catch (IOException ignored) {
-    }
-    finally {
-      try {
-        reader.close();
-      }
-      catch (IOException ignored) {
-      }
-    }
-  }
-
   private static String showDialogUrl(@NotNull final String initialUrl) {
     final String url = Messages.showInputDialog("IPython Notebook URL:", "Start IPython Notebook", null, initialUrl,
-                                              new InputValidator() {
-                                                @Override
-                                                public boolean checkInput(String inputString) {
-                                                  try {
-                                                    new URL(inputString);
+                                                new InputValidator() {
+                                                  @Override
+                                                  public boolean checkInput(String inputString) {
+                                                    try {
+                                                      new URL(inputString);
+                                                    }
+                                                    catch (MalformedURLException e) {
+                                                      return false;
+                                                    }
+                                                    return !inputString.isEmpty();
                                                   }
-                                                  catch (MalformedURLException e) {
-                                                    return false;
-                                                  }
-                                                  return !inputString.isEmpty();
-                                                }
 
-                                                @Override
-                                                public boolean canClose(String inputString) {
-                                                  return true;
-                                                }
-                                              });
+                                                  @Override
+                                                  public boolean canClose(String inputString) {
+                                                    return true;
+                                                  }
+                                                });
     return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
-  private boolean startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String url) {
+  private boolean startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String url,
+                                  boolean showNotification) {
     try {
       final IpnbConnection connection = new IpnbConnection(new URI(url), new IpnbConnectionListenerBase() {
         @Override
@@ -173,22 +172,36 @@ public final class IpnbConnectionManager implements ProjectComponent {
       myKernels.put(path, connection);
     }
     catch (URISyntaxException e) {
-      showWarning(codePanel.getFileEditor(), "Please, check IPython Notebook URL in Settings->IPython Notebook");
+      if (showNotification)
+        showWarning(codePanel.getFileEditor(), "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+                    new HyperlinkAdapter() {
+                      @Override
+                      protected void hyperlinkActivated(HyperlinkEvent e) {
+                        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "IPython Notebook");
+                      }
+                    });
+      LOG.warn("IPython Notebook URI Syntax Error: " + e.getMessage());
       return false;
     }
     catch (IOException e) {
-      showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused");
+      if (showNotification)
+        showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused");
       LOG.warn("IPython Notebook connection refused: " + e.getMessage());
       return false;
     }
     return true;
   }
 
-  private static void showWarning(@NotNull final IpnbFileEditor fileEditor, @NotNull final String message) {
+  private static void showWarning(@NotNull final IpnbFileEditor fileEditor, @NotNull final String message,
+                                  @Nullable final HyperlinkAdapter listener) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-      message, null, MessageType.WARNING.getPopupBackground(), null);
+      message, null, MessageType.WARNING.getPopupBackground(), listener);
     final Balloon balloon = balloonBuilder.createBalloon();
     balloon.showInCenterOf(fileEditor.getRunCellButton());
+  }
+
+  private static void showWarning(@NotNull final IpnbFileEditor fileEditor, @NotNull final String message) {
+    showWarning(fileEditor, message, null);
   }
 
   private boolean startIpythonServer(@NotNull final String url, @NotNull final IpnbFileEditor fileEditor) {
@@ -202,7 +215,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     try {
       final PyPackage ipythonPackage = PyPackageManager.getInstance(sdk).findPackage("ipython", false);
       if (ipythonPackage == null) {
-        showWarning(fileEditor, "Please check ipython installed in Python Interpreter in Settings->Python Interpreter");
+        showWarning(fileEditor, "Add IPython to the interpreter of the current project.");
         return false;
       }
     }
@@ -210,9 +223,19 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     final Map<String, String> env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
     try {
+      final Pair<String, String> hostPort = getHostPortFromUrl(url);
       final String ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
-      final GeneralCommandLine commandLine = new GeneralCommandLine(sdk.getHomePath(), ipython, "notebook", "--no-browser").
-        withWorkDirectory(myProject.getBasePath()).withEnvironment(env);
+      final ArrayList<String> parameters = Lists.newArrayList(sdk.getHomePath(), ipython, "notebook", "--no-browser");
+      if (hostPort.getFirst() != null) {
+        parameters.add("--ip");
+        parameters.add(hostPort.getFirst());
+      }
+      if (hostPort.getSecond() != null) {
+        parameters.add("--port");
+        parameters.add(hostPort.getSecond());
+      }
+      final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath()).
+        withEnvironment(env);
 
       myProcessHandler = new KillableColoredProcessHandler(commandLine);
 
@@ -223,15 +246,20 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  public static boolean isAvailable(@NotNull final String url) {
-    try {
-      final URLConnection connection = new URL(url).openConnection();
-      connection.connect();
-      return true;
+  @NotNull
+  public static Pair<String, String> getHostPortFromUrl(@NotNull String url) {
+    String host = null;
+    String port = null;
+    int index = url.indexOf("://");
+    if (index != -1) {
+      url = url.substring(index + 3);
     }
-    catch (final MalformedURLException ignored) {}
-    catch (final IOException ignored) {}
-    return false;
+    index = url.indexOf(':');
+    if (index != -1) {
+      host = url.substring(0, index);
+      port = url.substring(index + 1);
+    }
+    return Pair.create(host, port);
   }
 
   public void projectOpened() {}

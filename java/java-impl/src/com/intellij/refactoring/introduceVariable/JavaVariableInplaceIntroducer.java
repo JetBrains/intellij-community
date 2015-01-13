@@ -393,6 +393,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
+  public void finish(boolean success) {
+    super.finish(success);
+    myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
+  }
+
+  @Override
   protected String[] suggestNames(PsiType defaultType, String propName) {
     return IntroduceVariableBase.getSuggestedName(defaultType, myExpr).names;
   }

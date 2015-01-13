@@ -33,9 +33,8 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private boolean myEmmetEnabled = true;
   private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
   private boolean myPreviewEnabled = false;
-  private boolean myCompactBooleanAllowed = true;
-  private Set<String> myBooleanAttributes = ContainerUtil.newHashSet("contenteditable", "seamless");
   private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
+  private boolean myHrefAutoDetectEnabled = true;
 
   @NotNull
   public Set<String> getFiltersEnabledByDefault() {
@@ -66,28 +65,20 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
     myPreviewEnabled = previewEnabled;
   }
 
-  public boolean isCompactBooleanAllowed() {
-    return myCompactBooleanAllowed;
-  }
-
-  public void setCompactBooleanAllowed(boolean compactBooleanAllowed) {
-    myCompactBooleanAllowed = compactBooleanAllowed;
-  }
-
-  public Set<String> getBooleanAttributes() {
-    return myBooleanAttributes;
-  }
-
-  public void setBooleanAttributes(@NotNull Set<String> booleanAttributes) {
-    myBooleanAttributes = booleanAttributes;
-  }
-
   public boolean isEmmetEnabled() {
     return myEmmetEnabled;
   }
 
   public void setEmmetEnabled(boolean emmetEnabled) {
     myEmmetEnabled = emmetEnabled;
+  }
+  
+  public void setHrefAutoDetectEnabled(boolean hrefAutoDetectEnabled) {
+    myHrefAutoDetectEnabled = hrefAutoDetectEnabled;
+  }
+
+  public boolean isHrefAutoDetectEnabled() {
+    return myHrefAutoDetectEnabled;
   }
 
   @Nullable

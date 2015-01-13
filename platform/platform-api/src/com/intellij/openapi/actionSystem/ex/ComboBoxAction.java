@@ -231,7 +231,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       };
 
       myPopup = createPopup(onDispose);
-      myPopup.show(new RelativePoint(this, new Point(0, getHeight() - 1)));
+      myPopup.show(new RelativePoint(this, new Point(2, getHeight())));
     }
 
     @Nullable

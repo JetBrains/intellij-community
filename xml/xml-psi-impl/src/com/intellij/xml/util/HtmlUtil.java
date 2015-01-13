@@ -23,9 +23,13 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
+import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
@@ -55,12 +60,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -123,11 +126,7 @@ public class HtmlUtil {
 
   @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<String>();
-
-  @NonNls private static final String[] EMPTY_ATTRS =
-    {"nowrap", "compact", "disabled", "readonly", "selected", "multiple", "nohref", "ismap", "declare", "noshade", "checked"};
-  private static final Set<String> EMPTY_ATTRS_MAP = new THashSet<String>();
-
+  
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<String>();
 
   @NonNls private static final String[] HTML5_TAGS = {
@@ -140,11 +139,10 @@ public class HtmlUtil {
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
-      final String tagName = control.name.toLowerCase();
+      final String tagName = control.name.toLowerCase(Locale.US);
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
       AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<String>(control.autoClosedBy));
     }
-    ContainerUtil.addAll(EMPTY_ATTRS_MAP, EMPTY_ATTRS);
     ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
     ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
     ContainerUtil.addAll(INLINE_ELEMENTS_CONTAINER_MAP, INLINE_ELEMENTS_CONTAINER);
@@ -153,7 +151,7 @@ public class HtmlUtil {
   }
 
   public static boolean isSingleHtmlTag(String tagName) {
-    return EMPTY_TAGS_MAP.contains(tagName.toLowerCase());
+    return EMPTY_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isSingleHtmlTagL(String tagName) {
@@ -161,7 +159,7 @@ public class HtmlUtil {
   }
 
   public static boolean isOptionalEndForHtmlTag(String tagName) {
-    return OPTIONAL_END_TAGS_MAP.contains(tagName.toLowerCase());
+    return OPTIONAL_END_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isOptionalEndForHtmlTagL(String tagName) {
@@ -173,12 +171,8 @@ public class HtmlUtil {
     return closingTags != null && closingTags.contains(childTagName);
   }
 
-  public static boolean isSingleHtmlAttribute(String attrName) {
-    return EMPTY_ATTRS_MAP.contains(attrName.toLowerCase());
-  }
-
   public static boolean isHtmlBlockTag(String tagName) {
-    return BLOCK_TAGS_MAP.contains(tagName.toLowerCase());
+    return BLOCK_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isPossiblyInlineTag(String tagName) {
@@ -190,7 +184,7 @@ public class HtmlUtil {
   }
 
   public static boolean isInlineTagContainer(String tagName) {
-    return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName.toLowerCase());
+    return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isInlineTagContainerL(String tagName) {
@@ -240,7 +234,54 @@ public class HtmlUtil {
   public static String[] getHtmlTagNames() {
     return HtmlDescriptorsTable.getHtmlTagNames();
   }
+  
+  public static boolean isShortNotationOfBooleanAttributePreferred() {
+    return Registry.is("html.prefer.short.notation.of.boolean.attributes", true);
+  }
+  
+  @TestOnly
+  public static void setShortNotationOfBooleanAttributeIsPreferred(boolean value, Disposable parent) {
+    final boolean oldValue = isShortNotationOfBooleanAttributePreferred();
+    final RegistryValue registryValue = Registry.get("html.prefer.short.notation.of.boolean.attributes");
+    registryValue.setValue(value);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        registryValue.setValue(oldValue);
+      }
+    });
+  }
 
+  public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor, @Nullable PsiElement context) {
+    if (descriptor instanceof HtmlAttributeDescriptorImpl && descriptor.isEnumerated()) {
+      final String[] values = descriptor.getEnumeratedValues();
+      if (values == null) {
+        return false;
+      }
+      if (values.length == 2) {
+        return values[0].isEmpty() && values[1].equals(descriptor.getName())
+               || values[1].isEmpty() && values[0].equals(descriptor.getName());
+      }
+      else if (values.length == 1) {
+        return descriptor.getName().equals(values[0]);
+      }
+    }
+    return context != null && isCustomBooleanAttribute(descriptor.getName(), context);
+  }
+
+  public static boolean isCustomBooleanAttribute(@NotNull String attributeName, @NotNull PsiElement context) {
+    final String entitiesString = getEntitiesString(context, XmlEntitiesInspection.BOOLEAN_ATTRIBUTE_SHORT_NAME);
+    if (entitiesString != null) {
+      StringTokenizer tokenizer = new StringTokenizer(entitiesString, ",");
+      while (tokenizer.hasMoreElements()) {
+        if (tokenizer.nextToken().equalsIgnoreCase(attributeName)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
   public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.ATTRIBUTE_SHORT_NAME);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;

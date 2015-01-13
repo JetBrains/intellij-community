@@ -113,6 +113,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestMethod();
   }
 
+  public void testApiNotes() throws Exception {
+    doTestMethod();
+  }
+
   public void testLiteral() throws Exception {
     doTestField();
   }

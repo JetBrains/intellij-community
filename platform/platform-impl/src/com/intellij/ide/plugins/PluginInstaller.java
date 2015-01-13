@@ -52,7 +52,6 @@ public class PluginInstaller {
   public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
 
   private static final Object ourLock = new Object();
-  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   private PluginInstaller() { }
 
@@ -99,7 +98,7 @@ public class PluginInstaller {
         IdeaPluginDescriptor descriptor = allPlugins.get(node.getPluginId());
         if (descriptor != null) {
           node.setRepositoryName(((PluginNode)descriptor).getRepositoryName());
-          node.setUrl(descriptor.getUrl());
+          node.setDownloadUrl(((PluginNode)descriptor).getDownloadUrl());
         }
         else {
           node.setRepositoryName(null);
@@ -149,7 +148,7 @@ public class PluginInstaller {
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         PluginId depPluginId = pluginNode.getDepends().get(i);
         if (PluginManager.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
-            ourState.wasInstalled(depPluginId) ||
+            InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
             (pluginIds != null && pluginIds.contains(depPluginId))) {
           // ignore installed or installing plugins
           continue;

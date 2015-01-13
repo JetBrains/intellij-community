@@ -132,7 +132,7 @@ public abstract class AbstractVcsTestCase {
   }
 
   public VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
-    return VcsTestUtil.createDir(myProject, parent, name);
+    return VcsTestUtil.findOrCreateDir(myProject, parent, name);
   }
 
   protected void clearDirInCommand(final VirtualFile dir, final Processor<VirtualFile> filter) {

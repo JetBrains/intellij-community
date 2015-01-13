@@ -53,7 +53,7 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
 
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-    if (element instanceof PsiNamedElement) {
+    if (element instanceof PsiNamedElement && element.isValid()) {
       PsiNamedElement named = (PsiNamedElement)element;
       String name = named.getName();
       if (name != null) {

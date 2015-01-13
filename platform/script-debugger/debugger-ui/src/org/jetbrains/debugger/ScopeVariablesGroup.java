@@ -104,9 +104,9 @@ public class ScopeVariablesGroup extends XValueGroup {
                 node.addChildren(variable == null ? XValueChildrenList.EMPTY : XValueChildrenList.singleton(CallFrameBase.RECEIVER_NAME, new VariableView(variable, context)), true);
               }
             }
-          }).rejected(new Consumer<String>() {
+          }).rejected(new Consumer<Throwable>() {
             @Override
-            public void consume(@Nullable String error) {
+            public void consume(@Nullable Throwable error) {
               if (!node.isObsolete()) {
                 node.addChildren(XValueChildrenList.EMPTY, true);
               }

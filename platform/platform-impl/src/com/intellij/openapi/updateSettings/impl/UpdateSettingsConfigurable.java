@@ -48,7 +48,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @Override
   public JComponent createComponent() {
     myUpdatesSettingsPanel = new UpdatesSettingsPanel();
-    myUpdatesSettingsPanel.myCheckNow.setEnabled(myCheckNowEnabled);
+    myUpdatesSettingsPanel.myCheckNow.setVisible(myCheckNowEnabled);
     return myUpdatesSettingsPanel.myPanel;
   }
 

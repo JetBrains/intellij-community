@@ -23,7 +23,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -45,6 +44,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -214,54 +214,6 @@ public class PsiClassImplUtil {
 
   public enum MemberType {CLASS, FIELD, METHOD}
 
-  @NotNull
-  private static MembersMap buildAllMaps(@NotNull PsiClass psiClass) {
-    final List<Pair<PsiMember, PsiSubstitutor>> classes = new ArrayList<Pair<PsiMember, PsiSubstitutor>>();
-    final List<Pair<PsiMember, PsiSubstitutor>> fields = new ArrayList<Pair<PsiMember, PsiSubstitutor>>();
-    final List<Pair<PsiMember, PsiSubstitutor>> methods = new ArrayList<Pair<PsiMember, PsiSubstitutor>>();
-
-    FilterScopeProcessor<MethodCandidateInfo> processor = new FilterScopeProcessor<MethodCandidateInfo>(
-      new OrFilter(ElementClassFilter.METHOD, ElementClassFilter.FIELD, ElementClassFilter.CLASS)) {
-      @Override
-      protected void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
-        if (element instanceof PsiMethod) {
-          methods.add(Pair.create((PsiMember)element, substitutor));
-        }
-        else if (element instanceof PsiField) {
-          fields.add(Pair.create((PsiMember)element, substitutor));
-        }
-        else if (element instanceof PsiClass) {
-          classes.add(Pair.create((PsiMember)element, substitutor));
-        }
-      }
-    };
-    processDeclarationsInClassNotCached(psiClass, processor, ResolveState.initial(), null, null, psiClass, false,
-                                        PsiUtil.getLanguageLevel(psiClass));
-
-    MembersMap result = new MembersMap(MemberType.class);
-    result.put(MemberType.CLASS, generateMapByList(classes));
-    result.put(MemberType.METHOD, generateMapByList(methods));
-    result.put(MemberType.FIELD, generateMapByList(fields));
-    return result;
-  }
-
-  @NotNull
-  private static Map<String, List<Pair<PsiMember, PsiSubstitutor>>> generateMapByList(@NotNull final List<Pair<PsiMember, PsiSubstitutor>> list) {
-    Map<String, List<Pair<PsiMember, PsiSubstitutor>>> map = new THashMap<String, List<Pair<PsiMember, PsiSubstitutor>>>();
-    map.put(ALL, list);
-    for (final Pair<PsiMember, PsiSubstitutor> info : list) {
-      PsiMember element = info.getFirst();
-      String currentName = element.getName();
-      List<Pair<PsiMember, PsiSubstitutor>> listByName = map.get(currentName);
-      if (listByName == null) {
-        listByName = new ArrayList<Pair<PsiMember, PsiSubstitutor>>(1);
-        map.put(currentName, listByName);
-      }
-      listByName.add(info);
-    }
-    return map;
-  }
-
   private static Map<String, List<Pair<PsiMember, PsiSubstitutor>>> getMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
     ParameterizedCachedValue<MembersMap, PsiClass> value = getValues(aClass);
     return value.getValue(aClass).get(type);
@@ -407,9 +359,46 @@ public class PsiClassImplUtil {
     return factory.createMethodFromText(text, null).getSignature(PsiSubstitutor.EMPTY);
   }
 
-  private static class MembersMap extends EnumMap<MemberType, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>> {
-    public MembersMap(@NotNull Class<MemberType> keyType) {
-      super(keyType);
+  private static class MembersMap extends ConcurrentFactoryMap<MemberType, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>> {
+    private final PsiClass myPsiClass;
+
+    public MembersMap(PsiClass psiClass) {
+      myPsiClass = psiClass;
+    }
+
+    @Nullable
+    @Override
+    protected Map<String, List<Pair<PsiMember, PsiSubstitutor>>> create(final MemberType key) {
+      final Map<String, List<Pair<PsiMember, PsiSubstitutor>>> map = new THashMap<String, List<Pair<PsiMember, PsiSubstitutor>>>();
+      
+      final List<Pair<PsiMember, PsiSubstitutor>> allMembers = new ArrayList<Pair<PsiMember, PsiSubstitutor>>();
+      map.put(ALL, allMembers);
+
+      ElementClassFilter filter = key == MemberType.CLASS ? ElementClassFilter.CLASS :
+                                  key == MemberType.METHOD ? ElementClassFilter.METHOD :
+                                  ElementClassFilter.FIELD;
+      FilterScopeProcessor<MethodCandidateInfo> processor = new FilterScopeProcessor<MethodCandidateInfo>(filter) {
+        @Override
+        protected void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
+          if (key == MemberType.CLASS && element instanceof PsiClass ||
+              key == MemberType.METHOD && element instanceof PsiMethod ||
+              key == MemberType.FIELD && element instanceof PsiField) {
+            Pair<PsiMember, PsiSubstitutor> info = Pair.create((PsiMember)element, substitutor);
+            allMembers.add(info);
+            String currentName = ((PsiMember)element).getName();
+            List<Pair<PsiMember, PsiSubstitutor>> listByName = map.get(currentName);
+            if (listByName == null) {
+              listByName = new ArrayList<Pair<PsiMember, PsiSubstitutor>>(1);
+              map.put(currentName, listByName);
+            }
+            listByName.add(info);
+          }
+        }
+      };
+      
+      processDeclarationsInClassNotCached(myPsiClass, processor, ResolveState.initial(), null, null, myPsiClass, false,
+                                          PsiUtil.getLanguageLevel(myPsiClass));
+      return map;
     }
   }
 
@@ -418,8 +407,7 @@ public class PsiClassImplUtil {
 
     @Override
     public CachedValueProvider.Result<MembersMap> compute(@NotNull PsiClass myClass) {
-      MembersMap map = buildAllMaps(myClass);
-      return new CachedValueProvider.Result<MembersMap>(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return new CachedValueProvider.Result<MembersMap>(new MembersMap(myClass), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
   }
 

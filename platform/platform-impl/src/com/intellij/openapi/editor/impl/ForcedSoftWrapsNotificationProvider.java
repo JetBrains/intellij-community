@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.notification.impl.GotItStateKeeper;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ForcedSoftWrapsNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("forced.soft.wraps.notification.panel");
-  private static final String GOT_IT_KEY = "Forced soft wraps in editor";
+  private static final String DISABLED_NOTIFICATION_KEY = "disable.forced.soft.wraps.notification";
 
   @NotNull
   @Override
@@ -46,7 +46,7 @@ public class ForcedSoftWrapsNotificationProvider extends EditorNotifications.Pro
     final Project project = editor.getProject();
     if (project == null 
         || !Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS)) 
-        || GotItStateKeeper.getInstance().isNotificationDisabled(GOT_IT_KEY)) return null;
+        || PropertiesComponent.getInstance().isTrueValue(DISABLED_NOTIFICATION_KEY)) return null;
     
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(EditorBundle.message("forced.soft.wrap.message"));
@@ -60,7 +60,7 @@ public class ForcedSoftWrapsNotificationProvider extends EditorNotifications.Pro
     panel.createActionLabel(EditorBundle.message("forced.soft.wrap.dont.show.again.message"), new Runnable() {
       @Override
       public void run() {
-        GotItStateKeeper.getInstance().disableNotification(GOT_IT_KEY);
+        PropertiesComponent.getInstance().setValue(DISABLED_NOTIFICATION_KEY, "true");
         EditorNotifications.getInstance(project).updateAllNotifications();
       }
     });

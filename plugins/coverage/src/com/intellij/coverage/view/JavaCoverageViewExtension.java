@@ -90,12 +90,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       return myAnnotator.getPackageCoverageInfo((PsiPackage)value, myStateBean.myFlattenPackages);
     }
     if (value instanceof PsiNamedElement) {
-      for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-        PackageAnnotator.SummaryCoverageInfo info = extension.getSummaryCoverageInfo(myAnnotator, (PsiNamedElement)value);
-        if (info != null) {
-          return info;
-        }
-      }
+      return myAnnotator.getExtensionCoverageInfo((PsiNamedElement) value);
     }
     return null;
   }
@@ -222,22 +217,35 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
             return isInCoverageScope(psiPackage);
           }
         })) {
-          final PsiElement[] childElements = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement[]>() {
-            public PsiElement[] compute() {
-              return psiPackage.getChildren(mySuitesBundle.getSearchScope(node.getProject()));
+          final PsiPackage[] subPackages = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage[]>() {
+            public PsiPackage[] compute() {
+              return psiPackage.isValid()
+                     ? psiPackage.getSubPackages(mySuitesBundle.getSearchScope(node.getProject()))
+                     : PsiPackage.EMPTY_ARRAY;
             }
           });
-          for (PsiElement element : childElements) {
-            if (element instanceof PsiClass) {
-              PsiClass aClass = (PsiClass) element;
-              if (!(node instanceof CoverageListRootNode) && getClassCoverageInfo(aClass) == null) continue;
-              children.add(new CoverageListNode(myProject, aClass, mySuitesBundle, myStateBean));
+          for (PsiPackage subPackage: subPackages) {
+            processSubPackage(subPackage, children);
+          }
+
+          final PsiFile[] childFiles = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+            public PsiFile[] compute() {
+              return psiPackage.isValid()
+                     ? psiPackage.getFiles(mySuitesBundle.getSearchScope(node.getProject()))
+                     : PsiFile.EMPTY_ARRAY;
             }
-            else if (element instanceof PsiPackage) {
-              processSubPackage((PsiPackage) element, children);
+          });
+          for (PsiFile file : childFiles) {
+            if (file instanceof PsiJavaFile) {
+              PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+              if (classes.length > 0) {
+                PsiClass aClass = classes[0];
+                if (!(node instanceof CoverageListRootNode) && getClassCoverageInfo(aClass) == null) continue;
+                children.add(new CoverageListNode(myProject, aClass, mySuitesBundle, myStateBean));
+              }
             }
-            else if (element instanceof PsiNamedElement) {
-              children.add(new CoverageListNode(myProject, (PsiNamedElement) element, mySuitesBundle, myStateBean));
+            else if (file instanceof PsiClassOwner) {
+              children.add(new CoverageListNode(myProject, file, mySuitesBundle, myStateBean));
             }
           }
         }

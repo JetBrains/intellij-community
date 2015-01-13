@@ -48,6 +48,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -186,8 +187,51 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
 
-    if (aClass.hasTypeParameters()) {
-      PsiTypeParameter[] parms = aClass.getTypeParameters();
+    generateTypeParameters(aClass, buffer);
+
+    if (!aClass.isEnum() && !aClass.isAnnotationType()) {
+      PsiReferenceList extendsList = aClass.getExtendsList();
+      writeExtends(aClass, buffer, extendsList == null ? PsiClassType.EMPTY_ARRAY : extendsList.getReferencedTypes());
+    }
+
+    writeImplements(aClass, buffer, aClass.getImplementsListTypes());
+
+    return buffer.toString();
+  }
+
+  public static void writeImplements(PsiClass aClass, StringBuilder buffer, PsiClassType[] refs) {
+    if (refs.length > 0) {
+      newLine(buffer);
+      buffer.append("implements ");
+      writeTypeRefs(aClass, buffer, refs);
+    }
+  }
+
+  public static void writeExtends(PsiClass aClass, StringBuilder buffer, PsiClassType[] refs) {
+    if (refs.length > 0 || !aClass.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
+      buffer.append(" extends ");
+      if (refs.length == 0) {
+        buffer.append("Object");
+      }
+      else {
+        writeTypeRefs(aClass, buffer, refs);
+      }
+    }
+  }
+
+  private static void writeTypeRefs(PsiClass aClass, StringBuilder buffer, PsiClassType[] refs) {
+    for (int i = 0; i < refs.length; i++) {
+      JavaDocInfoGenerator.generateType(buffer, refs[i], aClass, false);
+
+      if (i < refs.length - 1) {
+        buffer.append(", ");
+      }
+    }
+  }
+
+  public static void generateTypeParameters(PsiTypeParameterListOwner typeParameterOwner, StringBuilder buffer) {
+    if (typeParameterOwner.hasTypeParameters()) {
+      PsiTypeParameter[] parms = typeParameterOwner.getTypeParameters();
 
       buffer.append("&lt;");
 
@@ -195,14 +239,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         PsiTypeParameter p = parms[i];
 
         buffer.append(p.getName());
-
         PsiClassType[] refs = p.getExtendsList().getReferencedTypes();
 
         if (refs.length > 0) {
           buffer.append(" extends ");
 
           for (int j = 0; j < refs.length; j++) {
-            JavaDocInfoGenerator.generateType(buffer, refs[j], aClass, false);
+            JavaDocInfoGenerator.generateType(buffer, refs[j], typeParameterOwner, false);
 
             if (j < refs.length - 1) {
               buffer.append(" & ");
@@ -217,42 +260,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
       buffer.append("&gt;");
     }
-
-    PsiClassType[] refs;
-    if (!aClass.isEnum() && !aClass.isAnnotationType()) {
-      PsiReferenceList extendsList = aClass.getExtendsList();
-      refs = extendsList == null ? PsiClassType.EMPTY_ARRAY : extendsList.getReferencedTypes();
-      if (refs.length > 0 || !aClass.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-        buffer.append(" extends ");
-        if (refs.length == 0) {
-          buffer.append("Object");
-        }
-        else {
-          for (int i = 0; i < refs.length; i++) {
-            JavaDocInfoGenerator.generateType(buffer, refs[i], aClass, false);
-
-            if (i < refs.length - 1) {
-              buffer.append(", ");
-            }
-          }
-        }
-      }
-    }
-
-    refs = aClass.getImplementsListTypes();
-    if (refs.length > 0) {
-      newLine(buffer);
-      buffer.append("implements ");
-      for (int i = 0; i < refs.length; i++) {
-        JavaDocInfoGenerator.generateType(buffer, refs[i], aClass, false);
-
-        if (i < refs.length - 1) {
-          buffer.append(", ");
-        }
-      }
-    }
-
-    return buffer.toString();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -272,35 +279,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     generateModifiers(buffer, method);
 
-    PsiTypeParameter[] params = method.getTypeParameters();
-
-    if (params.length > 0) {
-      buffer.append("&lt;");
-      for (int i = 0; i < params.length; i++) {
-        PsiTypeParameter param = params[i];
-
-        buffer.append(param.getName());
-
-        PsiClassType[] extendees = param.getExtendsList().getReferencedTypes();
-
-        if (extendees.length > 0) {
-          buffer.append(" extends ");
-
-          for (int j = 0; j < extendees.length; j++) {
-            JavaDocInfoGenerator.generateType(buffer, extendees[j], method, false);
-
-            if (j < extendees.length - 1) {
-              buffer.append(" & ");
-            }
-          }
-        }
-
-        if (i < params.length - 1) {
-          buffer.append(", ");
-        }
-      }
-      buffer.append("&gt; ");
-    }
+    generateTypeParameters(method, buffer);
 
     if (method.getReturnType() != null) {
       JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(method.getReturnType()), method, false);
@@ -415,43 +394,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       .forLanguage(commentOwner.getLanguage());
     if (commentOwner instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)commentOwner;
-      final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-      final Map<String, String> param2Description = new HashMap<String, String>();
-      final PsiMethod[] superMethods = psiMethod.findSuperMethods();
-      for (PsiMethod superMethod : superMethods) {
-        final PsiDocComment comment = superMethod.getDocComment();
-        if (comment != null) {
-          final PsiDocTag[] params = comment.findTagsByName("param");
-          for (PsiDocTag param : params) {
-            final PsiElement[] dataElements = param.getDataElements();
-            if (dataElements != null) {
-              String paramName = null;
-              for (PsiElement dataElement : dataElements) {
-                if (dataElement instanceof PsiDocParamRef) {
-                  paramName = dataElement.getReference().getCanonicalText();
-                  break;
-                }
-              }
-              if (paramName != null) {
-                param2Description.put(paramName, param.getText());
-              }
-            }
-          }
-        }
-      }
-      for (PsiParameter parameter : parameters) {
-        String description = param2Description.get(parameter.getName());
-        if (description != null) {
-          builder.append(CodeDocumentationUtil.createDocCommentLine("", project, commenter));
-          if (description.indexOf('\n') > -1) description = description.substring(0, description.lastIndexOf('\n'));
-          builder.append(description);
-        }
-        else {
-          builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, project, commenter));
-          builder.append(parameter.getName());
-        }
-        builder.append(LINE_SEPARATOR);
-      }
+      generateParametersTakingDocFromSuperMethods(project, builder, commenter, psiMethod);
 
       final PsiTypeParameterList typeParameterList = psiMethod.getTypeParameterList();
       if (typeParameterList != null) {
@@ -478,7 +421,51 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return builder.length() > 0 ? builder.toString() : null;
   }
 
-  private static void createTypeParamsListComment(final StringBuilder buffer,
+  public static void generateParametersTakingDocFromSuperMethods(Project project,
+                                                                 StringBuilder builder,
+                                                                 CodeDocumentationAwareCommenter commenter, PsiMethod psiMethod) {
+    final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+    final Map<String, String> param2Description = new HashMap<String, String>();
+    final PsiMethod[] superMethods = psiMethod.findSuperMethods();
+
+    for (PsiMethod superMethod : superMethods) {
+      final PsiDocComment comment = superMethod.getDocComment();
+      if (comment != null) {
+        final PsiDocTag[] params = comment.findTagsByName("param");
+        for (PsiDocTag param : params) {
+          final PsiElement[] dataElements = param.getDataElements();
+          if (dataElements != null) {
+            String paramName = null;
+            for (PsiElement dataElement : dataElements) {
+              if (dataElement instanceof PsiDocParamRef) {
+                paramName = dataElement.getReference().getCanonicalText();
+                break;
+              }
+            }
+            if (paramName != null) {
+              param2Description.put(paramName, param.getText());
+            }
+          }
+        }
+      }
+    }
+
+    for (PsiParameter parameter : parameters) {
+      String description = param2Description.get(parameter.getName());
+      if (description != null) {
+        builder.append(CodeDocumentationUtil.createDocCommentLine("", project, commenter));
+        if (description.indexOf('\n') > -1) description = description.substring(0, description.lastIndexOf('\n'));
+        builder.append(description);
+      }
+      else {
+        builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, project, commenter));
+        builder.append(parameter.getName());
+      }
+      builder.append(LINE_SEPARATOR);
+    }
+  }
+
+  public static void createTypeParamsListComment(final StringBuilder buffer,
                                                   final Project project,
                                                   final CodeDocumentationAwareCommenter commenter,
                                                   final PsiTypeParameterList typeParameterList) {
@@ -491,11 +478,56 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String generateDoc(final PsiElement element, final PsiElement originalElement) {
+  public String generateDoc(PsiElement element, PsiElement originalElement) {
+    if (element instanceof PsiExpressionList) {
+      element = element.getParent(); // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
+      originalElement = null;
+    }
     if (element instanceof PsiMethodCallExpression) {
       return getMethodCandidateInfo((PsiMethodCallExpression)element);
     }
 
+    // Try hard for documentation of incomplete new Class instantiation
+    PsiElement elt = originalElement != null ? PsiTreeUtil.prevLeaf(originalElement): element;
+    if (elt instanceof PsiErrorElement) elt = elt.getPrevSibling();
+    else if (elt != null && !(elt instanceof PsiNewExpression)) {
+      elt = elt.getParent();
+    }
+    if (elt instanceof PsiNewExpression) {
+      PsiClass targetClass = null;
+
+      if (element instanceof PsiJavaCodeReferenceElement) {     // new Class<caret>
+        PsiElement resolve = ((PsiJavaCodeReferenceElement)element).resolve();
+        if (resolve instanceof PsiClass) targetClass = (PsiClass)resolve;
+      } else if (element instanceof PsiClass) { //Class in completion
+        targetClass = (PsiClass)element;
+      } else if (element instanceof PsiNewExpression) { // new Class(<caret>)
+        PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassReference();
+        if (reference != null) {
+          PsiElement resolve = reference.resolve();
+          if (resolve instanceof PsiClass) targetClass = (PsiClass)resolve;
+        }
+      }
+
+      if (targetClass != null) {
+        PsiMethod[] constructors = targetClass.getConstructors();
+        if (constructors.length > 0) {
+          if (constructors.length == 1) return generateDoc(constructors[0], originalElement);
+          @NonNls final StringBuilder sb = new StringBuilder();
+
+          for(PsiMethod constructor:constructors) {
+            final String str = PsiFormatUtil.formatMethod(constructor, PsiSubstitutor.EMPTY,
+                                                          PsiFormatUtilBase.SHOW_NAME |
+                                                          PsiFormatUtilBase.SHOW_TYPE |
+                                                          PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                          PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
+            createElementLink(sb, constructor, StringUtil.escapeXml(str));
+          }
+
+          return CodeInsightBundle.message("javadoc.constructor.candidates", targetClass.getName(), sb);
+        }
+      }
+    }
 
     //external documentation finder
     return generateExternalJavadoc(element);
@@ -528,11 +560,15 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
-  private static String getMethodCandidateInfo(PsiMethodCallExpression expr) {
+  private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
     final String text = expr.getText();
     if (candidates.length > 0) {
+      if (candidates.length == 1) {
+        PsiElement element = candidates[0].getElement();
+        if (element instanceof PsiMethod) return generateDoc(element, null);
+      }
       @NonNls final StringBuilder sb = new StringBuilder();
 
       for (final CandidateInfo candidate : candidates) {

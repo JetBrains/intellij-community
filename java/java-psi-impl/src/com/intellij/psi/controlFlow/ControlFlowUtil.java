@@ -726,9 +726,15 @@ public class ControlFlowUtil {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
         if (offset > endOffset) return;
         int throwToOffset = instruction.offset;
-        boolean isNormal;
+        boolean isNormal = false;
         if (throwToOffset == nextOffset) {
-          isNormal = nextOffset == endOffset || throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
+
+          if (nextOffset == endOffset) {
+            final Instruction lastInstruction = flow.getInstructions().get(endOffset - 1);
+            isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn);
+          }
+
+          isNormal |= throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
         }
         else {
           isNormal = canCompleteNormally[nextOffset];

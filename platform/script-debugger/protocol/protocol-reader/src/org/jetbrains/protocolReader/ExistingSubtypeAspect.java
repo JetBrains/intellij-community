@@ -1,5 +1,7 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 class ExistingSubtypeAspect {
   private SubtypeCaster subtypeCaster;
   private final TypeRef<?> jsonSuperClass;
@@ -12,34 +14,34 @@ class ExistingSubtypeAspect {
     this.subtypeCaster = subtypeCaster;
   }
 
-  void writeGetSuperMethodJava(TextOutput out) {
-    out.newLine().append("@Override").newLine().append("public ").append(jsonSuperClass.get().getTypeClass().getCanonicalName() ).append(" getSuper()").openBlock();
+  void writeGetSuperMethodJava(@NotNull TextOutput out) {
+    out.newLine().append("@Override").newLine().append("public ").append(jsonSuperClass.type.typeClass.getCanonicalName() ).append(" getSuper()").openBlock();
     out.append("return ").append(Util.BASE_VALUE_PREFIX).semi().closeBlock();
   }
 
-  void writeSuperFieldJava(TextOutput out) {
-    out.newLine().append("private final ").append(jsonSuperClass.get().getTypeClass().getCanonicalName()).append(' ').append(Util.BASE_VALUE_PREFIX).semi().newLine();
+  void writeSuperFieldJava(@NotNull TextOutput out) {
+    out.newLine().append("private final ").append(jsonSuperClass.type.typeClass.getCanonicalName()).append(' ').append(Util.BASE_VALUE_PREFIX).semi().newLine();
   }
 
-  void writeSuperConstructorParamJava(TextOutput out) {
-    out.comma().append(jsonSuperClass.get().getTypeClass().getCanonicalName()).append(' ').append(Util.BASE_VALUE_PREFIX);
+  void writeSuperConstructorParamJava(@NotNull TextOutput out) {
+    out.comma().append(jsonSuperClass.type.typeClass.getCanonicalName()).append(' ').append(Util.BASE_VALUE_PREFIX);
   }
 
-  void writeSuperConstructorInitialization(TextOutput out) {
+  void writeSuperConstructorInitialization(@NotNull TextOutput out) {
     out.append("this.").append(Util.BASE_VALUE_PREFIX).append(" = ").append(Util.BASE_VALUE_PREFIX).append(';').newLine().newLine();
   }
 
-  void writeParseMethod(String className, ClassScope scope, TextOutput out) {
-    out.newLine().append("public static ").append(className).space().append("parse").append("(").append(Util.JSON_READER_PARAMETER_DEF).append(')').openBlock();
+  void writeParseMethod(@NotNull String className, @NotNull ClassScope scope, @NotNull TextOutput out) {
+    out.newLine().append("public static ").append(className).space().append("parse").append('(').append(Util.JSON_READER_PARAMETER_DEF).append(", String name").append(')').openBlock();
     out.append("return ");
-    jsonSuperClass.get().writeInstantiateCode(scope, out);
-    out.append('(').append(Util.READER_NAME).append(')').append('.');
+    jsonSuperClass.type.writeInstantiateCode(scope, out);
+    out.append('(').append(Util.READER_NAME).append(", name)").append('.');
     subtypeCaster.writeJava(out);
     out.semi().closeBlock();
     out.newLine();
   }
 
-  public void writeInstantiateCode(String className, TextOutput out) {
+  public void writeInstantiateCode(@NotNull String className, @NotNull TextOutput out) {
     out.append(className).append(".parse");
   }
 }

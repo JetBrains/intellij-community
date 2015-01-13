@@ -9,15 +9,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.cells.*;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,6 +65,7 @@ public class IpnbParser {
     writeToFile(ipnbPanel.getIpnbFile().getPath(), json);
   }
 
+  @Nullable
   public static String newDocumentText(@NotNull final IpnbFilePanel ipnbPanel) {
     final IpnbFile ipnbFile = ipnbPanel.getIpnbFile();
     if (ipnbFile == null) return null;
@@ -99,20 +99,25 @@ public class IpnbParser {
 
   private static void writeToFile(@NotNull final String path, @NotNull final String json) {
     final File file = new File(path);
-    FileWriter writer = null;
     try {
-      writer = new FileWriter(file);
-      writer.write(json);
-    } catch (IOException e) {
-      LOG.error(e);
-    }
-    finally {
+      final FileOutputStream fileOutputStream = new FileOutputStream(file);
+      final OutputStreamWriter writer = new OutputStreamWriter(fileOutputStream, Charset.forName("UTF-8").newEncoder());
       try {
-        if (writer != null)
-          writer.close();
+        writer.write(json);
       } catch (IOException e) {
         LOG.error(e);
       }
+      finally {
+        try {
+          writer.close();
+          fileOutputStream.close();
+        } catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
+    catch (FileNotFoundException e) {
+      LOG.error(e);
     }
   }
 

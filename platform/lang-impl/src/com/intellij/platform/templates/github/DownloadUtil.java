@@ -173,7 +173,7 @@ public class DownloadUtil {
 
     try {
       HttpRequests.request(location)
-        .userAgent()
+        .productNameAsUserAgent()
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
           public Object process(@NotNull HttpRequests.Request request) throws IOException {
@@ -183,7 +183,7 @@ public class DownloadUtil {
               NetUtils.copyStreamContent(progress, request.getInputStream(), output, contentLength);
             }
             catch (IOException e) {
-              throw new IOException(HttpRequests.createErrorMessage(e, request), e);
+              throw new IOException(HttpRequests.createErrorMessage(e, request, true), e);
             }
             return null;
           }

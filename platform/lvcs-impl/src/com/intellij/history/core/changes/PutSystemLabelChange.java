@@ -16,6 +16,8 @@
 
 package com.intellij.history.core.changes;
 
+import com.intellij.util.io.DataInputOutputUtil;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -30,13 +32,13 @@ public class PutSystemLabelChange extends PutLabelChange {
 
   public PutSystemLabelChange(DataInput in) throws IOException {
     super(in);
-    myColor = in.readInt();
+    myColor = DataInputOutputUtil.readSINT(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    out.writeInt(myColor);
+    DataInputOutputUtil.writeSINT(out, myColor);
   }
 
   public int getColor() {

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +141,7 @@ public class LambdaUtil {
   }
 
   @Nullable
-  static MethodSignature getFunction(PsiClass psiClass) {
+  public static MethodSignature getFunction(PsiClass psiClass) {
     if (psiClass == null) return null;
     final List<HierarchicalMethodSignature> functions = findFunctionCandidates(psiClass);
     if (functions != null && functions.size() == 1) {
@@ -440,32 +441,31 @@ public class LambdaUtil {
     return result;
   }
 
-  @Nullable
-  public static String checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
-      final PsiAnnotationOwner owner = annotation.getOwner();
-      if (owner instanceof PsiModifierList) {
-        final PsiElement parent = ((PsiModifierList)owner).getParent();
-        if (parent instanceof PsiClass) {
-          return LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent, ((PsiClass)parent).getName() + " is not a functional interface");
-        }
-      }
-    }
-    return null;
-  }
-
   public static boolean isValidQualifier4InterfaceStaticMethodCall(@NotNull PsiMethod method,
                                                                    @NotNull PsiReferenceExpression methodReferenceExpression,
                                                                    @Nullable PsiElement scope, @NotNull LanguageLevel languageLevel) {
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-      final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
-        return qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true))||
-               qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == containingClass;
+    return getInvalidQualifier4StaticInterfaceMethodMessage(method, methodReferenceExpression, scope, languageLevel) == null;
+  }
+
+  @Nullable
+  public static String getInvalidQualifier4StaticInterfaceMethodMessage(@NotNull PsiMethod method,
+                                                                        @NotNull PsiReferenceExpression methodReferenceExpression,
+                                                                        @Nullable PsiElement scope, @NotNull LanguageLevel languageLevel) {
+    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        return "Static interface method invocations are not supported at this language level";
       }
+
+      if (qualifierExpression == null && 
+          (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true)) || 
+          qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == containingClass) {
+        return null;
+      }
+      return "Static method may be invoked on containing interface class only";
     }
-    return true;
+    return null;
   }
 
   //JLS 14.8 Expression Statements
@@ -539,6 +539,41 @@ public class LambdaUtil {
       ourFunctionTypes.set(map);
     }
     return map;
+  }
+
+  public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
+    if (functionalInterfaceReturnType == PsiType.VOID) {
+      final PsiElement body = lambdaExpression.getBody();
+      if (body instanceof PsiCodeBlock) {
+        if (!getReturnExpressions(lambdaExpression).isEmpty()) return "Unexpected return value";
+      } else if (body instanceof PsiExpression) {
+        final PsiType type = ((PsiExpression)body).getType();
+        try {
+          if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
+            return "Bad return type in lambda expression: " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " cannot be converted to void";
+          }
+        }
+        catch (IncorrectOperationException ignore) {
+        }
+      }
+    } else if (functionalInterfaceReturnType != null) {
+      final List<PsiExpression> returnExpressions = getReturnExpressions(lambdaExpression);
+      for (final PsiExpression expression : returnExpressions) {
+        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+          @Override
+          public PsiType compute() {
+            return expression.getType();
+          }
+        });
+        if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
+          return "Bad return type in lambda expression: " + expressionType.getPresentableText() + " cannot be converted to " + functionalInterfaceReturnType.getPresentableText();
+        }
+      }
+      if (getReturnStatements(lambdaExpression).length > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
+        return "Missing return value";
+      }
+    }
+    return null;
   }
 
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

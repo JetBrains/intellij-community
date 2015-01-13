@@ -29,6 +29,7 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.editor.Document;
@@ -51,17 +52,16 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.google.common.collect.Lists.newArrayList;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class GenerationNode extends UserDataHolderBase {
   private final TemplateToken myTemplateToken;
   private final List<GenerationNode> myChildren = newArrayList();
@@ -74,6 +74,12 @@ public class GenerationNode extends UserDataHolderBase {
 
   private GenerationNode myParent;
   private boolean myContainsSurroundedTextMarker = false;
+  
+  private static final Pattern ATTRIBUTE_VARIABLE_PATTERN = Pattern.compile("\\$[A-z_0-9]+\\$");
+  private static final Pattern HREF_PATTERN = Pattern.compile("^(?:(?:https?|ftp|file)://|www\\.|ftp\\.)(?:\\([-A-Z0-9+&@#/%=~_|$?!:,.]*\\)|[-A-Z0-9+&@#/%=~_|$?!:,.])*(?:\\([-A-Z0-9+&@#/%=~_|$?!:,.]*\\)|[A-Z0-9+&@#/%=~_|$])",
+                                                              Pattern.CASE_INSENSITIVE);
+  private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-z0-9._%+-]+@[A-z0-9.-]+\\.[A-z]{2,5}$");
+  private static final Pattern PROTOCOL_PATTERN = Pattern.compile("^([A-z]+:)?//");
 
   public GenerationNode(TemplateToken templateToken,
                         int numberInIteration,
@@ -190,9 +196,8 @@ public class GenerationNode extends UserDataHolderBase {
     Map<String, String> predefinedValues;
     if (myTemplateToken instanceof TemplateToken && generator instanceof XmlZenCodingGenerator) {
       TemplateToken xmlTemplateToken = myTemplateToken;
-      Map<String, String> attributes = xmlTemplateToken.getAttributes();
-      parentTemplate = invokeXmlTemplate(xmlTemplateToken, callback, generator, hasChildren, attributes);
-      predefinedValues = buildPredefinedValues(attributes, (XmlZenCodingGenerator)generator, hasChildren);
+      parentTemplate = invokeXmlTemplate(xmlTemplateToken, callback, generator, hasChildren);
+      predefinedValues = buildPredefinedValues(xmlTemplateToken.getAttributes(), (XmlZenCodingGenerator)generator, hasChildren);
     }
     else {
       parentTemplate = invokeTemplate(myTemplateToken, hasChildren, callback, generator);
@@ -265,21 +270,37 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private TemplateImpl invokeXmlTemplate(final TemplateToken token,
-                                                CustomTemplateCallback callback,
-                                                @Nullable ZenCodingGenerator generator,
-                                                final boolean hasChildren,
-                                                final Map<String, String> attributes) {
+                                         CustomTemplateCallback callback,
+                                         @Nullable ZenCodingGenerator generator,
+                                         final boolean hasChildren) {
     /*assert generator == null || generator instanceof XmlZenCodingGenerator :
       "The generator cannot process TemplateToken because it doesn't inherit XmlZenCodingGenerator";*/
 
+    Map<String, String> attributes = token.getAttributes();
     TemplateImpl template = token.getTemplate();
     assert template != null;
 
     final XmlFile xmlFile = token.getFile();
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
-    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", StdFileTypes.HTML, xmlFile.getText());
+    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText(HTMLLanguage.INSTANCE, xmlFile.getText());
     final XmlTag tag = dummyFile.getRootTag();
     if (tag != null) {
+      
+      // autodetect href
+      if (EmmetOptions.getInstance().isHrefAutoDetectEnabled() && StringUtil.isNotEmpty(mySurroundedText)) {
+        final boolean isEmptyLinkTag = "a".equalsIgnoreCase(tag.getName()) && isEmptyValue(tag.getAttributeValue("href"));
+        if (!hasChildren && isEmptyLinkTag) {
+          if (HREF_PATTERN.matcher(mySurroundedText).matches()) {
+            attributes.put("href", PROTOCOL_PATTERN.matcher(mySurroundedText).find()
+                                   ? mySurroundedText.trim()
+                                   : "http://" + mySurroundedText.trim());
+          }
+          else if (EMAIL_PATTERN.matcher(mySurroundedText).matches()) {
+            attributes.put("href", "mailto:" + mySurroundedText.trim());
+          }
+        }
+      }
+
       for (Map.Entry<String, String> attribute : attributes.entrySet()) {
         if (Strings.isNullOrEmpty(attribute.getValue())) {
           template.addVariable(prepareVariableName(attribute.getKey()), "", "", true);
@@ -287,8 +308,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
       XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
       setAttributeValues(tag1, attributes, callback);
-      XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText("dummy.html", StdFileTypes.HTML, tag1.getContainingFile().getText(),
-                                                                     LocalTimeCounter.currentTime(), true);
+      XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText(HTMLLanguage.INSTANCE, tag1.getContainingFile().getText());
       VirtualFile vFile = physicalFile.getVirtualFile();
       if (vFile != null) {
         vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
@@ -302,7 +322,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private static String prepareVariableName(@NotNull String attributeName) {
-    return StringUtil.replaceChar(attributeName, '-', '_');
+    return StringUtil.replaceChar(StringUtil.replaceChar(attributeName, '-', '_'), '+', '_');
   }
 
   @NotNull
@@ -409,6 +429,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private void setAttributeValues(@NotNull XmlTag tag, @NotNull final Map<String, String> attributes, CustomTemplateCallback callback) {
+    // default and implied attributes
     final String defaultAttributeValue = attributes.get(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
     if (defaultAttributeValue != null) {
       attributes.remove(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
@@ -444,37 +465,42 @@ public class GenerationNode extends UserDataHolderBase {
       }
     }
     
-    for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-      final String attributeName = attribute.getKey();
-      final XmlAttribute xmlAttribute = tag.getAttribute(attributeName);
-      if (xmlAttribute != null) {
-        final String attributeValue = attribute.getValue();
-        
-        if (ZenCodingUtil.containsSurroundedTextMarker(attributeValue)) {
-          myContainsSurroundedTextMarker = true;
-        }
+    // boolean attributes
+    for (XmlAttribute xmlAttribute : tag.getAttributes()) {
+      final String attributeName = xmlAttribute.getName();
+      final XmlAttributeValue xmlAttributeValueElement = xmlAttribute.getValueElement();
+      if (xmlAttributeValueElement != null && !attributes.containsKey(attributeName)) {
+        continue;
+      }
 
-        final EmmetOptions emmetOptions = EmmetOptions.getInstance();
-        if (isBooleanAttribute(attributeName, attributeValue)) {
-          if (emmetOptions.isCompactBooleanAllowed() && ZenCodingUtil.isHtml(callback)) {
-            final XmlAttributeValue valueElement = xmlAttribute.getValueElement();
-            if (valueElement != null) {
-              final PsiElement prevSibling = valueElement.getPrevSibling();
-              if (prevSibling != null && prevSibling.textMatches("=")) {
-                xmlAttribute.deleteChildRange(prevSibling, valueElement);
-              }
+      String attributeValue = StringUtil.notNullize(attributes.get(attributeName), StringUtil.notNullize(xmlAttribute.getValue()));
+      if (ZenCodingUtil.containsSurroundedTextMarker(attributeValue)) {
+        myContainsSurroundedTextMarker = true;
+      }
+
+      if (isBooleanAttribute(attributeValue, xmlAttribute, callback)) {
+        if (HtmlUtil.isShortNotationOfBooleanAttributePreferred()) {
+          if (xmlAttributeValueElement != null) {
+            final PsiElement prevSibling = xmlAttributeValueElement.getPrevSibling();
+            if (prevSibling != null && prevSibling.textMatches("=")) {
+              xmlAttribute.deleteChildRange(prevSibling, xmlAttributeValueElement);
             }
-          }
-          else {
-            tag.setAttribute(attributeName, attributeName);
           }
         }
         else {
-          tag.setAttribute(attributeName,
-                           Strings.isNullOrEmpty(attributeValue)
-                           ? "$" + prepareVariableName(attributeName) + "$"
-                           : ZenCodingUtil.getValue(attributeValue, myNumberInIteration, myTotalIterations, mySurroundedText));
+          if (xmlAttributeValueElement == null) {
+            xmlAttribute.delete();
+          }
+          tag.setAttribute(attributeName, attributeName);
         }
+      }
+      else {
+        if (xmlAttributeValueElement == null) {
+          xmlAttribute.delete();
+        }
+        tag.setAttribute(attributeName, StringUtil.isEmpty(attributeValue)
+                                        ? "$" + prepareVariableName(attributeName) + "$"
+                                        : ZenCodingUtil.getValue(attributeValue, myNumberInIteration, myTotalIterations, mySurroundedText));
       }
     }
     
@@ -487,11 +513,17 @@ public class GenerationNode extends UserDataHolderBase {
     }
   }
 
-  private static boolean isBooleanAttribute(String name, String value) {
-    if (value.equals(XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE)) {
+  private static boolean isBooleanAttribute(@Nullable String attributeValue, 
+                                            @NotNull XmlAttribute xmlAttribute, 
+                                            @NotNull CustomTemplateCallback callback) {
+    if (XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE.equals(attributeValue)) {
       return true;
     }
-    return Strings.isNullOrEmpty(value) && EmmetOptions.getInstance().getBooleanAttributes().contains(name.toLowerCase(Locale.US));
+    if (ZenCodingUtil.isHtml(callback) && StringUtil.isEmpty(attributeValue)) {
+      final XmlAttributeDescriptor descriptor = xmlAttribute.getDescriptor();
+      return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, callback.getContext());
+    }
+    return false;
   }
 
   private static boolean isDefaultAttribute(String xmlAttributeLocalName) {
@@ -500,6 +532,10 @@ public class GenerationNode extends UserDataHolderBase {
 
   private static boolean isImpliedAttribute(String xmlAttributeLocalName) {
     return StringUtil.startsWithChar(xmlAttributeLocalName, '!');
+  }
+
+  private static boolean isEmptyValue(String attributeValue) {
+    return StringUtil.isEmpty(attributeValue) || ATTRIBUTE_VARIABLE_PATTERN.matcher(attributeValue).matches();
   }
 
   @Nullable
@@ -526,7 +562,7 @@ public class GenerationNode extends UserDataHolderBase {
   private static XmlAttribute findEmptyAttribute(@NotNull List<XmlAttribute> attributes) {
     for (XmlAttribute attribute : attributes) {
       final String attributeValue = attribute.getValue();
-      if (StringUtil.isEmpty(attributeValue) || StringUtil.startsWithChar(attributeValue, '$') && StringUtil.endsWithChar(attributeValue, '$')) {
+      if (isEmptyValue(attributeValue)) {
         return attribute;
       }
     }

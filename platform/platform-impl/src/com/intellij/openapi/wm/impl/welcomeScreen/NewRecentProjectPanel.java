@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -41,9 +42,9 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
       scrollPane.setBackground(FlatWelcomeFrame.getProjectsBackground());
-      scrollPane.setSize(245, 460);
-      scrollPane.setMinimumSize(new Dimension(245, 460));
-      scrollPane.setPreferredSize(new Dimension(245, 460));
+      scrollPane.setSize(JBUI.size(245, 460));
+      scrollPane.setMinimumSize(JBUI.size(245, 460));
+      scrollPane.setPreferredSize(JBUI.size(245, 460));
     }
     ListWithFilter panel = UIUtil.findComponentOfType(this, ListWithFilter.class);
     if (panel != null) {
@@ -82,9 +83,40 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   @Override
   protected ListCellRenderer createRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
     return new RecentProjectItemRenderer(myPathShortener) {
-      {
-        setBorder(new EmptyBorder(0, 10, 0, 0));
+       private GridBagConstraints nameCell;
+       private GridBagConstraints pathCell;
+       private GridBagConstraints closeButtonCell;
+
+      private void initConstraints () {
+        nameCell = new GridBagConstraints();
+        pathCell = new GridBagConstraints();
+        closeButtonCell = new GridBagConstraints();
+
+        nameCell.gridx = 0;
+        nameCell.gridy = 0;
+        nameCell.weightx = 1.0;
+        nameCell.weighty = 1.0;
+        nameCell.anchor = GridBagConstraints.FIRST_LINE_START;
+        nameCell.insets = JBUI.insets(6, 5, 1, 5);
+
+
+
+        pathCell.gridx = 0;
+        pathCell.gridy = 1;
+
+        pathCell.insets = JBUI.insets(1, 5, 6, 5);
+        pathCell.anchor = GridBagConstraints.LAST_LINE_START;
+
+
+        closeButtonCell.gridx = 1;
+        closeButtonCell.gridy = 0;
+        closeButtonCell.anchor = GridBagConstraints.FIRST_LINE_END;
+        closeButtonCell.insets = JBUI.insets(7, 7, 7, 7);
+        closeButtonCell.gridheight = 2;
+
+        //closeButtonCell.anchor = GridBagConstraints.WEST;
       }
+
       @Override
       protected Color getListBackground(boolean isSelected, boolean hasFocus) {
         return isSelected ? FlatWelcomeFrame.getListSelectionColor(hasFocus) : FlatWelcomeFrame.getProjectsBackground();
@@ -97,12 +129,31 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
       @Override
       protected void layoutComponents() {
-        setLayout(new BorderLayout());
-        myName.setBorder(new EmptyBorder(6, 0, 1, 5));
-        myPath.setBorder(new EmptyBorder(1, 0, 6, 5));
-        add(myName, BorderLayout.NORTH);
-        add(myPath, BorderLayout.SOUTH);
+        setLayout(new GridBagLayout());
+        initConstraints();
+        add(myName, nameCell);
+        add(myPath, pathCell);
       }
+
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+
+        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+        if (Registry.is("removable.welcome.screen.projects")) {
+          if (myHovered) {
+            add(myCloseThisItem, closeButtonCell);
+            list.revalidate();
+          }
+          else {
+            remove(myCloseThisItem);
+            list.revalidate();
+          }
+        }
+
+        return this;
+      }
+
     };
   }
   

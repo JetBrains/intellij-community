@@ -258,11 +258,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         });
         files.remove(null);
         if (toLog()) {
-          System.out.println("F: VFS events: " + events);
+          log("F: VFS events: " + events);
         }
         if (!files.isEmpty() && RE_DETECT_ASYNC) {
           if (toLog()) {
-            System.out.println("F: queued to redetect: " + files);
+            log("F: queued to redetect: " + files);
           }
           reDetectQueue.offerIfAbsent(files);
         }
@@ -275,6 +275,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private static boolean toLog() {
     return RE_DETECT_ASYNC && ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  private static void log(String message) {
+    //System.out.println(message);
   }
 
   private final TransferToPooledThreadQueue<Collection<VirtualFile>> reDetectQueue = new TransferToPooledThreadQueue<Collection<VirtualFile>>("File type re-detect", Conditions.alwaysFalse(), -1, new Processor<Collection<VirtualFile>>() {
@@ -306,7 +310,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     for (VirtualFile file : files) {
       boolean shouldRedetect = wasAutoDetectedBefore(file) && isDetectable(file);
       if (toLog()) {
-        System.out.println("F: Redetect file: " + file.getName() + "; shouldRedetect: " + shouldRedetect);
+        log("F: Redetect file: " + file.getName() + "; shouldRedetect: " + shouldRedetect);
       }
       if (shouldRedetect) {
         int id = file instanceof VirtualFileWithId ? ((VirtualFileWithId)file).getId() : -1;
@@ -317,7 +321,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
         FileType after = getFileTypeByFile(file); // may be back to standard file type
         if (toLog()) {
-          System.out.println("F: After redetect file: " + file.getName() + "; before: " + before.getName() + "; after: " + after.getName()+"; now getFileType()="+file.getFileType().getName());
+          log("F: After redetect file: " + file.getName() + "; before: " + before.getName() + "; after: " + after.getName()+"; now getFileType()="+file.getFileType().getName());
         }
 
         if (before != after) {
@@ -421,7 +425,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public static void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
     file.putUserData(FILE_TYPE_KEY, fileType);
     if (toLog()) {
-      System.out.println("F: Cached file type for "+file.getName()+" to "+(fileType == null ? null : fileType.getName()));
+      log("F: Cached file type for "+file.getName()+" to "+(fileType == null ? null : fileType.getName()));
     }
   }
 
@@ -441,7 +445,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       FileTypeIdentifiableByVirtualFile type = mySpecialFileTypes.get(i);
       if (type.isMyFileType(file)) {
         if (toLog()) {
-          System.out.println("F: Special file type for "+file.getName()+"; type: "+type.getName());
+          log("F: Special file type for "+file.getName()+"; type: "+type.getName());
         }
         return type;
       }
@@ -450,7 +454,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     fileType = getFileTypeByFileName(file.getNameSequence());
     if (fileType != UnknownFileType.INSTANCE) {
       if (toLog()) {
-        System.out.println("F: By name file type for "+file.getName()+"; type: "+fileType.getName());
+        log("F: By name file type for "+file.getName()+"; type: "+fileType.getName());
       }
       return fileType;
     }
@@ -475,7 +479,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       if (autoDetectWasRun) {
         FileType type = getAutoDetectedType(file, id);
         if (toLog()) {
-          System.out.println("F: autodetected getFileType("+file.getName()+") = "+type.getName());
+          log("F: autodetected getFileType("+file.getName()+") = "+type.getName());
         }
         return type;
       }
@@ -517,7 +521,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     if (toLog()) {
-      System.out.println("F: getFileType after detect run("+file.getName()+") = "+fileType.getName());
+      log("F: getFileType after detect run("+file.getName()+") = "+fileType.getName());
     }
 
     return fileType;
@@ -638,7 +642,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
       FileType fileType = result.get();
       if (toLog()) {
-        System.out.println("F: Redetect run for file: " + file.getName() + "; result: "+fileType.getName());
+        log("F: Redetect run for file: " + file.getName() + "; result: "+fileType.getName());
       }
 
       if (LOG.isDebugEnabled()) {

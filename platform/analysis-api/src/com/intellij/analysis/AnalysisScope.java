@@ -290,6 +290,7 @@ public class AnalysisScope {
 
   public boolean accept(@NotNull final Processor<VirtualFile> processor) {
     if (myType == VIRTUAL_FILES) {
+      if (myFilesSet == null) initFilesSet();
       final FileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (final VirtualFile file : myFilesSet) {
         if (!myIncludeTestSource && index.isInTestSourceContent(file)) continue;

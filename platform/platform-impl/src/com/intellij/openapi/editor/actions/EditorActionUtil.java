@@ -315,9 +315,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     EditorSettings editorSettings = editor.getSettings();
 
     int logCaretLine = caretModel.getLogicalPosition().line;
@@ -544,9 +542,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
 
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
@@ -621,9 +617,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
 
     int offset = caretModel.getOffset();
     if (offset == document.getTextLength()) {
@@ -715,9 +709,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
 
     int offset = editor.getCaretModel().getOffset();
     if (offset == 0) return;
@@ -771,9 +763,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     int lineNumber = visibleArea.y / lineHeight;
     if (visibleArea.y % lineHeight > 0) {
@@ -789,9 +779,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     int lineNumber = (visibleArea.y + visibleArea.height) / lineHeight - 1;
     VisualPosition pos = new VisualPosition(lineNumber, editor.getCaretModel().getVisualPosition().column);

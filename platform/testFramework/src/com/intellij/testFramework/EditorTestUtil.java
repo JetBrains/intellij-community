@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -195,6 +194,9 @@ public class EditorTestUtil {
       public boolean canUse() {
         return true;
       }
+
+      @Override
+      public void reinit() {}
     });
     model.reinitSettings();
 
@@ -223,7 +225,7 @@ public class EditorTestUtil {
   /**
    * Equivalent to <code>extractCaretAndSelectionMarkers(document, true)</code>.
    *
-   * @see #extractCaretAndSelectionMarkers(com.intellij.openapi.editor.Document, boolean)
+   * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
   public static CaretAndSelectionState extractCaretAndSelectionMarkers(Document document) {
     return extractCaretAndSelectionMarkers(document, true);
@@ -388,10 +390,8 @@ public class EditorTestUtil {
       int actualCaretLine = editor.getDocument().getLineNumber(currentCaret.getOffset());
       int actualCaretColumn = currentCaret.getOffset() - editor.getDocument().getLineStartOffset(actualCaretLine);
       LogicalPosition actualCaretPosition = new LogicalPosition(actualCaretLine, actualCaretColumn);
-      int[] selectionStarts = editor.getSelectionModel().getBlockSelectionStarts();
-      int[] selectionEnds = editor.getSelectionModel().getBlockSelectionEnds();
-      int selectionStart = editor.getSelectionModel().hasBlockSelection() ? selectionStarts[selectionStarts.length - 1] : currentCaret.getSelectionStart();
-      int selectionEnd = editor.getSelectionModel().hasBlockSelection() ? selectionEnds[selectionEnds.length - 1] : currentCaret.getSelectionEnd();
+      int selectionStart = currentCaret.getSelectionStart();
+      int selectionEnd = currentCaret.getSelectionEnd();
       LogicalPosition actualSelectionStart = editor.offsetToLogicalPosition(selectionStart);
       LogicalPosition actualSelectionEnd = editor.offsetToLogicalPosition(selectionEnd);
       CaretInfo expected = caretState.carets.get(i);
@@ -410,14 +410,6 @@ public class EditorTestUtil {
                     currentCaret.hasSelection());
       }
     }
-  }
-
-  public static void enableMultipleCarets() {
-    Registry.get("editor.allow.multiple.carets").setValue(true);
-  }
-
-  public static void disableMultipleCarets() {
-    Registry.get("editor.allow.multiple.carets").setValue(false);
   }
 
   public static FoldRegion addFoldRegion(@NotNull Editor editor, final int startOffset, final int endOffset, final String placeholder, final boolean collapse) {

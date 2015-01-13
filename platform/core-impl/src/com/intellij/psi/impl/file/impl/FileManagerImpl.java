@@ -126,8 +126,22 @@ public class FileManagerImpl implements FileManager {
           }
         }
         removeInvalidFilesAndDirs(false);
+        checkLanguageChange();
       }
     });
+  }
+
+  private void checkLanguageChange() {
+    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    myVFileToViewProviderMap.clear();
+    for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
+      VirtualFile vFile = iterator.next();
+      Language language = getLanguage(vFile);
+      if (language != null && language != fileToPsiFileMap.get(vFile).getBaseLanguage()) {
+        iterator.remove();
+      }
+    }
+    myVFileToViewProviderMap.putAll(fileToPsiFileMap);
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
@@ -231,6 +245,11 @@ public class FileManagerImpl implements FileManager {
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, boolean eventSystemEnabled) {
     Language language = getLanguage(file);
+    return createFileViewProvider(file, eventSystemEnabled, language);
+  }
+
+  @NotNull
+  private FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled, Language language) {
     final FileViewProviderFactory factory = language == null
                                             ? FileTypeFileViewProviders.INSTANCE.forFileType(file.getFileType())
                                             : LanguageFileViewProviders.INSTANCE.forLanguage(language);

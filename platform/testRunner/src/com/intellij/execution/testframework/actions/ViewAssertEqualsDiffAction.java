@@ -20,10 +20,12 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.TestTreeViewAction;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -33,25 +35,23 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
 
   public void actionPerformed(final AnActionEvent e) {
-    if (!openDiff(e.getDataContext())) {
+    if (!openDiff(e.getDataContext(), null)) {
       final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
       Messages.showInfoMessage(component, "Comparison error was not found", "No Comparison Data Found");
     }
   }
 
-  public static boolean openDiff(DataContext context) {
+  public static boolean openDiff(DataContext context, @Nullable DiffHyperlink currentHyperlink) {
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(context);
     if (testProxy != null) {
-      final AbstractTestProxy.AssertEqualsDiffViewerProvider diffViewerProvider = testProxy.getDiffViewerProvider();
+      DiffHyperlink diffViewerProvider = testProxy.getDiffViewerProvider();
       if (diffViewerProvider != null) {
         final Project project = CommonDataKeys.PROJECT.getData(context);
-        if (diffViewerProvider instanceof AbstractTestProxy.AssertEqualsMultiDiffViewProvider) {
-          final TestFrameworkRunningModel runningModel = TestTreeView.MODEL_DATA_KEY.getData(context);
-          final List<AbstractTestProxy.AssertEqualsMultiDiffViewProvider> providers = collectAvailableProviders(runningModel);
-          final MyAssertEqualsDiffChain diffChain =
-            providers.size() > 1 ? new MyAssertEqualsDiffChain(providers, (AbstractTestProxy.AssertEqualsMultiDiffViewProvider)diffViewerProvider) : null;
-          ((AbstractTestProxy.AssertEqualsMultiDiffViewProvider)diffViewerProvider).openMultiDiff(project, diffChain);
-        } else {
+        final List<DiffHyperlink> providers = collectAvailableProviders(TestTreeView.MODEL_DATA_KEY.getData(context));
+        if (providers.size() > 1) {
+          new MyAssertEqualsDiffChain(providers, diffViewerProvider, currentHyperlink).openMultiDiff(project);
+        }
+        else {
           diffViewerProvider.openDiff(project);
         }
         return true;
@@ -60,16 +60,16 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     return false;
   }
 
-  private static List<AbstractTestProxy.AssertEqualsMultiDiffViewProvider> collectAvailableProviders(TestFrameworkRunningModel model) {
-    final List<AbstractTestProxy.AssertEqualsMultiDiffViewProvider> providers = new ArrayList<AbstractTestProxy.AssertEqualsMultiDiffViewProvider>();
+  private static List<DiffHyperlink> collectAvailableProviders(TestFrameworkRunningModel model) {
+    final List<DiffHyperlink> providers = new ArrayList<DiffHyperlink>();
     if (model != null) {
       final AbstractTestProxy root = model.getRoot();
       final List<? extends AbstractTestProxy> allTests = root.getAllTests();
       for (AbstractTestProxy test : allTests) {
         if (test.isLeaf()) {
-          final AbstractTestProxy.AssertEqualsDiffViewerProvider provider = test.getDiffViewerProvider();
-          if (provider instanceof AbstractTestProxy.AssertEqualsMultiDiffViewProvider) {
-            providers.add((AbstractTestProxy.AssertEqualsMultiDiffViewProvider)provider);
+          final DiffHyperlink provider = test.getDiffViewerProvider();
+          if (provider != null) {
+            providers.add(provider);
           }
         }
       }
@@ -108,35 +108,48 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   private static class MyAssertEqualsDiffChain implements AbstractTestProxy.AssertEqualsDiffChain {
 
 
-    private final List<AbstractTestProxy.AssertEqualsMultiDiffViewProvider> myProviders;
-    private AbstractTestProxy.AssertEqualsMultiDiffViewProvider myProvider;
+    private final List<DiffHyperlink> myProviders;
+    private DiffHyperlink myProvider;
 
-    public MyAssertEqualsDiffChain(List<AbstractTestProxy.AssertEqualsMultiDiffViewProvider> providers,
-                                   AbstractTestProxy.AssertEqualsMultiDiffViewProvider provider) {
+    public MyAssertEqualsDiffChain(List<DiffHyperlink> providers,
+                                   DiffHyperlink provider, 
+                                   DiffHyperlink hyperlink) {
       myProviders = providers;
+      if (hyperlink != null) {
+        for (DiffHyperlink viewProvider : providers) {
+          if (hyperlink.equals(viewProvider)) {
+            provider = viewProvider;
+            break;
+          }
+        }
+      }
       myProvider = provider;
     }
 
     @Override
-    public AbstractTestProxy.AssertEqualsMultiDiffViewProvider getPrevious() {
+    public DiffHyperlink getPrevious() {
       final int prevIdx = (myProviders.size() + myProviders.indexOf(myProvider) - 1) % myProviders.size();
       return myProviders.get(prevIdx);
     }
 
     @Override
-    public AbstractTestProxy.AssertEqualsMultiDiffViewProvider getCurrent() {
+    public DiffHyperlink getCurrent() {
       return myProvider;
     }
 
     @Override
-    public AbstractTestProxy.AssertEqualsMultiDiffViewProvider getNext() {
+    public DiffHyperlink getNext() {
       final int nextIdx = (myProviders.indexOf(myProvider) + 1) % myProviders.size();
       return myProviders.get(nextIdx);
     }
 
     @Override
-    public void setCurrent(AbstractTestProxy.AssertEqualsMultiDiffViewProvider provider) {
+    public void setCurrent(DiffHyperlink provider) {
       myProvider = provider;
+    }
+
+    public void openMultiDiff(Project project) {
+      myProvider.openMultiDiff(project, this);
     }
   }
 }

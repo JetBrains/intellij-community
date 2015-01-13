@@ -64,9 +64,10 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import):
         type, value, traceback = original_exc_info()
         if type == ImportError:
             #we should not show frame added by patched_import call
-            return type, value, traceback.tb_next
+            if traceback and hasattr(traceback, "tb_next"):
+                return type, value, traceback.tb_next
         return type, value, traceback
-    
+
     def patched_import(name, *args, **kwargs):
         if patch_qt_on_import == name or name.startswith(dotted):
             builtins.__import__ = original_import
@@ -80,7 +81,7 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import):
         import __builtin__ as builtins
     builtins.__import__ = patched_import
     sys.exc_info = patched_exc_info
-    
+
     
 def _internal_patch_qt():
     try:
@@ -97,7 +98,7 @@ def _internal_patch_qt():
     _original_thread_init = QtCore.QThread.__init__
     _original_runnable_init = QtCore.QRunnable.__init__
     _original_QThread = QtCore.QThread
-    
+
     
     class FuncWrapper:
         

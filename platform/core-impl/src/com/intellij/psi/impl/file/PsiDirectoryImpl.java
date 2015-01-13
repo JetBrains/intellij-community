@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.file;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -105,15 +104,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
 
-    /*
-    final String oldName = myFile.getName();
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-    event.setElement(this);
-    event.setPropertyName(PsiTreeChangeEvent.PROP_DIRECTORY_NAME);
-    event.setOldValue(oldName);
-    myManager.beforePropertyChange(event);
-    */
-
     try {
       myFile.rename(myManager, name);
     }
@@ -121,26 +111,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       throw new IncorrectOperationException(e.toString());
     }
 
-    /*
-    PsiUndoableAction undoableAction = new PsiUndoableAction(){
-      public void undo() throws IncorrectOperationException {
-        if (!PsiDirectoryImpl.this.isValid()){
-          throw new IncorrectOperationException();
-        }
-        setName(oldName);
-      }
-    };
-    */
-
-    /*
-    event = new PsiTreeChangeEventImpl(myManager);
-    event.setElement(this);
-    event.setPropertyName(PsiTreeChangeEvent.PROP_DIRECTORY_NAME);
-    event.setOldValue(oldName);
-    event.setNewValue(name);
-    event.setUndoableAction(undoableAction);
-    myManager.propertyChanged(event);
-    */
     return this;
   }
 
@@ -150,7 +120,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     CheckUtil.checkWritable(this);
     VirtualFile parentFile = myFile.getParent();
     if (parentFile == null) {
-      throw new IncorrectOperationException(VfsBundle.message("cannot.rename.root.directory"));
+      throw new IncorrectOperationException(VfsBundle.message("cannot.rename.root.directory", myFile.getPath()));
     }
     VirtualFile child = parentFile.findChild(name);
     if (child != null && !child.equals(myFile)) {

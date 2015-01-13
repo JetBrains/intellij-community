@@ -151,17 +151,12 @@ def passed(name=None):
     print("#educational_plugin " + name + " test OK")
 
 
-def get_answer_placeholders(file_name=None):
+def get_answer_placeholders():
     """
         Returns all answer placeholders text
     """
     prefix = "#educational_plugin_window = "
-    import os
-    parent = os.path.abspath(os.path.join(sys.argv[-1], os.pardir))
-    if not file_name:
-        path = sys.argv[-1]
-    else:
-        path = os.path.join(parent, file_name)
+    path = sys.argv[-1]
     import os
 
     file_name_without_extension = os.path.splitext(path)[0]

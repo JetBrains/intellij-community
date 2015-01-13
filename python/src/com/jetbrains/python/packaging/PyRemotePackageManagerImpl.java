@@ -92,8 +92,8 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       }
       catch (InterruptedException e) {
         LOG.error(e);
-          remoteSdkCredentials = null;
-        }
+        remoteSdkCredentials = null;
+      }
       catch (ExecutionException e) {
         throw analyzeException(e, helperPath, args);
       }
@@ -136,9 +136,9 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   private ExecutionException analyzeException(ExecutionException exception, String command, List<String> args) {
     final Throwable cause = exception.getCause();
     if (cause instanceof VagrantNotStartedException) {
-      final String vagrantFolder = ((VagrantNotStartedException)cause).getVagrantFolder();
       return new PyExecutionException("Vagrant instance is down", command, args, "", "", 0,
-                                      ImmutableList.of(new LaunchVagrantFix(vagrantFolder)));
+                                      ImmutableList.of(new LaunchVagrantFix(((VagrantNotStartedException)cause).getVagrantFolder(),
+                                                                            ((VagrantNotStartedException)cause).getMachineName())));
     }
     return exception;
   }
@@ -160,9 +160,11 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
 
   private class LaunchVagrantFix implements PyExecutionFix {
     @NotNull private final String myVagrantFolder;
+    @Nullable private final String myMachineName;
 
-    public LaunchVagrantFix(@NotNull String vagrantFolder) {
+    public LaunchVagrantFix(@NotNull String vagrantFolder, @Nullable String machineName) {
       myVagrantFolder = vagrantFolder;
+      myMachineName = machineName;
     }
 
     @NotNull
@@ -176,7 +178,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         try {
-          manager.runVagrant(myVagrantFolder);
+          manager.runVagrant(myVagrantFolder, myMachineName);
           clearCaches();
         }
         catch (ExecutionException e) {

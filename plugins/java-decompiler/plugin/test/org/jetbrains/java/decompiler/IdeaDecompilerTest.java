@@ -65,9 +65,11 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testStubCompatibility() {
+    Registry.get("decompiler.dump.original.lines").setValue(true);
     String path = PlatformTestUtil.getRtJarPath() + "!/java";
     VirtualFile dir = getTestFile(path);
     doTestStubCompatibility(dir);
+    Registry.get("decompiler.dump.original.lines").setValue(false);
   }
 
   private void doTestStubCompatibility(VirtualFile root) {
@@ -83,6 +85,15 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
           PsiElement mirror = ((ClsFileImpl)clsFile).getMirror();
           String decompiled = mirror.getText();
           assertTrue(file.getPath(), decompiled.contains(file.getNameWithoutExtension()));
+
+          // check that no mapped line number is on an empty line
+          String prefix = "// ";
+          for (String s : decompiled.split("\n")) {
+            int pos = s.indexOf(prefix);
+            if (pos == 0 && prefix.length() < s.length() && Character.isDigit(s.charAt(prefix.length()))) {
+              fail("Incorrect line mapping in file " + file.getPath() + " line: " + s);
+            }
+          }
         }
         return true;
       }

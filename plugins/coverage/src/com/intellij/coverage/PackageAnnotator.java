@@ -311,20 +311,27 @@ public class PackageAnnotator {
             }
           });
           PackageCoverageInfo coverageInfoForClass = null;
-          if (isInSource != null && isInSource.booleanValue()) {
+          String classCoverageKey = classFqVMName.replace('/', '.');
+          boolean ignoreClass = false;
+          for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+            if (extension.ignoreCoverageForClass(myCoverageManager.getCurrentSuitesBundle(), child)) {
+              ignoreClass = true;
+              break;
+            }
+            if (extension.keepCoverageInfoForClassWithoutSource(myCoverageManager.getCurrentSuitesBundle(), child)) {
+              coverageInfoForClass = classWithoutSourceCoverageInfo;
+              break;
+            }
+          }
+          if (ignoreClass) {
+            continue;
+          }
+
+          if (coverageInfoForClass == null && isInSource != null && isInSource.booleanValue()) {
             for (DirCoverageInfo dirCoverageInfo : dirs) {
               if (dirCoverageInfo.sourceRoot != null && VfsUtil.isAncestor(dirCoverageInfo.sourceRoot, containingFileRef.get(), false)) {
                 coverageInfoForClass = dirCoverageInfo;
-                break;
-              }
-            }
-          }
-          String classCoverageKey = toplevelClassSrcFQName;
-          if (coverageInfoForClass == null) {
-            for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-              if (extension.keepCoverageInfoForClassWithoutSource(myCoverageManager.getCurrentSuitesBundle(), child)) {
-                classCoverageKey = classFqVMName.replace('/', '.');
-                coverageInfoForClass = classWithoutSourceCoverageInfo;
+                classCoverageKey = toplevelClassSrcFQName;
                 break;
               }
             }
@@ -411,7 +418,7 @@ public class PackageAnnotator {
       boolean touchedClass = false;
       final Collection methodSigs = classData.getMethodSigs();
       for (final Object nameAndSig : methodSigs) {
-        if (isGeneratedDefaultConstructor(psiClass, (String) nameAndSig)) {
+        if (isGeneratedDefaultConstructor(psiClass, (String)nameAndSig)) {
           continue;
         }
         final int covered = classData.getStatus((String)nameAndSig);
@@ -431,14 +438,21 @@ public class PackageAnnotator {
         packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;
         packageCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
         packageCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
-      } else {
+      }
+      else {
+        LOG.debug("Did not find any method signatures in " + classFile.getName());
         return;
       }
-    } else {
-      if (!collectNonCoveredClassInfo(classFile, psiClass, toplevelClassCoverageInfo, packageCoverageInfo)) return;
+    }
+    else {
+      if (!collectNonCoveredClassInfo(classFile, psiClass, toplevelClassCoverageInfo, packageCoverageInfo)) {
+        LOG.debug("Did not collect non-covered class info for " + classFile.getName());
+        return;
+      }
     }
 
     ClassCoverageInfo classCoverageInfo = getOrCreateClassCoverageInfo(toplevelClassCoverage, toplevelClassSrcFQName);
+    LOG.debug("Adding coverage of " + classFile.getName() + " to top-level class " + toplevelClassSrcFQName);
     classCoverageInfo.totalLineCount += toplevelClassCoverageInfo.totalLineCount;
     classCoverageInfo.fullyCoveredLineCount += toplevelClassCoverageInfo.fullyCoveredLineCount;
     classCoverageInfo.partiallyCoveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;

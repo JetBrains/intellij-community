@@ -18,6 +18,6 @@ abstract class SubtypeCaster {
   abstract void writeJava(TextOutput out);
 
   TypeHandler<?> getSubtypeHandler() {
-    return subtypeRef.get();
+    return subtypeRef.type;
   }
 }

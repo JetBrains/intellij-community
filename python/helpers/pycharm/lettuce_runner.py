@@ -4,7 +4,7 @@ BDD lettuce framework runner
 TODO: Support other params (like tags) as well.
 Supports only 2 params now: folder to search "features" for or file and "-s scenario_index"
 """
-import argparse
+import inspect
 import optparse
 import os
 import _bdd_utils
@@ -28,25 +28,31 @@ class _LettuceRunner(_bdd_utils.BddRunner):
         :param base_dir base directory to run tests in
         :type base_dir: str
         :param what_to_run folder or file to run
-        :type options list of optparse.Option
+        :type options optparse.Values
         :param options optparse options passed by user
         :type what_to_run str
 
         """
         super(_LettuceRunner, self).__init__(base_dir)
         # TODO: Copy/Paste with lettuce.bin, need to reuse somehow
-        tags = None
-        if options.tags:
-            tags = [tag.strip('@') for tag in options.tags]
-        self.__runner = lettuce.Runner(what_to_run, ",".join(scenarios),
-                                       random=options.random,
-                                       enable_xunit=options.enable_xunit,
-                                       xunit_filename=options.xunit_file,
-                                       enable_subunit=options.enable_subunit,
-                                       subunit_filename=options.subunit_filename,
-                                       failfast=options.failfast,
-                                       auto_pdb=options.auto_pdb,
-                                       tags=tags)
+
+        # Delete args that do not exist in constructor
+        args_to_pass = options.__dict__
+        runner_args = inspect.getargspec(lettuce.Runner.__init__)[0]
+        unknown_args = set(args_to_pass.keys()) - set(runner_args)
+        map(args_to_pass.__delitem__, unknown_args)
+
+        # Tags is special case and need to be preprocessed
+        self.__tags = None  # Store tags in field
+        if 'tags' in args_to_pass.keys() and args_to_pass['tags']:
+            args_to_pass['tags'] = [tag.strip('@') for tag in args_to_pass['tags']]
+            self.__tags = set(args_to_pass['tags'])
+
+        # Special cases we pass directly
+        args_to_pass['base_path'] = what_to_run
+        args_to_pass['scenarios'] = ",".join(scenarios)
+
+        self.__runner = lettuce.Runner(**args_to_pass)
 
     def _get_features_to_run(self):
         super(_LettuceRunner, self)._get_features_to_run()
@@ -71,6 +77,11 @@ class _LettuceRunner(_bdd_utils.BddRunner):
                     if index < len(feature.scenarios):
                         filtered_feature_scenarios.append(feature.scenarios[index])
                 feature.scenarios = filtered_feature_scenarios
+
+        # Filter out tags TODO: Share with behave_runner.py#__filter_scenarios_by_args
+        if self.__tags:
+            for feature in features:
+                feature.scenarios = filter(lambda s: set(s.tags) & self.__tags, feature.scenarios)
         return features
 
     def _run_tests(self):
@@ -145,7 +156,7 @@ def _get_args():
     parser = optparse.OptionParser()
     parser.add_option("-v", "--verbosity",
                       dest="verbosity",
-                      default=4,
+                      default=0,  # We do not need verbosity due to GUI we use (although user may override it)
                       help='The verbosity level')
 
     parser.add_option("-s", "--scenarios",

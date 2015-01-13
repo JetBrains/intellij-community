@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -44,6 +43,11 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
 
   public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
     super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
+  }
+
+  public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
+    super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
+    mySelectionModel = selectionModel;
   }
   
   public RearrangeCodeProcessor(@NotNull Project project,
@@ -82,13 +86,6 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     final List<TextRange> ranges = new SmartList<TextRange>();
     if (mySelectionModel != null && mySelectionModel.hasSelection()) {
       ranges.add(TextRange.create(mySelectionModel.getSelectionStart(), mySelectionModel.getSelectionEnd()));
-    }
-    else if (mySelectionModel != null && mySelectionModel.hasBlockSelection()) {
-      int[] starts = mySelectionModel.getBlockSelectionStarts();
-      int[] ends = mySelectionModel.getBlockSelectionEnds();
-      for (int i = 0; i < starts.length; i++) {
-        ranges.add(TextRange.create(starts[i], ends[i]));
-      }
     }
     else {
       ranges.add(TextRange.create(0, file.getTextLength()));

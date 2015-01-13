@@ -155,7 +155,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myRollbackEnvironment = gitRollbackEnvironment;
     myRevSelector = new GitRevisionSelector();
     myConfigurable = new GitVcsConfigurable(myProject, gitProjectSettings, sharedSettings);
-    myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, gitProjectSettings);
+    myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);

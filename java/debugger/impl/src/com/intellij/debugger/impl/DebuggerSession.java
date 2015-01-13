@@ -56,6 +56,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -288,7 +289,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       resumeAction(runToCursorCommand, EVENT_STEP);
     }
     catch (EvaluateException e) {
-      Messages.showErrorDialog(e.getMessage(), ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR));
+      Messages.showErrorDialog(e.getMessage(), UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR)));
     }
   }
 

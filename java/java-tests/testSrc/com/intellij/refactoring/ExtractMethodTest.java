@@ -642,6 +642,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testSuggestChangeSignatureCallToSameClassMethod() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignatureInitialParameterUnused() throws Exception {
     doDuplicatesTest();
   }
@@ -654,6 +658,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testTargetAnonymous() throws Exception {
+    doTest();
+  }
+
+  public void testTheOnlyParenthesisExpressionWhichIsSkippedInControlFlow() throws Exception {
     doTest();
   }
 

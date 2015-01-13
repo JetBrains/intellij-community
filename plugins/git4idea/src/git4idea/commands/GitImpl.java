@@ -481,6 +481,8 @@ public class GitImpl implements Git {
       @Override
       public GitLineHandler compute() {
         final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
+        h.setSilent(false);
+        h.setStdoutSuppressed(false);
         h.setUrl(url);
         h.addParameters(remote);
         h.addParameters(params);

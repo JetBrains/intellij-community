@@ -91,6 +91,8 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   }
 
   private static boolean isSimplePropertyAccessor(PsiMethod method) {
+    if (DumbService.isDumb(method.getProject())) return false;
+
     PsiCodeBlock body = method.getBody();
     if (body == null || body.getLBrace() == null || body.getRBrace() == null) return false;
     PsiStatement[] statements = body.getStatements();

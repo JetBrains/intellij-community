@@ -81,4 +81,9 @@ public interface SoftWrapPainter {
    * @return    <code>true</code> if current painter can be used at local environment; <code>false</code> otherwise
    */
   boolean canUse();
+
+  /**
+   * Called after a change of font preferences in editor, so that a painter could reset any related internal caches.
+   */
+  void reinit();
 }

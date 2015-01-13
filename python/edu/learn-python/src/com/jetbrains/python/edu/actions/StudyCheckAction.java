@@ -152,7 +152,9 @@ public class StudyCheckAction extends DumbAwareAction {
             final StudyTestRunner testRunner = new StudyTestRunner(task, taskDir);
             Process testProcess = null;
             try {
-              testProcess = testRunner.createCheckProcess(project, studyState.getVirtualFile().getPath());
+              final VirtualFile executablePath = getTaskVirtualFile(studyState, task, taskDir);
+
+              testProcess = testRunner.createCheckProcess(project, executablePath.getPath());
             }
             catch (ExecutionException e) {
               LOG.error(e);
@@ -164,6 +166,23 @@ public class StudyCheckAction extends DumbAwareAction {
             ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, project, selectedEditor));
           }
         });
+      }
+
+      private VirtualFile getTaskVirtualFile(@NotNull final StudyState studyState,
+                                             @NotNull final Task task,
+                                             @NotNull final VirtualFile taskDir) {
+        VirtualFile taskVirtualFile = studyState.getVirtualFile();
+        for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+          String name = entry.getKey();
+          TaskFile taskFile = entry.getValue();
+          VirtualFile virtualFile = taskDir.findChild(name);
+          if (virtualFile != null) {
+            if (!taskFile.getTaskWindows().isEmpty()) {
+              taskVirtualFile = virtualFile;
+            }
+          }
+        }
+        return taskVirtualFile;
       }
     });
   }

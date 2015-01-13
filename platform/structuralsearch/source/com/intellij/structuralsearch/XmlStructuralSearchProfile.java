@@ -62,12 +62,6 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return new XmlCompiledPattern();
   }
 
-  @Override
-  public boolean canProcess(@NotNull FileType fileType) {
-    return fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP ||
-           fileType == StdFileTypes.JSPX || fileType == StdFileTypes.XHTML;
-  }
-
   public boolean isMyLanguage(@NotNull Language language) {
     return language instanceof XMLLanguage;
   }

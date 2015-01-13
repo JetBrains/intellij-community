@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,11 +60,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String mySplashImageUrl = null;
   private String myAboutImageUrl = null;
   private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
-  @NonNls private String myIconUrl = "/icon.png";
-  @NonNls private String mySmallIconUrl = "/icon_small.png";
-  @NonNls private String myBigIconUrl = null;
-  @NonNls private String myOpaqueIconUrl = "/icon.png";
-  @NonNls private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
+  private String myIconUrl = "/icon.png";
+  private String mySmallIconUrl = "/icon_small.png";
+  private String myBigIconUrl = null;
+  private String myOpaqueIconUrl = "/icon.png";
+  private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl = null;
   private String myEditorBackgroundImageUrl = null;
 
@@ -91,89 +90,89 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private boolean myEAP;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
-  @NonNls private String myHelpFileName = "ideahelp.jar";
-  @NonNls private String myHelpRootName = "idea";
-  @NonNls private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
+  private String myHelpFileName = "ideahelp.jar";
+  private String myHelpRootName = "idea";
+  private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<PluginChooserPage>();
   private String myStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
   private String myStatisticsServiceKey;
   private String myThirdPartySoftwareUrl;
+  private String myJetbrainsTvUrl;
 
   private Rectangle myAboutLogoRect;
 
-  @NonNls private static final String IDEA_PATH = "/idea/";
-  @NonNls private static final String ELEMENT_VERSION = "version";
-  @NonNls private static final String ATTRIBUTE_MAJOR = "major";
-  @NonNls private static final String ATTRIBUTE_MINOR = "minor";
-  @NonNls private static final String ATTRIBUTE_CODENAME = "codename";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String ELEMENT_BUILD = "build";
-  @NonNls private static final String ELEMENT_COMPANY = "company";
-  @NonNls private static final String ATTRIBUTE_NUMBER = "number";
-  @NonNls private static final String ATTRIBUTE_API_VERSION = "apiVersion";
-  @NonNls private static final String ATTRIBUTE_DATE = "date";
-  @NonNls private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
-  @NonNls private static final String ELEMENT_LOGO = "logo";
-  @NonNls private static final String ATTRIBUTE_URL = "url";
-  @NonNls private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
-  @NonNls private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
-  @NonNls private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
-  @NonNls private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
-  @NonNls private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
-  @NonNls private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
-  @NonNls private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
-  @NonNls private static final String ELEMENT_ABOUT = "about";
-  @NonNls private static final String ELEMENT_ICON = "icon";
-  @NonNls private static final String ATTRIBUTE_SIZE32 = "size32";
-  @NonNls private static final String ATTRIBUTE_SIZE128 = "size128";
-  @NonNls private static final String ATTRIBUTE_SIZE16 = "size16";
-  @NonNls private static final String ATTRIBUTE_SIZE12 = "size12";
-  @NonNls private static final String ATTRIBUTE_SIZE32OPAQUE = "size32opaque";
-  @NonNls private static final String ELEMENT_PACKAGE = "package";
-  @NonNls private static final String ATTRIBUTE_CODE = "code";
-  @NonNls private static final String ELEMENT_LICENSEE = "licensee";
-  @NonNls private static final String ATTRIBUTE_SHOW = "show";
-  @NonNls private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
-  @NonNls private static final String CAPTION_URL_ATTR = "caption-url";
-  @NonNls private static final String LOGO_URL_ATTR = "logo-url";
-  @NonNls private static final String SLOGAN_URL_ATTR = "slogan-url";
-  @NonNls private static final String ELEMENT_EDITOR = "editor";
-  @NonNls private static final String BACKGROUND_URL_ATTR = "background-url";
-  @NonNls private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
-  @NonNls private static final String XML_EXTENSION = ".xml";
-  @NonNls private static final String ATTRIBUTE_EAP = "eap";
-  @NonNls private static final String HELP_ELEMENT_NAME = "help";
-  @NonNls private static final String ATTRIBUTE_HELP_FILE = "file";
-  @NonNls private static final String ATTRIBUTE_HELP_ROOT = "root";
-  @NonNls private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
-  @NonNls private static final String ELEMENT_DOCUMENTATION = "documentation";
-  @NonNls private static final String ELEMENT_SUPPORT = "support";
-  @NonNls private static final String ELEMENT_FEEDBACK = "feedback";
-  @NonNls private static final String ATTRIBUTE_RELEASE_URL = "release-url";
-  @NonNls private static final String ATTRIBUTE_EAP_URL = "eap-url";
-  @NonNls private static final String ELEMENT_PLUGINS = "plugins";
-  @NonNls private static final String ATTRIBUTE_LIST_URL = "list-url";
-  @NonNls private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
-  @NonNls private static final String ATTRIBUTE_BUILTIN_URL = "builtin-url";
-  @NonNls private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
-  @NonNls private static final String ATTRIBUTE_HAS_HELP = "has-help";
-  @NonNls private static final String ATTRIBUTE_HAS_CONTEXT_HELP = "has-context-help";
-  @NonNls private static final String ELEMENT_WHATSNEW = "whatsnew";
-  @NonNls private static final String ELEMENT_KEYMAP = "keymap";
-  @NonNls private static final String ATTRIBUTE_WINDOWS_URL = "win";
-  @NonNls private static final String ATTRIBUTE_MAC_URL = "mac";
-  @NonNls private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
+  private static final String IDEA_PATH = "/idea/";
+  private static final String ELEMENT_VERSION = "version";
+  private static final String ATTRIBUTE_MAJOR = "major";
+  private static final String ATTRIBUTE_MINOR = "minor";
+  private static final String ATTRIBUTE_CODENAME = "codename";
+  private static final String ATTRIBUTE_NAME = "name";
+  private static final String ELEMENT_BUILD = "build";
+  private static final String ELEMENT_COMPANY = "company";
+  private static final String ATTRIBUTE_NUMBER = "number";
+  private static final String ATTRIBUTE_API_VERSION = "apiVersion";
+  private static final String ATTRIBUTE_DATE = "date";
+  private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
+  private static final String ELEMENT_LOGO = "logo";
+  private static final String ATTRIBUTE_URL = "url";
+  private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
+  private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
+  private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
+  private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
+  private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
+  private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
+  private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
+  private static final String ELEMENT_ABOUT = "about";
+  private static final String ELEMENT_ICON = "icon";
+  private static final String ATTRIBUTE_SIZE32 = "size32";
+  private static final String ATTRIBUTE_SIZE128 = "size128";
+  private static final String ATTRIBUTE_SIZE16 = "size16";
+  private static final String ATTRIBUTE_SIZE12 = "size12";
+  private static final String ATTRIBUTE_SIZE32OPAQUE = "size32opaque";
+  private static final String ELEMENT_PACKAGE = "package";
+  private static final String ATTRIBUTE_CODE = "code";
+  private static final String ELEMENT_LICENSEE = "licensee";
+  private static final String ATTRIBUTE_SHOW = "show";
+  private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
+  private static final String CAPTION_URL_ATTR = "caption-url";
+  private static final String LOGO_URL_ATTR = "logo-url";
+  private static final String SLOGAN_URL_ATTR = "slogan-url";
+  private static final String ELEMENT_EDITOR = "editor";
+  private static final String BACKGROUND_URL_ATTR = "background-url";
+  private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
+  private static final String XML_EXTENSION = ".xml";
+  private static final String ATTRIBUTE_EAP = "eap";
+  private static final String HELP_ELEMENT_NAME = "help";
+  private static final String ATTRIBUTE_HELP_FILE = "file";
+  private static final String ATTRIBUTE_HELP_ROOT = "root";
+  private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
+  private static final String ELEMENT_DOCUMENTATION = "documentation";
+  private static final String ELEMENT_SUPPORT = "support";
+  private static final String ELEMENT_FEEDBACK = "feedback";
+  private static final String ATTRIBUTE_RELEASE_URL = "release-url";
+  private static final String ATTRIBUTE_EAP_URL = "eap-url";
+  private static final String ELEMENT_PLUGINS = "plugins";
+  private static final String ATTRIBUTE_LIST_URL = "list-url";
+  private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
+  private static final String ATTRIBUTE_BUILTIN_URL = "builtin-url";
+  private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
+  private static final String ATTRIBUTE_HAS_HELP = "has-help";
+  private static final String ATTRIBUTE_HAS_CONTEXT_HELP = "has-context-help";
+  private static final String ELEMENT_WHATSNEW = "whatsnew";
+  private static final String ELEMENT_KEYMAP = "keymap";
+  private static final String ATTRIBUTE_WINDOWS_URL = "win";
+  private static final String ATTRIBUTE_MAC_URL = "mac";
+  private static final String ELEMENT_STATISTICS = "statistics";
+  private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
+  private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
+  private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
+  private static final String ELEMENT_THIRD_PARTY = "third-party";
+  private static final String ELEMENT_JB_TV = "jetbrains-tv";
+  private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
+  private static final String STEPS_PROVIDER = "provider";
 
-  @NonNls private static final String ELEMENT_STATISTICS = "statistics";
-  @NonNls private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
-  @NonNls private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
-  @NonNls private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
-
-  @NonNls private static final String ELEMENT_THIRD_PARTY = "third-party";
-
-  @NonNls private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
-  @NonNls private static final String STEPS_PROVIDER = "provider";
+  private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
   @Override
   public Calendar getBuildDate() {
@@ -229,7 +228,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   @Override
-  @NonNls
   public String getHelpURL() {
     return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
   }
@@ -244,7 +242,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myCompanyUrl;
   }
 
-  @NonNls
   private String getHelpJarPath() {
     return PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
   }
@@ -432,7 +429,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   @Override
   public String getFullApplicationName() {
-    @NonNls StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder();
     buffer.append(getVersionName());
     buffer.append(" ");
     if (getMajorVersion() != null && !isEAP() && !isBetaOrRC()) {
@@ -469,6 +466,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public String getThirdPartySoftwareURL() {
     return myThirdPartySoftwareUrl;
+  }
+
+  @Override
+  public String getJetbrainsTvUrl() {
+    return myJetbrainsTvUrl;
   }
 
   @Override
@@ -740,6 +742,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element thirdPartyElement = parentNode.getChild(ELEMENT_THIRD_PARTY);
     if (thirdPartyElement != null) {
       myThirdPartySoftwareUrl = thirdPartyElement.getAttributeValue(ATTRIBUTE_URL);
+    }
+
+    Element tvElement = parentNode.getChild(ELEMENT_JB_TV);
+    if (tvElement != null) {
+      myJetbrainsTvUrl = tvElement.getAttributeValue(ATTRIBUTE_URL);
     }
   }
 

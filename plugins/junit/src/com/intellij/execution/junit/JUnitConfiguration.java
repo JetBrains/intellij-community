@@ -56,6 +56,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   @NonNls public static final String TEST_DIRECTORY = "directory";
   @NonNls public static final String TEST_CATEGORY = "category";
   @NonNls public static final String TEST_METHOD = "method";
+
+  //fork modes
+  @NonNls public static final String FORK_NONE = "none";
+  @NonNls public static final String FORK_METHOD = "method";
+  @NonNls public static final String FORK_KLASS = "class";
+
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
 

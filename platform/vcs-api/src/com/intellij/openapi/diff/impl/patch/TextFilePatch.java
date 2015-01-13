@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,7 +26,7 @@ import java.util.List;
  * @author yole
  */
 public class TextFilePatch extends FilePatch {
-  private Charset myCharset;
+  @Nullable private Charset myCharset;
   private final List<PatchHunk> myHunks;
 
   public void addHunk(final PatchHunk hunk) {
@@ -35,7 +37,7 @@ public class TextFilePatch extends FilePatch {
     return Collections.unmodifiableList(myHunks);
   }
 
-  public TextFilePatch(Charset charset) {
+  public TextFilePatch(@Nullable Charset charset) {
     myCharset = charset;
     myHunks = new ArrayList<PatchHunk>();
   }
@@ -65,11 +67,16 @@ public class TextFilePatch extends FilePatch {
     return myHunks.size() == 1 && myHunks.get(0).isDeletedContent();
   }
 
+  @Nullable
   public Charset getCharset() {
     return myCharset;
   }
 
-  public void setCharset(Charset charset) {
+  /**
+   * To be removed in IDEA 15
+   */
+  @Deprecated
+  public void setCharset(@Nullable Charset charset) {
     myCharset = charset;
   }
 }

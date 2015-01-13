@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
@@ -145,6 +144,7 @@ binding.setVariable("loadProject", {
   def compilerOptions = JpsJavaExtensionService.instance.getOrCreateCompilerConfiguration(project).currentCompilerOptions
   compilerOptions.GENERATE_NO_WARNINGS = true
   compilerOptions.DEPRECATION = false
+  compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
 })
 
 boolean hasSourceRoots(JpsModule module) {
@@ -852,7 +852,7 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
     launcherProperties = launcherPropertiesTemp
   }
 
-  ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
+  ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
     sysproperty(key: "java.awt.headless", value: "true")
     arg(value: inputPath)
     arg(value: appInfo)
@@ -928,13 +928,18 @@ binding.setVariable("buildSearchableOptions", { String target, List licenses, Cl
   ant.replace(file: classpathFile, token: File.pathSeparator, value: "\n")
 
   ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
-    jvmarg(line: "-Xbootclasspath/a:${projectBuilder.moduleOutput(findModule("boot"))} -ea -Xmx500m -XX:MaxPermSize=200m")
-    jvmarg(line: "-Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig}")
+    jvmarg(line: "-ea -Xmx500m -XX:MaxPermSize=200m")
+    jvmarg(value: "-Xbootclasspath/a:${projectBuilder.moduleOutput(findModule("boot"))}")
+    jvmarg(value: "-Didea.home.path=${home}")
+    jvmarg(value: "-Didea.system.path=${paths.ideaSystem}")
+    jvmarg(value: "-Didea.config.path=${paths.ideaConfig}")
     if (jvmArgs != null) {
       jvmarg(line: jvmArgs)
     }
 
-    arg(line: "${classpathFile} com.intellij.idea.Main traverseUI ${target}/searchableOptions.xml")
+    arg(value: "${classpathFile}")
+    arg(line: "com.intellij.idea.Main traverseUI")
+    arg(value: "${target}/searchableOptions.xml")
 
     classpath() {
       pathelement(location: "${projectBuilder.moduleOutput(findModule("java-runtime"))}")

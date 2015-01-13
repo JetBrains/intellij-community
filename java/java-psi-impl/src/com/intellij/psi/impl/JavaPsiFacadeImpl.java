@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
@@ -35,12 +37,9 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -57,7 +56,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final JavaFileManager myFileManager;
 
   public JavaPsiFacadeImpl(Project project,
-                           PsiManagerImpl psiManager,
+                           PsiManager psiManager,
                            JavaFileManager javaFileManager,
                            MessageBus bus) {
     myProject = project;
@@ -158,7 +157,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   @NotNull
-  private PsiElementFinder[] calcFinders() {
+  protected PsiElementFinder[] calcFinders() {
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
     ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
     return elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
@@ -243,54 +242,36 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
-  private static class AndPredicate implements Predicate<PsiNamedElement> {
-    private final List<Predicate<PsiNamedElement>> myComponents = new SmartList<Predicate<PsiNamedElement>>();
-
-    public AndPredicate(Predicate<PsiNamedElement> filter1, Predicate<PsiNamedElement> filter2) {
-      myComponents.add(filter1);
-      myComponents.add(filter2);
-    }
-
-    @Override
-    public boolean apply(@Nullable PsiNamedElement input) {
-      for (Predicate<PsiNamedElement> component : myComponents) {
-        if (!component.apply(input)) {
-          return false;
-        }
-      }
-      return true;
-    }
-  }
-
   @NotNull
-  public PsiElement[] getPackageChildren(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    Map<String, PsiNamedElement> result = new HashMap<String, PsiNamedElement>();
-    Predicate<PsiNamedElement> filter = null;
+  public PsiFile[] getPackageFiles(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    Condition<PsiFile> filter = null;
 
     for (PsiElementFinder finder : filteredFinders()) {
-      Predicate<PsiNamedElement> finderFilter = finder.getPackageChildrenFilter(psiPackage, scope);
+      Condition<PsiFile> finderFilter = finder.getPackageFilesFilter(psiPackage, scope);
       if (finderFilter != null) {
         if (filter == null) {
           filter = finderFilter;
         }
-        else if (filter instanceof AndPredicate) {
-          ((AndPredicate) filter).myComponents.add(finderFilter);
-        }
         else {
-          filter = new AndPredicate(filter, finderFilter);
+          filter = Conditions.and(filter, finderFilter);
+        }
+      }
+    }
+
+    Set<PsiFile> result = new LinkedHashSet<PsiFile>();
+    PsiDirectory[] directories = psiPackage.getDirectories(scope);
+    for (PsiDirectory directory : directories) {
+      for (PsiFile file : directory.getFiles()) {
+        if (filter == null || filter.value(file)) {
+          result.add(file);
         }
       }
     }
 
     for (PsiElementFinder finder : filteredFinders()) {
-      PsiNamedElement[] children = finder.getChildren(psiPackage, scope);
-      for (PsiNamedElement child : children) {
-        if (!result.containsKey(child.getName()) && (filter == null || filter.apply(child))) {
-          result.put(child.getName(), child);
-        }
-      }
+      Collections.addAll(result, finder.getPackageFiles(psiPackage, scope));
     }
-    return result.values().toArray(new PsiElement[result.size()]);
+    return result.toArray(new PsiFile[result.size()]);
   }
 
   public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,

@@ -1858,7 +1858,7 @@ public abstract class DialogWrapper {
   private Dimension myActualSize = null;
   private String myLastErrorText = null;
 
-  protected final void setErrorText(@Nullable final String text) {
+  protected void setErrorText(@Nullable final String text) {
     if (Comparing.equal(myLastErrorText, text)) {
       return;
     }

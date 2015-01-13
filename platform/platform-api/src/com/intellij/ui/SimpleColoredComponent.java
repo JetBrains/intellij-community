@@ -672,6 +672,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         g.drawString(fragment, offset, textBaseline);
       }
 
+      // for some reason strokeState here may be incorrect, resetting the stroke helps
+      g.setStroke(g.getStroke());
+
       // 1. Strikeout effect
       if (attributes.isStrikeout()) {
         final int strikeOutAt = textBaseline + (metrics.getDescent() - metrics.getAscent()) / 2;
@@ -682,11 +685,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         if (attributes.getWaveColor() != null) {
           g.setColor(attributes.getWaveColor());
         }
-        final int wavedAt = textBaseline + 1;
-        for (int x = offset; x <= offset + fragmentWidth; x += 4) {
-          UIUtil.drawLine(g, x, wavedAt, x + 2, wavedAt + 2);
-          UIUtil.drawLine(g, x + 3, wavedAt + 1, x + 4, wavedAt);
-        }
+        UIUtil.drawWave(g, new Rectangle(offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent())));
       }
       // 3. Underline
       if (attributes.isUnderline()) {

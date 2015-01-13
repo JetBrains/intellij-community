@@ -240,4 +240,17 @@ class Rectangle2D {
     myFixture.assertPreferredCompletionItems 0, 'aDouble', 'rectangle2D'
   }
 
+  public void "test suggest field-shadowing parameter name"() {
+    myFixture.configureByText 'a.java', '''
+class FooFoo {
+  private final Collection<MaterialQuality> materialQualities;
+
+    public Inventory setMaterialQualities(Iterable<MaterialQuality> <caret>) {
+
+    }}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'materialQualities', 'materialQualities1', 'qualities', 'materialQualityIterable', 'qualityIterable', 'iterable'
+  }
+
 }

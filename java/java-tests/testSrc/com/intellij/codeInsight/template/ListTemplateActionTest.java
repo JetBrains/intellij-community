@@ -33,6 +33,7 @@ public class ListTemplateActionTest extends LightCodeInsightFixtureTestCase {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
     addTemplate("simple", "simple template text", "description");
     addTemplate("complex key", "complex template text", "");
+    addTemplate("template.with.desc", "template with description", "desc");
   }
 
   private void addTemplate(String key, String text, String description) {
@@ -91,6 +92,10 @@ public class ListTemplateActionTest extends LightCodeInsightFixtureTestCase {
 
   public void testComplexKeyWithNotMatchedPrefixAfterNonJavaCharacter() {
     doTest("complex key");
+  }
+  
+  public void testTemplateShouldNotBeReplacedByOtherTemplateMatchedByDescription() {
+    doTest("template.with.desc");
   }
 
   private void doTest(@NotNull String lookupText) {

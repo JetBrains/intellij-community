@@ -336,7 +336,7 @@ def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
-        # fake return_controll_callback function just to prevent exception in PyCharm bebug console
+        # fake return_controll_callback function just to prevent exception in PyCharm debug console
         from pydev_ipython.inputhook import set_return_control_callback
         set_return_control_callback(lambda x: True)
 

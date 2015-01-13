@@ -37,6 +37,11 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
     doTest();
   }
 
+  public void testRecursiveMethod() throws Exception {
+    myFixture.testHighlighting(getTestName(false) + ".java");
+    assertEmpty(myFixture.filterAvailableIntentions("Properly capitalize"));
+  }
+
   public void doTest() {
     myFixture.testHighlighting(getTestName(false) + ".java");
     final IntentionAction action = myFixture.filterAvailableIntentions("Properly capitalize").get(0);

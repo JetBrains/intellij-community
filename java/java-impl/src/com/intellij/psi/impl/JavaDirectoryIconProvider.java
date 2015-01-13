@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,23 +48,17 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       final PsiDirectory psiDirectory = (PsiDirectory)element;
       final VirtualFile vFile = psiDirectory.getVirtualFile();
       final Project project = psiDirectory.getProject();
-      boolean isJarRoot = vFile.getParent() == null && vFile.getFileSystem() instanceof JarFileSystem;
-      boolean isContentRoot = ProjectRootsUtil.isModuleContentRoot(vFile, project);
-      SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
+
+      SourceFolder sourceFolder;
       Icon symbolIcon;
-      if (isJarRoot) {
+      if (vFile.getParent() == null && vFile.getFileSystem() instanceof JarFileSystem) {
         symbolIcon = PlatformIcons.JAR_ICON;
       }
-      else if (isContentRoot) {
+      else if (ProjectRootsUtil.isModuleContentRoot(vFile, project)) {
         Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
-        if (module != null) {
-          symbolIcon = ModuleType.get(module).getIcon();
-        }
-        else {
-          symbolIcon = PlatformIcons.CONTENT_ROOT_ICON_CLOSED;
-        }
+        symbolIcon = module != null ? ModuleType.get(module).getIcon() : PlatformIcons.CONTENT_ROOT_ICON_CLOSED;
       }
-      else if (sourceFolder != null) {
+      else if ((sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project)) != null) {
         symbolIcon = SourceRootPresentation.getSourceRootIcon(sourceFolder);
       }
       else if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
@@ -76,8 +70,10 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       else {
         symbolIcon = PlatformIcons.DIRECTORY_CLOSED_ICON;
       }
+
       return ElementBase.createLayeredIcon(element, symbolIcon, 0);
     }
+
     return null;
   }
 }

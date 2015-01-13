@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
     new HashMap<VirtualFile, PackageAnnotator.PackageCoverageInfo>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new HashMap<String, PackageAnnotator.ClassCoverageInfo>();
+  private final WeakHashMap<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos =
+    new WeakHashMap<PsiElement, PackageAnnotator.SummaryCoverageInfo>();
 
   public JavaCoverageAnnotator(final Project project) {
     super(project);
@@ -71,6 +74,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     myDirCoverageInfos.clear();
     myTestDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
+    myExtensionCoverageInfos.clear();
   }
 
   protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
@@ -256,5 +260,21 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Nullable
   public PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(String classFQName) {
     return myClassCoverageInfos.get(classFQName);
+  }
+
+  public PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(PsiNamedElement value) {
+    PackageAnnotator.SummaryCoverageInfo cachedInfo = myExtensionCoverageInfos.get(value);
+    if (cachedInfo != null) {
+      return cachedInfo;
+    }
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+      PackageAnnotator.SummaryCoverageInfo info = extension.getSummaryCoverageInfo(this, value);
+      if (info != null) {
+        myExtensionCoverageInfos.put(value, info);
+        return info;
+      }
+    }
+
+    return null;
   }
 }

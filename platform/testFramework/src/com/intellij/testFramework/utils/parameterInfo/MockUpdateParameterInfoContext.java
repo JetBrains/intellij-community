@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author gregsh
@@ -32,10 +33,18 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
   private PsiElement myParameterOwner;
   private Object myHighlightedParameter;
   private int myCurrentParameter;
+  private final Object[] myItems;
+  private final boolean[] myCompEnabled;
 
   public MockUpdateParameterInfoContext(@NotNull Editor editor, @NotNull PsiFile file) {
+    this(editor, file, null);
+  }
+
+  public MockUpdateParameterInfoContext(@NotNull Editor editor, @NotNull PsiFile file, @Nullable Object[] items) {
     myEditor = editor;
     myFile = file;
+    myItems = items == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : items;
+    myCompEnabled = items == null ? null : new boolean[items.length];
   }
 
   public void removeHint() {}
@@ -58,16 +67,22 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
     return myCurrentParameter;
   }
 
-  public boolean isUIComponentEnabled(int index) { return false; }
+  public boolean isUIComponentEnabled(int index) {
+    return myCompEnabled != null && myCompEnabled[index];
+  }
 
-  public void setUIComponentEnabled(int index, boolean b) {}
+  public void setUIComponentEnabled(int index, boolean b) {
+    if (myCompEnabled != null) {
+      myCompEnabled[index] = b;
+    }
+  }
 
   public int getParameterListStart() {
     return myEditor.getCaretModel().getOffset();
   }
 
   public Object[] getObjectsToView() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return myItems;
   }
 
   public Project getProject() {

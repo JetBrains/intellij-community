@@ -141,9 +141,13 @@ public class PluginHeaderPanel {
         myActionId = null;
       }
     }
+    UIUtil.setEnabled(myButtonPanel, true, true);
     if (myManager == null || myActionId == null || (myManager.getInstalled() != myManager.getAvailable() && myActionId == ACTION_ID.UNINSTALL)) {
       myActionId = ACTION_ID.INSTALL;
       myButtonPanel.setVisible(false);
+    }
+    else if (InstallPluginAction.isInstalling(plugin)) {
+      UIUtil.setEnabled(myButtonPanel, false, true);
     }
     myRoot.revalidate();
     ((JComponent)myInstallButton.getParent()).revalidate();

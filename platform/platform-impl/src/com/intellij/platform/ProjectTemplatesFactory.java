@@ -18,6 +18,7 @@ package com.intellij.platform;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -36,7 +37,7 @@ public abstract class ProjectTemplatesFactory {
   public abstract String[] getGroups();
 
   @NotNull
-  public abstract ProjectTemplate[] createTemplates(String group, WizardContext context);
+  public abstract ProjectTemplate[] createTemplates(@Nullable String group, WizardContext context);
 
   public Icon getGroupIcon(String group) {
     return null;

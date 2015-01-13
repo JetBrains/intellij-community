@@ -16,11 +16,11 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,33 +101,31 @@ public abstract class PsiElementFinder {
   }
 
   /**
-   * Returns a list of children (classes, subpackages and possibly other elements) belonging to the specified package.
+   * Returns a list of files belonging to the specified package which are not located in any of the package directories.
    *
-   * @param psiPackage the package to return the list of children for.
-   * @param scope      the scope in which children are searched.
-   * @return the list of children.
+   * @param psiPackage the package to return the list of files for.
+   * @param scope      the scope in which files are searched.
+   * @return the list of files.
    * @since 14.1
    */
   @NotNull
-  public PsiNamedElement[] getChildren(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    Set<PsiNamedElement> children = new HashSet<PsiNamedElement>();
-    Collections.addAll(children, getSubPackages(psiPackage, scope));
-    Collections.addAll(children, getClasses(psiPackage, scope));
-    return children.toArray(new PsiNamedElement[children.size()]);
+  public PsiFile[] getPackageFiles(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return PsiFile.EMPTY_ARRAY;
   }
 
   /**
-   * Returns the filter to use for filtering the list of children for a given package produced by other PsiElementFinder
-   * implementations. (For example, the list of children for a Kotlin package includes files directly, rather than classes,
-   * so the classes located by the standard Java package children finder need to be excluded.)
+   * Returns the filter to use for filtering the list of files in the directories belonging to a package to exclude files
+   * that actually belong to a different package. (For example, in Kotlin the package of a file is determined by its
+   * package statement and not by its location in the directory structure, so the files which have a differring package
+   * statement need to be excluded.)
    *
-   * @param psiPackage the package to return the list of children for.
-   * @param scope      the scope in which children are searched.
+   * @param psiPackage the package for which the list of files is requested.
+   * @param scope      the scope in which children are requested.
    * @return the filter to use, or null if no additional filtering is necessary.
    * @since 14.1
    */
   @Nullable
-  public Predicate<PsiNamedElement> getPackageChildrenFilter(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public Condition<PsiFile> getPackageFilesFilter(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return null;
   }
 

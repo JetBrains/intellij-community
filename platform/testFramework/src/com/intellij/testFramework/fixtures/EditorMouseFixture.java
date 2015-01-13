@@ -17,6 +17,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.JComponent;
 import java.awt.*;
@@ -113,7 +114,7 @@ public class EditorMouseFixture {
   }
 
   public EditorMouseFixture ctrl() {
-    myModifiers |= InputEvent.CTRL_DOWN_MASK;
+    myModifiers |= SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
     return this;
   }
 

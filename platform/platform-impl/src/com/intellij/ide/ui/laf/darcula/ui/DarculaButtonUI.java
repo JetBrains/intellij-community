@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
@@ -50,10 +51,11 @@ public class DarculaButtonUI extends BasicButtonUI {
     int h = c.getHeight();
     if (isHelpButton(c)) {
       ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
-      int x = (w - 22) / 2;
-      int y = (h - 22) / 2;
-      g.fillOval(x, y, 22, 22);
-      AllIcons.Actions.Help.paintIcon(c, g, x + 3, y + 3);
+      int off = JBUI.scale(22);
+      int x = (w - off) / 2;
+      int y = (h - off) / 2;
+      g.fillOval(x, y, off, off);
+      AllIcons.Actions.Help.paintIcon(c, g, x + JBUI.scale(3), y + JBUI.scale(3));
     } else {
       final Border border = c.getBorder();
       final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
@@ -69,7 +71,8 @@ public class DarculaButtonUI extends BasicButtonUI {
             ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
           }
         }
-        g.fillRoundRect(square ? 2 : 4, yOff, w - 2 * 4, h - 2 * yOff, square ? 3 : 5, square ? 3 : 5);
+        int rad = JBUI.scale(square ? 3 : 5);
+        g.fillRoundRect(JBUI.scale(square ? 2 : 4), yOff, w - 2 * JBUI.scale(4), h - 2 * yOff, rad, rad);
       }
       config.restore();
       super.paint(g, c);

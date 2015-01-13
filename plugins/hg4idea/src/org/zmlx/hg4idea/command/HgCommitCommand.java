@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -30,9 +29,7 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
-import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +46,7 @@ public class HgCommitCommand {
   private static final String TEMP_FILE_NAME = ".hg4idea-commit.tmp";
 
   private final Project myProject;
-  private final VirtualFile myRoot;
+  private final HgRepository myRepository;
   private final String myMessage;
   @NotNull private final Charset myCharset;
   private final boolean myAmend;
@@ -58,21 +55,21 @@ public class HgCommitCommand {
   private Set<HgFile> myFiles = Collections.emptySet();
   @NotNull private List<String> mySubrepos = Collections.emptyList();
 
-  public HgCommitCommand(@NotNull Project project, @NotNull VirtualFile root, String message, boolean amend, boolean closeBranch) {
+  public HgCommitCommand(@NotNull Project project, @NotNull HgRepository repository, String message, boolean amend, boolean closeBranch) {
     myProject = project;
-    myRoot = root;
+    myRepository = repository;
     myMessage = message;
     myCharset = HgEncodingUtil.getDefaultCharset(myProject);
     myAmend = amend;
     myCloseBranch = closeBranch;
   }
 
-  public HgCommitCommand(@NotNull Project project, @NotNull VirtualFile root, String message, boolean amend) {
-    this(project, root, message, amend, false);
+  public HgCommitCommand(@NotNull Project project, @NotNull HgRepository repo, String message, boolean amend) {
+    this(project, repo, message, amend, false);
   }
 
-  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message) {
-    this(project, root, message, false);
+  public HgCommitCommand(Project project, @NotNull HgRepository repo, String message) {
+    this(project, repo, message, false);
   }
 
   public void setFiles(@NotNull Set<HgFile> files) {
@@ -110,10 +107,7 @@ public class HgCommitCommand {
         commitChunkFiles(chunk, amendCommit, false, myCloseBranch && i == size - 1);
       }
     }
-    if (!myProject.isDisposed()) {
-      HgRepositoryManager manager = HgUtil.getRepositoryManager(myProject);
-      manager.updateRepository(myRoot);
-    }
+    myRepository.update();
     final MessageBus messageBus = myProject.getMessageBus();
     messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
     messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
@@ -125,8 +119,6 @@ public class HgCommitCommand {
 
   private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit, boolean withSubrepos, boolean closeBranch)
     throws VcsException {
-    HgRepository repository = HgUtil.getRepositoryForFile(myProject, myRoot);
-    assert repository != null;
     List<String> parameters = new LinkedList<String>();
     parameters.add("--logfile");
     parameters.add(saveCommitMessage().getAbsolutePath());
@@ -139,7 +131,7 @@ public class HgCommitCommand {
       parameters.add("--amend");
     }
     if (closeBranch) {
-      if (chunk.isEmpty() && repository.getState() != Repository.State.MERGING) {
+      if (chunk.isEmpty() && myRepository.getState() != Repository.State.MERGING) {
         //if there are changed files but nothing selected -> need to exclude all; if merge commit then nothing excluded
         parameters.add("-X");
         parameters.add("\"**\"");
@@ -149,7 +141,7 @@ public class HgCommitCommand {
     parameters.addAll(chunk);
     HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setCharset(myCharset);
-    ensureSuccess(executor.executeInCurrentThread(myRoot, "commit", parameters));
+    ensureSuccess(executor.executeInCurrentThread(myRepository.getRoot(), "commit", parameters));
   }
 
   private File saveCommitMessage() throws VcsException {

@@ -56,28 +56,25 @@ public class PluginDownloader {
 
   private final String myPluginId;
   private final String myPluginUrl;
+  private final String myPluginName;
   private String myPluginVersion;
-  private String myFileName;
-  private String myPluginName;
   private BuildNumber myBuildNumber;
-  private boolean myForceHttps;
 
   private File myFile;
   private File myOldFile;
   private String myDescription;
   private List<PluginId> myDepends;
   private IdeaPluginDescriptor myDescriptor;
+  private boolean myForceHttps;
 
   private PluginDownloader(@NotNull String pluginId,
                            @NotNull String pluginUrl,
-                           @Nullable String pluginVersion,
-                           @Nullable String fileName,
                            @Nullable String pluginName,
+                           @Nullable String pluginVersion,
                            @Nullable BuildNumber buildNumber) {
     myPluginId = pluginId;
     myPluginUrl = pluginUrl;
     myPluginVersion = pluginVersion;
-    myFileName = fileName;
     myPluginName = pluginName;
     myBuildNumber = buildNumber;
   }
@@ -90,18 +87,8 @@ public class PluginDownloader {
     return myPluginVersion;
   }
 
-  public String getFileName() {
-    if (myFileName == null) {
-      myFileName = myPluginUrl.substring(myPluginUrl.lastIndexOf('/') + 1);
-    }
-    return myFileName;
-  }
-
   public String getPluginName() {
-    if (myPluginName == null) {
-      myPluginName = FileUtil.getNameWithoutExtension(getFileName());
-    }
-    return myPluginName;
+    return myPluginName != null ? myPluginName : myPluginId;
   }
 
   public BuildNumber getBuildNumber() {
@@ -179,7 +166,8 @@ public class PluginDownloader {
 
     IdeaPluginDescriptorImpl actualDescriptor = loadDescriptionFromJar(myFile);
     if (actualDescriptor != null) {
-      if (InstalledPluginsState.getInstance().wasUpdated(actualDescriptor.getPluginId())) {
+      InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
+      if (state != null && state.wasUpdated(actualDescriptor.getPluginId())) {
         return false; //already updated
       }
 
@@ -237,7 +225,10 @@ public class PluginDownloader {
       StartupActionScriptManager.addActionCommand(deleteOld);
     }
     PluginInstaller.install(myFile, getPluginName(), true);
-    InstalledPluginsState.getInstance().onPluginInstall(myDescriptor);
+    InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
+    if (state != null) {
+      state.onPluginInstall(myDescriptor);
+    }
   }
 
   @NotNull
@@ -255,11 +246,9 @@ public class PluginDownloader {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
         request.saveToFile(file, indicator);
-        if (myFileName == null) {
-          myFileName = guessFileName(request.getConnection(), file);
-        }
 
-        File newFile = new File(file.getParentFile(), myFileName);
+        String fileName = guessFileName(request.getConnection(), file);
+        File newFile = new File(file.getParentFile(), fileName);
         FileUtil.rename(file, newFile);
         return newFile;
       }
@@ -311,9 +300,9 @@ public class PluginDownloader {
                                                   @Nullable String host,
                                                   @Nullable BuildNumber buildNumber) throws IOException {
     try {
-      PluginId id = descriptor.getPluginId();
-      String url = host != null ? getHostUrl(host, descriptor.getUrl()) : getRepositoryUrl(id, buildNumber);
-      PluginDownloader downloader = new PluginDownloader(id.getIdString(), url, descriptor.getVersion(), null, descriptor.getName(), null);
+      String url = getUrl(descriptor, host, buildNumber);
+      String id = descriptor.getPluginId().getIdString();
+      PluginDownloader downloader = new PluginDownloader(id, url, descriptor.getName(), descriptor.getVersion(), buildNumber);
       downloader.setDescriptor(descriptor);
       downloader.setDescription(descriptor.getDescription());
       downloader.setDepends(((PluginNode)descriptor).getDepends());
@@ -325,32 +314,30 @@ public class PluginDownloader {
   }
 
   @NotNull
-  private static String getHostUrl(@NotNull String host, @NotNull String pluginUrl) throws URISyntaxException, MalformedURLException {
-    if (new URI(pluginUrl).isAbsolute()) {
-      return pluginUrl;
+  private static String getUrl(@NotNull IdeaPluginDescriptor descriptor,
+                               @Nullable String host,
+                               @Nullable BuildNumber buildNumber) throws URISyntaxException, MalformedURLException {
+    if (host != null && descriptor instanceof PluginNode) {
+      String url = ((PluginNode)descriptor).getDownloadUrl();
+      return new URI(url).isAbsolute() ? url : new URL(new URL(host), url).toExternalForm();
     }
     else {
-      return new URL(new URL(host), pluginUrl).toExternalForm();
+      Application app = ApplicationManager.getApplication();
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+
+      String buildNumberAsString = buildNumber != null ? buildNumber.asString() :
+                                   app != null ? ApplicationInfo.getInstance().getApiVersion() :
+                                   appInfo.getBuild().asString();
+
+      String uuid = app != null ? UpdateChecker.getInstallationUID(PropertiesComponent.getInstance()) : UUID.randomUUID().toString();
+
+      URIBuilder uriBuilder = new URIBuilder(appInfo.getPluginsDownloadUrl());
+      uriBuilder.addParameter("action", "download");
+      uriBuilder.addParameter("id", descriptor.getPluginId().getIdString());
+      uriBuilder.addParameter("build", buildNumberAsString);
+      uriBuilder.addParameter("uuid", uuid);
+      return uriBuilder.toString();
     }
-  }
-
-  @NotNull
-  private static String getRepositoryUrl(@NotNull PluginId pluginId, @Nullable BuildNumber buildNumber) throws URISyntaxException {
-    Application app = ApplicationManager.getApplication();
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-
-    String buildNumberAsString = buildNumber != null ? buildNumber.asString() :
-                                 app != null ? ApplicationInfo.getInstance().getApiVersion() :
-                                 appInfo.getBuild().asString();
-
-    String uuid = app != null ? UpdateChecker.getInstallationUID(PropertiesComponent.getInstance()) : UUID.randomUUID().toString();
-
-    URIBuilder uriBuilder = new URIBuilder(appInfo.getPluginsDownloadUrl());
-    uriBuilder.addParameter("action", "download");
-    uriBuilder.addParameter("id", pluginId.getIdString());
-    uriBuilder.addParameter("build", buildNumberAsString);
-    uriBuilder.addParameter("uuid", uuid);
-    return uriBuilder.toString();
   }
 
   @Nullable

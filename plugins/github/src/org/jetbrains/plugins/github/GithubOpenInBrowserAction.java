@@ -20,13 +20,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitLocalBranch;
@@ -201,17 +204,20 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static String getCurrentFileRevisionHash(@NotNull Project project, @NotNull VirtualFile file) {
-    try {
-      VcsRevisionNumber revision = GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), null);
-      if (revision instanceof GitRevisionNumber) {
-        return ((GitRevisionNumber)revision).getRev();
+  private static String getCurrentFileRevisionHash(@NotNull final Project project, @NotNull final VirtualFile file) {
+    final Ref<GitRevisionNumber> ref = new Ref<GitRevisionNumber>();
+    ProgressManager.getInstance().run(new Task.Modal(project, "Getting last revision", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          ref.set((GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), null));
+        }
+        catch (VcsException e) {
+          LOG.warn(e);
+        }
       }
-      return null;
-    }
-    catch (VcsException e) {
-      LOG.warn(e);
-      return null;
-    }
+    });
+    if (ref.isNull()) return null;
+    return ref.get().getRev();
   }
 }
