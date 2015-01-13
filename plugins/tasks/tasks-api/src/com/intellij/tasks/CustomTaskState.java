@@ -83,4 +83,9 @@ public class CustomTaskState {
   public void setPredefined(boolean predefined) {
     myPredefined = predefined;
   }
+
+  @Override
+  public String toString() {
+    return "CustomTaskState(id='" + myId + '\'' + ", name='" + myPresentableName + '\'' + ", myPredefined=" + myPredefined + ')';
+  }
 }
