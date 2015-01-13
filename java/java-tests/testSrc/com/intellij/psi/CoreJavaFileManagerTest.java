@@ -39,6 +39,10 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     assertCanFind(manager, "foo.TopLevel");
     assertCanFind(manager, "foo.TopLevel.Inner");
     assertCanFind(manager, "foo.TopLevel.Inner.Inner");
+
+    assertCannotFind(manager, "foo.TopLevel$Inner.Inner");
+    assertCannotFind(manager, "foo.TopLevel.Inner$Inner");
+    assertCannotFind(manager, "foo.TopLevel.Inner.Inner.Inner");
   }
 
   public void testInnerClassesWithDollars() throws Exception {
@@ -78,6 +82,8 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     assertCanFind(manager, "foo.TopLevel.I$nner.Inner$$");
     assertCanFind(manager, "foo.TopLevel.I$nner.$$$$$");
 
+    assertCannotFind(manager, "foo.TopLevel.I.nner.$$$$$");
+
     assertCanFind(manager, "foo.TopLevel.Inner$");
     assertCanFind(manager, "foo.TopLevel.Inner$.I$nner");
     assertCanFind(manager, "foo.TopLevel.Inner$.$Inner");
@@ -85,12 +91,16 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     assertCanFind(manager, "foo.TopLevel.Inner$.Inner$$");
     assertCanFind(manager, "foo.TopLevel.Inner$.$$$$$");
 
+    assertCannotFind(manager, "foo.TopLevel.Inner..$$$$$");
+
     assertCanFind(manager, "foo.TopLevel.In$ner$$");
     assertCanFind(manager, "foo.TopLevel.In$ner$$.I$nner");
     assertCanFind(manager, "foo.TopLevel.In$ner$$.$Inner");
     assertCanFind(manager, "foo.TopLevel.In$ner$$.In$ne$r$");
     assertCanFind(manager, "foo.TopLevel.In$ner$$.Inner$$");
     assertCanFind(manager, "foo.TopLevel.In$ner$$.$$$$$");
+
+    assertCannotFind(manager, "foo.TopLevel.In.ner$$.$$$$$");
   }
 
   public void testTopLevelClassesWithDollars() throws Exception {
@@ -102,6 +112,7 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
 
     CoreJavaFileManager multiple = configureManager("package foo;\n\n public class Top$Lev$el$ {}", "Top$Lev$el$");
     assertCanFind(multiple, "foo.Top$Lev$el$");
+    assertCannotFind(multiple, "foo.Top.Lev$el$");
 
     CoreJavaFileManager twoBucks = configureManager("package foo;\n\n public class $$ {}", "$$");
     assertCanFind(twoBucks, "foo.$$");
@@ -137,6 +148,17 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     assertCanFind(manager, "foo.Top$Level$$.I$nner.$Inner");
     assertCanFind(manager, "foo.Top$Level$$.I$nner.$");
     assertCanFind(manager, "foo.Top$Level$$.I$nner.$$$$$");
+
+    assertCannotFind(manager, "foo.Top.Level$$.I$nner.$$$$$");
+  }
+
+  public void testDoNotThrowOnMalformedInput() throws Exception {
+    CoreJavaFileManager fileWithEmptyName = configureManager("package foo;\n\n public class Top$Level {}", "");
+    assertCannotFind(fileWithEmptyName, "foo.");
+    assertCannotFind(fileWithEmptyName, ".");
+    assertCannotFind(fileWithEmptyName, "..");
+    assertCannotFind(fileWithEmptyName, "");
+    assertCannotFind(fileWithEmptyName, ".foo");
   }
 
   @NotNull
@@ -155,5 +177,10 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     PsiClass foundClass = manager.findClass(qName, GlobalSearchScope.allScope(getProject()));
     assertNotNull("Could not find:" + qName, foundClass);
     assertEquals("Found " + foundClass.getQualifiedName() + " instead of " + qName, qName, foundClass.getQualifiedName());
+  }
+
+  private void assertCannotFind(@NotNull CoreJavaFileManager manager, @NotNull String qName) {
+    PsiClass foundClass = manager.findClass(qName, GlobalSearchScope.allScope(getProject()));
+    assertNull("Found, but shouldn't have:" + qName, foundClass);
   }
 }
