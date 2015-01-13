@@ -44,6 +44,9 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     myCondition = condition;
   }
 
+  /*
+ * Divider
+ */
   public static void drawConnectorLine(@NotNull Graphics2D g,
                                        int x1, int x2,
                                        int start1, int end1,
@@ -51,10 +54,72 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     int y1 = (start1 + end1) / 2;
     int y2 = (start2 + end2) / 2;
 
-    DiffDrawUtil.drawCurveTrapezium(g, x1, x2,
-                                    y1 - Y_STEP, y1 + Y_STEP,
-                                    y2 - Y_STEP, y2 + Y_STEP,
-                                    getInnerColor(), getOuterColor());
+    int[] xPoints;
+    int[] yPoints;
+
+    if (Math.abs(x2 - x1) < Math.abs(y2 - y1)) {
+      xPoints = new int[6];
+      yPoints = new int[6];
+
+      int dx = Y_STEP;
+      int dy = Y_STEP_2;
+      if (y2 < y1) {
+        xPoints[0] = x1;
+        yPoints[0] = y1 - Y_STEP;
+
+        xPoints[1] = x2 - dx;
+        yPoints[1] = y2 - Y_STEP + dy;
+
+        xPoints[2] = x2;
+        yPoints[2] = y2 - Y_STEP;
+
+        xPoints[3] = x2;
+        yPoints[3] = y2 + Y_STEP;
+
+        xPoints[4] = x1 + dx;
+        yPoints[4] = y1 + Y_STEP - dy;
+
+        xPoints[5] = x1;
+        yPoints[5] = y1 + Y_STEP;
+      }
+      else {
+        xPoints[0] = x1;
+        yPoints[0] = y1 - Y_STEP;
+
+        xPoints[1] = x1 + dx;
+        yPoints[1] = y1 - Y_STEP + dy;
+
+        xPoints[2] = x2;
+        yPoints[2] = y2 - Y_STEP;
+
+        xPoints[3] = x2;
+        yPoints[3] = y2 + Y_STEP;
+
+        xPoints[4] = x2 - dx;
+        yPoints[4] = y2 + Y_STEP - dy;
+
+        xPoints[5] = x1;
+        yPoints[5] = y1 + Y_STEP;
+      }
+    }
+    else {
+      xPoints = new int[4];
+      yPoints = new int[4];
+
+      xPoints[0] = x1;
+      yPoints[0] = y1 - Y_STEP;
+
+      xPoints[1] = x2;
+      yPoints[1] = y2 - Y_STEP;
+
+      xPoints[2] = x2;
+      yPoints[2] = y2 + Y_STEP;
+
+      xPoints[3] = x1;
+      yPoints[3] = y1 + Y_STEP;
+    }
+
+    paintLines(g, xPoints, yPoints);
   }
 
   /*
@@ -68,7 +133,6 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     final int gutterWidth = ((EditorEx)editor).getGutterComponentEx().getWidth();
     int lineHeight = myEditor.getLineHeight();
 
-    // TODO: disable AA
     draw(g, 0, gutterWidth, 0, y, lineHeight);
   }
 
@@ -130,22 +194,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
         setPointPair(xPoints, yPoints, index, count, xPos, yPos1, yPos2);
       }
 
-      Color innerColor = getInnerColor();
-      Color outerColor = getOuterColor();
-
-      if (innerColor != null) {
-        g.setColor(innerColor);
-        g.fillPolygon(xPoints, yPoints, count);
-      }
-      if (outerColor != null) {
-        g.setColor(outerColor);
-        g.drawPolyline(xPoints, yPoints, count / 2);
-        for (int i = 0; i * 2 < count; i++) {
-          xPoints[i] = xPoints[count - i - 1];
-          yPoints[i] = yPoints[count - i - 1];
-        }
-        g.drawPolyline(xPoints, yPoints, count / 2);
-      }
+      paintLines(g, xPoints, yPoints);
     }
     finally {
       gg.dispose();
@@ -159,6 +208,30 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     xPoints[count - index - 1] = x;
     yPoints[index] = y1;
     yPoints[count - index - 1] = y2;
+  }
+
+  private static void paintLines(@NotNull Graphics g, @NotNull int[] xPoints, @NotNull int[] yPoints) {
+    // TODO: disable AA
+    assert xPoints.length == yPoints.length;
+    assert xPoints.length % 2 == 0;
+
+    int count = xPoints.length;
+    Color innerColor = getInnerColor();
+    Color outerColor = getOuterColor();
+
+    if (innerColor != null) {
+      g.setColor(innerColor);
+      g.fillPolygon(xPoints, yPoints, count);
+    }
+    if (outerColor != null) {
+      g.setColor(outerColor);
+      g.drawPolyline(xPoints, yPoints, count / 2);
+      for (int i = 0; i * 2 < count; i++) {
+        xPoints[i] = xPoints[count - i - 1];
+        yPoints[i] = yPoints[count - i - 1];
+      }
+      g.drawPolyline(xPoints, yPoints, count / 2);
+    }
   }
 
   @Nullable
