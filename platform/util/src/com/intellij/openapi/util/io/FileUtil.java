@@ -131,26 +131,26 @@ public class FileUtil extends FileUtilRt {
    * @return ThreeState.YES if same path or immediate parent
    */
   @NotNull
-  private static ThreeState startsWith(@NotNull String path, @NotNull String start, boolean strict, boolean caseSensitive,
+  private static ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean caseSensitive,
                                        boolean checkImmediateParent) {
-    final int length1 = path.length();
-    final int length2 = start.length();
-    if (length2 == 0) return length1 == 0 ? ThreeState.YES : ThreeState.UNSURE;
-    if (length2 > length1) return ThreeState.NO;
-    if (!path.regionMatches(!caseSensitive, 0, start, 0, length2)) return ThreeState.NO;
-    if (length1 == length2) {
+    final int pathLength = path.length();
+    final int prefixLength = prefix.length();
+    if (prefixLength == 0) return pathLength == 0 ? ThreeState.YES : ThreeState.UNSURE;
+    if (prefixLength > pathLength) return ThreeState.NO;
+    if (!path.regionMatches(!caseSensitive, 0, prefix, 0, prefixLength)) return ThreeState.NO;
+    if (pathLength == prefixLength) {
       return strict ? ThreeState.NO : ThreeState.YES;
     }
-    char last2 = start.charAt(length2 - 1);
-    int slashOrSeparatorIdx = length2;
-    if (last2 == '/' || last2 == File.separatorChar) {
-      slashOrSeparatorIdx = length2 - 1;
+    char lastPrefixChar = prefix.charAt(prefixLength - 1);
+    int slashOrSeparatorIdx = prefixLength;
+    if (lastPrefixChar == '/' || lastPrefixChar == File.separatorChar) {
+      slashOrSeparatorIdx = prefixLength - 1;
     }
     char next1 = path.charAt(slashOrSeparatorIdx);
     if (next1 == '/' || next1 == File.separatorChar) {
       if (!checkImmediateParent) return ThreeState.YES;
 
-      if (slashOrSeparatorIdx == length1 - 1) return ThreeState.YES;
+      if (slashOrSeparatorIdx == pathLength - 1) return ThreeState.YES;
       int idxNext = path.indexOf(next1, slashOrSeparatorIdx + 1);
       idxNext = idxNext == -1 ? path.indexOf(next1 == '/' ? '\\' : '/', slashOrSeparatorIdx + 1) : idxNext;
       return idxNext == -1 ? ThreeState.YES : ThreeState.UNSURE;
