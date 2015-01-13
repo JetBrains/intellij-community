@@ -50,6 +50,10 @@ public class ChangesComparator implements Comparator<Change> {
       final String parentPath1 = lastSlash1 >= 0 && !filePath1.isDirectory() ? path1.substring(0, lastSlash1) : path1;
       final int lastSlash2 = path2.lastIndexOf('/');
       final String parentPath2 = lastSlash2 >= 0 && !filePath2.isDirectory() ? path2.substring(0, lastSlash2) : path2;
+      int parentPathComparison = parentPath1.compareToIgnoreCase(parentPath2);
+      if (parentPathComparison == 0) {
+        return 0;
+      }
       // subdirs precede files
       if (FileUtil.isAncestor(parentPath2, parentPath1, true)) {
         return -1;
@@ -57,10 +61,7 @@ public class ChangesComparator implements Comparator<Change> {
       else if (FileUtil.isAncestor(parentPath1, parentPath2, true)) {
         return 1;
       }
-      int parentPathComparison = parentPath1.compareToIgnoreCase(parentPath2);
-      if (parentPathComparison != 0) {
-        return parentPathComparison;
-      }
+      return parentPathComparison;
     }
     return filePath1.getName().compareToIgnoreCase(filePath2.getName());
   }
