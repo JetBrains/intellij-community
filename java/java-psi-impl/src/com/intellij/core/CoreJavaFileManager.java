@@ -160,8 +160,12 @@ public class CoreJavaFileManager implements JavaFileManager {
   }
 
   @Nullable
-  private static PsiClass findClassByTopLevelClass(@NotNull String classNameWithInnerClassesDotSeparated, @NotNull PsiClass topLevelClass) {
-    Iterator<String> segments = StringUtil.split(classNameWithInnerClassesDotSeparated, ".").iterator();
+  private static PsiClass findClassByTopLevelClass(@NotNull String className, @NotNull PsiClass topLevelClass) {
+    if (className.indexOf('.') < 0) {
+      return className.equals(topLevelClass.getName()) ? topLevelClass : null;
+    }
+
+    Iterator<String> segments = StringUtil.split(className, ".").iterator();
     if (!segments.hasNext() || !segments.next().equals(topLevelClass.getName())) {
       return null;
     }
