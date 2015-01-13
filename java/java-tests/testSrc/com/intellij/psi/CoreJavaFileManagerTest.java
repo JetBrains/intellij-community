@@ -21,143 +21,94 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-
-import java.util.LinkedList;
-import java.util.Queue;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 
 public class CoreJavaFileManagerTest extends PsiTestCase {
 
-  private VirtualFile prepareClasses(String clazzName, String clazzData) throws Exception {
+  public void testCommon() throws Exception {
+    CoreJavaFileManager manager = configureManager("package foo;\n\n" +
+                                                   "public class TopLevel {\n" +
+                                                   "public class Inner {\n" +
+                                                   "   public class Inner {}\n" +
+                                                   "}\n" +
+                                                   "\n" +
+                                                   "}");
+
+    assertCanFind(manager, "foo.TopLevel");
+    assertCanFind(manager, "foo.TopLevel.Inner");
+    assertCanFind(manager, "foo.TopLevel.Inner.Inner");
+  }
+
+  public void testInnerClassesWithDollars() throws Exception {
+
+    CoreJavaFileManager manager = configureManager("package foo;\n\n" +
+                                                   "public class TopLevel {\n" +
+
+                                                   "public class I$nner {" +
+                                                   "   public class I$nner{}" +
+                                                   "   public class $Inner{}" +
+                                                   "   public class In$ne$r${}" +
+                                                   "   public class Inner$${}" +
+                                                   "   public class $$$$${}" +
+                                                   "}\n" +
+                                                   "public class Inner$ {" +
+                                                   "   public class I$nner{}" +
+                                                   "   public class $Inner{}" +
+                                                   "   public class In$ne$r${}" +
+                                                   "   public class Inner$${}" +
+                                                   "   public class $$$$${}" +
+                                                   "}\n" +
+                                                   "public class In$ner$$ {" +
+                                                   "   public class I$nner{}" +
+                                                   "   public class $Inner{}" +
+                                                   "   public class In$ne$r${}" +
+                                                   "   public class Inner$${}" +
+                                                   "   public class $$$$${}" +
+                                                   "}\n" +
+                                                   "\n" +
+                                                   "}");
+
+    assertCanFind(manager, "foo.TopLevel");
+
+    assertCanFind(manager, "foo.TopLevel.I$nner");
+    assertCanFind(manager, "foo.TopLevel.I$nner.I$nner");
+    assertCanFind(manager, "foo.TopLevel.I$nner.$Inner");
+    assertCanFind(manager, "foo.TopLevel.I$nner.In$ne$r$");
+    assertCanFind(manager, "foo.TopLevel.I$nner.Inner$$");
+    assertCanFind(manager, "foo.TopLevel.I$nner.$$$$$");
+
+    assertCanFind(manager, "foo.TopLevel.Inner$");
+    assertCanFind(manager, "foo.TopLevel.Inner$.I$nner");
+    assertCanFind(manager, "foo.TopLevel.Inner$.$Inner");
+    assertCanFind(manager, "foo.TopLevel.Inner$.In$ne$r$");
+    assertCanFind(manager, "foo.TopLevel.Inner$.Inner$$");
+    assertCanFind(manager, "foo.TopLevel.Inner$.$$$$$");
+
+    assertCanFind(manager, "foo.TopLevel.In$ner$$");
+    assertCanFind(manager, "foo.TopLevel.In$ner$$.I$nner");
+    assertCanFind(manager, "foo.TopLevel.In$ner$$.$Inner");
+    assertCanFind(manager, "foo.TopLevel.In$ner$$.In$ne$r$");
+    assertCanFind(manager, "foo.TopLevel.In$ner$$.Inner$$");
+    assertCanFind(manager, "foo.TopLevel.In$ner$$.$$$$$");
+  }
+
+  @NotNull
+  private CoreJavaFileManager configureManager(@Language("JAVA") @NotNull String text) throws Exception {
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
     VirtualFile pkg = root.createChildDirectory(this, "foo");
     PsiDirectory dir = myPsiManager.findDirectory(pkg);
     assertNotNull(dir);
-    dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText(clazzName + ".java", JavaFileType.INSTANCE, clazzData));
-    return root;
-  }
-
-  public void testNotNullInnerClass() throws Exception {
-    String text = "package foo;\n\n" +
-                  "public class Nested {\n" +
-                  "public class InnerGeneral {}\n" +
-                  "public class Inner$ {" +
-                  "}\n" +
-                  "\n" +
-                  "public Inner$ inner() {\n" +
-                  "   return  new Inner$();\n" +
-                  "}\n" +
-                  "\n" +
-                  "}";
-
-    VirtualFile root = prepareClasses("Nested", text);
-    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText("TopLevel.java", JavaFileType.INSTANCE, text));
     CoreJavaFileManager manager = new CoreJavaFileManager(myPsiManager);
     manager.addToClasspath(root);
-
-    PsiClass clazz = manager.findClass("foo.Nested", scope);
-    assertNotNull(clazz);
-
-    PsiClass clazzInnerGeneral = manager.findClass("foo.Nested.InnerGeneral", scope);
-    assertNotNull(clazzInnerGeneral);
-
-    PsiClass clazzInner$ = manager.findClass("foo.Nested.Inner$", scope);
-    assertNotNull(clazzInner$);
-
-    PsiClass clazzInner$Wrong1 = manager.findClass("foo.Nested.Inner$X", scope);
-    assertNull(clazzInner$Wrong1);
-
-    PsiClass clazzInner$Wrong2 = manager.findClass("foo.Nested.Inner$$X", scope);
-    assertNull(clazzInner$Wrong2);
-
-    PsiClass clazzInner$Wrong3 = manager.findClass("foo.Nested.Inner$$", scope);
-    assertNull(clazzInner$Wrong3);
+    return manager;
   }
 
-
-  public void testNotNullInnerClass2() throws Exception {
-    String text = "package foo;\n\n" +
-                  "public class Nested {\n" +
-
-                  "public class Inner {" +
-                  "   public class XInner{}" +
-                  "   public class XInner${}" +
-                  "}\n" +
-                  "public class Inner$ {" +
-                  "   public class XInner{}" +
-                  "   public class XInner${}" +
-                  "}\n" +
-                  "\n" +
-                  "}";
-
-    VirtualFile root = prepareClasses("Nested", text);
-    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    CoreJavaFileManager manager = new CoreJavaFileManager(myPsiManager);
-    manager.addToClasspath(root);
-
-    PsiClass clazzInner = manager.findClass("foo.Nested.Inner", scope);
-    assertNotNull(clazzInner);
-
-    PsiClass clazzXInner = manager.findClass("foo.Nested.Inner.XInner", scope);
-    assertNotNull(clazzXInner);
-
-    PsiClass clazzXInner$ = manager.findClass("foo.Nested.Inner.XInner$", scope);
-    assertNotNull(clazzXInner$);
-
-    PsiClass clazz$XInner = manager.findClass("foo.Nested.Inner$.XInner", scope);
-    assertNotNull(clazz$XInner);
-
-    PsiClass clazz$XInner$ = manager.findClass("foo.Nested.Inner$.XInner$", scope);
-    assertNotNull(clazz$XInner$);
+  private void assertCanFind(@NotNull CoreJavaFileManager manager, @NotNull String qName) {
+    PsiClass foundClass = manager.findClass(qName, GlobalSearchScope.allScope(getProject()));
+    assertNotNull("Could not find:" + qName, foundClass);
+    assertEquals("Found " + foundClass.getQualifiedName() + " instead of " + qName, qName, foundClass.getQualifiedName());
   }
-
-
-  public void testNotNullInnerClass3() throws Exception {
-    String text = "package foo;\n\n" +
-                  "public class NestedX {\n" +
-
-                  "public class XX {" +
-                  "   public class XXX{" +
-                  "     public class XXXX{ }" +
-                  "     public class XXXX${ }" +
-                  "   }" +
-                  "   public class XXX${" +
-                  "     public class XXXX{ }" +
-                  "     public class XXXX${ }" +
-                  "   }" +
-                  "}\n" +
-                  "public class XX$ {" +
-                  "   public class XXX{" +
-                  "     public class XXXX{ }" +
-                  "     public class XXXX${ }" +
-                  "   }" +
-                  "   public class XXX${" +
-                  "     public class XXXX{ }" +
-                  "     public class XXXX${ }" +
-                  "   }" +
-                  "}\n" +
-                  "\n" +
-                  "}";
-
-    VirtualFile root = prepareClasses("NestedX", text);
-    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    CoreJavaFileManager manager = new CoreJavaFileManager(myPsiManager);
-    manager.addToClasspath(root);
-
-    Queue<String> queue = new LinkedList<String>();
-    queue.add("foo.NestedX");
-
-    while(!queue.isEmpty()) {
-      String head = queue.remove();
-      PsiClass clazzInner = manager.findClass(head, scope);
-      assertNotNull(head, clazzInner);      
-      String lastSegment = head.substring(head.lastIndexOf('.'));
-      String xs = lastSegment.substring(lastSegment.indexOf("X")).replace("$", "");
-      if (xs.length() < 4) {
-        queue.add(head + "." + xs + "X");
-        queue.add(head + "." + xs + "X$");
-      }
-    }
-  }
-
 }
