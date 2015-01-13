@@ -34,7 +34,7 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
                                                    "   public class Inner {}\n" +
                                                    "}\n" +
                                                    "\n" +
-                                                   "}");
+                                                   "}", "TopLevel");
 
     assertCanFind(manager, "foo.TopLevel");
     assertCanFind(manager, "foo.TopLevel.Inner");
@@ -42,7 +42,6 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
   }
 
   public void testInnerClassesWithDollars() throws Exception {
-
     CoreJavaFileManager manager = configureManager("package foo;\n\n" +
                                                    "public class TopLevel {\n" +
 
@@ -68,7 +67,7 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
                                                    "   public class $$$$${}" +
                                                    "}\n" +
                                                    "\n" +
-                                                   "}");
+                                                   "}", "TopLevel");
 
     assertCanFind(manager, "foo.TopLevel");
 
@@ -94,13 +93,59 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     assertCanFind(manager, "foo.TopLevel.In$ner$$.$$$$$");
   }
 
+  public void testTopLevelClassesWithDollars() throws Exception {
+    CoreJavaFileManager inTheMiddle = configureManager("package foo;\n\n public class Top$Level {}", "Top$Level");
+    assertCanFind(inTheMiddle, "foo.Top$Level");
+
+    CoreJavaFileManager doubleAtTheEnd = configureManager("package foo;\n\n public class TopLevel$$ {}", "TopLevel$$");
+    assertCanFind(doubleAtTheEnd, "foo.TopLevel$$");
+
+    CoreJavaFileManager multiple = configureManager("package foo;\n\n public class Top$Lev$el$ {}", "Top$Lev$el$");
+    assertCanFind(multiple, "foo.Top$Lev$el$");
+
+    CoreJavaFileManager twoBucks = configureManager("package foo;\n\n public class $$ {}", "$$");
+    assertCanFind(twoBucks, "foo.$$");
+  }
+
+  public void testTopLevelClassWithDollarsAndInners() throws Exception {
+    CoreJavaFileManager manager = configureManager("package foo;\n\n" +
+                                                   "public class Top$Level$$ {\n" +
+
+                                                   "public class I$nner {" +
+                                                   "   public class I$nner{}" +
+                                                   "   public class In$ne$r${}" +
+                                                   "   public class Inner$$$$${}" +
+                                                   "   public class $Inner{}" +
+                                                   "   public class ${}" +
+                                                   "   public class $$$$${}" +
+                                                   "}\n" +
+                                                   "public class Inner {" +
+                                                   "   public class Inner{}" +
+                                                   "}\n" +
+                                                   "\n" +
+                                                   "}", "Top$Level$$");
+
+    assertCanFind(manager, "foo.Top$Level$$");
+
+    assertCanFind(manager, "foo.Top$Level$$.Inner");
+    assertCanFind(manager, "foo.Top$Level$$.Inner.Inner");
+
+    assertCanFind(manager, "foo.Top$Level$$.I$nner");
+    assertCanFind(manager, "foo.Top$Level$$.I$nner.I$nner");
+    assertCanFind(manager, "foo.Top$Level$$.I$nner.In$ne$r$");
+    assertCanFind(manager, "foo.Top$Level$$.I$nner.Inner$$$$$");
+    assertCanFind(manager, "foo.Top$Level$$.I$nner.$Inner");
+    assertCanFind(manager, "foo.Top$Level$$.I$nner.$");
+    assertCanFind(manager, "foo.Top$Level$$.I$nner.$$$$$");
+  }
+
   @NotNull
-  private CoreJavaFileManager configureManager(@Language("JAVA") @NotNull String text) throws Exception {
+  private CoreJavaFileManager configureManager(@Language("JAVA") @NotNull String text, @NotNull String className) throws Exception {
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
     VirtualFile pkg = root.createChildDirectory(this, "foo");
     PsiDirectory dir = myPsiManager.findDirectory(pkg);
     assertNotNull(dir);
-    dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText("TopLevel.java", JavaFileType.INSTANCE, text));
+    dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText(className + ".java", JavaFileType.INSTANCE, text));
     CoreJavaFileManager manager = new CoreJavaFileManager(myPsiManager);
     manager.addToClasspath(root);
     return manager;

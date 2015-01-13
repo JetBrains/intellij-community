@@ -17,6 +17,7 @@ package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -108,77 +109,59 @@ public class CoreJavaFileManager implements JavaFileManager {
       cur = child;
     }
 
-    String className = pathRest.replace('.', '$');
-    int bucks = className.indexOf('$');
+    String classNameWithInnerClasses = pathRest;
+    String topLevelClassName = substringBeforeFirstDot(classNameWithInnerClasses);
 
-    String rootClassName;
-    if (bucks < 0) {
-      rootClassName = className;
+    VirtualFile vFile = cur.findChild(topLevelClassName + ".class");
+    if (vFile == null) vFile = cur.findChild(topLevelClassName + ".java");
+
+    if (vFile == null) {
+      return null;
+    }
+    if (!vFile.isValid()) {
+      LOG.error("Invalid child of valid parent: " + vFile.getPath() + "; " + root.isValid() + " path=" + root.getPath());
+      return null;
+    }
+
+    final PsiFile file = psiManager.findFile(vFile);
+    if (!(file instanceof PsiClassOwner)) {
+      return null;
+    }
+
+    return findClassInPsiFile(classNameWithInnerClasses, (PsiClassOwner)file);
+  }
+
+  @NotNull
+  private static String substringBeforeFirstDot(@NotNull String classNameWithInnerClasses) {
+    int dot = classNameWithInnerClasses.indexOf('.');
+    if (dot < 0) {
+      return classNameWithInnerClasses;
     }
     else {
-      rootClassName = className.substring(0, bucks);
-      className = className.substring(bucks + 1);
+      return classNameWithInnerClasses.substring(0, dot);
     }
+  }
 
-    VirtualFile vFile = cur.findChild(rootClassName + ".class");
-    if (vFile == null) vFile = cur.findChild(rootClassName + ".java");
-
-    if (vFile != null) {
-      if (!vFile.isValid()) {
-        LOG.error("Invalid child of valid parent: " + vFile.getPath() + "; " + root.isValid() + " path=" + root.getPath());
+  @Nullable
+  private static PsiClass findClassInPsiFile(@NotNull String classNameWithInnerClassesDotSeparated, @NotNull PsiClassOwner file) {
+    final PsiClass[] classes = file.getClasses();
+    if (classes.length != 1) {
+      return null;
+    }
+    PsiClass curClass = classes[0];
+    Iterator<String> segments = StringUtil.split(classNameWithInnerClassesDotSeparated, ".").iterator();
+    if (!segments.hasNext() || !segments.next().equals(curClass.getName())) {
+      return null;
+    }
+    while (segments.hasNext()) {
+      String innerClassName = segments.next();
+      PsiClass innerClass = curClass.findInnerClassByName(innerClassName, false);
+      if (innerClass == null) {
         return null;
       }
-
-      final PsiFile file = psiManager.findFile(vFile);
-      if (file instanceof PsiClassOwner) {
-        final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
-        if (classes.length == 1) {
-          PsiClass curClass = classes[0];
-
-            if (bucks > 0) {
-              Stack<ClassAndOffsets> currentPath = new Stack<ClassAndOffsets>();
-              currentPath.add(new ClassAndOffsets(curClass, 0, 0));
-              currentPath.add(currentPath.peek());
-
-              while (currentPath.size() > 1) {
-                ClassAndOffsets classAndOffset = currentPath.pop();
-                int newComponentStart = classAndOffset.componentStart;
-                int lookupStart = classAndOffset.lookupStart;
-                curClass = currentPath.peek().clazz; //owner class
-
-                while (lookupStart <= className.length()) {
-                  int bucksIndex = className.indexOf("$", lookupStart);
-                  bucksIndex =  bucksIndex < 0 ? className.length(): bucksIndex;
-
-                  String component = className.substring(newComponentStart, bucksIndex);
-                  PsiClass inner = curClass.findInnerClassByName(component, false);
-
-                  lookupStart = bucksIndex + 1;
-                  if (inner == null) {
-                    continue;
-                  }
-
-                  currentPath.add(new ClassAndOffsets(inner, newComponentStart, lookupStart));
-
-                  newComponentStart = lookupStart;
-                  curClass = inner;
-                }
-
-                if (lookupStart == newComponentStart) {
-                  return curClass;
-                }
-              }
-
-              return null;
-
-            } else {
-              return curClass;
-            }
-          }
-        }
-      }
-
-    return null;
+      curClass = innerClass;
+    }
+    return curClass;
   }
 
   @NotNull
@@ -202,18 +185,5 @@ public class CoreJavaFileManager implements JavaFileManager {
 
   public void addToClasspath(VirtualFile root) {
     myClasspath.add(root);
-  }
-
-  private static class ClassAndOffsets {
-
-    final PsiClass clazz;
-    final int componentStart;
-    final int lookupStart;
-
-    ClassAndOffsets(PsiClass clazz, int componentStart, int lookupStart) {
-      this.clazz = clazz;
-      this.componentStart = componentStart;
-      this.lookupStart = lookupStart;
-    }
   }
 }
