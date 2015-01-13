@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util.diff.tools.util;
+package com.intellij.openapi.util.diff.util;
 
 import com.intellij.openapi.diff.impl.splitter.Transformation;
 import com.intellij.openapi.editor.Editor;
@@ -29,7 +29,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DividerPolygonUtil {
+public class DiffDividerDrawUtil {
   public static void paintSeparators(@NotNull Graphics2D gg,
                                      int width,
                                      @NotNull Editor editor1,

@@ -30,11 +30,8 @@ import com.intellij.openapi.util.diff.tools.util.*;
 import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.SimpleThreesideFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideContentPanel.DiffDivider;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideTextDiffViewer;
-import com.intellij.openapi.util.diff.util.CalledInAwt;
+import com.intellij.openapi.util.diff.util.*;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
-import com.intellij.openapi.util.diff.util.DiffUtil;
-import com.intellij.openapi.util.diff.util.Side;
-import com.intellij.openapi.util.diff.util.ThreeSide;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.AnimatedIcon;
@@ -523,7 +520,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
   }
 
-  private class MyDividerPaintable implements DividerPolygonUtil.DividerPaintable {
+  private class MyDividerPaintable implements DiffDividerDrawUtil.DividerPaintable {
     @NotNull private final Side mySide;
 
     public MyDividerPaintable(@NotNull Side side) {
@@ -563,7 +560,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       Editor editor2 = mySide.selectN(myEditors.get(1), myEditors.get(2));
 
       //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
-      DividerPolygonUtil.paintPolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
+      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
 
       myFoldingModel.paintOnDivider(gg, divider, mySide);
 
@@ -580,7 +577,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       EditorEx editor2 = myEditors.get(2);
 
       int width = editor1.getScrollPane().getVerticalScrollBar().getWidth();
-      DividerPolygonUtil.paintPolygonsOnScrollbar((Graphics2D)g, width, editor1, editor2, myPaintable);
+      DiffDividerDrawUtil.paintPolygonsOnScrollbar((Graphics2D)g, width, editor1, editor2, myPaintable);
 
       myFoldingModel.paintOnScrollbar((Graphics2D)g, width);
     }

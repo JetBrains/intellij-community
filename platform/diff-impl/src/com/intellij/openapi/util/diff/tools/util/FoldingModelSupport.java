@@ -17,10 +17,7 @@ import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.IntP
 import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.fragments.MergeLineFragment;
-import com.intellij.openapi.util.diff.util.BooleanGetter;
-import com.intellij.openapi.util.diff.util.DiffDrawUtil;
-import com.intellij.openapi.util.diff.util.Side;
-import com.intellij.openapi.util.diff.util.ThreeSide;
+import com.intellij.openapi.util.diff.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
@@ -428,7 +425,7 @@ public class FoldingModelSupport {
     // Highlighting
     //
 
-    protected class MyPaintable implements DividerPolygonUtil.DividerSeparatorPaintable {
+    protected class MyPaintable implements DiffDividerDrawUtil.DividerSeparatorPaintable {
       private final int myLeft;
       private final int myRight;
 
@@ -449,11 +446,11 @@ public class FoldingModelSupport {
       }
 
       public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {
-        DividerPolygonUtil.paintSeparators(gg, divider.getWidth(), myEditors[myLeft], myEditors[myRight], this);
+        DiffDividerDrawUtil.paintSeparators(gg, divider.getWidth(), myEditors[myLeft], myEditors[myRight], this);
       }
 
       public void paintOnScrollbar(@NotNull Graphics2D gg, int width) {
-        DividerPolygonUtil.paintSeparatorsOnScrollbar(gg, width, myEditors[myLeft], myEditors[myRight], this);
+        DiffDividerDrawUtil.paintSeparatorsOnScrollbar(gg, width, myEditors[myLeft], myEditors[myRight], this);
       }
     }
 

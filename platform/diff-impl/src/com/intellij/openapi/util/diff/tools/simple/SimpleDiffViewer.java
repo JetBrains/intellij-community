@@ -37,6 +37,7 @@ import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.SimpleFoldi
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
+import com.intellij.openapi.util.diff.util.DiffDividerDrawUtil;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.util.diff.util.DiffUtil.DocumentData;
@@ -745,14 +746,14 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private class MyDividerPainter implements DiffSplitter.Painter, DividerPolygonUtil.DividerPaintable {
+  private class MyDividerPainter implements DiffSplitter.Painter, DiffDividerDrawUtil.DividerPaintable {
     @Override
     public void paint(@NotNull Graphics g, @NotNull Component divider) {
       if (myEditor1 == null || myEditor2 == null) return;
       Graphics2D gg = getDividerGraphics(g, divider);
 
       //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
-      DividerPolygonUtil.paintPolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
+      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
 
       if (myFoldingModel != null) myFoldingModel.paintOnDivider(gg, divider);
 
