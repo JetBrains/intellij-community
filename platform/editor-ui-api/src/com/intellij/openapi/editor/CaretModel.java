@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,8 @@ public interface CaretModel {
   TextAttributes getTextAttributes();
 
   /**
-   * Tells whether multiple coexisting carets are supported by this CaretModel instance.
+   * Tells whether multiple coexisting carets are supported by this CaretModel instance. Multiple carets
+   * are not supported when the corresponding Editor instance is a facade over a Swing JTextArea component.
    */
   boolean supportsMultipleCarets();
 
