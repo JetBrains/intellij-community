@@ -145,9 +145,6 @@ public class GenerateEqualsHelper implements Runnable {
   private PsiMethod createEquals() throws IncorrectOperationException {
     @NonNls StringBuilder buffer = new StringBuilder();
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-    if (shouldAddOverrideAnnotation(myClass)) {
-      buffer.append("@Override\n");
-    }
     ArrayList<PsiField> equalsFields = new ArrayList<PsiField>();
     ContainerUtil.addAll(equalsFields, myEqualsFields);
     Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
@@ -165,7 +162,8 @@ public class GenerateEqualsHelper implements Runnable {
     nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, objectType).names;
     final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : "object";
     contextMap.put("baseParamName", objectBaseName);
-    contextMap.put("superHasEquals", superMethodExists(getEqualsSignature(myProject, myClass.getResolveScope())));
+    final MethodSignature equalsSignature = getEqualsSignature(myProject, myClass.getResolveScope());
+    contextMap.put("superHasEquals", superMethodExists(equalsSignature));
     contextMap.put("checkParameterWithInstanceof", myCheckParameterWithInstanceof);
 
     final String methodText = GenerationUtil
@@ -185,6 +183,10 @@ public class GenerateEqualsHelper implements Runnable {
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, styleSettings.GENERATE_FINAL_PARAMETERS);
 
     PsiMethod method = (PsiMethod)myCodeStyleManager.reformat(result);
+    final PsiMethod superEquals = MethodSignatureUtil.findMethodBySignature(myClass, equalsSignature, true);
+    if (superEquals != null) {
+      OverrideImplementUtil.annotateOnOverrideImplement(method, myClass, superEquals);
+    }
     method = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(method);
     return method;
   }
@@ -200,10 +202,6 @@ public class GenerateEqualsHelper implements Runnable {
   private PsiMethod createHashCode() throws IncorrectOperationException {
     @NonNls StringBuilder buffer = new StringBuilder();
 
-    if (shouldAddOverrideAnnotation(myClass)) {
-      buffer.append("@Override\n");
-    }
-
     final HashMap<String, Object> contextMap = new HashMap<String, Object>();
     contextMap.put("superHasHashCode", mySuperHasHashCode);
 
@@ -217,6 +215,10 @@ public class GenerateEqualsHelper implements Runnable {
     }
     catch (IncorrectOperationException e) {
       return null;
+    }
+    final PsiMethod superHashCode = MethodSignatureUtil.findMethodBySignature(myClass, getHashCodeSignature(), true);
+    if (superHashCode != null) {
+      OverrideImplementUtil.annotateOnOverrideImplement(hashCode, myClass, superHashCode);
     }
     hashCode = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(hashCode);
     return (PsiMethod)myCodeStyleManager.reformat(hashCode);
