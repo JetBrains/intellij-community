@@ -144,15 +144,22 @@ public class CoreJavaFileManager implements JavaFileManager {
 
   @Nullable
   private static PsiClass findClassInPsiFile(@NotNull String classNameWithInnerClassesDotSeparated, @NotNull PsiClassOwner file) {
-    final PsiClass[] classes = file.getClasses();
-    if (classes.length != 1) {
-      return null;
+    for (PsiClass topLevelClass : file.getClasses()) {
+      PsiClass candidate = findClassByTopLevelClass(classNameWithInnerClassesDotSeparated, topLevelClass);
+      if (candidate != null) {
+        return candidate;
+      }
     }
-    PsiClass curClass = classes[0];
+    return null;
+  }
+
+  @Nullable
+  private static PsiClass findClassByTopLevelClass(@NotNull String classNameWithInnerClassesDotSeparated, @NotNull PsiClass topLevelClass) {
     Iterator<String> segments = StringUtil.split(classNameWithInnerClassesDotSeparated, ".").iterator();
-    if (!segments.hasNext() || !segments.next().equals(curClass.getName())) {
+    if (!segments.hasNext() || !segments.next().equals(topLevelClass.getName())) {
       return null;
     }
+    PsiClass curClass = topLevelClass;
     while (segments.hasNext()) {
       String innerClassName = segments.next();
       PsiClass innerClass = curClass.findInnerClassByName(innerClassName, false);

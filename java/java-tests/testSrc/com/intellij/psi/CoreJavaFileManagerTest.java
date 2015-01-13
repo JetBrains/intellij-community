@@ -161,6 +161,19 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     assertCannotFind(fileWithEmptyName, ".foo");
   }
 
+  public void testSeveralClassesInOneFile() throws Exception {
+    CoreJavaFileManager manager = configureManager("package foo;\n\n" +
+                                                   "public class One {}\n" +
+                                                   "class Two {}\n" +
+                                                   "class Three {}", "One");
+
+    assertCanFind(manager, "foo.One");
+
+    //NOTE: this is unsupported
+    assertCannotFind(manager, "foo.Two");
+    assertCannotFind(manager, "foo.Three");
+  }
+
   @NotNull
   private CoreJavaFileManager configureManager(@Language("JAVA") @NotNull String text, @NotNull String className) throws Exception {
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
