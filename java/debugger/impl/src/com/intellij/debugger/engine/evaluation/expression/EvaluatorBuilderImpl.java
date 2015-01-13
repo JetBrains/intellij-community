@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -986,15 +986,18 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
 
       boolean defaultInterfaceMethod = false;
+      boolean mustBeVararg = false;
 
       if (psiMethod != null) {
         processBoxingConversions(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
         argumentEvaluators = wrapVarargs(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
         defaultInterfaceMethod = psiMethod.hasModifierProperty(PsiModifier.DEFAULT);
+        mustBeVararg = psiMethod.isVarArgs();
       }
 
       myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(),
-                                     psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators, defaultInterfaceMethod);
+                                     psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators,
+                                     defaultInterfaceMethod, mustBeVararg);
     }
 
     @Override
