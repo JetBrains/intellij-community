@@ -3,7 +3,10 @@ package com.intellij.openapi.util.diff.tools.util.twoside;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -18,11 +21,11 @@ import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.contents.EmptyContent;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.util.*;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport;
 import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
+import com.intellij.openapi.util.diff.util.*;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,14 +138,16 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   protected List<EditorEx> createEditors() {
+    boolean[] forceReadOnly = checkForceReadOnly();
+
     EditorEx editor1 = null;
     EditorEx editor2 = null;
     if (myActualContent1 != null) {
-      editor1 = DiffUtil.createEditor(myActualContent1.getDocument(), myProject, false, true);
+      editor1 = DiffUtil.createEditor(myActualContent1.getDocument(), myProject, forceReadOnly[0], true);
       DiffUtil.configureEditor(editor1, myActualContent1, myProject);
     }
     if (myActualContent2 != null) {
-      editor2 = DiffUtil.createEditor(myActualContent2.getDocument(), myProject, false, true);
+      editor2 = DiffUtil.createEditor(myActualContent2.getDocument(), myProject, forceReadOnly[1], true);
       DiffUtil.configureEditor(editor2, myActualContent2, myProject);
     }
     if (editor1 != null && editor2 != null) {

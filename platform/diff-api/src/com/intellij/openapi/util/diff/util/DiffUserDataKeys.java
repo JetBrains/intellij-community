@@ -16,6 +16,7 @@ public interface DiffUserDataKeys {
   Key<ScrollToPolicy> SCROLL_TO_CHANGE = Key.create("Diff.ScrollToChange");
   Key<LogicalPosition[]> EDITORS_CARET_POSITION = Key.create("Diff.EditorsCaretPosition");
   Key<String> HELP_ID = Key.create("Diff.HelpId");
+  Key<boolean[]> FORCE_READ_ONLY_CONTENTS = Key.create("Diff.ForceReadOnlyContents");
 
   //
   // DiffContext
@@ -38,4 +39,5 @@ public interface DiffUserDataKeys {
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
   Key<Object> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");
+  Key<Object> FORCE_READ_ONLY = Key.create("Diff.ForceReadOnly");
 }

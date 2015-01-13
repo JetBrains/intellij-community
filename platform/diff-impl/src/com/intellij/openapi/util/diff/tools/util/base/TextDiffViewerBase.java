@@ -9,9 +9,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
@@ -20,9 +17,7 @@ import com.intellij.openapi.util.diff.util.CalledInAwt;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.ui.ToggleActionButton;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,9 +25,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.List;
 
 public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
@@ -129,6 +123,24 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
   //
   // Helpers
   //
+
+  @NotNull
+  protected boolean[] checkForceReadOnly() {
+    int contentCount = myRequest.getContents().length;
+    boolean[] result = new boolean[contentCount];
+
+    if (DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.FORCE_READ_ONLY) != null) {
+      Arrays.fill(result, true);
+      return result;
+    }
+
+    boolean[] data = myRequest.getUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS);
+    if (data != null && data.length == contentCount) {
+      return data;
+    }
+
+    return result;
+  }
 
   protected static int getLineCount(@NotNull Document document) {
     return DiffUtil.getLineCount(document);

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
 import com.intellij.openapi.util.diff.requests.NoDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
 import com.intellij.openapi.util.diff.util.CalledInBackground;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestPresentable;
 import org.jetbrains.annotations.Contract;
@@ -57,6 +58,12 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     myProject = project;
 
     init();
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+    myContextDataHolder.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
   }
 
   //

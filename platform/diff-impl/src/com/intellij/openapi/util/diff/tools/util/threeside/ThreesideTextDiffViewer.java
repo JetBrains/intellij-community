@@ -124,10 +124,12 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   protected List<EditorEx> createEditors() {
+    boolean[] forceReadOnly = checkForceReadOnly();
     List<EditorEx> editors = new ArrayList<EditorEx>(3);
 
-    for (DocumentContent content : myActualContents) {
-      EditorEx editor = DiffUtil.createEditor(content.getDocument(), myProject, false, true);
+    for (int i = 0; i < myActualContents.size(); i++) {
+      DocumentContent content = myActualContents.get(i);
+      EditorEx editor = DiffUtil.createEditor(content.getDocument(), myProject, forceReadOnly[i], true);
       DiffUtil.configureEditor(editor, content, myProject);
       editors.add(editor);
     }

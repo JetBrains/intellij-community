@@ -22,23 +22,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.contents.DocumentContentWrapper;
 import com.intellij.openapi.util.diff.impl.DiffContentFactory;
 import com.intellij.openapi.util.diff.impl.DiffRequestFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.DataFlavor;
-
-// TODO: force read-only
 public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @Nullable
   private static Editor getEditor(@NotNull AnActionEvent e) {
@@ -75,7 +70,11 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
 
     String title = DiffBundle.message("diff.clipboard.vs.editor.dialog.title");
 
-    return new SimpleDiffRequest(title, content1, content2, title1, title2);
+    SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+    if (editor.isViewer()) {
+      request.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{false, true});
+    }
+    return request;
   }
 
   @NotNull
