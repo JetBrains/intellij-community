@@ -94,6 +94,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testEqualsEnumConstant() throws Throwable { doTest(); }
   public void testEnumConstantNotNull() throws Throwable { doTest(); }
   public void testEqualsConstant() throws Throwable { doTest(); }
+  public void testDontSaveTypeValue() { doTest(); }
   public void testFinalLoopVariableInstanceof() throws Throwable { doTest(); }
   public void testGreaterIsNotEquals() throws Throwable { doTest(); }
   public void testNotGreaterIsNotEquals() throws Throwable { doTest(); }

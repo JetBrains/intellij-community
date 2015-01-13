@@ -271,6 +271,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!canBeReused(dfaValue) && !(((DfaBoxedValue)dfaValue).getWrappedValue() instanceof DfaConstValue)) {
       return null;
     }
+    if (dfaValue instanceof DfaTypeValue) {
+      return null;
+    }
     EqClass aClass = new EqClass(myFactory);
     aClass.add(dfaValue.getID());
 
