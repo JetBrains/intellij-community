@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -70,7 +71,7 @@ public class GitUpdateOptionsPanel {
   /**
    * Save configuration to settings object
    */
-  public void applyTo(GitVcsSettings settings) {
+  public void applyTo(@NotNull GitVcsSettings settings) {
     settings.setUpdateType(getUpdateType());
     settings.setUpdateChangesPolicy(updateSaveFilesPolicy());
   }
@@ -78,7 +79,7 @@ public class GitUpdateOptionsPanel {
   /**
    * Update panel according to settings
    */
-  public void updateFrom(GitVcsSettings settings) {
+  public void updateFrom(@NotNull GitVcsSettings settings) {
     switch (settings.getUpdateType()) {
       case REBASE:
         myForceRebaseRadioButton.setSelected(true);
