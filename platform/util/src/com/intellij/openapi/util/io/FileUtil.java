@@ -123,11 +123,6 @@ public class FileUtil extends FileUtilRt {
   public static ThreeState isAncestorThreeState(@NotNull String ancestor, @NotNull String file, boolean strict) {
     String ancestorPath = toCanonicalPath(ancestor);
     String filePath = toCanonicalPath(file);
-
-    if (ancestorPath == null || filePath == null) {
-      return ThreeState.NO;
-    }
-
     return startsWith(filePath, ancestorPath, strict, SystemInfo.isFileSystemCaseSensitive, true);
   }
 
