@@ -21,9 +21,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.diff.DiffDialogHints;
+import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.comparison.ComparisonUtil;
 import com.intellij.openapi.util.diff.contents.DiffContent;
@@ -727,6 +729,34 @@ public class DiffUtil {
 
     window.setVisible(false);
     window.dispose();
+  }
+
+  //
+  // UserData
+  //
+
+  public static <T> T getUserData(@Nullable DiffRequest request, @Nullable FrameDiffTool.DiffContext context, @NotNull Key<T> key) {
+    if (request != null) {
+      T data = request.getUserData(key);
+      if (data != null) return data;
+    }
+    if (context != null) {
+      T data = context.getUserData(key);
+      if (data != null) return data;
+    }
+    return null;
+  }
+
+  public static <T> T getUserData(@Nullable FrameDiffTool.DiffContext context, @Nullable DiffRequest request, @NotNull Key<T> key) {
+    if (context != null) {
+      T data = context.getUserData(key);
+      if (data != null) return data;
+    }
+    if (request != null) {
+      T data = request.getUserData(key);
+      if (data != null) return data;
+    }
+    return null;
   }
 
   //

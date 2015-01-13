@@ -615,6 +615,9 @@ public abstract class DiffRequestProcessor implements Disposable {
           return "reference.dialogs.diff.file";
         }
       }
+      else if (DiffDataKeys.DIFF_CONTEXT.is(dataId)) {
+        return myContext;
+      }
 
       Object data = myState.getData(dataId);
       if (data != null) return data;
