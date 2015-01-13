@@ -835,7 +835,7 @@ public class BuildManager implements ApplicationComponent{
     return projectTaskQueue.submit(new Callable<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>() {
       public Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> call() throws Exception {
         if (project.isDisposed()) {
-          throw new Exception("project " + project.getName()+ " already disposed");
+          return null;
         }
         final RequestFuture<PreloadedProcessMessageHandler> future = new RequestFuture<PreloadedProcessMessageHandler>(new PreloadedProcessMessageHandler(), UUID.randomUUID(), new CancelBuildSessionAction<PreloadedProcessMessageHandler>());
         try {
