@@ -150,8 +150,14 @@
 
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
         implementation="org.jetbrains.idea.svn.difftool.SvnChangeDiffRequestProvider"/>
+    <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
+        implementation="org.jetbrains.idea.svn.difftool.SvnPhantomChangeDiffRequestProvider"/>
+    <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
+        implementation="org.jetbrains.idea.svn.difftool.SvnTreeConflictDiffRequestProvider"/>
 
     <openapi.util.diff.api.DiffTool implementation="org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffTool"/>
+    <openapi.util.diff.api.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnPhantomChangeDiffRequestProvider$SvnPhantomDiffTool"/>
+    <openapi.util.diff.api.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnTreeConflictDiffRequestProvider$SvnTreeConflictDiffTool"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"
                         serviceImplementation="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"/>
   </extensions>
