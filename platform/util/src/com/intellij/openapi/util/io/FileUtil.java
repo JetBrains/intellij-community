@@ -107,6 +107,18 @@ public class FileUtil extends FileUtilRt {
     return !ThreeState.NO.equals(isAncestorThreeState(ancestor, file, strict));
   }
 
+  /**
+   * Checks if the {@code ancestor} is an ancestor of the {@code file}, and if it is an immediate parent or not.
+   *
+   * @param ancestor supposed ancestor.
+   * @param file     supposed descendant.
+   * @param strict   if {@code false}, the file can be ancestor of itself,
+   *                 i.e. the method returns {@code ThreeState.YES} if {@code ancestor} equals to {@code file}.
+   *
+   * @return {@code ThreeState.YES} if ancestor is an immediate parent of the file,
+   *         {@code ThreeState.UNSURE} if ancestor is not immediate parent of the file,
+   *         {@code ThreeState.NO} if ancestor is not a parent of the file at all.
+   */
   @NotNull
   public static ThreeState isAncestorThreeState(@NotNull String ancestor, @NotNull String file, boolean strict) {
     String ancestorPath = toCanonicalPath(ancestor);
@@ -127,9 +139,6 @@ public class FileUtil extends FileUtilRt {
     return !ThreeState.NO.equals(startsWith(path, start, false, caseSensitive, false));
   }
 
-  /**
-   * @return ThreeState.YES if same path or immediate parent
-   */
   @NotNull
   private static ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean caseSensitive,
                                        boolean checkImmediateParent) {
