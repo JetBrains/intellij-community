@@ -29,6 +29,7 @@ import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.classMembers.AbstractMemberInfoModel;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -47,6 +48,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author dsl
@@ -236,11 +238,13 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   @Override
   protected int getNextStep(int step) {
     if (step + 1 == getNonNullStepCode()) {
-      for (MemberInfo classField : myClassFields) {
-        if (classField.isChecked()) {
-          PsiField field = (PsiField)classField.getMember();
-          if (!(field.getType() instanceof PsiPrimitiveType)) {
-            return getNonNullStepCode();
+      if (templateDependsOnFieldsNullability()) {
+        for (MemberInfo classField : myClassFields) {
+          if (classField.isChecked()) {
+            PsiField field = (PsiField)classField.getMember();
+            if (!(field.getType() instanceof PsiPrimitiveType)) {
+              return getNonNullStepCode();
+            }
           }
         }
       }
@@ -248,6 +252,14 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
 
     return super.getNextStep(step);
+  }
+
+  private static boolean templateDependsOnFieldsNullability() {
+    final EqualsHashCodeTemplatesManager templatesManager = EqualsHashCodeTemplatesManager.getInstance();
+    final String notNullCheckPresent = "\\.notNull[^\\w]";
+    final Pattern pattern = Pattern.compile(notNullCheckPresent);
+    return pattern.matcher(templatesManager.getDefaultEqualsTemplate().getTemplate()).find() ||
+           pattern.matcher(templatesManager.getDefaultHashcodeTemplate().getTemplate()).find();
   }
 
   @Override
