@@ -113,7 +113,6 @@ public class ExternalDiffSettings implements PersistentStateComponent<ExternalDi
 
   public void setDiffParameters(@NotNull String path) {
     myState.DIFF_PARAMETERS = path;
-    setProperty(DiffManagerImpl.FILES_TOOL, path);
   }
 
 
