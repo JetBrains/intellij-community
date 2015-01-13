@@ -265,6 +265,7 @@ public class FoldingModelSupport {
 
     @Nullable
     protected static FoldRegion addFolding(@NotNull final EditorEx editor, int start, int end, final boolean expanded) {
+      assert ApplicationManager.getApplication().isReadAccessAllowed();
       if (end - start < 2) return null;
 
       DocumentEx document = editor.getDocument();
@@ -337,6 +338,7 @@ public class FoldingModelSupport {
     }
 
     protected void updateLineNumbers() {
+      assert ApplicationManager.getApplication().isReadAccessAllowed();
       for (FoldedBlock folding : myFoldings) {
         folding.updateLineNumbers();
       }
@@ -508,6 +510,7 @@ public class FoldingModelSupport {
 
     @NotNull
     private List<FoldedRange> getFoldedRanges(int index) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       List<FoldedRange> ranges = new ArrayList<FoldedRange>(myFoldings.size());
       for (FoldedBlock folding : myFoldings) {
         FoldRegion region = folding.getRegion(index);
