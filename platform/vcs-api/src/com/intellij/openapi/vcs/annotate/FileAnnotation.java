@@ -98,7 +98,8 @@ public abstract class FileAnnotation {
   public abstract VcsRevisionNumber getCurrentRevision();
 
   /**
-   * Get all revisions that are mentioned in the annotations
+   * Get all revisions that are mentioned in the annotations.
+   * order: from newest to oldest
    *
    * @return the list of revisions that are mentioned in annotations. Or null
    *   if before/after popups cannot be suported by the VCS system.
