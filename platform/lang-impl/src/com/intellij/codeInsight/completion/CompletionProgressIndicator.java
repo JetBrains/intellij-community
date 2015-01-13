@@ -598,7 +598,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @Override
   public boolean isAutopopupCompletion() {
-    return myHandler.autopopup;
+    return myParameters.getInvocationCount() == 0;
   }
 
   @NotNull
