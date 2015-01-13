@@ -57,6 +57,7 @@ public class ElementFactory {
     ce.setDeprecated(clazz.isDeprecated());
     ce.setException(PsiAdapter.isExceptionClass(clazz));
     ce.setAbstract(clazz.hasModifierProperty(PsiModifier.ABSTRACT));
+    ce.setTypeParams(clazz.getTypeParameters().length);
 
     return ce;
   }

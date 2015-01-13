@@ -36,8 +36,9 @@ public class ClassElement {
     private boolean _enum;
     private boolean exception;
     private boolean _abstract;
+  private int myTypeParams;
 
-    /**
+  /**
      * Does the class implement the given interface?
      * <p/>
      * The name should <b>not</b> be the qualified name.
@@ -168,5 +169,13 @@ public class ClassElement {
                 ", exception=" + exception +
                 ", abstract=" + _abstract +
                 "}";
+    }
+
+    public void setTypeParams(int typeParams) {
+      myTypeParams = typeParams;
+    }
+  
+    public int getTypeParams() {
+      return myTypeParams;
     }
 }

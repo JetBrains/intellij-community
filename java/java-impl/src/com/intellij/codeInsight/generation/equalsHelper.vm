@@ -4,7 +4,22 @@
   #if ($settings.generateFinalLocals)
   final ##
   #end
-  $classname $classInstanceName = ($classname)$paramName;
+  #set($wildcards = "#generateWildcards()")
+  $classname$wildcards $classInstanceName = ($classname$wildcards)$paramName;
+#end
+##
+#macro(generateWildcards)
+  #if ($class.typeParams > 0)
+  <##
+    #set( $arr = [1..$class.typeParams] )
+    #foreach( $i in $arr )
+      #if ($i > 1)
+      , ##
+      #end
+      ?##
+    #end
+  >##
+  #end
 #end
 ##
 #macro(addEqualsPrologue)
