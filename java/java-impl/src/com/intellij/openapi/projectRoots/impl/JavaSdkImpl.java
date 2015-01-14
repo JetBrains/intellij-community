@@ -18,6 +18,7 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -235,7 +236,16 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
-    FileChooserDescriptor descriptor = super.getHomeChooserDescriptor();
+    final FileChooserDescriptor baseDescriptor = super.getHomeChooserDescriptor();
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(baseDescriptor) {
+      @Override
+      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+        if (files.length > 0 && JrtFileSystem.isModularJdk(files[0].getPath()) && !JrtFileSystem.isSupported()) {
+          throw new Exception(LangBundle.message("jrt.not.available.message"));
+        }
+        baseDescriptor.validateSelectedFiles(files);
+      }
+    };
     descriptor.putUserData(KEY, Boolean.TRUE);
     return descriptor;
   }
@@ -255,7 +265,13 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    return checkForJdk(new File(path));
+    if (!checkForJdk(new File(path))) {
+      return false;
+    }
+    if (JrtFileSystem.isModularJdk(path) && !JrtFileSystem.isSupported()) {
+      return false;
+    }
+    return true;
   }
 
   @Override
@@ -460,17 +476,22 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static List<VirtualFile> findClasses(File file, boolean isJre) {
-    List<VirtualFile> result = ContainerUtil.newArrayList();
+    List<File> roots = JavaSdkUtil.getJdkClassesRoots(file, isJre);
+    List<String> urls = ContainerUtil.newArrayListWithCapacity(roots.size() + 1);
+    if (JrtFileSystem.isModularJdk(file.getPath())) {
+      urls.add(VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(file.getPath()) + JrtFileSystem.SEPARATOR));
+    }
+    for (File root : roots) {
+      urls.add(VfsUtil.getUrlForLibraryRoot(root));
+    }
 
-    List<File> rootFiles = JavaSdkUtil.getJdkClassesRoots(file, isJre);
-    for (File child : rootFiles) {
-      String url = VfsUtil.getUrlForLibraryRoot(child);
+    List<VirtualFile> result = ContainerUtil.newArrayListWithCapacity(urls.size());
+    for (String url : urls) {
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {
         result.add(vFile);
       }
     }
-
     return result;
   }
 
