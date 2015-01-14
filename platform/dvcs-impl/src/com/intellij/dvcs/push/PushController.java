@@ -88,8 +88,12 @@ public class PushController implements Disposable {
     myPushLog.getTree().addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
+        // when user starts edit we need to force disable ok actions, because tree.isEditing() still false;
+        // after editing completed okActions will be enabled automatically by dialog validation
         Boolean isEditMode = (Boolean)evt.getNewValue();
-        myDialog.enableOkActions(!isEditMode && isPushAllowed());
+        if (isEditMode) {
+          myDialog.disableOkActions();
+        }
       }
     });
     startLoadingCommits();
@@ -234,7 +238,7 @@ public class PushController implements Disposable {
 
       @Override
       public void onSelectionChanged(boolean isSelected) {
-        myDialog.enableOkActions(isPushAllowed());
+        myDialog.updateOkActions();
         if (isSelected) {
           boolean forceLoad = myExcludedRepositoryRoots.remove(model.getRepository().getRoot().getPath());
           if (!model.hasCommitInfo() && (forceLoad || !model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories())) {
@@ -399,7 +403,7 @@ public class PushController implements Disposable {
             if (shouldBeSelected) { // never remove selection; initially all checkboxes are not selected
               node.setChecked(true);
             }
-            myDialog.enableOkActions(isPushAllowed());
+            myDialog.updateOkActions();
           }
         });
       }

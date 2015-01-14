@@ -52,7 +52,7 @@ public class VcsPushDialog extends DialogWrapper {
     myListPanel = myController.getPushPanelLog();
 
     init();
-    enableOkActions(myController.isPushAllowed());
+    updateOkActions();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
     setTitle("Push Commits");
@@ -78,7 +78,7 @@ public class VcsPushDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    enableOkActions(myController.isPushAllowed());
+    updateOkActions();
     return null;
   }
 
@@ -101,6 +101,10 @@ public class VcsPushDialog extends DialogWrapper {
     return actions.toArray(new Action[actions.size()]);
   }
 
+  private boolean canPush() {
+    return myController.isPushAllowed();
+  }
+
   private boolean canForcePush() {
     return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null;
   }
@@ -121,11 +125,13 @@ public class VcsPushDialog extends DialogWrapper {
   protected String getHelpId() {
     return ID;
   }
-  public void enableOkActions(boolean isEnabled) {
-    myPushAction.setEnabled(isEnabled);
+
+  public void updateOkActions() {
+    boolean canPush = canPush();
+    myPushAction.setEnabled(canPush);
     if (myForcePushAction != null) {
       boolean canForcePush = canForcePush();
-      myForcePushAction.setEnabled(isEnabled && canForcePush);
+      myForcePushAction.setEnabled(canPush && canForcePush);
       String tooltip = null;
       if (!canForcePush) {
         PushTarget target = myController.getProhibitedTarget();
@@ -135,6 +141,10 @@ public class VcsPushDialog extends DialogWrapper {
       }
       myForcePushAction.putValue(Action.SHORT_DESCRIPTION, tooltip);
     }
+  }
+
+  public void disableOkActions() {
+    myPushAction.setEnabled(false);
   }
 
   @Nullable
