@@ -54,72 +54,35 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     int y1 = (start1 + end1) / 2;
     int y2 = (start2 + end2) / 2;
 
-    int[] xPoints;
-    int[] yPoints;
+    int[] xPoints1;
+    int[] yPoints1;
+    int[] xPoints2;
+    int[] yPoints2;
 
     if (Math.abs(x2 - x1) < Math.abs(y2 - y1)) {
-      xPoints = new int[6];
-      yPoints = new int[6];
-
       int dx = Y_STEP;
       int dy = Y_STEP_2;
       if (y2 < y1) {
-        xPoints[0] = x1;
-        yPoints[0] = y1 - Y_STEP;
-
-        xPoints[1] = x2 - dx;
-        yPoints[1] = y2 - Y_STEP + dy;
-
-        xPoints[2] = x2;
-        yPoints[2] = y2 - Y_STEP;
-
-        xPoints[3] = x2;
-        yPoints[3] = y2 + Y_STEP;
-
-        xPoints[4] = x1 + dx;
-        yPoints[4] = y1 + Y_STEP - dy;
-
-        xPoints[5] = x1;
-        yPoints[5] = y1 + Y_STEP;
+        xPoints1 = new int[]{x1, x2 - dx, x2};
+        yPoints1 = new int[]{y1 - Y_STEP, y2 - Y_STEP + dy, y2 - Y_STEP};
+        xPoints2 = new int[]{x1, x1 + dx, x2};
+        yPoints2 = new int[]{y1 + Y_STEP, y1 + Y_STEP - dy, y2 + Y_STEP};
       }
       else {
-        xPoints[0] = x1;
-        yPoints[0] = y1 - Y_STEP;
-
-        xPoints[1] = x1 + dx;
-        yPoints[1] = y1 - Y_STEP + dy;
-
-        xPoints[2] = x2;
-        yPoints[2] = y2 - Y_STEP;
-
-        xPoints[3] = x2;
-        yPoints[3] = y2 + Y_STEP;
-
-        xPoints[4] = x2 - dx;
-        yPoints[4] = y2 + Y_STEP - dy;
-
-        xPoints[5] = x1;
-        yPoints[5] = y1 + Y_STEP;
+        xPoints1 = new int[]{x1, x1 + dx, x2};
+        yPoints1 = new int[]{y1 - Y_STEP, y1 - Y_STEP + dy, y2 - Y_STEP};
+        xPoints2 = new int[]{x1, x2 - dx, x2};
+        yPoints2 = new int[]{y1 + Y_STEP, y2 + Y_STEP - dy, y2 + Y_STEP};
       }
     }
     else {
-      xPoints = new int[4];
-      yPoints = new int[4];
-
-      xPoints[0] = x1;
-      yPoints[0] = y1 - Y_STEP;
-
-      xPoints[1] = x2;
-      yPoints[1] = y2 - Y_STEP;
-
-      xPoints[2] = x2;
-      yPoints[2] = y2 + Y_STEP;
-
-      xPoints[3] = x1;
-      yPoints[3] = y1 + Y_STEP;
+      xPoints1 = new int[]{x1, x2};
+      yPoints1 = new int[]{y1 - Y_STEP, y2 - Y_STEP};
+      xPoints2 = new int[]{x1, x2};
+      yPoints2 = new int[]{y1 + Y_STEP, y2 + Y_STEP};
     }
 
-    paintLines(g, xPoints, yPoints);
+    paintLine(g, xPoints1, yPoints1, xPoints2, yPoints2);
   }
 
   /*
@@ -165,13 +128,15 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     try {
       int halfHeight = lineHeight / 2;
 
-      int count = ((x2 - x1) / X_STEP + 3) * 2;
+      int count = ((x2 - x1) / X_STEP + 3);
 
-      int[] xPoints = new int[count];
-      int[] yPoints = new int[count];
+      int[] xPoints1 = new int[count];
+      int[] yPoints1 = new int[count];
+      int[] xPoints2 = new int[count];
+      int[] yPoints2 = new int[count];
 
       int shift = Math.max(x1 - shiftX / X_STEP, 0);
-      for (int index = 0; index * 2 < count; index++) {
+      for (int index = 0; index < count; index++) {
         int absIndex = index + shift;
 
         int xPos = absIndex * X_STEP + shiftX;
@@ -191,47 +156,48 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
           yPos2 = halfHeight + shiftY + Y_STEP_2;
         }
 
-        setPointPair(xPoints, yPoints, index, count, xPos, yPos1, yPos2);
+        xPoints1[index] = xPos;
+        yPoints1[index] = yPos1;
+        xPoints2[index] = xPos;
+        yPoints2[index] = yPos2;
       }
 
-      paintLines(g, xPoints, yPoints);
+      paintLine(g, xPoints1, yPoints1, xPoints2, yPoints2);
     }
     finally {
       gg.dispose();
     }
   }
 
-  private static void setPointPair(@NotNull int[] xPoints, @NotNull int[] yPoints,
-                                   int index, int count,
-                                   int x, int y1, int y2) {
-    xPoints[index] = x;
-    xPoints[count - index - 1] = x;
-    yPoints[index] = y1;
-    yPoints[count - index - 1] = y2;
-  }
-
-  private static void paintLines(@NotNull Graphics g, @NotNull int[] xPoints, @NotNull int[] yPoints) {
+  private static void paintLine(@NotNull Graphics g,
+                                @NotNull int[] xPoints1, @NotNull int[] yPoints1,
+                                @NotNull int[] xPoints2, @NotNull int[] yPoints2) {
     // TODO: disable AA
-    assert xPoints.length == yPoints.length;
-    assert xPoints.length % 2 == 0;
-
-    int count = xPoints.length;
     Color innerColor = getInnerColor();
     Color outerColor = getOuterColor();
 
     if (innerColor != null) {
       g.setColor(innerColor);
-      g.fillPolygon(xPoints, yPoints, count);
+      int[] xPoints = mergeReverse(xPoints1, xPoints2);
+      int[] yPoints = mergeReverse(yPoints1, yPoints2);
+
+      g.fillPolygon(xPoints, yPoints, xPoints.length);
     }
     if (outerColor != null) {
       g.setColor(outerColor);
-      g.drawPolyline(xPoints, yPoints, count / 2);
-      for (int i = 0; i * 2 < count; i++) {
-        xPoints[i] = xPoints[count - i - 1];
-        yPoints[i] = yPoints[count - i - 1];
-      }
-      g.drawPolyline(xPoints, yPoints, count / 2);
+      g.drawPolyline(xPoints1, yPoints1, xPoints1.length);
+      g.drawPolyline(xPoints2, yPoints2, xPoints2.length);
     }
+  }
+
+  @NotNull
+  private static int[] mergeReverse(@NotNull int[] a1, @NotNull int[] a2) {
+    int[] result = new int[a1.length + a2.length];
+    System.arraycopy(a1, 0, result, 0, a1.length);
+    for (int i = 0; i < a2.length; i++) {
+      result[result.length - i - 1] = a2[i];
+    }
+    return result;
   }
 
   @Nullable
