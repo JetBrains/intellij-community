@@ -88,8 +88,12 @@ public class PushController implements Disposable {
     myPushLog.getTree().addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
+        // when user starts edit we need to force disable ok actions, because tree.isEditing() still false;
+        // after editing completed okActions will be enabled automatically by dialog validation
         Boolean isEditMode = (Boolean)evt.getNewValue();
-        myDialog.enableOkActions(!isEditMode && isPushAllowed());
+        if (isEditMode) {
+          myDialog.disableOkActions();
+        }
       }
     });
     startLoadingCommits();
@@ -234,7 +238,7 @@ public class PushController implements Disposable {
 
       @Override
       public void onSelectionChanged(boolean isSelected) {
-        myDialog.enableOkActions(isPushAllowed());
+        myDialog.updateOkActions();
         if (isSelected) {
           boolean forceLoad = myExcludedRepositoryRoots.remove(model.getRepository().getRoot().getPath());
           if (!model.hasCommitInfo() && (forceLoad || !model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories())) {
@@ -277,21 +281,21 @@ public class PushController implements Disposable {
     return names;
   }
 
-  public boolean isPushAllowed() {
+  public boolean isPushAllowed(final boolean force) {
     JTree tree = myPushLog.getTree();
     return !tree.isEditing() &&
            ContainerUtil.exists(myPushSupports, new Condition<PushSupport<?, ?, ?>>() {
              @Override
              public boolean value(PushSupport<?, ?, ?> support) {
-               return isPushAllowed(support);
+               return isPushAllowed(support, force);
              }
            });
   }
 
-  private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport) {
+  private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport, boolean force) {
     Collection<RepositoryNode> nodes = getNodesForSupport(pushSupport);
     if (hasSomethingToPush(nodes)) return true;
-    if (hasCheckedNodesWithContent(nodes, myDialog.getAdditionalOptionValue(pushSupport) != null)) {
+    if (hasCheckedNodesWithContent(nodes, force || myDialog.getAdditionalOptionValue(pushSupport) != null)) {
       return !pushSupport.getRepositoryManager().isSyncEnabled() || allNodesAreLoaded(nodes);
     }
     return false;
@@ -399,7 +403,7 @@ public class PushController implements Disposable {
             if (shouldBeSelected) { // never remove selection; initially all checkboxes are not selected
               node.setChecked(true);
             }
-            myDialog.enableOkActions(isPushAllowed());
+            myDialog.updateOkActions();
           }
         });
       }

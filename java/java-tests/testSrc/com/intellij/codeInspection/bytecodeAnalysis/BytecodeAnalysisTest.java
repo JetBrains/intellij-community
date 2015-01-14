@@ -194,10 +194,12 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void checkCompoundId(Method method, PsiMethod psiMethod, boolean noKey) throws IOException {
+    /*
     System.out.println();
     System.out.println(method.internalClassName);
     System.out.println(method.methodName);
     System.out.println(method.methodDesc);
+    */
 
 
     HKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, Direction.Out, myMessageDigest);

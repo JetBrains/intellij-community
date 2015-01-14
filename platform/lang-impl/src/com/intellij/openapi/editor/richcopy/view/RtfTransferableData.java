@@ -77,8 +77,8 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     return "US-ASCII";
   }
 
-  private static void addFontSize(StringBuilder buffer, int fontSize) {
-    buffer.append("\\fs").append(fontSize * 2);
+  private static void addFontSize(StringBuilder buffer, float fontSize) {
+    buffer.append("\\fs").append(Math.round(fontSize * 2));
   }
 
   private static class MyVisitor implements MarkupHandler {
@@ -88,7 +88,7 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     private final int myMaxLength;
 
     private final int myDefaultBackgroundId;
-    private final int myFontSize;
+    private final float myFontSize;
     private int myForegroundId = -1;
     private int myFontNameId   = -1;
     private int myFontStyle    = -1;

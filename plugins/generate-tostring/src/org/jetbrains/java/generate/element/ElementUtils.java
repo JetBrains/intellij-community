@@ -33,16 +33,23 @@ public class ElementUtils {
     /**
      * Gets the list of members to be put in the VelocityContext.
      *
-     * @param members a list of {@link com.intellij.psi.PsiMember} objects.
+     * @param members a list of {@link PsiMember} objects.
+     * @param selectedNotNullMembers
+     * @param useAccessors
      * @return a filtered list of only the fields as {@link FieldElement} objects.
      */
-    public static List<FieldElement> getOnlyAsFieldElements(Collection<? extends PsiMember> members) {
+    public static List<FieldElement> getOnlyAsFieldElements(Collection<? extends PsiMember> members,
+                                                            Collection<? extends PsiMember> selectedNotNullMembers,
+                                                            boolean useAccessors) {
         List<FieldElement> fieldElementList = new ArrayList<FieldElement>();
 
         for (PsiMember member : members) {
             if (member instanceof PsiField) {
                 PsiField field = (PsiField) member;
-                FieldElement fe = ElementFactory.newFieldElement(field);
+                FieldElement fe = ElementFactory.newFieldElement(field, useAccessors);
+                if (selectedNotNullMembers.contains(member)) {
+                    fe.setNotNull(true);
+                }
                 fieldElementList.add(fe);
             }
         }
@@ -75,16 +82,18 @@ public class ElementUtils {
      *
      * @param members                  a list of {@link PsiMember} objects.
      * @param selectedNotNullMembers  a list of @NotNull objects
+     * @param useAccessors
      * @return a filtered list of only the methods as a {@link FieldElement} or {@link MethodElement} objects.
      */
     public static List<Element> getOnlyAsFieldAndMethodElements(Collection<? extends PsiMember> members,
-                                                                Collection<? extends PsiMember> selectedNotNullMembers) {
+                                                                Collection<? extends PsiMember> selectedNotNullMembers,
+                                                                boolean useAccessors) {
         List<Element> elementList = new ArrayList<Element>();
 
         for (PsiMember member : members) {
             AbstractElement element = null;
             if (member instanceof PsiField) {
-              element = ElementFactory.newFieldElement((PsiField) member);
+              element = ElementFactory.newFieldElement((PsiField) member, useAccessors);
             } else if (member instanceof PsiMethod) {
               element = ElementFactory.newMethodElement((PsiMethod) member);
             }

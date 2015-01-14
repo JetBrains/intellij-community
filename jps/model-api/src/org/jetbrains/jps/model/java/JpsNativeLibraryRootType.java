@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,10 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 public class JpsNativeLibraryRootType extends JpsOrderRootType {
   public static final JpsNativeLibraryRootType INSTANCE = new JpsNativeLibraryRootType();
 
-  private JpsNativeLibraryRootType() {
+  private JpsNativeLibraryRootType() { }
+
+  @Override
+  public String toString() {
+    return "native lib root";
   }
 }

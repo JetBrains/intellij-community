@@ -73,18 +73,20 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
-        final PsiElement body = expression.getBody();
-        final PsiExpression psiExpression = isCodeBlockRedundant(expression, body);
-        if (psiExpression != null) {
-          final PsiElement errorElement;
-          final PsiElement parent = psiExpression.getParent();
-          if (parent instanceof PsiReturnStatement) {
-            errorElement = parent.getFirstChild();
-          } else {
-            errorElement = body.getFirstChild();
+        if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
+          final PsiElement body = expression.getBody();
+          final PsiExpression psiExpression = isCodeBlockRedundant(expression, body);
+          if (psiExpression != null) {
+            final PsiElement errorElement;
+            final PsiElement parent = psiExpression.getParent();
+            if (parent instanceof PsiReturnStatement) {
+              errorElement = parent.getFirstChild();
+            } else {
+              errorElement = body.getFirstChild();
+            }
+            holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
+                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
           }
-          holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
         }
       }
     };

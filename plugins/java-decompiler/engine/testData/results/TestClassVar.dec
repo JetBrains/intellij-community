@@ -9,7 +9,7 @@ public class TestClassVar {
          try {
             System.out.println();// 29
          } finally {
-            if(this.field_boolean) {
+            if(this.field_boolean) {// 32
                System.out.println();// 33
             }
 
@@ -46,6 +46,8 @@ class 'pkg/TestClassVar' {
       3      7
       8      9
       b      9
+      1f      11
+      20      11
       26      12
       29      12
    }
@@ -73,6 +75,7 @@ class 'pkg/TestClassVar' {
 Lines mapping:
 26 <-> 8
 29 <-> 10
+32 <-> 12
 33 <-> 13
 40 <-> 22
 45 <-> 26

@@ -29,6 +29,7 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.editor.Document;
@@ -281,7 +282,7 @@ public class GenerationNode extends UserDataHolderBase {
 
     final XmlFile xmlFile = token.getFile();
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
-    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", StdFileTypes.HTML, xmlFile.getText());
+    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText(HTMLLanguage.INSTANCE, xmlFile.getText());
     final XmlTag tag = dummyFile.getRootTag();
     if (tag != null) {
       
@@ -307,8 +308,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
       XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
       setAttributeValues(tag1, attributes, callback);
-      XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText("dummy.html", StdFileTypes.HTML, tag1.getContainingFile().getText(),
-                                                                     LocalTimeCounter.currentTime(), true);
+      XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText(HTMLLanguage.INSTANCE, tag1.getContainingFile().getText());
       VirtualFile vFile = physicalFile.getVirtualFile();
       if (vFile != null) {
         vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);

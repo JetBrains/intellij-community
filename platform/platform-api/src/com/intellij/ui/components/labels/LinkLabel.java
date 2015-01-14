@@ -22,11 +22,11 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UI;
+import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
@@ -49,13 +49,10 @@ public class LinkLabel<T> extends JLabel {
   private boolean myIsLinkActive;
 
   private String myVisitedLinksKey;
-  private int myIconWidth;
   private Icon myHoveringIcon;
   private Icon myInactiveIcon;
 
   private boolean myClickIsBeingProcessed;
-  private boolean myPaintDefaultIcon;
-  protected static final int DEFAULT_ICON_GAP = 2;
   protected boolean myPaintUnderline = true;
 
   public LinkLabel() {
@@ -83,8 +80,6 @@ public class LinkLabel<T> extends JLabel {
     setOpaque(false);
 
     setListener(aListener, aLinkData);
-
-    myIconWidth = getIcon() == null ? 0 : getIcon().getIconWidth() + getIconTextGap();
     myInactiveIcon = getIcon();
 
     MyMouseHandler mouseHandler = new MyMouseHandler();
@@ -122,17 +117,8 @@ public class LinkLabel<T> extends JLabel {
   }
 
   protected void paintComponent(Graphics g) {
-    final Border border = getBorder();
-    int shiftX = 0;
-
-    if (border != null) {
-      shiftX = border.getBorderInsets(this).left;
-    }
-
     setForeground(getTextColor());
-
     super.paintComponent(g);
-
 
     if (getText() != null) {
       g.setColor(getTextColor());
@@ -141,13 +127,6 @@ public class LinkLabel<T> extends JLabel {
         Rectangle bounds = getTextBounds();
         int lineY = getUI().getBaseline(this, getWidth(), getHeight()) + 1;
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
-      }
-
-      if (myPaintDefaultIcon) {
-        int endX = myIconWidth + getFontMetrics(getFont()).stringWidth(getText());
-        int endY = getHeight() / 2 - AllIcons.Ide.Link.getIconHeight() / 2 + 1;
-
-        AllIcons.Ide.Link.paintIcon(this, g, endX + shiftX + DEFAULT_ICON_GAP, endY);
       }
     }
   }
@@ -175,12 +154,6 @@ public class LinkLabel<T> extends JLabel {
     return myIsLinkActive ? getActive() : isVisited() ? getVisited() : getNormal();
   }
 
-  public Dimension getPreferredSize() {
-    final Dimension size = super.getPreferredSize();
-    size.width += myPaintDefaultIcon ? AllIcons.Ide.Link.getIconWidth() + DEFAULT_ICON_GAP : 0;
-    return size;
-  }
-
   public void setPaintUnderline(boolean paintUnderline) {
     myPaintUnderline = paintUnderline;
   }
@@ -201,25 +174,37 @@ public class LinkLabel<T> extends JLabel {
 
   }
 
-  private int getTextBaseLine() {
-    FontMetrics fm = getFontMetrics(getFont());
-    return getHeight() / 2 + (fm.getHeight() / 2 - fm.getDescent());
-  }
+  private final JBRectangle iconR = new JBRectangle();
+  private final JBRectangle textR = new JBRectangle();
+  private final JBRectangle viewR = new JBRectangle();
 
   private boolean isInClickableArea(Point pt) {
-    Insets insets = getInsets(); // border is set
-    pt.translate(-insets.left, -insets.top);
+    iconR.clear();
+    textR.clear();
+    final Insets insets = getInsets(null);
+    viewR.x = insets.left;
+    viewR.y = insets.top;
+    viewR.width = getWidth() - (insets.left + insets.right);
+    viewR.height = getHeight() - (insets.top + insets.bottom);
+    SwingUtilities.layoutCompoundLabel(this,
+                                       getFontMetrics(getFont()),
+                                       getText(),
+                                       isEnabled() ? getIcon() : getDisabledIcon(),
+                                       getVerticalAlignment(),
+                                       getHorizontalAlignment(),
+                                       getVerticalTextPosition(),
+                                       getHorizontalTextPosition(),
+                                       viewR,
+                                       iconR,
+                                       textR,
+                                       getIconTextGap());
     if (getIcon() != null) {
-      if (pt.getX() < getIcon().getIconWidth() && pt.getY() < getIcon().getIconHeight()) {
+      iconR.width += getIconTextGap(); //todo[kb] icon at right?
+      if (iconR.contains(pt)) {
         return true;
       }
     }
-    if (getText() != null) {
-      Rectangle bounds = getTextBounds(); // get calculated text bounds
-      return bounds.contains(pt.x + insets.left, pt.y + insets.top);
-    }
-
-    return false;
+    return textR.contains(pt);
   }
 
   private void enableUnderline() {
@@ -313,9 +298,5 @@ public class LinkLabel<T> extends JLabel {
 
   public void doClick(InputEvent e) {
     doClick();
-  }
-
-  public void setDefaultIconPainted(boolean paintDefaultIcon) {
-    myPaintDefaultIcon = paintDefaultIcon;
   }
 }

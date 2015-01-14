@@ -1226,42 +1226,6 @@ public class Test {
     assert !lookup
   }
 
-  public void testBlockSelection() {
-    doTestBlockSelection """
-class Foo {{
-  <caret>tx;
-  tx;
-}}""", '\n', '''
-class Foo {{
-  toString()x;
-  toString()<caret>x;
-}}'''
-  }
-
-  public void testBlockSelectionTab() {
-    doTestBlockSelection """
-class Foo {{
-  <caret>tx;
-  tx;
-}}""", '\t', '''
-class Foo {{
-  toString();
-  toString()<caret>;
-}}'''
-  }
-
-  public void testBlockSelectionBackspace() {
-    doTestBlockSelection """
-class Foo {{
-  <caret>t;
-  t;
-}}""", '\b\t', '''
-class Foo {{
-  toString();
-  toString()<caret>;
-}}'''
-  }
-
   public void testMulticaret() {
     doTestMulticaret """
 class Foo {{

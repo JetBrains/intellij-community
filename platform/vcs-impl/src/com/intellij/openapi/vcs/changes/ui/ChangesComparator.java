@@ -46,6 +46,9 @@ public class ChangesComparator implements Comparator<Change> {
     if (myTreeCompare) {
       final String path1 = FileUtilRt.toSystemIndependentName(filePath1.getPath());
       final String path2 = FileUtilRt.toSystemIndependentName(filePath2.getPath());
+      if (path1.compareToIgnoreCase(path2) == 0) {
+        return 0;
+      }
       final int lastSlash1 = path1.lastIndexOf('/');
       final String parentPath1 = lastSlash1 >= 0 && !filePath1.isDirectory() ? path1.substring(0, lastSlash1) : path1;
       final int lastSlash2 = path2.lastIndexOf('/');

@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -170,32 +171,34 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
       @Override
       protected void run(@NotNull Result<Void> result) throws Throwable {
         if (tag.isValid()) {
-          tag.setAttribute(HtmlUtil.CLASS_ATTRIBUTE_NAME, StringUtil.join(classes, " ").trim());
+          if (!ReadonlyStatusHandler.getInstance(file.getProject()).ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) {
+            tag.setAttribute(HtmlUtil.CLASS_ATTRIBUTE_NAME, StringUtil.join(classes, " ").trim());
 
-          for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-            final String attributeName = attribute.getKey();
-            if (StringUtil.startsWithChar(attributeName, '+')) {
-              final XmlAttribute existingAttribute = tag.getAttribute(attributeName.substring(1));
-              if (existingAttribute != null) {
-                existingAttribute.setValue(StringUtil.notNullize(existingAttribute.getValue() + attribute.getValue()));
+            for (Map.Entry<String, String> attribute : attributes.entrySet()) {
+              final String attributeName = attribute.getKey();
+              if (StringUtil.startsWithChar(attributeName, '+')) {
+                final XmlAttribute existingAttribute = tag.getAttribute(attributeName.substring(1));
+                if (existingAttribute != null) {
+                  existingAttribute.setValue(StringUtil.notNullize(existingAttribute.getValue() + attribute.getValue()));
+                }
+                else {
+                  tag.setAttribute(attributeName.substring(1), attribute.getValue());
+                }
+              }
+              else if (StringUtil.startsWithChar(attributeName, '-')) {
+                final XmlAttribute existingAttribute = tag.getAttribute(attributeName.substring(1));
+                if (existingAttribute != null) {
+                  existingAttribute.delete();
+                }
               }
               else {
-                tag.setAttribute(attributeName.substring(1), attribute.getValue());
+                tag.setAttribute(attributeName, attribute.getValue());
               }
             }
-            else if (StringUtil.startsWithChar(attributeName, '-')) {
-              final XmlAttribute existingAttribute = tag.getAttribute(attributeName.substring(1));
-              if (existingAttribute != null) {
-                existingAttribute.delete();
-              }
-            }
-            else {
-              tag.setAttribute(attributeName, attribute.getValue());
-            }
-          }
 
-          if (newTagName != null) {
-            tag.setName(newTagName);
+            if (newTagName != null) {
+              tag.setName(newTagName);
+            }
           }
         }
       }

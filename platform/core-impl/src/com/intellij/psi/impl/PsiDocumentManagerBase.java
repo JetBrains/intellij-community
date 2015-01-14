@@ -66,6 +66,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private final DocumentCommitProcessor myDocumentCommitProcessor;
   protected final Set<Document> myUncommittedDocuments = ContainerUtil.newConcurrentSet();
   private final Map<Document, Pair<CharSequence, Long>> myLastCommittedTexts = ContainerUtil.newConcurrentMap();
+  protected boolean myStopTrackingDocuments;
 
   private volatile boolean myIsCommitInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
@@ -599,6 +600,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
+    if (myStopTrackingDocuments) return;
+
     final Document document = event.getDocument();
     if (!(document instanceof DocumentWindow) && !myLastCommittedTexts.containsKey(document)) {
       myLastCommittedTexts.put(document, Pair.create(document.getImmutableCharSequence(), document.getModificationStamp()));
@@ -642,6 +645,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void documentChanged(DocumentEvent event) {
+    if (myStopTrackingDocuments) return;
+
     final Document document = event.getDocument();
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     boolean isBulk = document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate();

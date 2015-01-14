@@ -11,10 +11,10 @@ class Test {
 
         final Test test = (Test) o;
 
-        if (!Arrays.deepEquals(myIIs, test.myIIs)) return false;
-        if (!Arrays.equals(myIs, test.myIs)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(myOs, test.myOs)) return false;
+        if (!Arrays.deepEquals(myIIs, test.myIIs)) return false;
+        if (!Arrays.equals(myIs, test.myIs)) return false;
 
         return true;
     }

@@ -343,6 +343,13 @@ public class LaterInvocator {
   }
 
   @TestOnly
+  public static List<RunnableInfo> getLaterInvocatorQueue() {
+    synchronized (LOCK) {
+      return ContainerUtil.newArrayList(ourQueue);
+    }
+  }
+
+  @TestOnly
   static String dumpQueue() {
     synchronized (LOCK) {
       @NonNls String result = "";

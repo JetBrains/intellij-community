@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -456,42 +457,41 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
 
-    return getFromRefTableOrCache(elem, new NullableFactory<RefElement>() {
-      @Override
-      public RefElement create() {
-        return ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
-          @Override
-          @Nullable
-          public RefElementImpl compute() {
-            RefElementImpl result = null;
-
-            final RefManagerExtension extension = getExtension(elem.getLanguage());
-            if (extension != null) {
-              final RefElement refElement = extension.createRefElement(elem);
-              result = (RefElementImpl)refElement;
-            }
-            else if (elem instanceof PsiFile) {
-              result = new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
-            }
-            else if (elem instanceof PsiDirectory) {
-              result = new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
-            }
-            
-            if (result == null) {
+    return getFromRefTableOrCache(
+      elem,
+      new NullableFactory<RefElementImpl>() {
+        @Override
+        public RefElementImpl create() {
+          return ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
+            @Override
+            @Nullable
+            public RefElementImpl compute() {
+              final RefManagerExtension extension = getExtension(elem.getLanguage());
+              if (extension != null) {
+                final RefElement refElement = extension.createRefElement(elem);
+                if (refElement != null) return (RefElementImpl)refElement;
+              }
+              if (elem instanceof PsiFile) {
+                return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+              }
+              if (elem instanceof PsiDirectory) {
+                return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
+              }
               return null;
             }
-
-            result.initialize();
-            for (RefManagerExtension each : myExtensions.values()) {
-              each.onEntityInitialized(result, elem);
-            }
-            fireNodeInitialized(result);
-
-            return result;
+          });
+        }
+      },
+      new Consumer<RefElementImpl>() {
+        @Override
+        public void consume(RefElementImpl element) {
+          element.initialize();
+          for (RefManagerExtension each : myExtensions.values()) {
+            each.onEntityInitialized(element, elem);
           }
-        });
-      }
-    });
+          fireNodeInitialized(element);
+        }
+      });
   }
 
   private RefManagerExtension getExtension(final Language language) {
@@ -500,8 +500,7 @@ public class RefManagerImpl extends RefManager {
 
   @Nullable
   @Override
-  public
-  RefEntity getReference(final String type, final String fqName) {
+  public RefEntity getReference(final String type, final String fqName) {
     for (RefManagerExtension extension : myExtensions.values()) {
       final RefEntity refEntity = extension.getReference(type, fqName);
       if (refEntity != null) return refEntity;
@@ -527,7 +526,15 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Nullable
-  protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, NullableFactory<T> factory) {
+  protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, 
+                                                            @NotNull NullableFactory<T> factory) {
+    return getFromRefTableOrCache(element, factory, null); 
+  }
+  
+  @Nullable
+  protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, 
+                                                            @NotNull NullableFactory<T> factory,
+                                                            @Nullable Consumer<T> whenCached) {
     T result;
 
     myLock.readLock().lock();
@@ -541,11 +548,12 @@ public class RefManagerImpl extends RefManager {
           }
         }
       ));
-      if (result != null) return result;
     }
     finally {
       myLock.readLock().unlock();
     }
+
+    if (result != null) return result;
 
     if (!isValidPointForReference()) {
       //LOG.assertTrue(true, "References may become invalid after process is finished");
@@ -576,11 +584,14 @@ public class RefManagerImpl extends RefManager {
           }
         }
       ), result);
-      return result;
     }
     finally {
       myLock.writeLock().unlock();
     }
+    
+    if (whenCached != null) whenCached.consume(result);
+
+    return result;
   }
 
   @Override

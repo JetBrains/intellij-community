@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight;
+package com.intellij.codeInsight.generation;
 
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import org.apache.velocity.exception.ResourceNotFoundException;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
-@State(
-  name = "NullableNotNullManager",
-  storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)}
-)
-public class NullableNotNullManagerImpl extends NullableNotNullManager {
+import java.io.InputStream;
+
+public class VelocityIncludesClassLoader extends ClasspathResourceLoader {
+  @Override
+  public InputStream getResourceStream(String name) throws ResourceNotFoundException {
+    return super.getResourceStream("com/intellij/codeInsight/generation/" + name);
+  }
 }
