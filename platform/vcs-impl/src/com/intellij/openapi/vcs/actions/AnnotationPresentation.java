@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,22 +31,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
 class AnnotationPresentation implements TextAnnotationPresentation {
-  private final HighlightAnnotationsActions myHighlighting;
+  private final FileAnnotation myFileAnnotation;
   @Nullable
   private final AnnotationSourceSwitcher mySwitcher;
   private final ArrayList<AnAction> myActions;
   private SwitchAnnotationSourceAction mySwitchAction;
   private final List<LineNumberListener> myPopupLineNumberListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  AnnotationPresentation(@NotNull final HighlightAnnotationsActions highlighting, @Nullable final AnnotationSourceSwitcher switcher,
-                                final EditorGutterComponentEx gutter,
-                                final List<AnnotationFieldGutter> gutters,
-                                final AnAction... actions) {
-    myHighlighting = highlighting;
+  AnnotationPresentation(@NotNull FileAnnotation fileAnnotation,
+                         @Nullable final AnnotationSourceSwitcher switcher,
+                         final EditorGutterComponentEx gutter,
+                         final AnAction... actions) {
+    myFileAnnotation = fileAnnotation;
     mySwitcher = switcher;
 
     myActions = new ArrayList<AnAction>();
@@ -57,7 +55,6 @@ class AnnotationPresentation implements TextAnnotationPresentation {
         myActions.add(new Separator());
       }
     }
-    myActions.addAll(myHighlighting.getList());
     if (mySwitcher != null) {
       mySwitchAction = new SwitchAnnotationSourceAction(mySwitcher, gutter);
       myActions.add(mySwitchAction);
@@ -69,7 +66,9 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   }
 
   public EditorFontType getFontType(final int line) {
-    return myHighlighting.isLineBold(line) ? EditorFontType.BOLD : EditorFontType.PLAIN;
+    VcsRevisionNumber revision = myFileAnnotation.originalRevision(line);
+    VcsRevisionNumber currentRevision = myFileAnnotation.getCurrentRevision();
+    return currentRevision != null && currentRevision.equals(revision) ? EditorFontType.BOLD : EditorFontType.PLAIN;
   }
 
   public ColorKey getColor(final int line) {
