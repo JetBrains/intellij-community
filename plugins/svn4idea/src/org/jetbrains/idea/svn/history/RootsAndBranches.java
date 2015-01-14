@@ -70,7 +70,6 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private final Map<String, MergeInfoHolder> myHolders;
 
   private boolean myHighlightingOn;
-  private boolean myFromHereDirection;
   private JPanel myPanelWrapper;
   private final MergePanelFiltering myStrategy;
   private final FilterOutMerged myFilterMerged;
@@ -120,7 +119,6 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     myUndoIntegrateChangeListsAction = new IntegrateChangeListsAction(false);
 
     myPanel = new JPanel(new GridBagLayout());
-    myFromHereDirection = true;
     createToolbar();
     final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0);
@@ -130,7 +128,6 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     myPanel.setPreferredSize(new Dimension(200, 60));
 
     myManager.install(this);
-    setDirectionToPanels();
 
     myStrategy = new MergePanelFiltering(getPanel());
   }
@@ -167,27 +164,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   public void turnFromHereHighlighting() {
     myHighlightingOn = true;
-    myFromHereDirection = true;
-    setDirectionToPanels();
     for (MergeInfoHolder holder : myHolders.values()) {
       holder.updateMixedRevisionsForPanel();
     }
 
     myManager.repaintTree();
-  }
-
-  public void turnFromThereHighlighting() {
-    myHighlightingOn = true;
-    myFromHereDirection = false;
-    setDirectionToPanels();
-
-    myManager.repaintTree();
-  }
-
-  private void setDirectionToPanels() {
-    for (SvnMergeInfoRootPanelManual panel : myMergePanels.values()) {
-      panel.setDirection(myFromHereDirection);
-    }
   }
 
   public void turnOff() {
@@ -340,30 +321,15 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private MergeInfoHolder createHolder(final SvnMergeInfoRootPanelManual panel) {
     return new MergeInfoHolder(myProject, myManager, new Getter<WCInfoWithBranches>() {
       public WCInfoWithBranches get() {
-        if (myFromHereDirection) {
-          return panel.getWcInfo();
-        } else {
-          // actually not used
-          return null;
-        }
+        return panel.getWcInfo();
       }
     }, new Getter<WCInfoWithBranches.Branch>() {
       public WCInfoWithBranches.Branch get() {
-        if (myFromHereDirection) {
-          return panel.getBranch();
-        } else {
-          final WCInfoWithBranches wcInfo = panel.getWcInfo();
-          return new WCInfoWithBranches.Branch(wcInfo.getUrl().toString());
-        }
+        return panel.getBranch();
       }
     }, new Getter<String>() {
       public String get() {
-        if (myFromHereDirection) {
-          return panel.getLocalBranch();
-        } else {
-          final WCInfoWithBranches wcInfo = panel.getWcInfo();
-          return wcInfo.getPath();
-        }
+        return panel.getLocalBranch();
       }
     }, new Getter<Boolean>() {
       public Boolean get() {
@@ -464,27 +430,6 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
   }
 
-  private class HighlightTo extends ToggleAction {
-    @Override
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setIcon(SvnIcons.ShowIntegratedTo);
-    }
-
-    public boolean isSelected(final AnActionEvent e) {
-      return myHighlightingOn && (! myFromHereDirection);
-    }
-
-    public void setSelected(final AnActionEvent e, final boolean state) {
-      if (state) {
-        turnFromThereHighlighting();
-      } else {
-        turnOff();
-      }
-    }
-  }
-
   private class HighlightFrom extends ToggleAction {
     @Override
     public void update(final AnActionEvent e) {
@@ -496,7 +441,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     public boolean isSelected(final AnActionEvent e) {
-      return myHighlightingOn && myFromHereDirection;
+      return myHighlightingOn;
     }
 
     public void setSelected(final AnActionEvent e, final boolean state) {

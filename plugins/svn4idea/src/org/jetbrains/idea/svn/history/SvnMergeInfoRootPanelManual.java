@@ -261,16 +261,6 @@ public class SvnMergeInfoRootPanelManual {
     return false;
   }
 
-  public void setDirection(final boolean fromHere) {
-    if (fromHere) {
-      myHereLabel.setText(SvnBundle.message("tab.repository.merge.panel.root.panel.from"));
-      myThereLabel.setText(SvnBundle.message("tab.repository.merge.panel.root.panel.to"));
-    } else {
-      myThereLabel.setText(SvnBundle.message("tab.repository.merge.panel.root.panel.from"));
-      myHereLabel.setText(SvnBundle.message("tab.repository.merge.panel.root.panel.to"));
-    }
-  }
-
   public void setOnlyOneRoot(final boolean onlyOneRoot) {
     myOnlyOneRoot = onlyOneRoot;
     myInclude.setEnabled(! myOnlyOneRoot);
