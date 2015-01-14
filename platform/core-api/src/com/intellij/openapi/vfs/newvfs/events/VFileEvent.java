@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +20,9 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public abstract class VFileEvent {
   private final boolean myIsFromRefresh;
   private final Object myRequestor;
@@ -47,8 +46,8 @@ public abstract class VFileEvent {
   /**
    * Returns the VirtualFile which this event belongs to.
    * In some cases it may be null - it is not guaranteed that there is such file.
-   *
-   * NB: Use this method with caution, because {@link com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent#getFile()} needs
+   * <p/>
+   * NB: Use this method with caution, because {@link VFileCreateEvent#getFile()} needs
    * {@link VirtualFile#findChild(String)} which may be a performance leak.
    */
   @Nullable
@@ -61,6 +60,7 @@ public abstract class VFileEvent {
 
   @Override
   public abstract int hashCode();
+
   @Override
   public abstract boolean equals(Object o);
 }
