@@ -77,7 +77,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private final FilterOutNotMerged myFilterNotMerged;
   private final FilterOutAlien myFilterAlien;
   private final IntegrateChangeListsAction myIntegrateAction;
-  private final UndoIntegrateChangeListsAction myUndoIntegrateChangeListsAction;
+  private final IntegrateChangeListsAction myUndoIntegrateChangeListsAction;
   private JComponent myToolbarComponent;
 
   private boolean myDisposed;
@@ -116,8 +116,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     myFilterMerged = new FilterOutMerged();
     myFilterNotMerged = new FilterOutNotMerged();
     myFilterAlien = new FilterOutAlien();
-    myIntegrateAction = new IntegrateChangeListsAction();
-    myUndoIntegrateChangeListsAction = new UndoIntegrateChangeListsAction();
+    myIntegrateAction = new IntegrateChangeListsAction(true);
+    myUndoIntegrateChangeListsAction = new IntegrateChangeListsAction(false);
 
     myPanel = new JPanel(new GridBagLayout());
     myFromHereDirection = true;
@@ -139,7 +139,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return myIntegrateAction;
   }
 
-  public UndoIntegrateChangeListsAction getUndoIntegrateAction() {
+  public IntegrateChangeListsAction getUndoIntegrateAction() {
     return myUndoIntegrateChangeListsAction;
   }
 
@@ -638,39 +638,17 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
   }
 
-  private class UndoIntegrateChangeListsAction extends IntegrateChangeListsAction {
-    private UndoIntegrateChangeListsAction() {
-      super(false);
-    }
-
-    @Override
-    protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
-      e.getPresentation().setIcon(SvnIcons.UndoIntegrateToBranch);
-      e.getPresentation().setText(SvnBundle.message("undo.integrate.to.branch"));
-      e.getPresentation().setDescription(SvnBundle.message("undo.integrate.to.branch.description"));
-    }
-
-    @Override
-    protected String getDialogTitle() {
-      return SvnBundle.message("undo.integrate.to.branch.dialog.title");
-    }
-  }
-
   private class IntegrateChangeListsAction extends AbstractIntegrateChangesAction<SelectedChangeListsChecker> {
-    private final boolean myDirect;
+    private final boolean myIntegrate;
 
-    public IntegrateChangeListsAction() {
-      this(true);
-    }
-
-    protected IntegrateChangeListsAction(final boolean direct) {
+    public IntegrateChangeListsAction(boolean integrate) {
       super(false);
-      myDirect = direct;
+      myIntegrate = integrate;
     }
 
     @NotNull
     protected MergerFactory createMergerFactory(final SelectedChangeListsChecker checker) {
-      return new ChangeListsMergerFactory(checker.getSelectedLists(), false, !myDirect, false);
+      return new ChangeListsMergerFactory(checker.getSelectedLists(), false, !myIntegrate, false);
     }
 
     @NotNull
@@ -680,7 +658,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
-      e.getPresentation().setIcon(SvnIcons.IntegrateToBranch);
+      if (myIntegrate) {
+        e.getPresentation().setIcon(SvnIcons.IntegrateToBranch);
+      }
+      else {
+        e.getPresentation().setIcon(SvnIcons.UndoIntegrateToBranch);
+        e.getPresentation().setText(SvnBundle.message("undo.integrate.to.branch"));
+        e.getPresentation().setDescription(SvnBundle.message("undo.integrate.to.branch.description"));
+      }
     }
 
     protected String getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
@@ -700,7 +685,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     protected String getDialogTitle() {
-      return null;
+      return !myIntegrate ? SvnBundle.message("undo.integrate.to.branch.dialog.title") : null;
     }
   }
 
