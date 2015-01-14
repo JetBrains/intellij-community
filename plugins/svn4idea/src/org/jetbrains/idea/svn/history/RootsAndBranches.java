@@ -31,7 +31,7 @@ import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.Topic;
 import icons.SvnIcons;
 import org.jetbrains.annotations.NotNull;
@@ -267,9 +267,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
           continue;
         }
         final SvnMergeInfoRootPanelManual panel = new SvnMergeInfoRootPanelManual(myProject,
-                                                                                  new NullableFunction<WCInfoWithBranches, WCInfoWithBranches>() {
-                                                                                    public WCInfoWithBranches fun(final WCInfoWithBranches wcInfoWithBranches) {
-
+                                                                                  new NotNullFunction<WCInfoWithBranches, WCInfoWithBranches>() {
+                                                                                    @NotNull
+                                                                                    public WCInfoWithBranches fun(@NotNull WCInfoWithBranches wcInfoWithBranches) {
                                                                                       final WCInfoWithBranches newInfo =
                                                                                         myDataLoader.reloadInfo(wcInfoWithBranches);
                                                                                       if (newInfo == null) {
