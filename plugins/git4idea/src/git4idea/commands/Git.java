@@ -144,4 +144,7 @@ public interface Git {
   @NotNull
   GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote,
                          @NotNull List<GitLineHandlerListener> listeners, String... params);
+
+  @NotNull
+  GitCommandResult addRemote(@NotNull GitRepository repository, @NotNull String name, @NotNull String url);
 }
