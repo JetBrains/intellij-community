@@ -86,7 +86,7 @@ public class PropertiesTableModel extends ListTableModel<PropertyDiffRecord> {
     @Nullable
     @Override
     public String getMaxStringValue() {
-      return "svn:some_big_property_name";
+      return "svn:some_long_property";
     }
 
     @Nullable
