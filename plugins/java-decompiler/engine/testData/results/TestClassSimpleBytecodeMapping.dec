@@ -22,9 +22,9 @@ public class TestClassSimpleBytecodeMapping {
       try {
          Integer.parseInt(var1);// 34
       } catch (Exception var6) {
-         System.out.println(var6);
+         System.out.println(var6);// 36
       } finally {
-         System.out.println("Finally");
+         System.out.println("Finally");// 38
       }
 
    }
@@ -80,6 +80,11 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
 
    method 'test2 (Ljava/lang/String;)V' {
       1      22
+      11      24
+      15      24
+      23      26
+      24      26
+      27      26
    }
 
    method 'run (Ljava/lang/Runnable;)V' {
@@ -114,6 +119,8 @@ Lines mapping:
 27 <-> 16
 28 <-> 17
 34 <-> 23
+36 <-> 25
+38 <-> 27
 44 <-> 44
 49 <-> 33
 54 <-> 38
