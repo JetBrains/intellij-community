@@ -87,7 +87,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myToolbarStatusPanel = new ModifiablePanel();
 
     JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(myToolbarPanel, BorderLayout.WEST);
+    topPanel.add(myToolbarPanel, BorderLayout.CENTER);
     topPanel.add(myToolbarStatusPanel, BorderLayout.EAST);
 
 
