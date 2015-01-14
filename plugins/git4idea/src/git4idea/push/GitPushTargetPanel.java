@@ -52,9 +52,9 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private static final String SEPARATOR = " : ";
 
   @NotNull private final GitRepository myRepository;
-  @NotNull private final VcsEditableTextComponent myTargetRenderedComponent;
-  @NotNull private final PushTargetTextField myTargetTextField;
-  @NotNull private final VcsLinkedTextComponent myRemoteRenderedComponent;
+  @NotNull private final VcsEditableTextComponent myTargetRenderer;
+  @NotNull private final PushTargetTextField myTargetEditor;
+  @NotNull private final VcsLinkedTextComponent myRemoteRenderer;
 
   @Nullable private GitPushTarget myCurrentTarget;
   @Nullable private String myError;
@@ -85,9 +85,9 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       initialBranch = getTextFieldText(defaultTarget);
       initialRemote = defaultTarget.getBranch().getRemote().getName();
     }
-    myTargetRenderedComponent = new VcsEditableTextComponent("<a href=''>" + initialBranch + "</a>", null);
-    myTargetTextField = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), initialBranch);
-    myRemoteRenderedComponent = new VcsLinkedTextComponent("<a href=''>" + initialRemote + "</a>", new VcsLinkListener() {
+    myTargetRenderer = new VcsEditableTextComponent("<a href=''>" + initialBranch + "</a>", null);
+    myTargetEditor = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), initialBranch);
+    myRemoteRenderer = new VcsLinkedTextComponent("<a href=''>" + initialRemote + "</a>", new VcsLinkListener() {
       @Override
       public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
         showRemoteSelector(event);
@@ -98,16 +98,16 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     setOpaque(false);
     JPanel remoteAndSeparator = new JPanel(new BorderLayout());
     remoteAndSeparator.setOpaque(false);
-    remoteAndSeparator.add(myRemoteRenderedComponent, BorderLayout.CENTER);
+    remoteAndSeparator.add(myRemoteRenderer, BorderLayout.CENTER);
     remoteAndSeparator.add(new JBLabel(SEPARATOR), BorderLayout.EAST);
 
     add(remoteAndSeparator, BorderLayout.WEST);
-    add(myTargetTextField, BorderLayout.CENTER);
+    add(myTargetEditor, BorderLayout.CENTER);
     updateTextField();
   }
 
   private void updateTextField() {
-    myTargetTextField.setVisible(!myRepository.getRemotes().isEmpty());
+    myTargetEditor.setVisible(!myRepository.getRemotes().isEmpty());
   }
 
   private void showRemoteSelector(@NotNull MouseEvent event) {
@@ -119,7 +119,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(null, remotes) {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-        myRemoteRenderedComponent.updateLinkText(selectedValue);
+        myRemoteRenderer.updateLinkText(selectedValue);
         if (myFireOnChangeAction != null) {
           myFireOnChangeAction.run();
         }
@@ -146,11 +146,11 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       renderer.append(myError, PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.ERROR_ATTRIBUTES, isActive));
     }
     else {
-      String currentRemote = myRemoteRenderedComponent.getText();
+      String currentRemote = myRemoteRenderer.getText();
       if (getRemotes().size() > 1) {
-        myRemoteRenderedComponent.setSelected(isSelected);
-        myRemoteRenderedComponent.setTransparent(!isActive);
-        myRemoteRenderedComponent.render(renderer);
+        myRemoteRenderer.setSelected(isSelected);
+        myRemoteRenderer.setTransparent(!isActive);
+        myRemoteRenderer.render(renderer);
       }
       else {
         renderer.append(currentRemote, targetTextAttributes);
@@ -161,9 +161,9 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       if (target.isNewBranchCreated()) {
         renderer.append("+", PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, isActive), this);
       }
-      myTargetRenderedComponent.setSelected(isSelected);
-      myTargetRenderedComponent.setTransparent(!isActive);
-      myTargetRenderedComponent.render(renderer);
+      myTargetRenderer.setSelected(isSelected);
+      myTargetRenderer.setTransparent(!isActive);
+      myTargetRenderer.render(renderer);
     }
   }
 
@@ -180,7 +180,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @Override
   public void fireOnCancel() {
-    myTargetTextField.setText(getTextFieldText(myCurrentTarget));
+    myTargetEditor.setText(getTextFieldText(myCurrentTarget));
   }
 
   @Override
@@ -188,11 +188,11 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     if (myError != null) {
       return;
     }
-    String remoteName = myRemoteRenderedComponent.getText();
-    String branchName = myTargetTextField.getText();
+    String remoteName = myRemoteRenderer.getText();
+    String branchName = myTargetEditor.getText();
     try {
       myCurrentTarget = GitPushTarget.parse(myRepository, remoteName, branchName);
-      myTargetRenderedComponent.updateLinkText(branchName);
+      myTargetRenderer.updateLinkText(branchName);
     }
     catch (ParseException e) {
       LOG.error("Invalid remote name shouldn't be allowed. [" + remoteName + ", " + branchName + "]", e);
@@ -203,14 +203,14 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @Override
   public ValidationInfo verify() {
     if (myError != null) {
-      return new ValidationInfo(myError, myTargetTextField);
+      return new ValidationInfo(myError, myTargetEditor);
     }
     try {
-      GitPushTarget.parse(myRepository, myRemoteRenderedComponent.getText(), myTargetTextField.getText());
+      GitPushTarget.parse(myRepository, myRemoteRenderer.getText(), myTargetEditor.getText());
       return null;
     }
     catch (ParseException e) {
-      return new ValidationInfo(e.getMessage(), myTargetTextField);
+      return new ValidationInfo(e.getMessage(), myTargetEditor);
     }
   }
 
