@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,20 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull private final Project myProject;
   @NotNull private final Change myChange;
   @NotNull private final Map<Key, Object> myChangeContext;
+
+  public static boolean isEquals(@NotNull Change change1, @NotNull Change change2) {
+    for (ChangeDiffRequestProvider provider : ChangeDiffRequestProvider.EP_NAME.getExtensions()) {
+      ThreeState equals = provider.isEquals(change1, change2);
+      if (equals == ThreeState.YES) return true;
+      if (equals == ThreeState.NO) return false;
+    }
+
+    if (!Comparing.equal(change1.getClass(), change2.getClass())) return false;
+    if (!Comparing.equal(change1.getBeforeRevision(), change2.getBeforeRevision())) return false;
+    if (!Comparing.equal(change1.getAfterRevision(), change2.getAfterRevision())) return false;
+
+    return true;
+  }
 
   @Nullable
   public static ChangeDiffRequestPresentable create(@NotNull Project project, @NotNull Change change) {

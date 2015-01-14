@@ -22,7 +22,10 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
@@ -126,9 +129,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     Pair<Change, DiffRequest> pair = myRequestCache.get(change);
     if (pair != null) {
       Change oldChange = pair.first;
-      // TODO: check if we should make a better check
-      if (Comparing.equal(oldChange.getBeforeRevision(), change.getBeforeRevision()) &&
-          Comparing.equal(oldChange.getAfterRevision(), change.getAfterRevision())) {
+      if (ChangeDiffRequestPresentable.isEquals(oldChange, change)) {
         return pair.second;
       }
     }

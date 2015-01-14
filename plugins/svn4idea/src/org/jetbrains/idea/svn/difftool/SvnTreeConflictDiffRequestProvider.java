@@ -13,14 +13,30 @@ import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.treeConflict.TreeConflictRefreshablePanel;
 
 import javax.swing.*;
 
 public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProvider {
+  @NotNull
+  @Override
+  public ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
+    if (change1 instanceof ConflictedSvnChange && change2 instanceof ConflictedSvnChange) {
+      if (!change1.isTreeConflict() && !change2.isTreeConflict()) return ThreeState.UNSURE;
+      if (!change1.isTreeConflict() || !change2.isTreeConflict()) return ThreeState.NO;
+
+      TreeConflictDescription description1 = ((ConflictedSvnChange)change1).getBeforeDescription();
+      TreeConflictDescription description2 = ((ConflictedSvnChange)change2).getBeforeDescription();
+      return TreeConflictRefreshablePanel.descriptionsEqual(description1, description2) ? ThreeState.YES : ThreeState.NO;
+    }
+    return ThreeState.UNSURE;
+  }
+
   @Override
   public boolean canCreate(@NotNull Project project, @NotNull Change change) {
     return change instanceof ConflictedSvnChange && ((ConflictedSvnChange)change).getConflictState().isTree();

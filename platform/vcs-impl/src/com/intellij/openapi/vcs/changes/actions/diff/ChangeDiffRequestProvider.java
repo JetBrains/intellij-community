@@ -23,12 +23,15 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface ChangeDiffRequestProvider {
   ExtensionPointName<ChangeDiffRequestProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider");
+
+  @NotNull
+  ThreeState isEquals(@NotNull Change change1, @NotNull Change change2);
 
   boolean canCreate(@NotNull Project project, @NotNull Change change);
 
