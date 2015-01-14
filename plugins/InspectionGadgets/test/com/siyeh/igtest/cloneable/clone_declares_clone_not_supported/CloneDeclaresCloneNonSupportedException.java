@@ -8,7 +8,7 @@ public class CloneDeclaresCloneNonSupportedException implements Cloneable
         
     }
     
-    public Object clone()
+    protected Object <warning descr="'clone()' does not declare 'CloneNotSupportedException'">clone</warning>()
     {
         try
         {
@@ -32,5 +32,15 @@ class Child extends CloneDeclaresCloneNonSupportedException {
   @Override
   public Object clone() {
     return super.clone();
+  }
+}
+class NoWarnOnPublic implements Cloneable {
+
+  public Object clone() {
+    try {
+      return super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new AssertionError(e);
+    }
   }
 }
