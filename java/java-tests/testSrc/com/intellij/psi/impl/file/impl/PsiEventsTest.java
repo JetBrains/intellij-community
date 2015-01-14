@@ -35,6 +35,7 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.Processor;
 import com.intellij.util.WaitFor;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
@@ -199,6 +200,7 @@ public class PsiEventsTest extends PsiTestCase {
       LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiDirectory.class, isReallyLeak);
       LeakHunter.checkLeak(IdeEventQueue.getInstance(), PsiDirectory.class, isReallyLeak);
       LeakHunter.checkLeak(LaterInvocator.getLaterInvocatorQueue(), PsiDirectory.class, isReallyLeak);
+      MemoryDumpHelper.captureMemoryDump("testRenameFileWithoutDir.hprof");
       assertNull(((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1));
       fail("directory just died");
     }
