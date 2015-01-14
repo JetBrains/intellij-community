@@ -25,7 +25,7 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.AbstractPrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.PrintElementsManagerImpl;
 import com.intellij.vcs.log.graph.impl.visible.CollapsedGraphWithHiddenNodes;
-import com.intellij.vcs.log.graph.impl.visible.FragmentGenerator;
+import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
 import com.intellij.vcs.log.graph.impl.visible.adapters.GraphWithHiddenNodesAsGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.impl.visible.adapters.LinearGraphAsGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.utils.IntToIntMap;
@@ -46,7 +46,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
                                                               permanentGraph.getPermanentCommitsInfo());
 
     final Condition<Integer> notCollapsedNodes = permanentGraph.getNotCollapsedNodes();
-    FragmentGenerator fragmentGeneratorForPrinterGraph = new FragmentGenerator(graphWithCommitInfo, new Condition<Integer>() {
+    LinearFragmentGenerator fragmentGeneratorForPrinterGraph = new LinearFragmentGenerator(graphWithCommitInfo, new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
         int longIndex = graphWithCommitInfo.getIntToIntMap().getLongIndex(integer);
@@ -64,7 +64,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
   private final CollapsedGraphWithHiddenNodes myCollapsedGraph;
 
   @NotNull
-  private final FragmentGenerator myFragmentGeneratorForPrinterGraph;
+  private final LinearFragmentGenerator myFragmentGeneratorForPrinterGraph;
 
   @NotNull
   private final IntToIntMap myIntToIntMap;
@@ -76,7 +76,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
   private CollapsedVisibleGraph(@NotNull GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> graphWithCommitInfo,
                                 @NotNull CollapsedGraphWithHiddenNodes collapsedGraph,
                                 @NotNull PrintElementsManager printElementsManager,
-                                @NotNull FragmentGenerator fragmentGeneratorForPrinterGraph, @NotNull PermanentGraphInfo<CommitId> permanentGraph) {
+                                @NotNull LinearFragmentGenerator fragmentGeneratorForPrinterGraph, @NotNull PermanentGraphInfo<CommitId> permanentGraph) {
     super(graphWithCommitInfo, printElementsManager);
     myCollapsedGraph = collapsedGraph;
     myFragmentGeneratorForPrinterGraph = fragmentGeneratorForPrinterGraph;
@@ -89,10 +89,10 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
     if (!collapse) {
       myCollapsedGraph.expandAll();
     } else {
-      FragmentGenerator fragmentGenerator = new FragmentGenerator(myCollapsedGraph, myPermanentGraph.getNotCollapsedNodes());
+      LinearFragmentGenerator fragmentGenerator = new LinearFragmentGenerator(myCollapsedGraph, myPermanentGraph.getNotCollapsedNodes());
       for (int i = 0; i < myCollapsedGraph.nodesCount(); i++) {
         if (myCollapsedGraph.nodeIsVisible(i)) {
-          FragmentGenerator.GraphFragment longDownFragment = fragmentGenerator.getLongDownFragment(i);
+          LinearFragmentGenerator.GraphFragment longDownFragment = fragmentGenerator.getLongDownFragment(i);
           if (longDownFragment != null) {
             myCollapsedGraph.fastCollapse(longDownFragment.upNodeIndex, longDownFragment.downNodeIndex);
           }
@@ -112,7 +112,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
       return createJumpAnswer(graphEdge.getUpNodeIndex());
     }
 
-    FragmentGenerator.GraphFragment relativeFragment = myFragmentGeneratorForPrinterGraph.getLongFragment(graphElement);
+    LinearFragmentGenerator.GraphFragment relativeFragment = myFragmentGeneratorForPrinterGraph.getLongFragment(graphElement);
     if (relativeFragment != null) {
       int upShortIndex = myIntToIntMap.getLongIndex(relativeFragment.upNodeIndex);
       int downShortIndex = myIntToIntMap.getLongIndex(relativeFragment.downNodeIndex);
