@@ -39,7 +39,7 @@ import javax.swing.*;
 
 public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
 
-  private boolean onlyWarnOnPublicClone = true;
+  private boolean onlyWarnOnProtectedClone = true;
 
   @Override
   @NotNull
@@ -67,16 +67,16 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("only.warn.on.public.clone.methods"),
-                                          this, "onlyWarnOnPublicClone");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("only.warn.on.protected.clone.methods"),
+                                          this, "onlyWarnOnProtectedClone");
   }
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
     for (Element option : node.getChildren("option")) {
-      if ("onlyWarnOnPublicClone".equals(option.getAttributeValue("name"))) {
-        onlyWarnOnPublicClone = Boolean.parseBoolean(option.getAttributeValue("value"));
+      if ("onlyWarnOnProtectedClone".equals(option.getAttributeValue("name"))) {
+        onlyWarnOnProtectedClone = Boolean.parseBoolean(option.getAttributeValue("value"));
       }
     }
   }
@@ -84,9 +84,9 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
-    if (!onlyWarnOnPublicClone) {
-      node.addContent(new Element("option").setAttribute("name", "onlyWarnOnPublicClone")
-                        .setAttribute("value", String.valueOf(onlyWarnOnPublicClone)));
+    if (!onlyWarnOnProtectedClone) {
+      node.addContent(new Element("option").setAttribute("name", "onlyWarnOnProtectedClone")
+                        .setAttribute("value", String.valueOf(onlyWarnOnProtectedClone)));
     }
   }
 
@@ -131,7 +131,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
       if (method.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      if (onlyWarnOnPublicClone && !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (onlyWarnOnProtectedClone && method.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
