@@ -111,8 +111,10 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
         if (argumentList == null) {
           continue;
         }
-        final PsiExpression expression =
-          factory.createExpressionFromText("new " + classReference.getQualifiedName() + argumentList.getText(), innerClass);
+        final PsiReferenceParameterList parameterList = classReference.getParameterList();
+        final String genericParameters = parameterList != null ? parameterList.getText() : "";
+        final PsiExpression expression = factory
+          .createExpressionFromText("new " + classReference.getQualifiedName() + genericParameters + argumentList.getText(), innerClass);
         codeStyleManager.shortenClassReferences(newExpression.replace(expression));
       }
       final PsiModifierList modifiers = innerClass.getModifierList();
