@@ -1487,19 +1487,13 @@ class Bar {
 
   public void "test code cleanup during completion generation"() {
     myFixture.configureByText "a.java", "class Foo {int i; ge<caret>}"
-    def inspection = new UnqualifiedFieldAccessInspection()
-    try {
-      myFixture.enableInspections(inspection)
-      myFixture.complete(CompletionType.BASIC)
-      myFixture.checkResult '''class Foo {int i;
+    myFixture.enableInspections(new UnqualifiedFieldAccessInspection())
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.checkResult '''class Foo {int i;
 
     public int getI() {
         return this.i;
     }
 }'''
-    }
-    finally {
-      myFixture.disableInspections(inspection)
-    }
   }
 }
