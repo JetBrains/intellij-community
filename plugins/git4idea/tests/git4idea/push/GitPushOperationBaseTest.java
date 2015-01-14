@@ -33,12 +33,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.intellij.openapi.vcs.Executor.append;
-import static git4idea.test.GitExecutor.*;
+import static git4idea.test.GitExecutor.cd;
+import static git4idea.test.GitExecutor.git;
 
 abstract class GitPushOperationBaseTest extends GitPlatformTest {
 
@@ -139,13 +138,6 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
       newBranch = false;
     }
     return new PushSpec<GitPushSource, GitPushTarget>(GitPushSource.create(source), new GitPushTarget(target, newBranch));
-  }
-
-  @NotNull
-  protected static String makeCommit(String file) throws IOException {
-    append(file, "some content");
-    addCommit("some message");
-    return last();
   }
 
   protected void agreeToUpdate(final int exitCode) {

@@ -144,9 +144,15 @@ class GitRepositoryReader {
     Head head = readHead();
     if (head.isBranch) {
       String branchName = head.ref;
+      if (branchName == null) { // some error
+        return null;
+      }
       String hash = readCurrentRevision();  // TODO we know the branch name, so no need to read head twice
+      if (hash == null) {
+        return new GitLocalBranch(branchName, GitBranch.DUMMY_HASH);
+      }
       Hash h = createHash(hash);
-      if (branchName == null || h == null) {
+      if (h == null) {
         return null;
       }
       return new GitLocalBranch(branchName, h);

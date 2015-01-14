@@ -31,9 +31,12 @@ import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
+import java.io.IOException;
 
 import static com.intellij.openapi.vcs.Executor.*;
+import static git4idea.test.GitExecutor.addCommit;
 import static git4idea.test.GitExecutor.git;
+import static git4idea.test.GitExecutor.last;
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -135,5 +138,12 @@ public class GitTestUtil {
     picoContainer.unregisterComponent(key);
     picoContainer.registerComponentImplementation(key, serviceImplementation);
     return (T) ServiceManager.getService(serviceInterface);
+  }
+
+  @NotNull
+  public static String makeCommit(@NotNull String file) throws IOException {
+    append(file, "some content");
+    addCommit("some message");
+    return last();
   }
 }

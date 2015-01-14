@@ -23,11 +23,14 @@ import git4idea.GitRemoteBranch;
 import git4idea.test.GitSingleRepoTest;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 import static git4idea.test.GitExecutor.git;
 import static git4idea.test.GitScenarios.commit;
 import static git4idea.test.GitScenarios.conflict;
+import static git4idea.test.GitTestUtil.makeCommit;
+
 /**
  * {@link GitRepositoryReaderTest} reads information from the pre-created .git directory from a real project.
  * This one, on the other hand, operates on a live Git repository, putting it to various situations and checking the results.
@@ -35,15 +38,15 @@ import static git4idea.test.GitScenarios.conflict;
 public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
 
   // inspired by IDEA-93806
-  public void test_rebase_with_conflicts_while_being_on_detached_HEAD() {
+  public void test_rebase_with_conflicts_while_being_on_detached_HEAD() throws IOException {
+    makeCommit("file.txt");
     conflict(myRepo, "feature");
     commit(myRepo);
     commit(myRepo);
     git("checkout HEAD^");
     git("rebase feature", true);
 
-    File gitDir = new File(myRepo.getRoot().getPath(), ".git");
-    GitRepositoryReader reader = new GitRepositoryReader(gitDir);
+    GitRepositoryReader reader = getReader();
     GitLocalBranch branch = reader.readCurrentBranch();
     Repository.State state = reader.readState();
     assertNull("Current branch can't be identified for this case", branch);
@@ -51,7 +54,8 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
   }
 
   // inspired by IDEA-124052
-  public void test_remote_reference_without_remote() {
+  public void test_remote_reference_without_remote() throws IOException {
+    makeCommit("file.txt");
     final String INVALID_REMOTE = "invalid-remote";
     final String INVALID_REMOTE_BRANCH = "master";
     git("update-ref refs/remotes/" + INVALID_REMOTE + "/" + INVALID_REMOTE_BRANCH + " HEAD");
@@ -70,4 +74,19 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
     }));
   }
 
+  public void test_fresh_repository_is_on_branch() {
+    GitLocalBranch currentBranch = getReader().readCurrentBranch();
+    assertNotNull("Current branch shouldn't be null in a fresh repository", currentBranch);
+    assertEquals("Fresh repository should be on master", "master", currentBranch.getName());
+  }
+
+  private GitRepositoryReader getReader() {
+    File gitDir = new File(myRepo.getRoot().getPath(), ".git");
+    return new GitRepositoryReader(gitDir);
+  }
+
+  @Override
+  protected boolean makeInitialCommit() {
+    return false;
+  }
 }

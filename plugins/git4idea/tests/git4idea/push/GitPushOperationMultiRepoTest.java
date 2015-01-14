@@ -109,9 +109,9 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
     };
 
     cd(myRepository);
-    makeCommit("file.txt");
+    GitTestUtil.makeCommit("file.txt");
     cd(myCommunity);
-    makeCommit("com.txt");
+    GitTestUtil.makeCommit("com.txt");
 
     PushSpec<GitPushSource, GitPushTarget> spec1 = makePushSpec(myRepository, "master", "origin/master");
     PushSpec<GitPushSource, GitPushTarget> spec2 = makePushSpec(myCommunity, "master", "origin/master");
@@ -130,14 +130,14 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
 
   public void test_update_all_roots_on_reject_when_needed_even_if_only_one_in_push_spec() throws IOException {
     cd(myBro);
-    String broHash = makeCommit("bro.txt");
+    String broHash = GitTestUtil.makeCommit("bro.txt");
     git("push");
     cd(myBroCommunity);
-    String broCommunityHash = makeCommit("bro_com.txt");
+    String broCommunityHash = GitTestUtil.makeCommit("bro_com.txt");
     git("push");
 
     cd(myRepository);
-    makeCommit("file.txt");
+    GitTestUtil.makeCommit("file.txt");
 
     PushSpec<GitPushSource, GitPushTarget> mainSpec = makePushSpec(myRepository, "master", "origin/master");
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE); // auto-update-all-roots is selected by default
