@@ -336,7 +336,7 @@ public class ExprProcessor implements CodeConstants {
 
       Instruction instr = seq.getInstr(i);
       Integer bytecode_offset = block.getOldOffset(i);
-      Set<Integer> bytecode_offsets = bytecode_offset >= 0 ? new HashSet<Integer>(Arrays.asList(bytecode_offset)) : null;
+      Set<Integer> bytecode_offsets = bytecode_offset >= 0 ? Collections.singleton(bytecode_offset) : null;
 
       switch (instr.opcode) {
         case opc_aconst_null:
