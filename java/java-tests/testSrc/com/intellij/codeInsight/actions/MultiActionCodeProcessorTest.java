@@ -18,7 +18,9 @@ package com.intellij.codeInsight.actions;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,37 +33,30 @@ public class MultiActionCodeProcessorTest extends LightPlatformCodeInsightFixtur
 
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/actions/codeProcessor/";
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+    return JavaTestUtil.getJavaTestDataPath() + "/actions/reformatFileInEditor/";
   }
 
   @Override
   public void tearDown() throws Exception {
-    myFixture.getFile().putUserData(FormatChangedTextUtil.CHANGED_RANGES, null);
+    myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
     super.tearDown();
   }
 
   public void doTest(LayoutCodeOptions options) {
-    myFixture.configureByFile(getTestDataPath() + getTestName(true) + "_before.java");
-    CodeProcessor processor = new CodeProcessor(myFixture.getFile(), myFixture.getEditor(), options);
-
+    CharSequence revisionContent = null;
     if (options.getTextRangeType() == VCS_CHANGED_TEXT) {
-      CaretModel model = myFixture.getEditor().getCaretModel();
-      List<TextRange> ranges = ContainerUtil.mapNotNull(model.getAllCarets(), new Function<Caret, TextRange>() {
-        @Override
-        public TextRange fun(Caret caret) {
-          if (caret.hasSelection()) {
-            return new TextRange(caret.getSelectionStart(), caret.getSelectionEnd());
-          }
-          return null;
-        }
-      });
-      myFixture.getFile().putUserData(FormatChangedTextUtil.CHANGED_RANGES, ranges);
+      myFixture.configureByFile(getTestName(true) + "_revision.java");
+      PsiFile file = myFixture.getFile();
+      Document document = myFixture.getDocument(file);
+      revisionContent = document.getCharsSequence();
     }
+
+    myFixture.configureByFile(getTestName(true) + "_before.java");
+    if (revisionContent != null) {
+      myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, revisionContent);
+    }
+
+    CodeProcessor processor = new CodeProcessor(myFixture.getFile(), myFixture.getEditor(), options);
 
     processor.processCode();
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
@@ -75,10 +70,6 @@ public class MultiActionCodeProcessorTest extends LightPlatformCodeInsightFixtur
     doTest(new ReformatCodeRunOptions(WHOLE_FILE));
   }
 
-  public void testVcsChangedTextReformat() {
-    doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT));
-  }
-
   public void testWholeFileReformatAndOptimize() {
     doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true));
   }
@@ -87,7 +78,35 @@ public class MultiActionCodeProcessorTest extends LightPlatformCodeInsightFixtur
     doTest(new ReformatCodeRunOptions(SELECTED_TEXT).setOptimizeImports(true));
   }
 
-  //public void testVcsChangedTextReformatAndOptimize() {
-  //  doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true));
-  //}
+  public void testFormatWholeFile() {
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE));
+  }
+
+  public void testFormatOptimizeWholeFile() {
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true));
+  }
+
+  public void testFormatOptimizeRearrangeWholeFile() {
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true).setRearrangeCode(true));
+  }
+
+  public void testFormatSelection() {
+    doTest(new ReformatCodeRunOptions(SELECTED_TEXT));
+  }
+
+  public void testFormatRearrangeSelection() {
+    doTest(new ReformatCodeRunOptions(SELECTED_TEXT).setRearrangeCode(true));
+  }
+
+  public void testFormatVcsChanges() {
+    doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT));
+  }
+
+  public void testFormatOptimizeVcsChanges() {
+    doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true));
+  }
+
+  public void testFormatOptimizeRearrangeVcsChanges() {
+    doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true).setRearrangeCode(true));
+  }
 }

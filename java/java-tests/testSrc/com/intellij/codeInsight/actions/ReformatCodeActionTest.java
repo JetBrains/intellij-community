@@ -34,28 +34,9 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
 
   public void testReformatAndOptimizeMultipleFiles() throws IOException {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
-
-    //todo mock this guy
-    //LastRunReformatCodeOptionsProvider provider = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
-
+    injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
     performReformatActionOnSelectedFiles(files);
     checkFormationAndImportsOptimizationFor(files);
-  }
-
-  public void testReformatSingleSelected_FileWithoutEditor() throws IOException {
-    //todo fill
-  }
-
-  public void testReformatAndOptimizeFileFromEditor() throws IOException {
-    List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
-    injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
-
-    PsiFile fileToFormat = files.get(0);
-    List<PsiFile> shouldNotBeFormatted = files.subList(1, files.size());
-
-    performReformatActionOnFileInEditor(fileToFormat);
-    checkFormationAndImportsOptimizationFor(Arrays.asList(fileToFormat));
-    checkNoProcessingWasPerformedOn(shouldNotBeFormatted);
   }
 
   public void testOptimizeAndReformatOnlySelectedFiles() throws IOException {
@@ -71,10 +52,6 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
     checkNoProcessingWasPerformedOn(noProcessing);
   }
 
-  public void testOptimizeAndReformat_AllFilesInDirectoryIncludeSubdirs() throws IOException {
-    //todo create tests for AbstractLayoutCodeProcessor
-  }
-
   public void testOptimizeAndReformatInModule() throws IOException {
     Module module = createModuleWithSourceRoot("newModule");
     VirtualFile srcDir = ModuleRootManager.getInstance(module).getSourceRoots()[0];
@@ -85,10 +62,4 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
 
     checkFormationAndImportsOptimizationFor(files);
   }
-
-
-
-
-
-
 }

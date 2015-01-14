@@ -54,9 +54,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FormatChangedTextUtil {
-  public static final Key<String> TEST_REVISION_CONTENT = Key.create("test.revision.content");
+  public static final Key<CharSequence> TEST_REVISION_CONTENT = Key.create("test.revision.content");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.FormatChangedTextUtil");
-  protected static final Key<List<TextRange>> CHANGED_RANGES = Key.create("changed.ranges.since.last.revision");
 
 
   private FormatChangedTextUtil() {
@@ -234,15 +233,18 @@ public class FormatChangedTextUtil {
 
   @NotNull
   public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
-    List<TextRange> cachedChangedLines = getCachedChangedLines(project, file);
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return ContainerUtil.emptyList();
+
+    List<TextRange> cachedChangedLines = getCachedChangedLines(project, document);
     if (cachedChangedLines != null) {
       return cachedChangedLines;
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      String testContent = file.getUserData(TEST_REVISION_CONTENT);
+      CharSequence testContent = file.getUserData(TEST_REVISION_CONTENT);
       if (testContent != null) {
-        return calculateChangedTextRanges(file.getProject(), file, testContent);
+        return calculateChangedTextRanges(document, testContent);
       }
     }
 
