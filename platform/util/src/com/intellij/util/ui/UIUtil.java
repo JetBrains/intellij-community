@@ -2924,6 +2924,10 @@ public class UIUtil {
     textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
   }
 
+  public static void adjustRows(JTextArea area, int minRows, int maxRows) {
+    area.setRows(Math.max(minRows, Math.min(maxRows, area.getText().split("\n").length)));
+  }
+
   public static void playSoundFromResource(final String resourceName) {
     final Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return;
