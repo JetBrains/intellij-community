@@ -24,7 +24,7 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool implements PairedUnfairLocalInspectionTool {
+public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
   @NonNls public static final String UNUSED_PARAMETERS_SHORT_NAME = "UnusedParameters";
@@ -74,9 +74,4 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
     return true;
   }
 
-  @NotNull
-  @Override
-  public String getInspectionForBatchShortName() {
-    return UnusedDeclarationInspectionBase.SHORT_NAME;
-  }
 }
