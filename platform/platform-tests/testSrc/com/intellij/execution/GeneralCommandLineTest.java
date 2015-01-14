@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -242,10 +241,10 @@ public class GeneralCommandLineTest {
 
   @Test
   public void emptyEnvironmentPassing() throws Exception {
-    Pair<String, String> nonEmpty = Pair.create("a", "b");
-    Map<String, String> inputEnv = newHashMap(Pair.create("", "c"), nonEmpty);
+    Map<String, String> env = newHashMap(pair("a", "b"), pair("", "c"));
+    Map<String, String> expected = newHashMap(pair("a", "b"));
     GeneralCommandLine commandLine = makeJavaCommand(EnvPassingTest.class, null);
-    checkEnvPassing(commandLine, inputEnv, SystemInfo.isWindows ? newHashMap(nonEmpty) : inputEnv, false);
+    checkEnvPassing(commandLine, env, expected, false);
   }
 
   private static String execAndGetOutput(GeneralCommandLine commandLine, @Nullable String encoding) throws Exception {
