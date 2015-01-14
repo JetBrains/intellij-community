@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui;
 
+import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,7 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.Future;
 
 public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
@@ -192,22 +194,26 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myUiProperties.isShowRootNames();
   }
 
-  public void jumpToCommit(@NotNull Hash commitHash) {
+  public Future<Boolean> jumpToCommit(@NotNull Hash commitHash) {
+    SettableFuture<Boolean> future = SettableFuture.create();
     jumpTo(commitHash, new PairFunction<GraphTableModel, Hash, Integer>() {
       @Override
       public Integer fun(GraphTableModel model, Hash hash) {
         return model.getRowOfCommit(hash);
       }
-    });
+    }, future);
+    return future;
   }
 
-  public void jumpToCommitByPartOfHash(@NotNull String commitHash) {
+  public Future<Boolean> jumpToCommitByPartOfHash(@NotNull String commitHash) {
+    SettableFuture<Boolean> future = SettableFuture.create();
     jumpTo(commitHash, new PairFunction<GraphTableModel, String, Integer>() {
       @Override
       public Integer fun(GraphTableModel model, String hash) {
         return model.getRowOfCommitByPartOfHash(hash);
       }
-    });
+    }, future);
+    return future;
   }
 
   public void handleAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange) {
@@ -235,13 +241,15 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     }
   }
 
-  private <T> void jumpTo(@NotNull final T commitId, @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter) {
+  private <T> void jumpTo(@NotNull final T commitId, @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter, @NotNull final SettableFuture<Boolean> future) {
+    if (future.isCancelled()) return;
+
     GraphTableModel model = getModel();
     if (model == null) {
       invokeOnChange(new Runnable() {
         @Override
         public void run() {
-          jumpTo(commitId, rowGetter);
+          jumpTo(commitId, rowGetter, future);
         }
       });
       return;
@@ -250,12 +258,13 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     int row = rowGetter.fun(model, commitId);
     if (row >= 0) {
       myMainFrame.getGraphTable().jumpToRow(row);
+      future.set(true);
     }
     else if (model.canRequestMore()) {
       model.requestToLoadMore(new Runnable() {
         @Override
         public void run() {
-          jumpTo(commitId, rowGetter);
+          jumpTo(commitId, rowGetter, future);
         }
       });
     }
@@ -263,12 +272,13 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       invokeOnChange(new Runnable() {
         @Override
         public void run() {
-          jumpTo(commitId, rowGetter);
+          jumpTo(commitId, rowGetter, future);
         }
       });
     }
     else {
       commitNotFound(commitId.toString());
+      future.set(false);
     }
   }
 

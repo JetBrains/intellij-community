@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  *
@@ -85,7 +86,7 @@ public class VcsLogImpl implements VcsLog {
   }
 
   @Override
-  public void jumpToReference(final String reference) {
+  public Future<Boolean> jumpToReference(final String reference) {
     Collection<VcsRef> references = getAllReferences();
     VcsRef ref = ContainerUtil.find(references, new Condition<VcsRef>() {
       @Override
@@ -94,10 +95,10 @@ public class VcsLogImpl implements VcsLog {
       }
     });
     if (ref != null) {
-      myUi.jumpToCommit(ref.getCommitHash());
+      return myUi.jumpToCommit(ref.getCommitHash());
     }
     else {
-      myUi.jumpToCommitByPartOfHash(reference);
+      return myUi.jumpToCommitByPartOfHash(reference);
     }
   }
 

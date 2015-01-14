@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * Use this interface to access information available in the VCS Log.
@@ -55,7 +56,7 @@ public interface VcsLog {
   /**
    * Selects the commit node defined by the given reference (commit hash, branch or tag).
    */
-  void jumpToReference(String reference);
+  Future<Boolean> jumpToReference(String reference);
 
   /**
    * Returns the VCS log toolbar component.
@@ -68,5 +69,4 @@ public interface VcsLog {
    */
   @NotNull
   Collection<VcsLogProvider> getLogProviders();
-
 }
