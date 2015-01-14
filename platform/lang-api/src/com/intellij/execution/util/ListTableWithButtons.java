@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
@@ -40,6 +41,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
   private final List<T> myElements = ContainerUtil.newArrayList();
   private final JPanel myPanel;
   private final TableView<T> myTableView;
+  private final CommonActionsPanel myActionsPanel;
   private boolean myIsEnabled = true;
 
   protected ListTableWithButtons() {
@@ -55,6 +57,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
               final int column = myTableView.getEditingColumn();
               final int row = myTableView.getEditingRow();
               if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
+                e.consume();
                 SwingUtilities.invokeLater(new Runnable() {
                   @Override
                   public void run() {
@@ -69,6 +72,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
                         nextRow = 0;
                       }
                     }
+                    myTableView.scrollRectToVisible(myTableView.getCellRect(nextRow, nextColumn, true));
                     myTableView.editCellAt(nextRow, nextColumn);
                   }
                 });
@@ -79,19 +83,24 @@ public abstract class ListTableWithButtons<T> extends Observable {
       }
     };
     myTableView.setRowHeight(new JTextField().getPreferredSize().height);
+    myTableView.setIntercellSpacing(new Dimension(0, 0));
+    myTableView.setStriped(true);
+    
     myTableView.getTableViewModel().setSortable(false);
-    myPanel = ToolbarDecorator.createDecorator(myTableView)
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
+    myPanel = decorator
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          if (!myElements.isEmpty() && isEmpty(myElements.get(myElements.size() - 1))) return;
           myTableView.stopEditing();
           setModified();
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-              myElements.add(createElement());
-              myTableView.getTableViewModel().setItems(myElements);
+              if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
+                myElements.add(createElement());
+                myTableView.getTableViewModel().setItems(myElements);
+              }
               myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
               myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
             }
@@ -105,6 +114,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
           T selected = getSelection();
           if (selected != null) {
             int selectedIndex = myElements.indexOf(selected);
+            myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
             myElements.remove(selected);
             myTableView.getTableViewModel().setItems(myElements);
 
@@ -133,6 +143,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
       }
     });
 
+    myActionsPanel = decorator.getActionsPanel();
 
     myTableView.getComponent().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
   }
@@ -155,6 +166,10 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   public JComponent getComponent() {
     return myPanel;
+  }
+
+  public CommonActionsPanel getActionsPanel() {
+    return myActionsPanel;
   }
 
   public void setEnabled() {
