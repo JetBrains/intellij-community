@@ -15,14 +15,13 @@
  */
 package com.intellij.vcs.log.graph.linearBek;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges;
-import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
-import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,14 +86,26 @@ public class LinearBekGraph implements LinearGraph {
     return myGraph.getNodeIndexById(nodeId);
   }
 
-  public Collection<GraphEdge> expandEdge(@NotNull GraphEdge edge) {
+  public Collection<GraphEdge> expandEdge(@NotNull final GraphEdge edge) {
     assert edge.getType() == GraphEdgeType.DOTTED;
+    final Integer tail = edge.getUpNodeIndex();
+    final Integer firstChild = edge.getDownNodeIndex();
 
     myDottedEdges.removeEdge(edge);
 
     Set<GraphEdge> addedEdges = ContainerUtil.newHashSet();
-    addedEdges.addAll(myGraph.getAdjacentEdges(edge.getUpNodeIndex()));
-    addedEdges.addAll(myGraph.getAdjacentEdges(edge.getDownNodeIndex()));
+    addedEdges.addAll(ContainerUtil.filter(myGraph.getAdjacentEdges(tail), new Condition<GraphEdge>() {
+      @Override
+      public boolean value(GraphEdge it) {
+        return LinearGraphUtils.isEdgeToDown(it, tail);
+      }
+    }));
+    addedEdges.addAll(ContainerUtil.filter(myGraph.getAdjacentEdges(firstChild), new Condition<GraphEdge>() {
+      @Override
+      public boolean value(GraphEdge it) {
+        return LinearGraphUtils.isEdgeToUp(it, firstChild); // TODO should rename that :)
+      }
+    }));
 
     for (GraphEdge hiddenEdge : addedEdges) {
       myHiddenEdges.removeEdge(hiddenEdge);
