@@ -15,11 +15,13 @@
  */
 package com.intellij.vcs.log.graph.linearBek;
 
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
@@ -94,9 +96,11 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       Integer next = nextEdge.getDownNodeIndex();
       if (next == null) return; // well, what do you do
 
+      Integer upNodeIndex = nextEdge.getUpNodeIndex();
+
       if (next == firstChildIndex) {
         // found first child
-        tails.add(nextEdge.getUpNodeIndex());
+        tails.add(upNodeIndex);
       }
       else if (next < currentNodeIndex + k) {
         // or we were here before
@@ -106,7 +110,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
         // all is fine, continuing
         k++;
         addDownEdges(myWorkingGraph, next, queue);
-        definitelyNotTails.add(nextEdge.getUpNodeIndex());
+        definitelyNotTails.add(upNodeIndex);
       }
       else if (next > currentNodeIndex + k && next < firstChildIndex) {
         int li = myGraphLayout.getLayoutIndex(next);
@@ -123,7 +127,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
 
         // here we have to decide whether next is a part of the block or not
         if (visited.get(next)) {
-          definitelyNotTails.add(nextEdge.getUpNodeIndex());
+          definitelyNotTails.add(upNodeIndex);
         }
       }
       else if (next > firstChildIndex) {
@@ -137,10 +141,10 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
           }
         }
         else {
-          if (!definitelyNotTails.contains(nextEdge.getUpNodeIndex())) {
-            tails.add(nextEdge.getUpNodeIndex());
+          if (!definitelyNotTails.contains(upNodeIndex)) {
+            tails.add(upNodeIndex);
           }
-          myWorkingGraph.removeEdge(nextEdge.getUpNodeIndex(), nextEdge.getDownNodeIndex());
+          myWorkingGraph.removeEdge(upNodeIndex, next); // should remember this
         }
       }
 
@@ -167,8 +171,6 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       else if (mergeWithOldCommit) {
         myWorkingGraph.removeEdge(tail, firstChildIndex);
         myWorkingGraph.addEdge(tail, firstChildIndex);
-        // todo I think we should pass something to the working graph so it would remember what are we adding/removing on each iteration
-        // to be able to expand dotted edges later
       }
     }
 
@@ -201,7 +203,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     private final List<GraphEdge> myDottedToRemove = new ArrayList<GraphEdge>();
 
     private WorkingGraph(LinearGraph graph) {
-      super(graph, LinearBekController.createSimpleAdditionalEdges(), LinearBekController.createSimpleAdditionalEdges());
+      super(graph, createSimpleAdditionalEdges(), createSimpleAdditionalEdges());
     }
 
     public void addEdge(int from, int to) {
@@ -230,6 +232,11 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
         myDottedEdges.createEdge(e);
       }
 
+      // todo in this specific place we should remember which edges were hidden
+      // 1) we hide some edges that do not go to first child, but below it
+      // 2) we hide some dotted edges; we can not restore them
+      // we should either change collapsing algorithm (simplify it) or save some stuff here somehow
+
       clear();
     }
 
@@ -242,5 +249,9 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     public LinearBekGraph createLinearBekGraph() {
       return new LinearBekGraph(myGraph, myHiddenEdges, myDottedEdges);
     }
+  }
+
+  private static GraphAdditionalEdges createSimpleAdditionalEdges() {
+    return GraphAdditionalEdges.newInstance(new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
   }
 }
