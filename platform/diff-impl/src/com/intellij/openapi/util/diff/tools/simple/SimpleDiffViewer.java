@@ -327,8 +327,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected void onBeforeDocumentChange(@NotNull DocumentEvent e) {
     super.onBeforeDocumentChange(e);
     if (myDiffChanges.isEmpty()) return;
-
-    assert myEditor1 != null && myEditor2 != null;
+    if (myEditor1 == null || myEditor2 == null) return;
 
     Side side;
     if (e.getDocument() == myEditor1.getDocument()) {
