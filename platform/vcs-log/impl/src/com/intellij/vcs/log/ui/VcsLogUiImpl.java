@@ -194,6 +194,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myUiProperties.isShowRootNames();
   }
 
+  @NotNull
   public Future<Boolean> jumpToCommit(@NotNull Hash commitHash) {
     SettableFuture<Boolean> future = SettableFuture.create();
     jumpTo(commitHash, new PairFunction<GraphTableModel, Hash, Integer>() {
@@ -205,6 +206,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return future;
   }
 
+  @NotNull
   public Future<Boolean> jumpToCommitByPartOfHash(@NotNull String commitHash) {
     SettableFuture<Boolean> future = SettableFuture.create();
     jumpTo(commitHash, new PairFunction<GraphTableModel, String, Integer>() {

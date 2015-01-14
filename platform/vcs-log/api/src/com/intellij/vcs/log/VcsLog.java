@@ -56,6 +56,7 @@ public interface VcsLog {
   /**
    * Selects the commit node defined by the given reference (commit hash, branch or tag).
    */
+  @NotNull
   Future<Boolean> jumpToReference(String reference);
 
   /**

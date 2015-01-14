@@ -85,6 +85,7 @@ public class VcsLogImpl implements VcsLog {
     return myUi.getDataPack().getRefsModel().getAllRefs();
   }
 
+  @NotNull
   @Override
   public Future<Boolean> jumpToReference(final String reference) {
     Collection<VcsRef> references = getAllReferences();
