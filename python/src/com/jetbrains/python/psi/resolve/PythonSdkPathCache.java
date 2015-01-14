@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,20 +76,12 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     }, this);
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileAdapter(), this);
     if (!project.isDisposed()) {
-      project.getMessageBus().connect(this).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
-        @Override
-        public void jdkAdded(Sdk jdk) {
-        }
-
+      project.getMessageBus().connect(this).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Adapter() {
         @Override
         public void jdkRemoved(Sdk jdk) {
           if (jdk == sdk) {
             Disposer.dispose(PythonSdkPathCache.this);
           }
-        }
-
-        @Override
-        public void jdkNameChanged(Sdk jdk, String previousName) {
         }
       });
       Disposer.register(project, this);
