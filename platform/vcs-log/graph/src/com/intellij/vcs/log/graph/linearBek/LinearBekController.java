@@ -15,23 +15,29 @@
  */
 package com.intellij.vcs.log.graph.linearBek;
 
-import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
+import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
 
 public class LinearBekController extends CascadeLinearGraphController {
-  @NotNull private final LinearGraph myCompiledGraph;
+  @NotNull private final LinearBekGraph myCompiledGraph;
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller,
                              @NotNull PermanentGraphInfo permanentGraphInfo,
@@ -43,7 +49,9 @@ public class LinearBekController extends CascadeLinearGraphController {
                                    new BekTimestampGetter(timestampGetter, bekIntMap));
   }
 
-  static LinearGraph compileGraph(@NotNull LinearGraph graph, @NotNull GraphLayout graphLayout, @NotNull TimestampGetter timestampGetter) {
+  static LinearBekGraph compileGraph(@NotNull LinearGraph graph,
+                                     @NotNull GraphLayout graphLayout,
+                                     @NotNull TimestampGetter timestampGetter) {
     long start = System.currentTimeMillis();
     LinearBekGraph result = new LinearBekGraphBuilder(graph, graphLayout, timestampGetter).build();
     long end = System.currentTimeMillis();
@@ -65,6 +73,15 @@ public class LinearBekController extends CascadeLinearGraphController {
   @Nullable
   @Override
   protected LinearGraphAnswer performAction(@NotNull LinearGraphAction action) {
+    if (action.getType() == GraphAction.Type.MOUSE_CLICK && action.getAffectedElement() != null) {
+      GraphElement graphElement = action.getAffectedElement().getGraphElement();
+      if (graphElement instanceof GraphEdge) {
+        GraphEdge edge = (GraphEdge)graphElement;
+        if (edge.getType() == GraphEdgeType.DOTTED) {
+          return new ExpandedEdgeAnswer(edge, myCompiledGraph.expandEdge(edge));
+        }
+      }
+    }
     return null;
   }
 
@@ -122,6 +139,87 @@ public class LinearBekController extends CascadeLinearGraphController {
     @Override
     public long getTimestamp(int index) {
       return myTimestampGetter.getTimestamp(myBekIntMap.getUsualIndex(index));
+    }
+
+  }
+
+  private static class ExpandedEdgeAnswer implements LinearGraphAnswer {
+    private final GraphChanges<Integer> myChanges;
+
+    private ExpandedEdgeAnswer(@NotNull GraphEdge expanded, @NotNull Collection<GraphEdge> addedEdges) {
+      final Set<GraphChanges.Edge<Integer>> edgeChanges = ContainerUtil.newHashSet();
+
+      edgeChanges.add(new ChangedEdge(expanded.getUpNodeIndex(), expanded.getDownNodeIndex(), true));
+      for (GraphEdge edge : addedEdges) {
+        edgeChanges.add(new ChangedEdge(edge.getUpNodeIndex(), edge.getDownNodeIndex(), false));
+      }
+
+      myChanges = new GraphChanges<Integer>() {
+        @NotNull
+        @Override
+        public Collection<Node<Integer>> getChangedNodes() {
+          return Collections.emptySet();
+        }
+
+        @NotNull
+        @Override
+        public Collection<Edge<Integer>> getChangedEdges() {
+          return edgeChanges;
+        }
+      };
+    }
+
+    @Nullable
+    @Override
+    public GraphChanges<Integer> getGraphChanges() {
+      return myChanges;
+    }
+
+    @Nullable
+    @Override
+    public Cursor getCursorToSet() {
+      return null; // TODO
+    }
+
+    @Nullable
+    @Override
+    public Integer getCommitToJump() {
+      return null; // TODO
+    }
+
+    private static class ChangedEdge implements GraphChanges.Edge<Integer> {
+      private final int myUpNodeId;
+      private final int myDownNodeId;
+      private final boolean myRemoved;
+
+      private ChangedEdge(int upNodeId, int downNodeId, boolean removed) {
+        myUpNodeId = upNodeId;
+        myDownNodeId = downNodeId;
+        myRemoved = removed;
+      }
+
+      @Nullable
+      @Override
+      public Integer upNodeId() {
+        return myUpNodeId;
+      }
+
+      @Nullable
+      @Override
+      public Integer downNodeId() {
+        return myDownNodeId;
+      }
+
+      @Nullable
+      @Override
+      public Integer additionInfo() {
+        return null; // TODO huh?
+      }
+
+      @Override
+      public boolean removed() {
+        return myRemoved;
+      }
     }
   }
 }
