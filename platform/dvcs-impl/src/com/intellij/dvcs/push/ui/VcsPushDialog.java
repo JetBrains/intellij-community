@@ -36,7 +36,6 @@ public class VcsPushDialog extends DialogWrapper {
 
   private static final String ID = "Vcs.Push.Dialog";
 
-  @NotNull private final Project myProject;
   private final PushLog myListPanel;
   private final PushController myController;
   private final Map<PushSupport, VcsPushOptionsPanel> myAdditionalPanels;
@@ -48,7 +47,6 @@ public class VcsPushDialog extends DialogWrapper {
                        @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo) {
     super(project);
-    myProject = project;
     myController = new PushController(project, this, selectedRepositories, currentRepo);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
