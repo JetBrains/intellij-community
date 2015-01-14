@@ -146,7 +146,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   @Override
-  protected void onBeforeRediff() {
+  protected void onSlowRediff() {
     myStatusPanel.setBusy(true);
   }
 

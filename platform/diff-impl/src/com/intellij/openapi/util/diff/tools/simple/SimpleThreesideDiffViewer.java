@@ -26,8 +26,11 @@ import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.fragments.MergeLineFragment;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.tools.util.*;
+import com.intellij.openapi.util.diff.tools.util.BaseSyncScrollable;
+import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.SimpleThreesideFoldingModel;
+import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
+import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideContentPanel.DiffDivider;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.*;
@@ -131,7 +134,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   //
 
   @Override
-  protected void onBeforeRediff() {
+  protected void onSlowRediff() {
     myStatusPanel.setBusy(true);
   }
 
