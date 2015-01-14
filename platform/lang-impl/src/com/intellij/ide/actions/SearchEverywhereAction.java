@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,6 +158,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private JBList myList;
   private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
+  private Set<AnAction> myDisabledActions = new HashSet<AnAction>();
   private Component myContextComponent;
   private CalcThread myCalcThread;
   private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
@@ -1040,6 +1041,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     };
     SearchEverywherePsiRenderer myFileRenderer = new SearchEverywherePsiRenderer(myList);
+    ListCellRenderer myActionsRenderer = new GotoActionModel.GotoActionListCellRenderer(Function.TO_STRING);
 
     private String myLocationString;
     private DefaultPsiElementCellRenderer myPsiRenderer = new DefaultPsiElementCellRenderer() {
@@ -1080,6 +1082,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       } else if (value instanceof PsiElement) {
         myFileRenderer.setPatternMatcher(matcher);
         cmp = myFileRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
+      } else if (value instanceof GotoActionModel.ActionWrapper) {
+        cmp = myActionsRenderer.getListCellRendererComponent(list, new GotoActionModel.MatchedValue(((GotoActionModel.ActionWrapper)value), pattern), index, isSelected, isSelected);
       } else {
         cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
         final JPanel p = new JPanel(new BorderLayout());
@@ -1464,7 +1468,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               result.add(object);
             }
           } else if (actions && !isToolWindowAction(object) && isActionValue(object)) {
-            result.add(object);
+            AnAction action = object instanceof AnAction ? ((AnAction)object) : ((GotoActionModel.ActionWrapper)object).getAction();
+            if (isEnabled(action)) {
+              result.add(object);
+            }
           }
           return result.size() <= max;
         }
@@ -1905,19 +1912,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           public void run() {
             if (isCanceled()) return;
 
-
             for (Object element : new ArrayList(elements)) {
               if (element instanceof AnAction) {
-                final AnAction action = (AnAction)element;
-                final AnActionEvent e = new AnActionEvent(myActionEvent.getInputEvent(),
-                                                          myActionEvent.getDataContext(),
-                                                          myActionEvent.getPlace(),
-                                                          action.getTemplatePresentation(),
-                                                          myActionEvent.getActionManager(),
-                                                          myActionEvent.getModifiers());
-                ActionUtil.performDumbAwareUpdate(action, e, false);
-                final Presentation presentation = e.getPresentation();
-                if (!presentation.isEnabled() || !presentation.isVisible() || StringUtil.isEmpty(presentation.getText())) {
+                if (!isEnabled((AnAction)element)) {
                   elements.remove(element);
                 }
                 if (isCanceled()) return;
@@ -1931,6 +1928,29 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         });
       }
+    }
+
+    protected boolean isEnabled(final AnAction action) {
+      if (myDisabledActions.contains(action)) return false;
+      final AnActionEvent e = new AnActionEvent(myActionEvent.getInputEvent(),
+                                                myActionEvent.getDataContext(),
+                                                myActionEvent.getPlace(),
+                                                action.getTemplatePresentation(),
+                                                myActionEvent.getActionManager(),
+                                                myActionEvent.getModifiers());
+
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          ActionUtil.performDumbAwareUpdate(action, e, false);
+        }
+      });
+      final Presentation presentation = e.getPresentation();
+      final boolean enabled = presentation.isEnabled() && presentation.isVisible() && !StringUtil.isEmpty(presentation.getText());
+      if (!enabled) {
+        myDisabledActions.add(action);
+      }
+      return enabled;
     }
 
     private synchronized void checkModelsUpToDate() {
@@ -2165,6 +2185,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             myEditor = null;
             myFileEditor = null;
             myStructureModel = null;
+            myDisabledActions.clear();
           }
         }
       }
