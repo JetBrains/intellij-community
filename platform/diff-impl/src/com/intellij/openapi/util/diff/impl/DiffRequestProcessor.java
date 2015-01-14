@@ -862,7 +862,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       buildActionPopup(popupActions);
 
 
-      myToolbarStatusPanel.setContent(toolbarComponents2.statusPanel); // TODO: combine both panels ?
+      myToolbarStatusPanel.setContent(toolbarComponents1.statusPanel); // TODO: combine both panels ?
 
       myPanel.validate();
     }
