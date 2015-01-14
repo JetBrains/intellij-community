@@ -327,8 +327,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     svnGroup.add(new HighlightFrom());
     svnGroup.add(myIntegrateAction);
     svnGroup.add(myUndoIntegrateChangeListsAction);
-    svnGroup.add(new MarkAsMerged());
-    svnGroup.add(new MarkAsNotMerged());
+    svnGroup.add(new MarkAsMerged(true));
+    svnGroup.add(new MarkAsMerged(false));
     svnGroup.add(myFilterMerged);
     svnGroup.add(myFilterNotMerged);
     svnGroup.add(myFilterAlien);
@@ -582,16 +582,18 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private class MarkAsMerged extends AbstractIntegrateChangesAction<SelectedChangeListsChecker> {
     private final String myText;
     private final String myDescription;
+    private final boolean myMarkAsMerged;
 
-    private MarkAsMerged() {
+    private MarkAsMerged(boolean markAsMerged) {
       super(false);
-      myText = SvnBundle.message("action.mark.list.as.merged.text");
-      myDescription = SvnBundle.message("action.mark.list.as.merged.description");
+      myMarkAsMerged = markAsMerged;
+      myText = message("action.mark.list.as.%s.text");
+      myDescription = message("action.mark.list.as.%s.description");
     }
 
     @NotNull
     protected MergerFactory createMergerFactory(SelectedChangeListsChecker checker) {
-      return new ChangeListsMergerFactory(checker.getSelectedLists(), true, false, false);
+      return new ChangeListsMergerFactory(checker.getSelectedLists(), true, !myMarkAsMerged, false);
     }
 
     @NotNull
@@ -602,10 +604,10 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(SvnIcons.MarkAsMerged);
+      presentation.setIcon(myMarkAsMerged ? SvnIcons.MarkAsMerged : SvnIcons.MarkAsNotMerged);
       presentation.setText(myText);
       presentation.setDescription(myDescription);
-      presentation.setEnabled(presentation.isEnabled() && mergeEnabled(checker.getSelectedLists(), true));
+      presentation.setEnabled(presentation.isEnabled() && mergeEnabled(checker.getSelectedLists(), myMarkAsMerged));
     }
     
     @Nullable
@@ -629,57 +631,10 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     protected String getDialogTitle() {
       return myText;
     }
-  }
-
-  private class MarkAsNotMerged extends AbstractIntegrateChangesAction<SelectedChangeListsChecker> {
-    private final String myText;
-    private final String myDescription;
-
-    private MarkAsNotMerged() {
-      super(false);
-      myText = SvnBundle.message("action.mark.list.as.not.merged.title");
-      myDescription = SvnBundle.message("action.mark.list.as.not.merged.descrition");
-    }
 
     @NotNull
-    protected MergerFactory createMergerFactory(SelectedChangeListsChecker checker) {
-      return new ChangeListsMergerFactory(checker.getSelectedLists(), true, true, false);
-    }
-
-    @NotNull
-    protected SelectedChangeListsChecker createChecker() {
-      return new SelectedChangeListsChecker();
-    }
-
-    @Override
-    protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
-      final Presentation presentation = e.getPresentation();
-      presentation.setIcon(SvnIcons.MarkAsNotMerged);
-      presentation.setText(myText);
-      presentation.setDescription(myDescription);
-      presentation.setEnabled(presentation.isEnabled() && mergeEnabled(checker.getSelectedLists(), false));
-    }
-
-    @Nullable
-    protected String getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
-      final SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
-      if (data != null) {
-        return data.getBranch().getUrl();
-      }
-      return null;
-    }
-
-    @Nullable
-    protected String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker) {
-      final SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
-      if (data != null) {
-        return data.getLocalBranch();
-      }
-      return null;
-    }
-
-    protected String getDialogTitle() {
-      return myText;
+    private String message(@NotNull String key) {
+      return SvnBundle.message(String.format(key, myMarkAsMerged ? "merged" : "not.merged"));
     }
   }
 
