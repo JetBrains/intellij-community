@@ -15,13 +15,19 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.psi.PsiElement;
 
 @State(
   name = "NullableNotNullManager",
   storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)}
 )
 public class NullableNotNullManagerImpl extends NullableNotNullManager {
+  protected boolean hasHardcodedContracts(PsiElement element) {
+    return HardcodedContracts.hasHardcodedContracts(element);
+  }
+
 }

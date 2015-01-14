@@ -82,22 +82,18 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     if (owner instanceof PsiMethod && PsiUtil.canBeOverriden((PsiMethod)owner)) {
       return true;
     }
-    if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && hasHardcodedContracts(owner)) {
+    if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && HardcodedContracts.hasHardcodedContracts(owner)) {
       return true;
     }
     if (AnnotationUtil.NOT_NULL.equals(annotationFQN) && owner instanceof PsiParameter && owner.getParent() != null) {
       if (AnnotationUtil.isAnnotated(owner, NullableNotNullManager.getInstance(owner.getProject()).getNullables(), false, false)) {
         return true;
       }
-      if (hasHardcodedContracts(owner.getParent().getParent())) {
+      if (HardcodedContracts.hasHardcodedContracts(owner)) {
         return true;
       }
     }
     return false;
-  }
-
-  private static boolean hasHardcodedContracts(PsiElement owner) {
-    return owner instanceof PsiMethod && !HardcodedContracts.getHardcodedContracts((PsiMethod)owner, null).isEmpty();
   }
 
   @Nullable
