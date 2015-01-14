@@ -76,20 +76,21 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void setVisiblePack(@NotNull VisiblePack pack) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
+    PermanentGraph<Integer> previousPermGraph = myVisiblePack.getPermanentGraph();
     TIntHashSet previouslySelected = getSelectedCommits();
 
-    PermanentGraph<Integer> previousPermGraph = myVisiblePack.getPermanentGraph();
     myVisiblePack = pack;
-
     boolean permGraphChanged = previousPermGraph != myVisiblePack.getPermanentGraph();
 
     GraphTableModel currentModel = getModel();
     if (currentModel == null) {
-      GraphTableModel newModel = new GraphTableModel(myVisiblePack, myLogDataHolder, this);
-      setModel(newModel, myVisiblePack.getVisibleGraph(), previouslySelected);
+      VcsLogGraphTable table = getTable();
+      table.setModel(new GraphTableModel(myVisiblePack, myLogDataHolder, this));
+      table.setPaintBusy(false);
     }
     else {
       currentModel.setVisiblePack(myVisiblePack);
+      restoreSelection(currentModel, myVisiblePack.getVisibleGraph(), previouslySelected, getTable());
     }
     myMainFrame.updateDataPack(myVisiblePack);
     setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
@@ -100,15 +101,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull
   public MainFrame getMainFrame() {
     return myMainFrame;
-  }
-
-  private void setModel(@NotNull GraphTableModel newModel,
-                        @NotNull VisibleGraph<Integer> newVisibleGraph,
-                        @NotNull TIntHashSet previouslySelectedCommits) {
-    final VcsLogGraphTable table = getTable();
-    table.setModel(newModel);
-    restoreSelection(newModel, newVisibleGraph, previouslySelectedCommits, table);
-    table.setPaintBusy(false);
   }
 
   private static void restoreSelection(@NotNull GraphTableModel newModel,
@@ -243,7 +235,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     }
   }
 
-  private <T> void jumpTo(@NotNull final T commitId, @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter, @NotNull final SettableFuture<Boolean> future) {
+  private <T> void jumpTo(@NotNull final T commitId,
+                          @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
+                          @NotNull final SettableFuture<Boolean> future) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getModel();
