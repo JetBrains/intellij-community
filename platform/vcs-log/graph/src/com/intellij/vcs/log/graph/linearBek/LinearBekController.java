@@ -20,7 +20,6 @@ import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
-import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges;
 import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
@@ -73,10 +72,6 @@ public class LinearBekController extends CascadeLinearGraphController {
   @Override
   public LinearGraph getCompiledGraph() {
     return myCompiledGraph;
-  }
-
-  public static GraphAdditionalEdges createSimpleAdditionalEdges() {
-    return GraphAdditionalEdges.newInstance(new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
   }
 
   private static class BekGraphLayout implements GraphLayout {
