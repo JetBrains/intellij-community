@@ -16,10 +16,13 @@
 package com.intellij.openapi;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.Component;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -181,6 +184,18 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
 
   abstract void setMnemonicIndex(int index);
 
+  static KeyStroke fixMacKeyStroke(KeyStroke stroke, InputMap map, int code, boolean onKeyRelease, String action) {
+    if (stroke != null && code != stroke.getKeyCode()) {
+      map.remove(stroke);
+      stroke = null;
+    }
+    if (stroke == null && code != KeyEvent.VK_UNDEFINED) {
+      stroke = KeyStroke.getKeyStroke(code, InputEvent.ALT_MASK | InputEvent.ALT_DOWN_MASK, onKeyRelease);
+      map.put(stroke, action);
+    }
+    return stroke;
+  }
+
   // TODO: HACK because of Java7 required:
   // replace later with KeyEvent.getExtendedKeyCodeForChar(ch)
   private static int getExtendedKeyCodeForChar(int ch) {
@@ -211,6 +226,9 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
   }
 
   private static class ButtonWrapper extends MnemonicWrapper<AbstractButton> {
+    private KeyStroke myStrokePressed;
+    private KeyStroke myStrokeReleased;
+
     private ButtonWrapper(AbstractButton component) {
       super(component, "text", "mnemonic", "displayedMnemonicIndex");
     }
@@ -233,6 +251,13 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     @Override
     void setMnemonicCode(int code) {
       myComponent.setMnemonic(code);
+      if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+        InputMap map = myComponent.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        if (map != null) {
+          myStrokePressed = fixMacKeyStroke(myStrokePressed, map, code, false, "pressed");
+          myStrokeReleased = fixMacKeyStroke(myStrokeReleased, map, code, true, "released");
+        }
+      }
     }
 
     @Override
@@ -247,6 +272,8 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
   }
 
   private static class LabelWrapper extends MnemonicWrapper<JLabel> {
+    private KeyStroke myStrokeRelease;
+
     private LabelWrapper(JLabel component) {
       super(component, "text", "displayedMnemonic", "displayedMnemonicIndex");
     }
@@ -269,6 +296,12 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     @Override
     void setMnemonicCode(int code) {
       myComponent.setDisplayedMnemonic(code);
+      if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+        InputMap map = myComponent.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        if (map != null) {
+          myStrokeRelease = fixMacKeyStroke(myStrokeRelease, map, code, true, "release");
+        }
+      }
     }
 
     @Override
