@@ -44,3 +44,18 @@ class TestInspection {
     //...
   }
 }
+
+class WithInner {
+  @Nullable Object o;
+
+  {
+    new Runnable() {
+      @Override
+      public void run() {
+        if (WithInner.this.o != null) {
+          System.out.println(WithInner.this.o.toString());
+        }
+      }
+    };
+  }
+}
