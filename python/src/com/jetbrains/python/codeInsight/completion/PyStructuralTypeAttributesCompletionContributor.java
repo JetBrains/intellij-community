@@ -25,9 +25,15 @@ import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.types.PyTypeFromUsedAttributesHelper.getAllDeclaredAttributeNames;
 
 /**
+ * This completion contributor tries to map structural type (if any) of qualifier under caret to set of concrete
+ * classes (nominal types) that have (declare and/or inherit) all necessary attributes and thus complete other
+ * attributes that may be accessed on this expression.
+ * <p/>
+ * Because it's somewhat computationally heavy operation that requires extensive resolution of superclasses and their
+ * attributes, this contributor is activated only on smart completion.
+ *
  * @author Mikhail Golubev
  */
 public class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor {
@@ -125,9 +131,9 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
 
     @NotNull
     private Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate) {
-      final Set<String> availableAttrs = Sets.newHashSet(getAllDeclaredAttributeNames(candidate));
+      final Set<String> availableAttrs = Sets.newHashSet(PyClassAttributesIndex.getAllDeclaredAttributeNames(candidate));
       for (PyClass parent : getAncestorClassesFast(candidate)) {
-        availableAttrs.addAll(getAllDeclaredAttributeNames(parent));
+        availableAttrs.addAll(PyClassAttributesIndex.getAllDeclaredAttributeNames(parent));
       }
       return availableAttrs;
     }

@@ -16,6 +16,7 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -29,6 +30,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class PythonCompletionTest extends PyTestCase {
@@ -58,6 +60,13 @@ public class PythonCompletionTest extends PyTestCase {
   private List<String> doTestByFile() {
     myFixture.configureByFile("completion/" + getTestName(true) + ".py");
     myFixture.completeBasic();
+    return myFixture.getLookupElementStrings();
+  }
+
+  @Nullable
+  private List<String> doTestSmartByFile() {
+    myFixture.configureByFile("completion/" + getTestName(true) + ".py");
+    myFixture.complete(CompletionType.SMART);
     return myFixture.getLookupElementStrings();
   }
 
@@ -702,15 +711,15 @@ public class PythonCompletionTest extends PyTestCase {
     assertDoesntContain(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
   }
 
-  public void testFromUsedMethodsOfString() {
-    final List<String> suggested = doTestByFile();
+  public void testSmartFromUsedMethodsOfString() {
+    final List<String> suggested = doTestSmartByFile();
     assertNotNull(suggested);
-    // append comes from bytearray
-    assertContainsElements(suggested, "lower", "capitalize", "join", "append");
+    // Remove duplicates for assertContainsElements(), "append" comes from bytearray
+    assertContainsElements(new HashSet<String>(suggested), "lower", "capitalize", "join", "append");
   }
 
-  public void testFromUsedAttributesOfClass() {
-    final List<String> suggested = doTestByFile();
+  public void testSmartFromUsedAttributesOfClass() {
+    final List<String> suggested = doTestSmartByFile();
     assertNotNull(suggested);
     assertContainsElements(suggested, "other_method", "name", "unique_method");
   }

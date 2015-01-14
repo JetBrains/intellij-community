@@ -8,8 +8,8 @@ class MyClass(Base):
       def other_method(self):
           pass
 
-x = undefined()
-x.__init__()
-print(x.name)
-x.unique_method()
-x.<caret>
+def func(x):
+    x.__init__()
+    print(x.name)
+    x.unique_method()
+    x.<caret>
