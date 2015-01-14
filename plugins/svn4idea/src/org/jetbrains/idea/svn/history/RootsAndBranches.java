@@ -60,7 +60,9 @@ import java.util.Map;
 
 public class RootsAndBranches implements CommittedChangeListDecorator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.RootsAndBranches");
-  private final Project myProject;
+
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Project myProject;
   private final DecoratorManager myManager;
   private final RepositoryLocation myLocation;
   private JPanel myPanel;
@@ -100,12 +102,13 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return myMergePanels.get(key.endsWith(File.separator) ? key.substring(0, key.length() - 1) : key + File.separator);
   }
 
-  public RootsAndBranches(final Project project, @NotNull DecoratorManager manager, final RepositoryLocation location) {
-    myProject = project;
+  public RootsAndBranches(@NotNull SvnVcs vcs, @NotNull DecoratorManager manager, final RepositoryLocation location) {
+    myVcs = vcs;
+    myProject = vcs.getProject();
     myManager = manager;
     myLocation = location;
 
-    myDataLoader = new WcInfoLoader(myProject, myLocation);
+    myDataLoader = new WcInfoLoader(myVcs, myLocation);
 
     myMergePanels = new HashMap<String, SvnMergeInfoRootPanelManual>();
     myHolders = new HashMap<String, MergeInfoHolder>();
