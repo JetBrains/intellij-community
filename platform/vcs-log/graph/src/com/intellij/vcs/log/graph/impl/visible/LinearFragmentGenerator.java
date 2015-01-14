@@ -20,9 +20,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,12 +32,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class FragmentGenerator {
+import static com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter.DOWN;
+import static com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter.UP;
+
+public class LinearFragmentGenerator {
   private static final int SHORT_FRAGMENT_MAX_SIZE = 10;
   private static final int MAX_SEARCH_SIZE = 10;
 
   @NotNull
-  private final LinearGraph myLinearGraph;
+  private final LiteLinearGraph myLinearGraph;
 
   @NotNull
   private final Condition<Integer> myThisNodeCantBeInMiddle;
@@ -43,19 +48,19 @@ public class FragmentGenerator {
   private final Function<Integer, List<Integer>> upNodesFun = new Function<Integer, List<Integer>>() {
     @Override
     public List<Integer> fun(Integer integer) {
-      return myLinearGraph.getUpNodes(integer);
+      return myLinearGraph.getNodes(integer, UP);
     }
   };
 
   private final Function<Integer, List<Integer>> downNodesFun = new Function<Integer, List<Integer>>() {
     @Override
     public List<Integer> fun(Integer integer) {
-      return myLinearGraph.getDownNodes(integer);
+      return myLinearGraph.getNodes(integer, DOWN);
     }
   };
 
-  public FragmentGenerator(@NotNull LinearGraph linearGraph, @NotNull Condition<Integer> thisNodeCantBeInMiddle) {
-    myLinearGraph = linearGraph;
+  public LinearFragmentGenerator(@NotNull LinearGraph linearGraph, @NotNull Condition<Integer> thisNodeCantBeInMiddle) {
+    myLinearGraph = LinearGraphUtils.asLiteLinearGraph(linearGraph);
     myThisNodeCantBeInMiddle = thisNodeCantBeInMiddle;
   }
 
@@ -67,9 +72,11 @@ public class FragmentGenerator {
       upNodeIndex = ((GraphNode)element).getNodeIndex();
       downNodeIndex = upNodeIndex;
     } else {
-      GraphEdge graphEdge = ((GraphEdge)element);
-      upNodeIndex = graphEdge.getUpNodeIndex();
-      downNodeIndex = graphEdge.getDownNodeIndex();
+      Pair<Integer, Integer> graphEdge = LinearGraphUtils.asNormalEdge(((GraphEdge)element));
+      if (graphEdge == null) return null;
+
+      upNodeIndex = graphEdge.first;
+      downNodeIndex = graphEdge.second;
     }
 
     for (int i = 0; i < MAX_SEARCH_SIZE; i++) {
@@ -77,7 +84,7 @@ public class FragmentGenerator {
       if (graphFragment != null && graphFragment.downNodeIndex >= downNodeIndex)
         return graphFragment;
 
-      List<Integer> upNodes = myLinearGraph.getUpNodes(upNodeIndex);
+      List<Integer> upNodes = myLinearGraph.getNodes(upNodeIndex, UP);
       if (upNodes.size() != 1) {
         break;
       }
@@ -139,7 +146,8 @@ public class FragmentGenerator {
     if (maxUp != startFragment.upNodeIndex || maxDown != startFragment.downNodeIndex) {
       return new GraphFragment(maxUp, maxDown);
     } else {
-      if (myLinearGraph.getDownNodes(startFragment.upNodeIndex).size() != 1)
+      // start fragment is Simple
+      if (myLinearGraph.getNodes(startFragment.upNodeIndex, DOWN).size() != 1)
         return startFragment;
     }
     return null;
@@ -157,7 +165,7 @@ public class FragmentGenerator {
     grayNodes.addAll(getNextNodes.fun(startNode));
 
     int endNode = -1;
-    while (blackNodes.size() < SHORT_FRAGMENT_MAX_SIZE && !grayNodes.contains(LinearGraph.NOT_LOAD_COMMIT)) {
+    while (blackNodes.size() < SHORT_FRAGMENT_MAX_SIZE) {
       int nextBlackNode = -1;
       for (int grayNode : grayNodes) {
         if (blackNodes.containsAll(getPrevNodes.fun(grayNode))) {

@@ -21,7 +21,7 @@ import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.impl.visible.FragmentGenerator;
+import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
@@ -32,13 +32,13 @@ import java.util.Set;
 public class PrintElementsManagerImpl<CommitId> extends AbstractPrintElementsManager<CommitId> {
 
   @NotNull
-  private final FragmentGenerator myFragmentGenerator;
+  private final LinearFragmentGenerator myFragmentGenerator;
 
   @NotNull
   private final DfsUtil myDfsUtil = new DfsUtil();
 
   public PrintElementsManagerImpl(@NotNull LinearGraphWithCommitInfo<CommitId> printedLinearGraph,
-                                  @NotNull FragmentGenerator fragmentGenerator,
+                                  @NotNull LinearFragmentGenerator fragmentGenerator,
                                   @NotNull GraphColorManager<CommitId> colorManager) {
     super(printedLinearGraph, colorManager);
     myFragmentGenerator = fragmentGenerator;
@@ -77,7 +77,7 @@ public class PrintElementsManagerImpl<CommitId> extends AbstractPrintElementsMan
 
   @NotNull
   protected Set<Integer> getSelectedNodes(@NotNull GraphElement graphElement) {
-    FragmentGenerator.GraphFragment fragment = myFragmentGenerator.getPartLongFragment(graphElement);
+    LinearFragmentGenerator.GraphFragment fragment = myFragmentGenerator.getPartLongFragment(graphElement);
     if (fragment == null)
       return Collections.emptySet();
 
