@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -362,8 +362,14 @@ public class ExprProcessor implements CodeConstants {
         case opc_ldc:
         case opc_ldc_w:
         case opc_ldc2_w:
-          PrimitiveConstant cn = pool.getPrimitiveConstant(instr.getOperand(0));
-          pushEx(stack, exprlist, new ConstExprent(consts[cn.type - CONSTANT_Integer], cn.value, bytecode_offsets));
+          PooledConstant cn = pool.getConstant(instr.getOperand(0));
+          if (cn instanceof PrimitiveConstant) {
+            pushEx(stack, exprlist, new ConstExprent(consts[cn.type - CONSTANT_Integer], ((PrimitiveConstant)cn).value, bytecode_offsets));
+          }
+          else if (cn instanceof LinkConstant) {
+            //TODO: for now treat Links as Strings
+            pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_STRING, ((LinkConstant)cn).elementname , bytecode_offsets));
+          }
           break;
         case opc_iload:
         case opc_lload:
