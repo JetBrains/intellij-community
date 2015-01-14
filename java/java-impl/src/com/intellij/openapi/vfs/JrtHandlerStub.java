@@ -13,20 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.model.java;
+package com.intellij.openapi.vfs;
 
-import org.jetbrains.jps.model.library.JpsOrderRootType;
+import com.intellij.openapi.vfs.impl.ArchiveHandler;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
-public class JpsNativeLibraryRootType extends JpsOrderRootType {
-  public static final JpsNativeLibraryRootType INSTANCE = new JpsNativeLibraryRootType();
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
-  private JpsNativeLibraryRootType() { }
+class JrtHandlerStub extends ArchiveHandler {
+  public JrtHandlerStub(@NotNull String path) {
+    super(path);
+  }
 
+  @NotNull
   @Override
-  public String toString() {
-    return "native lib root";
+  protected Map<String, EntryInfo> createEntriesMap() throws IOException {
+    return Collections.emptyMap();
+  }
+
+  @NotNull
+  @Override
+  public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
+    return new byte[0];
   }
 }
