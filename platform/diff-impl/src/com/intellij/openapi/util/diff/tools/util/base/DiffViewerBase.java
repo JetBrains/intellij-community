@@ -4,15 +4,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffViewer;
@@ -20,7 +17,9 @@ import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import com.intellij.openapi.util.diff.util.CalledInBackground;
+import com.intellij.openapi.util.diff.util.WaitingBackgroundableTaskExecutor;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,25 +27,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
-  private static final Runnable TOO_SLOW_OPERATION = new EmptyRunnable();
-
-  private static final int REDIFF_SCHEDULE_DELAY = ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
-  private static final int ASYNC_REDIFF_POSTPONE_DELAY = ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
   @Nullable protected final Project myProject;
   @NotNull protected final DiffContext myContext;
   @NotNull protected final ContentDiffRequest myRequest;
 
-  private int myModificationStamp = 0;
+  @NotNull private final WaitingBackgroundableTaskExecutor myTaskExecutor = new WaitingBackgroundableTaskExecutor();
   @NotNull private final Alarm myAlarm = new Alarm();
-
-  @Nullable private ProgressIndicator myProgressIndicator;
 
   private volatile boolean myDisposed = false;
 
@@ -89,99 +79,50 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @CalledInAwt
   public final void scheduleRediff() {
     if (myDisposed) return;
-    final int modificationStamp = myModificationStamp;
+    final int modificationStamp = myTaskExecutor.getModificationStamp();
 
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (modificationStamp != myModificationStamp) return;
+        if (modificationStamp != myTaskExecutor.getModificationStamp()) return;
         rediff();
       }
-    }, REDIFF_SCHEDULE_DELAY);
+    }, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
   }
 
   @CalledInAwt
   public final void abortRediff() {
-    if (myProgressIndicator != null) {
-      myProgressIndicator.cancel();
-      myProgressIndicator = null;
-      myModificationStamp++;
-    }
+    myTaskExecutor.abort();
   }
 
   @CalledInAwt
   public final void rediff() {
     if (myDisposed) return;
 
-    abortRediff();
-
-    myModificationStamp++;
-    final int modificationStamp = myModificationStamp;
-
-    myProgressIndicator = new EmptyProgressIndicator();
-
-    final ProgressIndicator indicator = myProgressIndicator;
-
-    final Semaphore semaphore = new Semaphore(0);
-    final AtomicReference<Runnable> resultRef = new AtomicReference<Runnable>();
-
     onBeforeRediff();
 
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      // most of performRediff implementations take ReadLock inside. If EDT is holding write lock - this will never happen,
-      // and diff will not be calculated. This could happen for diff from FileDocumentManager.
+    // most of performRediff implementations take ReadLock inside. If EDT is holding write lock - this will never happen,
+    // and diff will not be calculated. This could happen for diff from FileDocumentManager.
+    boolean forceEDT = ApplicationManager.getApplication().isWriteAccessAllowed();
 
-      Runnable result = performRediff(indicator);
-      finishRediff(result, modificationStamp, indicator);
-    }
-    else {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    int waitMillis = tryRediffSynchronously() ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
+
+    myTaskExecutor.execute(
+      new Convertor<ProgressIndicator, Runnable>() {
+        @Override
+        public Runnable convert(ProgressIndicator indicator) {
+          return performRediff(indicator);
+        }
+      },
+      new Runnable() {
         @Override
         public void run() {
-          final Runnable result = performRediff(indicator);
-
-          if (indicator.isCanceled()) {
-            semaphore.release();
-            return;
-          }
-
-          if (!resultRef.compareAndSet(null, result)) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                finishRediff(result, modificationStamp, indicator);
-              }
-            }, ModalityState.any());
-          }
-          semaphore.release();
+          onSlowRediff();
         }
-      });
-
-      try {
-        if (tryRediffSynchronously()) {
-          // TODO: we should vary delay: 400 ms is OK for initial loading, but too slow for active typing
-          semaphore.tryAcquire(ASYNC_REDIFF_POSTPONE_DELAY, TimeUnit.MILLISECONDS);
-        }
-      }
-      catch (InterruptedException ignore) {
-      }
-      if (!resultRef.compareAndSet(null, TOO_SLOW_OPERATION)) {
-        // update presentation in the same thread to reduce blinking, caused by 'invokeLater' and fast performRediff()
-        finishRediff(resultRef.get(), modificationStamp, indicator);
-      }
-      else {
-        onSlowRediff();
-      }
-    }
-  }
-
-  @CalledInAwt
-  private void finishRediff(@NotNull final Runnable result, int modificationStamp, @NotNull final ProgressIndicator indicator) {
-    if (indicator.isCanceled()) return;
-    if (myModificationStamp != modificationStamp) return;
-
-    result.run();
+      },
+      waitMillis, forceEDT
+    );
   }
 
   //

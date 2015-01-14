@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -35,7 +33,9 @@ import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
 import com.intellij.openapi.util.diff.util.CalledInBackground;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.diff.util.WaitingBackgroundableTaskExecutor;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestPresentable;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +53,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
 
   @Nullable private Change myCurrentChange;
 
-  @Nullable private ProgressIndicator myProgressIndicator;
-  private int myModificationStamp;
+  @NotNull private final WaitingBackgroundableTaskExecutor myTaskExecutor = new WaitingBackgroundableTaskExecutor();
 
   public CacheChangeProcessor(@NotNull Project project) {
     super(project);
@@ -86,10 +85,6 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   //
 
   public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
-    if (myProgressIndicator != null) myProgressIndicator.cancel();
-    myProgressIndicator = null;
-    myModificationStamp++;
-
     final Change change = myCurrentChange;
     DiffRequest cachedRequest = loadRequestFast(change);
     if (cachedRequest != null) {
@@ -97,28 +92,28 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       return;
     }
 
-    applyRequest(new ErrorDiffRequest("Loading..."), force, scrollToChangePolicy);
-
-    myProgressIndicator = new EmptyProgressIndicator();
-    final ProgressIndicator indicator = myProgressIndicator;
-    final int modificationStamp = myModificationStamp;
-
-    // TODO: delayed update in background ?
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final DiffRequest request = loadRequest(change, indicator);
-        indicator.checkCanceled();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myModificationStamp != modificationStamp) return;
-            myRequestCache.put(change, Pair.create(change, request));
-            applyRequest(request, force, scrollToChangePolicy);
-          }
-        }, ModalityState.any());
-      }
-    });
+    myTaskExecutor.execute(
+      new Convertor<ProgressIndicator, Runnable>() {
+        @Override
+        public Runnable convert(ProgressIndicator indicator) {
+          final DiffRequest request = loadRequest(change, indicator);
+          return new Runnable() {
+            @Override
+            public void run() {
+              myRequestCache.put(change, Pair.create(change, request));
+              applyRequest(request, force, scrollToChangePolicy);
+            }
+          };
+        }
+      },
+      new Runnable() {
+        @Override
+        public void run() {
+          applyRequest(new ErrorDiffRequest("Loading..."), force, scrollToChangePolicy);
+        }
+      },
+      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+    );
   }
 
   @Nullable
@@ -163,6 +158,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   @Override
   protected void onDispose() {
     super.onDispose();
+    myTaskExecutor.abort();
     myRequestCache.clear();
   }
 
