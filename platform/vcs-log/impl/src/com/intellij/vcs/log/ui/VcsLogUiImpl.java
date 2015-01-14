@@ -84,14 +84,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
     GraphTableModel currentModel = getModel();
     if (currentModel == null) {
-      VcsLogGraphTable table = getTable();
-      table.setModel(new GraphTableModel(myVisiblePack, myLogDataHolder, this));
-      table.setPaintBusy(false);
+      getTable().setModel(new GraphTableModel(myVisiblePack, myLogDataHolder, this));
     }
     else {
       currentModel.setVisiblePack(myVisiblePack);
       restoreSelection(currentModel, myVisiblePack.getVisibleGraph(), previouslySelected, getTable());
     }
+    getTable().setPaintBusy(false);
+
     myMainFrame.updateDataPack(myVisiblePack);
     setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
     fireFilterChangeEvent(myVisiblePack, permGraphChanged);
