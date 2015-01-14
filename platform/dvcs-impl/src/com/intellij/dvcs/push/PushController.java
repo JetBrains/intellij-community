@@ -281,21 +281,21 @@ public class PushController implements Disposable {
     return names;
   }
 
-  public boolean isPushAllowed() {
+  public boolean isPushAllowed(final boolean force) {
     JTree tree = myPushLog.getTree();
     return !tree.isEditing() &&
            ContainerUtil.exists(myPushSupports, new Condition<PushSupport<?, ?, ?>>() {
              @Override
              public boolean value(PushSupport<?, ?, ?> support) {
-               return isPushAllowed(support);
+               return isPushAllowed(support, force);
              }
            });
   }
 
-  private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport) {
+  private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport, boolean force) {
     Collection<RepositoryNode> nodes = getNodesForSupport(pushSupport);
     if (hasSomethingToPush(nodes)) return true;
-    if (hasCheckedNodesWithContent(nodes, myDialog.getAdditionalOptionValue(pushSupport) != null)) {
+    if (hasCheckedNodesWithContent(nodes, force || myDialog.getAdditionalOptionValue(pushSupport) != null)) {
       return !pushSupport.getRepositoryManager().isSyncEnabled() || allNodesAreLoaded(nodes);
     }
     return false;

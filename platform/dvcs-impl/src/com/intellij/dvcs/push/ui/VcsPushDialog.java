@@ -102,11 +102,11 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   private boolean canPush() {
-    return myController.isPushAllowed();
+    return myController.isPushAllowed(false);
   }
 
   private boolean canForcePush() {
-    return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null;
+    return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null && myController.isPushAllowed(true);
   }
 
   @Nullable
@@ -127,11 +127,10 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   public void updateOkActions() {
-    boolean canPush = canPush();
-    myPushAction.setEnabled(canPush);
+    myPushAction.setEnabled(canPush());
     if (myForcePushAction != null) {
       boolean canForcePush = canForcePush();
-      myForcePushAction.setEnabled(canPush && canForcePush);
+      myForcePushAction.setEnabled(canForcePush);
       String tooltip = null;
       if (!canForcePush) {
         PushTarget target = myController.getProhibitedTarget();
