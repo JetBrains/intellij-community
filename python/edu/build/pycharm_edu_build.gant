@@ -213,12 +213,14 @@ public layoutEducational(String classesPath, Set usedJars) {
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    layouts.layoutPlugin("learn-python") {
+    layouts.layoutPlugin("interactive-learning")
+    layouts.layoutPlugin("interactive-learning-python") {
       dir("courses") {
-        fileset(dir: "$pythonEduHome/learn-python/resources/courses")
+        fileset(dir: "$pythonEduHome/interactive-learning-python/resources/courses")
       }
     }
     layouts.layoutPlugin("course-creator")
+    layouts.layoutPlugin("course-creator-python")
   }
 
   layouts.layoutCommunityPlugins(ch)

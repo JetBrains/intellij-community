@@ -16,6 +16,7 @@ class 'pkg/TestSynchronizedMapping' {
    method 'test (I)I' {
       3      4
       5      5
+      a      5
    }
 
    method 'test2 (Ljava/lang/String;)V' {

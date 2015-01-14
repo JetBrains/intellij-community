@@ -101,6 +101,13 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSpaceAfterInstanceof() throws Exception { doTest(false); }
   public void testInstanceofAfterUnresolved() throws Exception { doTest(1, "instanceof"); }
   public void testInstanceofAfterStatementStart() throws Exception { doTest(1, "instanceof"); }
+  
+  public void testInstanceofNegation() {
+    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
+    selectItem(myItems[0], '!');
+    checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
+  }
+  
   public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() throws Exception { doTest(1, "char"); }
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }

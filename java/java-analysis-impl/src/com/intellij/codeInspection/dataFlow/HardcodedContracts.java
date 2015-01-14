@@ -164,4 +164,16 @@ public class HardcodedContracts {
 
     return true;
   }
+
+  public static boolean hasHardcodedContracts(@Nullable PsiElement element) {
+    if (element instanceof PsiMethod) {
+      return !getHardcodedContracts((PsiMethod)element, null).isEmpty();
+    }
+
+    if (element instanceof PsiParameter) {
+      return hasHardcodedContracts(element.getParent().getParent());
+    }
+
+    return false;
+  }
 }
