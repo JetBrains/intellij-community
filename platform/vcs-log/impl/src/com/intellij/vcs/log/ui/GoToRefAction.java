@@ -18,9 +18,6 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLog;
@@ -28,6 +25,7 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsRef;
 
 import java.util.Collection;
+import java.util.concurrent.Future;
 
 public class GoToRefAction extends DumbAwareAction {
 
@@ -45,16 +43,12 @@ public class GoToRefAction extends DumbAwareAction {
         return ref.getName();
       }
     });
-    final PopupWithTextFieldWithAutoCompletion textField = new PopupWithTextFieldWithAutoCompletion(project, refs);
-    JBPopup popup = textField.createPopup();
-    popup.addListener(new JBPopupListener.Adapter() {
-      @Override
-      public void onClosed(LightweightWindowEvent event) {
-        if (event.isOk()) {
-          log.jumpToReference(textField.getText().trim());
-        }
-      }
-    });
+    FindPopupWithProgress popup = new FindPopupWithProgress(project, refs, new Function<String, Future>() {
+            @Override
+            public Future fun(String text) {
+              return log.jumpToReference(text);
+            }
+          });
     popup.showUnderneathOf(log.getToolbar());
   }
 
