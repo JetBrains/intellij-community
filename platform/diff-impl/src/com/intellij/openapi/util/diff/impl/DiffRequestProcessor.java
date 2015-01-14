@@ -318,7 +318,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     JComponent component = myState.getPreferredFocusedComponent();
-    return component != null ? component : myToolbarPanel;
+    return component != null ? component : myToolbarPanel.getContent();
   }
 
   @Nullable
