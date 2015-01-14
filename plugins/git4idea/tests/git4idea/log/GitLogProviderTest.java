@@ -136,6 +136,29 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     }));
   }
 
+  public void test_support_equally_named_branch_and_tag() throws Exception {
+    prepareSomeHistory();
+    git("branch build");
+    git("tag build");
+
+    VcsLogProvider.DetailedLogData data = myLogProvider.readFirstBlock(myProjectRoot,
+                                                                        new RequirementsImpl(1000, true, Collections.<VcsRef>emptySet()));
+    List<VcsCommitMetadata> expectedLog = log();
+    assertOrderedEquals(data.getCommits(), expectedLog);
+    assertTrue(ContainerUtil.exists(data.getRefs(), new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return ref.getName().equals("build") && ref.getType() == GitRefManager.LOCAL_BRANCH;
+      }
+    }));
+    assertTrue(ContainerUtil.exists(data.getRefs(), new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return ref.getName().equals("build") && ref.getType() == GitRefManager.TAG;
+      }
+    }));
+  }
+
   private static void prepareSomeHistory() {
     tac("a.txt");
     git("tag ATAG");

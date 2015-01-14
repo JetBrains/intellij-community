@@ -24,6 +24,7 @@ public class StudyNames {
   public static final String TASK_TESTS = "tests.py";
   public static final String COURSES = "courses";
   public static final String LESSON = "lesson";
+  public static final String TEST_HELPER = "test_helper.py";
 
   private StudyNames() {
   }

@@ -117,7 +117,7 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
     Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> map = ContainerUtil.newHashMap();
     map.put(myRepository, spec1);
     map.put(myCommunity, spec2);
-    GitPushResult result = new GitPushOperation(myProject, map, null, false).execute();
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport, map, null, false).execute();
 
     GitPushRepoResult result1 = result.getResults().get(myRepository);
     GitPushRepoResult result2 = result.getResults().get(myCommunity);
@@ -140,7 +140,8 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
 
     PushSpec<GitPushSource, GitPushTarget> mainSpec = makePushSpec(myRepository, "master", "origin/master");
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE); // auto-update-all-roots is selected by default
-    GitPushResult result = new GitPushOperation(myProject, Collections.singletonMap(myRepository, mainSpec), null, false).execute();
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport,
+                                                Collections.singletonMap(myRepository, mainSpec), null, false).execute();
 
     GitPushRepoResult result1 = result.getResults().get(myRepository);
     GitPushRepoResult result2 = result.getResults().get(myCommunity);

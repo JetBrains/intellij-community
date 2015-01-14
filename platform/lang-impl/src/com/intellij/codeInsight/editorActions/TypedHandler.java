@@ -192,15 +192,13 @@ public class TypedHandler extends TypedActionHandlerBase {
           }
         }
 
-        if (!editor.getSelectionModel().hasBlockSelection()) {
-          if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
-            if (FileTypes.PLAIN_TEXT != fileType) {
-              if (handleRParen(editor, fileType, charTyped)) return;
-            }
+        if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
+          if (FileTypes.PLAIN_TEXT != fileType) {
+            if (handleRParen(editor, fileType, charTyped)) return;
           }
-          else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped/* || '/' == charTyped*/) {
-            if (handleQuote(editor, charTyped, dataContext, file)) return;
-          }
+        }
+        else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped/* || '/' == charTyped*/) {
+          if (handleQuote(editor, charTyped, dataContext, file)) return;
         }
 
         long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
@@ -209,7 +207,7 @@ public class TypedHandler extends TypedActionHandlerBase {
 
         if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
             CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-            !editor.getSelectionModel().hasBlockSelection() && fileType != FileTypes.PLAIN_TEXT) {
+            fileType != FileTypes.PLAIN_TEXT) {
           handleAfterLParen(editor, fileType, charTyped);
         }
         else if ('}' == charTyped) {

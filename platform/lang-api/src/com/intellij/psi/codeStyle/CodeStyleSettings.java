@@ -166,7 +166,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
 
-  public boolean AUTODETECT_INDENTS = true;
+  public boolean AUTODETECT_INDENTS = false;
 
   @Deprecated
   public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
@@ -763,6 +763,18 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean useTabCharacter(FileType fileType) {
     return getIndentOptions(fileType).USE_TAB_CHARACTER;
+  }
+
+  //used in generate equals/hashCode
+  @SuppressWarnings("unused")
+  public boolean isGenerateFinalLocals() {
+    return GENERATE_FINAL_LOCALS;
+  }
+
+  //used in generate equals/hashCode
+  @SuppressWarnings("unused")
+  public boolean isGenerateFinalParameters() {
+    return GENERATE_FINAL_PARAMETERS;
   }
 
   public static class TypeToNameMap implements JDOMExternalizable {

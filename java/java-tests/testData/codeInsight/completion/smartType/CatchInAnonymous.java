@@ -6,7 +6,7 @@ class Foo {
                                     public void run() {
                                         try {
                                             throw new IOException();
-                                        } catch (<caret>) {
+                                        } catch (IO<caret>) {
 
                                         }
                                     }

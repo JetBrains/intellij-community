@@ -25,7 +25,7 @@ public class RemoteSdkException extends ExecutionException {
         return;
       }
 
-      t = throwable.getCause();
+      t = t.getCause();
     }
     myNoRouteToHost = false;
     myCause = throwable;

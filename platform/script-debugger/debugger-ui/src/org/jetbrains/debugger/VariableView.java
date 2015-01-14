@@ -8,7 +8,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XSourcePositionWrapper;
@@ -99,7 +98,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       node.setPresentation(icon, null, valueString, true);
     }
     else {
-      context.getEvaluateContext().evaluate("a.length", Collections.<String, EvaluateContextAdditionalParameter>singletonMap("a", value))
+      context.getEvaluateContext().evaluate("a.length", Collections.<String, Object>singletonMap("a", value), false)
         .done(new Consumer<EvaluateResult>() {
           @Override
           public void consume(EvaluateResult result) {
@@ -108,9 +107,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
             }
           }
         })
-        .rejected(new Consumer<String>() {
+        .rejected(new Consumer<Throwable>() {
           @Override
-          public void consume(String error) {
+          public void consume(Throwable error) {
             node.setPresentation(icon, null, "Internal error: " + error, false);
           }
         });
@@ -149,7 +148,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @NotNull
   @Override
-  public MemberFilter createMemberFilter() {
+  public Promise<MemberFilter> createMemberFilter() {
     return context.getViewSupport().createMemberFilter(this);
   }
 
@@ -176,11 +175,11 @@ public final class VariableView extends XNamedValue implements VariableContext {
             }
           }
         }
-      }).rejected(new Consumer<String>() {
+      }).rejected(new Consumer<Throwable>() {
         @Override
-        public void consume(String error) {
+        public void consume(Throwable error) {
           if (!node.isObsolete()) {
-            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error), error, node);
+            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error.getMessage()), error.getMessage(), node);
           }
         }
       });
@@ -279,8 +278,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
   }
 
+  @NotNull
   private static XValuePresentation createNumberPresentation(@NotNull String value) {
-    return value.equals("NaN") || value.equals("Infinity") ? new XKeywordValuePresentation(value) : new XNumericValuePresentation(value);
+    return value.equals(PrimitiveValue.NA_N_VALUE) || value.equals(PrimitiveValue.INFINITY_VALUE) ? new XKeywordValuePresentation(value) : new XNumericValuePresentation(value);
   }
 
   @Override
@@ -325,10 +325,10 @@ public final class VariableView extends XNamedValue implements VariableContext {
         promises.add(computeNamedProperties(objectValue, node, !hasIndexedProperties && additionalProperties == null));
       }
       else {
-        promises.add(additionalProperties.then(new AsyncFunction<Void, List<Variable>>() {
+        promises.add(additionalProperties.then(new AsyncFunction<Void, Void>() {
           @NotNull
           @Override
-          public Promise<List<Variable>> fun(Void o) {
+          public Promise<Void> fun(Void o) {
             return computeNamedProperties(objectValue, node, true);
           }
         }));
@@ -383,35 +383,47 @@ public final class VariableView extends XNamedValue implements VariableContext {
   }
 
   @NotNull
-  private Promise<List<Variable>> computeNamedProperties(@NotNull final ObjectValue value, @NotNull XCompositeNode node, final boolean isLastChildren) {
-    return ObsolescentAsyncResults.consume(value.getProperties(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
-      @Override
-      public void consume(List<Variable> variables, XCompositeNode node) {
-        if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
-          computeArrayRanges(variables, node);
-          return;
-        }
+  private Promise<Void> computeNamedProperties(@NotNull final ObjectValue value, @NotNull final XCompositeNode node, final boolean isLastChildren) {
+    // start properties loading to achieve, possibly, parallel execution (properties loading & member filter computation)
+    final Promise<List<Variable>> properties = value.getProperties();
+    return createMemberFilter()
+      .then(new ValueNodeAsyncFunction<MemberFilter, Void>(node) {
+        @NotNull
+        @Override
+        public Promise<Void> fun(final MemberFilter memberFilter) {
+          return properties.then(new ValueNodeAsyncFunction<List<Variable>, Void>(node) {
+            @NotNull
+            @Override
+            public Promise<Void> fun(List<Variable> variables) {
+              if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
+                computeArrayRanges(variables, node, memberFilter);
+                return Promise.DONE;
+              }
 
-        FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
-        if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
-          functionValue = null;
-        }
+              FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
+              if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
+                functionValue = null;
+              }
 
-        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null);
-        if (remainingChildren != null) {
-          remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
-        }
+              remainingChildren =
+                Variables.sortFilterAndAddValueList(variables, node, VariableView.this, memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null);
+              if (remainingChildren != null) {
+                remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
+              }
 
-        if (functionValue != null) {
-          // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), isLastChildren);
+              if (functionValue != null) {
+                // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
+                node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), isLastChildren);
+              }
+              return Promise.DONE;
+            }
+          });
         }
-      }
-    });
+      });
   }
 
-  private void computeArrayRanges(@NotNull List<Variable> properties, @NotNull XCompositeNode node) {
-    final List<Variable> variables = Variables.filterAndSort(properties, this, false);
+  private void computeArrayRanges(@NotNull List<Variable> properties, @NotNull XCompositeNode node, @NotNull MemberFilter memberFilter) {
+    final List<Variable> variables = Variables.filterAndSort(properties, memberFilter, false);
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
     if (count <= bucketSize) {
@@ -496,11 +508,11 @@ public final class VariableView extends XNamedValue implements VariableContext {
     };
   }
 
-  private static Consumer<String> createErrorMessageConsumer(@NotNull final XValueCallback callback) {
-    return new Consumer<String>() {
+  private static Consumer<Throwable> createErrorMessageConsumer(@NotNull final XValueCallback callback) {
+    return new Consumer<Throwable>() {
       @Override
-      public void consume(@Nullable String errorMessage) {
-        callback.errorOccurred(errorMessage == null ? "Internal error" : errorMessage);
+      public void consume(Throwable error) {
+        callback.errorOccurred(error.getMessage());
       }
     };
   }

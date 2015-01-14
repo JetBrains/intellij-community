@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.AppUIUtil;
@@ -24,6 +25,7 @@ import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
@@ -69,7 +71,9 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
           AppUIUtil.invokeOnEdt(new Runnable() {
             @Override
             public void run() {
-              editor.show(initialValue);
+              if (editor.getTree().isShowing()) {
+                editor.show(initialValue);
+              }
             }
           });
         }
@@ -102,12 +106,14 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myModifier.setValue(myExpressionEditor.getExpression().getExpression(), new XValueModifier.XModificationCallback() {
       @Override
       public void valueModified() {
-        AppUIUtil.invokeOnEdt(new Runnable() {
-          @Override
-          public void run() {
-            myTree.rebuildAndRestore(treeState);
-          }
-        });
+        if (isDetachedTree(myTree)) {
+          AppUIUtil.invokeOnEdt(new Runnable() {
+            @Override
+            public void run() {
+              myTree.rebuildAndRestore(treeState);
+            }
+          });
+        }
         XDebuggerUtilImpl.rebuildAllSessionsViews(getProject());
       }
 
@@ -128,6 +134,10 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
           }
         });
         XDebuggerUtilImpl.rebuildAllSessionsViews(getProject());
+      }
+
+      boolean isDetachedTree(XDebuggerTree tree) {
+        return XDebugSessionTab.TAB_KEY.getData(DataManager.getInstance().getDataContext(tree)) == null;
       }
     });
     super.doOKAction();

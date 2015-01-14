@@ -147,7 +147,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
           try {
             LOG.info("Downloading sources JAR: " + myUrl);
             indicator.checkCanceled();
-            bytes = HttpRequests.request(myUrl).getBytes(indicator);
+            bytes = HttpRequests.request(myUrl).readBytes(indicator);
           }
           catch (IOException e) {
             LOG.warn(e);

@@ -488,7 +488,7 @@ public class InferenceSession {
         if (psiClass != null) {
           LOG.assertTrue(returnType instanceof PsiClassType);
           final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-          InferenceVariable[] copy = initBounds(myContext, typeParameters);
+          InferenceVariable[] copy = initBounds(null, typeParameters);
           final PsiType substitutedCapture = PsiUtil.captureToplevelWildcards(returnType, myContext);
           myIncorporationPhase.addCapture(copy, (PsiClassType)substituteWithInferenceVariables(returnType));
           addConstraint(new TypeCompatibilityConstraint(targetType, substitutedCapture));

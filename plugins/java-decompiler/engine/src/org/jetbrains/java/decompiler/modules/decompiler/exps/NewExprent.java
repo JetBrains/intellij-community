@@ -176,8 +176,8 @@ public class NewExprent extends Exprent {
 
         List<VarVersionPair> sigFields = null;
         if (newnode != null) { // own class
-          if (newnode.wrapper != null) {
-            sigFields = newnode.wrapper.getMethodWrapper("<init>", invsuper.getStringDescriptor()).signatureFields;
+          if (newnode.getWrapper() != null) {
+            sigFields = newnode.getWrapper().getMethodWrapper("<init>", invsuper.getStringDescriptor()).signatureFields;
           }
           else {
             if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&
@@ -282,8 +282,8 @@ public class NewExprent extends Exprent {
 
           List<VarVersionPair> sigFields = null;
           if (newnode != null) { // own class
-            if (newnode.wrapper != null) {
-              sigFields = newnode.wrapper.getMethodWrapper("<init>", constructor.getStringDescriptor()).signatureFields;
+            if (newnode.getWrapper() != null) {
+              sigFields = newnode.getWrapper().getMethodWrapper("<init>", constructor.getStringDescriptor()).signatureFields;
             }
             else {
               if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&

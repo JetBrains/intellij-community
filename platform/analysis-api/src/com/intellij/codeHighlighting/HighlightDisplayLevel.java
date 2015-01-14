@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
@@ -118,11 +120,11 @@ public class HighlightDisplayLevel {
 
   @NotNull
   public static Icon createIconByMask(final Color renderColor) {
-    return new TheColorIcon(getEmptyIconDim(), renderColor);
+    return new MyColorIcon(getEmptyIconDim(), renderColor);
   }
 
-  public static class TheColorIcon extends ColorIcon implements ColoredIcon {
-    public TheColorIcon(int size, @NotNull Color color) {
+  private static class MyColorIcon extends ColorIcon implements ColoredIcon {
+    public MyColorIcon(int size, @NotNull Color color) {
       super(size, color);
     }
 
@@ -130,12 +132,12 @@ public class HighlightDisplayLevel {
     public Color getColor() {
       return getIconColor();
     }
-  } 
-  
+  }
+
   public interface ColoredIcon {
     Color getColor();
   }
-  
+
   public static class SingleColorIcon implements Icon, ColoredIcon {
     private final TextAttributesKey myKey;
 
@@ -143,7 +145,13 @@ public class HighlightDisplayLevel {
       myKey = key;
     }
 
+    @NotNull
     public Color getColor() {
+      return ObjectUtils.notNull(getColorInner(), JBColor.GRAY);
+    }
+
+    @Nullable
+    public Color getColorInner() {
       final EditorColorsManager manager = EditorColorsManager.getInstance();
       if (manager != null) {
         TextAttributes attributes = manager.getGlobalScheme().getAttributes(myKey);

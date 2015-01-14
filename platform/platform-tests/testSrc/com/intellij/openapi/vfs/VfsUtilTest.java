@@ -417,6 +417,52 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   }
 
+  public void testGetParentPerformance() throws IOException {
+    File tempDir = createTempDirectory();
+    final VirtualFile vDir = refreshAndFindFile(tempDir);
+    assertNotNull(vDir);
+    assertTrue(vDir.isDirectory());
+    final int depth = 10;
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        VirtualFile dir = vDir;
+        for (int i=0; i<depth; i++) {
+          dir = dir.createChildDirectory(this, "foo");
+        }
+        final VirtualFile leafDir = dir;
+        ThrowableRunnable checkPerformance = new ThrowableRunnable() {
+          private VirtualFile findRoot(VirtualFile file) {
+            while (true) {
+              VirtualFile parent = file.getParent();
+              if (parent == null) {
+                return file;
+              }
+              file = parent;
+            }
+          }
+          @Override
+          public void run() throws Throwable {
+            for (int i = 0; i < 5000000; i++) {
+              checkRootsEqual();
+            }
+          }
+          private void checkRootsEqual() {
+            assertEquals(findRoot(vDir), findRoot(leafDir));
+          }
+        };
+        int time = 1200;
+        PlatformTestUtil.startPerformanceTest("getParent is slow before movement", time, checkPerformance).assertTiming();
+        VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
+        VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
+        for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
+          dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
+        }
+        PlatformTestUtil.startPerformanceTest("getParent is slow after movement", time, checkPerformance).assertTiming();
+      }
+    }.execute();
+  }
+
   public void testFindRootWithDenormalizedPath() throws IOException {
     File tempJar = IoTestUtil.createTestJar();
     VirtualFile jar = refreshAndFindFile(tempJar);

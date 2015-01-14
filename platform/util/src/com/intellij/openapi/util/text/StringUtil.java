@@ -613,24 +613,32 @@ public class StringUtil extends StringUtilRt {
     return buffer.toString();
   }
 
+  private static boolean isQuoteAt(@NotNull String s, int ind) {
+    char ch = s.charAt(ind);
+    return ch == '\'' || ch == '\"';
+  }
+
+  @Contract(pure = true)
+  public static boolean isQuotedString(@NotNull String s) {
+    return s.length() > 1 && isQuoteAt(s, 0) && s.charAt(0) == s.charAt(s.length() - 1);
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String unquoteString(@NotNull String s) {
-    char c;
-    if (s.length() <= 1 || (c = s.charAt(0)) != '"' && c != '\'' || s.charAt(s.length() - 1) != c) {
-      return s;
+    if (isQuotedString(s)) {
+      return s.substring(1, s.length() - 1);
     }
-    return s.substring(1, s.length() - 1);
+    return s;
   }
 
   @NotNull
   @Contract(pure = true)
   public static String unquoteString(@NotNull String s, char quotationChar) {
-    char c;
-    if (s.length() <= 1 || (c = s.charAt(0)) != quotationChar || s.charAt(s.length() - 1) != c) {
-      return s;
+    if (s.length() > 1 && quotationChar == s.charAt(0) && quotationChar == s.charAt(s.length() - 1)) {
+      return s.substring(1, s.length() - 1);
     }
-    return s.substring(1, s.length() - 1);
+    return s;
   }
 
   /**
@@ -1487,8 +1495,15 @@ public class StringUtil extends StringUtilRt {
     return builder.toString();
   }
 
+  /**
+   * Strips quotes around the value.
+   * Quotes are removed even if leading and trailing quotes are different or if there is only one quote (leading or trailing).
+   * @deprecated use {@link com.intellij.openapi.util.text.StringUtil#unquoteString(String)} instead
+   * To be removed in IDEA 17
+   */
   @NotNull
   @Contract(pure = true)
+  @Deprecated
   public static String stripQuotesAroundValue(@NotNull String text) {
     final int len = text.length();
     if (len > 0) {
@@ -1499,18 +1514,6 @@ public class StringUtil extends StringUtilRt {
       };
     }
     return text;
-  }
-
-  private static boolean isQuoteAt(@NotNull String text, int ind) {
-    char ch = text.charAt(ind);
-    return ch == '\'' || ch == '\"';
-  }
-
-  @Contract(pure = true)
-  public static boolean isQuotedString(@NotNull String text) {
-    if (text.length() < 2) return false;
-    return startsWithChar(text, '\"') && endsWithChar(text, '\"')
-           || startsWithChar(text, '\'') && endsWithChar(text, '\'');
   }
 
   /**
@@ -3062,6 +3065,36 @@ public class StringUtil extends StringUtilRt {
     }
     return builder.toString().replaceAll("\\.{4,}", "...");
   }
+
+  /**
+     * Does the string have an uppercase character?
+     * @param s  the string to test.
+     * @return   true if the string has an uppercase character, false if not.
+     */
+    public static boolean hasUpperCaseChar(String s) {
+        char[] chars = s.toCharArray();
+        for (char c : chars) {
+            if (Character.isUpperCase(c)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+  /**
+     * Does the string have a lowercase character?
+     * @param s  the string to test.
+     * @return   true if the string has a lowercase character, false if not.
+     */
+    public static boolean hasLowerCaseChar(String s) {
+        char[] chars = s.toCharArray();
+        for (char c : chars) {
+            if (Character.isLowerCase(c)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
   /**
    * Expirable CharSequence. Very useful to control external library execution time,

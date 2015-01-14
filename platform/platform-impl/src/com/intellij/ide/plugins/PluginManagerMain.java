@@ -23,7 +23,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.sorters.SortByStatusAction;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,6 +34,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,7 +43,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -67,7 +70,6 @@ import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -80,8 +82,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  */
 public abstract class PluginManagerMain implements Disposable {
   public static final String JETBRAINS_VENDOR = "JetBrains";
-  public static final NotificationGroup PLUGIN_LIFECYCLE_NOTIFICATION_GROUP =
-    new NotificationGroup("Plugins Lifecycle Group", NotificationDisplayType.STICKY_BALLOON, true);
+
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
   @NonNls private static final String TEXT_PREFIX = "<html><head>" +
@@ -254,9 +255,9 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public void refresh() {
-    final IdeaPluginDescriptor[] descriptors = pluginTable.getSelectedObjects();
-    pluginInfoUpdate(descriptors != null && descriptors.length == 1 ? descriptors[0] : null,
-                     myFilter.getFilter(), myDescriptionTextArea, myPluginHeaderPanel, this);
+    IdeaPluginDescriptor[] descriptors = pluginTable.getSelectedObjects();
+    IdeaPluginDescriptor plugin = descriptors != null && descriptors.length == 1 ? descriptors[0] : null;
+    pluginInfoUpdate(plugin, myFilter.getFilter(), myDescriptionTextArea, myPluginHeaderPanel);
     myActionToolbar.updateActionsImmediately();
     final JComponent parent = (JComponent)myHeader.getParent();
     parent.revalidate();
@@ -307,16 +308,17 @@ public abstract class PluginManagerMain implements Disposable {
         final List<String> errors = ContainerUtil.newSmartList();
         ProgressIndicator indicator = new EmptyProgressIndicator();
 
-        String builtinPluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
-        List<String> hosts = ContainerUtil.newArrayList();
-        hosts.add(null);  // default repository
-        if (builtinPluginsUrl != null) hosts.add(builtinPluginsUrl);
-        hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
-
+        List<String> hosts = RepositoryHelper.getPluginHosts();
+        Set<PluginId> unique = ContainerUtil.newHashSet();
         for (String host : hosts) {
           try {
             if (host == null || acceptHost(host)) {
-              list.addAll(RepositoryHelper.loadPlugins(host, null, indicator));
+              List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, null, indicator);
+              for (IdeaPluginDescriptor plugin : plugins) {
+                if (unique.add(plugin.getPluginId())) {
+                  list.add(plugin);
+                }
+              }
             }
           }
           catch (FileNotFoundException e) {
@@ -324,7 +326,7 @@ public abstract class PluginManagerMain implements Disposable {
           }
           catch (IOException e) {
             LOG.info(host, e);
-            if (host != builtinPluginsUrl) {
+            if (host != ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) {
               errors.add(e.getMessage());
             }
           }
@@ -336,6 +338,11 @@ public abstract class PluginManagerMain implements Disposable {
             setDownloadStatus(false);
 
             if (!list.isEmpty()) {
+              InstalledPluginsState state = InstalledPluginsState.getInstance();
+              for (IdeaPluginDescriptor descriptor : list) {
+                state.onDescriptorDownload(descriptor);
+              }
+
               modifyPluginsList(list);
               propagateUpdates(list);
             }
@@ -422,8 +429,7 @@ public abstract class PluginManagerMain implements Disposable {
   public static void pluginInfoUpdate(IdeaPluginDescriptor plugin,
                                       @Nullable String filter,
                                       @NotNull JEditorPane descriptionTextArea,
-                                      @NotNull PluginHeaderPanel header, PluginManagerMain manager) {
-
+                                      @NotNull PluginHeaderPanel header) {
     if (plugin == null) {
       setTextValue(null, filter, descriptionTextArea);
       header.getPanel().setVisible(false);
@@ -604,55 +610,29 @@ public abstract class PluginManagerMain implements Disposable {
     return false;
   }
 
-  private static boolean isAccepted(final Set<String> search,
-                                    @NotNull final String filter,
-                                    @NotNull final String description) {
+  private static boolean isAccepted(Set<String> search, @NotNull String filter, @NotNull String description) {
     if (StringUtil.containsIgnoreCase(description, filter)) return true;
-    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final HashSet<String> descriptionSet = new HashSet<String>(search);
-    descriptionSet.removeAll(optionsRegistrar.getProcessedWords(description));
-    if (descriptionSet.isEmpty()) {
-      return true;
-    }
-    return false;
+    Set<String> descriptionSet = new HashSet<String>(search);
+    descriptionSet.removeAll(SearchableOptionsRegistrar.getInstance().getProcessedWords(description));
+    return descriptionSet.isEmpty();
   }
 
-
-  public static void notifyPluginsWereInstalled(@Nullable String pluginName, final Project project) {
-    notifyPluginsWereUpdated(pluginName != null
-                             ? "Plugin \'" + pluginName + "\' was successfully installed"
-                             : "Plugins were installed", project);
-  }
-
-  public static void notifyPluginsWereUpdated(final String title, @Nullable final Project project) {
+  public static void notifyPluginsUpdated(@Nullable Project project) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    final boolean restartCapable = app.isRestartCapable();
-    String message =
-      restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName())
-                     : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
-    message += "<br><a href=";
-    message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
-    message += "</a>";
-    PLUGIN_LIFECYCLE_NOTIFICATION_GROUP
-      .createNotification(title,
-                          XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
-                          new NotificationListener() {
-                            @Override
-                            public void hyperlinkUpdate(@NotNull Notification notification,
-                                                        @NotNull HyperlinkEvent event) {
-                              notification.expire();
-                              if (restartCapable) {
-                                app.restart(true);
-                              }
-                              else {
-                                app.exit(false, true);
-                              }
-                            }
-                          }).notify(project);
+    String title = IdeBundle.message("update.notifications.title");
+    String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
+    String message = IdeBundle.message("ide.restart.required.notification", action, ApplicationNamesInfo.getInstance().getFullProductName());
+    NotificationListener listener = new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        notification.expire();
+        app.restart(true);
+      }
+    };
+    UpdateChecker.NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener).notify(project);
   }
 
   public class MyPluginsFilter extends FilterComponent {
-
     public MyPluginsFilter() {
       super("PLUGIN_FILTER", 5);
     }

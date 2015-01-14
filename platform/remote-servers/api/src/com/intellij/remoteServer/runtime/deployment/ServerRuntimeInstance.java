@@ -40,6 +40,11 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
 
     void addDeployment(@NotNull String deploymentName, @Nullable DeploymentRuntime deploymentRuntime);
 
+    void addDeployment(@NotNull String deploymentName,
+                       @Nullable DeploymentRuntime deploymentRuntime,
+                       @Nullable DeploymentStatus deploymentStatus,
+                       @Nullable String deploymentStatusText);
+
     void succeeded();
   }
 }

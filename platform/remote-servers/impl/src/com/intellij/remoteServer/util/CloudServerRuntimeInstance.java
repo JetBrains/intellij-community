@@ -95,7 +95,7 @@ public abstract class CloudServerRuntimeInstance
       public void run() throws Exception {
         try {
           for (CloudApplicationRuntime application : getApplications()) {
-            callback.addDeployment(application.getApplicationName(), application);
+            callback.addDeployment(application.getApplicationName(), application, application.getStatus(), application.getStatusText());
           }
           callback.succeeded();
         }
@@ -125,9 +125,5 @@ public abstract class CloudServerRuntimeInstance
     });
   }
 
-  protected CloudApplicationRuntime createApplicationRuntime(CloudRemoteApplication application) {
-    return createApplicationRuntime(application.getName());
-  }
-
-  protected abstract CloudApplicationRuntime createApplicationRuntime(String applicationName);
+  protected abstract CloudApplicationRuntime createApplicationRuntime(CloudRemoteApplication application);
 }

@@ -37,13 +37,18 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
   @Override
   public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
-    if (!refElement.isValid() || !(refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter)) return;
+    if (!refElement.isValid() || !(refElement instanceof PsiVariable)) return;
 
     final String name = ((PsiVariable)refElement).getName();
     if (name == null) return;
 
-    final SearchScope scope = p.getEffectiveSearchScope();
-    if (!(scope instanceof LocalSearchScope)) return;
+    SearchScope scope = p.getEffectiveSearchScope();
+    if (!(scope instanceof LocalSearchScope)) {
+      final PsiFile file = refElement.getContainingFile();
+      if (file == null) return;
+      //process incomplete references to the 'field' in the same file only
+      scope = new LocalSearchScope(file);
+    }
 
     PsiElement[] elements = ((LocalSearchScope)scope).getScope();
     if (elements.length == 0) return;

@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
@@ -211,7 +212,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
           }
           currentReference = (PsiReferenceExpression)qualifier;
         }
-        if (!hasNoNestedSubstitutionHandlers) {
+        if (!hasNoNestedSubstitutionHandlers && PsiTreeUtil.getChildOfType(reference, PsiAnnotation.class) == null) {
           createAndSetSubstitutionHandlerFromReference(
             reference,
             resolve != null ? ((PsiClass)resolve).getQualifiedName() : reference.getText(),
@@ -258,21 +259,16 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitDeclarationStatement(PsiDeclarationStatement psiDeclarationStatement) {
     super.visitDeclarationStatement(psiDeclarationStatement);
 
-    if (psiDeclarationStatement.getFirstChild() instanceof PsiTypeElement) {
+    final PsiElement firstChild = psiDeclarationStatement.getFirstChild();
+    if (firstChild instanceof PsiTypeElement) {
       // search for expression or symbol
-      final PsiJavaCodeReferenceElement reference =
-        ((PsiTypeElement)psiDeclarationStatement.getFirstChild()).getInnermostComponentReferenceElement();
+      final PsiJavaCodeReferenceElement reference = ((PsiTypeElement)firstChild).getInnermostComponentReferenceElement();
 
-      if (reference != null &&
-          (myCompilingVisitor.getContext().getPattern().isRealTypedVar(reference.getReferenceNameElement())) &&
-          reference.getParameterList().getTypeParameterElements().length > 0
-        ) {
+      if (reference != null && reference.getParameterList().getTypeParameterElements().length > 0) {
         myCompilingVisitor.setHandler(psiDeclarationStatement, new TypedSymbolHandler());
         final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiDeclarationStatement);
         // typed symbol
-        handler.setFilter(
-          TypedSymbolNodeFilter.getInstance()
-        );
+        handler.setFilter(TypedSymbolNodeFilter.getInstance());
 
         final PsiTypeElement[] params = reference.getParameterList().getTypeParameterElements();
         for (PsiTypeElement param : params) {
@@ -289,14 +285,26 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         return;
       }
     }
+    else if (firstChild instanceof PsiModifierList) {
+      final PsiModifierList modifierList = (PsiModifierList)firstChild;
+      final PsiAnnotation[] annotations = modifierList.getAnnotations();
+      if (annotations.length != 1) {
+        throw new UnsupportedPatternException("Pattern is malformed");
+      }
+      for (String modifier : PsiModifier.MODIFIERS) {
+        if (modifierList.hasExplicitModifier(modifier)) {
+          throw new UnsupportedPatternException("Pattern is malformed");
+        }
+      }
+      myCompilingVisitor.setHandler(psiDeclarationStatement, new AnnotationHandler());
+      final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiDeclarationStatement);
+      handler.setFilter(AnnotationFilter.getInstance());
+      return;
+    }
 
     final MatchingHandler handler = new DeclarationStatementHandler();
     myCompilingVisitor.getContext().getPattern().setHandler(psiDeclarationStatement, handler);
-    PsiElement previousNonWhiteSpace = psiDeclarationStatement.getPrevSibling();
-
-    while (previousNonWhiteSpace instanceof PsiWhiteSpace) {
-      previousNonWhiteSpace = previousNonWhiteSpace.getPrevSibling();
-    }
+    final PsiElement previousNonWhiteSpace = PsiTreeUtil.skipSiblingsBackward(psiDeclarationStatement, PsiWhiteSpace.class);
 
     if (previousNonWhiteSpace instanceof PsiComment) {
       ((DeclarationStatementHandler)handler)
@@ -375,7 +383,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
                                                                            boolean classQualifier) {
     final SubstitutionHandler substitutionHandler =
       new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, false);
-    substitutionHandler.setPredicate(new RegExpPredicate(referenceText.replaceAll("\\.", "\\\\."), true, null, false, false));
+    final boolean caseSensitive = myCompilingVisitor.getContext().getOptions().isCaseSensitiveMatch();
+    substitutionHandler.setPredicate(new RegExpPredicate(referenceText.replaceAll("\\.", "\\\\."), caseSensitive, null, false, false));
     myCompilingVisitor.getContext().getPattern().setHandler(expr, substitutionHandler);
     return substitutionHandler;
   }
@@ -580,18 +589,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private MatchingStrategy findStrategy(PsiElement el) {
-    // identify matching strategy
-    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(el);
-
-    //if (handler instanceof SubstitutionHandler) {
-    //  final SubstitutionHandler shandler = (SubstitutionHandler) handler;
-    if (handler.getFilter() instanceof SymbolNodeFilter ||
-        handler.getFilter() instanceof TypedSymbolNodeFilter
-      ) {
-      return SymbolMatchingStrategy.getInstance();
-    }
-    //}
-
     if (el instanceof PsiDocComment) {
       return JavaDocMatchingStrategy.getInstance();
     }

@@ -18,11 +18,17 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
+
+import java.io.File;
+import java.util.Arrays;
 
 /**
  * @author Dmitry Avdeev
@@ -30,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 public class LightFileTemplatesTest extends LightPlatformTestCase {
 
   public static final String TEST_TEMPLATE_TXT = "testTemplate.txt";
+  public static final String HI_THERE = "hi there";
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public LightFileTemplatesTest() {
@@ -40,15 +47,16 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertEquals(FileTemplatesScheme.DEFAULT, myTemplateManager.getCurrentScheme());
 
     FileTemplate template = myTemplateManager.getTemplate(TEST_TEMPLATE_TXT);
-    assertEquals("hi there", template.getText());
-    template.setText("good bye");
-    assertEquals("good bye", myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
+    assertEquals(HI_THERE, template.getText());
+    String newText = "good bye";
+    template.setText(newText);
+    assertEquals(newText, myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
 
     myTemplateManager.setCurrentScheme(myTemplateManager.getProjectScheme());
-    assertEquals("hi there", myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
+    assertEquals(HI_THERE, myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
 
     myTemplateManager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
-    assertEquals("good bye", myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
+    assertEquals(newText, myTemplateManager.getTemplate(TEST_TEMPLATE_TXT).getText());
   }
 
   public void testDefaultProject() throws Exception {
@@ -83,6 +91,83 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     }
     finally {
       configurable.disposeUIResources();
+    }
+  }
+
+  public void testPreserveCustomTemplates() throws Exception {
+    myTemplateManager.addTemplate("foo", "txt");
+    myTemplateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(myTemplateManager.getAllTemplates()));
+    assertNotNull(myTemplateManager.getTemplate("foo.txt"));
+
+    File foo = PlatformTestCase.createTempDir("foo");
+    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());;
+    try {
+      assertNotNull(project);
+      assertNotNull(FileTemplateManager.getInstance(project).getTemplate("foo.txt"));
+    }
+    finally {
+      closeProject(project);
+    }
+  }
+
+  public void testSurviveOnProjectReopen() throws Exception {
+    File foo = PlatformTestCase.createTempDir("foo");
+    Project reloaded = null;
+    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());;
+    try {
+      assertNotNull(project);
+      FileTemplateManager manager = FileTemplateManager.getInstance(project);
+      manager.setCurrentScheme(manager.getProjectScheme());
+      FileTemplate template = manager.getTemplate(TEST_TEMPLATE_TXT);
+      assertEquals(HI_THERE, template.getText());
+      String newText = "good bye";
+      template.setText(newText);
+      assertEquals(newText, manager.getTemplate(TEST_TEMPLATE_TXT).getText());
+
+      PlatformTestUtil.saveProject(project);
+      closeProject(project);
+
+      reloaded = ProjectManager.getInstance().loadAndOpenProject(foo.getPath());
+      assertNotNull(reloaded);
+      manager = FileTemplateManager.getInstance(reloaded);
+      assertEquals(manager.getProjectScheme(), manager.getCurrentScheme());
+      //manager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
+      //manager.setCurrentScheme(manager.getProjectScheme()); // enforce reloading
+      assertEquals(newText, manager.getTemplate(TEST_TEMPLATE_TXT).getText());
+    }
+    finally {
+      closeProject(project);
+      closeProject(reloaded);
+    }
+  }
+
+  private static void closeProject(final Project project) {
+    if (project != null && !project.isDisposed()) {
+      ProjectManager.getInstance().closeProject(project);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(project);
+        }
+      });
+    }
+  }
+
+  public void testRemoveTemplate() throws Exception {
+    FileTemplate[] before = myTemplateManager.getAllTemplates();
+    try {
+      FileTemplate template = myTemplateManager.getTemplate(TEST_TEMPLATE_TXT);
+      myTemplateManager.removeTemplate(template);
+      assertNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
+      myTemplateManager.setCurrentScheme(myTemplateManager.getProjectScheme());
+      assertNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
+      myTemplateManager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
+      assertNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
+    }
+    finally {
+      myTemplateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(before));
+      myTemplateManager.setCurrentScheme(myTemplateManager.getProjectScheme());
+      myTemplateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(before));
     }
   }
 

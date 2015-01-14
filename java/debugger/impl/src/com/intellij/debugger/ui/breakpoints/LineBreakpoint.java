@@ -198,22 +198,28 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       final VirtualFile breakpointFile = position.getFile().getVirtualFile();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       if (breakpointFile != null && fileIndex.isUnderSourceRootOfType(breakpointFile, JavaModuleSourceRootTypes.SOURCES)) {
+        if (debugProcess.getSearchScope().contains(breakpointFile)) {
+          return true;
+        }
         // apply filtering to breakpoints from content sources only, not for sources attached to libraries
         final Collection<VirtualFile> candidates = findClassCandidatesInSourceContent(className, debugProcess.getSearchScope(), fileIndex);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Found "+ (candidates == null? "null" : candidates.size()) + " candidate containing files for class " + className);
         }
         if (candidates == null) {
+          // If no candidates are found in scope then assume that class is loaded dynamically and allow breakpoint
           return true;
         }
-        for (VirtualFile classFile : candidates) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Breakpoint file: " + breakpointFile.getPath()+ "; candidate file: " + classFile.getPath());
-          }
-          if (breakpointFile.equals(classFile)) {
-            return true;
-          }
-        }
+
+        // breakpointFile is not in scope here and there are some candidates in scope
+        //for (VirtualFile classFile : candidates) {
+        //  if (LOG.isDebugEnabled()) {
+        //    LOG.debug("Breakpoint file: " + breakpointFile.getPath()+ "; candidate file: " + classFile.getPath());
+        //  }
+        //  if (breakpointFile.equals(classFile)) {
+        //    return true;
+        //  }
+        //}
         if (LOG.isDebugEnabled()) {
           final GlobalSearchScope scope = debugProcess.getSearchScope();
           final boolean contains = scope.contains(breakpointFile);

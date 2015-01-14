@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -51,7 +52,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -363,15 +363,15 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         if (myProject.isDisposed()) return;
         TreeUtil.expandAll(myTree);
 
-        int listSelection = 0;
-        int scrollRow = -1;
+        int selectedListRow = 0;
+        int selectedTreeRow = -1;
 
         if (myShowCheckboxes) {
           if (myIncludedChanges.size() > 0) {
             for (int i = 0; i < sortedChanges.size(); i++) {
               T t = sortedChanges.get(i);
               if (myIncludedChanges.contains(t)) {
-                listSelection = i;
+                selectedListRow = i;
                 break;
               }
             }
@@ -394,46 +394,32 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
               @SuppressWarnings("unchecked")
               final CheckboxTree.NodeState state = getNodeStatus(node);
               if (state == CheckboxTree.NodeState.FULL && node.isLeaf()) {
-                scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
+                selectedTreeRow = myTree.getRowForPath(new TreePath(node.getPath()));
                 break;
               }
             }
           }
         } else {
           if (toSelect != null) {
-            ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-            final int[] rowToSelect = new int[] {-1}; 
-            TreeUtil.traverse(root, new TreeUtil.Traverse() {
-              @Override
-              public boolean accept(Object node) {
-                if (node instanceof DefaultMutableTreeNode) {
-                  Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-                  if (userObject instanceof Change) {
-                    Change change = (Change)userObject;
-                    VirtualFile virtualFile = change.getVirtualFile();
-                    if ((virtualFile != null && virtualFile.equals(toSelect)) || seemsToBeMoved(change, toSelect)) {
-                      TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
-                      rowToSelect[0] = myTree.getRowForPath(new TreePath(path));
-                    }
-                  }
-                }
-
-                return rowToSelect[0] == -1;
-              }
-            });
-
-            scrollRow = rowToSelect[0] == -1 ? scrollRow : rowToSelect[0];
+            int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
+            if (rowInTree > -1) {
+              selectedTreeRow = rowInTree;
+            }
+            int rowInList = findRowContainingFile(myList.getModel(), toSelect);
+            if (rowInList > -1) {
+              selectedListRow = rowInList;
+            }
           }
         }
         
         if (changes.size() > 0) {
-          myList.setSelectedIndex(listSelection);
-          myList.ensureIndexIsVisible(listSelection);
+          myList.setSelectedIndex(selectedListRow);
+          myList.ensureIndexIsVisible(selectedListRow);
 
-          if (scrollRow >= 0) {
-            myTree.setSelectionRow(scrollRow);
+          if (selectedTreeRow >= 0) {
+            myTree.setSelectionRow(selectedTreeRow);
           }
-          TreeUtil.showRowCentered(myTree, scrollRow, false);
+          TreeUtil.showRowCentered(myTree, selectedTreeRow, false);
         }
       }
     };
@@ -442,6 +428,42 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     } else {
       SwingUtilities.invokeLater(runnable);
     }
+  }
+
+  private static int findRowContainingFile(@NotNull ListModel listModel, @NotNull final VirtualFile toSelect) {
+    for (int i = 0; i < listModel.getSize(); i++) {
+      Object item = listModel.getElementAt(i);
+      if (item instanceof Change && matches((Change)item, toSelect)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private int findRowContainingFile(@NotNull TreeNode root, @NotNull final VirtualFile toSelect) {
+    final Ref<Integer> row = Ref.create(-1);
+    TreeUtil.traverse(root, new TreeUtil.Traverse() {
+      @Override
+      public boolean accept(Object node) {
+        if (node instanceof DefaultMutableTreeNode) {
+          Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+          if (userObject instanceof Change) {
+            if (matches((Change)userObject, toSelect)) {
+              TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
+              row.set(myTree.getRowForPath(new TreePath(path)));
+            }
+          }
+        }
+
+        return row.get() == -1;
+      }
+    });
+    return row.get();
+  }
+
+  private static boolean matches(@NotNull Change change, @NotNull VirtualFile file) {
+    VirtualFile virtualFile = change.getVirtualFile();
+    return virtualFile != null && virtualFile.equals(file) || seemsToBeMoved(change, file);
   }
 
   private static boolean seemsToBeMoved(Change change, VirtualFile toSelect) {
@@ -542,18 +564,12 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         return Collections.emptyList();
       }
       else {
-        final List<T> changes = new ArrayList<T>();
-        final TIntHashSet checkSet = new TIntHashSet();
+        LinkedHashSet<T> changes = ContainerUtil.newLinkedHashSet();
         for (TreePath path : paths) {
           //noinspection unchecked
-          List<T> list = getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent());
-          for (T object : list) {
-            if (checkSet.add(object.hashCode()) || !changes.contains(object)) {
-              changes.add(object);
-            }
-          }
+          changes.addAll(getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent()));
         }
-        return changes;
+        return ContainerUtil.newArrayList(changes);
       }
     }
   }

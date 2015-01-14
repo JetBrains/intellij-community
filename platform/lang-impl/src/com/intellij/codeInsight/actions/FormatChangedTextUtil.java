@@ -54,8 +54,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FormatChangedTextUtil {
+  public static final Key<String> TEST_REVISION_CONTENT = Key.create("test.revision.content");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.FormatChangedTextUtil");
   protected static final Key<List<TextRange>> CHANGED_RANGES = Key.create("changed.ranges.since.last.revision");
+
 
   private FormatChangedTextUtil() {
   }
@@ -232,19 +234,16 @@ public class FormatChangedTextUtil {
 
   @NotNull
   public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      List<TextRange> testData = file.getUserData(CHANGED_RANGES);
-      if (testData != null) {
-        return testData;
-      }
-    }
-
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) return ContainerUtil.emptyList();
-
-    List<TextRange> cachedChangedLines = getCachedChangedLines(project, document);
+    List<TextRange> cachedChangedLines = getCachedChangedLines(project, file);
     if (cachedChangedLines != null) {
       return cachedChangedLines;
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      String testContent = file.getUserData(TEST_REVISION_CONTENT);
+      if (testContent != null) {
+        return calculateChangedTextRanges(file.getProject(), file, testContent);
+      }
     }
 
     Change change = ChangeListManager.getInstance(project).getChange(file.getVirtualFile());

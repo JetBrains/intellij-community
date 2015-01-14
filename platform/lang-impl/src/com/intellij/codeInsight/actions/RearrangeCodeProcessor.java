@@ -56,6 +56,16 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
                                 @NotNull SelectionModel selectionModel)
   {
     super(file.getProject(), file, PROGRESS_TEXT, COMMAND_NAME, false);
+
+  public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
+    super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
+    mySelectionModel = selectionModel;
+  }
+  
+  public RearrangeCodeProcessor(@NotNull Project project,
+                                @NotNull PsiFile file,
+                                @Nullable SelectionModel selectionModel) {
+    super(project, file, PROGRESS_TEXT, COMMAND_NAME, false);
     mySelectionModel = selectionModel;
   }
 

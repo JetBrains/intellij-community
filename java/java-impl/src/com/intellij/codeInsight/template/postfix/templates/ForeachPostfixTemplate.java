@@ -25,11 +25,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_ITERABLE_OR_ARRAY;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class ForeachPostfixTemplate extends StringBasedPostfixTemplate {
   public ForeachPostfixTemplate() {
-    super("for", "for (T item : expr)", JAVA_PSI_INFO, IS_ITERABLE_OR_ARRAY);
+    super("for", "for (T item : expr)", selectorTopmost(IS_ITERABLE_OR_ARRAY));
   }
 
   @Override

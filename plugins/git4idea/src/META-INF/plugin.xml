@@ -164,9 +164,6 @@
         serviceImplementation="git4idea.config.GitVcsSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService
-        serviceInterface="git4idea.settings.GitPushSettings"
-        serviceImplementation="git4idea.settings.GitPushSettings"/>
-    <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
     <projectService

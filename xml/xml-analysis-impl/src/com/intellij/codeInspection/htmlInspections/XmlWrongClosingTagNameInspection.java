@@ -30,7 +30,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
@@ -104,8 +103,8 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
         }
       }
     }
-    final String tagName = tag instanceof HtmlTag ? tag.getName().toLowerCase() : tag.getName();
-    final String endTokenText = tag instanceof HtmlTag ? end.getText().toLowerCase() : end.getText();
+    final String tagName = tag.getName();
+    final String endTokenText = end.getText();
 
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
@@ -129,8 +128,8 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
         }
       }
     }
-    final String tagName = tag instanceof HtmlTag ? tag.getName().toLowerCase() : tag.getName();
-    final String endTokenText = tag instanceof HtmlTag ? end.getText().toLowerCase() : end.getText();
+    final String tagName = tag.getName();
+    final String endTokenText = end.getText();
 
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);

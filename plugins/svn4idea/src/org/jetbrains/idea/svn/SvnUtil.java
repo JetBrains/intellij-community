@@ -470,15 +470,32 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getBranchForUrl(final SvnVcs vcs, final VirtualFile vcsRoot, final String urlPath) {
+  public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull String urlValue) {
+    SVNURL url = null;
+
     try {
-      final SVNURL url = SVNURL.parseURIEncoded(urlPath);
-      SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
-      return configuration.getWorkingBranch(url);
+      url = createUrl(urlValue);
     }
-    catch (SVNException e) {
-      return null;
+    catch (SvnBindException e) {
+      LOG.debug(e);
     }
+
+    return url != null ? getBranchForUrl(vcs, vcsRoot, url) : null;
+  }
+
+  @Nullable
+  public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull SVNURL url) {
+    SVNURL result = null;
+    SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
+
+    try {
+      result = configuration.getWorkingBranch(url);
+    }
+    catch (SvnBindException e) {
+      LOG.debug(e);
+    }
+
+    return result;
   }
 
   public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull String url) {
@@ -701,8 +718,13 @@ public class SvnUtil {
 
   @NotNull
   public static SVNURL createUrl(@NotNull String url) throws SvnBindException {
+    return createUrl(url, true);
+  }
+
+  @NotNull
+  public static SVNURL createUrl(@NotNull String url, boolean encoded) throws SvnBindException {
     try {
-      SVNURL result = SVNURL.parseURIEncoded(url);
+      SVNURL result = encoded ? SVNURL.parseURIEncoded(url) : SVNURL.parseURIDecoded(url);
 
       // explicitly check if port corresponds to default port and recreate url specifying default port indicator
       if (result.hasPort() && hasDefaultPort(result)) {

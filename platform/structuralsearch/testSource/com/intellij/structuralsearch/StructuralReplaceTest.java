@@ -1810,17 +1810,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testUseStaticImport() {
-    String in = "class X {{ Math.abs(-1); }}";
+    final String in = "class X {{ Math.abs(-1); }}";
     final String what = "Math.abs('a)";
     final String by = "Math.abs($a$)";
     options.setToUseStaticImport(true);
 
-    String expected = "import static java.lang.Math.abs;class X {{ abs(-1); }}";
+    final String expected = "import static java.lang.Math.abs;class X {{ abs(-1); }}";
     assertEquals("Replacing with static import", expected, replacer.testReplace(in, what, by, options, true));
 
-    in = "class X { void m(java.util.Random r) { Math.abs(r.nextInt()); }}";
-    expected = "import static java.lang.Math.abs;class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
-    assertEquals("don't add broken static imports", expected, replacer.testReplace(in, what, by, options, true));
+    final String in2 = "class X { void m(java.util.Random r) { Math.abs(r.nextInt()); }}";
+    final String expected2 = "import static java.lang.Math.abs;class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
+    assertEquals("don't add broken static imports", expected2, replacer.testReplace(in2, what, by, options, true));
+
+    final String by2 = "new java.util.AbstractMap.SimpleEntry(\"\", \"\")";
+    final String expected3 = "import static java.util.AbstractMap.SimpleEntry;class X {{ new SimpleEntry(\"\", \"\"); }}";
+    assertEquals("", expected3, replacer.testReplace(in, what, by2, options, true));
   }
 
   public void testUseStaticStarImport() {

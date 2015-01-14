@@ -56,7 +56,7 @@ public class HungryBackspaceAction extends TextComponentEditorAction {
       final SelectionModel selectionModel = editor.getSelectionModel();
       final CharSequence text = document.getCharsSequence();
       final char c = text.charAt(prevSymbolOffset);
-      final boolean doHungryCheck = !selectionModel.hasSelection() && !selectionModel.hasBlockSelection() && StringUtil.isWhiteSpace(c);
+      final boolean doHungryCheck = !selectionModel.hasSelection() && StringUtil.isWhiteSpace(c);
       final EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
       handler.execute(editor, dataContext);
 

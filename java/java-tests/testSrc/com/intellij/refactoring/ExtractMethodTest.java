@@ -581,6 +581,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testMethod2Interface() throws Exception {
     doTest();
   }
+  
+  public void testMethod2InterfaceFromStatic() throws Exception {
+    doTest();
+  }
+
+  public void testMethod2InterfaceFromConstant() throws Exception {
+    doTest();
+  }
 
   public void testParamDetection() throws Exception {
     doTest();
@@ -634,6 +642,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testSuggestChangeSignatureCallToSameClassMethod() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignatureInitialParameterUnused() throws Exception {
     doDuplicatesTest();
   }
@@ -646,6 +658,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testTargetAnonymous() throws Exception {
+    doTest();
+  }
+
+  public void testTheOnlyParenthesisExpressionWhichIsSkippedInControlFlow() throws Exception {
     doTest();
   }
 

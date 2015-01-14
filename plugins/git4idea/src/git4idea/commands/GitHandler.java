@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -138,6 +139,7 @@ public abstract class GitHandler {
     }
     myCommandLine.addParameter(command.name());
     myStdoutSuppressed = true;
+    mySilent = myCommand.lockingPolicy() == GitCommand.LockingPolicy.READ;
   }
 
   /**
@@ -478,6 +480,9 @@ public abstract class GitHandler {
       // start process
       myProcess = startProcess();
       startHandlingStreams();
+    }
+    catch (ProcessCanceledException pce) {
+      cleanupEnv();
     }
     catch (Throwable t) {
       if (!ApplicationManager.getApplication().isUnitTestMode() || !myProject.isDisposed()) {

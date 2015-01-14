@@ -380,7 +380,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       caretPosition = new LogicalPosition(caretPosition.line, caretPosition.column);
     }
     int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
-    boolean hasBlockSelection = myEditor.getSelectionModel().hasBlockSelection();
     int selectionStart = myEditor.getSelectionModel().getSelectionStart();
     int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
 
@@ -424,7 +423,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
       myEditor.getSelectionModel().removeSelection();
-    } else if (!hasBlockSelection && selectionStart < myEditor.getDocument().getTextLength()) {
+    } else if (selectionStart < myEditor.getDocument().getTextLength()) {
       myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
 

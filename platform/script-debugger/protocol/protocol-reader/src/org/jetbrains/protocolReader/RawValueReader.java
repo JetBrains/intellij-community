@@ -1,14 +1,15 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.JsonReaderEx;
 
 class RawValueReader extends ValueReader {
   RawValueReader(boolean nullable) {
-    super(nullable);
+    super();
   }
 
   @Override
-  void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, TextOutput out) {
+  void writeReadCode(ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
     addReaderParameter(subtyping, out);
     out.append(".subReader();").newLine();
     addReaderParameter(subtyping, out);
@@ -16,15 +17,7 @@ class RawValueReader extends ValueReader {
   }
 
   @Override
-  public void appendFinishedValueTypeName(TextOutput out) {
+  public void appendFinishedValueTypeName(@NotNull TextOutput out) {
     out.append(JsonReaderEx.class.getCanonicalName());
-  }
-
-  @Override
-  void writeArrayReadCode(ClassScope scope,
-                          boolean subtyping,
-                          boolean nullable,
-                          String fieldName, TextOutput out) {
-    throw new UnsupportedOperationException();
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -105,7 +106,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   }
 
                   if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {body}).isEmpty()) {
-                    if (isCollectCall(body)) {
+                    if (isCollectCall(body, statement.getIterationParameter())) {
                       holder.registerProblem(iteratedValue, "Can be replaced with collect call",
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithCollectCallFix());
                     } else if (!isTrivial(body, statement.getIterationParameter())) {
@@ -124,7 +125,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     };
   }
 
-  private static boolean isCollectCall(PsiStatement body) {
+  private static boolean isCollectCall(PsiStatement body, final PsiParameter parameter) {
     PsiIfStatement ifStatement = extractIfStatement(body);
     final PsiMethodCallExpression methodCallExpression = extractAddCall(body, ifStatement);
     if (methodCallExpression != null) {
@@ -132,8 +133,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       PsiClass qualifierClass = null;
       if (qualifierExpression instanceof PsiReferenceExpression) {
+        if (ReferencesSearch.search(parameter, new LocalSearchScope(qualifierExpression)).findFirst() != null) {
+          return false;
+        }
         qualifierClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
-      } else if (qualifierExpression == null) {
+      }
+      else if (qualifierExpression == null) {
         final PsiClass enclosingClass = PsiTreeUtil.getParentOfType(body, PsiClass.class);
         if (PsiUtil.getEnclosingStaticElement(body, enclosingClass) == null) {
           qualifierClass = enclosingClass;

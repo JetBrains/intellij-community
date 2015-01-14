@@ -104,7 +104,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       HgRepository repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
       HgCommitCommand command =
-        new HgCommitCommand(myProject, repo.getRoot(), preparedComment, myNextCommitAmend, myCloseBranch);
+        new HgCommitCommand(myProject, repo, preparedComment, myNextCommitAmend, myCloseBranch);
 
       if (isMergeCommit(repo.getRoot())) {
         //partial commits are not allowed during merges

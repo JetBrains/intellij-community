@@ -184,6 +184,10 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
           return false;
         }
         boolean sameRow = isAboveSelectedItem(event, watchTree);
+        if (!sameRow || clickCount > 1) {
+          editAlarm.cancelAllRequests();
+          return false;
+        }
         final AnAction editWatchAction = ActionManager.getInstance().getAction(XDebuggerActions.XEDIT_WATCH);
         Presentation presentation = editWatchAction.getTemplatePresentation().clone();
         DataContext context = DataManager.getInstance().getDataContext(watchTree);
@@ -194,7 +198,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
             editWatchAction.actionPerformed(actionEvent);
           }
         };
-        if (sameRow && editAlarm.isEmpty() && quitePeriod.isEmpty()) {
+        if (editAlarm.isEmpty() && quitePeriod.isEmpty()) {
           editAlarm.addRequest(runnable, UIUtil.getMultiClickInterval());
         } else {
           editAlarm.cancelAllRequests();

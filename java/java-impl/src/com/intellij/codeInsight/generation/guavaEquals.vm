@@ -1,0 +1,27 @@
+#parse("equalsHelper.vm")
+public boolean equals(##
+#if ($settings.generateFinalParameters)
+  final ##
+#end
+Object $paramName){
+  #addEqualsPrologue()
+  #addClassInstance()
+  return ##
+   #set($i = 0)
+   #foreach($field in $fields)
+     #if ($i > 0)
+     &&
+     #end
+     #set($i = $i + 1)
+     #if ($field.array)
+       #if ($field.nestedArray)
+java.util.Arrays.deepEquals($field.accessor, ${classInstanceName}.$field.accessor)##
+       #else
+java.util.Arrays.equals($field.accessor, ${classInstanceName}.$field.accessor)##
+       #end
+     #else
+com.google.common.base.Objects.equal($field.accessor, ${classInstanceName}.$field.accessor)##
+     #end
+   #end
+  ;
+}

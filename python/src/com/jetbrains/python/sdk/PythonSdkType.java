@@ -597,7 +597,8 @@ public class PythonSdkType extends SdkType {
             final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
             if (manager != null) {
               try {
-                manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
+                VagrantNotStartedException cause = (VagrantNotStartedException)e.getCause();
+                manager.runVagrant(cause.getVagrantFolder(), cause.getMachineName());
               }
               catch (ExecutionException e1) {
                 throw new RuntimeException(e1);

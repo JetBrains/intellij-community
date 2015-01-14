@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet.generators;
 
+import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
@@ -117,5 +118,10 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     }
     String key = computeKey(documentText.subSequence(startOffset, currentOffset));
     return !StringUtil.isEmpty(key) && ZenCodingTemplate.checkTemplateKey(key, callback, this) ? key : null;
+  }
+
+  @Override
+  public void disableEmmet() {
+    EmmetOptions.getInstance().setEmmetEnabled(false);
   }
 }

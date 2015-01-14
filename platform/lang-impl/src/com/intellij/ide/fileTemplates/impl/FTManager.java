@@ -45,6 +45,8 @@ class FTManager {
   private final String myName;
   private final boolean myInternal;
   private final String myTemplatesDir;
+  @Nullable
+  private final FTManager myOriginal;
   private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
   private final Map<String, FileTemplateBase> myTemplates = new HashMap<String, FileTemplateBase>();
   private volatile List<FileTemplateBase> mySortedTemplates;
@@ -58,9 +60,11 @@ class FTManager {
     myName = name;
     myInternal = internal;
     myTemplatesDir = defaultTemplatesDirName;
+    myOriginal = null;
   }
 
-  FTManager(FTManager original) {
+  FTManager(@NotNull FTManager original) {
+    myOriginal = original;
     myName = original.getName();
     myTemplatesDir = original.myTemplatesDir;
     myInternal = original.myInternal;
@@ -73,15 +77,16 @@ class FTManager {
   }
 
   public void setScheme(FileTemplatesScheme scheme) {
+    mySortedTemplates = null;
     myScheme = scheme;
-    restoreDefaults(Collections.<String>emptySet());
+    loadCustomizedContent();
   }
 
   @NotNull
   public Collection<FileTemplateBase> getAllTemplates(boolean includeDisabled) {
     List<FileTemplateBase> sorted = mySortedTemplates;
     if (sorted == null) {
-      sorted = new ArrayList<FileTemplateBase>(myTemplates.values());
+      sorted = new ArrayList<FileTemplateBase>(getTemplates().values());
       Collections.sort(sorted, new Comparator<FileTemplateBase>() {
         @Override
         public int compare(FileTemplateBase t1, FileTemplateBase t2) {
@@ -111,7 +116,7 @@ class FTManager {
    */
   @Nullable
   public FileTemplateBase getTemplate(@NotNull String templateQname) {
-    return myTemplates.get(templateQname);
+    return getTemplates().get(templateQname);
   }
 
   /**
@@ -121,7 +126,7 @@ class FTManager {
    */
   @Nullable
   public FileTemplateBase findTemplateByName(@NotNull String templateName) {
-    final FileTemplateBase template = myTemplates.get(templateName);
+    final FileTemplateBase template = getTemplates().get(templateName);
     if (template != null) {
       final boolean isEnabled = !(template instanceof BundledFileTemplate) || ((BundledFileTemplate)template).isEnabled();
       if (isEnabled) {
@@ -147,7 +152,7 @@ class FTManager {
     FileTemplateBase template = getTemplate(qName);
     if (template == null) {
       template = new CustomFileTemplate(name, extension);
-      myTemplates.put(qName, template);
+      getTemplates().put(qName, template);
       mySortedTemplates = null;
     }
     else {
@@ -159,9 +164,9 @@ class FTManager {
   }
 
   public void removeTemplate(@NotNull String qName) {
-    final FileTemplateBase template = myTemplates.get(qName);
+    final FileTemplateBase template = getTemplates().get(qName);
     if (template instanceof CustomFileTemplate) {
-      myTemplates.remove(qName);
+      getTemplates().remove(qName);
       mySortedTemplates = null;
     }
     else if (template instanceof BundledFileTemplate){
@@ -186,7 +191,7 @@ class FTManager {
   }
 
   private void restoreDefaults(Set<String> toDisable) {
-    myTemplates.clear();
+    getTemplates().clear();
     mySortedTemplates = null;
     for (DefaultTemplate template : myDefaultTemplates) {
       final BundledFileTemplate bundled = createAndStoreBundledTemplate(template);
@@ -204,14 +209,13 @@ class FTManager {
   private BundledFileTemplate createAndStoreBundledTemplate(DefaultTemplate template) {
     final BundledFileTemplate bundled = new BundledFileTemplate(template, myInternal);
     final String qName = bundled.getQualifiedName();
-    final FileTemplateBase previous = myTemplates.put(qName, bundled);
+    final FileTemplateBase previous = getTemplates().put(qName, bundled);
     mySortedTemplates = null;
 
     LOG.assertTrue(previous == null, "Duplicate bundled template " + qName +
                                      " [" + template.getTemplateURL() + ", " + previous + ']');
     return bundled;
   }
-
 
   void loadCustomizedContent() {
     final File configRoot = getConfigRoot(false);
@@ -389,4 +393,7 @@ class FTManager {
     return Pair.create(name, ext);
   }
 
+  public Map<String, FileTemplateBase> getTemplates() {
+    return myOriginal != null && myScheme == FileTemplatesScheme.DEFAULT ? myOriginal.myTemplates : myTemplates;
+  }
 }

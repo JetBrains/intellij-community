@@ -25,11 +25,14 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -363,8 +366,13 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                      final PsiClass targetClass,
                                      final FileTemplate template) throws IncorrectOperationException {
     if (targetClass.isInterface()) {
-      final PsiCodeBlock body = result.getBody();
-      if (body != null) body.delete();
+      if (isImplementInterfaceInJava8Interface(targetClass)) {
+        PsiUtil.setModifierProperty(result, PsiModifier.DEFAULT, true);
+      }
+      else {
+        final PsiCodeBlock body = result.getBody();
+        if (body != null) body.delete();
+      }
     }
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
     PsiType returnType = result.getReturnType();
@@ -408,6 +416,16 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
         oldBody.replace(m.getBody());
       }
     }
+  }
+
+  private static boolean isImplementInterfaceInJava8Interface(PsiClass targetClass) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(targetClass)){
+      return false;
+    }
+    final String implementMethodsName = ActionsBundle.message("action.ImplementMethods.text");
+    final Presentation presentation = new Presentation();
+    presentation.setText(implementMethodsName);
+    return presentation.getText().equals(CommandProcessor.getInstance().getCurrentCommandName());
   }
 
   public static void chooseAndOverrideMethods(Project project, Editor editor, PsiClass aClass){

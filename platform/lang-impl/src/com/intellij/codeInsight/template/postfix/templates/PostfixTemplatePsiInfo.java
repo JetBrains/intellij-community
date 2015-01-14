@@ -16,42 +16,15 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public abstract class PostfixTemplatePsiInfo {
-
-  @NotNull
-  public abstract PsiElement createStatement(@NotNull PsiElement context,
-                                             @NotNull String prefix,
-                                             @NotNull String suffix);
-
   @NotNull
   public abstract PsiElement createExpression(@NotNull PsiElement context,
                                               @NotNull String prefix,
                                               @NotNull String suffix);
 
-  @Nullable
-  public abstract PsiElement getTopmostExpression(@NotNull PsiElement element);
-
   @NotNull
   public abstract PsiElement getNegatedExpression(@NotNull PsiElement element);
-
-  @NotNull
-  public abstract List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
-
-  @NotNull
-  public Function<PsiElement, String> getRenderer() {
-    return new Function<PsiElement, String>() {
-      @Override
-      public String fun(@NotNull PsiElement element) {
-        return element.getText();
-      }
-    };
-  }
 }

@@ -19,7 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
@@ -196,6 +199,53 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testNonDefaultAfterDefault1() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(1, "b", "1", true), new PyParameterInfo(-1, "a", "2", false)),
                      PyBundle.message("ANN.non.default.param.after.default"));
+  }
+
+  // PY-14774
+  public void testAnnotationsForStarredParametersAreNotShownInDialog() throws Exception {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      public void run() {
+        myFixture.configureByText(PythonFileType.INSTANCE, "def func(a, b:int, *args: tuple, c:list, d:str='foo', ** kwargs:dict):\n" +
+                                                           "    pass");
+        final PyFunction function = (PyFunction)new PyChangeSignatureHandler().findTargetMember(myFixture.getFile(), myFixture.getEditor());
+        assertNotNull(function);
+        final List<String> expected = Arrays.asList("a", "b", "*args", "c", "d", "**kwargs");
+        final List<PyParameterInfo> parameters = new PyMethodDescriptor(function).getParameters();
+        assertEquals(expected, ContainerUtil.map(parameters, new Function<PyParameterInfo, String>() {
+          @Override
+          public String fun(PyParameterInfo info) {
+            return info.getOldName();
+          }
+        }));
+      }
+    });
+  }
+
+  public void testDuplicateNamesOfStarredParameters() throws Exception {
+    final PyParameterInfo firstParam = new PyParameterInfo(0, "*foo", null, false);
+    firstParam.setName("*bar");
+    doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "**bar", null, false)),
+                     PyBundle.message("ANN.duplicate.param.name"));
+  }
+
+  public void testMultipleSingleStarredParameters() throws Exception {
+    final PyParameterInfo firstParam = new PyParameterInfo(0, "foo", null, false);
+    firstParam.setName("*foo");
+    doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "*bar", null, false)),
+                     PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star"));
+  }
+
+  public void testMultipleDoubleStarredParameters() throws Exception {
+    final PyParameterInfo firstParam = new PyParameterInfo(0, "foo", null, false);
+    firstParam.setName("**foo");
+    doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "**bar", null, false)),
+                     PyBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star"));
+  }
+
+  public void testParameterNameWithMoreThanTwoStars() throws Exception {
+    final PyParameterInfo firstParam = new PyParameterInfo(0, "**kwargs", null, false);
+    firstParam.setName("***kwargs");
+    doValidationTest(null, Arrays.asList(firstParam), PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
   }
 
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {

@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.*;
-import com.intellij.openapi.command.AbnormalCommandTerminationException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -125,7 +124,7 @@ public class CodeEditUtil {
 
   public static void checkForOuters(ASTNode element) {
     if (element instanceof OuterLanguageElement && element.getCopyableUserData(OUTER_OK) == null) {
-      throw new AbnormalCommandTerminationException();
+      throw new IllegalArgumentException("Outer element " + element + " is not allowed here");
     }
 
     ASTNode child = element.getFirstChildNode();

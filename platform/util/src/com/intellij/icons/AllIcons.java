@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -445,7 +445,6 @@ public class AllIcons {
     public static final Icon InspectionsOff = IconLoader.getIcon("/general/inspectionsOff.png"); // 16x16
     public static final Icon InspectionsPause = IconLoader.getIcon("/general/inspectionsPause.png"); // 12x12
     public static final Icon Jdk = IconLoader.getIcon("/general/jdk.png"); // 16x16
-    public static final Icon JetbrainsTvIdea = IconLoader.getIcon("/general/jetbrainsTvIdea.png"); // 32x32
     public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png"); // 13x13
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png"); // 32x32
     public static final Icon Locate = IconLoader.getIcon("/general/locate.png"); // 14x16
@@ -512,7 +511,6 @@ public class AllIcons {
     public static final Icon TemplateProjectSettings = IconLoader.getIcon("/general/TemplateProjectSettings.png"); // 32x32
     public static final Icon TemplateProjectStructure = IconLoader.getIcon("/general/TemplateProjectStructure.png"); // 32x32
     public static final Icon Tip = IconLoader.getIcon("/general/tip.png"); // 32x32
-    public static final Icon TipsOfTheDay = IconLoader.getIcon("/general/tipsOfTheDay.png"); // 32x32
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.png"); // 12x12
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.png"); // 12x12
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.png"); // 12x12
@@ -1184,6 +1182,9 @@ public class AllIcons {
     public static final Icon ImportProject = IconLoader.getIcon("/welcome/importProject.png"); // 16x16
     public static final Icon OpenProject = IconLoader.getIcon("/welcome/openProject.png"); // 16x16
     public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
+
+    public static final Icon RemoveRecentProject = IconLoader.getIcon("/welcome/project/remove.png"); // 10x10
+    public static final Icon RemoveRecentProjectHover = IconLoader.getIcon("/welcome/project/remove-hover.png"); // 10x10
 
   }
   

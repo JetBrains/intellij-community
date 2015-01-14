@@ -142,8 +142,9 @@ public class ExtractMethodProcessor implements MatchProvider {
                                 String helpId) {
     myProject = project;
     myEditor = editor;
-    if (elements.length != 1 || elements.length == 1 && !(elements[0] instanceof PsiBlockStatement)) {
-      myElements = elements;
+    if (elements.length != 1 || !(elements[0] instanceof PsiBlockStatement)) {
+      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression 
+                   ? new PsiElement[] {PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0])} : elements;
       myEnclosingBlockStatement = null;
     }
     else {
@@ -1339,7 +1340,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     if (myTargetClass.isInterface() && PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
-      PsiUtil.setModifierProperty(newMethod, PsiModifier.DEFAULT, true);
+      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiMethod.class, false);
+      if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+        PsiUtil.setModifierProperty(newMethod, PsiModifier.DEFAULT, true);
+      }
     }
     return (PsiMethod)myStyleManager.reformat(newMethod);
   }
@@ -1579,24 +1583,34 @@ public class ExtractMethodProcessor implements MatchProvider {
     myStatic = shouldBeStatic();
     final Set<PsiField> fields = new LinkedHashSet<PsiField>();
     if (!PsiUtil.isLocalOrAnonymousClass(myTargetClass) && (myTargetClass.getContainingClass() == null || myTargetClass.hasModifierProperty(PsiModifier.STATIC))) {
-      ElementNeedsThis needsThis = new ElementNeedsThis(myTargetClass) {
-        @Override
-        protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
-          if (classMember instanceof PsiField && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
-            final PsiExpression expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression.class, false);
-            if (expression == null || !PsiUtil.isAccessedForWriting(expression)) {
-              fields.add((PsiField)classMember);
-              return;
-            }
-          }
-          super.visitClassMemberReferenceElement(classMember, classMemberReference);
-        }
-      };
-      for (int i = 0; i < myElements.length && !needsThis.usesMembers(); i++) {
-        PsiElement element = myElements[i];
-        element.accept(needsThis);
+      boolean canBeStatic = true;
+      if (myTargetClass.isInterface()) {
+        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiMethod.class, false);
+        canBeStatic = containingMethod == null || containingMethod.hasModifierProperty(PsiModifier.STATIC);
       }
-      myCanBeStatic = !needsThis.usesMembers();
+      if (canBeStatic) {
+        ElementNeedsThis needsThis = new ElementNeedsThis(myTargetClass) {
+          @Override
+          protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
+            if (classMember instanceof PsiField && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
+              final PsiExpression expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression.class, false);
+              if (expression == null || !PsiUtil.isAccessedForWriting(expression)) {
+                fields.add((PsiField)classMember);
+                return;
+              }
+            }
+            super.visitClassMemberReferenceElement(classMember, classMemberReference);
+          }
+        };
+        for (int i = 0; i < myElements.length && !needsThis.usesMembers(); i++) {
+          PsiElement element = myElements[i];
+          element.accept(needsThis);
+        }
+        myCanBeStatic = !needsThis.usesMembers();
+      }
+      else {
+        myCanBeStatic = false;
+      }
     }
     else {
       myCanBeStatic = false;

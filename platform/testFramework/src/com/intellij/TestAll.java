@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,8 +161,9 @@ public class TestAll implements Test {
   public static void fillTestCases(TestCaseLoader testCaseLoader, String packageRoot, String... classRoots) throws IOException {
     for (String classRoot : classRoots) {
       int oldCount = testCaseLoader.getClasses().size();
-      ClassFinder classFinder = new ClassFinder(new File(FileUtil.toSystemDependentName(classRoot)), packageRoot);
-      testCaseLoader.loadTestCases(classFinder.getClasses());
+      File classRootFile = new File(FileUtil.toSystemDependentName(classRoot));
+      ClassFinder classFinder = new ClassFinder(classRootFile, packageRoot);
+      testCaseLoader.loadTestCases(classRootFile.getName(), classFinder.getClasses());
       int newCount = testCaseLoader.getClasses().size();
       if (newCount != oldCount) {
         System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classRoot);

@@ -294,7 +294,7 @@ public class SheetController {
       }
     });
 
-    FontMetrics fontMetrics = mySheetMessage.getFontMetrics(regularFont);
+    FontMetrics fontMetrics = sheetPanel.getFontMetrics(regularFont);
 
     int widestWordWidth = 250;
 

@@ -65,7 +65,7 @@ public abstract class SettingsConnectionService {
   @Nullable
   private Map<String, String> readSettings(final String... attributes) {
     return HttpRequests.request(mySettingsUrl)
-      .userAgent()
+      .productNameAsUserAgent()
       .connect(new HttpRequests.RequestProcessor<Map<String, String>>() {
         @Override
         public Map<String, String> process(@NotNull HttpRequests.Request request) throws IOException {
@@ -77,7 +77,7 @@ public abstract class SettingsConnectionService {
 
           Map<String, String> settings = ContainerUtilRt.newLinkedHashMap();
           try {
-            Element root = JDOMUtil.load(request.getInputStream());
+            Element root = JDOMUtil.load(request.getReader());
             for (String s : attributes) {
               String attributeValue = root.getAttributeValue(s);
               if (StringUtil.isNotEmpty(attributeValue)) {

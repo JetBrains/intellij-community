@@ -56,7 +56,7 @@ public class PyConsoleParsingContext extends ParsingContext {
     return expressionParser;
   }
 
-  private static class ConsoleStatementParsing extends StatementParsing {
+  public static class ConsoleStatementParsing extends StatementParsing {
 
     private boolean myStartsWithIPythonSymbol;
     private PythonConsoleData myPythonConsoleData;
@@ -136,7 +136,7 @@ public class PyConsoleParsingContext extends ParsingContext {
     }
   }
 
-  private static class ConsoleExpressionParsing extends ExpressionParsing {
+  public static class ConsoleExpressionParsing extends ExpressionParsing {
     public ConsoleExpressionParsing(ParsingContext context) {
       super(context);
     }

@@ -15,9 +15,6 @@
  */
 package com.intellij.codeInsight.template.emmet;
 
-import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
@@ -30,7 +27,6 @@ import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -44,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Map;
 
 public class EmmetPreviewUtil {
   private EmmetPreviewUtil() {
@@ -53,9 +48,8 @@ public class EmmetPreviewUtil {
   @Nullable
   public static String calculateTemplateText(@NotNull Editor editor, @NotNull PsiFile file, boolean expandPrimitiveAbbreviations) {
     if (file instanceof XmlFile) {
-      final Ref<TemplateImpl> generatedTemplate = new Ref<TemplateImpl>();
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
-      CustomTemplateCallback callback = createCallback(editor, file, generatedTemplate);
+      CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
       PsiElement context = callback.getContext();
       ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(context, false);
       if (generator != null && generator instanceof XmlZenCodingGenerator) {
@@ -64,7 +58,7 @@ public class EmmetPreviewUtil {
           try {
             ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.<ZenCodingFilter>emptyList(),
                                      expandPrimitiveAbbreviations, 0);
-            TemplateImpl template = generatedTemplate.get();
+            TemplateImpl template = callback.getGeneratedTemplate();
             String templateText = template != null ? template.getTemplateText() : null;
             if (!StringUtil.isEmpty(templateText)) {
               return template.isToReformat() ? reformatTemplateText(file, templateText) : templateText;
@@ -128,24 +122,6 @@ public class EmmetPreviewUtil {
       }
     });
     return copy.getText();
-  }
-
-  @NotNull
-  private static CustomTemplateCallback createCallback(@NotNull Editor editor,
-                                                       @NotNull PsiFile file,
-                                                       @NotNull final Ref<TemplateImpl> generatedTemplate) {
-    return new CustomTemplateCallback(editor, file) {
-      @Override
-      public void startTemplate(@NotNull Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
-        if (template instanceof TemplateImpl && !((TemplateImpl)template).isDeactivated()) {
-          generatedTemplate.set((TemplateImpl)template);
-        }
-      }
-
-      @Override
-      public void deleteTemplateKey(@NotNull String key) {
-      }
-    };
   }
 
   private static class TemplateTextProducer implements Producer<String> {

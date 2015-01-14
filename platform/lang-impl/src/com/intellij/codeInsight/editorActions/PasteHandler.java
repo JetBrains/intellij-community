@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -90,8 +91,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
 
     final Project project = editor.getProject();
-    if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()
-        || editor.getCaretModel().getCaretCount() > 1) {
+    if (project == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, null, context);
       }
@@ -158,12 +158,19 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
       final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<CopyPastePostProcessor, List<? extends TextBlockTransferableData>>();
       Collection<TextBlockTransferableData> allValues = new ArrayList<TextBlockTransferableData>();
-      for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-        List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
-        if (!data.isEmpty()) {
-          extraData.put(processor, data);
-          allValues.addAll(data);
+      
+      DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+      try {
+        for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+          List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
+          if (!data.isEmpty()) {
+            extraData.put(processor, data);
+            allValues.addAll(data);
+          }
         }
+      }
+      finally {
+        DumbService.getInstance(project).setAlternativeResolveEnabled(false);
       }
 
       text = TextBlockTransferable.convertLineSeparators(editor, text, allValues);

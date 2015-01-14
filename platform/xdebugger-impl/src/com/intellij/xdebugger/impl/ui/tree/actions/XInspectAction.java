@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -32,11 +31,9 @@ public class XInspectAction extends XDebuggerTreeActionBase {
   protected void perform(XValueNodeImpl node, @NotNull final String nodeName, AnActionEvent e) {
     XDebuggerTree tree = node.getTree();
     XValue value = node.getValueContainer();
-    XDebugSession session = XDebuggerManager.getInstance(tree.getProject()).getCurrentSession();
-    if (session != null) {
-      XInspectDialog dialog = new XInspectDialog(tree.getProject(), tree.getEditorsProvider(), tree.getSourcePosition(), nodeName, value,
-                                                 tree.getValueMarkers(), session, true);
-      dialog.show();
-    }
+    XInspectDialog dialog = new XInspectDialog(tree.getProject(), tree.getEditorsProvider(), tree.getSourcePosition(), nodeName, value,
+                                               tree.getValueMarkers(),
+                                               XDebuggerManager.getInstance(tree.getProject()).getCurrentSession(), true);
+    dialog.show();
   }
 }

@@ -85,7 +85,7 @@ public class ClassReference14Processor {
 
   public void processClassReferences(ClassNode node) {
 
-    ClassWrapper wrapper = node.wrapper;
+    ClassWrapper wrapper = node.getWrapper();
 
     //		int major_version = wrapper.getClassStruct().major_version;
     //		int minor_version = wrapper.getClassStruct().minor_version;
@@ -123,7 +123,7 @@ public class ClassReference14Processor {
                                       final HashMap<ClassWrapper, MethodWrapper> mapClassMeths,
                                       final HashSet<ClassWrapper> setFound) {
 
-    final ClassWrapper wrapper = node.wrapper;
+    final ClassWrapper wrapper = node.getWrapper();
 
     // search code
     for (MethodWrapper meth : wrapper.getMethods()) {
@@ -176,7 +176,7 @@ public class ClassReference14Processor {
   private void mapClassMethods(ClassNode node, Map<ClassWrapper, MethodWrapper> map) {
     boolean noSynthFlag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
 
-    ClassWrapper wrapper = node.wrapper;
+    ClassWrapper wrapper = node.getWrapper();
 
     for (MethodWrapper method : wrapper.getMethods()) {
       StructMethod mt = method.methodStruct;

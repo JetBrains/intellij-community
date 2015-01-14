@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Locates all references to a specified PSI element.
+ *
+ * @see com.intellij.psi.PsiReference
  * @author max
  */
 public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
@@ -96,21 +99,50 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     }
   }
 
+  /**
+   * Searches for references to the specified element in the scope in which such references are expected to be found, according to
+   * dependencies and access rules.
+   *
+   * @param element the element (declaration) the references to which are requested.
+   * @return the query allowing to enumerate the references.
+   */
   @NotNull
   public static Query<PsiReference> search(@NotNull PsiElement element) {
     return search(element, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(element)), false);
   }
 
+  /**
+   * Searches for references to the specified element in the specified scope.
+   *
+   * @param element the element (declaration) the references to which are requested.
+   * @param searchScope the scope in which the search is performed.
+   * @return the query allowing to enumerate the references.
+   */
   @NotNull
   public static Query<PsiReference> search(@NotNull PsiElement element, @NotNull SearchScope searchScope) {
     return search(element, searchScope, false);
   }
 
+  /**
+   * Searches for references to the specified element in the specified scope, optionally returning also references which
+   * are invalid because of access rules (e.g. references to a private method from a different class).
+   *
+   * @param element the element (declaration) the references to which are requested.
+   * @param searchScope the scope in which the search is performed.
+   * @param ignoreAccessScope if true, references which are invalid because of access rules are included in the results.
+   * @return the query allowing to enumerate the references.
+   */
   @NotNull
   public static Query<PsiReference> search(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope) {
     return search(new SearchParameters(element, searchScope, ignoreAccessScope));
   }
 
+  /**
+   * Searches for references to the specified element according to the specified parameters.
+   *
+   * @param parameters the parameters for the search (contain also the element the references to which are requested).
+   * @return the query allowing to enumerate the references.
+   */
   @NotNull
   public static Query<PsiReference> search(@NotNull final SearchParameters parameters) {
     final Query<PsiReference> result = INSTANCE.createQuery(parameters);

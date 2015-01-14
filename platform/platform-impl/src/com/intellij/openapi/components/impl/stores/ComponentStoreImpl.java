@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
@@ -37,12 +39,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.xmlb.JDOMXIncluder;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
+import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -51,9 +56,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   private static final Logger LOG = Logger.getInstance(ComponentStoreImpl.class);
   private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
   private final List<SettingsSavingComponent> mySettingsSavingComponents = new CopyOnWriteArrayList<SettingsSavingComponent>();
-
-  @Nullable
-  protected abstract StateStorage getDefaultsStorage();
 
   @Override
   public void initComponent(@NotNull Object component, boolean service) {
@@ -158,7 +160,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return;
     }
 
-    Element element = getJdomState(component, componentName, stateStorage);
+    Element element = stateStorage.getState(component, componentName, Element.class, null);
     if (element == null) {
       return;
     }
@@ -185,28 +187,16 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     myComponents.put(componentName, component);
   }
 
-  private void loadJdomDefaults(@NotNull Object component, @NotNull String componentName) {
+  private void loadJdomDefaults(@NotNull JDOMExternalizable component, @NotNull String componentName) {
     try {
-      StateStorage defaultsStorage = getDefaultsStorage();
-      if (defaultsStorage == null) {
-        return;
+      Element defaultState = getDefaultState(component, componentName, Element.class);
+      if (defaultState != null) {
+        component.readExternal(defaultState);
       }
-
-      Element defaultState = getJdomState(component, componentName, defaultsStorage);
-      if (defaultState == null) {
-        return;
-      }
-
-      ((JDOMExternalizable)component).readExternal(defaultState);
     }
     catch (Exception e) {
       LOG.error("Cannot load defaults for " + component.getClass(), e);
     }
-  }
-
-  @Nullable
-  private static Element getJdomState(final Object component, @NotNull String componentName, @NotNull StateStorage defaultsStorage) {
-    return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
   @Nullable
@@ -238,12 +228,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return name;
     }
 
-    Class<T> stateClass = getComponentStateClass(component);
-    T state = null;
-    StateStorage defaultsStorage = getDefaultsStorage();
-    if (defaultsStorage != null) {
-      state = defaultsStorage.getState(component, name, stateClass, null);
-    }
+    Class<T> stateClass = ComponentSerializationUtil.getStateClass(component.getClass());
+    T state = getDefaultState(component, name, stateClass);
 
     Storage[] storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ);
     for (Storage storageSpec : storageSpecs) {
@@ -264,27 +250,32 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     return name;
   }
 
-  @NotNull
-  private static <T> Class<T> getComponentStateClass(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
-    final Class persistentStateComponentClass = PersistentStateComponent.class;
+  @Nullable
+  protected abstract PathMacroManager getPathMacroManagerForDefaults();
 
-    Class componentClass = persistentStateComponent.getClass();
-
-    nextSuperClass:
-    while (true) {
-      for (Class anInterface : componentClass.getInterfaces()) {
-        if (anInterface.equals(persistentStateComponentClass)) {
-          break nextSuperClass;
-        }
-      }
-
-      componentClass = componentClass.getSuperclass();
+  @Nullable
+  protected <T> T getDefaultState(@NotNull Object component, @NotNull String componentName, @NotNull final Class<T> stateClass) {
+    URL url = DecodeDefaultsUtil.getDefaults(component, componentName);
+    if (url == null) {
+      return null;
     }
 
-    final Type type = ReflectionUtil.resolveVariable(persistentStateComponentClass.getTypeParameters()[0], componentClass);
-    assert type != null;
-    //noinspection unchecked
-    return (Class<T>)ReflectionUtil.getRawType(type);
+    try {
+      Element documentElement = JDOMXIncluder.resolve(JDOMUtil.loadDocument(url), url.toExternalForm()).detachRootElement();
+
+      PathMacroManager pathMacroManager = getPathMacroManagerForDefaults();
+      if (pathMacroManager != null) {
+        pathMacroManager.expandPaths(documentElement);
+      }
+
+      return DefaultStateSerializer.deserializeState(documentElement, stateClass, null);
+    }
+    catch (IOException e) {
+      throw new StateStorageException("Error loading state from " + url, e);
+    }
+    catch (JDOMException e) {
+      throw new StateStorageException("Error loading state from " + url, e);
+    }
   }
 
   @NotNull

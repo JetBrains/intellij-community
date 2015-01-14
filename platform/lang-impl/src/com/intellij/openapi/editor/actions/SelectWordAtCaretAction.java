@@ -103,7 +103,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
       final SelectionModel selectionModel = editor.getSelectionModel();
-      if (guide != null && !selectionModel.hasSelection() && !selectionModel.hasBlockSelection() && isWhitespaceAtCaret(editor)) {
+      if (guide != null && !selectionModel.hasSelection() && isWhitespaceAtCaret(editor)) {
         selectWithGuide(editor, guide);
       }
       else {

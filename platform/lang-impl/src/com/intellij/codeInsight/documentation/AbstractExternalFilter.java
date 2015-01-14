@@ -29,7 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.URL;
 import java.util.Locale;
-import java.util.concurrent.Future;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -215,56 +213,6 @@ public abstract class AbstractExternalFilter {
 
   protected abstract RefConvertor[] getRefConverters();
 
-  private static void getReaderByUrl(@NotNull String url, final @NotNull ThrowableConsumer<Reader, IOException> consumer)
-    throws IOException {
-    if (url.startsWith(JAR_PROTOCOL)) {
-      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(BrowserUtil.getDocURL(url));
-      if (file != null) {
-        consumer.consume(new StringReader(VfsUtilCore.loadText(file)));
-      }
-      return;
-    }
-
-    final URL parsedUrl = BrowserUtil.getURL(url);
-    if (parsedUrl == null) {
-      return;
-    }
-
-    HttpRequests.request(parsedUrl.toString()).connect(new HttpRequests.RequestProcessor<Void>() {
-      @Override
-      public Void process(@NotNull HttpRequests.Request request) throws IOException {
-        String contentEncoding = guessEncoding(parsedUrl);
-        InputStream inputStream = request.getInputStream();
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        consumer.consume(contentEncoding != null ? new MyReader(inputStream, contentEncoding) : new MyReader(inputStream));
-        return null;
-      }
-    });
-  }
-
-  @Nullable
-  private static String guessEncoding(URL url) {
-    return HttpRequests.request(url.toExternalForm()).connect(new HttpRequests.RequestProcessor<String>() {
-      @Override
-      public String process(@NotNull HttpRequests.Request request) throws IOException {
-        String result = request.getConnection().getContentEncoding();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
-        try {
-          for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
-            result = parseContentEncoding(htmlLine);
-            if (result != null) {
-              break;
-            }
-          }
-        }
-        finally {
-          reader.close();
-        }
-        return result;
-      }
-    }, null, null);
-  }
-
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String getExternalDocInfo(final String url) throws Exception {
@@ -274,36 +222,34 @@ public abstract class AbstractExternalFilter {
       return null;
     }
 
-    if (url == null) {
+    if (url == null || !MyJavadocFetcher.ourFree) {
       return null;
     }
-    if (MyJavadocFetcher.isFree()) {
-      final MyJavadocFetcher fetcher = new MyJavadocFetcher(url, new MyDocBuilder() {
-        @Override
-        public void buildFromStream(String url, Reader input, StringBuilder result) throws IOException {
-          doBuildFromStream(url, input, result);
-        }
-      });
-      final Future<?> fetcherFuture = app.executeOnPooledThread(fetcher);
-      try {
-        fetcherFuture.get();
-      }
-      catch (Exception e) {
-        return null;
-      }
-      final Exception exception = fetcher.getException();
-      if (exception != null) {
-        fetcher.cleanup();
-        throw exception;
-      }
 
-      final String docText = correctRefs(ourAnchorSuffix.matcher(url).replaceAll(""), fetcher.getData());
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Filtered JavaDoc: " + docText + "\n");
+    MyJavadocFetcher fetcher = new MyJavadocFetcher(url, new MyDocBuilder() {
+      @Override
+      public void buildFromStream(String url, Reader input, StringBuilder result) throws IOException {
+        doBuildFromStream(url, input, result);
       }
-      return PlatformDocumentationUtil.fixupText(docText);
+    });
+    try {
+      app.executeOnPooledThread(fetcher).get();
     }
-    return null;
+    catch (Exception e) {
+      return null;
+    }
+
+    Exception exception = fetcher.myException;
+    if (exception != null) {
+      fetcher.myException = null;
+      throw exception;
+    }
+
+    final String docText = correctRefs(ourAnchorSuffix.matcher(url).replaceAll(""), fetcher.data.toString());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Filtered JavaDoc: " + docText + "\n");
+    }
+    return PlatformDocumentationUtil.fixupText(docText);
   }
 
   @Nullable
@@ -315,7 +261,7 @@ public abstract class AbstractExternalFilter {
     doBuildFromStream(url, input, data, true);
   }
 
-  protected void doBuildFromStream(final String url, Reader input, final StringBuilder data, boolean search4Encoding) throws IOException {
+  protected void doBuildFromStream(final String url, Reader input, final StringBuilder data, boolean searchForEncoding) throws IOException {
     Trinity<Pattern, Pattern, Boolean> settings = getParseSettings(url);
     @NonNls Pattern startSection = settings.first;
     @NonNls Pattern endSection = settings.second;
@@ -345,7 +291,7 @@ public abstract class AbstractExternalFilter {
     BufferedReader buf = new BufferedReader(input);
     do {
       read = buf.readLine();
-      if (read != null && search4Encoding && read.contains("charset")) {
+      if (read != null && searchForEncoding && read.contains("charset")) {
         String foundEncoding = parseContentEncoding(read);
         if (foundEncoding != null) {
           contentEncoding = foundEncoding;
@@ -358,14 +304,8 @@ public abstract class AbstractExternalFilter {
         !contentEncoding.equals(((MyReader)input).getEncoding())) {
       //restart page parsing with correct encoding
       try {
-        final String finalContentEncoding = contentEncoding;
-        getReaderByUrl(url, new ThrowableConsumer<Reader, IOException>() {
-          @Override
-          public void consume(Reader reader) throws IOException {
-            data.delete(0, data.length());
-            doBuildFromStream(url, new MyReader(((MyReader)reader).getInputStream(), finalContentEncoding), data, false);
-          }
-        });
+        data.setLength(0);
+        doBuildFromStream(url, new MyReader(((MyReader)input).myInputStream, contentEncoding), data, false);
       }
       catch (ProcessCanceledException e) {
         return;
@@ -374,7 +314,7 @@ public abstract class AbstractExternalFilter {
     }
 
     if (read == null) {
-      data.delete(0, data.length());
+      data.setLength(0);
       return;
     }
 
@@ -495,14 +435,6 @@ public abstract class AbstractExternalFilter {
       ourFree = false;
     }
 
-    public static boolean isFree() {
-      return ourFree;
-    }
-
-    public String getData() {
-      return data.toString();
-    }
-
     @Override
     public void run() {
       try {
@@ -510,50 +442,74 @@ public abstract class AbstractExternalFilter {
           return;
         }
 
-        try {
-          getReaderByUrl(url, new ThrowableConsumer<Reader, IOException>() {
-            @Override
-            public void consume(Reader reader) throws IOException {
-              myBuilder.buildFromStream(url, reader, data);
-            }
-          });
+        if (url.startsWith(JAR_PROTOCOL)) {
+          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(BrowserUtil.getDocURL(url));
+          if (file != null) {
+            myBuilder.buildFromStream(url, new StringReader(VfsUtilCore.loadText(file)), data);
+          }
         }
-        catch (ProcessCanceledException ignored) {
+        else {
+          URL parsedUrl = BrowserUtil.getURL(url);
+          if (parsedUrl != null) {
+            HttpRequests.request(parsedUrl.toString()).connect(new HttpRequests.RequestProcessor<Void>() {
+              @Override
+              public Void process(@NotNull HttpRequests.Request request) throws IOException {
+                byte[] bytes = request.readBytes(null);
+                String contentEncoding = null;
+                ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+                try {
+                  for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
+                    contentEncoding = parseContentEncoding(htmlLine);
+                    if (contentEncoding != null) {
+                      break;
+                    }
+                  }
+                }
+                finally {
+                  reader.close();
+                  stream.reset();
+                }
+
+                if (contentEncoding == null) {
+                  contentEncoding = request.getConnection().getContentEncoding();
+                }
+
+                //noinspection IOResourceOpenedButNotSafelyClosed
+                myBuilder.buildFromStream(url, contentEncoding != null ? new MyReader(stream, contentEncoding) : new MyReader(stream), data);
+                return null;
+              }
+            });
+          }
         }
-        catch (IOException e) {
-          myException = e;
-        }
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (IOException e) {
+        myException = e;
       }
       finally {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourFree = true;
       }
     }
-
-    public Exception getException() {
-      return myException;
-    }
-
-    public void cleanup() {
-      myException = null;
-    }
   }
 
   private static class MyReader extends InputStreamReader {
-    private InputStream myInputStream;
+    private ByteArrayInputStream myInputStream;
 
-    public MyReader(InputStream in) {
+    public MyReader(ByteArrayInputStream in) {
       super(in);
+
+      in.reset();
       myInputStream = in;
     }
 
-    public MyReader(InputStream in, String charsetName) throws UnsupportedEncodingException {
+    public MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
       super(in, charsetName);
-      myInputStream = in;
-    }
 
-    public InputStream getInputStream() {
-      return myInputStream;
+      in.reset();
+      myInputStream = in;
     }
   }
 }

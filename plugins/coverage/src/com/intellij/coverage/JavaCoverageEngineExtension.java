@@ -3,10 +3,10 @@ package com.intellij.coverage;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.rt.coverage.data.LineData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +76,38 @@ public abstract class JavaCoverageEngineExtension {
    * corresponding sources.
    */
   public boolean isSourceMapNeeded(RunConfigurationBase runConfiguration) {
+    return false;
+  }
+
+  /**
+   * Returns the summary information for the specified object (other than a class or a package) shown in the coverage view.
+   */
+  @Nullable
+  public PackageAnnotator.ClassCoverageInfo getSummaryCoverageInfo(JavaCoverageAnnotator coverageAnnotator, PsiNamedElement element) {
+    return null;
+  }
+
+  /**
+   * Returns true if the specified .class file needs to be completely excluded from the coverage statistics.
+   *
+   * @param bundle the coverage suites bundle being indexed.
+   * @param classFile the class file.
+   */
+  public boolean ignoreCoverageForClass(CoverageSuitesBundle bundle, File classFile) {
+    return false;
+  }
+
+  /**
+   * Returns true if the class coverage info for the specified .class file, for which it wasn't possible to find a corresponding
+   * source file, needs to be preserved and made available as {@link JavaCoverageAnnotator#getClassCoverageInfo(String)}.
+   * The qualified name under which the data will be available is calculated by replacing slashes with dots in the path of the
+   * .class file relative to the class output root. The statistics for such classes will be included in the statistics for
+   * the package with the corresponding qualified name but will not be included in the statistics of any directories.
+   *
+   * @param bundle the coverage suites bundle being indexed.
+   * @param classFile the class file.
+   */
+  public boolean keepCoverageInfoForClassWithoutSource(CoverageSuitesBundle bundle, File classFile) {
     return false;
   }
 }

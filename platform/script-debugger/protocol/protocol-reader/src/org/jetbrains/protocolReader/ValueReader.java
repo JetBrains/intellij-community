@@ -1,55 +1,32 @@
 package org.jetbrains.protocolReader;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A parser that accepts value of JSON field and outputs value in another form (e.g. string
  * is converted to enum constant) to serve field getters in JsonType interfaces.
  */
 abstract class ValueReader {
-  private final boolean nullable;
-
-  protected ValueReader(boolean nullable) {
-    this.nullable = nullable;
-  }
-
   public ObjectValueReader asJsonTypeParser() {
     return null;
   }
 
-  abstract void appendFinishedValueTypeName(TextOutput out);
+  abstract void appendFinishedValueTypeName(@NotNull TextOutput out);
 
-  void appendInternalValueTypeName(FileScope scope, TextOutput out) {
+  void appendInternalValueTypeName(@NotNull FileScope scope, @NotNull TextOutput out) {
     appendFinishedValueTypeName(out);
   }
 
-  abstract void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, TextOutput out);
+  abstract void writeReadCode(ClassScope methodScope, boolean subtyping, @NotNull TextOutput out);
 
-  public boolean isNullable() {
-    return nullable;
+  void writeArrayReadCode(@NotNull ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
+    throw new UnsupportedOperationException();
   }
 
-  abstract void writeArrayReadCode(ClassScope scope, boolean subtyping, boolean nullable, String fieldName, TextOutput out);
-
-  protected void beginReadCall(String readPostfix, boolean subtyping, TextOutput out, @Nullable String fieldName) {
+  protected void beginReadCall(String readPostfix, boolean subtyping, TextOutput out) {
     out.append("read");
-    if (isNullable()) {
-      out.append("Nullable");
-    }
     out.append(readPostfix).append('(');
     addReaderParameter(subtyping, out);
-    if (!isNullable()) {
-      out.comma();
-      if (subtyping) {
-        out.append("null");
-      }
-      else if (fieldName == null) {
-        out.append("name");
-      }
-      else {
-        out.quote(fieldName);
-      }
-    }
   }
 
   protected static void addReaderParameter(boolean subtyping, TextOutput out) {

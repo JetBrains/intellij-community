@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Properties;
@@ -74,11 +73,13 @@ public abstract class FileTemplateManager{
   /**
    * @return Project scheme, or null if manager is created for default project.
    */
-  @Nullable
   public abstract FileTemplatesScheme getProjectScheme();
 
   public abstract FileTemplate[] getTemplates(String category);
 
+  /**
+   *  Returns all templates from "Default" category.
+   */
   @NotNull
   public abstract FileTemplate[] getAllTemplates();
 
@@ -96,7 +97,7 @@ public abstract class FileTemplateManager{
   }
 
   /**
-   * Creates a new template with specified name.
+   * Creates a new template with specified name, and adds it to the list of default templates.
    * @return created template
    */
   @NotNull 

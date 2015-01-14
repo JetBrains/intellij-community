@@ -97,6 +97,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                            ModuleChunk chunk,
                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                            OutputConsumer outputConsumer) throws ProjectBuildException {
+    if (GreclipseBuilder.useGreclipse(context)) return ExitCode.NOTHING_DONE;
+    
     long start = 0;
     try {
       JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
@@ -119,7 +121,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
       JpsSdk<JpsDummyElement> jdk = getJdk(chunk);
       String version = jdk == null ? SystemInfo.JAVA_RUNTIME_VERSION : jdk.getVersionString();
-      boolean inProcess = "true".equals(System.getProperty("groovyc.in.process"));
+      boolean inProcess = "true".equals(System.getProperty("groovyc.in.process", "true"));
       boolean mayDependOnUtilJar = version != null && StringUtil.compareVersionNumbers(version, "1.6") >= 0;
       boolean optimizeClassLoading = !inProcess && mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
 

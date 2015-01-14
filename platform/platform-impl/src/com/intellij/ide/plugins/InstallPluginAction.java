@@ -86,6 +86,10 @@ public class InstallPluginAction extends AnAction implements DumbAware {
     install(null);
   }
 
+  public static boolean isInstalling(IdeaPluginDescriptor node) {
+    return ourInstallingNodes.contains(node);
+  }
+  
   public void install(@Nullable final Runnable onSuccess) {
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
 
@@ -158,7 +162,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
               }
 
               if (needToRestart) {
-                PluginManagerMain.notifyPluginsWereInstalled(list.size() == 1 ? list.get(0).getName() : null, null);
+                PluginManagerMain.notifyPluginsUpdated(null);
               }
             }
             if (onSuccess != null) {

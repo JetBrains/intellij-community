@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -154,7 +154,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   
   @Nullable
   @Override
-  public UnnamedConfigurable createConfigurable() {
+  public Configurable createConfigurable() {
     return new XmlEmmetConfigurable();
   }
 }

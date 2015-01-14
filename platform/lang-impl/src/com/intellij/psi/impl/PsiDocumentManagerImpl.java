@@ -107,6 +107,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     // avoid documents piling up during batch processing
     if (FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
       if (myUnitTestMode) {
+        myStopTrackingDocuments = true;
         try {
           LOG.error("Too many uncommitted documents for " + myProject + ":\n" + myUncommittedDocuments);
         }

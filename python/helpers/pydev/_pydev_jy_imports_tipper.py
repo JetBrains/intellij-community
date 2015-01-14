@@ -190,12 +190,20 @@ def ismethod(func):
                 args = list(names[:nargs])
                 step = 0
 
+                if not hasattr(func_code, 'CO_VARARGS'):
+                    from org.python.core import CodeFlag
+                    co_varargs_flag = CodeFlag.CO_VARARGS.flag
+                    co_varkeywords_flag = CodeFlag.CO_VARKEYWORDS.flag
+                else:
+                    co_varargs_flag = func_code.CO_VARARGS
+                    co_varkeywords_flag = func_code.CO_VARKEYWORDS
+
                 varargs = None
-                if func_code.co_flags & func_code.CO_VARARGS:
+                if func_code.co_flags & co_varargs_flag:
                     varargs = func_code.co_varnames[nargs]
                     nargs = nargs + 1
                 varkw = None
-                if func_code.co_flags & func_code.CO_VARKEYWORDS:
+                if func_code.co_flags & co_varkeywords_flag:
                     varkw = func_code.co_varnames[nargs]
                 return args, varargs, varkw
 

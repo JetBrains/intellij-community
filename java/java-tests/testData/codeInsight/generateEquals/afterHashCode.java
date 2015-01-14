@@ -10,8 +10,8 @@ class Test {
 
         final Test test = (Test) o;
 
-        if (Double.compare(test.c, c) != 0) return false;
         if (i != test.i) return false;
+        if (Double.compare(test.c, c) != 0) return false;
         if (!a.equals(test.a)) return false;
         if (b != null ? !b.equals(test.b) : test.b != null) return false;
 

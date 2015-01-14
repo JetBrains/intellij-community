@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +72,17 @@ public class XSourcePositionImpl implements XSourcePosition {
     return new XSourcePositionImpl(file, line, offset);
   }
 
+  @Nullable
+  public static XSourcePositionImpl createByElement(@Nullable PsiElement element) {
+    if (element == null) return null;
+
+    VirtualFile file = element.getContainingFile().getVirtualFile();
+
+    if (file == null) return null;
+
+    return createByOffset(file, element.getTextOffset());
+  }
+
   /**
    * do not call this method from plugins, use {@link com.intellij.xdebugger.XDebuggerUtil#createPosition(com.intellij.openapi.vfs.VirtualFile, int)} instead
    */
@@ -106,7 +118,9 @@ public class XSourcePositionImpl implements XSourcePosition {
 
   @NotNull
   public static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
-    return position.getOffset() != -1 ? new OpenFileDescriptor(project, position.getFile(), position.getOffset()) : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
+    return position.getOffset() != -1
+           ? new OpenFileDescriptor(project, position.getFile(), position.getOffset())
+           : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
   }
 
   @Override

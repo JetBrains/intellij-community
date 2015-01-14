@@ -172,7 +172,9 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
 
   @Override
   public Info doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
-    CommandExecutor command = execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, buildParameters(url.toDecodedString(), pegRevision, revision, Depth.EMPTY), null);
+    CommandExecutor command =
+      execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, buildParameters(url.toString(), pegRevision, revision, Depth.EMPTY),
+              null);
 
     return parseResult(null, command.getOutput());
   }

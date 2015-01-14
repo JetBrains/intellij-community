@@ -67,7 +67,7 @@ public class GlobalScope {
       }
 
       for (Map<Class<?>, String> base : basePackages) {
-        String result = base.get(typeHandler.getTypeClass());
+        String result = base.get(typeHandler.typeClass);
         if (result != null) {
           return result;
         }

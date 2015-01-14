@@ -194,6 +194,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         :return true if should pass
         """
         assert isinstance(scenario, Scenario), scenario
+        # TODO: share with lettuce_runner.py#_get_features_to_run
         expected_tags = self.__config.tags
         scenario_name_re = self.__config.name_re
         if scenario_name_re and not scenario_name_re.match(scenario.name):

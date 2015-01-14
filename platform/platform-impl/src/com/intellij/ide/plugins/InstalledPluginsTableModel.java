@@ -178,9 +178,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   @Override
   public void updatePluginsList(List<IdeaPluginDescriptor> list) {
-    for (IdeaPluginDescriptor descr : list) {
-      ourState.onDescriptorDownload(descr);
-    }
     fireTableDataChanged();
   }
 

@@ -7,12 +7,12 @@ public class Main {
 
     {
         String s = "";
-        I<Object> arr1 = <error descr="Incompatible return type String in lambda expression">(t) -> s</error>;
+        I<Object> arr1 = (t) -> <error descr="Bad return type in lambda expression: String cannot be converted to void">s</error>;
         I<Object> arr2 = (t) -> s.toString();
       
-        I<Integer> i1 = <error descr="Incompatible return type int in lambda expression">i -> i * 2</error>;
-        I<Integer> i2 = <error descr="Incompatible return type int in lambda expression">i -> 2 * i</error>;
-        I<Integer> i3 = <error descr="Incompatible return type void in lambda expression">i -> true ? foo() : foo()</error>;
+        I<Integer> i1 = i -> <error descr="Bad return type in lambda expression: int cannot be converted to void">i * 2</error>;
+        I<Integer> i2 = i -> <error descr="Bad return type in lambda expression: int cannot be converted to void">2 * i</error>;
+        I<Integer> i3 = i -> <error descr="Bad return type in lambda expression: void cannot be converted to void">true ? foo() : foo()</error>;
     }
 
 }
