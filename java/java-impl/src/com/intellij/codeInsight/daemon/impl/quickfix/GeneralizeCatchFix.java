@@ -63,7 +63,7 @@ public class GeneralizeCatchFix implements IntentionAction {
         myTryStatement = (PsiTryStatement)element.getParent();
         break;
       }
-      if (element instanceof PsiMethod || (element instanceof PsiClass && !(element instanceof PsiAnonymousClass))) break;
+      if (element instanceof PsiMethod || element instanceof PsiFunctionalExpression || (element instanceof PsiClass && !(element instanceof PsiAnonymousClass))) break;
       element = element.getParent();
     }
     if (myTryStatement == null) return false;
