@@ -298,7 +298,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, editor, presentation, bgColorMap, actionGroup));
 
-    presentation.addAction(new ShowHideAdditionalInfoAction(gutters, editorGutter, actionGroup));
     presentation.addAction(new AnnotateCurrentRevisionAction(fileAnnotation, vcs));
     presentation.addAction(new AnnotatePreviousRevisionAction(fileAnnotation, vcs));
     addActionsFromExtensions(presentation, fileAnnotation);
