@@ -135,7 +135,7 @@ public class SvnDiffViewer implements DiffViewer {
   }
 
   private void updateContextHints() {
-    if (!myDumbContentViewer) myContext.putUserData(FOCUSED_VIEWER_KEY, myPropertiesViewerFocused);
+    if (!myDumbContentViewer && !mySettings.isHideProperties()) myContext.putUserData(FOCUSED_VIEWER_KEY, myPropertiesViewerFocused);
     mySettings.setSplitterProportion(mySplitter.getProportion());
   }
 
@@ -258,15 +258,21 @@ public class SvnDiffViewer implements DiffViewer {
   @Override
   public JComponent getPreferredFocusedComponent() {
     if (myPropertiesViewerFocused) {
-      JComponent component = myPropertiesViewer.getPreferredFocusedComponent();
+      JComponent component = getPropertiesPreferredFocusedComponent();
       if (component != null) return component;
       return myContentViewer.getPreferredFocusedComponent();
     }
     else {
       JComponent component = myContentViewer.getPreferredFocusedComponent();
       if (component != null) return component;
-      return myPropertiesViewer.getPreferredFocusedComponent();
+      return getPropertiesPreferredFocusedComponent();
     }
+  }
+
+  @Nullable
+  private JComponent getPropertiesPreferredFocusedComponent() {
+    if (mySettings.isHideProperties()) return null;
+    return myPropertiesViewer.getPreferredFocusedComponent();
   }
 
   //
