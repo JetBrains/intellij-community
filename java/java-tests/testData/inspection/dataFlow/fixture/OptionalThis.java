@@ -1,6 +1,9 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.Override;
+import java.lang.Runnable;
+
 class TestInspection {
 
   private static class StringWrapper {
@@ -45,17 +48,3 @@ class TestInspection {
   }
 }
 
-class WithInner {
-  @Nullable Object o;
-
-  {
-    new Runnable() {
-      @Override
-      public void run() {
-        if (WithInner.this.o != null) {
-          System.out.println(WithInner.this.o.toString());
-        }
-      }
-    };
-  }
-}
