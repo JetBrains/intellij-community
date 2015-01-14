@@ -143,7 +143,7 @@ public class SvnDiffViewer implements DiffViewer {
   // Diff
   //
 
-  @NotNull
+  @Nullable
   private JComponent createNotification() {
     if (myPropertyRequest instanceof ErrorDiffRequest) {
       return createNotification(((ErrorDiffRequest)myPropertyRequest).getErrorMessage());
@@ -154,7 +154,7 @@ public class SvnDiffViewer implements DiffViewer {
     Map<String, PropertyValue> before = getProperties(contents[0]);
     Map<String, PropertyValue> after = getProperties(contents[1]);
 
-    if (before.isEmpty() && after.isEmpty()) return createNotification("No SVN properties set");
+    if (before.isEmpty() && after.isEmpty()) return null;
 
     if (!before.keySet().equals(after.keySet())) {
       return createNotification("SVN Properties changed");
@@ -164,7 +164,7 @@ public class SvnDiffViewer implements DiffViewer {
       if (!Comparing.equal(before.get(key), after.get(key))) return createNotification("SVN Properties changed");
     }
 
-    return createNotification("SVN Properties unchanged");
+    return null;
   }
 
   @NotNull
