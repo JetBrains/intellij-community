@@ -26,6 +26,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesImplUtil;
@@ -186,6 +187,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   public ResourceBundle getResourceBundle() {
     return myResourceBundle;
+  }
+
+  public void updateTreeRoot() {
+    final Object element = myStructureViewComponent.getTreeStructure().getRootElement();
+    if (element instanceof CachingChildrenTreeNode) {
+      ((CachingChildrenTreeNode)element).rebuildChildren();
+    }
   }
 
   private void onSelectionChanged(@NotNull FileEditorManagerEvent event) {
@@ -704,13 +712,15 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }
 
-  @Override
-  public void setState(@NotNull FileEditorState state) {
-    ResourceBundleEditorState myState = (ResourceBundleEditorState)state;
-    String propertyName = myState.myPropertyName;
+  public void selectProperty(@Nullable final String propertyName) {
     if (propertyName != null) {
       setStructureViewSelection(propertyName);
     }
+  }
+
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+    selectProperty(((ResourceBundleEditorState)state).getPropertyName());
   }
 
   @Override
