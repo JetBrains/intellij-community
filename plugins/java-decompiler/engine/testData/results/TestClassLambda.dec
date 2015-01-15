@@ -1,10 +1,12 @@
 package pkg;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -13,179 +15,189 @@ public class TestClassLambda {
    public int field = 0;
 
    public void testLambda() {
-      List var1 = Arrays.asList(new Integer[]{Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3), Integer.valueOf(4), Integer.valueOf(5), Integer.valueOf(6), Integer.valueOf(7)});// 27
-      int var2 = (int)Math.random();// 28
-      var1.forEach((var2x) -> {// 30
+      List var1 = Arrays.asList(new Integer[]{Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3), Integer.valueOf(4), Integer.valueOf(5), Integer.valueOf(6), Integer.valueOf(7)});// 29
+      int var2 = (int)Math.random();// 30
+      var1.forEach((var2x) -> {// 32
          int var3 = 2 * var2x.intValue();
          System.out.println(var3 + var2 + this.field);
       });
    }
 
    public void testLambda1() {
-      int var1 = (int)Math.random();// 37
+      int var1 = (int)Math.random();// 39
       Runnable var2 = () -> {
          System.out.println("hello1" + var1);
-      };// 38
+      };// 40
       Runnable var3 = () -> {
          System.out.println("hello2" + var1);
-      };// 39
+      };// 41
    }
 
    public void testLambda2() {
-      reduce((var0, var1) -> {// 43
+      reduce((var0, var1) -> {// 45
          return Math.max(var0, var1);
       });
    }
 
    public void testLambda3() {
-      reduce(Math::max);// 47
+      reduce(Math::max);// 49
    }
 
    public void testLambda4() {
-      reduce(TestClassLambda::localMax);// 51
+      reduce(TestClassLambda::localMax);// 53
    }
 
    public void testLambda5() {
-      String var1 = "abcd";// 55
-      function(var1::toString);// 56
+      String var1 = "abcd";// 57
+      function(var1::toString);// 58
    }
 
    public void testLambda6() {
-      ArrayList var1 = new ArrayList();// 60
-      int var2 = var1.size() * 2;// 61
-      int var3 = var1.size() * 5;// 62
-      var1.removeIf((var2x) -> {// 63
+      ArrayList var1 = new ArrayList();// 62
+      int var2 = var1.size() * 2;// 63
+      int var3 = var1.size() * 5;// 64
+      var1.removeIf((var2x) -> {// 65
          return var2 >= var2x.length() && var2x.length() <= var3;
       });
    }
 
+   public static void testLambda7(Annotation[] var0) {
+      Arrays.stream(var0).map(Annotation::annotationType);// 69
+   }
+
    public static OptionalInt reduce(IntBinaryOperator var0) {
-      return null;// 67
+      return null;// 73
    }
 
    public static String function(Supplier<String> var0) {
-      return (String)var0.get();// 71
+      return (String)var0.get();// 77
    }
 
    public static int localMax(int var0, int var1) {
-      return 0;// 75
+      return 0;// 81
    }
 
    public void nestedLambdas() {
-      byte var1 = 5;// 79
+      byte var1 = 5;// 85
       Runnable var2 = () -> {
          Runnable var1x = () -> {
             System.out.println("hello2" + var1);
          };
          System.out.println("hello1" + var1);
-      };// 80
+      };// 86
    }
 }
 
 class 'pkg/TestClassLambda' {
    method 'testLambda ()V' {
-      7      15
-      8      15
-      e      15
-      f      15
-      15      15
-      16      15
-      1c      15
-      1d      15
-      23      15
-      24      15
-      2a      15
-      2c      15
-      33      15
-      35      15
-      39      15
-      3c      15
-      3d      16
-      40      16
-      41      16
-      4a      17
+      7      17
+      8      17
+      e      17
+      f      17
+      15      17
+      16      17
+      1c      17
+      1d      17
+      23      17
+      24      17
+      2a      17
+      2c      17
+      33      17
+      35      17
+      39      17
+      3c      17
+      3d      18
+      40      18
+      41      18
+      4a      19
    }
 
    method 'testLambda1 ()V' {
-      0      24
-      3      24
-      4      24
-      b      27
-      12      30
+      0      26
+      3      26
+      4      26
+      b      29
+      12      32
    }
 
    method 'testLambda2 ()V' {
-      5      34
+      5      36
    }
 
    method 'testLambda3 ()V' {
-      5      40
+      5      42
    }
 
    method 'testLambda4 ()V' {
-      5      44
+      5      46
    }
 
    method 'testLambda5 ()V' {
-      0      48
-      2      48
-      e      49
+      0      50
+      2      50
+      e      51
    }
 
    method 'testLambda6 ()V' {
-      7      53
-      9      54
-      e      54
-      f      54
-      10      54
-      12      55
-      17      55
-      18      55
-      19      55
-      22      56
+      7      55
+      9      56
+      e      56
+      f      56
+      10      56
+      12      57
+      17      57
+      18      57
+      19      57
+      22      58
+   }
+
+   method 'testLambda7 ([Ljava/lang/annotation/Annotation;)V' {
+      1      64
+      9      64
    }
 
    method 'reduce (Ljava/util/function/IntBinaryOperator;)Ljava/util/OptionalInt;' {
-      0      62
-      1      62
+      0      68
+      1      68
    }
 
    method 'function (Ljava/util/function/Supplier;)Ljava/lang/String;' {
-      1      66
-      6      66
-      9      66
+      1      72
+      6      72
+      9      72
    }
 
    method 'localMax (II)I' {
-      0      70
-      1      70
+      0      76
+      1      76
    }
 
    method 'nestedLambdas ()V' {
-      0      74
-      1      74
-      8      80
+      0      80
+      1      80
+      8      86
    }
 }
 
 Lines mapping:
-27 <-> 16
-28 <-> 17
-30 <-> 18
-37 <-> 25
-38 <-> 28
-39 <-> 31
-43 <-> 35
-47 <-> 41
-51 <-> 45
-55 <-> 49
-56 <-> 50
-60 <-> 54
-61 <-> 55
+29 <-> 18
+30 <-> 19
+32 <-> 20
+39 <-> 27
+40 <-> 30
+41 <-> 33
+45 <-> 37
+49 <-> 43
+53 <-> 47
+57 <-> 51
+58 <-> 52
 62 <-> 56
 63 <-> 57
-67 <-> 63
-71 <-> 67
-75 <-> 71
-79 <-> 75
-80 <-> 81
+64 <-> 58
+65 <-> 59
+69 <-> 65
+73 <-> 69
+77 <-> 73
+81 <-> 77
+85 <-> 81
+86 <-> 87
