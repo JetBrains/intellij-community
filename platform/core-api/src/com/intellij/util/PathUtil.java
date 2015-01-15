@@ -128,4 +128,9 @@ public class PathUtil {
     }
     return path;
   }
+
+  @NotNull
+  public static String makeFileName(@NotNull String name, @Nullable String extension) {
+    return name + (StringUtil.isEmpty(extension) ? "" : "." + extension);
+  }
 }
