@@ -211,7 +211,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   /** Given a prefix in a file and a set of candidate namespaces, returns the namespace that matches the prefix (if any)
-   * as determined by the {@link com.intellij.xml.XmlSchemaProvider#getDefaultPrefix(String, com.intellij.psi.xml.XmlFile)}
+   * as determined by the {@link XmlSchemaProvider#getDefaultPrefix(String, XmlFile)}
    * implementations */
   @Nullable
   public static String getUnboundNamespaceForPrefix(String prefix, XmlFile xmlFile, Set<String> namespaces) {
