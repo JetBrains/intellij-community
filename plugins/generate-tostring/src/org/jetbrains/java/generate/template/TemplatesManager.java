@@ -135,7 +135,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
                                        //hide setters from completion list
                                        return null;
                                      }
-                                     return method.getGenericReturnType().getTypeName() + " " + methodName + "();";
+                                     return method.getGenericReturnType().toString() + " " + methodName + "();";
                                    }
                                  });
       final String text = "interface " + elementClass.getSimpleName() + " {\n" + StringUtil.join(methodNames, "\n") + "}";
