@@ -28,6 +28,9 @@ public class StudyDocumentListener extends DocumentAdapter {
   // with fragments containing "\n"
   @Override
   public void beforeDocumentChange(DocumentEvent e) {
+    if (!myTaskFile.isTrackChanges()) {
+      return;
+    }
     Document document = e.getDocument();
     myTaskWindows.clear();
     for (TaskWindow taskWindow : myTaskFile.getTaskWindows()) {
@@ -39,6 +42,9 @@ public class StudyDocumentListener extends DocumentAdapter {
 
   @Override
   public void documentChanged(DocumentEvent e) {
+    if (!myTaskFile.isTrackChanges()) {
+      return;
+    }
     if (e instanceof DocumentEventImpl) {
       DocumentEventImpl event = (DocumentEventImpl)e;
       Document document = e.getDocument();

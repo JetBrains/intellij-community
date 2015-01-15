@@ -272,4 +272,10 @@ public class StudyUtils {
       extensions[0].setCommandLineParameters(cmd, project, filePath, pythonPath, currentTask);
     }
   }
+
+  public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
+    final Presentation presentation = event.getPresentation();
+    presentation.setVisible(isEnable);
+    presentation.setEnabled(isEnable);
+  }
 }

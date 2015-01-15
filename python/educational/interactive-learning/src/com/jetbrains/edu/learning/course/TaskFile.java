@@ -36,6 +36,7 @@ public class TaskFile implements Stateful {
   private TaskWindow mySelectedTaskWindow = null;
   public int myIndex = -1;
   private boolean myUserCreated = false;
+  private boolean myTrackChanges = true;
 
   /**
    * @return if all the windows in task file are marked as resolved
@@ -107,7 +108,7 @@ public class TaskFile implements Stateful {
     final Document document = editor.getDocument();
     EditorActionManager.getInstance()
       .setReadonlyFragmentModificationHandler(document, new TaskWindowDeleteHandler(editor));
-    createGuardedBlocks(document, editor);
+    createGuardedBlocks(editor);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
   }
 
@@ -227,11 +228,15 @@ public class TaskFile implements Stateful {
   /**
    * Marks symbols adjacent to task windows as read-only fragments
    */
-  public void createGuardedBlocks(@NotNull final Document document, @NotNull final Editor editor) {
+  public void createGuardedBlocks(@NotNull final Editor editor) {
+    final Document document = editor.getDocument();
     if (document instanceof DocumentImpl) {
       DocumentImpl documentImpl = (DocumentImpl)document;
       List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
       for (TaskWindow taskWindow : taskWindows) {
+        if (!taskWindow.isValid(document)) {
+          return;
+        }
         int start = taskWindow.getRealStartOffset(document);
         int end = start + taskWindow.getLength();
         if (start != 0) {
@@ -248,5 +253,13 @@ public class TaskFile implements Stateful {
     RangeHighlighter rh = editor.getMarkupModel()
       .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, null, HighlighterTargetArea.EXACT_RANGE);
     blocks.add(rh);
+  }
+
+  public boolean isTrackChanges() {
+    return myTrackChanges;
+  }
+
+  public void setTrackChanges(boolean trackChanges) {
+    myTrackChanges = trackChanges;
   }
 }

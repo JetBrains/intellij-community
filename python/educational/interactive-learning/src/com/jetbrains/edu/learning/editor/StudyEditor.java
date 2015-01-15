@@ -59,7 +59,7 @@ import java.util.Map;
 
 /**
  * Implementation of StudyEditor which has panel with special buttons and task text
- * also @see {@link com.jetbrains.python.edu.editor.StudyFileEditorProvider}
+ * also @see {@link com.jetbrains.edu.learning.editor.StudyFileEditorProvider}
  */
 public class StudyEditor implements TextEditor {
   private static final String TASK_TEXT_HEADER = "Task Text";
