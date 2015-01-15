@@ -31,6 +31,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.java.generate.template.TemplateResource;
 
 import javax.swing.*;
@@ -40,11 +44,19 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     private final Editor myEditor;
 
     public GenerateTemplateConfigurable(TemplateResource template, Project project) {
-        this.template = template;
-        final EditorFactory factory = EditorFactory.getInstance();
-        final Document doc = factory.createDocument(template.getTemplate());
-        final FileType ftl = FileTypeManager.getInstance().findFileTypeByName("VTL");
-        myEditor = factory.createEditor(doc, project, ftl != null ? ftl : FileTypes.PLAIN_TEXT, template.isDefault());
+      this.template = template;
+      final EditorFactory factory = EditorFactory.getInstance();
+      Document doc = factory.createDocument(template.getTemplate());
+      final FileType ftl = FileTypeManager.getInstance().findFileTypeByName("VTL");
+      if (project != null && ftl != null) {
+        final PsiFile file = PsiFileFactory.getInstance(project)
+            .createFileFromText(template.getFileName(), ftl, template.getTemplate(), LocalTimeCounter.currentTime(), true);
+        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        if (document != null) {
+          doc = document;
+        }
+      }
+      myEditor = factory.createEditor(doc, project, ftl != null ? ftl : FileTypes.PLAIN_TEXT, template.isDefault());
     }
 
     public JComponent createComponent() {
