@@ -23,11 +23,13 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
@@ -108,12 +111,27 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     throws IncorrectOperationException
   {
     return new FutureTask<Boolean>(new Callable<Boolean>() {
+      private Document myDocument;
+
       @Override
       public Boolean call() throws Exception {
         FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
         try {
           Collection<TextRange> ranges = getRangesToFormat(processChangedTextOnly, file);
+
+          CharSequence before = null;
+          if (isSingleFileProcessed()) {
+            myDocument = PsiDocumentManager.getInstance(myProject).getDocument(file);
+            LOG.assertTrue(myDocument != null);
+            before = myDocument.getImmutableCharSequence();
+          }
+
           CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
+
+          if (before != null) {
+            prepareUserNotificationMessage(myDocument, before);
+          }
+
           return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
         }
         catch (FilesTooBigForDiffException e) {
@@ -129,6 +147,17 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         }
       }
     });
+  }
+
+  private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {
+    int number = CodeProcessor.getProcessedLinesNumber(document, before);
+    if (number > 0) {
+      String message = "formatted " + number + " line" + (number > 1 ? "s" : "");
+      addNotificationInfo(message);
+    }
+    else {
+      addNotificationInfo("formatter: no lines changed");
+    }
   }
 
   @NotNull

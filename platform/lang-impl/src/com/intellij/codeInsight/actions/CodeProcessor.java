@@ -49,6 +49,8 @@ class CodeProcessor {
   private final PsiFile myFile;
   private final TextRangeType myProcessingType;
 
+  private AbstractLayoutCodeProcessor myProcessor;
+
   public CodeProcessor(PsiFile file,
                        Editor editor,
                        LayoutCodeOptions runOptions)
@@ -68,45 +70,44 @@ class CodeProcessor {
   }
 
   public void processCode() {
-    AbstractLayoutCodeProcessor processor = null;
     if (myShouldOptimizeImports) {
-      processor = new OptimizeImportsProcessor(myProject, myFile);
+      myProcessor = new OptimizeImportsProcessor(myProject, myFile);
     }
 
-    if (processor != null) {
+    if (myProcessor != null) {
       if (myProcessSelectedText) {
-        processor = new ReformatCodeProcessor(processor, myEditor.getSelectionModel());
+        myProcessor = new ReformatCodeProcessor(myProcessor, myEditor.getSelectionModel());
       }
       else {
-        processor = new ReformatCodeProcessor(processor, myProcessChangesTextOnly);
+        myProcessor = new ReformatCodeProcessor(myProcessor, myProcessChangesTextOnly);
       }
     }
     else {
       if (myProcessSelectedText) {
-        processor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
+        myProcessor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
       }
       else {
-        processor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
+        myProcessor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
       }
     }
 
     if (myShouldRearrangeCode) {
       if (myProcessSelectedText) {
-        processor = new RearrangeCodeProcessor(processor, myEditor.getSelectionModel());
+        myProcessor = new RearrangeCodeProcessor(myProcessor, myEditor.getSelectionModel());
       }
       else {
-        processor = new RearrangeCodeProcessor(processor);
+        myProcessor = new RearrangeCodeProcessor(myProcessor);
       }
     }
 
     if (myShouldNotify) {
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
       if (document != null) {
-        processor.setPostRunnable(getNotificationCallBack(document));
+        myProcessor.setPostRunnable(getNotificationCallBack(document));
       }
     }
 
-    processor.run();
+    myProcessor.run();
   }
 
   private Runnable getNotificationCallBack(@NotNull final Document document) {
@@ -134,7 +135,7 @@ class CodeProcessor {
     };
   }
 
-  private static int getProcessedLinesNumber(final Document document, final CharSequence before) {
+  protected static int getProcessedLinesNumber(final Document document, final CharSequence before) {
     int totalLinesProcessed = 0;
     try {
       List<TextRange> ranges = FormatChangedTextUtil.calculateChangedTextRanges(document, before);
@@ -153,33 +154,39 @@ class CodeProcessor {
 
   @NotNull
   private String prepareMessage(@NotNull Document document, @NotNull CharSequence textBeforeChange) {
-    int totalLinesProcessed = getProcessedLinesNumber(document, textBeforeChange);
+    //int totalLinesProcessed = getProcessedLinesNumber(document, textBeforeChange);
+    //
+    //String linesInfo = "";
+    //if (totalLinesProcessed >= 0) {
+    //  linesInfo = "Changed " + totalLinesProcessed + " lines";
+    //}
+    //
+    //String scopeInfo = myProcessingType == VCS_CHANGED_TEXT ? ", processed only changed lines since last revision" : null;
+    //String actionsInfo = "Performed: formatting";
+    //if (myShouldOptimizeImports) {
+    //  actionsInfo += ", import optimization";
+    //}
+    //if (myShouldRearrangeCode) {
+    //  actionsInfo += " and code rearrangement";
+    //}
+    //
+    //String shortcutInfo = "Show reformat dialog: " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ReformatFile"));
+    //
+    //String info = linesInfo;
+    //if (scopeInfo != null) {
+    //  info += scopeInfo;
+    //}
+    //info += "\n";
+    //info += actionsInfo + "\n";
+    //info += shortcutInfo;
 
-    String linesInfo = "";
-    if (totalLinesProcessed >= 0) {
-      linesInfo = "Changed " + totalLinesProcessed + " lines";
+    StringBuilder builder = new StringBuilder();
+
+    for (String info : myProcessor.getNotificationInfo()) {
+      builder.append(info).append('\n');
     }
 
-    String scopeInfo = myProcessingType == VCS_CHANGED_TEXT ? ", processed only changed lines since last revision" : null;
-    String actionsInfo = "Performed: formatting";
-    if (myShouldOptimizeImports) {
-      actionsInfo += ", import optimization";
-    }
-    if (myShouldRearrangeCode) {
-      actionsInfo += " and code rearrangement";
-    }
-
-    String shortcutInfo = "Show reformat dialog: " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ReformatFile"));
-
-    String info = linesInfo;
-    if (scopeInfo != null) {
-      info += scopeInfo;
-    }
-    info += "\n";
-    info += actionsInfo + "\n";
-    info += shortcutInfo;
-
-    return info;
+    return builder.toString();
   }
 
   private static void showHint(@NotNull Editor editor, @NotNull String info) {

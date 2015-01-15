@@ -55,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -81,6 +80,12 @@ public abstract class AbstractLayoutCodeProcessor {
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
   private List<FileFilter> myFilters = ContainerUtil.newArrayList();
 
+  private List<String> myNotificationInfo;
+
+  public List<String> getNotificationInfo() {
+    return myNotificationInfo;
+  }
+
   protected AbstractLayoutCodeProcessor(Project project, String commandName, String progressText, boolean processChangedTextOnly) {
     this(project, (Module)null, commandName, progressText, processChangedTextOnly);
   }
@@ -102,6 +107,7 @@ public abstract class AbstractLayoutCodeProcessor {
     myCommandName = commandName;
     myPreviousCodeProcessor = previous;
     myFilters = previous.myFilters;
+    myNotificationInfo = previous.myNotificationInfo;
   }
 
   protected AbstractLayoutCodeProcessor(Project project,
@@ -150,6 +156,7 @@ public abstract class AbstractLayoutCodeProcessor {
     myCommandName = commandName;
     myPostRunnable = null;
     myProcessChangedTextOnly = processChangedTextOnly;
+    myNotificationInfo = ContainerUtil.newArrayList();
   }
 
   protected AbstractLayoutCodeProcessor(Project project,
@@ -607,5 +614,13 @@ public abstract class AbstractLayoutCodeProcessor {
                                                    NotificationType.INFORMATION);
       notification.notify(file.getProject());
     }
+  }
+
+  protected void addNotificationInfo(String info) {
+    myNotificationInfo.add(info);
+  }
+
+  protected boolean isSingleFileProcessed() {
+    return myFile != null;
   }
 }
