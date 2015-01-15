@@ -91,7 +91,8 @@ public class ZipFileCache {
           }
         }
       }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
-    } else {
+    }
+    else {
       ourExecutor = null;
     }
   }
