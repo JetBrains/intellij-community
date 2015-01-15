@@ -459,9 +459,14 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       nothingToSearchFor();
     }
     if (mySearchField instanceof JTextArea) {
-      UIUtil.adjustRows((JTextArea)mySearchField, 2, 6);
+      adjustRows((JTextArea)mySearchField, 2, 6);
     }
   }
+
+  private static void adjustRows(JTextArea area, int minRows, int maxRows) {
+    area.setRows(Math.max(minRows, Math.min(maxRows, area.getText().split("\n").length)));
+  }
+
 
   public boolean isRegexp() {
     return myFindModel.isRegularExpressions();
@@ -649,7 +654,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     setMatchesLimit(LivePreviewController.MATCHES_LIMIT);
     myFindModel.setStringToReplace(myReplaceField.getText());
     if (myReplaceField instanceof JTextArea) {
-        UIUtil.adjustRows((JTextArea)myReplaceField, 2, 6);
+        adjustRows((JTextArea)myReplaceField, 2, 6);
     }
   }
 
