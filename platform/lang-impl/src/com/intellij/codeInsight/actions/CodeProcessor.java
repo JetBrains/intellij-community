@@ -101,38 +101,18 @@ class CodeProcessor {
     }
 
     if (myShouldNotify) {
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
-      if (document != null) {
-        myProcessor.setPostRunnable(getNotificationCallBack(document));
-      }
+      myProcessor.setPostRunnable(new Runnable() {
+        @Override
+        public void run() {
+          String message = prepareMessage();
+          if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
+            showHint(myEditor, message);
+          }
+        }
+      });
     }
 
     myProcessor.run();
-  }
-
-  private Runnable getNotificationCallBack(@NotNull final Document document) {
-    final CharSequence textBeforeChange = document.getImmutableCharSequence();
-    final Runnable calculateChangesAndNotify = new Runnable() {
-      @Override
-      public void run() {
-        final String info = prepareMessage(document, textBeforeChange);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
-              showHint(myEditor, info);
-            }
-          }
-        });
-      }
-    };
-
-    return new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(calculateChangesAndNotify);
-      }
-    };
   }
 
   protected static int getProcessedLinesNumber(final Document document, final CharSequence before) {
@@ -153,43 +133,21 @@ class CodeProcessor {
   }
 
   @NotNull
-  private String prepareMessage(@NotNull Document document, @NotNull CharSequence textBeforeChange) {
-
-    //int totalLinesProcessed = getProcessedLinesNumber(document, textBeforeChange);
-    //
-    //String linesInfo = "";
-    //if (totalLinesProcessed >= 0) {
-    //  linesInfo = "Changed " + totalLinesProcessed + " lines";
-    //}
-    //
-    //String scopeInfo = myProcessingType == VCS_CHANGED_TEXT ? ", processed only changed lines since last revision" : null;
-    //String actionsInfo = "Performed: formatting";
-    //if (myShouldOptimizeImports) {
-    //  actionsInfo += ", import optimization";
-    //}
-    //if (myShouldRearrangeCode) {
-    //  actionsInfo += " and code rearrangement";
-    //}
-    //
-    //String shortcutInfo = "Show reformat dialog: " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ReformatFile"));
-    //
-    //String info = linesInfo;
-    //if (scopeInfo != null) {
-    //  info += scopeInfo;
-    //}
-    //info += "\n";
-    //info += actionsInfo + "\n";
-    //info += shortcutInfo;
+  private String prepareMessage() {
+    String shortcutInfo = "Show reformat dialog: " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ReformatFile"));
 
     StringBuilder builder = new StringBuilder();
-
-    for (String info : myProcessor.getNotificationInfo()) {
-      builder.append(info).append('\n');
+    List<String> notifications = myProcessor.getNotificationInfo();
+    if (notifications.isEmpty()) {
+      builder.append("code looks pretty well").append('\n');
+    } else {
+      for (String info : notifications) {
+        builder.append(info).append('\n');
+      }
     }
+    builder.append(shortcutInfo);
 
     return builder.toString();
-
-
   }
 
   private static void showHint(@NotNull Editor editor, @NotNull String info) {

@@ -79,7 +79,7 @@ public class JavaImportOptimizer implements ImportOptimizer, UserNotificationInf
   @Override
   public String getUserNotificationInfo() {
     if (myImportListLengthDiff > 0) {
-      return "removed " + myImportListLengthDiff + " imports";
+      return "removed " + myImportListLengthDiff + " import" + (myImportListLengthDiff > 1 ? "s" : "");
     }
     return null;
   }
