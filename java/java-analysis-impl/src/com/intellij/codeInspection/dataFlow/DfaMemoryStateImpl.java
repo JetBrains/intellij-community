@@ -264,10 +264,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private Integer getOrCreateEqClassIndex(DfaValue dfaValue) {
     int i = getEqClassIndex(dfaValue);
     if (i != -1) return i;
-    if (!canBeReused(dfaValue) && !(((DfaBoxedValue)dfaValue).getWrappedValue() instanceof DfaConstValue)) {
-      return null;
-    }
-    if (dfaValue instanceof DfaTypeValue) {
+    if (!canBeInRelation(dfaValue) ||
+        !canBeReused(dfaValue) && !(((DfaBoxedValue)dfaValue).getWrappedValue() instanceof DfaConstValue)) {
       return null;
     }
     EqClass aClass = new EqClass(myFactory);
@@ -281,6 +279,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     myEqClasses.add(aClass);
     return myEqClasses.size() - 1;
+  }
+
+  private static boolean canBeInRelation(DfaValue dfaValue) {
+    DfaValue unwrapped = unwrap(dfaValue);
+    return unwrapped instanceof DfaVariableValue || unwrapped instanceof DfaConstValue;
   }
 
   @NotNull
