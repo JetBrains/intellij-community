@@ -46,7 +46,7 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
   @NotNull
   private FragmentGenerator myFragmentGenerator;
 
-  protected CollapsedLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
+  public CollapsedLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
                                            @NotNull final PermanentGraphInfo permanentGraphInfo) {
     super(delegateLinearGraphController, permanentGraphInfo);
     myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), null);
