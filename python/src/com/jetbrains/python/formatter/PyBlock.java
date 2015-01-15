@@ -246,12 +246,13 @@ public class PyBlock implements ASTBlock {
       }
     }
     //Align elements vertically if there is an argument in the first line of parenthesized expression
-    else if (((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION && myContext.getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION)
-              || (parentType == PyElementTypes.ARGUMENT_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS)
-              || (parentType == PyElementTypes.PARAMETER_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS)) &&
+    else if (!hasHangingIndent(_node.getPsi()) &&
+             ((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION && myContext.getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION) ||
+              (parentType == PyElementTypes.ARGUMENT_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS) ||
+              (parentType == PyElementTypes.PARAMETER_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS)) &&
              !isIndentNext(child) &&
-             !hasLineBreaksBefore(_node.getFirstChildNode(), 1)
-             && !ourListElementTypes.contains(childType)) {
+             !hasLineBreaksBefore(_node.getFirstChildNode(), 1) &&
+             !ourListElementTypes.contains(childType)) {
 
       if (!ourBrackets.contains(childType)) {
         childAlignment = getAlignmentForChildren();
@@ -326,6 +327,35 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  // Check https://www.python.org/dev/peps/pep-0008/#indentation
+  private boolean hasHangingIndent(@NotNull PsiElement elem) {
+    final PsiElement[] items;
+    if (elem instanceof PyCallExpression) {
+      final PyArgumentList argumentList = ((PyCallExpression)elem).getArgumentList();
+      return argumentList != null && hasHangingIndent(argumentList);
+    }
+    else if (elem instanceof PyFunction) {
+      return hasHangingIndent(((PyFunction)elem).getParameterList());
+    }
+    else if (elem instanceof PySequenceExpression) {
+      items = ((PySequenceExpression)elem).getElements();
+    }
+    else if (elem instanceof PyParameterList) {
+      items = ((PyParameterList)elem).getParameters();
+    }
+    else if (elem instanceof PyArgumentList) {
+      items = ((PyArgumentList)elem).getArguments();
+    }
+    else {
+      return false;
+    }
+    if (items.length == 0) {
+      return true;
+    }
+    final PsiElement firstItem = items[0];
+    return hasLineBreaksBefore(firstItem.getNode(), 1) || hasHangingIndent(firstItem);
   }
 
   private static boolean breaksAlignment(IElementType type) {
@@ -420,7 +450,7 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     if (_node.getElementType() == PyElementTypes.ARGUMENT_LIST) {
-      if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
+      if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS || hasHangingIndent(_node.getPsi())) {
         return false;
       }
       if (child.getElementType() == PyTokenTypes.COMMA) {
@@ -435,7 +465,7 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     if (_node.getElementType() == PyElementTypes.PARAMETER_LIST) {
-      return myContext.getSettings().ALIGN_MULTILINE_PARAMETERS;
+      return !hasHangingIndent(_node.getPsi()) && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS;
     }
     if (_node.getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
       return false;
