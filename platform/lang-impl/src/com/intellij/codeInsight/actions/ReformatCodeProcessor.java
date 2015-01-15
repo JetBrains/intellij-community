@@ -155,9 +155,6 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       String message = "formatted " + number + " line" + (number > 1 ? "s" : "");
       addNotificationInfo(message);
     }
-    else {
-      addNotificationInfo("formatter: no lines changed");
-    }
   }
 
   @NotNull
