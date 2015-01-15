@@ -163,17 +163,19 @@ public class GradleResourceCompilerConfigurationGenerator {
       affectedModuleConfigurations.put(module.getName(), resourceConfig);
     }
 
-    boolean configurationUpdateRequired = false;
-    for (Map.Entry<String, GradleModuleResourceConfiguration> entry : affectedModuleConfigurations.entrySet()) {
-      GradleModuleResourceConfiguration currentConfiguration = projectConfig.moduleConfigurations.get(entry.getKey());
+    boolean configurationUpdateRequired = context.isRebuild() || !gradleConfigFile.exists();
+    if(!configurationUpdateRequired) {
+      for (Map.Entry<String, GradleModuleResourceConfiguration> entry : affectedModuleConfigurations.entrySet()) {
+        GradleModuleResourceConfiguration currentConfiguration = projectConfig.moduleConfigurations.get(entry.getKey());
 
-      if (currentConfiguration == null || !isSameModuleConfiguration(currentConfiguration, entry.getValue())) {
-        configurationUpdateRequired = true;
-        break;
+        if (currentConfiguration == null || !isSameModuleConfiguration(currentConfiguration, entry.getValue())) {
+          configurationUpdateRequired = true;
+          break;
+        }
       }
     }
 
-    if (configurationUpdateRequired || context.isRebuild()) {
+    if (configurationUpdateRequired) {
       projectConfig.moduleConfigurations.putAll(affectedModuleConfigurations);
 
       final Document document = new Document(new Element("gradle-project-configuration"));
