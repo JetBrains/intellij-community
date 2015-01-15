@@ -29,7 +29,7 @@ import java.util.Map;
 
 public abstract class ScratchFileService {
 
-  public static RootType SCRATCHES = RootType.newRootType("scratches", "Scratches");
+  public static final RootType SCRATCHES = RootType.newRootType("scratches", "Scratches");
 
   public static ScratchFileService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ScratchFileService.class);
@@ -42,10 +42,10 @@ public abstract class ScratchFileService {
   @NotNull
   public abstract String getRootPath(@NotNull RootType rootType);
 
+  public abstract boolean isFileInRoot(@NotNull VirtualFile file, @NotNull RootType rootType);
+
   @Nullable
   public abstract VirtualFile createScratchFile(@NotNull Project project, @NotNull Language language, @NotNull String initialContent);
-
-  public abstract boolean isScratchFile(@NotNull VirtualFile file);
 
   @NotNull
   public abstract PerFileMappings<Language> getScratchesMapping();
@@ -56,15 +56,17 @@ public abstract class ScratchFileService {
     private final String myId;
     private final String myDisplayName;
 
-    private RootType(String id, String displayName) {
+    private RootType(@NotNull String id, @Nullable String displayName) {
       myId = id;
       myDisplayName = displayName;
     }
 
+    @NotNull
     public String getId() {
       return myId;
     }
 
+    @Nullable
     public String getDisplayName() {
       return myDisplayName;
     }

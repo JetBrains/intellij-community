@@ -236,7 +236,7 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
     @Override
     public boolean isWritable(@NotNull VirtualFile file) {
-      return file.getFileType() == SCRATCH_FILE_TYPE; // todo ensure project is OK
+      return file.getFileType() == SCRATCH_FILE_TYPE;
     }
   }
 
@@ -280,8 +280,13 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
   }
 
   @Override
-  public boolean isScratchFile(@NotNull VirtualFile file) {
-    return file.getFileType() == SCRATCH_FILE_TYPE;
+  public boolean isFileInRoot(@NotNull VirtualFile file, @NotNull RootType rootType) {
+    return rootType == SCRATCHES ? file.getFileType() == SCRATCH_FILE_TYPE : isFileInRootImpl(file, rootType);
+  }
+
+  private static boolean isFileInRootImpl(@NotNull VirtualFile file, RootType scratches) {
+    String rootPath = ScratchFileService.getInstance().getRootPath(scratches);
+    return file.getPath().startsWith(rootPath);
   }
 
   private static class MyFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, InternalFileType {
@@ -292,8 +297,7 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
     @Override
     public boolean isMyFileType(@NotNull VirtualFile file) {
-      String rootPath = ScratchFileService.getInstance().getRootPath(SCRATCHES);
-      return file.getPath().startsWith(rootPath);
+      return isFileInRootImpl(file, SCRATCHES);
     }
 
     @NotNull
