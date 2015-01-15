@@ -23,6 +23,8 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 public interface LinearGraphController {
 
   @NotNull
@@ -41,8 +43,33 @@ public interface LinearGraphController {
     PrintElementWithGraphElement getAffectedElement();
   }
 
-  interface LinearGraphAnswer extends GraphAnswer<Integer> {
+  class LinearGraphAnswer implements GraphAnswer<Integer> {
+    @Nullable private final GraphChanges<Integer> myGraphChanges;
+    @Nullable private final Cursor myCursorToSet;
+    @Nullable private final Integer myCommitToJump;
+
+    public LinearGraphAnswer(@Nullable GraphChanges<Integer> graphChanges, @Nullable Cursor cursorToSet, @Nullable Integer commitToJump) {
+      myGraphChanges = graphChanges;
+      myCursorToSet = cursorToSet;
+      myCommitToJump = commitToJump;
+    }
+
     @Nullable
-    GraphChanges<Integer> getGraphChanges();
+    public GraphChanges<Integer> getGraphChanges() {
+      return myGraphChanges;
+    }
+
+    @Nullable
+    @Override
+    public Cursor getCursorToSet() {
+      return myCursorToSet;
+    }
+
+    @Nullable
+    @Override
+    public Integer getCommitToJump() {
+      return myCommitToJump;
+    }
   }
+
 }

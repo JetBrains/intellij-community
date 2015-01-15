@@ -22,35 +22,14 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.List;
 
 public class LinearGraphUtils {
-  public static final LinearGraphController.LinearGraphAnswer DEFAULT_GRAPH_ANSWER = new LinearGraphController.LinearGraphAnswer() {
-    @Nullable
-    @Override
-    public GraphChanges<Integer> getGraphChanges() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public Cursor getCursorToSet() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public Integer getCommitToJump() {
-      return null;
-    }
-  };
-
+  public static final LinearGraphController.LinearGraphAnswer DEFAULT_GRAPH_ANSWER = new LinearGraphController.LinearGraphAnswer(null, null, null);
 
   public static boolean intEqual(@Nullable Integer value, int number) {
     return value != null && value == number;
