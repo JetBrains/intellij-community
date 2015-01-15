@@ -228,7 +228,7 @@ public final class JsonReaderEx implements Closeable {
    * Consumes the next token from the JSON stream and asserts that it is the
    * beginning of a new object.
    */
-  public void beginObject() {
+  public JsonReaderEx beginObject() {
     int p = peeked;
     if (p == PEEKED_NONE) {
       p = doPeek();
@@ -240,6 +240,7 @@ public final class JsonReaderEx implements Closeable {
     else {
       throw createParseError("Expected BEGIN_OBJECT but was " + peek());
     }
+    return this;
   }
 
   /**

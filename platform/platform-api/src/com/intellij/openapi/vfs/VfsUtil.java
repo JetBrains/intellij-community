@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -406,7 +406,6 @@ public class VfsUtil extends VfsUtilCore {
    * @return the relative path, or null if the files have no common ancestor.
    * @since 5.0.2
    */
-
   @Nullable
   public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);

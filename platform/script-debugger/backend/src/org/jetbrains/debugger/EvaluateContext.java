@@ -11,17 +11,19 @@ import java.util.Map;
  * of suspended process, but may also be detached from any stack frame
  */
 public interface EvaluateContext {
-
   /**
    * Evaluates an arbitrary {@code expression} in the particular context.
    * Previously loaded {@link org.jetbrains.debugger.values.ObjectValue}s can be addressed from the expression if listed in
    * additionalContext parameter.
    */
   @NotNull
-  Promise<EvaluateResult> evaluate(@NotNull String expression, @Nullable Map<String, EvaluateContextAdditionalParameter> additionalContext);
+  Promise<EvaluateResult> evaluate(@NotNull String expression, @Nullable Map<String, Object> additionalContext, boolean enableBreak);
 
   @NotNull
   Promise<EvaluateResult> evaluate(@NotNull String expression);
+
+  @NotNull
+  Promise<EvaluateResult> evaluate(@NotNull String expression, boolean enableBreak);
 
   /**
    * optional to implement, some protocols, WIP for example, require you to release remote objects

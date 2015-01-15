@@ -30,11 +30,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsightAction {
+  private String myCurrentActionName = null;
+
+  @Override
+  protected String getCommandName() {
+    String actionName = myCurrentActionName;
+    return actionName != null ? myCurrentActionName : super.getCommandName();
+  }
+
   @Override
   public void update(AnActionEvent event) {
     // since previous handled may have changed the presentation, we need to restore it; otherwise it will stick. 
     event.getPresentation().copyFrom(getTemplatePresentation());
     super.update(event);
+    
+    // for Undo to show the correct action name, we remember it here to return from getCommandName(), which lack context of AnActionEvent 
+    myCurrentActionName = event.getPresentation().getText();
   }
 
   @Override

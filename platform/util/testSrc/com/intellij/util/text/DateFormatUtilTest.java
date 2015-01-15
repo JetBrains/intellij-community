@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -126,9 +127,8 @@ public class DateFormatUtilTest {
     return execAndGetOutput(builder);
   }
 
-  private static String printWindowsTime(long time) throws IOException {
-    String script = DateFormatUtil.class.getResource("PrintTime.js").getPath();
-    if (StringUtil.startsWithChar(script, '/')) script = script.substring(1);
+  private static String printWindowsTime(long time) throws IOException, URISyntaxException {
+    String script = new File(DateFormatUtil.class.getResource("PrintTime.js").toURI()).getPath();
     ProcessBuilder builder = new ProcessBuilder().command("cscript", "//Nologo", script, String.valueOf(time));
     return execAndGetOutput(builder);
   }

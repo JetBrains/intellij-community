@@ -2445,12 +2445,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}\n";
     assertEquals("Find all annotations", 4, findMatchesCount(source2, "@'_Annotation"));
 
-    String source3 = "class A {\n" +
+    String source3 = "class A<@HH T> extends @HH Object {\n" +
                      "  @HH final String s = (@HH String) new @HH Object();\n" +
                      "  final String t = (String) new Object();\n" +
+                     "  Map<@HH String, @HH List<@HH String>> map;\n" +
                      "}\n";
     assertEquals("Find annotated casts", 1, findMatchesCount(source3, "(@'_A 'Cast) '_Expression"));
     assertEquals("Find annotated new expressions", 1, findMatchesCount(source3, "new @'_A 'Type()"));
+    assertEquals("Find all annotations 2", 8, findMatchesCount(source3, "@'_Annotation"));
+
+    // package-info.java
+    final String source4 = "/**\n" +
+                           " * documentation\n" +
+                           " */\n" +
+                           "@Deprecated\n" +
+                           "package one.two;";
+    assertEquals("Find annotation on package statement", 1, findMatchesCount(source4, "@'_Annotation", true));
   }
 
   public void testBoxingAndUnboxing() {
@@ -2464,12 +2474,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "a.c(new Integer(2));\n" +
                 "a.c(new Integer(3));\n" +
                 "a.c2(new Integer(3));\n" +
-                "a.c(3);";
+                "a.c(3);\n" +
+                "Integer i = 4;\n" +
+                "int j = Integer.valueOf(4);\n";
     String s2 = "a.'b('_Params:[formal( Integer ) && exprtype( int ) ])";
     String s2_2 = "a.c('_Params:[formal( int ) && exprtype( Integer ) ])";
 
     assertEquals("Find boxing in method call",1,findMatchesCount(s1,s2,false));
     assertEquals("Find unboxing in method call",2,findMatchesCount(s1,s2_2,false));
+
+    String pattern1 = "'_a:[formal( Integer ) && exprtype( int ) ]";
+    assertEquals("Find any boxing", 2, findMatchesCount(s1, pattern1));
+
+    String pattern2 = "'_a:[formal( int ) && exprtype( Integer ) ]";
+    assertEquals("Find any unboxing", 3, findMatchesCount(s1, pattern2));
   }
 
   public void testCommentsInDclSearch() {
@@ -3059,5 +3077,44 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}";
     String pattern = "/*$Text$*/";
     assertEquals("should find comments in all the right places", 12, findMatchesCount(source, pattern));
+  }
+
+  public void testCaseInsensitive() {
+    String source = "/* HELLO */\n" +
+                    "class A<T> {\n" +
+                    "  private char b = 'C';\n" +
+                    "  void m() {\n" +
+                    "    @X String s = \"\";\n" +
+                    "    s.equals(\"\");\n" +
+                    "    s = s;\n" +
+                    "    this.b = 'D';\n" +
+                    "  }\n" +
+                    "}";
+    String pattern1 = "a";
+    assertEquals("should find symbol case insensitively", 1, findMatchesCount(source, pattern1));
+    String pattern2 = "class a {}";
+    assertEquals("should find class case insensitively", 1, findMatchesCount(source, pattern2));
+    String pattern3 = "/* hello */";
+    assertEquals("should find comment case insensitively", 1, findMatchesCount(source, pattern3));
+    String pattern4 = "'c'";
+    assertEquals("should find character literal case insensitively", 1, findMatchesCount(source, pattern4));
+    String pattern5 = "char B = '_initializer;";
+    assertEquals("should find variable case insensitively", 1, findMatchesCount(source, pattern5));
+    String pattern6 = "class '_a<t> {}";
+    assertEquals("should find type parameter case insensitively", 1, findMatchesCount(source, pattern6));
+    String pattern7 = "class '_A {" +
+                      "  void M();" +
+                      "}";
+    assertEquals("should find class with method case insensitively", 1, findMatchesCount(source, pattern7));
+    String pattern8 = "'_a.EQUALS('_b)";
+    assertEquals("should find method call case insensitively", 1, findMatchesCount(source, pattern8));
+    String pattern9 = "S.'_call('_e)";
+    assertEquals("should find qualifier case insensitively", 1, findMatchesCount(source, pattern9));
+    String pattern10 = "S = S";
+    assertEquals("should find reference case insensitively", 1, findMatchesCount(source, pattern10));
+    String pattern11 = "this.B";
+    assertEquals("should find qualified reference case insensitively", 1, findMatchesCount(source, pattern11));
+    String pattern12 = "@x";
+    assertEquals("should find annotation case insensitively", 1, findMatchesCount(source, pattern12));
   }
 }

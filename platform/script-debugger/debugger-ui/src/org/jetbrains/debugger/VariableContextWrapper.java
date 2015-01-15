@@ -2,6 +2,7 @@ package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 class VariableContextWrapper implements VariableContext {
   private final VariableContext parentContext;
@@ -20,7 +21,7 @@ class VariableContextWrapper implements VariableContext {
 
   @NotNull
   @Override
-  public MemberFilter createMemberFilter() {
+  public Promise<MemberFilter> createMemberFilter() {
     return parentContext.getViewSupport().createMemberFilter(this);
   }
 

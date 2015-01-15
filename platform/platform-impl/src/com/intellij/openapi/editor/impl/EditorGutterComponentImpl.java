@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +98,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ANNOTATIONS = 5;
   private String myLastGutterToolTip = null;
   @NotNull private TIntFunction myLineNumberConvertor;
+  private TIntFunction myLineNumberAreaWidthFunction;
   private boolean myShowDefaultGutterPopup = true;
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
 
@@ -559,6 +561,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void updateSizeInner(boolean onLayout) {
     if (!onLayout) {
+      calcLineNumberAreaWidth();
       calcIconAreaWidth();
       calcAnnotationsSize();
     }
@@ -569,6 +572,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int result = myLineMarkerAreaWidth;
     result = 31 * result + myTextAnnotationGuttersSize;
     result = 31 * result + myTextAnnotationExtraSize;
+    result = 31 * result + getLineNumberAreaWidth();
     return result;
   }
 
@@ -611,7 +615,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     int width = editorLocationX + editorComponent.getWidth();
     if (rightMarginX < width && editorLocationX < width - rightMarginX) {
-      int centeredSize = (width - rightMarginX - editorLocationX) / 2 - (myLineMarkerAreaWidth + myLineNumberAreaWidth);
+      int centeredSize = (width - rightMarginX - editorLocationX) / 2 - (myLineMarkerAreaWidth + getLineNumberAreaWidth());
       myTextAnnotationExtraSize = Math.max(0, centeredSize - myTextAnnotationGuttersSize);
     }
   }
@@ -905,7 +909,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void drawAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
                           DisplayedFoldingAnchor.Type type, boolean active) {
 
-    int height = width + 2;
+    final int off = JBUI.scale(2);
+    int height = width + off;
     int y;
     switch (type) {
       case COLLAPSED:
@@ -917,13 +922,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       case EXPANDED_TOP:
         y = myEditor.visibleLineToY(visualLine) + myEditor.getLineHeight() - myEditor.getDescent() - width;
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, height, width - 2, active);
+          drawDirectedBox(g, anchorX, y, width, height, width - off, active);
         }
         break;
       case EXPANDED_BOTTOM:
         y = myEditor.visibleLineToY(visualLine) + myEditor.getLineHeight() - myEditor.getDescent();
         if (y - height <= clip.y + clip.height && y >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, -height, -width + 2, active);
+          drawDirectedBox(g, anchorX, y, width, -height, -width + off, active);
         }
         break;
     }
@@ -948,6 +953,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     try {
+      final int off = JBUI.scale(2);
       int[] xPoints = {anchorX, anchorX + width, anchorX + width, anchorX + width / 2, anchorX};
       int[] yPoints = {y, y, y + baseHeight, y + height, y + baseHeight};
 
@@ -959,7 +965,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       //Minus
       int minusHeight = y + baseHeight / 2 + (height - baseHeight) / 4;
-      UIUtil.drawLine(g, anchorX + 2, minusHeight, anchorX + width - 2, minusHeight);
+      UIUtil.drawLine(g, anchorX + off, minusHeight, anchorX + width - off, minusHeight);
     }
     finally {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialiasing);
@@ -972,8 +978,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                   int width,
                                   boolean active) {
     drawSquareWithMinus(g, anchorX, y, width, active);
-
-    UIUtil.drawLine(g, anchorX + width / 2, y + 2, anchorX + width / 2, y + width - 2);
+    final int off = JBUI.scale(2);
+    UIUtil.drawLine(g, anchorX + width / 2, y + off, anchorX + width / 2, y + width - off);
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
@@ -987,14 +993,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     g.setColor(getOutlineColor(active));
     g.drawRect(anchorX, y, width, width);
-
+    final int off = JBUI.scale(2);
     // Draw plus
     if (!active) g.setColor(getOutlineColor(true));
-    UIUtil.drawLine(g, anchorX + 2, y + width / 2, anchorX + width - 2, y + width / 2);
+    UIUtil.drawLine(g, anchorX + off, y + width / 2, anchorX + width - off, y + width / 2);
   }
 
   private int getFoldingAnchorWidth() {
-    return Math.min(4, myEditor.getLineHeight() / 2 - 2) * 2;
+    return Math.min(JBUI.scale(4), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2;
   }
 
   public int getFoldingAreaOffset() {
@@ -1002,7 +1008,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getFoldingAreaWidth() {
-    return isRealEditor() ? getFoldingAnchorWidth() + (isFoldingOutlineShown() ? 2 : 0) : 0;
+    int width = isRealEditor() ? getFoldingAnchorWidth() + (isFoldingOutlineShown() ? 2 : 0) : 0;
+    return JBUI.scale(width);
   }
 
   public boolean isRealEditor() {
@@ -1039,7 +1046,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return isLineMarkersShown() ? myLineMarkerAreaWidth : 0;
   }
 
-  public void setLineNumberAreaWidth(@NotNull TIntFunction calculator) {
+  public void setLineNumberAreaWidthFunction(@NotNull TIntFunction calculator) {
+    myLineNumberAreaWidthFunction = calculator;
+  }
+  
+  private void calcLineNumberAreaWidth() {
+    if (myLineNumberAreaWidthFunction == null || !isLineNumbersShown()) return;
     int maxLineNumber = 0;
     for (int i = endLineNumber(); i >= 0; i--) {
       int number = myLineNumberConvertor.execute(i);
@@ -1049,11 +1061,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
 
-    final int lineNumberAreaWidth = calculator.execute(maxLineNumber) + 4;
-    if (myLineNumberAreaWidth != lineNumberAreaWidth) {
-      myLineNumberAreaWidth = lineNumberAreaWidth;
-      fireResized();
-    }
+    myLineNumberAreaWidth = myLineNumberAreaWidthFunction.execute(maxLineNumber) + 4;
   }
 
   @Nullable

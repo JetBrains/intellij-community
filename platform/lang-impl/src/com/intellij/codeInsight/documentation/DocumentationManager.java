@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,6 +264,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public void showJavaDocInfo(@NotNull final PsiElement element,
                               final PsiElement original,
                               @Nullable Runnable closeCallback) {
+    if (!element.isValid()) {
+      return;
+    }
+
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       @Override
       public void updatePopup(Object lookupItemObject) {

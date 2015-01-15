@@ -20,7 +20,6 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
@@ -118,18 +117,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   private final WindowAdapter myActivationListener;
   private final DataManager myDataManager;
   private final ActionManagerEx myActionManager;
-  private final UISettings myUiSettings;
 
   /**
    * invoked by reflection
    */
   public WindowManagerImpl(DataManager dataManager,
                            ActionManagerEx actionManager,
-                           UISettings uiSettings,
                            MessageBus bus) {
     myDataManager = dataManager;
     myActionManager = actionManager;
-    myUiSettings = uiSettings;
     if (myDataManager instanceof DataManagerImpl) {
         ((DataManagerImpl)myDataManager).setWindowManager(this);
     }
@@ -522,7 +518,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
   public void showFrame() {
     final IdeFrameImpl frame = new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(),
-                                                myActionManager, myUiSettings, myDataManager,
+                                                myActionManager, myDataManager,
                                                 ApplicationManager.getApplication());
     myProject2Frame.put(null, frame);
 
@@ -592,7 +588,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       frame.setProject(project);
     }
     else {
-      frame = new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(), myActionManager, myUiSettings,
+      frame = new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(), myActionManager,
                                myDataManager, ApplicationManager.getApplication());
 
       final Rectangle bounds = ProjectFrameBounds.getInstance(project).getBounds();

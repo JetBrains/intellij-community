@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class SwitchStatementPostfixTemplate extends StringBasedPostfixTemplate {
   private static final Condition<PsiElement> SWITCH_TYPE = new Condition<PsiElement>() {
@@ -52,7 +52,7 @@ public class SwitchStatementPostfixTemplate extends StringBasedPostfixTemplate {
   };
 
   public SwitchStatementPostfixTemplate() {
-    super("switch", "switch (expr)", JAVA_PSI_INFO, SWITCH_TYPE);
+    super("switch", "switch (expr)", selectorTopmost(SWITCH_TYPE));
   }
 
   @Nullable

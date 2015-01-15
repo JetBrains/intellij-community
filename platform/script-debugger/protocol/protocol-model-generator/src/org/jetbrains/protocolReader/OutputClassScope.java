@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 class OutputClassScope extends ClassScope {
-  OutputClassScope(DomainGenerator generator, NamePath classNamePath) {
+  OutputClassScope(@NotNull DomainGenerator generator, @NotNull NamePath classNamePath) {
     super(generator, classNamePath);
   }
 
-  <P extends ItemDescriptor.Named> void generate(TextOutput out, List<P> parameters) {
+  <P extends ItemDescriptor.Named> void generate(@NotNull TextOutput out, @Nullable List<P> parameters) {
     if (parameters == null) {
       return;
     }
@@ -108,9 +108,9 @@ class OutputClassScope extends ClassScope {
     }
   }
 
-  private <P extends ItemDescriptor.Named> void generateConstructor(@NotNull TextOutput out, @NotNull List<P> mandatoryParameters, @Nullable BoxableType[] mandatoryParameterTypes) {
+  private <P extends ItemDescriptor.Named> void generateConstructor(@NotNull TextOutput out, @NotNull List<P> parameters, @Nullable BoxableType[] parameterTypes) {
     boolean hasDoc = false;
-    for (P parameter : mandatoryParameters) {
+    for (P parameter : parameters) {
       if (parameter.description() != null) {
         hasDoc = true;
         break;
@@ -118,7 +118,7 @@ class OutputClassScope extends ClassScope {
     }
     if (hasDoc) {
       out.append("/**").newLine();
-      for (P parameter : mandatoryParameters) {
+      for (P parameter : parameters) {
         if (parameter.description() != null) {
           out.append(" * @param " + parameter.name() + ' ' + parameter.description()).newLine();
         }
@@ -127,37 +127,50 @@ class OutputClassScope extends ClassScope {
     }
     out.append("public " + getShortClassName() + '(');
 
-    if (mandatoryParameterTypes == null) {
-      mandatoryParameterTypes = new BoxableType[mandatoryParameters.size()];
+    if (parameterTypes == null) {
+      parameterTypes = new BoxableType[parameters.size()];
     }
-    for (int i = 0, length = mandatoryParameterTypes.length; i < length; i++) {
-      assert mandatoryParameterTypes != null;
-      if (mandatoryParameterTypes[i] == null) {
-        P parameter = mandatoryParameters.get(i);
-        mandatoryParameterTypes[i] = new OutputMemberScope(parameter.name()).resolveType(parameter).getType();
+    writeMethodParameters(out, parameters, parameterTypes);
+    out.append(')');
+
+    out.openBlock(false);
+    writeWriteCalls(out, parameters, parameterTypes, null);
+    out.closeBlock();
+  }
+
+  <P extends ItemDescriptor.Named> void writeWriteCalls(@NotNull TextOutput out, @NotNull List<P> parameters, @NotNull BoxableType[] parameterTypes, @Nullable String qualifier) {
+    for (int i = 0, size = parameters.size(); i < size; i++) {
+      out.newLine();
+
+      if (qualifier != null) {
+        out.append(qualifier).append('.');
+      }
+
+      P parameter = parameters.get(i);
+      appendWriteValueInvocation(out, parameter, parameter.name(), parameterTypes[i]);
+    }
+  }
+
+  <P extends ItemDescriptor.Named> void writeMethodParameters(@NotNull TextOutput out, @NotNull List<P> parameters, @NotNull BoxableType[] parameterTypes) {
+    for (int i = 0, length = parameterTypes.length; i < length; i++) {
+      if (parameterTypes[i] == null) {
+        P parameter = parameters.get(i);
+        parameterTypes[i] = new OutputMemberScope(parameter.name()).resolveType(parameter).getType();
       }
     }
 
     boolean needComa = false;
-    for (int i = 0, size = mandatoryParameters.size(); i < size; i++) {
-      P parameter = mandatoryParameters.get(i);
+    for (int i = 0, size = parameters.size(); i < size; i++) {
       if (needComa) {
         out.comma();
       }
+      else {
+        needComa = true;
+      }
 
-      assert mandatoryParameterTypes != null;
-      out.append(mandatoryParameterTypes[i].getShortText(getClassContextNamespace()));
-      out.space().append(parameter.name());
-      needComa = true;
+      out.append(parameterTypes[i].getShortText(getClassContextNamespace()));
+      out.space().append(parameters.get(i).name());
     }
-    out.append(")").openBlock(false);
-    for (int i = 0, size = mandatoryParameters.size(); i < size; i++) {
-      P parameter = mandatoryParameters.get(i);
-      out.newLine();
-      assert mandatoryParameterTypes != null;
-      appendWriteValueInvocation(out, parameter, parameter.name(), mandatoryParameterTypes[i]);
-    }
-    out.closeBlock();
   }
 
   private void appendWriteValueInvocation(TextOutput out, ItemDescriptor.Named parameter, String valueRefName, @Nullable BoxableType type) {

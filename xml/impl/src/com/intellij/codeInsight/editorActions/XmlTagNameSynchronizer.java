@@ -62,10 +62,19 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
-        event.getEditor().getDocument().putUserData(SYNCHRONIZER_KEY, null);
+        uninstallSynchronizer(event);
       }
     }, ApplicationManager.getApplication());
     processor.addCommandListener(this);
+  }
+
+  public void uninstallSynchronizer(@NotNull EditorFactoryEvent event) {
+    final Document document = event.getEditor().getDocument();
+    final TagNameSynchronizer synchronizer = findSynchronizer(document);
+    if (synchronizer != null) {
+      synchronizer.clearMarkers();
+    }
+    document.putUserData(SYNCHRONIZER_KEY, null);
   }
 
   private void installSynchronizer(Editor editor) {
@@ -98,24 +107,15 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
   }
 
-  @Override
-  public void commandStarted(CommandEvent event) {
-    final TagNameSynchronizer synchronizer = findSynchronizer(event);
-    if (synchronizer != null) {
-      synchronizer.commandStarted();
-    }
-  }
-
   @Nullable
-  public TagNameSynchronizer findSynchronizer(CommandEvent event) {
-    if (!WebEditorOptions.getInstance().isSyncTagEditing()) return null;
-    final Document document = event.getDocument();
-    return document != null ? document.getUserData(SYNCHRONIZER_KEY) : null;
+  public TagNameSynchronizer findSynchronizer(final Document document) {
+    if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return null;
+    return document.getUserData(SYNCHRONIZER_KEY);
   }
 
   @Override
   public void beforeCommandFinished(CommandEvent event) {
-    final TagNameSynchronizer synchronizer = findSynchronizer(event);
+    final TagNameSynchronizer synchronizer = findSynchronizer(event.getDocument());
     if (synchronizer != null) {
       synchronizer.beforeCommandFinished();
     }
@@ -127,7 +127,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     private enum State {INITIAL, TRACKING, APPLYING}
 
     private final Editor myEditor;
-    private State myState;
+    private State myState = State.INITIAL;
     private final List<Couple<RangeMarker>> myMarkers = new SmartList<Couple<RangeMarker>>();
 
     public TagNameSynchronizer(Editor editor, Project project) {
@@ -216,6 +216,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
         leaderAndSupport.second.dispose();
       }
       myMarkers.clear();
+      myState = State.INITIAL;
     }
 
     private RangeMarker createTagNameMarker(Caret caret) {
@@ -248,11 +249,6 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       return Character.isJavaIdentifierPart(c) || c == ':';
     }
 
-    public void commandStarted() {
-      myState = State.INITIAL;
-      clearMarkers();
-    }
-
     public void beforeCommandFinished() {
       if (myMarkers.isEmpty()) return;
 
@@ -270,7 +266,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
           }
         }
       });
-      clearMarkers();
+
+      myState = State.TRACKING;
     }
 
     private static RangeMarker findSupport(RangeMarker leader, PsiFile file, Document document) {

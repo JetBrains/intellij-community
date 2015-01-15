@@ -1,16 +1,20 @@
 package org.jetbrains.concurrency;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
+  private static final Logger LOG = Logger.getInstance(AsyncPromise.class);
+
   private volatile Consumer<T> done;
-  private volatile Consumer<String> rejected;
+  private volatile Consumer<Throwable> rejected;
 
   protected volatile State state = State.PENDING;
   // result object or error message
@@ -25,6 +29,10 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   @NotNull
   @Override
   public Promise<T> done(@NotNull Consumer<T> done) {
+    if (isObsolete(done)) {
+      return this;
+    }
+
     switch (state) {
       case PENDING:
         break;
@@ -42,14 +50,14 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @NotNull
   @Override
-  public Promise<T> rejected(@NotNull Consumer<String> rejected) {
+  public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
     switch (state) {
       case PENDING:
         break;
       case FULFILLED:
         return this;
       case REJECTED:
-        rejected.consume((String)result);
+        rejected.consume((Throwable)result);
         return this;
     }
 
@@ -84,7 +92,9 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
       if (list != null) {
         for (Consumer<T> consumer : list) {
-          consumer.consume(t);
+          if (!isObsolete(consumer)) {
+            consumer.consume(t);
+          }
         }
       }
     }
@@ -108,35 +118,35 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
         //noinspection unchecked
         return new DonePromise<SUB_RESULT>(fulfilled.fun((T)result));
       case REJECTED:
-        return new RejectedPromise<SUB_RESULT>((String)result);
+        return new RejectedPromise<SUB_RESULT>((Throwable)result);
     }
 
-    assert done == null && rejected == null;
     final AsyncPromise<SUB_RESULT> promise = new AsyncPromise<SUB_RESULT>();
     addHandlers(new Consumer<T>() {
       @Override
       public void consume(T result) {
         try {
-          if (fulfilled instanceof ObsolescentFunction && ((ObsolescentFunction)fulfilled).isObsolete()) {
-            promise.setError("Obsolete");
+          if (fulfilled instanceof Obsolescent && ((Obsolescent)fulfilled).isObsolete()) {
+            promise.setError(createError("Obsolete"));
           }
           else {
             promise.setResult(fulfilled.fun(result));
           }
         }
         catch (Throwable e) {
-          promise.setError(e.getMessage());
+          promise.setError(e);
         }
       }
-    }, new Consumer<String>() {
+    }, new Consumer<Throwable>() {
       @Override
-      public void consume(String error) {
+      public void consume(Throwable error) {
         promise.setError(error);
       }
     });
     return promise;
   }
 
+  @Override
   void notify(@NotNull final AsyncPromise<T> child) {
     switch (state) {
       case PENDING:
@@ -146,7 +156,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
         child.setResult((T)result);
         return;
       case REJECTED:
-        child.setError((String)result);
+        child.setError((Throwable)result);
         return;
     }
 
@@ -157,12 +167,12 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
           child.setResult(result);
         }
         catch (Throwable e) {
-          child.setError(e.getMessage());
+          child.setError(e);
         }
       }
-    }, new Consumer<String>() {
+    }, new Consumer<Throwable>() {
       @Override
-      public void consume(String error) {
+      public void consume(Throwable error) {
         child.setError(error);
       }
     });
@@ -178,13 +188,13 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
         //noinspection unchecked
         return fulfilled.fun((T)result);
       case REJECTED:
-        return new RejectedPromise<SUB_RESULT>((String)result);
+        return new RejectedPromise<SUB_RESULT>((Throwable)result);
     }
 
     final AsyncPromise<SUB_RESULT> promise = new AsyncPromise<SUB_RESULT>();
-    final Consumer<String> rejectedHandler = new Consumer<String>() {
+    final Consumer<Throwable> rejectedHandler = new Consumer<Throwable>() {
       @Override
-      public void consume(String error) {
+      public void consume(Throwable error) {
         promise.setError(error);
       }
     };
@@ -200,22 +210,23 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
                   promise.setResult(result);
                 }
                 catch (Throwable e) {
-                  promise.setError(e.getMessage());
+                  promise.setError(e);
                 }
               }
             })
             .rejected(rejectedHandler);
         }
         catch (Throwable e) {
-          promise.setError(e.getMessage());
+          promise.setError(e);
         }
       }
     }, rejectedHandler);
     return promise;
   }
 
+  @Override
   @NotNull
-  public Promise<T> done(@NotNull final AsyncPromise<T> fulfilled) {
+  public Promise<T> processed(@NotNull final AsyncPromise<T> fulfilled) {
     switch (state) {
       case PENDING:
         break;
@@ -224,7 +235,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
         fulfilled.setResult((T)result);
         return this;
       case REJECTED:
-        fulfilled.setError((String)result);
+        fulfilled.setError((Throwable)result);
         return this;
     }
 
@@ -235,19 +246,19 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
           fulfilled.setResult(result);
         }
         catch (Throwable e) {
-          fulfilled.setError(e.getMessage());
+          fulfilled.setError(e);
         }
       }
-    }, new Consumer<String>() {
+    }, new Consumer<Throwable>() {
       @Override
-      public void consume(String error) {
+      public void consume(Throwable error) {
         fulfilled.setError(error);
       }
     });
     return this;
   }
 
-  private void addHandlers(@NotNull Consumer<T> done, @NotNull Consumer<String> rejected) {
+  private void addHandlers(@NotNull Consumer<T> done, @NotNull Consumer<Throwable> rejected) {
     this.done = setHandler(this.done, done);
     this.rejected = setHandler(this.rejected, rejected);
   }
@@ -267,24 +278,39 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   public void setResult(T result) {
+    if (state != State.PENDING) {
+      return;
+    }
+
     this.result = result;
     state = State.FULFILLED;
 
     Consumer<T> done = this.done;
     clearHandlers();
-    if (done != null) {
+    if (done != null && !isObsolete(done)) {
       done.consume(result);
     }
   }
 
-  public void setError(String error) {
+  static boolean isObsolete(@Nullable Consumer<?> done) {
+    return done instanceof Obsolescent && ((Obsolescent)done).isObsolete();
+  }
+
+  public void setError(@NotNull Throwable error) {
+    if (state != State.PENDING) {
+      return;
+    }
+
     result = error;
     state = State.REJECTED;
 
-    Consumer<String> rejected = this.rejected;
+    Consumer<Throwable> rejected = this.rejected;
     clearHandlers();
     if (rejected != null) {
       rejected.consume(error);
+    }
+    else if (!(error instanceof MessageError)) {
+      LOG.error(error);
     }
   }
 
@@ -296,9 +322,9 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   @Override
   public void processed(@NotNull final Consumer<T> processed) {
     done(processed);
-    rejected(new Consumer<String>() {
+    rejected(new Consumer<Throwable>() {
       @Override
-      public void consume(String error) {
+      public void consume(Throwable error) {
         processed.consume(null);
       }
     });

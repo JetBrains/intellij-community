@@ -383,7 +383,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
                                                                            boolean classQualifier) {
     final SubstitutionHandler substitutionHandler =
       new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, false);
-    substitutionHandler.setPredicate(new RegExpPredicate(referenceText.replaceAll("\\.", "\\\\."), true, null, false, false));
+    final boolean caseSensitive = myCompilingVisitor.getContext().getOptions().isCaseSensitiveMatch();
+    substitutionHandler.setPredicate(new RegExpPredicate(referenceText.replaceAll("\\.", "\\\\."), caseSensitive, null, false, false));
     myCompilingVisitor.getContext().getPattern().setHandler(expr, substitutionHandler);
     return substitutionHandler;
   }
@@ -588,18 +589,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private MatchingStrategy findStrategy(PsiElement el) {
-    // identify matching strategy
-    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(el);
-
-    //if (handler instanceof SubstitutionHandler) {
-    //  final SubstitutionHandler shandler = (SubstitutionHandler) handler;
-    if (handler.getFilter() instanceof SymbolNodeFilter ||
-        handler.getFilter() instanceof TypedSymbolNodeFilter
-      ) {
-      return SymbolMatchingStrategy.getInstance();
-    }
-    //}
-
     if (el instanceof PsiDocComment) {
       return JavaDocMatchingStrategy.getInstance();
     }

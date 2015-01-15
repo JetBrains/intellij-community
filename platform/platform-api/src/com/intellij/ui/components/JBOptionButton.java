@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -38,9 +39,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class JBOptionButton extends JButton implements MouseMotionListener, Weighted {
-
-
-  private static final Insets myDownIconInsets = new Insets(0, 6, 0, 4);
+  private final Insets myDownIconInsets = JBUI.insets(0, 6, 0, 4);
 
   private Rectangle myMoreRec;
   private Rectangle myMoreRecMouse;

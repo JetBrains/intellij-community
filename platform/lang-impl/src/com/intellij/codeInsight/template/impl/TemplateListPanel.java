@@ -946,13 +946,30 @@ public class TemplateListPanel extends JPanel implements Disposable {
     selectTemplate(lastSelectedGroup, lastSelectedKey);
   }
 
-  private void selectTemplate(final String lastSelectedGroup, final String lastSelectedKey) {
+  void selectNode(@NotNull String searchQuery) {
+    for (TemplateGroup group : myTemplateGroups) {
+      for (TemplateImpl template : group.getElements()) {
+        if (StringUtil.startsWithIgnoreCase(template.getKey(), searchQuery)) {
+          selectTemplate(group.getName(), template.getKey());
+          return;
+        }
+      }
+    }
+    for (TemplateGroup group : myTemplateGroups) {
+      if (StringUtil.startsWithIgnoreCase(group.getName(), searchQuery)) {
+        selectTemplate(group.getName(), null);
+        return;
+      }
+    }
+  }
+
+  private void selectTemplate(@Nullable final String groupName, @Nullable final String templateKey) {
     TreeUtil.traverseDepth(myTreeRoot, new TreeUtil.Traverse() {
       @Override
       public boolean accept(Object node) {
         Object o = ((DefaultMutableTreeNode)node).getUserObject();
-        if (lastSelectedKey == null && o instanceof TemplateGroup && Comparing.equal(lastSelectedGroup, ((TemplateGroup)o).getName()) ||
-            o instanceof TemplateImpl && Comparing.equal(lastSelectedKey, ((TemplateImpl)o).getKey()) && Comparing.equal(lastSelectedGroup, ((TemplateImpl)o).getGroupName())) {
+        if (templateKey == null && o instanceof TemplateGroup && Comparing.equal(groupName, ((TemplateGroup)o).getName()) ||
+            o instanceof TemplateImpl && Comparing.equal(templateKey, ((TemplateImpl)o).getKey()) && Comparing.equal(groupName, ((TemplateImpl)o).getGroupName())) {
           setSelectedNode((DefaultMutableTreeNode)node);
           return false;
         }

@@ -382,6 +382,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
             commitToOriginalInner();
           }
         });
+        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
       }
     }
     finally {

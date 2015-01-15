@@ -60,6 +60,11 @@ public class ChangesComparatorTest {
     assertEquals("Equal paths should compare to 0", 0, compare("~/project/A.java", "~/project/A.java"));
     assertEquals("Equal paths should compare to 0", 0, compare("~/project/aaa/A.java", "~/project/aaa/A.java"));
   }
+  
+  @Test
+  public void testEmptyPaths() throws Exception {
+    assertEquals(0, compare("", ""));
+  }
 
   private static int compare(String path1, String path2) throws Exception {
     return compare(change(path1), change(path2));

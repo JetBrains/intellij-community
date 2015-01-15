@@ -2,20 +2,23 @@ package org.jetbrains.concurrency;
 
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class CountDownConsumer implements Consumer<Void> {
+class CountDownConsumer<T> implements Consumer<T> {
   private volatile int countDown;
-  private final AsyncPromise<Void> promise;
+  private final AsyncPromise<T> promise;
+  private final T totalResult;
 
-  public CountDownConsumer(int countDown, @NotNull AsyncPromise<Void> promise) {
+  public CountDownConsumer(int countDown, @NotNull AsyncPromise<T> promise, @Nullable T totalResult) {
     this.countDown = countDown;
     this.promise = promise;
+    this.totalResult = totalResult;
   }
 
   @Override
-  public void consume(Void t) {
+  public void consume(T t) {
     if (--countDown == 0) {
-      promise.setResult(null);
+      promise.setResult(totalResult);
     }
   }
 }

@@ -21,7 +21,7 @@ class LazyCachedMethodHandler extends MethodHandler {
       Util.writeJavaTypeName(m.getGenericReturnType(), out);
     }
     else {
-      out.append(scope.getTypeImplReference(objectValueParser.getType().get()));
+      out.append(scope.getTypeImplReference(objectValueParser.getType().type));
     }
   }
 
@@ -43,7 +43,7 @@ class LazyCachedMethodHandler extends MethodHandler {
       {
         fieldBinding.writeGetExpression(out);
         out.append(" = ");
-        parser.writeReadCode(classScope, true, null, classScope.getOutput());
+        parser.writeReadCode(classScope, true, classScope.getOutput());
         out.semi();
       }
       if (parser.isThrowsIOException()) {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.config;
 
+import com.intellij.ProjectTopics;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -31,6 +32,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -39,8 +41,11 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.XmlSerializer;
+import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +54,7 @@ import org.jetbrains.jps.gradle.model.impl.*;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 
@@ -63,31 +67,37 @@ public class GradleResourceCompilerConfigurationGenerator {
   private static Logger LOG = Logger.getInstance(GradleResourceCompilerConfigurationGenerator.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final CompileContext myContext;
-  @NotNull private final Map<String, ExternalProject> myExternalProjectMap;
+  private final GradleProjectConfiguration projectConfig;
+
   private final ExternalProjectDataService myExternalProjectDataService;
 
-  public GradleResourceCompilerConfigurationGenerator(@NotNull final Project project, @NotNull final CompileContext context) {
+  public GradleResourceCompilerConfigurationGenerator(@NotNull final Project project) {
     myProject = project;
-    myContext = context;
+    projectConfig = new GradleProjectConfiguration();
     myExternalProjectDataService =
       (ExternalProjectDataService)ServiceManager.getService(ProjectDataManager.class).getDataService(ExternalProjectDataService.KEY);
     assert myExternalProjectDataService != null;
 
-    myExternalProjectMap = new FactoryMap<String, ExternalProject>() {
-      @Nullable
-      @Override
-      protected ExternalProject create(String gradleProjectPath) {
-        return myExternalProjectDataService.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
+    MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      public void moduleRemoved(Project project, Module module) {
+        projectConfig.moduleConfigurations.remove(module.getName());
       }
-    };
+
+      @Override
+      public void modulesRenamed(Project project, List<Module> modules, Function<Module, String> oldNameProvider) {
+        for (Module module : modules) {
+          moduleRemoved(project, module);
+        }
+      }
+    });
   }
 
-  public void generateBuildConfiguration() {
+  public void generateBuildConfiguration(@NotNull final CompileContext context) {
 
     if(shouldBeBuiltByExternalSystem(myProject)) return;
 
-    if (!hasGradleModules()) return;
+    if (!hasGradleModules(context)) return;
 
     final BuildManager buildManager = BuildManager.getInstance();
     final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
@@ -95,17 +105,26 @@ public class GradleResourceCompilerConfigurationGenerator {
 
     final File gradleConfigFile = new File(projectSystemDir, GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
 
-    GradleProjectConfiguration projectConfig = new GradleProjectConfiguration();
-    for (Module module : myContext.getCompileScope().getAffectedModules()) {
+    //noinspection MismatchedQueryAndUpdateOfCollection
+    final Map<String, ExternalProject> lazyExternalProjectMap = new FactoryMap<String, ExternalProject>() {
+      @Nullable
+      @Override
+      protected ExternalProject create(String gradleProjectPath) {
+        return myExternalProjectDataService.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
+      }
+    };
+
+    Map<String, GradleModuleResourceConfiguration> affectedModuleConfigurations = new THashMap<String, GradleModuleResourceConfiguration>();
+    for (Module module : context.getCompileScope().getAffectedModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
 
       if(shouldBeBuiltByExternalSystem(module)) continue;
 
       final String gradleProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
       assert gradleProjectPath != null;
-      final ExternalProject externalRootProject = myExternalProjectMap.get(gradleProjectPath);
+      final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
-        myContext.addMessage(CompilerMessageCategory.ERROR,
+        context.addMessage(CompilerMessageCategory.ERROR,
                              String.format("Unable to make the module: %s, related gradle configuration was not found. " +
                                            "Please, re-import the Gradle project and try again.",
                                            module.getName()), VfsUtilCore.pathToUrl(gradleProjectPath), -1, -1);
@@ -141,24 +160,44 @@ public class GradleResourceCompilerConfigurationGenerator {
         }
       }
 
-      projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
+      affectedModuleConfigurations.put(module.getName(), resourceConfig);
     }
 
-    final Document document = new Document(new Element("gradle-project-configuration"));
-    XmlSerializer.serializeInto(projectConfig, document.getRootElement());
-    buildManager.runCommand(new Runnable() {
-      @Override
-      public void run() {
-        buildManager.clearState(myProject);
-        FileUtil.createIfDoesntExist(gradleConfigFile);
-        try {
-          JDOMUtil.writeDocument(document, gradleConfigFile, "\n");
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
+    boolean configurationUpdateRequired = context.isRebuild() || !gradleConfigFile.exists();
+    if(!configurationUpdateRequired) {
+      for (Map.Entry<String, GradleModuleResourceConfiguration> entry : affectedModuleConfigurations.entrySet()) {
+        GradleModuleResourceConfiguration currentConfiguration = projectConfig.moduleConfigurations.get(entry.getKey());
+
+        if (currentConfiguration == null || !isSameModuleConfiguration(currentConfiguration, entry.getValue())) {
+          configurationUpdateRequired = true;
+          break;
         }
       }
-    });
+    }
+
+    if (configurationUpdateRequired) {
+      projectConfig.moduleConfigurations.putAll(affectedModuleConfigurations);
+
+      final Document document = new Document(new Element("gradle-project-configuration"));
+      XmlSerializer.serializeInto(projectConfig, document.getRootElement());
+      buildManager.runCommand(new Runnable() {
+        @Override
+        public void run() {
+          buildManager.clearState(myProject);
+          FileUtil.createIfDoesntExist(gradleConfigFile);
+          try {
+            JDOMUtil.writeDocument(document, gradleConfigFile, "\n");
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+    }
+  }
+
+  private static boolean isSameModuleConfiguration(GradleModuleResourceConfiguration conf1, GradleModuleResourceConfiguration conf2) {
+    return conf1.computeConfigurationHash() == conf2.computeConfigurationHash();
   }
 
   private static boolean shouldBeBuiltByExternalSystem(@NotNull Project project) {
@@ -176,8 +215,8 @@ public class GradleResourceCompilerConfigurationGenerator {
     return false;
   }
 
-  private boolean hasGradleModules() {
-    for (Module module : myContext.getCompileScope().getAffectedModules()) {
+  private static boolean hasGradleModules(@NotNull CompileContext context) {
+    for (Module module : context.getCompileScope().getAffectedModules()) {
       if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return true;
     }
     return false;

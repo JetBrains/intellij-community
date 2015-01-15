@@ -55,8 +55,10 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    */
   private final List<HistoryEntry> myEntriesList = Collections.synchronizedList(new ArrayList<HistoryEntry>());
 
-  /** Invoked by reflection */
-  EditorHistoryManager(final Project project, final UISettings uiSettings){
+  /**
+   * Invoked by reflection
+   */
+  EditorHistoryManager(final Project project, final UISettings uiSettings) {
     super(project);
     uiSettings.addUISettingsListener(new MyUISettingsListener(), project);
   }

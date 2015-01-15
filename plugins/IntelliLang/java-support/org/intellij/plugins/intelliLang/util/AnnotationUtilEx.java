@@ -271,22 +271,21 @@ public class AnnotationUtilEx {
    */
   private static PsiAnnotation[] getAnnotations(@NotNull final PsiModifierListOwner listOwner, final boolean inHierarchy) {
     final PsiModifierList modifierList = listOwner.getModifierList();
-    if (modifierList == null) {
-      return PsiAnnotation.EMPTY_ARRAY;
-    }
     if (!inHierarchy) {
-      return modifierList.getAnnotations();
+      return modifierList == null ? PsiAnnotation.EMPTY_ARRAY : modifierList.getAnnotations();
     }
     return CachedValuesManager.getCachedValue(listOwner, new CachedValueProvider<PsiAnnotation[]>() {
       @Nullable
       @Override
       public Result<PsiAnnotation[]> compute() {
-        return Result.create(getHierarchyAnnotations(listOwner, modifierList), PsiModificationTracker.MODIFICATION_COUNT);
+        return Result.create(getHierarchyAnnotations(listOwner), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }
 
-  private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner, PsiModifierList modifierList) {
+  private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner) {
+    PsiModifierList modifierList = listOwner.getModifierList();
+
     final Set<PsiAnnotation> all = new HashSet<PsiAnnotation>() {
       public boolean add(PsiAnnotation o) {
         // don't overwrite "higher level" annotations
@@ -294,7 +293,9 @@ public class AnnotationUtilEx {
       }
     };
     if (listOwner instanceof PsiMethod) {
-      ContainerUtil.addAll(all, modifierList.getAnnotations());
+      if (modifierList != null) {
+        ContainerUtil.addAll(all, modifierList.getAnnotations());
+      }
       SuperMethodsSearch.search((PsiMethod)listOwner, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
         public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
           ContainerUtil.addAll(all, superMethod.getMethod().getModifierList().getAnnotations());
@@ -310,7 +311,9 @@ public class AnnotationUtilEx {
       if (declarationScope instanceof PsiMethod && parameter.getParent() == (parameterList = ((PsiMethod)declarationScope).getParameterList())) {
         PsiMethod method = (PsiMethod)declarationScope;
         final int parameterIndex = parameterList.getParameterIndex(parameter);
-        ContainerUtil.addAll(all, modifierList.getAnnotations());
+        if (modifierList != null) {
+          ContainerUtil.addAll(all, modifierList.getAnnotations());
+        }
         SuperMethodsSearch.search(method, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
           public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
             PsiParameter superParameter = superMethod.getMethod().getParameterList().getParameters()[parameterIndex];
@@ -324,6 +327,6 @@ public class AnnotationUtilEx {
         return all.toArray(new PsiAnnotation[all.size()]);
       }
     }
-    return modifierList.getAnnotations();
+    return modifierList == null ? PsiAnnotation.EMPTY_ARRAY : modifierList.getAnnotations();
   }
 }

@@ -38,6 +38,10 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("<div<caret>></div>", "\b\b\b", "<></>");
   }
 
+  public void testLastCharDeletedAndNewAdded() {
+    doTest("<a<caret> alt='</>'></a>", "\bb", "<b alt='</>'></b>");
+  }
+
   public void testSelection() {
     doTest("<<selection>div</selection>></div>", "b", "<b></b>");
   }
@@ -80,17 +84,20 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private void doTest(final String text, final String toType, final String result) {
     myFixture.configureByText(XmlFileType.INSTANCE, text);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            myFixture.type(toType);
-          }
-        });
-      }
-    }, "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
+    for (int i = 0; i < toType.length(); i++) {
+      final char c = toType.charAt(i);
+      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              myFixture.type(c);
+            }
+          });
+        }
+      }, "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
+    }
     myFixture.checkResult(result);
   }
 

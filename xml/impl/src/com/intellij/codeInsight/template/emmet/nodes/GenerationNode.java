@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.google.common.base.Strings;
+import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
 import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
@@ -28,6 +29,7 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.editor.Document;
@@ -60,9 +62,6 @@ import java.util.regex.Pattern;
 
 import static com.google.common.collect.Lists.newArrayList;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class GenerationNode extends UserDataHolderBase {
   private final TemplateToken myTemplateToken;
   private final List<GenerationNode> myChildren = newArrayList();
@@ -75,7 +74,12 @@ public class GenerationNode extends UserDataHolderBase {
 
   private GenerationNode myParent;
   private boolean myContainsSurroundedTextMarker = false;
-  public static final Pattern ATTRIBUTE_VARIABLE_PATTERN = Pattern.compile("\\$[A-z_0-9]+\\$");
+  
+  private static final Pattern ATTRIBUTE_VARIABLE_PATTERN = Pattern.compile("\\$[A-z_0-9]+\\$");
+  private static final Pattern HREF_PATTERN = Pattern.compile("^(?:(?:https?|ftp|file)://|www\\.|ftp\\.)(?:\\([-A-Z0-9+&@#/%=~_|$?!:,.]*\\)|[-A-Z0-9+&@#/%=~_|$?!:,.])*(?:\\([-A-Z0-9+&@#/%=~_|$?!:,.]*\\)|[A-Z0-9+&@#/%=~_|$])",
+                                                              Pattern.CASE_INSENSITIVE);
+  private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-z0-9._%+-]+@[A-z0-9.-]+\\.[A-z]{2,5}$");
+  private static final Pattern PROTOCOL_PATTERN = Pattern.compile("^([A-z]+:)?//");
 
   public GenerationNode(TemplateToken templateToken,
                         int numberInIteration,
@@ -192,9 +196,8 @@ public class GenerationNode extends UserDataHolderBase {
     Map<String, String> predefinedValues;
     if (myTemplateToken instanceof TemplateToken && generator instanceof XmlZenCodingGenerator) {
       TemplateToken xmlTemplateToken = myTemplateToken;
-      Map<String, String> attributes = xmlTemplateToken.getAttributes();
-      parentTemplate = invokeXmlTemplate(xmlTemplateToken, callback, generator, hasChildren, attributes);
-      predefinedValues = buildPredefinedValues(attributes, (XmlZenCodingGenerator)generator, hasChildren);
+      parentTemplate = invokeXmlTemplate(xmlTemplateToken, callback, generator, hasChildren);
+      predefinedValues = buildPredefinedValues(xmlTemplateToken.getAttributes(), (XmlZenCodingGenerator)generator, hasChildren);
     }
     else {
       parentTemplate = invokeTemplate(myTemplateToken, hasChildren, callback, generator);
@@ -267,21 +270,37 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private TemplateImpl invokeXmlTemplate(final TemplateToken token,
-                                                CustomTemplateCallback callback,
-                                                @Nullable ZenCodingGenerator generator,
-                                                final boolean hasChildren,
-                                                final Map<String, String> attributes) {
+                                         CustomTemplateCallback callback,
+                                         @Nullable ZenCodingGenerator generator,
+                                         final boolean hasChildren) {
     /*assert generator == null || generator instanceof XmlZenCodingGenerator :
       "The generator cannot process TemplateToken because it doesn't inherit XmlZenCodingGenerator";*/
 
+    Map<String, String> attributes = token.getAttributes();
     TemplateImpl template = token.getTemplate();
     assert template != null;
 
     final XmlFile xmlFile = token.getFile();
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
-    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", StdFileTypes.HTML, xmlFile.getText());
+    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, xmlFile.getText(), false, true);
     final XmlTag tag = dummyFile.getRootTag();
     if (tag != null) {
+      
+      // autodetect href
+      if (EmmetOptions.getInstance().isHrefAutoDetectEnabled() && StringUtil.isNotEmpty(mySurroundedText)) {
+        final boolean isEmptyLinkTag = "a".equalsIgnoreCase(tag.getName()) && isEmptyValue(tag.getAttributeValue("href"));
+        if (!hasChildren && isEmptyLinkTag) {
+          if (HREF_PATTERN.matcher(mySurroundedText).matches()) {
+            attributes.put("href", PROTOCOL_PATTERN.matcher(mySurroundedText).find()
+                                   ? mySurroundedText.trim()
+                                   : "http://" + mySurroundedText.trim());
+          }
+          else if (EMAIL_PATTERN.matcher(mySurroundedText).matches()) {
+            attributes.put("href", "mailto:" + mySurroundedText.trim());
+          }
+        }
+      }
+
       for (Map.Entry<String, String> attribute : attributes.entrySet()) {
         if (Strings.isNullOrEmpty(attribute.getValue())) {
           template.addVariable(prepareVariableName(attribute.getKey()), "", "", true);
@@ -289,8 +308,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
       XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
       setAttributeValues(tag1, attributes, callback);
-      XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText("dummy.html", StdFileTypes.HTML, tag1.getContainingFile().getText(),
-                                                                     LocalTimeCounter.currentTime(), true);
+      XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText(HTMLLanguage.INSTANCE, tag1.getContainingFile().getText());
       VirtualFile vFile = physicalFile.getVirtualFile();
       if (vFile != null) {
         vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
@@ -304,7 +322,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private static String prepareVariableName(@NotNull String attributeName) {
-    return StringUtil.replaceChar(attributeName, '-', '_');
+    return StringUtil.replaceChar(StringUtil.replaceChar(attributeName, '-', '_'), '+', '_');
   }
 
   @NotNull
@@ -501,7 +519,7 @@ public class GenerationNode extends UserDataHolderBase {
     if (XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE.equals(attributeValue)) {
       return true;
     }
-    if (ZenCodingUtil.isHtml(callback)) {
+    if (ZenCodingUtil.isHtml(callback) && StringUtil.isEmpty(attributeValue)) {
       final XmlAttributeDescriptor descriptor = xmlAttribute.getDescriptor();
       return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, callback.getContext());
     }

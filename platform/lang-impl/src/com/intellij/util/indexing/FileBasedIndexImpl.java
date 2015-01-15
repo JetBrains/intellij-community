@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -786,7 +787,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (filter == GlobalSearchScope.EMPTY_SCOPE) {
       return;
     }
-    if (isDumb(project)) {
+    if (ActionUtil.isDumbMode(project)) {
       handleDumbMode(project);
     }
 
@@ -839,18 +840,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     throw new IndexNotReadyException();
-  }
-
-  private static boolean isDumb(@Nullable Project project) {
-    if (project != null) {
-      return DumbServiceImpl.getInstance(project).isDumb();
-    }
-    for (Project proj : ProjectManager.getInstance().getOpenProjects()) {
-      if (DumbServiceImpl.getInstance(proj).isDumb()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override

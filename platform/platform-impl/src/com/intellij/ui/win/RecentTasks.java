@@ -31,6 +31,9 @@ public class RecentTasks {
   private final static WeakReference<Thread> openerThread =
     new WeakReference<Thread>(Thread.currentThread());
 
+  private final static String openerThreadName =
+    Thread.currentThread().getName();
+
   static {
     UrlClassLoader.loadPlatformLibrary("jumpListBridge");
   }
@@ -71,6 +74,6 @@ public class RecentTasks {
   private static void checkThread() {
     Thread t = openerThread.get();
     if (t == null || !t.equals(Thread.currentThread()))
-      throw new RuntimeException("This class has to be used from the same thread");
+      throw new RuntimeException("Current thread is " + Thread.currentThread().getName() + "This class has to be used from " + openerThreadName + " thread");
   }
 }

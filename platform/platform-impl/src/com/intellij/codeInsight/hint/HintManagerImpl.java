@@ -111,7 +111,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     };
 
-    projectManager.addProjectManagerListener(new MyProjectManagerListener());
+    final MyProjectManagerListener projectManagerListener = new MyProjectManagerListener();
+    for (Project project : projectManager.getOpenProjects()) {
+      projectManagerListener.projectOpened(project);
+    }
+    projectManager.addProjectManagerListener(projectManagerListener);
 
     myEditorMouseListener = new EditorMouseAdapter() {
       @Override

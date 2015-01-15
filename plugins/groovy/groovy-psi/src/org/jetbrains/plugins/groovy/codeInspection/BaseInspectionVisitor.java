@@ -26,8 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
@@ -87,7 +87,7 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     registerError(variable.getNameIdentifierGroovy(), description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  protected void registerMethodCallError(GrMethodCallExpression method, Object... args) {
+  protected void registerMethodCallError(GrMethodCall method, Object... args) {
     if (method == null) {
       return;
     }
@@ -95,7 +95,6 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     final String description = StringUtil.notNullize(inspection.buildErrorString(args));
 
     final GrExpression invoked = method.getInvokedExpression();
-    assert invoked != null;
     final PsiElement nameElement = ((GrReferenceExpression)invoked).getReferenceNameElement();
     assert nameElement != null;
     registerError(nameElement, description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);

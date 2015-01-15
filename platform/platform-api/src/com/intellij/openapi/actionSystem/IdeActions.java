@@ -40,6 +40,8 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_BACKSPACE = "EditorBackSpace";
   @NonNls String ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION = "EditorLeftWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION = "EditorRightWithSelection";
+  @NonNls String ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION = "EditorUpWithSelection";
+  @NonNls String ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION = "EditorDownWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_CARET_UP = "EditorUp";
   @NonNls String ACTION_EDITOR_MOVE_CARET_LEFT = "EditorLeft";
   @NonNls String ACTION_EDITOR_MOVE_CARET_DOWN = "EditorDown";
@@ -92,6 +94,7 @@ public interface IdeActions {
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_DOT = "EditorChooseLookupItemDot";
   @NonNls String ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB = "ExpandLiveTemplateByTab";
   @NonNls String ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM = "ExpandLiveTemplateCustom";
+  @NonNls String ACTION_UPDATE_TAG_WITH_EMMET = "EmmetUpdateTag";
 
   @NonNls String ACTION_LOOKUP_UP = "EditorLookupUp";
   @NonNls String ACTION_LOOKUP_DOWN = "EditorLookupDown";

@@ -6,6 +6,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.*;
 
 import java.util.List;
@@ -113,7 +114,7 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
 
   @NotNull
   @Override
-  public MemberFilter createMemberFilter() {
+  public Promise<MemberFilter> createMemberFilter() {
     return debugProcess.createMemberFilter(this);
   }
 

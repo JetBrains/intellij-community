@@ -111,9 +111,12 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     if (editor == null) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (file != null) {
-        final FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(file.getVirtualFile());
-        if (fileEditor instanceof TextEditor) {
-          editor = ((TextEditor)fileEditor).getEditor();
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null) {
+          final FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(virtualFile);
+          if (fileEditor instanceof TextEditor) {
+            editor = ((TextEditor)fileEditor).getEditor();
+          }
         }
       }
     }

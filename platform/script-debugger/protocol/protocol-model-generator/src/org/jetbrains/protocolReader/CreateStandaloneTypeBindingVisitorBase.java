@@ -17,12 +17,12 @@ abstract class CreateStandaloneTypeBindingVisitorBase implements TypeVisitor<Sta
 
   @Override
   public StandaloneTypeBinding visitString() {
-    return generator.createTypedefTypeBinding(type, StandaloneTypeBinding.PredefinedTarget.STRING, generator.generator.getNaming().commonTypedef, null);
+    return generator.createTypedefTypeBinding(type, StandaloneTypeBinding.PredefinedTarget.STRING, generator.generator.naming.commonTypedef, null);
   }
 
   @Override
   public StandaloneTypeBinding visitInteger() {
-    return generator.createTypedefTypeBinding(type, StandaloneTypeBinding.PredefinedTarget.INT, generator.generator.getNaming().commonTypedef, null);
+    return generator.createTypedefTypeBinding(type, StandaloneTypeBinding.PredefinedTarget.INT, generator.generator.naming.commonTypedef, null);
   }
 
   @Override
@@ -38,13 +38,13 @@ abstract class CreateStandaloneTypeBindingVisitorBase implements TypeVisitor<Sta
   @Override
   public StandaloneTypeBinding visitNumber() {
     return generator.createTypedefTypeBinding(type, StandaloneTypeBinding.PredefinedTarget.NUMBER,
-                                              generator.generator.getNaming().commonTypedef, null);
+                                              generator.generator.naming.commonTypedef, null);
   }
 
   @Override
   public StandaloneTypeBinding visitMap() {
     return generator.createTypedefTypeBinding(type, StandaloneTypeBinding.PredefinedTarget.MAP,
-                                              generator.generator.getNaming().commonTypedef, null);
+                                              generator.generator.naming.commonTypedef, null);
   }
 
   @Override

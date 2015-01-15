@@ -45,7 +45,8 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
 
   static PsiMethod isTheLastClassRef(PsiElement element, PsiMethod member) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
-    if ( containingMethod != null && 
+    if ( containingMethod != null &&
+        !containingMethod.hasModifierProperty(PsiModifier.STATIC) &&
         !containingMethod.isConstructor() &&
          containingMethod.findDeepestSuperMethods().length == 0 &&
         !containingMethod.equals(member)) {

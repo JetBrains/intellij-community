@@ -19,10 +19,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -491,7 +488,29 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     }
 
     if (isInstanceofPlace(position)) {
-      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.INSTANCEOF), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.addElement(LookupElementDecorator.withInsertHandler(
+        createKeyword(position, PsiKeyword.INSTANCEOF),
+        new InsertHandler<LookupElementDecorator<LookupElement>>() {
+          @Override
+          public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+            TailType tailType = TailType.HUMBLE_SPACE_BEFORE_WORD;
+            if (tailType.isApplicable(context)) {
+              tailType.processTail(context.getEditor(), context.getTailOffset());
+            }
+            
+            if ('!' == context.getCompletionChar()) {
+              context.setAddCompletionChar(false);
+              context.commitDocument();
+              PsiInstanceOfExpression expr =
+                PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiInstanceOfExpression.class, false);
+              if (expr != null) {
+                String space = context.getCodeStyleSettings().SPACE_WITHIN_PARENTHESES ? " " : "";
+                context.getDocument().insertString(expr.getTextRange().getStartOffset(), "!(" + space);
+                context.getDocument().insertString(context.getTailOffset(), space + ")");
+              }
+            }
+          }
+        }));
     }
 
     if (isSuitableForClass(position)) {

@@ -78,6 +78,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
@@ -697,6 +698,64 @@ public class UIUtil {
         defColor.getBlue() + 50, 255)), defColor.darker());
     }
     return defColor;
+  }
+
+  private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<Class, Ref<Method>>();
+  public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
+    // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint 
+    ButtonUI ui = cb.getUI();
+    String text = cb.getText();
+
+    Icon buttonIcon = cb.getIcon();
+    if (buttonIcon == null && ui != null) {
+      if (ui instanceof BasicRadioButtonUI) {
+        buttonIcon = ((BasicRadioButtonUI)ui).getDefaultIcon();
+      }
+      else if (isUnderAquaLookAndFeel()) {
+        // inheritors of AquaButtonToggleUI
+        Ref<Method> cached = ourDefaultIconMethodsCache.get(ui.getClass());
+        if (cached == null) {
+          cached = Ref.create(ReflectionUtil.findMethod(Arrays.asList(ui.getClass().getMethods()), "getDefaultIcon", JComponent.class));
+          ourDefaultIconMethodsCache.put(ui.getClass(), cached);
+          if (!cached.isNull()) {
+            cached.get().setAccessible(true);
+          }
+        }
+        Method method = cached.get();
+        if (method != null) {
+          try {
+            buttonIcon = (Icon)method.invoke(ui, cb);
+          }
+          catch (Exception e) {
+            cached.set(null);
+          }
+        }
+      }
+    }
+
+    Dimension size = new Dimension();
+    Rectangle viewRect = new Rectangle();
+    Rectangle iconRect = new Rectangle();
+    Rectangle textRect = new Rectangle();
+
+    Insets i = cb.getInsets();
+
+    size = cb.getSize(size);
+    viewRect.x = i.left;
+    viewRect.y = i.top;
+    viewRect.width = size.width - (i.right + viewRect.x);
+    viewRect.height = size.height - (i.bottom + viewRect.y);
+    iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
+    textRect.x = textRect.y = textRect.width = textRect.height = 0;
+
+    SwingUtilities.layoutCompoundLabel(
+      cb, cb.getFontMetrics(cb.getFont()), text, buttonIcon,
+      cb.getVerticalAlignment(), cb.getHorizontalAlignment(),
+      cb.getVerticalTextPosition(), cb.getHorizontalTextPosition(),
+      viewRect, iconRect, textRect,
+      text == null ? 0 : cb.getIconTextGap());
+
+    return textRect.x;
   }
 
   public static int getScrollBarWidth() {
@@ -3154,6 +3213,10 @@ public class UIUtil {
     textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
     textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
+  }
+
+  public static void adjustRows(JTextArea area, int minRows, int maxRows) {
+    area.setRows(Math.max(minRows, Math.min(maxRows, area.getText().split("\n").length)));
   }
 
   public static void playSoundFromResource(final String resourceName) {

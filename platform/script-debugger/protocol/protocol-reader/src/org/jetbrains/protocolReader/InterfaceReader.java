@@ -1,6 +1,7 @@
 package org.jetbrains.protocolReader;
 
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.jsonProtocol.JsonField;
@@ -18,21 +19,18 @@ class InterfaceReader {
   private static final PrimitiveValueReader LONG_PARSER = new PrimitiveValueReader("long", "-1");
 
   private static final PrimitiveValueReader INTEGER_PARSER = new PrimitiveValueReader("int", "-1");
-  private static final PrimitiveValueReader NULLABLE_INTEGER_PARSER = new PrimitiveValueReader("int", "-1", true, false);
 
   private static final PrimitiveValueReader BOOLEAN_PARSER = new PrimitiveValueReader("boolean");
   private static final PrimitiveValueReader FLOAT_PARSER = new PrimitiveValueReader("float");
 
   private static final PrimitiveValueReader NUMBER_PARSER = new PrimitiveValueReader("double");
-  private static final PrimitiveValueReader NULLABLE_NUMBER_PARSER = new PrimitiveValueReader("double", true);
 
   private static final PrimitiveValueReader STRING_PARSER = new PrimitiveValueReader("String");
-  private static final PrimitiveValueReader NULLABLE_STRING_PARSER = new PrimitiveValueReader("String", true);
 
-  private static final PrimitiveValueReader RAW_STRING_PARSER = new PrimitiveValueReader("String", null, false, true);
-  private static final PrimitiveValueReader RAW_STRING_OR_MAP_PARSER = new PrimitiveValueReader("Object", null, false, true) {
+  private static final PrimitiveValueReader RAW_STRING_PARSER = new PrimitiveValueReader("String", null, true);
+  private static final PrimitiveValueReader RAW_STRING_OR_MAP_PARSER = new PrimitiveValueReader("Object", null, true) {
     @Override
-    void writeReadCode(ClassScope methodScope, boolean subtyping, String fieldName, TextOutput out) {
+    void writeReadCode(ClassScope methodScope, boolean subtyping, @NotNull TextOutput out) {
       out.append("readRawStringOrMap(");
       addReaderParameter(subtyping, out);
       out.append(')');
@@ -40,27 +38,20 @@ class InterfaceReader {
   };
 
   private static final RawValueReader JSON_PARSER = new RawValueReader(false);
-  private static final RawValueReader NULLABLE_JSON_PARSER = new RawValueReader(true);
 
-  private static final MapReader MAP_PARSER = new MapReader(false);
-  private static final MapReader NULLABLE_MAP_PARSER = new MapReader(true);
+  private static final MapReader MAP_PARSER = new MapReader(null);
 
   private static final StringIntPairValueReader STRING_INT_PAIR_PARSER = new StringIntPairValueReader();
 
-  final static ValueReader VOID_PARSER = new ValueReader(true) {
+  final static ValueReader VOID_PARSER = new ValueReader() {
     @Override
-    public void appendFinishedValueTypeName(TextOutput out) {
+    public void appendFinishedValueTypeName(@NotNull TextOutput out) {
       out.append("void");
     }
 
     @Override
-    void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, TextOutput out) {
+    void writeReadCode(ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
       out.append("null");
-    }
-
-    @Override
-    void writeArrayReadCode(ClassScope scope, boolean subtyping, boolean nullable, String fieldName, TextOutput out) {
-      throw new UnsupportedOperationException();
     }
   };
 
@@ -102,22 +93,21 @@ class InterfaceReader {
       // refs can be modified - new items can be added
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, n = refs.size(); i < n; i++) {
-        TypeRef<?> ref = refs.get(i);
-        TypeHandler<?> type = typeToTypeHandler.get(ref.typeClass);
-        if (type == null) {
+        TypeRef ref = refs.get(i);
+        ref.type = typeToTypeHandler.get(ref.typeClass);
+        if (ref.type == null) {
           createIfNotExists(ref.typeClass);
           hasUnresolved = true;
-          type = typeToTypeHandler.get(ref.typeClass);
-          if (type == null) {
+          ref.type = typeToTypeHandler.get(ref.typeClass);
+          if (ref.type == null) {
             throw new IllegalStateException();
           }
         }
-        ref.set(type);
       }
     }
 
     for (SubtypeCaster subtypeCaster : subtypeCasters) {
-      ExistingSubtypeAspect subtypeSupport = subtypeCaster.getSubtypeHandler().getSubtypeSupport();
+      ExistingSubtypeAspect subtypeSupport = subtypeCaster.getSubtypeHandler().subtypeAspect;
       if (subtypeSupport != null) {
         subtypeSupport.setSubtypeCaster(subtypeCaster);
       }
@@ -145,10 +135,10 @@ class InterfaceReader {
     }
 
     TypeHandler<?> typeHandler = createTypeHandler(typeClass);
-    for (TypeRef<?> ref : refs) {
+    for (TypeRef ref : refs) {
       if (ref.typeClass == typeClass) {
-        assert ref.get() == null;
-        ref.set(typeHandler);
+        assert ref.type == null;
+        ref.type = typeHandler;
         break;
       }
     }
@@ -175,103 +165,83 @@ class InterfaceReader {
                               fields.lazyRead);
   }
 
-  ValueReader getFieldTypeParser(Type type, boolean declaredNullable, boolean isSubtyping, @Nullable Method method) {
+  ValueReader getFieldTypeParser(Type type, boolean isSubtyping, @Nullable Method method) {
     if (type instanceof Class) {
       Class<?> typeClass = (Class<?>)type;
       if (type == Long.TYPE) {
-        nullableIsNotSupported(declaredNullable);
         return LONG_PARSER;
       }
       else if (type == Integer.TYPE) {
-        return declaredNullable ? NULLABLE_INTEGER_PARSER : INTEGER_PARSER;
+        return INTEGER_PARSER;
       }
       else if (type == Boolean.TYPE) {
-        nullableIsNotSupported(declaredNullable);
         return BOOLEAN_PARSER;
       }
       else if (type == Float.TYPE) {
-        nullableIsNotSupported(declaredNullable);
         return FLOAT_PARSER;
       }
       else if (type == Number.class || type == Double.TYPE) {
-        return declaredNullable ? NULLABLE_NUMBER_PARSER : NUMBER_PARSER;
+        return NUMBER_PARSER;
       }
       else if (type == Void.TYPE) {
-        nullableIsNotSupported(declaredNullable);
         return VOID_PARSER;
       }
       else if (type == String.class) {
-        if (declaredNullable) {
-          return NULLABLE_STRING_PARSER;
-        }
-        else {
-          if (method != null) {
-            JsonField jsonField = method.getAnnotation(JsonField.class);
-            if (jsonField != null && jsonField.allowAnyPrimitiveValue()) {
-              return RAW_STRING_PARSER;
-            }
+        if (method != null) {
+          JsonField jsonField = method.getAnnotation(JsonField.class);
+          if (jsonField != null && jsonField.allowAnyPrimitiveValue()) {
+            return RAW_STRING_PARSER;
           }
-          return STRING_PARSER;
         }
+        return STRING_PARSER;
       }
       else if (type == Object.class) {
         return RAW_STRING_OR_MAP_PARSER;
       }
       else if (type == JsonReaderEx.class) {
-        return declaredNullable ? NULLABLE_JSON_PARSER : JSON_PARSER;
+        return JSON_PARSER;
       }
       else if (type == Map.class) {
-        return declaredNullable ? NULLABLE_MAP_PARSER : MAP_PARSER;
+        return MAP_PARSER;
       }
       else if (type == StringIntPair.class) {
         return STRING_INT_PAIR_PARSER;
       }
       else if (typeClass.isArray()) {
-        return new ArrayReader(getFieldTypeParser(typeClass.getComponentType(), false, false, null), false,
-                               declaredNullable);
+        return new ArrayReader(getFieldTypeParser(typeClass.getComponentType(), false, null), false);
       }
       else if (typeClass.isEnum()) {
         //noinspection unchecked
-        return EnumReader.create((Class<RetentionPolicy>)typeClass, declaredNullable);
+        return EnumReader.create((Class<RetentionPolicy>)typeClass);
       }
       TypeRef<?> ref = getTypeRef(typeClass);
       if (ref != null) {
-        return createJsonParser(ref, declaredNullable, isSubtyping);
+        JsonField jsonField = method == null ? null : method.getAnnotation(JsonField.class);
+        return new ObjectValueReader<>(ref, isSubtyping, jsonField == null ? null : jsonField.primitiveValue());
       }
-      throw new JsonProtocolModelParseException("Method return type " + type + " (simple class) not supported");
+      throw new UnsupportedOperationException("Method return type " + type + " (simple class) not supported");
     }
     else if (type instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)type;
-      if (parameterizedType.getRawType() == List.class) {
-        Type argumentType = parameterizedType.getActualTypeArguments()[0];
+      boolean isList = parameterizedType.getRawType() == List.class;
+      if (isList || parameterizedType.getRawType() == Map.class) {
+        Type argumentType = parameterizedType.getActualTypeArguments()[isList ? 0 : 1];
         if (argumentType instanceof WildcardType) {
           WildcardType wildcard = (WildcardType)argumentType;
           if (wildcard.getLowerBounds().length == 0 && wildcard.getUpperBounds().length == 1) {
             argumentType = wildcard.getUpperBounds()[0];
           }
         }
-        return new ArrayReader(getFieldTypeParser(argumentType, false, false, method), true, declaredNullable);
-      }
-      else if (parameterizedType.getRawType() == Map.class) {
-        return declaredNullable ? NULLABLE_MAP_PARSER : MAP_PARSER;
+        ValueReader componentParser = getFieldTypeParser(argumentType, false, method);
+        return isList ? new ArrayReader(componentParser, true) : new MapReader(componentParser);
       }
       else {
-        throw new JsonProtocolModelParseException("Method return type " + type + " (generic) not supported");
+        throw new UnsupportedOperationException("Method return type " + type + " (generic) not supported");
       }
     }
     else {
-      throw new JsonProtocolModelParseException("Method return type " + type + " not supported");
+      throw new UnsupportedOperationException("Method return type " + type + " not supported");
     }
-  }
-
-  private static void nullableIsNotSupported(boolean declaredNullable) {
-    if (declaredNullable) {
-      throw new JsonProtocolModelParseException("The type cannot be declared nullable");
-    }
-  }
-
-  private static <T> ObjectValueReader<T> createJsonParser(TypeRef<T> type, boolean isNullable, boolean isSubtyping) {
-    return new ObjectValueReader<>(type, isNullable, isSubtyping);
   }
 
   <T> TypeRef<T> getTypeRef(Class<T> typeClass) {
@@ -296,8 +266,7 @@ class InterfaceReader {
       }
       Class<?> paramClass = (Class<?>)param;
       if (result != null) {
-        throw new JsonProtocolModelParseException("Already has superclass " +
-                                                  result.getTypeClass().getName());
+        throw new JsonProtocolModelParseException("Already has superclass " + result.typeClass.getName());
       }
       result = getTypeRef(paramClass);
       if (result == null) {

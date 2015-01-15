@@ -319,6 +319,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testInsideCatch() { doTest(); }
   public void testInsideCatchFinal() { doTest(); }
+  public void testInsideCatchWithoutThrow() { doTest(); }
 
   public void testGenerics6() throws Exception {
     String path = "/generics";

@@ -11,10 +11,10 @@ class Test {
 
         final Test test = (Test) o;
 
-        // Compare nested arrays - values of myIIs here
-        if (!Arrays.equals(myIs, test.myIs)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(myOs, test.myOs)) return false;
+        // Compare nested arrays - values of myIIs here
+        if (!Arrays.equals(myIs, test.myIs)) return false;
 
         return true;
     }

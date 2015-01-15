@@ -15,6 +15,7 @@
  */
 package com.intellij.remote;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author traff
@@ -44,12 +46,15 @@ public abstract class VagrantSupport {
   @NotNull
   public abstract RemoteCredentials getVagrantSettings(@NotNull Project project, String vagrantFolder);
 
+  @Deprecated
+  /**
+   * @deprecated use computeVagrantSettings
+   */
   public abstract void getVagrantSettingsAsync(@Nullable Project project,
                                                @NotNull String vagrantFolder,
                                                @NotNull Consumer<RemoteCredentials> onSuccess);
 
-  @NotNull
-  public abstract RemoteCredentials getCredentials(@NotNull String folder) throws IOException;
+  public abstract ListenableFuture<RemoteCredentials> computeVagrantSettings(@Nullable Project project, @NotNull String vagrantFolder, @Nullable String machineName);
 
   public static void showMissingVagrantSupportMessage(final @Nullable Project project) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -61,11 +66,25 @@ public abstract class VagrantSupport {
     });
   }
 
-  public abstract boolean checkVagrantRunning(String folder, boolean runIfDown);
+  @NotNull
+  public abstract RemoteCredentials getCredentials(@NotNull String vagrantFolder, @Nullable String machineName) throws IOException;
 
-  public abstract void runVagrant(String folder) throws ExecutionException;
+  public abstract boolean checkVagrantRunning(@NotNull String vagrantFolder, @Nullable String machineName, boolean askToRunIfDown);
+
+  public abstract void runVagrant(@NotNull String vagrantFolder, @Nullable String machineName) throws ExecutionException;
 
   public abstract Collection<? extends RemoteConnector> getVagrantInstancesConnectors(@NotNull Project project);
 
   public abstract boolean isVagrantInstance(VirtualFile dir);
+
+  public boolean isMultipleMachinesException(Throwable t) {
+    // false positives are ok as we double-check parsing Vagrantfile
+    return t.getMessage().contains("multi-VM"); // TODO: make sure it has no false negative
+  }
+
+  public abstract List<String> getMachineNames(@NotNull String instanceFolder);
+
+  public boolean isNotReadyForSsh(Throwable t) {
+    return t.getMessage().contains("not yet ready for SSH");
+  }
 }

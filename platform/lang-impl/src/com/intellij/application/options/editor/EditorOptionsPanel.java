@@ -102,6 +102,7 @@ public class EditorOptionsPanel {
   private JComboBox    myRichCopyColorSchemeComboBox;
   private JCheckBox    myShowInlineDialogForCheckBox;
   private JBLabel myStripTrailingSpacesExplanationLabel;
+  private JCheckBox myCbEnableRichCopyByDefault;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
 
@@ -229,6 +230,7 @@ public class EditorOptionsPanel {
     myErrorHighlightingPanel.reset();
 
     RichCopySettings settings = RichCopySettings.getInstance();
+    myCbEnableRichCopyByDefault.setSelected(settings.isEnabled());
     myRichCopyColorSchemeComboBox.removeAllItems();
     EditorColorsScheme[] schemes = EditorColorsManager.getInstance().getAllSchemes();
     myRichCopyColorSchemeComboBox.addItem(RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER);
@@ -360,6 +362,7 @@ public class EditorOptionsPanel {
     myErrorHighlightingPanel.apply();
 
     RichCopySettings settings = RichCopySettings.getInstance();
+    settings.setEnabled(myCbEnableRichCopyByDefault.isSelected());
     Object item = myRichCopyColorSchemeComboBox.getSelectedItem();
     if (item instanceof String) {
       settings.setSchemeName(item.toString());
@@ -485,6 +488,7 @@ public class EditorOptionsPanel {
     isModified |= myErrorHighlightingPanel.isModified();
 
     RichCopySettings settings = RichCopySettings.getInstance();
+    isModified |= isModified(myCbEnableRichCopyByDefault, settings.isEnabled());
     isModified |= !Comparing.equal(settings.getSchemeName(), myRichCopyColorSchemeComboBox.getSelectedItem());
 
     return isModified;

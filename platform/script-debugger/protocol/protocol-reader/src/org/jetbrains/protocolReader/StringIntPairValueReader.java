@@ -1,24 +1,25 @@
 package org.jetbrains.protocolReader;
 
+import org.jetbrains.annotations.NotNull;
+
 public class StringIntPairValueReader extends ValueReader {
   StringIntPairValueReader() {
-    super(false);
+    super();
   }
 
   @Override
-  void appendFinishedValueTypeName(TextOutput out) {
+  void appendFinishedValueTypeName(@NotNull TextOutput out) {
     out.append("StringIntPair");
   }
 
   @Override
-  void writeReadCode(ClassScope scope, boolean subtyping, String fieldName, TextOutput out) {
+  void writeReadCode(ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
   }
 
   @Override
-  void writeArrayReadCode(ClassScope scope,
+  void writeArrayReadCode(@NotNull ClassScope scope,
                           boolean subtyping,
-                          boolean nullable,
-                          String fieldName, TextOutput out) {
+                          @NotNull TextOutput out) {
     out.append("read").append("IntStringPairs").append('(');
     addReaderParameter(subtyping, out);
     out.append(')');

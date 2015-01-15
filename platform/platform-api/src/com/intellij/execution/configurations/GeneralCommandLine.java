@@ -333,11 +333,6 @@ public class GeneralCommandLine implements UserDataHolder {
         environment.putAll(myEnvParams);
       }
     }
-    if (SystemInfo.isWindows) {
-      // (Windows) An environment variable with empty name is incorrect.
-      // It'll end up in "CreateProcess error=87, The parameter is incorrect".
-      environment.remove("");
-    }
   }
 
   /**
@@ -381,9 +376,12 @@ public class GeneralCommandLine implements UserDataHolder {
         LOG.error(new Exception("Nulls are not allowed"));
         return null;
       }
-      else {
-        return super.put(key, value);
+      if (key.isEmpty()) {
+        // Windows: passing an environment variable with empty name causes "CreateProcess error=87, The parameter is incorrect"
+        LOG.warn("Skipping environment variable with empty name, value: " + value);
+        return null;
       }
+      return super.put(key, value);
     }
 
     @Override
