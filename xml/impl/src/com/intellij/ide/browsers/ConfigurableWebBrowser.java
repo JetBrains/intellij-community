@@ -69,7 +69,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
         return AllIcons.Xml.Browsers.Opera16;
       }
       else if (checkNameAndPath("node-webkit") || checkNameAndPath("nw")) {
-        return AllIcons.Xml.Browsers.Node_webkit16;
+        return AllIcons.Xml.Browsers.Nwjs16;
       }
     }
     return family.getIcon();
