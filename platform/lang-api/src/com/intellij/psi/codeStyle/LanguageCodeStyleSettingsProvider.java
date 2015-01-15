@@ -97,16 +97,6 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   /**
-   * @return True if the language uses the preview pane shared with other languages. The tab for the
-   *         language is shown above common settings' preview pane in this case.
-   * @deprecated Normally a language must have it's own settings/preview page.
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  public boolean usesSharedPreview() {
-    return false;
-  }
-
-  /**
    * @deprecated use PredefinedCodeStyle extension point instead
    */
   @NotNull
@@ -127,17 +117,6 @@ public abstract class LanguageCodeStyleSettingsProvider {
     }
     return languages.toArray(new Language[languages.size()]);
   }
-
-  @NotNull
-  public static Language[] getLanguagesWithSharedPreview() {
-  final ArrayList<Language> languages = new ArrayList<Language>();
-  for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-    if (provider.usesSharedPreview()) {
-      languages.add(provider.getLanguage());
-    }
-  }
-  return languages.toArray(new Language[languages.size()]);
-}
 
   @Nullable
   public static String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
