@@ -17,6 +17,7 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -26,20 +27,23 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public interface PerFileMappings<T> {
-  
+
+  @NotNull
   Map<VirtualFile, T> getMappings();
 
-  void setMappings(Map<VirtualFile, T> mappings);
+  void setMappings(@NotNull Map<VirtualFile, T> mappings);
 
-  Collection<T> getAvailableValues(final VirtualFile file);
+  void setMapping(@Nullable VirtualFile file, T value);
+
+  Collection<T> getAvailableValues(VirtualFile file);
 
   @Nullable
-  T getMapping(final VirtualFile file);
+  T getMapping(VirtualFile file);
 
   @Nullable
   T getDefaultMapping(@Nullable VirtualFile file);
 
-  T chosenToStored(final VirtualFile file, final T value);
+  T chosenToStored(VirtualFile file, T value);
 
-  boolean isSelectable(final T value);
+  boolean isSelectable(T value);
 }

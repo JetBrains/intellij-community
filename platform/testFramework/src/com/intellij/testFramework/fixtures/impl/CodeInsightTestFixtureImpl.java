@@ -1068,7 +1068,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
 
   @Override
-  public void completeBasicAllCarets() {
+  @NotNull
+  public final List<LookupElement> completeBasicAllCarets() {
     final CaretModel caretModel = myEditor.getCaretModel();
     final List<Caret> carets = caretModel.getAllCarets();
 
@@ -1082,10 +1083,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // We do it in reverse order because completions would affect offsets
     // i.e.: when you complete "spa" to "spam", next caret offset increased by 1
     Collections.reverse(originalOffsets);
+    final List<LookupElement> result = new ArrayList<LookupElement>();
     for (final int originalOffset : originalOffsets) {
       caretModel.moveToOffset(originalOffset);
-      completeBasic();
+      final LookupElement[] lookupElements = completeBasic();
+      if (lookupElements != null) {
+        result.addAll(Arrays.asList(lookupElements));
+      }
     }
+    return result;
   }
 
   @Override

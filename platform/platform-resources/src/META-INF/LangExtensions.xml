@@ -328,8 +328,17 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.LibraryScopeCache"
                     serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
-    <projectService serviceInterface="com.intellij.ide.scratch.ScratchpadManager"
-                    serviceImplementation="com.intellij.ide.scratch.ScratchpadManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
+                        serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl$App"/>
+    <projectService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
+                    serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl$Prj"/>
+    <fileTypeFactory implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$TypeFactory"/>
+    <fileIconProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$IconProvider"/>
+    <lang.substitutor language="TEXT" implementationClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Substitutor" order="first"/>
+    <syntaxHighlighter factoryClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Highlighter" order="first"/>
+    <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$AccessExtension"/>
+    <navbar implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$NavBarExtension"/>
+    <projectViewPane implementation="com.intellij.ide.scratch.ScratchProjectViewPane"/>
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="defaultLanguage"/>
@@ -867,9 +876,6 @@
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
 
     <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>
-
-    <virtualFileSystem key="scratchpad" implementationClass="com.intellij.ide.scratch.ScratchpadFileSystem"/>
-    <fileIconProvider implementation="com.intellij.ide.scratch.ScratchpadIconProvider"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.richcopy.settings.RichCopySettings"/>
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>

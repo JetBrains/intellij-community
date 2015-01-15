@@ -16,11 +16,10 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.GCUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.junit.Test;
 
-import java.lang.ref.SoftReference;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -96,12 +95,7 @@ public class ConcurrentMapsTest {
   }
 
   public static void tryGcSoftlyReachableObjects() {
-    SoftReference<?> reference = new SoftReference<Object>(new Object());
-    List<Object> list = ContainerUtil.newArrayList();
-    while (reference.get() != null) {
-      int chunk = (int)Math.min(Runtime.getRuntime().freeMemory() / 2, Integer.MAX_VALUE);
-      list.add(new SoftReference<byte[]>(new byte[chunk]));
-    }
+    GCUtil.tryGcSoftlyReachableObjects();
   }
 
   @Test(timeout = TIMEOUT)
