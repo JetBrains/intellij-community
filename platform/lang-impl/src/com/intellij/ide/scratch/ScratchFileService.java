@@ -24,12 +24,13 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public abstract class ScratchFileService {
 
-  public static final RootType SCRATCHES = RootType.newRootType("scratches", "Scratches");
+  public static final RootId SCRATCHES = new RootId("scratches", "Scratches");
 
   public static ScratchFileService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ScratchFileService.class);
@@ -40,9 +41,12 @@ public abstract class ScratchFileService {
   }
 
   @NotNull
-  public abstract String getRootPath(@NotNull RootType rootType);
+  public abstract String getRootPath(@NotNull RootId rootId);
 
-  public abstract boolean isFileInRoot(@NotNull VirtualFile file, @NotNull RootType rootType);
+  public abstract boolean isFileInRoot(@NotNull VirtualFile file, @NotNull RootId rootId);
+
+  @Nullable
+  public abstract VirtualFile getOrCreateFile(@NotNull RootId rootId, @NotNull String pathName) throws IOException;
 
   @Nullable
   public abstract VirtualFile createScratchFile(@NotNull Project project, @NotNull Language language, @NotNull String initialContent);
@@ -50,24 +54,30 @@ public abstract class ScratchFileService {
   @NotNull
   public abstract PerFileMappings<Language> getScratchesMapping();
 
-  public static class RootType {
-    private static final Map<String, RootType> ourInstances = ContainerUtil.newLinkedHashMap();
+  public static class RootId {
+    private static final Map<String, RootId> ourInstances = ContainerUtil.newLinkedHashMap();
 
     private final String myId;
     private final String myDisplayName;
 
-    private RootType(@NotNull String id, @Nullable String displayName) {
+    public RootId(@NotNull String id, @Nullable String displayName) {
       myId = id;
       myDisplayName = displayName;
+      synchronized (ourInstances) {
+        RootId prev = ourInstances.put(id, this);
+        if (prev != null) {
+          throw new AssertionError(String.format("rootType '%s' already registered", id));
+        }
+      }
     }
 
     @NotNull
-    public String getId() {
+    public final String getId() {
       return myId;
     }
 
     @Nullable
-    public String getDisplayName() {
+    public final String getDisplayName() {
       return myDisplayName;
     }
 
@@ -75,17 +85,10 @@ public abstract class ScratchFileService {
       return myDisplayName == null;
     }
 
-    public static synchronized RootType newRootType(String id, String displayName) {
-      RootType rootType = new RootType(id, displayName);
-      RootType prev = ourInstances.put(id, rootType);
-      if (prev != null) {
-        throw new AssertionError(String.format("rootType '%s' already registered", id));
+    public static synchronized List<RootId> getAllRootIds() {
+      synchronized (ourInstances) {
+        return ContainerUtil.newArrayList(ourInstances.values());
       }
-      return rootType;
-    }
-
-    public static synchronized List<RootType> getAllRootTypes() {
-      return ContainerUtil.newArrayList(ourInstances.values());
     }
   }
 }
