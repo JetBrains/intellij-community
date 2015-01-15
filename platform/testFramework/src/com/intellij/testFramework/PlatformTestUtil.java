@@ -830,10 +830,6 @@ public class PlatformTestUtil {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
   }
 
-  public static void gc() {
-    GCUtil.tryForceGC();
-  }
-
   public static void tryGcSoftlyReachableObjects() {
     GCUtil.tryGcSoftlyReachableObjects();
   }
