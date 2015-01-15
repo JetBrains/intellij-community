@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaCodeBlockModificationListener implements PsiTreeChangePreprocessor {
@@ -70,9 +69,11 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
   private void processChange(final PsiElement parent, final PsiElement child1, final PsiElement child2) {
     try {
       if (!isInsideCodeBlock(parent)) {
-        if (parent != null && isClassOwner(parent.getContainingFile()) ||
-            isClassOwner(child1) || isClassOwner(child2) || isSourceDir(parent) ||
-            (parent != null && isClassOwner(parent.getParent()))) {
+        if (isClassOwner(parent.getContainingFile()) ||
+            isClassOwner(child1) ||
+            isClassOwner(child2) ||
+            isSourceDir(parent) ||
+            isClassOwner(parent.getParent())) {
           myModificationTracker.incCounter();
         }
         else {
@@ -96,7 +97,7 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
   }
 
   private static boolean isClassOwner(final PsiElement element) {
-    return element instanceof PsiClassOwner && !(element instanceof XmlFile) || element instanceof JspDirective;
+    return element instanceof PsiClassOwner || element instanceof JspDirective;
   }
 
   private static boolean containsClassesInside(final PsiElement element) {
