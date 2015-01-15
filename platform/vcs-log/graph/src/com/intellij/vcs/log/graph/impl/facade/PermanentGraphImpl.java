@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
+import com.intellij.vcs.log.graph.collapsing.CollapsedLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
@@ -110,7 +111,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       controller = new BekBaseLinearGraphController(this, myBekIntMap);
     }
     else {
-      controller = new BaseLinearGraphController(this);
+      controller = new CollapsedLinearGraphController(new BaseLinearGraphController(this), this);
     }
     return new VisibleGraphImpl<CommitId>(controller, this);
     //
