@@ -25,8 +25,10 @@ import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.psi.PsiDirectory;
@@ -178,13 +180,14 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   private static class MyPsiNode extends BasePsiNode<PsiFileSystemItem> implements NavigatableWithText {
 
-    MyPsiNode(Project project, PsiFileSystemItem value) {
+    MyPsiNode(@NotNull Project project, @NotNull PsiFileSystemItem value) {
       super(project, value, ViewSettings.DEFAULT);
     }
 
     @Override
     public boolean isAlwaysLeaf() {
-      return !getValue().isDirectory();
+      PsiFileSystemItem value = getValue();
+      return value != null && !value.isDirectory();
     }
 
     @Nullable
@@ -192,27 +195,42 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     protected Collection<AbstractTreeNode> getChildrenImpl() {
       if (isAlwaysLeaf()) return Collections.emptyList();
       final List<AbstractTreeNode> list = ContainerUtil.newArrayList();
-      getValue().processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
-        @Override
-        public boolean execute(@NotNull PsiFileSystemItem element) {
-          list.add(new MyPsiNode(getProject(), element));
-          return true;
-        }
-      });
+      PsiFileSystemItem value = getValue();
+      if (value != null) {
+        value.processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
+          @Override
+          public boolean execute(@NotNull PsiFileSystemItem element) {
+            list.add(new MyPsiNode(getProject(), element));
+            return true;
+          }
+        });
+      }
       return list;
     }
 
     @Override
     protected void updateImpl(PresentationData data) {
       PsiFileSystemItem value = getValue();
-      data.setIcon(value.getIcon(0));
-      data.setPresentableText(value.getName());
+      if (value != null) {
+        data.setIcon(value.getIcon(0));
+        data.setPresentableText(value.getName());
+      }
     }
 
     @Nullable
     @Override
     public String getNavigateActionText(boolean focusEditor) {
       return null;
+    }
+
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      PsiFileSystemItem value = getValue();
+      if (!(value instanceof PsiDirectory)) return super.contains(file);
+      PsiDirectory dir = (PsiDirectory)value;
+
+      return VfsUtilCore.isAncestor(dir.getVirtualFile(), file, false) &&
+             !FileTypeRegistry.getInstance().isFileIgnored(file);
     }
   }
 }
