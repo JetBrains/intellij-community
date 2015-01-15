@@ -44,8 +44,8 @@ public class LinearGraphUtils {
     return intEqual(edge.getUpNodeIndex(), nodeIndex);
   }
 
-  public static boolean isNormalEdge(@NotNull GraphEdge edge) {
-    if (edge.getType().isNormalEdge()) {
+  public static boolean isNormalEdge(@Nullable GraphEdge edge) {
+    if (edge != null && edge.getType().isNormalEdge()) {
       assert edge.getUpNodeIndex() != null && edge.getDownNodeIndex() != null;
       return true;
     }
@@ -53,7 +53,7 @@ public class LinearGraphUtils {
   }
 
   @Nullable
-  public static Pair<Integer, Integer> asNormalEdge(@NotNull GraphEdge edge) {
+  public static Pair<Integer, Integer> asNormalEdge(@Nullable GraphEdge edge) {
     if (isNormalEdge(edge)) {
       assert edge.getUpNodeIndex() != null && edge.getDownNodeIndex() != null;
       return Pair.create(edge.getUpNodeIndex(), edge.getDownNodeIndex());
