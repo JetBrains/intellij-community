@@ -98,7 +98,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     final String canonicalSandbox = sandboxHome;
 
     //copy license from running instance of idea
-    IdeaLicenseHelper.copyIDEALicense(sandboxHome, ideaJdk);
+    IdeaLicenseHelper.copyIDEALicense(sandboxHome);
 
     final JavaCommandLineState state = new JavaCommandLineState(env) {
       @Override
