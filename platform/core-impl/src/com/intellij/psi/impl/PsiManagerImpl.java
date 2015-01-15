@@ -130,7 +130,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     else if (element instanceof PsiFileSystemItem) {
       virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
     }
-    if (virtualFile instanceof LightVirtualFile) return true;
+    if (file != null && file.isPhysical() && virtualFile instanceof LightVirtualFile) return true;
     if (virtualFile != null && virtualFile.getFileType() instanceof InternalFileType) return true;
 
     if (virtualFile != null) {
