@@ -23,6 +23,10 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class GCUtil {
+  /**
+   * Try to force VM to collect all the garbage along with soft- and weak-references.
+   * Method doesn't guarantee to succeed, and should not be used in the production code.
+   */
   public static void tryForceGC() {
     tryGcSoftlyReachableObjects();
     WeakReference<Object> weakReference = new WeakReference<Object>(new Object());
@@ -32,6 +36,10 @@ public class GCUtil {
     while (weakReference.get() != null);
   }
 
+  /**
+   * Try to force VM to collect dangling soft-references.
+   * Method doesn't guarantee to succeed, and should not be used in the production code.
+   */
   public static void tryGcSoftlyReachableObjects() {
     ReferenceQueue<Object> q = new ReferenceQueue<Object>();
     SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);

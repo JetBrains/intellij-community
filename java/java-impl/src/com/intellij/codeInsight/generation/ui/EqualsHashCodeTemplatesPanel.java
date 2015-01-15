@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
+import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -135,8 +136,8 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
 
   @Override
   protected UnnamedConfigurable createConfigurable(Couple<TemplateResource> item) {
-    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, myProject);
-    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, myProject);
+    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, GenerateEqualsHelper.getEqualsImplicitVars(myProject), myProject);
+    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, GenerateEqualsHelper.getHashCodeImplicitVars(), myProject);
     return new UnnamedConfigurable() {
       @Nullable
       @Override

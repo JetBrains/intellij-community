@@ -18,6 +18,7 @@ package com.intellij.codeInsight.generation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,6 +39,13 @@ import java.util.*;
  */
 public class GenerateEqualsHelper implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateEqualsHelper");
+
+  @NonNls private static final String INSTANCE_NAME = "instanceBaseName";
+  @NonNls private static final String BASE_PARAM_NAME = "baseParamName";
+  @NonNls private static final String SUPER_HAS_EQUALS = "superHasEquals";
+  @NonNls private static final String CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof";
+  @NonNls private static final String SUPER_HAS_HASH_CODE = "superHasHashCode";
+
   private final PsiClass myClass;
   private final PsiField[] myEqualsFields;
   private final PsiField[] myHashCodeFields;
@@ -141,7 +149,23 @@ public class GenerateEqualsHelper implements Runnable {
     }
   }
 
+  public static Map<String, PsiType> getEqualsImplicitVars(Project project) {
+    final Map<String, PsiType> map = new LinkedHashMap<String, PsiType>();
+    final PsiType stringType = project != null ? PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project))
+                                               : PsiType.NULL;
+    map.put(INSTANCE_NAME, stringType);
+    map.put(BASE_PARAM_NAME, stringType);
+    map.put(CHECK_PARAMETER_WITH_INSTANCEOF, PsiType.BOOLEAN);
+    map.put(SUPER_HAS_EQUALS, PsiType.BOOLEAN);
+    return map;
+  }
 
+  public static Map<String, PsiType> getHashCodeImplicitVars() {
+    final Map<String, PsiType> map = new LinkedHashMap<String, PsiType>();
+    map.put(SUPER_HAS_HASH_CODE, PsiType.BOOLEAN);
+    return map;
+  }
+  
   private PsiMethod createEquals() throws IncorrectOperationException {
     @NonNls StringBuilder buffer = new StringBuilder();
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
@@ -156,15 +180,15 @@ public class GenerateEqualsHelper implements Runnable {
     String[] nameSuggestions = codeStyleManager
       .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType).names;
     String instanceBaseName = nameSuggestions.length > 0 && nameSuggestions[0].length() < 10 ? nameSuggestions[0] : "that";
-    contextMap.put("instanceName", instanceBaseName);
+    contextMap.put(INSTANCE_NAME, instanceBaseName);
 
     final PsiType objectType = PsiType.getJavaLangObject(myClass.getManager(), myClass.getResolveScope());
     nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, objectType).names;
     final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : "object";
-    contextMap.put("baseParamName", objectBaseName);
+    contextMap.put(BASE_PARAM_NAME, objectBaseName);
     final MethodSignature equalsSignature = getEqualsSignature(myProject, myClass.getResolveScope());
-    contextMap.put("superHasEquals", superMethodExists(equalsSignature));
-    contextMap.put("checkParameterWithInstanceof", myCheckParameterWithInstanceof);
+    contextMap.put(SUPER_HAS_EQUALS, superMethodExists(equalsSignature));
+    contextMap.put(CHECK_PARAMETER_WITH_INSTANCEOF, myCheckParameterWithInstanceof);
 
     final String methodText = GenerationUtil
       .velocityGenerateCode(myClass, equalsFields, myNonNullSet, new HashMap<String, String>(), contextMap,
@@ -203,7 +227,7 @@ public class GenerateEqualsHelper implements Runnable {
     @NonNls StringBuilder buffer = new StringBuilder();
 
     final HashMap<String, Object> contextMap = new HashMap<String, Object>();
-    contextMap.put("superHasHashCode", mySuperHasHashCode);
+    contextMap.put(SUPER_HAS_HASH_CODE, mySuperHasHashCode);
 
     final String methodText = GenerationUtil
       .velocityGenerateCode(myClass, Arrays.asList(myHashCodeFields), myNonNullSet, new HashMap<String, String>(), contextMap, 
