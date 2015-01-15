@@ -1,13 +1,17 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +59,11 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
 
     PyTestCase.initPlatformPrefix();
+  }
+
+  @Nullable
+  public static PyPackage getInstalledDjango(@NotNull final Sdk sdk) throws ExecutionException {
+    return PyPackageManager.getInstance(sdk).findPackage("django", false);
   }
 
   @Override

@@ -39,6 +39,8 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.ColorGenerator;
 import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.graph.RowInfo;
+import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphMouseAction;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
@@ -321,16 +323,17 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   public void applyHighlighters(@NotNull Component rendererComponent, int row, boolean selected) {
+    RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
     boolean fgUpdated = false;
     for (VcsLogHighlighter highlighter : myHighlighters) {
-      Color color = highlighter.getForeground(myDataPack.getVisibleGraph().getRowInfo(row).getCommit(), selected);
+      Color color = highlighter.getForeground(rowInfo.getCommit(), selected);
       if (color != null) {
         rendererComponent.setForeground(color);
         fgUpdated = true;
       }
     }
     if (!fgUpdated) { // reset highlighting if no-one wants to change it
-      rendererComponent.setForeground(UIUtil.getTableForeground(selected));
+      rendererComponent.setForeground(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : UIUtil.getTableForeground(selected));
     }
   }
 

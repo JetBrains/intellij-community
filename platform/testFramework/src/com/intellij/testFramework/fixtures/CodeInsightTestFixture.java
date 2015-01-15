@@ -274,7 +274,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return duration
    */
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
-  
+
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, boolean ignoreExtraHighlighting);
 
   long checkHighlighting();
@@ -356,7 +356,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @param hint the text that the intention text should begin with.
    * @return the matching intention
-   * @throws java.lang.AssertionError if no intentions are found or if multiple intentions match the hint text. 
+   * @throws java.lang.AssertionError if no intentions are found or if multiple intentions match the hint text.
    */
   IntentionAction findSingleIntention(@NotNull String hint);
 
@@ -561,9 +561,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Actually, it works just like {@link #completeBasic()} but supports
    * several  {@link #CARET_MARKER}
    *
+   * @return list of all completion elements just like in {@link #completeBasic()}
    * @see #completeBasic()
    */
-  void completeBasicAllCarets();
+  @NotNull
+  List<LookupElement> completeBasicAllCarets();
 
   void saveText(VirtualFile file, String text);
 }

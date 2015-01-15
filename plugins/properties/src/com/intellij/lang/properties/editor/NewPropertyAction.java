@@ -20,12 +20,10 @@ import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -55,11 +53,15 @@ class NewPropertyAction extends AnAction {
     if (project == null) {
       return;
     }
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
-    if (editor == null || !(editor instanceof ResourceBundleEditor)) {
-      return;
+    final ResourceBundleEditor resourceBundleEditor;
+    final DataContext context = e.getDataContext();
+    FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context);
+    if (fileEditor instanceof ResourceBundleEditor) {
+      resourceBundleEditor = (ResourceBundleEditor)fileEditor;
+    } else {
+      final Editor editor = CommonDataKeys.EDITOR.getData(context);
+      resourceBundleEditor = editor != null ? editor.getUserData(ResourceBundleEditor.RESOURCE_BUNDLE_EDITOR_KEY) : null;
     }
-    final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)editor;
 
     final String prefix;
     final String separator;

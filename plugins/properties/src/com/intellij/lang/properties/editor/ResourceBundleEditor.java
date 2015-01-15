@@ -47,6 +47,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -85,6 +86,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     Logger.getInstance("#com.intellij.lang.properties.editor.ResourceBundleEditor");
   @NonNls private static final String VALUES               = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
+  public static final Key<ResourceBundleEditor> RESOURCE_BUNDLE_EDITOR_KEY = Key.create("resourceBundleEditor");
 
   private final StructureViewComponent      myStructureViewComponent;
   private final Map<PropertiesFile, Editor> myEditors;
@@ -798,11 +800,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
   }
 
-  private static Editor createEditor() {
+  private Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument("");
     EditorEx editor = (EditorEx)editorFactory.createEditor(document);
     reinitSettings(editor);
+    editor.putUserData(RESOURCE_BUNDLE_EDITOR_KEY, this);
     return editor;
   }
 
