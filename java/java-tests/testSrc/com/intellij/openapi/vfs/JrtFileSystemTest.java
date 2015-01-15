@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.junit.BeforeClass;

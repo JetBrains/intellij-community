@@ -154,12 +154,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = resolverCtx.getConnection().action(projectImportAction);
 
-    // TODO [vlad] remove the check
-    if (!GradleEnvironment.DISABLE_ENHANCED_TOOLING_API) {
-      File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionClasses);
-      if (initScript != null) {
-        ContainerUtil.addAll(commandLineArgs, GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
-      }
+    File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionClasses);
+    if (initScript != null) {
+      ContainerUtil.addAll(commandLineArgs, GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
     }
 
     GradleExecutionHelper.prepare(
@@ -298,7 +295,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                      @NotNull final ProjectConnectionDataNodeFunction projectConnectionDataNodeFunction) {
 
     if (projectConnectionDataNodeFunction.myIsPreviewMode
-        || GradleEnvironment.DISABLE_ENHANCED_TOOLING_API
         || !new File(projectConnectionDataNodeFunction.myProjectPath).isDirectory()) {
       return;
     }

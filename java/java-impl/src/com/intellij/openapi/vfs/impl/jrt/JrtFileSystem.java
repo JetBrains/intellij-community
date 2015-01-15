@@ -13,32 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs;
+package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
-import com.intellij.util.Function;
+import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 
 public class JrtFileSystem extends ArchiveFileSystem {
-  public static final String PROTOCOL = "jrt";
+  public static final String PROTOCOL = StandardFileSystems.JRT_PROTOCOL;
   public static final String SEPARATOR = JarFileSystem.JAR_SEPARATOR;
+
+  private final Map<String, ArchiveHandler> myHandlers = newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+  private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
 
   public JrtFileSystem() {
     scheduleConfiguredSdkCheck();
@@ -50,8 +64,9 @@ public class JrtFileSystem extends ArchiveFileSystem {
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appStarting(Project project) {
-        for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-          if (getHomePathIfModular(sdk) != null) {
+        for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
+          String homePath = sdk.getHomePath();
+          if (homePath != null && isModularJdk(homePath)) {
             String title = LangBundle.message("jrt.not.available.title", sdk.getName());
             String message = LangBundle.message("jrt.not.available.message");
             Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING));
@@ -60,16 +75,6 @@ public class JrtFileSystem extends ArchiveFileSystem {
         connection.disconnect();
       }
     });
-  }
-
-  private static String getHomePathIfModular(Sdk sdk) {
-    if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-      String homePath = sdk.getHomePath();
-      if (homePath != null && isModularJdk(homePath)) {
-        return homePath;
-      }
-    }
-    return null;
   }
 
   @NotNull
@@ -101,11 +106,54 @@ public class JrtFileSystem extends ArchiveFileSystem {
   @NotNull
   @Override
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
+    checkSubscription();
+
     final String homePath = extractLocalPath(extractRootPath(entryFile.getPath()));
-    return VfsImplUtil.getHandler(this, homePath + "/lib/modules", new Function<String, ArchiveHandler>() {
+    ArchiveHandler handler = myHandlers.get(homePath);
+    if (handler == null) {
+      handler = isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);
+      myHandlers.put(homePath, handler);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/lib/modules");
+          if (dir != null) dir.getChildren();
+        }
+      }, ModalityState.defaultModalityState());
+    }
+    return handler;
+  }
+
+  private void checkSubscription() {
+    if (mySubscribed.getAndSet(true)) return;
+
+    Application app = ApplicationManager.getApplication();
+    app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
-      public ArchiveHandler fun(String localPath) {
-        return isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        Set<VirtualFile> toRefresh = null;
+
+        for (VFileEvent event : events) {
+          if (event.getFileSystem() instanceof LocalFileSystem && event instanceof VFileContentChangeEvent) {
+            VirtualFile file = event.getFile();
+            if (file != null && "jimage".equals(file.getExtension())) {
+              String homePath = file.getParent().getParent().getParent().getPath();
+              if (myHandlers.remove(homePath) != null) {
+                VirtualFile root = findFileByPath(composeRootPath(homePath));
+                if (root != null) {
+                  ((NewVirtualFile)root).markDirtyRecursively();
+                  if (toRefresh == null) toRefresh = ContainerUtil.newHashSet();
+                  toRefresh.add(root);
+                }
+              }
+            }
+          }
+        }
+
+        if (toRefresh != null) {
+          boolean async = !ApplicationManager.getApplication().isUnitTestMode();
+          RefreshQueue.getInstance().refresh(async, true, null, toRefresh);
+        }
       }
     });
   }

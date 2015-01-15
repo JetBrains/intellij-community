@@ -21,6 +21,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,7 +149,10 @@ public abstract class EditorAction extends AnAction implements DumbAware {
       @Override
       public Object getData(String dataId) {
         if (PROJECT.is(dataId)) {
-          return editor.getProject();
+          final Project project = editor.getProject();
+          if (project != null) {
+            return project;
+          }
         }
         return original.getData(dataId);
       }

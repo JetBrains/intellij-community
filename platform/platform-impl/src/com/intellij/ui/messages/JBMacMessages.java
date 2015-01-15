@@ -49,7 +49,7 @@ public class JBMacMessages extends MacMessagesEmulation {
       window = getForemostWindow(null);
     }
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String [] {defaultButton, alternateButton, otherButton}, null, defaultButton, alternateButton);
+                                                 new String [] {defaultButton, alternateButton, otherButton}, doNotAskOption, defaultButton, alternateButton);
     String resultString = sheetMessage.getResult();
     int result = resultString.equals(defaultButton) ? Messages.YES : resultString.equals(alternateButton) ? Messages.NO : Messages.CANCEL;
     if (doNotAskOption != null) {

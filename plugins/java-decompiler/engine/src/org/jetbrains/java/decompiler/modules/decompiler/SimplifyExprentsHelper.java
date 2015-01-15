@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -448,7 +448,7 @@ public class SimplifyExprentsHelper {
             if (left.type != Exprent.EXPRENT_VAR && left.equals(econd)) {
               FunctionExprent ret = new FunctionExprent(
                 func.getFuncType() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_PPI : FunctionExprent.FUNCTION_MMI,
-                Arrays.asList(econd), func.bytecode);
+                econd, func.bytecode);
               ret.setImplicitType(VarType.VARTYPE_INT);
               return ret;
             }

@@ -46,7 +46,7 @@
 
   <application-components>
     <component>
-      <implementation-class>com.intellij.openapi.vfs.JrtFileSystem</implementation-class>
+      <implementation-class>com.intellij.openapi.vfs.impl.jrt.JrtFileSystem</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>

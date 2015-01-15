@@ -312,6 +312,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
         else if (JarFileSystem.PROTOCOL.equals(protocol)) {
           flat.add(extractLocalPath(url));
         }
+        else if (StandardFileSystems.JRT_PROTOCOL.equals(protocol)) {
+          recursive.add(extractLocalPath(url));
+        }
       }
     }
   }

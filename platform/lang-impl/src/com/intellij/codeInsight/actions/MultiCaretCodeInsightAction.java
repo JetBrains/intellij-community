@@ -37,16 +37,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Base class for PSI-aware editor actions that need to support multiple carets.
  * Recognizes multi-root PSI and injected fragments, so different carets might be processed in context of different
- * {@link com.intellij.openapi.editor.Editor} and {@link com.intellij.psi.PsiFile} instances.
+ * {@link Editor} and {@link PsiFile} instances.
  * <p>
  * Implementations should implement {@link #getHandler()} method, and might override {@link
- * #isValidFor(com.intellij.openapi.project.Project, com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.psi.PsiFile)} method.
+ * #isValidFor(Project, Editor, Caret, PsiFile)} method.
  *
- * @see com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler
+ * @see MultiCaretCodeInsightActionHandler
  */
 public abstract class MultiCaretCodeInsightAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -82,7 +82,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
 
     Project project = e.getProject();
@@ -132,7 +132,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
           handler.invoke(project, editor, caret, file);
         }
       }
-    }, true);
+    });
   }
 
   /**

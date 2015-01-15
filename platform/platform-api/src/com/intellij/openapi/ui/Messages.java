@@ -1673,7 +1673,11 @@ public class Messages {
         return myExitFunc.fun(exitCode, myCheckBox);
       }
 
-      return exitCode == OK_EXIT_CODE ? myCheckBox.isSelected() ? OK_EXIT_CODE : CANCEL_EXIT_CODE : CANCEL_EXIT_CODE;
+      boolean checkBoxSelected = (myCheckBox != null && myCheckBox.isSelected());
+
+      boolean okExitCode = (exitCode == OK_EXIT_CODE);
+
+      return checkBoxSelected && okExitCode ? OK_EXIT_CODE : CANCEL_EXIT_CODE;
     }
 
     @Override

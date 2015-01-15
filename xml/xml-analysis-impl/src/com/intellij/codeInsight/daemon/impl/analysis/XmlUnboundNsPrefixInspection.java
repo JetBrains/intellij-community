@@ -152,6 +152,11 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       LocalQuickFix fix = isOnTheFly ? XmlQuickFixFactory.getInstance().createNSDeclarationIntentionFix(context, namespacePrefix, token) : null;
       reportTagProblem(element, localizedMessage, range, highlightType, fix, holder);
     }
+    else if (element instanceof XmlAttribute) {
+      LocalQuickFix fix = isOnTheFly ? XmlQuickFixFactory.getInstance().createNSDeclarationIntentionFix(element, namespacePrefix, token) : null;
+      XmlAttribute attribute = (XmlAttribute)element;
+      holder.registerProblem(attribute.getNameElement(), localizedMessage, highlightType, range, fix);
+    }
     else {
       holder.registerProblem(element, localizedMessage, highlightType, range);
     }
