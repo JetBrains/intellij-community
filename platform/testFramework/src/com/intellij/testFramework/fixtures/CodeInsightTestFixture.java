@@ -40,6 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.usageView.UsageInfo;
@@ -59,7 +60,7 @@ import java.util.List;
  */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
-  @NonNls String CARET_MARKER = "<caret>";
+  @NonNls String CARET_MARKER = EditorTestUtil.CARET_TAG;
 
   @NonNls String ERROR_MARKER = "error";
   @NonNls String WARNING_MARKER = "warning";
@@ -119,7 +120,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return the VirtualFile for the copied directory in the test project directory.
    */
   @NotNull
-  VirtualFile copyDirectoryToProject(@NonNls @NotNull String sourceFilePath, @NonNls @NotNull String targetPath);
+  VirtualFile copyDirectoryToProject(@TestDataFile @NonNls @NotNull String sourceFilePath, @NonNls @NotNull String targetPath);
 
   /**
    * Copies a file from the testdata directory to the same relative path in the test project directory.
@@ -273,14 +274,14 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return duration
    */
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
-  
+
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, boolean ignoreExtraHighlighting);
 
   long checkHighlighting();
 
   /**
    * Runs highlighting test for the given files.
-   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set.
+   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with {@code checkInfos=false}.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
    * @return highlighting duration in milliseconds
@@ -355,7 +356,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @param hint the text that the intention text should begin with.
    * @return the matching intention
-   * @throws java.lang.AssertionError if no intentions are found or if multiple intentions match the hint text. 
+   * @throws java.lang.AssertionError if no intentions are found or if multiple intentions match the hint text.
    */
   IntentionAction findSingleIntention(@NotNull String hint);
 
@@ -560,7 +561,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Actually, it works just like {@link #completeBasic()} but supports
    * several  {@link #CARET_MARKER}
    *
+   * @return list of all completion elements just like in {@link #completeBasic()}
    * @see #completeBasic()
    */
-  void completeBasicAllCarets();
+  @NotNull
+  List<LookupElement> completeBasicAllCarets();
 }
