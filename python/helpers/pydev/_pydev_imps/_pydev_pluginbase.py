@@ -463,15 +463,9 @@ sys.modules[import_hook.__name__] = import_hook
 del builtins
 
 
-def patched_exc_info():
-    type, value, traceback = sys.system_exc_info()
-    if type == ImportError:
-        #we should not show frame added by plugin_import call
-        if traceback and hasattr(traceback, "tb_next"):
-            return type, value, traceback.tb_next
-    return type, value, traceback
+from _pydev_imps._pydev_sys_patch import patch_sys_module, patch_reload
+
+patch_sys_module()
+patch_reload()
 
 
-system_exc_info = sys.exc_info
-sys.exc_info = patched_exc_info
-sys.system_exc_info = system_exc_info
