@@ -107,12 +107,6 @@
           <option name="ASSIGNMENT_WRAP" value="1" />
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
         </codeStyleSettings>
-        <codeStyleSettings language="CoffeeScript">
-          <option name="KEEP_LINE_BREAKS" value="false" />
-          <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
-          <option name="METHOD_PARAMETERS_WRAP" value="5" />
-          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
-        </codeStyleSettings>
         <codeStyleSettings language="ECMA Script Level 4">
           <option name="KEEP_LINE_BREAKS" value="false" />
           <option name="ELSE_ON_NEW_LINE" value="true" />
@@ -224,10 +218,6 @@
             <option name="TAB_SIZE" value="8" />
           </indentOptions>
         </codeStyleSettings>
-        <codeStyleSettings language="JSON">
-          <option name="KEEP_LINE_BREAKS" value="false" />
-          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
-        </codeStyleSettings>
         <codeStyleSettings language="JSP">
           <indentOptions>
             <option name="INDENT_SIZE" value="2" />
@@ -319,3 +309,4 @@
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />
   </component>
 </project>
+
