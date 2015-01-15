@@ -26,6 +26,7 @@ import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 
 public class LinearGraphUtils {
@@ -136,4 +137,11 @@ public class LinearGraphUtils {
     };
   }
 
+  @NotNull
+  public static LinearGraphController.LinearGraphAnswer createHoverAnswer(boolean handCursor) {
+    Cursor cursor = Cursor.getDefaultCursor();
+    if (handCursor) cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+
+    return new LinearGraphController.LinearGraphAnswer(null, cursor, null);
+  }
 }
