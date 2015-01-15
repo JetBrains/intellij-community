@@ -120,6 +120,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
   @Override
   public void disposeContent() {
     myConnection.disconnect();
+    myContainer.removeAll();
     Disposer.dispose(myLogManager);
   }
 
