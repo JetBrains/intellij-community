@@ -154,6 +154,7 @@ class CodeProcessor {
 
   @NotNull
   private String prepareMessage(@NotNull Document document, @NotNull CharSequence textBeforeChange) {
+
     //int totalLinesProcessed = getProcessedLinesNumber(document, textBeforeChange);
     //
     //String linesInfo = "";
@@ -187,6 +188,8 @@ class CodeProcessor {
     }
 
     return builder.toString();
+
+
   }
 
   private static void showHint(@NotNull Editor editor, @NotNull String info) {

@@ -18,7 +18,9 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ImportOptimizer;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageImportStatements;
+import com.intellij.notification.UserNotificationInfoProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -28,6 +30,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
@@ -81,6 +84,9 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         }
       }
     }
+
+    prepareUserInfoMessage(optimizers);
+
     Runnable runnable = runnables.isEmpty() ? EmptyRunnable.getInstance() : new Runnable() {
       @Override
       public void run() {
@@ -96,5 +102,19 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       }
     };
     return new FutureTask<Boolean>(runnable, true);
+  }
+
+  private void prepareUserInfoMessage(Set<ImportOptimizer> optimizers) {
+    if (optimizers.size() == 1) {
+      ImportOptimizer optimizer = optimizers.iterator().next();
+      if (optimizer instanceof UserNotificationInfoProvider) {
+        String info = ((UserNotificationInfoProvider)optimizer).getUserNotificationInfo();
+        if (info != null) {
+          addNotificationInfo(info);
+        }
+        return;
+      }
+    }
+    addNotificationInfo("imports optimized");
   }
 }

@@ -17,6 +17,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.lang.ImportOptimizer;
+import com.intellij.notification.UserNotificationInfoProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -28,22 +29,32 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
-public class JavaImportOptimizer implements ImportOptimizer {
+public class JavaImportOptimizer implements ImportOptimizer, UserNotificationInfoProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaImportOptimizer");
+  private int myImportListLengthDiff;
 
   @Override
   @NotNull
   public Runnable processFile(final PsiFile file) {
+    myImportListLengthDiff = 0;
     if (!(file instanceof PsiJavaFile)) {
       return EmptyRunnable.getInstance();
     }
     Project project = file.getProject();
     final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
     if (newImportList == null) return EmptyRunnable.getInstance();
+
+    PsiImportList oldList = ((PsiJavaFile)file).getImportList();
+    if (oldList != null) {
+      //todo: better decision is to move calculation into runnable, since here we only plan to do things
+      //todo: and perform them after. Some exception may interrupt and we will see notification but nothing has happened
+      myImportListLengthDiff = oldList.getAllImportStatements().length - newImportList.getAllImportStatements().length;
+    }
     return new Runnable() {
       @Override
       public void run() {
@@ -62,6 +73,15 @@ public class JavaImportOptimizer implements ImportOptimizer {
         }
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public String getUserNotificationInfo() {
+    if (myImportListLengthDiff > 0) {
+      return "removed " + myImportListLengthDiff + " imports";
+    }
+    return null;
   }
 
   @Override
