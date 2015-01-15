@@ -122,18 +122,18 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
 
     Block lastBlock = myBlocks.isEmpty() ? null : myBlocks.get(myBlocks.size() - 1);
     Block currentBlock;
-    if (lastBlock == null || lastBlock.editor != editor || lastBlock.psiFile != file || endLine < (lastBlock.startLine - 1)) {
+    if (lastBlock == null || lastBlock.editor != editor || lastBlock.psiFile != file || startLine > (lastBlock.endLine + 1)) {
       currentBlock = new Block();
       currentBlock.editor = editor;
       currentBlock.psiFile = file;
-      currentBlock.endLine = endLine;
+      currentBlock.startLine = startLine;
       myBlocks.add(currentBlock);
     }
     else {
       currentBlock = lastBlock;
     }
     currentBlock.carets.add(caret);
-    currentBlock.startLine = startLine;
+    currentBlock.endLine = endLine;
 
     boolean wholeLinesSelected = !hasSelection ||
                                  startOffset == document.getLineStartOffset(document.getLineNumber(startOffset)) &&

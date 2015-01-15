@@ -54,6 +54,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,7 +199,7 @@ public class TypedHandler extends TypedActionHandlerBase {
           }
         }
         else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped/* || '/' == charTyped*/) {
-          if (handleQuote(editor, charTyped, dataContext, file)) return;
+          if (handleQuote(editor, charTyped, file)) return;
         }
 
         long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
@@ -233,7 +234,7 @@ public class TypedHandler extends TypedActionHandlerBase {
           indentOpenedParenth(project, editor);
         }
       }
-    }, true);
+    });
   }
 
   private static void type(Editor editor, char charTyped) {
@@ -250,6 +251,12 @@ public class TypedHandler extends TypedActionHandlerBase {
   public static void autoPopupCompletion(@NotNull Editor editor, char charTyped, @NotNull Project project, @NotNull PsiFile file) {
     if (charTyped == '.' || isAutoPopup(editor, file, charTyped)) {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
+    }
+  }
+  
+  public static void commitDocumentIfCurrentCaretIsNotTheFirstOne(@NotNull Editor editor, @NotNull Project project) {
+    if (ContainerUtil.getFirstItem(editor.getCaretModel().getAllCarets()) != editor.getCaretModel().getCurrentCaret()) {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     }
   }
 
@@ -425,7 +432,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     return true;
   }
 
-  private boolean handleQuote(@NotNull Editor editor, char quote, @NotNull DataContext dataContext, @NotNull PsiFile file) {
+  private static boolean handleQuote(@NotNull Editor editor, char quote, @NotNull PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return false;
     final QuoteHandler quoteHandler = getQuoteHandler(file, editor);
     if (quoteHandler == null) return false;
