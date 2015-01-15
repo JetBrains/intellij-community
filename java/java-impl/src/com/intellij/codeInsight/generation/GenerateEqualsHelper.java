@@ -161,7 +161,7 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   public static Map<String, PsiType> getHashCodeImplicitVars() {
-    return ContainerUtil.newLinkedHashMap(Pair.create(SUPER_HAS_HASH_CODE, PsiType.BOOLEAN));
+    return ContainerUtil.newLinkedHashMap(Pair.<String, PsiType>create(SUPER_HAS_HASH_CODE, PsiType.BOOLEAN));
   }
   
   private PsiMethod createEquals() throws IncorrectOperationException {
