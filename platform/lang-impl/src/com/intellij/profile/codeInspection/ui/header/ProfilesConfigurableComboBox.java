@@ -44,7 +44,7 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
 
     myCardLayout = new CardLayout();
     myComboBoxPanel.setLayout(myCardLayout);
-    myComboBoxPanel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(4, 0, 6, 0)));
+    setBorder(IdeBorderFactory.createEmptyBorder(new Insets(4, 0, 6, 0)));
 
     myProfilesComboBox = new JComboBox();
     myComboBoxPanel.add(myProfilesComboBox, COMBO_CARD);
