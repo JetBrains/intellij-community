@@ -616,6 +616,27 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  public void testTryImportWithReload() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_try_import.py") {
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 29);
+        toggleBreakpoint(getScriptPath(), 30);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("result.__name__").hasValue("'datetime'");
+        resume();
+        waitForPause();
+        eval("result").hasValue("None");
+        resume();
+      }
+    });
+  }
+
 
   //TODO: fix me as I don't work properly sometimes (something connected with process termination on agent)
   //public void testResume() throws Exception {
