@@ -125,6 +125,10 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       }
     }
 
+    if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
+      return new LoadingDiffRequest(ChangeDiffRequestPresentable.getRequestTitle(change));
+    }
+
     return null;
   }
 
