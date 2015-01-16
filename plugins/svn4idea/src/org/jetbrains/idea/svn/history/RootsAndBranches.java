@@ -670,7 +670,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       holder = getHolder(wcPath);
     }
     if (holder != null) {
-      return holder.getDecorator().check(list, ignoreEnabled);
+      return holder.check(list, ignoreEnabled);
     }
     return null;
   }

@@ -53,7 +53,6 @@ public class MergeInfoHolder {
   private final Getter<WCInfoWithBranches.Branch> myBranchGetter;
   private final Getter<String> myWcPathGetter;
   private final Getter<Boolean> myEnabledHolder;
-  private final MyDecorator myDecorator;
 
   public MergeInfoHolder(final Project project, final DecoratorManager manager, final Getter<WCInfoWithBranches> rootGetter,
                          final Getter<WCInfoWithBranches.Branch> branchGetter,
@@ -66,8 +65,6 @@ public class MergeInfoHolder {
     myMixedRevisionsConsumer = mixedRevisionsConsumer;
     myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
     myCachedMap = new HashMap<Couple<String>, MergeinfoCached>();
-
-    myDecorator = new MyDecorator();
   }
 
   private MergeinfoCached getCurrentCache() {
@@ -163,60 +160,50 @@ public class MergeInfoHolder {
     }
   }
 
-  public static interface ListChecker {
-    ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled);
+  private ListMergeStatus convert(SvnMergeInfoCache.MergeCheckResult result, final boolean refreshing) {
+    if (result != null) {
+      if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result)) {
+        return ListMergeStatus.MERGED;
+      } else if (SvnMergeInfoCache.MergeCheckResult.COMMON.equals(result)) {
+        return ListMergeStatus.COMMON;
+      } else {
+        return ListMergeStatus.NOT_MERGED;
+      }
+    }
+    if (refreshing) {
+      return ListMergeStatus.REFRESHING;
+    }
+    return ListMergeStatus.ALIEN;
   }
 
-  class MyDecorator implements ListChecker {
-    private ListMergeStatus convert(SvnMergeInfoCache.MergeCheckResult result, final boolean refreshing) {
-      if (result != null) {
-        if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result)) {
-          return ListMergeStatus.MERGED;
-        } else if (SvnMergeInfoCache.MergeCheckResult.COMMON.equals(result)) {
-          return ListMergeStatus.COMMON;
-        } else {
-          return ListMergeStatus.NOT_MERGED;
-        }
-      }
-      if (refreshing) {
-        return ListMergeStatus.REFRESHING;
-      }
+  public ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled) {
+    if (! enabledAndGettersFilled(ignoreEnabled)) {
       return ListMergeStatus.ALIEN;
     }
 
-    public ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled) {
-      if (! enabledAndGettersFilled(ignoreEnabled)) {
-        return ListMergeStatus.ALIEN;
-      }
+    if (! (list instanceof SvnChangeList)) {
+      return ListMergeStatus.ALIEN;
+    }
 
-      if (! (list instanceof SvnChangeList)) {
-        return ListMergeStatus.ALIEN;
+    final MergeinfoCached cachedState = getCurrentCache();
+    if (cachedState != null) {
+      if (cachedState.getCopyRevision() != -1 && cachedState.getCopyRevision() >= list.getNumber()) {
+        return ListMergeStatus.COMMON;
       }
-
-      final MergeinfoCached cachedState = getCurrentCache();
-      if (cachedState != null) {
-        if (cachedState.getCopyRevision() != -1 && cachedState.getCopyRevision() >= list.getNumber()) {
+      final SvnMergeInfoCache.MergeCheckResult result = cachedState.getMap().get(list.getNumber());
+      return convert(result, true);
+    } else {
+      final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myWcPathGetter.get());
+      if (state == null) {
+        refresh(ignoreEnabled);
+        return ListMergeStatus.REFRESHING;
+      } else {
+        if (state.getCopyRevision() != -1 && state.getCopyRevision() >= list.getNumber()) {
           return ListMergeStatus.COMMON;
         }
-        final SvnMergeInfoCache.MergeCheckResult result = cachedState.getMap().get(list.getNumber());
-        return convert(result, true);
-      } else {
-        final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myWcPathGetter.get());
-        if (state == null) {
-          refresh(ignoreEnabled);
-          return ListMergeStatus.REFRESHING;
-        } else {
-          if (state.getCopyRevision() != -1 && state.getCopyRevision() >= list.getNumber()) {
-            return ListMergeStatus.COMMON;
-          }
-          return convert(state.getMap().get(list.getNumber()), false);
-        }
+        return convert(state.getMap().get(list.getNumber()), false);
       }
     }
-  }
-
-  public ListChecker getDecorator() {
-    return myDecorator;
   }
 
   public void updateMixedRevisionsForPanel() {
