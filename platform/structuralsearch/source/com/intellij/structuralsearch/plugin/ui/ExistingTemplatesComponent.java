@@ -90,12 +90,7 @@ public class ExistingTemplatesComponent {
     }
 
     panel = ToolbarDecorator.createDecorator(patternTree)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          addSelectedTreeNodeAndClose();
-        }
-      }).setRemoveAction(new AnActionButtonRunnable() {
+      .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           Object selection = patternTree.getLastSelectedPathComponent();
@@ -165,13 +160,6 @@ public class ExistingTemplatesComponent {
         return true;
       }
     }.installOn(component);
-  }
-
-  private void addSelectedTreeNodeAndClose() {
-    addConfigurationToUserTemplates(
-      Configuration.getConfigurationCreator().createConfiguration()
-    );
-    owner.close(DialogWrapper.OK_EXIT_CODE);
   }
 
   private static Tree createTree(TreeModel treeModel) {
