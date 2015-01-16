@@ -70,6 +70,16 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("<divv<caret>></div>", "\bd", "<divd></divd>");
   }
 
+  public void testCompletionSimple() {
+    doTestCompletion("<html><body></body><b<caret>></b><html>", null,
+                     "<html><body></body><body></body><html>");
+  }
+
+  public void testCompletionWithLookup() {
+    doTestCompletion("<html><body></body><bertran></bertran><b<caret>></b><html>", "e\n",
+                     "<html><body></body><bertran></bertran><bertran></bertran><html>");
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -98,6 +108,23 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
         }
       }, "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
     }
+    myFixture.checkResult(result);
+  }
+
+  private void doTestCompletion(final String text, final String toType, final String result) {
+    myFixture.configureByText(XmlFileType.INSTANCE, text);
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            myFixture.completeBasic();
+            if (toType != null) myFixture.type(toType);
+          }
+        });
+      }
+    }, "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
     myFixture.checkResult(result);
   }
 
