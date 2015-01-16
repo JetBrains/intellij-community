@@ -466,6 +466,11 @@ public class PyFormatterTest extends PyTestCase {
     }
   }
 
+  // PY-12145
+  public void testAlignmentOfClosingBraceInDictLiteralWhenNoHangingIndent() {
+    doTest();
+  }
+
   /**
    * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
    * is possible for Python sources.
