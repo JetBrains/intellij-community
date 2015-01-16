@@ -148,8 +148,8 @@
 
     <statistics.usagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnWorkingCopyFormatUsagesCollector"/>
 
-    <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
-        implementation="org.jetbrains.idea.svn.difftool.SvnChangeDiffRequestProvider"/>
+    <openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider
+        implementation="org.jetbrains.idea.svn.difftool.SvnChangeDiffViewerProvider"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
         implementation="org.jetbrains.idea.svn.difftool.SvnPhantomChangeDiffRequestProvider"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider

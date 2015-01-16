@@ -21,14 +21,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.diff.impl.DiffViewerWrapper;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
-public interface ChangeDiffRequestProvider {
-  ExtensionPointName<ChangeDiffRequestProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider");
+public interface ChangeDiffViewerWrapperProvider {
+  ExtensionPointName<ChangeDiffViewerWrapperProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider");
 
   @NotNull
   ThreeState isEquals(@NotNull Change change1, @NotNull Change change2);
@@ -36,7 +36,7 @@ public interface ChangeDiffRequestProvider {
   boolean canCreate(@NotNull Project project, @NotNull Change change);
 
   @NotNull
-  DiffRequest process(@NotNull ChangeDiffRequestPresentable presentable,
-                      @NotNull UserDataHolder context,
-                      @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException, ProcessCanceledException;
+  DiffViewerWrapper process(@NotNull ChangeDiffRequestPresentable presentable,
+                            @NotNull UserDataHolder context,
+                            @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException, ProcessCanceledException;
 }

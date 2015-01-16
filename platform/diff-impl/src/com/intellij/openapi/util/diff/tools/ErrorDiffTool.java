@@ -3,8 +3,7 @@ package com.intellij.openapi.util.diff.tools;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
-import com.intellij.openapi.util.diff.requests.LoadingDiffRequest;
-import com.intellij.openapi.util.diff.requests.NoDiffRequest;
+import com.intellij.openapi.util.diff.requests.MessageDiffRequest;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,13 +46,10 @@ public class ErrorDiffTool implements FrameDiffTool {
     private static String getMessage(@NotNull DiffRequest request) {
       if (request instanceof ErrorDiffRequest) {
         // TODO: explain some of exceptions ?
-        return ((ErrorDiffRequest)request).getErrorMessage();
+        return ((ErrorDiffRequest)request).getMessage();
       }
-      if (request instanceof NoDiffRequest) {
-        return "Nothing to show";
-      }
-      if (request instanceof LoadingDiffRequest) {
-        return "Loading...";
+      if (request instanceof MessageDiffRequest) {
+        return ((MessageDiffRequest)request).getMessage();
       }
 
       return "Can't show diff";

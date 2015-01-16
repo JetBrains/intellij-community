@@ -26,10 +26,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.impl.DiffRequestProcessor;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
-import com.intellij.openapi.util.diff.requests.LoadingDiffRequest;
-import com.intellij.openapi.util.diff.requests.NoDiffRequest;
+import com.intellij.openapi.util.diff.requests.*;
 import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
 import com.intellij.openapi.util.diff.util.CalledInBackground;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
@@ -118,7 +115,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   @Nullable
   @Contract("null -> !null")
   protected DiffRequest loadRequestFast(@Nullable Change change) {
-    if (change == null) return NoDiffRequest.INSTANCE;
+    if (change == null) return new NoDiffRequest();
 
     Pair<Change, DiffRequest> pair = myRequestCache.get(change);
     if (pair != null) {
@@ -140,7 +137,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       return presentable.process(getContext(), indicator);
     }
     catch (ProcessCanceledException e) {
-      return new ErrorDiffRequest(presentable, "Operation Canceled"); // TODO: add reload action
+      return new OperationCanceledDiffRequest(presentable.getName());
     }
     catch (DiffRequestPresentableException e) {
       return new ErrorDiffRequest(presentable, e);

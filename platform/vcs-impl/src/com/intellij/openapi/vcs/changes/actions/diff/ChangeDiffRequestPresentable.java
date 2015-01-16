@@ -34,7 +34,9 @@ import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.impl.DiffViewerWrapper;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.io.FileUtil;
@@ -66,6 +68,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull private final Map<Key, Object> myChangeContext;
 
   public static boolean isEquals(@NotNull Change change1, @NotNull Change change2) {
+    for (ChangeDiffViewerWrapperProvider provider : ChangeDiffViewerWrapperProvider.EP_NAME.getExtensions()) {
+      ThreeState equals = provider.isEquals(change1, change2);
+      if (equals == ThreeState.NO) return false;
+    }
     for (ChangeDiffRequestProvider provider : ChangeDiffRequestProvider.EP_NAME.getExtensions()) {
       ThreeState equals = provider.isEquals(change1, change2);
       if (equals == ThreeState.YES) return true;
@@ -93,6 +99,9 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   private static boolean canCreate(@NotNull Project project, @NotNull Change change) {
+    for (ChangeDiffViewerWrapperProvider provider : ChangeDiffViewerWrapperProvider.EP_NAME.getExtensions()) {
+      if (provider.canCreate(project, change)) return true;
+    }
     for (ChangeDiffRequestProvider provider : ChangeDiffRequestProvider.EP_NAME.getExtensions()) {
       if (provider.canCreate(project, change)) return true;
     }
@@ -142,7 +151,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     catch (DiffRequestPresentableException e) {
       throw e;
     }
-    catch (Throwable e) {
+    catch (Exception e) {
       LOG.warn(e);
       throw new DiffRequestPresentableException(e.getMessage());
     }
@@ -151,16 +160,50 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull
   protected DiffRequest loadCurrentContents(@NotNull UserDataHolder context,
                                             @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
-    DiffRequest request = null;
-    for (ChangeDiffRequestProvider provider : ChangeDiffRequestProvider.EP_NAME.getExtensions()) {
-      if (provider.canCreate(myProject, myChange)) {
-        request = provider.process(this, context, indicator);
-        break;
+    DiffRequestPresentableException wrapperException = null;
+    DiffRequestPresentableException requestException = null;
+
+    DiffViewerWrapper wrapper = null;
+    try {
+      for (ChangeDiffViewerWrapperProvider provider : ChangeDiffViewerWrapperProvider.EP_NAME.getExtensions()) {
+        if (provider.canCreate(myProject, myChange)) {
+          wrapper = provider.process(this, context, indicator);
+          break;
+        }
       }
     }
-    if (request == null) request = createRequest(myProject, myChange, context, indicator);
+    catch (DiffRequestPresentableException e) {
+      wrapperException = e;
+    }
+
+    DiffRequest request = null;
+    try {
+      for (ChangeDiffRequestProvider provider : ChangeDiffRequestProvider.EP_NAME.getExtensions()) {
+        if (provider.canCreate(myProject, myChange)) {
+          request = provider.process(this, context, indicator);
+          break;
+        }
+      }
+      if (request == null) request = createRequest(myProject, myChange, context, indicator);
+    }
+    catch (DiffRequestPresentableException e) {
+      requestException = e;
+    }
+
+    if (requestException != null && wrapperException != null) {
+      String message = requestException.getMessage() + "\n\n" + wrapperException.getMessage();
+      throw new DiffRequestPresentableException(message);
+    }
+    if (requestException != null) {
+      request = new ErrorDiffRequest(getRequestTitle(myChange), requestException);
+      LOG.info("Request: " + requestException.getMessage());
+    }
+    if (wrapperException != null) {
+      LOG.info("Wrapper: " + wrapperException.getMessage());
+    }
 
     request.putUserData(CONTENT_REVISIONS, new ContentRevision[]{myChange.getBeforeRevision(), myChange.getAfterRevision()});
+    request.putUserData(DiffViewerWrapper.KEY, wrapper);
 
     for (Map.Entry<Key, Object> entry : myChangeContext.entrySet()) {
       request.putUserData(entry.getKey(), entry.getValue());
@@ -177,10 +220,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   @NotNull
-  public static DiffRequest createRequest(@NotNull Project project,
-                                          @NotNull Change change,
-                                          @NotNull UserDataHolder context,
-                                          @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
+  private static DiffRequest createRequest(@NotNull Project project,
+                                           @NotNull Change change,
+                                           @NotNull UserDataHolder context,
+                                           @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException {
     if (ChangesUtil.isTextConflictingChange(change)) { // three side diff
       // FIXME: This part is ugly as a VCS merge subsystem itself.
 

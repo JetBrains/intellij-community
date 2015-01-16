@@ -65,7 +65,7 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
     @Nullable private final Window myWindow;
     @NotNull private final UserDataHolder myContext = new UserDataHolderBase();
 
-    @NotNull private DiffRequest myRequest = NoDiffRequest.INSTANCE;
+    @NotNull private DiffRequest myRequest = new NoDiffRequest();
 
     public MyCacheDiffRequestChainProcessor(@Nullable Project project, @Nullable Window window) {
       super(project);
@@ -73,7 +73,7 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
     }
 
     public void setRequest(@Nullable DiffRequest request) {
-      myRequest = request != null ? request : NoDiffRequest.INSTANCE;
+      myRequest = request != null ? request : new NoDiffRequest();
     }
 
     @Override

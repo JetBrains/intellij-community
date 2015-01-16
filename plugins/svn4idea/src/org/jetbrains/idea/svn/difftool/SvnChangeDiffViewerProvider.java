@@ -8,13 +8,12 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.impl.DiffViewerWrapper;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,12 +26,17 @@ import org.jetbrains.idea.svn.properties.PropertyData;
 import java.util.List;
 import java.util.Map;
 
-public class SvnChangeDiffRequestProvider implements ChangeDiffRequestProvider {
-  private static final Logger LOG = Logger.getInstance(SvnChangeDiffRequestProvider.class);
+public class SvnChangeDiffViewerProvider implements ChangeDiffViewerWrapperProvider {
+  private static final Logger LOG = Logger.getInstance(SvnChangeDiffViewerProvider.class);
 
   @NotNull
   @Override
   public ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
+    Change layer1 = getSvnChangeLayer(change1);
+    Change layer2 = getSvnChangeLayer(change2);
+    if (layer1 != null || layer2 != null) {
+      if (layer1 == null || layer2 == null) return ThreeState.NO;
+    }
     return ThreeState.UNSURE;
   }
 
@@ -43,41 +47,13 @@ public class SvnChangeDiffRequestProvider implements ChangeDiffRequestProvider {
 
   @NotNull
   @Override
-  public DiffRequest process(@NotNull ChangeDiffRequestPresentable presentable,
-                             @NotNull UserDataHolder context,
-                             @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException, ProcessCanceledException {
-    // TODO: support tree/properties conflict for merge
+  public DiffViewerWrapper process(@NotNull ChangeDiffRequestPresentable presentable,
+                                   @NotNull UserDataHolder context,
+                                   @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException, ProcessCanceledException {
+    // TODO: support properties conflict for three-way-diff
 
-    DiffRequestPresentableException e1 = null;
-    DiffRequestPresentableException e2 = null;
-
-    DiffRequest propertyRequest;
-    try {
-      propertyRequest = createPropertyRequest(presentable.getChange(), indicator);
-    }
-    catch (DiffRequestPresentableException e) {
-      e1 = e;
-      propertyRequest = new ErrorDiffRequest(presentable, e);
-    }
-
-    DiffRequest contentRequest;
-    try {
-      contentRequest = ChangeDiffRequestPresentable.createRequest(presentable.getProject(), presentable.getChange(), context, indicator);
-    }
-    catch (DiffRequestPresentableException e) {
-      e2 = e;
-      contentRequest = new ErrorDiffRequest(presentable, e);
-    }
-
-    if (e1 != null && e2 != null) {
-      LOG.info(e1);
-      LOG.info(e2);
-      throw new DiffRequestPresentableException(e1.getMessage() + "\n\n" + e2.getMessage());
-    }
-
-    contentRequest.putUserData(DiffViewerWrapper.KEY, new SvnDiffViewerWrapper(propertyRequest));
-
-    return contentRequest;
+    DiffRequest propertyRequest = createPropertyRequest(presentable.getChange(), indicator);
+    return new SvnDiffViewerWrapper(propertyRequest);
   }
 
   @NotNull

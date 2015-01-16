@@ -146,7 +146,7 @@ public class SvnDiffViewer implements DiffViewer {
   @Nullable
   private JComponent createNotification() {
     if (myPropertyRequest instanceof ErrorDiffRequest) {
-      return createNotification(((ErrorDiffRequest)myPropertyRequest).getErrorMessage());
+      return createNotification(((ErrorDiffRequest)myPropertyRequest).getMessage());
     }
 
     DiffContent[] contents = ((SvnPropertiesDiffRequest)myPropertyRequest).getContents();

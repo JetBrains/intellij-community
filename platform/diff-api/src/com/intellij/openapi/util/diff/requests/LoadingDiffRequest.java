@@ -1,21 +1,13 @@
 package com.intellij.openapi.util.diff.requests;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class LoadingDiffRequest extends DiffRequestBase {
-  @NotNull private final String myTitle;
+public class LoadingDiffRequest extends MessageDiffRequest {
+  public LoadingDiffRequest(@Nullable String title) {
+    super(title, "Loading...");
+  }
 
   public LoadingDiffRequest() {
-    this("Loading diff...");
-  }
-
-  public LoadingDiffRequest(@NotNull String message) {
-    myTitle = message;
-  }
-
-  @NotNull
-  @Override
-  public String getTitle() {
-    return myTitle;
+    super("Loading...");
   }
 }

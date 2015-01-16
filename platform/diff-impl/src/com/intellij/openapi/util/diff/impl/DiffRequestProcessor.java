@@ -75,7 +75,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myToolOrder = new LinkedList<DiffTool>(myAvailableTools);
 
     myContext = new MyDiffContext();
-    myActiveRequest = NoDiffRequest.INSTANCE;
+    myActiveRequest = new NoDiffRequest();
 
     // UI
 

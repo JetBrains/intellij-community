@@ -64,5 +64,7 @@
 
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"
+                    interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"/>
   </extensionPoints>
 </idea-plugin>

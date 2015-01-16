@@ -1,13 +1,13 @@
 package com.intellij.openapi.util.diff.requests;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class NoDiffRequest extends DiffRequestBase {
-  public static final NoDiffRequest INSTANCE = new NoDiffRequest();
+public class NoDiffRequest extends MessageDiffRequest {
+  public NoDiffRequest(@Nullable String title) {
+    super(title, "Nothing to show");
+  }
 
-  @NotNull
-  @Override
-  public String getTitle() {
-    return "Nothing To Show";
+  public NoDiffRequest() {
+    super("Nothing to show");
   }
 }
