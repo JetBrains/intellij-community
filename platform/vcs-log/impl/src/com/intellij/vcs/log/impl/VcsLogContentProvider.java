@@ -49,10 +49,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
 
   @NotNull private final Project myProject;
-  @NotNull private VcsLogManager myLogManager;
+  @NotNull private final VcsLogManager myLogManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private final VcsLogSettings mySettings;
-  @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
   private MessageBusConnection myConnection;
 
@@ -62,8 +60,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
                                @NotNull VcsLogUiProperties uiProperties) {
     myProject = project;
     myVcsManager = manager;
-    mySettings = settings;
-    myUiProperties = uiProperties;
     myLogManager = new VcsLogManager(project, settings, uiProperties);
   }
 
@@ -130,7 +126,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
       myContainer.removeAll();
       Disposer.dispose(myLogManager);
 
-      myLogManager = new VcsLogManager(myProject, mySettings, myUiProperties);
       initContentInternal();
     }
   }

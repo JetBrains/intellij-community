@@ -70,12 +70,13 @@ public class VcsLogManager implements Disposable {
     myProject = project;
     mySettings = settings;
     myUiProperties = uiProperties;
-    Disposer.register(myProject, this);
   }
 
   @NotNull
   public JComponent initContent(@NotNull Collection<VcsRoot> roots, @Nullable String contentTabName) {
-    final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots);
+    Disposer.register(myProject, this);
+
+    final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
 
     Consumer<VisiblePack> visiblePackConsumer = new Consumer<VisiblePack>() {
       @Override
