@@ -45,6 +45,11 @@ public class LayoutCodeNotification {
     this.rearrangeCodeNotification = rearrangeCodeNotification;
   }
 
+  public boolean hasReformatOrRearrangeNotification() {
+    return rearrangeCodeNotification != null
+           || reformatCodeNotification != null;
+  }
+
   public boolean isEmpty() {
     return optimizeImportsNotification == null
            && rearrangeCodeNotification == null

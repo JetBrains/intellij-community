@@ -43,15 +43,17 @@ class CodeProcessor {
 
   private final Editor myEditor;
 
+  private boolean myNoChangesDetected = false;
+  private final boolean myProcessChangesTextOnly;
+
   private final boolean myShouldOptimizeImports;
   private final boolean myShouldRearrangeCode;
   private final boolean myProcessSelectedText;
-  private final boolean myProcessChangesTextOnly;
+
   private final boolean myShouldNotify;
-
   private final Project myProject;
-  private final PsiFile myFile;
 
+  private final PsiFile myFile;
   private AbstractLayoutCodeProcessor myProcessor;
 
   public CodeProcessor(PsiFile file,
@@ -73,6 +75,10 @@ class CodeProcessor {
   public void processCode() {
     if (myShouldOptimizeImports) {
       myProcessor = new OptimizeImportsProcessor(myProject, myFile);
+    }
+
+    if (myProcessChangesTextOnly && !FormatChangedTextUtil.hasChanges(myFile)) {
+      myNoChangesDetected = true;
     }
 
     myProcessor = mixWithReformatProcessor(myProcessor);
@@ -149,20 +155,30 @@ class CodeProcessor {
     LayoutCodeNotification notifications = myProcessor.getNotificationInfo();
     LOG.assertTrue(notifications != null);
 
-    if (notifications.isEmpty()) {
-      builder.append("Code looks pretty well").append("<br>");
-    } else {
-      String reformatNotification = notifications.getReformatCodeNotification();
-      String rearrangeNotification = notifications.getRearrangeCodeNotification();
+    if (notifications.isEmpty() && !myNoChangesDetected) {
+      builder.append("Code processed, nothing changed").append("<br>");
+    }
+    else {
+      if (notifications.hasReformatOrRearrangeNotification()) {
+        String reformatNotification = notifications.getReformatCodeNotification();
+        String rearrangeNotification = notifications.getRearrangeCodeNotification();
 
-      if (rearrangeNotification != null || reformatNotification != null) {
-        String firstNotificationLine = joinAndCapitalizeFirst(reformatNotification, rearrangeNotification);
-        if (myProcessChangesTextOnly) {
-          builder.append("Processed lines, changed since last revision: ");
-          firstNotificationLine = StringUtil.decapitalize(firstNotificationLine);
+        if (rearrangeNotification != null || reformatNotification != null) {
+          String firstNotificationLine = joinAndCapitalizeFirst(reformatNotification, rearrangeNotification);
+          if (myProcessChangesTextOnly) {
+            builder.append("Processed lines, changed since last revision: ");
+            firstNotificationLine = StringUtil.decapitalize(firstNotificationLine);
+          }
+          builder.append(firstNotificationLine);
+          builder.append("<br>");
         }
-        builder.append(firstNotificationLine);
-        builder.append("<br>");
+      }
+      else if (myNoChangesDetected) {
+        builder.append("Nothing to format");
+        if (myShouldRearrangeCode) {
+          builder.append(" and rearrange");
+        }
+        builder.append(", no changes since last revision").append("<br>");
       }
 
       String optimizeImportsNotification = notifications.getOptimizeImportsNotification();
