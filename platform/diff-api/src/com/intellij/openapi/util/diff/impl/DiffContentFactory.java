@@ -1,8 +1,6 @@
 package com.intellij.openapi.util.diff.impl;
 
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffContentUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -55,7 +53,7 @@ public class DiffContentFactory {
   @NotNull
   public static DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return new DirectoryContentImpl(project, file);
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = FileDocumentManager.getInstance().getDocument(file); // TODO: add notification, that file is decompiled ?
     if (document != null) return new FileDocumentContentImpl(project, document, file);
     return new BinaryFileContentImpl(project, file);
   }
@@ -63,7 +61,6 @@ public class DiffContentFactory {
   @Nullable
   public static DocumentContent createDocument(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
-    if (!DiffContentUtil.isTextFile(file)) return null;
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return null;
     return new FileDocumentContentImpl(project, document, file);
@@ -82,28 +79,34 @@ public class DiffContentFactory {
   }
 
   @NotNull
-  public static BinaryFileContentImpl createBinary(@Nullable Project project,
-                                                   @NotNull String name,
-                                                   @NotNull FileType type,
-                                                   @NotNull byte[] content) throws IOException {
-    if (type instanceof ArchiveFileType) {
-      // workaround - our JarFileSystem can't process non-local files
+  public static DiffContent createBinary(@Nullable Project project,
+                                         @NotNull String name,
+                                         @NotNull FileType type,
+                                         @NotNull byte[] content) throws IOException {
+    boolean useTemporalFile = true; // TODO: workaround for Decompiler
+    //boolean useTemporalFile = type instanceof ArchiveFileType; // workaround - our JarFileSystem can't process non-local files
+
+    VirtualFile file;
+    if (useTemporalFile) {
       if (type.getDefaultExtension().isEmpty()) {
-        return createTemporalFile(project, "tmp_", "_" + name, content);
+        file = createTemporalFile(project, "tmp_", "_" + name, content);
       }
       else {
-        return createTemporalFile(project, name + "_", "." + type.getDefaultExtension(), content);
+        file = createTemporalFile(project, name + "_", "." + type.getDefaultExtension(), content);
       }
     }
+    else {
+      file = new BinaryLightVirtualFile(name, type, content);
+    }
 
-    return new BinaryFileContentImpl(project, new BinaryLightVirtualFile(name, type, content));
+    return create(project, file);
   }
 
   @NotNull
-  public static BinaryFileContentImpl createTemporalFile(@Nullable Project project,
-                                                         @NotNull String prefix,
-                                                         @NotNull String suffix,
-                                                         @NotNull byte[] content) throws IOException {
+  public static VirtualFile createTemporalFile(@Nullable Project project,
+                                               @NotNull String prefix,
+                                               @NotNull String suffix,
+                                               @NotNull byte[] content) throws IOException {
     File tempFile = FileUtil.createTempFile(prefix + "_", "_" + suffix, true);
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
@@ -116,7 +119,7 @@ public class DiffContentFactory {
     if (file == null) {
       throw new IOException("Can't create temp file for revision content");
     }
-    return new BinaryFileContentImpl(project, file);
+    return file;
   }
 
   @NotNull
