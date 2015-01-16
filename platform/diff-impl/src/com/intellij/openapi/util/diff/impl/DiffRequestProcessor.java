@@ -345,7 +345,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     public void update(AnActionEvent e) {
       if (!ExternalDiffTool.isEnabled()) {
-        e.getPresentation().setVisible(false);
+        e.getPresentation().setEnabledAndVisible(false);
         return;
       }
       e.getPresentation().setEnabled(ExternalDiffTool.canShow(myActiveRequest));
@@ -556,7 +556,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!isNavigationEnabled()) {
-        e.getPresentation().setVisible(false);
+        e.getPresentation().setEnabledAndVisible(false);
         return;
       }
 
@@ -574,7 +574,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!isNavigationEnabled()) {
-        e.getPresentation().setVisible(false);
+        e.getPresentation().setEnabledAndVisible(false);
         return;
       }
 
