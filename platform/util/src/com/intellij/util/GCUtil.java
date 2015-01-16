@@ -45,6 +45,7 @@ public class GCUtil {
     SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
     List<Object> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
     for (int i = 0; i < 100; i++) {
+      System.gc();
       if (q.poll() != null) {
         break;
       }
