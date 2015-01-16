@@ -68,7 +68,7 @@ public class SvnMergeInfoCache {
   }
 
   @Nullable
-  public MergeinfoCached getCachedState(final WCPaths info, final String branchPath) {
+  public MergeInfoCached getCachedState(final WCPaths info, final String branchPath) {
     final String currentUrl = info.getRootUrl();
 
     MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(currentUrl);

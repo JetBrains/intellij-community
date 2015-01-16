@@ -41,7 +41,7 @@ public class MergeInfoHolder {
   @NotNull private final SvnMergeInfoRootPanelManual myPanel;
 
   // used ONLY when refresh is triggered
-  @NotNull private final Map<Couple<String>, MergeinfoCached> myCachedMap;
+  @NotNull private final Map<Couple<String>, MergeInfoCached> myCachedMap;
 
   public MergeInfoHolder(@NotNull Project project,
                          @NotNull DecoratorManager manager,
@@ -55,7 +55,7 @@ public class MergeInfoHolder {
   }
 
   @Nullable
-  private MergeinfoCached getCurrentCache() {
+  private MergeInfoCached getCurrentCache() {
     return myCachedMap.get(createKey(myPanel.getWcInfo(), myPanel.getBranch()));
   }
 
@@ -91,8 +91,8 @@ public class MergeInfoHolder {
 
     if (refreshEnabled(ignoreEnabled)) {
       // on awt thread
-      final MergeinfoCached state = myMergeInfoCache.getCachedState(myPanel.getWcInfo(), myPanel.getLocalBranch());
-      myCachedMap.put(createKey(myPanel.getWcInfo(), myPanel.getBranch()), state != null ? state.copy() : new MergeinfoCached());
+      final MergeInfoCached state = myMergeInfoCache.getCachedState(myPanel.getWcInfo(), myPanel.getLocalBranch());
+      myCachedMap.put(createKey(myPanel.getWcInfo(), myPanel.getBranch()), state != null ? state.copy() : new MergeInfoCached());
       myMergeInfoCache.clear(myPanel.getWcInfo(), myPanel.getLocalBranch());
 
       result = new MyRefresher();
@@ -124,7 +124,7 @@ public class MergeInfoHolder {
         final long number = list.getNumber();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            final MergeinfoCached cachedState = myCachedMap.get(createKey(myRefreshedRoot, myRefreshedBranch));
+            final MergeInfoCached cachedState = myCachedMap.get(createKey(myRefreshedRoot, myRefreshedBranch));
             if (cachedState != null) {
               cachedState.getMap().put(number, checkState);
             }
@@ -154,8 +154,8 @@ public class MergeInfoHolder {
       result = ListMergeStatus.ALIEN;
     }
     else {
-      MergeinfoCached cachedState = getCurrentCache();
-      MergeinfoCached state = myMergeInfoCache.getCachedState(myPanel.getWcInfo(), myPanel.getLocalBranch());
+      MergeInfoCached cachedState = getCurrentCache();
+      MergeInfoCached state = myMergeInfoCache.getCachedState(myPanel.getWcInfo(), myPanel.getLocalBranch());
 
       result = cachedState != null ? check(list, cachedState, true) : state != null ? check(list, state, false) : refresh(ignoreEnabled);
     }
@@ -164,7 +164,7 @@ public class MergeInfoHolder {
   }
 
   @NotNull
-  public ListMergeStatus check(@NotNull CommittedChangeList list, @NotNull MergeinfoCached state, boolean isCached) {
+  public ListMergeStatus check(@NotNull CommittedChangeList list, @NotNull MergeInfoCached state, boolean isCached) {
     SvnMergeInfoCache.MergeCheckResult mergeCheckResult = state.getMap().get(list.getNumber());
     ListMergeStatus result = state.copiedAfter(list) ? ListMergeStatus.COMMON : ListMergeStatus.from(mergeCheckResult);
 

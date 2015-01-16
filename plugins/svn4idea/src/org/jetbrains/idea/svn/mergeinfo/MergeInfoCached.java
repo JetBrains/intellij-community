@@ -21,17 +21,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class MergeinfoCached {
+public class MergeInfoCached {
 
   @NotNull private final Map<Long, SvnMergeInfoCache.MergeCheckResult> myMap;
   private final long myCopyRevision;
 
-  public MergeinfoCached() {
+  public MergeInfoCached() {
     myMap = ContainerUtil.newHashMap();
     myCopyRevision = -1;
   }
 
-  public MergeinfoCached(@NotNull Map<Long, SvnMergeInfoCache.MergeCheckResult> map, long copyRevision) {
+  public MergeInfoCached(@NotNull Map<Long, SvnMergeInfoCache.MergeCheckResult> map, long copyRevision) {
     myMap = ContainerUtil.newHashMap(map);
     myCopyRevision = copyRevision;
   }
@@ -42,8 +42,8 @@ public class MergeinfoCached {
   }
 
   @NotNull
-  public MergeinfoCached copy() {
-    return new MergeinfoCached(myMap, myCopyRevision);
+  public MergeInfoCached copy() {
+    return new MergeInfoCached(myMap, myCopyRevision);
   }
 
   public boolean copiedAfter(@NotNull CommittedChangeList list) {

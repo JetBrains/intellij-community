@@ -96,7 +96,7 @@ public class BranchInfo {
     myMixedRevisionsFound = false;
   }
 
-  public MergeinfoCached getCached() {
+  public MergeInfoCached getCached() {
     synchronized (myCalculatedLock) {
       final long revision;
       if (myCopyRevison != null && myCopyRevison.getRevision() != -1) {
@@ -104,7 +104,7 @@ public class BranchInfo {
       } else {
         revision = -1;
       }
-      return new MergeinfoCached(Collections.unmodifiableMap(myAlreadyCalculatedMap), revision);
+      return new MergeInfoCached(Collections.unmodifiableMap(myAlreadyCalculatedMap), revision);
     }
   }
 
