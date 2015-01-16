@@ -12,10 +12,7 @@ import com.intellij.openapi.util.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.openapi.util.diff.chains.DiffRequestChain;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
-import com.intellij.openapi.util.diff.requests.NoDiffRequest;
-import com.intellij.openapi.util.diff.requests.OperationCanceledDiffRequest;
+import com.intellij.openapi.util.diff.requests.*;
 import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.util.Consumer;
@@ -36,6 +33,18 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
     super(project);
     myRequestChain = requestChain;
+  }
+
+  @Override
+  public void init() {
+    super.init();
+
+    if (myRequestChain.getRequests().isEmpty()) {
+      applyRequest(new NoDiffRequest(), true, null);
+    }
+    else {
+      applyRequest(new LoadingDiffRequest(), true, null);
+    }
   }
 
   //

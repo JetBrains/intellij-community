@@ -72,6 +72,11 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
       myWindow = window;
     }
 
+    @Override
+    public void init() {
+      applyRequest(new NoDiffRequest(), true, null);
+    }
+
     public void setRequest(@Nullable DiffRequest request) {
       myRequest = request != null ? request : new NoDiffRequest();
     }

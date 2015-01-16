@@ -60,8 +60,10 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
 
   @Override
   public void init() {
-    myContextDataHolder.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
     super.init();
+    myContextDataHolder.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
+
+    applyRequest(new NoDiffRequest(), true, null);
   }
 
   //
