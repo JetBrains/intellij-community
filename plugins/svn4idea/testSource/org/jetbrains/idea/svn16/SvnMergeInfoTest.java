@@ -30,6 +30,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.info.Info;
@@ -48,6 +49,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 // TODO: Full duplicate of SvnMergeInfoTest in org.jetbrains.idea.svn.
@@ -59,6 +61,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
   private File myBranchVcsRoot;
   private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;
   private WCInfo myWCInfo;
+  private WCInfoWithBranches myWCInfoWithBranches;
   private OneShotMergeInfoHelper myOneShotMergeInfoHelper;
 
   private SvnVcs myVcs;
@@ -101,7 +104,9 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     final String repoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    myMergeChecker = new BranchInfo(myVcs, repoUrl, repoUrl + "/branch", repoUrl + "/trunk", repoUrl + "/trunk");
+    myWCInfoWithBranches =
+      new WCInfoWithBranches(myWCInfo, Collections.<WCInfoWithBranches.Branch>emptyList(), vcsRoot, repoUrl + "/trunk");
+    myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl + "/branch"));
   }
 
   @Test

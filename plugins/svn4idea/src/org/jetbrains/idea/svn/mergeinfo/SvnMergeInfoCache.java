@@ -89,19 +89,16 @@ public class SvnMergeInfoCache {
   // only refresh might have changed; for branches/roots change, another method is used
   public MergeCheckResult getState(final WCInfoWithBranches info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch,
                                    final String branchPath) {
-    final String currentUrl = info.getRootUrl();
-    final String branchUrl = selectedBranch.getUrl();
-
-    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(currentUrl);
+    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getRootUrl());
     BranchInfo mergeChecker = null;
     if (rootMapping == null) {
       rootMapping = new MyCurrentUrlData();
-      myCurrentUrlMapping.put(currentUrl, rootMapping);
+      myCurrentUrlMapping.put(info.getRootUrl(), rootMapping);
     } else {
       mergeChecker = rootMapping.getBranchInfo(branchPath);
     }
     if (mergeChecker == null) {
-      mergeChecker = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, info.getTrunkRoot());
+      mergeChecker = new BranchInfo(SvnVcs.getInstance(myProject), info, selectedBranch);
       rootMapping.addBranchInfo(branchPath, mergeChecker);
     }
 

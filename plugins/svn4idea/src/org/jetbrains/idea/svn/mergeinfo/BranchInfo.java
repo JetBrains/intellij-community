@@ -19,8 +19,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyValue;
@@ -48,22 +50,17 @@ public class BranchInfo {
   private final Map<Long, SvnMergeInfoCache.MergeCheckResult> myAlreadyCalculatedMap;
   private final Object myCalculatedLock = new Object();
 
-  private final String myRepositoryRoot;
-  private final String myBranchUrl;
-  private final String myTrunkUrl;
-  private final String myTrunkCorrected;
+  @NotNull private final WCInfoWithBranches myInfo;
+  @NotNull private final WCInfoWithBranches.Branch myBranch;
   private final SvnVcs myVcs;
 
   private SvnMergeInfoCache.CopyRevison myCopyRevison;
   private final MultiMap<Long, String> myPartlyMerged;
 
-  public BranchInfo(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl,
-                    final String trunkCorrected) {
+  public BranchInfo(@NotNull SvnVcs vcs, @NotNull WCInfoWithBranches info, @NotNull WCInfoWithBranches.Branch branch) {
     myVcs = vcs;
-    myRepositoryRoot = repositoryRoot;
-    myBranchUrl = branchUrl;
-    myTrunkUrl = trunkUrl;
-    myTrunkCorrected = trunkCorrected;
+    myInfo = info;
+    myBranch = branch;
 
     myPathMergedMap = new HashMap<String, Set<Long>>();
     myPartlyMerged = new MultiMap<Long, String>();
@@ -76,7 +73,7 @@ public class BranchInfo {
     if (myCopyRevison != null && Comparing.equal(myCopyRevison.getPath(), branchPath)) {
       return myCopyRevison.getRevision();
     }
-    myCopyRevison = new SvnMergeInfoCache.CopyRevison(myVcs, branchPath, myRepositoryRoot, myBranchUrl, myTrunkUrl);
+    myCopyRevison = new SvnMergeInfoCache.CopyRevison(myVcs, branchPath, myInfo.getRepoUrl(), myBranch.getUrl(), myInfo.getRootUrl());
     return -1;
   }
 
@@ -128,10 +125,10 @@ public class BranchInfo {
 
   private SvnMergeInfoCache.MergeCheckResult checkAlive(final SvnChangeList list, final String branchPath) {
     final Info info = getInfo(new File(branchPath));
-    if (info == null || info.getURL() == null || (! SVNPathUtil.isAncestor(myBranchUrl, info.getURL().toString()))) {
+    if (info == null || info.getURL() == null || (!SVNPathUtil.isAncestor(myBranch.getUrl(), info.getURL().toString()))) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
-    final String subPathUnderBranch = SVNPathUtil.getRelativePath(myBranchUrl, info.getURL().toString());
+    final String subPathUnderBranch = SVNPathUtil.getRelativePath(myBranch.getUrl(), info.getURL().toString());
 
     final MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = new MultiMap<SvnMergeInfoCache.MergeCheckResult, String>();
     checkPaths(list.getNumber(), list.getAddedPaths(), branchPath, subPathUnderBranch, result);
@@ -155,9 +152,9 @@ public class BranchInfo {
 
   private void checkPaths(final long number, final Collection<String> paths, final String branchPath, final String subPathUnderBranch,
                           final MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result) {
-    final String myTrunkPathCorrespondingToLocalBranchPath = SVNPathUtil.append(myTrunkCorrected, subPathUnderBranch);
+    final String myTrunkPathCorrespondingToLocalBranchPath = SVNPathUtil.append(myInfo.getTrunkRoot(), subPathUnderBranch);
     for (String path : paths) {
-      final String absoluteInTrunkPath = SVNPathUtil.append(myRepositoryRoot, path);
+      final String absoluteInTrunkPath = SVNPathUtil.append(myInfo.getRepoUrl(), path);
       if (! absoluteInTrunkPath.startsWith(myTrunkPathCorrespondingToLocalBranchPath)) {
         result.putValue(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS, path);
         continue;
@@ -231,8 +228,8 @@ public class BranchInfo {
         LOG.info(e);
         return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
       }
-      final String absoluteTrunk = SVNPathUtil.append(myRepositoryRoot, newTrunkUrl);
-      if ((1 >= newTrunkUrl.length()) || (myRepositoryRoot.length() >= newBranchUrl.toString().length()) ||
+      final String absoluteTrunk = SVNPathUtil.append(myInfo.getRepoUrl(), newTrunkUrl);
+      if ((1 >= newTrunkUrl.length()) || (myInfo.getRepoUrl().length() >= newBranchUrl.toString().length()) ||
         (newBranchUrl.toString().equals(absoluteTrunk))) {
         return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
       }
