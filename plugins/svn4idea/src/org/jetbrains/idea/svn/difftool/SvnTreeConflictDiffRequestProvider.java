@@ -110,6 +110,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
       // And if Change will change - we'll create new DiffRequest and DiffViewer
       myDelegate =
         new TreeConflictRefreshablePanel(myContext.getProject(), "Loading tree conflict details", myQueue, myRequest.getChange());
+      myDelegate.refresh();
       myPanel.setContent(myDelegate.getPanel());
     }
 
