@@ -208,10 +208,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Override
   protected void projectCreated() {
-    if (isUseNativeAcceleration()) {
-      SvnConfiguration.getInstance(myProject).setUseAcceleration(SvnConfiguration.UseAcceleration.commandLine);
+    SvnConfiguration.getInstance(myProject).setUseAcceleration(
+      isUseNativeAcceleration() ? SvnConfiguration.UseAcceleration.commandLine : SvnConfiguration.UseAcceleration.nothing);
       SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
-    }
   }
 
   @After
