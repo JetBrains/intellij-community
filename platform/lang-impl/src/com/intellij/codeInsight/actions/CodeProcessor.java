@@ -19,14 +19,17 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.indexing.DebugAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +38,7 @@ import java.util.List;
 import static com.intellij.codeInsight.actions.TextRangeType.*;
 
 class CodeProcessor {
+  private static final Logger LOG = Logger.getInstance(CodeProcessor.class);
   private static final String COLOR = "#7D7D7D";
 
   private final Editor myEditor;
@@ -134,14 +138,29 @@ class CodeProcessor {
 
   @NotNull
   private String prepareMessage() {
-
     StringBuilder builder = new StringBuilder("<html>");
-    List<String> notifications = myProcessor.getNotificationInfo();
+    LayoutCodeNotification notifications = myProcessor.getNotificationInfo();
+    LOG.assertTrue(notifications != null);
+
     if (notifications.isEmpty()) {
-      builder.append("code looks pretty well").append("<br>");
+      builder.append("Code looks pretty well").append("<br>");
     } else {
-      for (String info : notifications) {
-        builder.append(info).append("<br>");
+      String reformatNotification = notifications.getReformatCodeNotification();
+      String rearrangeNotification = notifications.getRearrangeCodeNotification();
+
+      if (rearrangeNotification != null || reformatNotification != null) {
+        String firstNotificationLine = joinAndCapitalizeFirst(reformatNotification, rearrangeNotification);
+        if (myProcessChangesTextOnly) {
+          builder.append("Processed lines, changed since last revision: ");
+          firstNotificationLine = StringUtil.decapitalize(firstNotificationLine);
+        }
+        builder.append(firstNotificationLine);
+        builder.append("<br>");
+      }
+
+      String optimizeImportsNotification = notifications.getOptimizeImportsNotification();
+      if (optimizeImportsNotification != null) {
+        builder.append(StringUtil.capitalize(optimizeImportsNotification)).append("<br>");
       }
     }
 
@@ -153,6 +172,16 @@ class CodeProcessor {
            .append("</html>");
 
     return builder.toString();
+  }
+
+  @NotNull
+  private String joinAndCapitalizeFirst(String reformatNotification, String rearrangeNotification) {
+    String firstNotificationLine = reformatNotification != null ? reformatNotification : rearrangeNotification;
+    if (reformatNotification != null && rearrangeNotification != null) {
+      firstNotificationLine += ", " + rearrangeNotification;
+    }
+    firstNotificationLine = StringUtil.capitalize(firstNotificationLine);
+    return firstNotificationLine;
   }
 
   private static void showHint(@NotNull Editor editor, @NotNull String info) {

@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -80,11 +81,7 @@ public abstract class AbstractLayoutCodeProcessor {
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
   private List<FileFilter> myFilters = ContainerUtil.newArrayList();
 
-  private List<String> myNotificationInfo;
-
-  public List<String> getNotificationInfo() {
-    return myNotificationInfo;
-  }
+  private LayoutCodeNotification myNotificationInfo;
 
   protected AbstractLayoutCodeProcessor(Project project, String commandName, String progressText, boolean processChangedTextOnly) {
     this(project, (Module)null, commandName, progressText, processChangedTextOnly);
@@ -156,7 +153,7 @@ public abstract class AbstractLayoutCodeProcessor {
     myCommandName = commandName;
     myPostRunnable = null;
     myProcessChangedTextOnly = processChangedTextOnly;
-    myNotificationInfo = ContainerUtil.newArrayList();
+    myNotificationInfo = new LayoutCodeNotification();
   }
 
   protected AbstractLayoutCodeProcessor(Project project,
@@ -616,8 +613,9 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  protected void addNotificationInfo(String info) {
-    myNotificationInfo.add(info);
+  @Nullable
+  public LayoutCodeNotification getNotificationInfo() {
+    return myNotificationInfo;
   }
 
   protected boolean isSingleFileProcessed() {

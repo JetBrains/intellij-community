@@ -109,12 +109,15 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       ImportOptimizer optimizer = optimizers.iterator().next();
       if (optimizer instanceof UserNotificationInfoProvider) {
         String info = ((UserNotificationInfoProvider)optimizer).getUserNotificationInfo();
-        if (info != null) {
-          addNotificationInfo(info);
+        if (info != null && getNotificationInfo() != null) {
+          getNotificationInfo().setOptimizeImportsNotification(info);
         }
         return;
       }
     }
-    addNotificationInfo("imports optimized");
+
+    if (getNotificationInfo() != null) {
+      getNotificationInfo().setOptimizeImportsNotification("imports optimized");
+    }
   }
 }

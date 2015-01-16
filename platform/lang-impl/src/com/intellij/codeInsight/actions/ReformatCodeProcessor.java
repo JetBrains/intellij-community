@@ -151,9 +151,9 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
 
   private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {
     int number = CodeProcessor.getProcessedLinesNumber(document, before);
-    if (number > 0) {
+    if (number > 0 && getNotificationInfo() != null) {
       String message = "formatted " + number + " line" + (number > 1 ? "s" : "");
-      addNotificationInfo(message);
+      getNotificationInfo().setReformatCodeNotification(message);
     }
   }
 
