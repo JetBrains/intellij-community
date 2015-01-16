@@ -243,11 +243,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (myPanels == null) {
       synchronized (myInitLock) {
         if (myPanels == null) {
-          myPanels = new JPanel(new BorderLayout());
-          myPanels.setOpaque(false);
-          myPanels.setBorder(new MyBorder());
+          final JPanel panel = new JPanel(new BorderLayout());
+          panel.setOpaque(false);
+          panel.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this, myDockManager, true);
-          myPanels.add(mySplitters, BorderLayout.CENTER);
+          panel.add(mySplitters, BorderLayout.CENTER);
+          myPanels = panel;
         }
       }
     }
