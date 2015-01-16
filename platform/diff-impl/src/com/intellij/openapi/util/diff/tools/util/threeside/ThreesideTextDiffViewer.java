@@ -113,7 +113,6 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     if (side != null) myCurrentSide = side;
 
     myScrollToLineHelper.processContext();
-    myScrollToLineHelper.onInit();
   }
 
   protected void updateContextHints() {
@@ -205,6 +204,12 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @CalledInAwt
   protected void scrollOnRediff() {
     myScrollToLineHelper.onRediff();
+  }
+
+  @Override
+  protected void onSlowRediff() {
+    super.onSlowRediff();
+    myScrollToLineHelper.onSlowRediff();
   }
 
   //
@@ -410,24 +415,11 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       myRequest.putUserData(DiffUserDataKeys.EDITORS_CARET_POSITION, carets);
     }
 
-    public void onInit() {
-      if (!myShouldScroll) return;
+    public void onSlowRediff() {
       if (myScrollToChange != null) return;
 
-      if (myCaretPosition != null && myCaretPosition.length == 3) {
-        myEditors.get(0).getCaretModel().moveToLogicalPosition(myCaretPosition[0]);
-        myEditors.get(1).getCaretModel().moveToLogicalPosition(myCaretPosition[1]);
-        myEditors.get(2).getCaretModel().moveToLogicalPosition(myCaretPosition[2]);
-
-        if (myEditorsPosition != null && myEditorsPosition.isSame(myCaretPosition)) {
-          DiffUtil.scrollToPoint(myEditors.get(0), myEditorsPosition.myPoints[0]);
-          DiffUtil.scrollToPoint(myEditors.get(1), myEditorsPosition.myPoints[1]);
-          DiffUtil.scrollToPoint(myEditors.get(2), myEditorsPosition.myPoints[2]);
-        }
-        else {
-          getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
-        }
-        myShouldScroll = false;
+      if (myShouldScroll && myCaretPosition != null) {
+        myShouldScroll = !doScrollToPosition();
       }
     }
 
@@ -435,10 +427,31 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       if (myShouldScroll && myScrollToChange != null) {
         myShouldScroll = !doScrollToChange(myScrollToChange);
       }
+      if (myShouldScroll && myCaretPosition != null) {
+        myShouldScroll = !doScrollToPosition();
+      }
       if (myShouldScroll) {
         doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
       }
       myShouldScroll = false;
+    }
+
+    private boolean doScrollToPosition() {
+      if (myCaretPosition == null || myCaretPosition.length != 3) return false;
+
+      myEditors.get(0).getCaretModel().moveToLogicalPosition(myCaretPosition[0]);
+      myEditors.get(1).getCaretModel().moveToLogicalPosition(myCaretPosition[1]);
+      myEditors.get(2).getCaretModel().moveToLogicalPosition(myCaretPosition[2]);
+
+      if (myEditorsPosition != null && myEditorsPosition.isSame(myCaretPosition)) {
+        DiffUtil.scrollToPoint(myEditors.get(0), myEditorsPosition.myPoints[0]);
+        DiffUtil.scrollToPoint(myEditors.get(1), myEditorsPosition.myPoints[1]);
+        DiffUtil.scrollToPoint(myEditors.get(2), myEditorsPosition.myPoints[2]);
+      }
+      else {
+        getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      }
+      return true;
     }
 
     @NotNull
