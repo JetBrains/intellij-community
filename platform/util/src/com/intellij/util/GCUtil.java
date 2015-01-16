@@ -37,7 +37,7 @@ public class GCUtil {
   }
 
   /**
-   * Try to force VM to collect dangling soft-references.
+   * Try to force VM to collect soft references if possible.
    * Method doesn't guarantee to succeed, and should not be used in the production code.
    */
   public static void tryGcSoftlyReachableObjects() {
