@@ -24,13 +24,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.Topic;
 import icons.SvnIcons;
@@ -138,6 +136,10 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   public IntegrateChangeListsAction getUndoIntegrateAction() {
     return myUndoIntegrateChangeListsAction;
+  }
+
+  public boolean isHighlightingOn() {
+    return myHighlightingOn;
   }
 
   public void reloadPanels() {
@@ -318,28 +320,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return svnGroup;
   }
 
-  private MergeInfoHolder createHolder(final SvnMergeInfoRootPanelManual panel) {
-    return new MergeInfoHolder(myProject, myManager, new Getter<WCInfoWithBranches>() {
-      public WCInfoWithBranches get() {
-        return panel.getWcInfo();
-      }
-    }, new Getter<WCInfoWithBranches.Branch>() {
-      public WCInfoWithBranches.Branch get() {
-        return panel.getBranch();
-      }
-    }, new Getter<String>() {
-      public String get() {
-        return panel.getLocalBranch();
-      }
-    }, new Getter<Boolean>() {
-      public Boolean get() {
-        return myHighlightingOn && panel.isEnabled();
-      }
-    }, new Consumer<Boolean>() {
-      public void consume(final Boolean aBoolean) {
-        panel.setMixedRevisions(aBoolean);
-      }
-    });
+  @NotNull
+  private MergeInfoHolder createHolder(@NotNull SvnMergeInfoRootPanelManual panel) {
+    return new MergeInfoHolder(myProject, myManager, this, panel);
   }
 
   public JComponent getPanel() {

@@ -18,17 +18,18 @@ package org.jetbrains.idea.svn.mergeinfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.dialogs.WCPaths;
+import org.jetbrains.idea.svn.history.RootsAndBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.history.SvnMergeInfoRootPanelManual;
 
 import java.awt.*;
 import java.io.File;
@@ -36,9 +37,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MergeInfoHolder {
+
   private final DecoratorManager myManager;
-  private final Consumer<Boolean> myMixedRevisionsConsumer;
   private final SvnMergeInfoCache myMergeInfoCache;
+  @NotNull private final RootsAndBranches myMainPanel;
+  @NotNull private final SvnMergeInfoRootPanelManual myPanel;
 
   private final static String ourIntegratedText = SvnBundle.message("committed.changes.merge.status.integrated.text");
   private final static String ourNotIntegratedText = SvnBundle.message("committed.changes.merge.status.not.integrated.text");
@@ -49,33 +52,26 @@ public class MergeInfoHolder {
   // used ONLY when refresh is triggered
   private final Map<Couple<String>, MergeinfoCached> myCachedMap;
 
-  private final Getter<WCInfoWithBranches> myRootGetter;
-  private final Getter<WCInfoWithBranches.Branch> myBranchGetter;
-  private final Getter<String> myWcPathGetter;
-  private final Getter<Boolean> myEnabledHolder;
-
-  public MergeInfoHolder(final Project project, final DecoratorManager manager, final Getter<WCInfoWithBranches> rootGetter,
-                         final Getter<WCInfoWithBranches.Branch> branchGetter,
-                         final Getter<String> wcPathGetter, Getter<Boolean> enabledHolder, final Consumer<Boolean> mixedRevisionsConsumer) {
-    myRootGetter = rootGetter;
-    myBranchGetter = branchGetter;
-    myWcPathGetter = wcPathGetter;
-    myEnabledHolder = enabledHolder;
+  public MergeInfoHolder(final Project project,
+                         final DecoratorManager manager,
+                         @NotNull RootsAndBranches mainPanel,
+                         @NotNull SvnMergeInfoRootPanelManual panel) {
     myManager = manager;
-    myMixedRevisionsConsumer = mixedRevisionsConsumer;
+    myMainPanel = mainPanel;
+    myPanel = panel;
     myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
     myCachedMap = new HashMap<Couple<String>, MergeinfoCached>();
   }
 
   private MergeinfoCached getCurrentCache() {
-    return myCachedMap.get(createKey(myRootGetter.get(), myBranchGetter.get()));
+    return myCachedMap.get(createKey(myPanel.getWcInfo(), myPanel.getBranch()));
   }
 
   private boolean enabledAndGettersFilled(final boolean ignoreEnabled) {
-    if ((! ignoreEnabled) && (! Boolean.TRUE.equals(myEnabledHolder.get()))) {
+    if ((!ignoreEnabled) && !(myMainPanel.isHighlightingOn() && myPanel.isEnabled())) {
       return false;
     }
-    return (myRootGetter.get() != null) && (myBranchGetter.get() != null) && (myWcPathGetter.get() != null);
+    return (myPanel.getWcInfo() != null) && (myPanel.getBranch() != null) && (myPanel.getLocalBranch() != null);
   }
 
   public boolean refreshEnabled(final boolean ignoreEnabled) {
@@ -98,10 +94,10 @@ public class MergeInfoHolder {
   public CommittedChangeListsListener createRefresher(final boolean ignoreEnabled) {
     if (refreshEnabled(ignoreEnabled)) {
       // on awt thread
-      final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myWcPathGetter.get());
-      myCachedMap.put(createKey(myRootGetter.get(), myBranchGetter.get()), (state == null) ? new MergeinfoCached() :
+      final MergeinfoCached state = myMergeInfoCache.getCachedState(myPanel.getWcInfo(), myPanel.getLocalBranch());
+      myCachedMap.put(createKey(myPanel.getWcInfo(), myPanel.getBranch()), (state == null) ? new MergeinfoCached() :
           new MergeinfoCached(new HashMap<Long, SvnMergeInfoCache.MergeCheckResult>(state.getMap()), state.getCopyRevision()));
-      myMergeInfoCache.clear(myRootGetter.get(), myWcPathGetter.get());
+      myMergeInfoCache.clear(myPanel.getWcInfo(), myPanel.getLocalBranch());
 
       return new MyRefresher();
     }
@@ -114,9 +110,9 @@ public class MergeInfoHolder {
     private final String myBranchPath;
 
     private MyRefresher() {
-      myRefreshedRoot = myRootGetter.get();
-      myRefreshedBranch = myBranchGetter.get();
-      myBranchPath = myWcPathGetter.get();
+      myRefreshedRoot = myPanel.getWcInfo();
+      myRefreshedBranch = myPanel.getBranch();
+      myBranchPath = myPanel.getLocalBranch();
     }
 
     public void onBeforeStartReport() {
@@ -193,7 +189,7 @@ public class MergeInfoHolder {
       final SvnMergeInfoCache.MergeCheckResult result = cachedState.getMap().get(list.getNumber());
       return convert(result, true);
     } else {
-      final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myWcPathGetter.get());
+      final MergeinfoCached state = myMergeInfoCache.getCachedState(myPanel.getWcInfo(), myPanel.getLocalBranch());
       if (state == null) {
         refresh(ignoreEnabled);
         return ListMergeStatus.REFRESHING;
@@ -207,6 +203,6 @@ public class MergeInfoHolder {
   }
 
   public void updateMixedRevisionsForPanel() {
-    myMixedRevisionsConsumer.consume(myMergeInfoCache.isMixedRevisions(myRootGetter.get(), myWcPathGetter.get()));    
+    myPanel.setMixedRevisions(myMergeInfoCache.isMixedRevisions(myPanel.getWcInfo(), myPanel.getLocalBranch()));
   }
 }
