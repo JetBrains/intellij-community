@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       if (needRebuild) {
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }
-      FileUtil.deleteWithRenaming(indexRootDir);
+      if (indexRootDir.list().length > 0) {
+        FileUtil.deleteWithRenaming(indexRootDir);
+      }
       IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
     }
 
