@@ -79,7 +79,8 @@ public class SvnDiffViewer implements DiffViewer {
 
     mySettings = initSettings(context);
 
-    mySplitter = new OnePixelSplitter(true);
+    mySplitter = new Splitter(true);
+    mySplitter.setDividerWidth(5);
     mySplitter.setProportion(mySettings.getSplitterProportion());
     mySplitter.setFirstComponent(myContentViewer.getComponent());
 
