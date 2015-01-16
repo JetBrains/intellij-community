@@ -202,7 +202,9 @@ public class PsiEventsTest extends PsiTestCase {
       LeakHunter.checkLeak(IdeEventQueue.getInstance(), PsiDirectory.class, isReallyLeak);
       LeakHunter.checkLeak(LaterInvocator.getLaterInvocatorQueue(), PsiDirectory.class, isReallyLeak);
 
-      String dumpPath = FileUtil.createTempFile(new File(System.getProperty("java.io.tmpdir")), "testRenameFileWithoutDir", ".hprof", false, false).getPath();
+      String dumpPath = FileUtil.createTempFile(
+        new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))), "testRenameFileWithoutDir", ".hprof",
+                 false, false).getPath();
       MemoryDumpHelper.captureMemoryDump(dumpPath);
       System.out.println(dumpPath);
 
