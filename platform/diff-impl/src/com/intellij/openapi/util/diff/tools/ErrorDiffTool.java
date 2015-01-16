@@ -3,6 +3,7 @@ package com.intellij.openapi.util.diff.tools;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
+import com.intellij.openapi.util.diff.requests.LoadingDiffRequest;
 import com.intellij.openapi.util.diff.requests.NoDiffRequest;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,9 @@ public class ErrorDiffTool implements FrameDiffTool {
       }
       if (request instanceof NoDiffRequest) {
         return "Nothing to show";
+      }
+      if (request instanceof LoadingDiffRequest) {
+        return "Loading...";
       }
 
       return "Can't show diff";

@@ -254,7 +254,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
       if (bRev != null) checkContentRevision(project, bRev, context, indicator);
       if (aRev != null) checkContentRevision(project, aRev, context, indicator);
 
-      String title = getRequestTitle(bRev, aRev);
+      String title = getRequestTitle(change);
 
       indicator.setIndeterminate(true);
       DiffContent content1 = createContent(project, bRev, context, indicator);
@@ -268,7 +268,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   @NotNull
-  public static String getRequestTitle(@Nullable ContentRevision bRev, @Nullable ContentRevision aRev) {
+  public static String getRequestTitle(@NotNull Change change) {
+    ContentRevision bRev = change.getBeforeRevision();
+    ContentRevision aRev = change.getAfterRevision();
+
     assert bRev != null || aRev != null;
     if (bRev != null && aRev != null) {
       FilePath bPath = bRev.getFile();

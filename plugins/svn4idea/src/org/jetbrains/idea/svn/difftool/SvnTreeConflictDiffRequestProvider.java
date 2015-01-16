@@ -65,7 +65,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
     @Nullable
     @Override
     public String getTitle() {
-      return ChangeDiffRequestPresentable.getRequestTitle(myChange.getBeforeRevision(), myChange.getAfterRevision());
+      return ChangeDiffRequestPresentable.getRequestTitle(myChange);
     }
 
     @Override

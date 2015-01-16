@@ -28,6 +28,7 @@ import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
+import com.intellij.openapi.util.diff.requests.LoadingDiffRequest;
 import com.intellij.openapi.util.diff.requests.NoDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
 import com.intellij.openapi.util.diff.util.CalledInBackground;
@@ -107,7 +108,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       new Runnable() {
         @Override
         public void run() {
-          applyRequest(new ErrorDiffRequest("Loading..."), force, scrollToChangePolicy);
+          applyRequest(new LoadingDiffRequest(ChangeDiffRequestPresentable.getRequestTitle(change)), force, scrollToChangePolicy);
         }
       },
       ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
