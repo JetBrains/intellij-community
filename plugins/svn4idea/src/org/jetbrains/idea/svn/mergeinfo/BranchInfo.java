@@ -17,7 +17,9 @@ package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
@@ -39,34 +41,35 @@ import java.io.File;
 import java.util.*;
 
 public class BranchInfo {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.mergeinfo.BranchInfo");
+
+  private final static Logger LOG = Logger.getInstance(BranchInfo.class);
   // repo path in branch in format path@revision -> merged revisions
-  private final Map<String, Set<Long>> myPathMergedMap;
-  private final Map<String, Set<Long>> myNonInheritablePathMergedMap;
+  @NotNull private final Map<String, Set<Long>> myPathMergedMap;
+  @NotNull private final Map<String, Set<Long>> myNonInheritablePathMergedMap;
 
   private boolean myMixedRevisionsFound;
 
   // revision in trunk -> whether merged into branch
-  private final Map<Long, SvnMergeInfoCache.MergeCheckResult> myAlreadyCalculatedMap;
-  private final Object myCalculatedLock = new Object();
+  @NotNull private final Map<Long, SvnMergeInfoCache.MergeCheckResult> myAlreadyCalculatedMap;
+  @NotNull private final Object myCalculatedLock = new Object();
 
   @NotNull private final WCInfoWithBranches myInfo;
   @NotNull private final WCInfoWithBranches.Branch myBranch;
-  private final SvnVcs myVcs;
+  @NotNull private final SvnVcs myVcs;
 
   private SvnMergeInfoCache.CopyRevison myCopyRevison;
-  private final MultiMap<Long, String> myPartlyMerged;
+  @NotNull private final MultiMap<Long, String> myPartlyMerged;
 
   public BranchInfo(@NotNull SvnVcs vcs, @NotNull WCInfoWithBranches info, @NotNull WCInfoWithBranches.Branch branch) {
     myVcs = vcs;
     myInfo = info;
     myBranch = branch;
 
-    myPathMergedMap = new HashMap<String, Set<Long>>();
-    myPartlyMerged = new MultiMap<Long, String>();
-    myNonInheritablePathMergedMap = new HashMap<String, Set<Long>>();
+    myPathMergedMap = ContainerUtil.newHashMap();
+    myPartlyMerged = MultiMap.create();
+    myNonInheritablePathMergedMap = ContainerUtil.newHashMap();
 
-    myAlreadyCalculatedMap = new HashMap<Long, SvnMergeInfoCache.MergeCheckResult>();
+    myAlreadyCalculatedMap = ContainerUtil.newHashMap();
   }
 
   private long calculateCopyRevision(final String branchPath) {
@@ -85,52 +88,45 @@ public class BranchInfo {
     myMixedRevisionsFound = false;
   }
 
-  public void halfClear(final long listNumber) {
-    myPathMergedMap.clear();
-    synchronized (myCalculatedLock) {
-      myAlreadyCalculatedMap.remove(listNumber);
-    }
-    myMixedRevisionsFound = false;
-  }
-
+  @NotNull
   public MergeInfoCached getCached() {
     synchronized (myCalculatedLock) {
-      final long revision;
-      if (myCopyRevison != null && myCopyRevison.getRevision() != -1) {
-        revision = myCopyRevison.getRevision();
-      } else {
-        revision = -1;
-      }
+      long revision = myCopyRevison != null ? myCopyRevison.getRevision() : -1;
+
+      // TODO: NEW MAP WILL ALSO BE CREATED IN MergeInfoCached constructor
       return new MergeInfoCached(Collections.unmodifiableMap(myAlreadyCalculatedMap), revision);
     }
   }
 
-  public SvnMergeInfoCache.MergeCheckResult checkList(final SvnChangeList list, final String branchPath) {
+  @NotNull
+  public SvnMergeInfoCache.MergeCheckResult checkList(@NotNull final SvnChangeList list, final String branchPath) {
     synchronized (myCalculatedLock) {
+      SvnMergeInfoCache.MergeCheckResult result;
       final long revision = calculateCopyRevision(branchPath);
       if (revision != -1 && revision >= list.getNumber()) {
-        return SvnMergeInfoCache.MergeCheckResult.COMMON;
+        result = SvnMergeInfoCache.MergeCheckResult.COMMON;
       }
-
-      final SvnMergeInfoCache.MergeCheckResult calculated = myAlreadyCalculatedMap.get(list.getNumber());
-      if (calculated != null) {
-        return calculated;
+      else {
+        result = ContainerUtil.getOrCreate(myAlreadyCalculatedMap, list.getNumber(), new Factory<SvnMergeInfoCache.MergeCheckResult>() {
+          @Override
+          public SvnMergeInfoCache.MergeCheckResult create() {
+            return checkAlive(list, branchPath);
+          }
+        });
       }
-
-      final SvnMergeInfoCache.MergeCheckResult result = checkAlive(list, branchPath);
-      myAlreadyCalculatedMap.put(list.getNumber(), result);
       return result;
     }
   }
 
-  private SvnMergeInfoCache.MergeCheckResult checkAlive(final SvnChangeList list, final String branchPath) {
-    final Info info = getInfo(new File(branchPath));
-    if (info == null || info.getURL() == null || (!SVNPathUtil.isAncestor(myBranch.getUrl(), info.getURL().toString()))) {
+  @NotNull
+  private SvnMergeInfoCache.MergeCheckResult checkAlive(@NotNull SvnChangeList list, @NotNull String branchPath) {
+    final Info info = myVcs.getInfo(new File(branchPath));
+    if (info == null || info.getURL() == null || !SVNPathUtil.isAncestor(myBranch.getUrl(), info.getURL().toString())) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
     final String subPathUnderBranch = SVNPathUtil.getRelativePath(myBranch.getUrl(), info.getURL().toString());
 
-    final MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = new MultiMap<SvnMergeInfoCache.MergeCheckResult, String>();
+    MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = MultiMap.create();
     checkPaths(list.getNumber(), list.getAddedPaths(), branchPath, subPathUnderBranch, result);
     if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
@@ -150,8 +146,8 @@ public class BranchInfo {
     return SvnMergeInfoCache.MergeCheckResult.MERGED;
   }
 
-  private void checkPaths(final long number, final Collection<String> paths, final String branchPath, final String subPathUnderBranch,
-                          final MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result) {
+  private void checkPaths(final long number, @NotNull Collection<String> paths, @NotNull String branchPath, final String subPathUnderBranch,
+                          @NotNull MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result) {
     final String myTrunkPathCorrespondingToLocalBranchPath = SVNPathUtil.append(myInfo.getTrunkRoot(), subPathUnderBranch);
     for (String path : paths) {
       final String absoluteInTrunkPath = SVNPathUtil.append(myInfo.getRepoUrl(), path);
@@ -161,14 +157,13 @@ public class BranchInfo {
       }
       final String relativeToTrunkPath = absoluteInTrunkPath.substring(myTrunkPathCorrespondingToLocalBranchPath.length());
       final String localPathInBranch = new File(branchPath, relativeToTrunkPath).getAbsolutePath();
-      
-      final SvnMergeInfoCache.MergeCheckResult pathResult = checkPathGoingUp(number, -1, branchPath, localPathInBranch, path, true);
-      result.putValue(pathResult, path);
+
+      result.putValue(checkPathGoingUp(number, -1, branchPath, localPathInBranch, path, true), path);
     }
   }
 
   private SvnMergeInfoCache.MergeCheckResult goUp(final long revisionAsked, final long targetRevision, final String branchRootPath,
-                                                              final String path, final String trunkUrl) {
+                                                  final String path, @NotNull String trunkUrl) {
     final String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
     if (newTrunkUrl.length() == 0 || "/".equals(newTrunkUrl)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
@@ -180,8 +175,8 @@ public class BranchInfo {
         // no paths in local copy
         return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
       }
-      final Info svnInfo = getInfo(new File(branchRootPath));
-      if (svnInfo == null || svnInfo.getRevision() == null || svnInfo.getURL() == null) {
+      final Info svnInfo = myVcs.getInfo(new File(branchRootPath));
+      if (svnInfo == null || svnInfo.getURL() == null) {
         return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
       }
       try {
@@ -240,12 +235,12 @@ public class BranchInfo {
     return processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty, trunkUrl, false);
   }
 
-  private Info getInfo(final File pathFile) {
-    return myVcs.getInfo(pathFile);
-  }
-
-  private SvnMergeInfoCache.MergeCheckResult checkPathGoingUp(final long revisionAsked, final long targetRevision, final String branchRootPath,
-                                                              final String path, final String trunkUrl, final boolean self) {
+  private SvnMergeInfoCache.MergeCheckResult checkPathGoingUp(final long revisionAsked,
+                                                              final long targetRevision,
+                                                              @NotNull String branchRootPath,
+                                                              @NotNull String path,
+                                                              final String trunkUrl,
+                                                              final boolean self) {
     final File pathFile = new File(path);
 
     if (targetRevision == -1) {
@@ -256,9 +251,9 @@ public class BranchInfo {
         return goUp(revisionAsked, targetRevision, branchRootPath, path, trunkUrl);
       }
     }
-    
-    final Info svnInfo = getInfo(pathFile);
-    if (svnInfo == null || svnInfo.getRevision() == null || svnInfo.getURL() == null) {
+
+    final Info svnInfo = myVcs.getInfo(pathFile);
+    if (svnInfo == null || svnInfo.getURL() == null) {
       LOG.info("Svninfo for " + pathFile + " is null or not full.");
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
@@ -273,8 +268,7 @@ public class BranchInfo {
     final Set<Long> selfInfo = self ? myNonInheritablePathMergedMap.get(keyString) : null;
     final Set<Long> mergeInfo = myPathMergedMap.get(keyString);
     if (mergeInfo != null || selfInfo != null) {
-      final boolean merged = ((mergeInfo != null) && mergeInfo.contains(revisionAsked)) ||
-                             ((selfInfo != null) && selfInfo.contains(revisionAsked));
+      final boolean merged = mergeInfo != null && mergeInfo.contains(revisionAsked) || selfInfo != null && selfInfo.contains(revisionAsked);
       // take from self or first parent with info; do not go further 
       return SvnMergeInfoCache.MergeCheckResult.getInstance(merged);
     }
@@ -308,12 +302,9 @@ public class BranchInfo {
   }
 
   private SvnMergeInfoCache.MergeCheckResult processMergeinfoProperty(final String pathWithRevisionNumber, final long revisionAsked,
-                                                                      final PropertyValue value, final String trunkRelativeUrl,
+                                                                      @NotNull PropertyValue value, final String trunkRelativeUrl,
                                                                       final boolean self) {
-    final String valueAsString = value.toString().trim();
-
-    // empty mergeinfo
-    if (valueAsString.length() == 0) {
+    if (value.toString().trim().length() == 0) {
       myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
@@ -366,7 +357,8 @@ public class BranchInfo {
     return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
   }
 
-  private String replaceSeparators(final String s) {
+  @NotNull
+  private static String replaceSeparators(@NotNull String s) {
     return s.replace('\r', '\n').replace("\n\n", "\n");
   }
 
@@ -375,6 +367,8 @@ public class BranchInfo {
   }
 
   // if nothing, maybe all not merged or merged: here only partly not merged
+  @SuppressWarnings("unused")
+  @NotNull
   public Collection<String> getNotMergedPaths(final long number) {
     return myPartlyMerged.get(number);
   }

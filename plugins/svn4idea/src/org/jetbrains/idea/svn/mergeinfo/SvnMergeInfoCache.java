@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
@@ -38,56 +39,44 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import java.util.Map;
 
 public class SvnMergeInfoCache {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache");
 
-  private final Project myProject;
-  private final Map<String, MyCurrentUrlData> myCurrentUrlMapping;
+  private final static Logger LOG = Logger.getInstance(SvnMergeInfoCache.class);
+
+  @NotNull private final Project myProject;
+  // key - working copy root url
+  @NotNull private final Map<String, MyCurrentUrlData> myCurrentUrlMapping;
 
   public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE =
     new Topic<SvnMergeInfoCacheListener>("SVN_MERGE_INFO_CACHE", SvnMergeInfoCacheListener.class);
 
-  private SvnMergeInfoCache(final Project project) {
+  private SvnMergeInfoCache(@NotNull Project project) {
     myProject = project;
     myCurrentUrlMapping = ContainerUtil.newHashMap();
   }
 
-  public static SvnMergeInfoCache getInstance(final Project project) {
+  public static SvnMergeInfoCache getInstance(@NotNull Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, SvnMergeInfoCache.class);
   }
 
-  public void clear(final WCPaths info, final String branchPath) {
-    final String currentUrl = info.getRootUrl();
+  public void clear(@NotNull WCPaths info, String branchPath) {
+    BranchInfo branchInfo = getBranchInfo(info, branchPath);
 
-    final MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(currentUrl);
-    if (rootMapping != null) {
-      final BranchInfo mergeChecker = rootMapping.getBranchInfo(branchPath);
-      if (mergeChecker != null) {
-        mergeChecker.clear();
-      }
+    if (branchInfo != null) {
+      branchInfo.clear();
     }
   }
 
   @Nullable
-  public MergeInfoCached getCachedState(final WCPaths info, final String branchPath) {
-    final String currentUrl = info.getRootUrl();
+  public MergeInfoCached getCachedState(@NotNull WCPaths info, String branchPath) {
+    BranchInfo branchInfo = getBranchInfo(info, branchPath);
 
-    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(currentUrl);
-    if (rootMapping != null) {
-      final BranchInfo branchInfo = rootMapping.getBranchInfo(branchPath);
-      if (branchInfo != null) {
-        return branchInfo.getCached();
-      }
-    }
-    return null;
+    return branchInfo != null ? branchInfo.getCached() : null;
   }
 
   // only refresh might have changed; for branches/roots change, another method is used
-  public MergeCheckResult getState(final WCInfoWithBranches info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch) {
-    return getState(info, list, selectedBranch, null);
-  }
-
-  // only refresh might have changed; for branches/roots change, another method is used
-  public MergeCheckResult getState(final WCInfoWithBranches info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch,
+  public MergeCheckResult getState(@NotNull WCInfoWithBranches info,
+                                   @NotNull SvnChangeList list,
+                                   @NotNull WCInfoWithBranches.Branch selectedBranch,
                                    final String branchPath) {
     MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getRootUrl());
     BranchInfo mergeChecker = null;
@@ -105,31 +94,29 @@ public class SvnMergeInfoCache {
     return mergeChecker.checkList(list, branchPath);
   }
 
-  public boolean isMixedRevisions(final WCInfoWithBranches info, final String branchPath) {
-    final String currentUrl = info.getRootUrl();
-    final MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(currentUrl);
-    if (rootMapping != null) {
-      final BranchInfo branchInfo = rootMapping.getBranchInfo(branchPath);
-      if (branchInfo != null) {
-        return branchInfo.isMixedRevisionsFound();
-      }
-    }
-    return false;
+  public boolean isMixedRevisions(@NotNull WCInfoWithBranches info, final String branchPath) {
+    BranchInfo branchInfo = getBranchInfo(info, branchPath);
+
+    return branchInfo != null && branchInfo.isMixedRevisionsFound();
   }
 
-  public static enum MergeCheckResult {
+  @Nullable
+  private BranchInfo getBranchInfo(@NotNull WCPaths info, String branchPath) {
+    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getRootUrl());
+
+    return rootMapping != null ? rootMapping.getBranchInfo(branchPath) : null;
+  }
+
+  public enum MergeCheckResult {
     COMMON,
     MERGED,
     NOT_MERGED,
     NOT_EXISTS,
     NOT_EXISTS_PARTLY_MERGED;
 
-    public static MergeCheckResult getInstance(final boolean merged) {
-      // not exists assumed to be already checked
-      if (merged) {
-        return MERGED;
-      }
-      return NOT_MERGED;
+    @NotNull
+    public static MergeCheckResult getInstance(boolean merged) {
+      return merged ? MERGED : NOT_MERGED;
     }
   }
 
@@ -181,7 +168,9 @@ public class SvnMergeInfoCache {
   }
 
   private static class MyCurrentUrlData {
-    private final Map<String, BranchInfo> myBranchInfo;
+
+    // key - working copy local path
+    @NotNull private final Map<String, BranchInfo> myBranchInfo;
 
     private MyCurrentUrlData() {
       myBranchInfo = new SoftHashMap<String, BranchInfo>();
@@ -191,7 +180,7 @@ public class SvnMergeInfoCache {
       return myBranchInfo.get(branchUrl);
     }
 
-    public void addBranchInfo(final String branchUrl, final BranchInfo mergeChecker) {
+    public void addBranchInfo(@NotNull String branchUrl, @NotNull BranchInfo mergeChecker) {
       myBranchInfo.put(branchUrl, mergeChecker);
     }
   }
