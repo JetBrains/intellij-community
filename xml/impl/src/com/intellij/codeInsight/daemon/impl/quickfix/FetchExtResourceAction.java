@@ -149,10 +149,6 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     final String url = findUrl(file, offset, uri);
     final Project project = file.getProject();
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
     ProgressManager.getInstance().run(new Task.Backgroundable(project, XmlBundle.message("fetching.resource.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -517,7 +513,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   @Nullable
   private static FetchResult fetchData(final Project project, final String dtdUrl, final ProgressIndicator indicator) throws IOException {
     try {
-      HttpRequests.request(dtdUrl).accept("text/xml,application/xml,text/html,*/*").connect(new HttpRequests.RequestProcessor<FetchResult>() {
+      return HttpRequests.request(dtdUrl).accept("text/xml,application/xml,text/html,*/*").connect(new HttpRequests.RequestProcessor<FetchResult>() {
         @Override
         public FetchResult process(@NotNull HttpRequests.Request request) throws IOException {
           FetchResult result = new FetchResult();
