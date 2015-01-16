@@ -44,6 +44,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -200,7 +201,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       }
 
       for (int i = 0; i < newLength; i++) {
-        if (!isValidTagNameChar(fragment.charAt(i))) {
+        if (!XmlUtil.isValidTagNameChar(fragment.charAt(i))) {
           clearMarkers();
           return;
         }
@@ -241,22 +242,18 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
           start = i + 1;
           break;
         }
-        if (!isValidTagNameChar(c)) break;
+        if (!XmlUtil.isValidTagNameChar(c)) break;
       }
       if (start < 0) return null;
       for (int i = offset; i < Math.min(document.getTextLength(), offset + 50); i++) {
         final char c = sequence.charAt(i);
-        if (!isValidTagNameChar(c)) {
+        if (!XmlUtil.isValidTagNameChar(c)) {
           end = i;
           break;
         }
       }
       if (end < 0 || start >= end) return null;
       return document.createRangeMarker(start, end, true);
-    }
-
-    private static boolean isValidTagNameChar(char c) {
-      return Character.isJavaIdentifierPart(c) || c == ':';
     }
 
     public void beforeCommandFinished() {
