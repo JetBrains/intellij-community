@@ -32,8 +32,9 @@ public abstract class ChangeSide {
   }
 
   @NotNull
-  public String getText() {
-    return DocumentUtil.getText(getRange());
+  public CharSequence getText() {
+    DiffRangeMarker range = getRange();
+    return range.getDocument().getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset());
   }
 
   public int getEndLine() {
