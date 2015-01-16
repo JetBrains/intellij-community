@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,12 +33,25 @@ import java.awt.*;
  */
 public class ViewTextAction extends XFetchValueActionBase {
   @Override
-  protected void handle(Project project, String value, XDebuggerTree tree) {
-    final MyDialog dialog = new MyDialog(project);
-    dialog.setTitle("View Text");
-    dialog.setText(StringUtil.unquoteString(value));
-    dialog.show();
-  }
+  protected void handle(Project project, String value, XDebuggerTree tree) {}
+
+  @NotNull
+  @Override
+  protected ValueCollector createCollector(@NotNull AnActionEvent e) {
+    return new ValueCollector(XDebuggerTree.getTree(e.getDataContext())) {
+      MyDialog dialog = null;
+
+      @Override
+      public void handleInCollector(Project project, String value, XDebuggerTree tree) {
+        if (dialog == null) {
+          dialog = new MyDialog(project);
+          dialog.setTitle("View Text");
+          dialog.show();
+        }
+        dialog.setText(StringUtil.unquoteString(value));
+      }
+    };
+  };
 
   //@Override
   //protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {

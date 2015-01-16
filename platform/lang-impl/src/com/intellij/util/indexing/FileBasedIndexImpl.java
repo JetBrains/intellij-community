@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -376,7 +376,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       if (extension.hasSnapshotMapping() && (isCurrentVersionCorrupted || versionChanged)) {
         FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
       }
-      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(name));
+      File rootDir = IndexInfrastructure.getIndexRootDir(name);
+      if (rootDir.list().length > 0) {
+        FileUtil.deleteWithRenaming(rootDir);
+      }
       IndexingStamp.rewriteVersion(versionFile, version);
     }
 

@@ -54,7 +54,9 @@ public interface VcsLog {
   Collection<VcsRef> getAllReferences();
 
   /**
-   * Selects the commit node defined by the given reference (commit hash, branch or tag).
+   * Asynchronously selects the commit node defined by the given reference (commit hash, branch or tag).
+   * Returns a {@link Future future} that allows to check if the commit was selected, wait for the selection while log is being loaded,
+   * or cancel commit selection.
    */
   @NotNull
   Future<Boolean> jumpToReference(String reference);

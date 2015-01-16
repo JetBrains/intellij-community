@@ -57,17 +57,17 @@ public class FindPopupWithProgress {
             public void run() {
               try {
                 future.get();
-                ok();
+                okPopup();
               }
               catch (CancellationException ex) {
-                cancel();
+                cancelPopup();
               }
               catch (InterruptedException ex) {
-                cancel();
+                cancelPopup();
               }
               catch (ExecutionException ex) {
                 LOG.error(ex);
-                cancel();
+                cancelPopup();
               }
             }
           });
@@ -82,10 +82,11 @@ public class FindPopupWithProgress {
       public void onClosed(LightweightWindowEvent event) {
         if (!event.isOk()) {
           if (myFuture != null) {
-            myFuture.cancel(false);
-            myFuture = null;
+            myFuture.cancel(true);
           }
         }
+        myFuture = null;
+        myTextField.hideProgress();
       }
     });
 
@@ -97,23 +98,19 @@ public class FindPopupWithProgress {
     myPopup.setSize(size);
   }
 
-  private void cancel() {
+  private void cancelPopup() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myFuture != null) myFuture = null;
-        myTextField.hideProgress();
         myPopup.cancel();
       }
     });
   }
 
-  private void ok() {
+  private void okPopup() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myFuture != null) myFuture = null;
-        myTextField.hideProgress();
         myPopup.closeOk(null);
       }
     });

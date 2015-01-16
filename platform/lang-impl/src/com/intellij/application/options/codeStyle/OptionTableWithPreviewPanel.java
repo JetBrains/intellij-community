@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -53,7 +52,7 @@ import java.util.List;
 /**
  * @author max
  */
-public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyleAbstractPanel {
+public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private TreeTable myTreeTable;
   private final JPanel myPanel = new JPanel();
 
@@ -96,15 +95,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     addPanelToWatch(myPanel);
 
     isFirstUpdate = false;
-  }
-
-  @Override
-  protected void onLanguageChange(Language language) {
-    if (myTreeTable.isEditing()) {
-      myTreeTable.getCellEditor().stopCellEditing();
-    }
-    resetImpl(getSettings());
-    myTreeTable.repaint();
+    customizeSettings();
   }
 
   @Override
@@ -402,7 +393,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
     protected Object getSettings(CodeStyleSettings settings) {
       if (clazz != null) return settings.getCustomSettings(clazz);
-      return settings.getCommonSettings(getSelectedLanguage());
+      return settings.getCommonSettings(getDefaultLanguage());
     }
   }
 

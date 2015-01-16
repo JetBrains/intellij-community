@@ -275,8 +275,6 @@
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectImporterCheckoutListener"/>
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.NewProjectCheckoutListener"/>
 
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.CommonCodeStyleSettingsProvider"/>
-
     <!-- new project wizard -->
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode" id="CreateFromTemplateMode"
                 order="after CreateFromScratchMode"/>
