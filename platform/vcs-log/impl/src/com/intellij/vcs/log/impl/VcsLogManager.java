@@ -134,9 +134,9 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<VcsRoot> roots) {
+  public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<VcsRoot> roots, @NotNull Project project) {
     Map<VirtualFile, VcsLogProvider> logProviders = ContainerUtil.newHashMap();
-    VcsLogProvider[] allLogProviders = Extensions.getExtensions(LOG_PROVIDER_EP, myProject);
+    VcsLogProvider[] allLogProviders = Extensions.getExtensions(LOG_PROVIDER_EP, project);
     for (VcsRoot root : roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();

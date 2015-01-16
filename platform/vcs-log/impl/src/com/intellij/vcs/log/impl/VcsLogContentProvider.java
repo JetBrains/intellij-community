@@ -43,7 +43,7 @@ import java.util.Arrays;
  * <p/>
  * Delegates to the VcsLogManager.
  */
-public class VcsLogContentProvider implements ChangesViewContentProvider, NotNullFunction<Project, Boolean> {
+public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   public static final String TAB_NAME = "Log";
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
@@ -95,12 +95,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
     }, ",");
   }
 
-  @NotNull
-  @Override
-  public Boolean fun(Project project) {
-    return !myLogManager.findLogProviders(Arrays.asList(myVcsManager.getAllVcsRoots())).isEmpty();
-  }
-
   @Override
   public JComponent initContent() {
     myConnection = myProject.getMessageBus().connect();
@@ -127,6 +121,15 @@ public class VcsLogContentProvider implements ChangesViewContentProvider, NotNul
       Disposer.dispose(myLogManager);
 
       initContentInternal();
+    }
+  }
+
+  public static class VcsLogVisibilityPredicate implements NotNullFunction<Project, Boolean> {
+    @NotNull
+    @Override
+    public Boolean fun(Project project) {
+      return !VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project)
+        .isEmpty();
     }
   }
 }
