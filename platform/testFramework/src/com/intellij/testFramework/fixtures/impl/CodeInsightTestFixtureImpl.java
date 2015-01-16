@@ -578,7 +578,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public IntentionAction getAvailableIntention(@NotNull final String intentionName, @NotNull final String... filePaths) {
     List<IntentionAction> intentions = getAvailableIntentions(filePaths);
-    return CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
+    IntentionAction action = CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
+    if (action == null) {
+      System.out.println(intentionName + " not found among " + StringUtil.join(intentions, new Function<IntentionAction, String>() {
+        @Override
+        public String fun(IntentionAction action) {
+          return action.getText();
+        }
+      }, ","));
+    }
+    return action;
   }
 
   @Override
