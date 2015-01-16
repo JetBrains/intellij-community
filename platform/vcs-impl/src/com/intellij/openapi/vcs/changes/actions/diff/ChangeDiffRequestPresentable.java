@@ -67,6 +67,28 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   @NotNull private final Change myChange;
   @NotNull private final Map<Key, Object> myChangeContext;
 
+  private ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change, @NotNull Map<Key, Object> changeContext) {
+    myChange = change;
+    myProject = project;
+    myChangeContext = changeContext;
+  }
+
+  @NotNull
+  public Change getChange() {
+    return myChange;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return ChangesUtil.getFilePath(myChange).getPath();
+  }
+
   public static boolean isEquals(@NotNull Change change1, @NotNull Change change2) {
     for (ChangeDiffViewerWrapperProvider provider : ChangeDiffViewerWrapperProvider.EP_NAME.getExtensions()) {
       ThreeState equals = provider.isEquals(change1, change2);
@@ -114,28 +136,6 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     if (aRev != null && aRev.getFile().isDirectory()) return false;
 
     return true;
-  }
-
-  private ChangeDiffRequestPresentable(@NotNull Project project, @NotNull Change change, @NotNull Map<Key, Object> changeContext) {
-    myChange = change;
-    myProject = project;
-    myChangeContext = changeContext;
-  }
-
-  @NotNull
-  public Change getChange() {
-    return myChange;
-  }
-
-  @NotNull
-  public Project getProject() {
-    return myProject;
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return ChangesUtil.getFilePath(myChange).getPath();
   }
 
   @NotNull
