@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
@@ -59,7 +60,8 @@ public class PushController implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final List<? extends Repository> myPreselectedRepositories;
-  @NotNull private final List<PushSupport<?, ?, ?>> myPushSupports;
+  @NotNull private final VcsRepositoryManager myGlobalRepositoryManager;
+  @NotNull private final List<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
   @NotNull private final PushSettings myPushSettings;
@@ -70,18 +72,18 @@ public class PushController implements Disposable {
   private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor();
 
   private final Map<RepositoryNode, MyRepoModel<?, ?, ?>> myView2Model = new TreeMap<RepositoryNode, MyRepoModel<?, ?, ?>>();
-  //todo need to sort repositories in ui tree using natural order
 
   public PushController(@NotNull Project project,
                         @NotNull VcsPushDialog dialog,
                         @NotNull List<? extends Repository> preselectedRepositories, @Nullable Repository currentRepo) {
     myProject = project;
     myPushSettings = ServiceManager.getService(project, PushSettings.class);
+    myGlobalRepositoryManager = ServiceManager.getService(project, VcsRepositoryManager.class);
     myExcludedRepositoryRoots = ContainerUtil.newHashSet(myPushSettings.getExcludedRepoRoots());
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;
     myPushSupports = getAffectedSupports(myProject);
-    mySingleRepoProject = isSingleRepoProject(myPushSupports);
+    mySingleRepoProject = isSingleRepoProject();
     myDialog = dialog;
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
     createTreeModel(rootNode);
@@ -101,20 +103,22 @@ public class PushController implements Disposable {
     Disposer.register(dialog.getDisposable(), this);
   }
 
-  private static boolean isSingleRepoProject(@NotNull List<PushSupport<?, ?, ?>> pushSupports) {
-    int repositoryNumbers = 0;
-    for (PushSupport support : pushSupports) {
-      repositoryNumbers += support.getRepositoryManager().getRepositories().size();
-    }
-    return repositoryNumbers == 1;
+  private boolean isSingleRepoProject() {
+    return myGlobalRepositoryManager.getRepositories().size() == 1;
   }
 
   @NotNull
-  private static List<PushSupport<?, ?, ?>> getAffectedSupports(@NotNull Project project) {
+  private List<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> getAffectedSupports(@NotNull Project project) {
+    final Collection<Repository> repositories = myGlobalRepositoryManager.getRepositories();
     return ContainerUtil.filter(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, project), new Condition<PushSupport>() {
       @Override
-      public boolean value(PushSupport support) {
-        return !support.getRepositoryManager().getRepositories().isEmpty();
+      public boolean value(final PushSupport support) {
+        return ContainerUtil.exists(repositories, new Condition<Repository>() {
+          @Override
+          public boolean value(Repository repository) {
+            return support.getVcs().equals(repository.getVcs());
+          }
+        });
       }
     });
   }
@@ -186,21 +190,30 @@ public class PushController implements Disposable {
   }
 
   private void createTreeModel(@NotNull CheckedTreeNode rootNode) {
-    for (PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget> support : myPushSupports) {
-      createNodesForVcs(support, rootNode);
+    for (Repository repository : DvcsUtil.sortRepositories(myGlobalRepositoryManager.getRepositories())) {
+      createRepoNode(repository, rootNode);
     }
   }
 
-  private <R extends Repository, S extends PushSource, T extends PushTarget> void createNodesForVcs(
-    @NotNull PushSupport<R, S, T> pushSupport, @NotNull CheckedTreeNode rootNode) {
-    for (R repository : pushSupport.getRepositoryManager().getRepositories()) {
-      createRepoNode(pushSupport, repository, rootNode);
-    }
+  @Nullable
+  private <R extends Repository, S extends PushSource, T extends PushTarget> PushSupport<R, S, T> getPushSupportByRepository(@NotNull final R repository) {
+    //noinspection unchecked
+    return (PushSupport<R, S, T>)ContainerUtil.find(
+      myPushSupports,
+      new Condition<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>>() {
+        @Override
+        public boolean value(PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget> support) {
+          return support.getVcs().equals(repository.getVcs());
+        }
+      });
   }
 
-  private <R extends Repository, S extends PushSource, T extends PushTarget> void createRepoNode(@NotNull final PushSupport<R, S, T> support,
-                                                                                                 @NotNull final R repository,
+  private <R extends Repository, S extends PushSource, T extends PushTarget> void createRepoNode(@NotNull final R repository,
                                                                                                  @NotNull final CheckedTreeNode rootNode) {
+
+    PushSupport<R, S, T> support = getPushSupportByRepository(repository);
+    if (support == null) return;
+
     T target = support.getDefaultTarget(repository);
     String repoName = getDisplayedRepoName(repository);
     S source = support.getSource(repository);
@@ -263,34 +276,28 @@ public class PushController implements Disposable {
       return name;
     }
     String candidate = name.substring(slash + 1);
-    if (!getOtherRepositoriesLastNames(repository).contains(candidate)) {
-      return candidate;
-    }
-    return name;
+    return !containedInOtherNames(repository, candidate) ? candidate : name;
   }
 
-  @NotNull
-  private Set<String> getOtherRepositoriesLastNames(@NotNull Repository except) {
-    Set<String> names = ContainerUtil.newHashSet();
-    for (PushSupport<?, ?, ?> support : myPushSupports) {
-      for (Repository repo : support.getRepositoryManager().getRepositories()) {
-        if (!repo.equals(except)) {
-          names.add(repo.getRoot().getName());
-        }
+  private boolean containedInOtherNames(@NotNull final Repository except, final String candidate) {
+    return ContainerUtil.exists(myGlobalRepositoryManager.getRepositories(), new Condition<Repository>() {
+      @Override
+      public boolean value(Repository repository) {
+        return !repository.equals(except) && repository.getRoot().getName().equals(candidate);
       }
-    }
-    return names;
+    });
   }
 
   public boolean isPushAllowed(final boolean force) {
     JTree tree = myPushLog.getTree();
     return !tree.isEditing() &&
-           ContainerUtil.exists(myPushSupports, new Condition<PushSupport<?, ?, ?>>() {
-             @Override
-             public boolean value(PushSupport<?, ?, ?> support) {
-               return isPushAllowed(support, force);
-             }
-           });
+           ContainerUtil
+             .exists(myPushSupports, new Condition<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>>() {
+               @Override
+               public boolean value(PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget> support) {
+                 return isPushAllowed(support, force);
+               }
+             });
   }
 
   private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport, boolean force) {

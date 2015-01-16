@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,44 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.actions;
+package com.intellij.dvcs.push;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitUtil;
-import git4idea.branch.GitBranchUtil;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 
-public class GitPushAction extends DumbAwareAction {
+public class VcsPushAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    Collection<GitRepository> repositories = e.getData(CommonDataKeys.EDITOR) != null
-                                             ? ContainerUtil.<GitRepository>emptyList()
-                                             : collectRepositories(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-    new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories), GitBranchUtil.getCurrentRepository(project)).show();
+    VcsRepositoryManager manager = ServiceManager.getService(project, VcsRepositoryManager.class);
+    Collection<Repository> repositories = e.getData(CommonDataKeys.EDITOR) != null
+                                          ? ContainerUtil.<Repository>emptyList()
+                                          : collectRepositories(manager, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+    VirtualFile selectedFile = DvcsUtil.getSelectedFile(project);
+    new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories),
+                      selectedFile != null ? manager.getRepositoryForFile(selectedFile) : null).show();
   }
 
   @NotNull
-  private static Collection<GitRepository> collectRepositories(@NotNull Project project, @Nullable VirtualFile[] files) {
+  private static Collection<Repository> collectRepositories(@NotNull VcsRepositoryManager vcsRepositoryManager,
+                                                            @Nullable VirtualFile[] files) {
     if (files == null) return Collections.emptyList();
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    Collection<GitRepository> repositories = ContainerUtil.newHashSet();
+    Collection<Repository> repositories = ContainerUtil.newHashSet();
     for (VirtualFile file : files) {
-      GitRepository repo = manager.getRepositoryForFile(file);
+      Repository repo = vcsRepositoryManager.getRepositoryForFile(file);
       if (repo != null) {
         repositories.add(repo);
       }
@@ -62,6 +64,7 @@ public class GitPushAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Project project = e.getProject();
-    e.getPresentation().setEnabledAndVisible(project != null && !GitUtil.getRepositoryManager(project).getRepositories().isEmpty());
+    e.getPresentation()
+      .setEnabledAndVisible(project != null && !ServiceManager.getService(project, VcsRepositoryManager.class).getRepositories().isEmpty());
   }
 }
