@@ -19,7 +19,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.OptionsContainingConfigurable;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -86,23 +85,9 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     }
   }
 
-  public void setLanguageSelector(final LanguageSelector langSelector) {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
-      configurable.getPanel().setLanguageSelector(langSelector);
-    }
-  }
-
   public void onSomethingChanged() {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       ((CodeStyleAbstractConfigurable)myTab).onSomethingChanged();
-    }
-  }
-
-  public void setLanguage(Language language) {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
-      configurable.getPanel().setPanelLanguage(language);
     }
   }
 
