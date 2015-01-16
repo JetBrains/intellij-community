@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.structuralsearch.SSRBundle;
@@ -93,17 +94,34 @@ public class ExistingTemplatesComponent {
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          Object selection = patternTree.getLastSelectedPathComponent();
-
+          final Object selection = patternTree.getLastSelectedPathComponent();
+          if (!(selection instanceof DefaultMutableTreeNode)) {
+            return;
+          }
+          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+          if (!(node.getUserObject() instanceof Configuration)) {
+            return;
+          }
+          final Configuration configuration = (Configuration)node.getUserObject();
+          if (configuration.isPredefined()) {
+            return;
+          }
+          patternTreeModel.removeNodeFromParent(node);
+          configurationManager.removeConfiguration(configuration);
+        }
+      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          final Object selection = patternTree.getLastSelectedPathComponent();
           if (selection instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-
-            if (node.getUserObject() instanceof Configuration) {
-              Configuration configuration = (Configuration)node.getUserObject();
-              patternTreeModel.removeNodeFromParent(node);
-              configurationManager.removeConfiguration(configuration);
+            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+            final Object userObject = node.getUserObject();
+            if (userObject instanceof Configuration) {
+              final Configuration configuration = (Configuration)userObject;
+              return !configuration.isPredefined();
             }
           }
+          return false;
         }
       }).createPanel();
 
