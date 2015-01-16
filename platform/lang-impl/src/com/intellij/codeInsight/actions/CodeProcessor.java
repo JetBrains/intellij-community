@@ -19,13 +19,11 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -37,6 +35,8 @@ import java.util.List;
 import static com.intellij.codeInsight.actions.TextRangeType.*;
 
 class CodeProcessor {
+  private static final String COLOR = "#7D7D7D";
+
   private final Editor myEditor;
 
   private final boolean myShouldOptimizeImports;
@@ -134,18 +134,23 @@ class CodeProcessor {
 
   @NotNull
   private String prepareMessage() {
-    String shortcutInfo = "Show reformat dialog: " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ReformatFile"));
 
-    StringBuilder builder = new StringBuilder();
+    StringBuilder builder = new StringBuilder("<html>");
     List<String> notifications = myProcessor.getNotificationInfo();
     if (notifications.isEmpty()) {
-      builder.append("code looks pretty well").append('\n');
+      builder.append("code looks pretty well").append("<br>");
     } else {
       for (String info : notifications) {
-        builder.append(info).append('\n');
+        builder.append(info).append("<br>");
       }
     }
-    builder.append(shortcutInfo);
+
+    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ReformatFile"));
+    builder.append("<span style='color:").append(COLOR).append("'>")
+           .append("Show reformat dialog: ")
+           .append(shortcutText)
+           .append("</span>")
+           .append("</html>");
 
     return builder.toString();
   }
