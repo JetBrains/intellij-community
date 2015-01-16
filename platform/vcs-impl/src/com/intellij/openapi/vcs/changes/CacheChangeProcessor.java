@@ -58,14 +58,12 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   public CacheChangeProcessor(@NotNull Project project) {
     super(project);
     myProject = project;
-
-    init();
   }
 
   @Override
-  protected void init() {
-    super.init();
+  public void init() {
     myContextDataHolder.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
+    super.init();
   }
 
   //

@@ -35,8 +35,6 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
     super(project);
     myRequestChain = requestChain;
-
-    init();
   }
 
   //

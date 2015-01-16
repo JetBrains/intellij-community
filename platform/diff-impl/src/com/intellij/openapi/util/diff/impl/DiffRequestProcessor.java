@@ -107,10 +107,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     new ShowActionGroupPopupAction();
   }
 
-  protected void init() {
+  public void init() {
     JComponent bottomPanel = myContext.getUserData(DiffUserDataKeysEx.BOTTOM_PANEL);
     if (bottomPanel != null) myPanel.add(bottomPanel, BorderLayout.SOUTH);
     if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
+
+    applyRequest(myActiveRequest, true, null);
   }
 
   //

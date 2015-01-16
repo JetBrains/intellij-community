@@ -119,6 +119,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myDiffDetails = new MyChangeProcessor(myProject);
+    myDiffDetails.init();
     myTsl = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {

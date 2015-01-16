@@ -314,6 +314,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         changeDetails();
       }
     });
+    myDiffDetails.init();
 
     myBrowserExtender.addToolbarActions(this);
 

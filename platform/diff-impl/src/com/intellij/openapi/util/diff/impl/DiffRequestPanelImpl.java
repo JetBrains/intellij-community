@@ -3,28 +3,25 @@ package com.intellij.openapi.util.diff.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.DiffRequestPanel;
-import com.intellij.openapi.util.diff.chains.DiffRequestChain;
-import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
-import com.intellij.openapi.util.diff.chains.SimpleDiffRequestChain;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.diff.requests.NoDiffRequest;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.List;
 
 public class DiffRequestPanelImpl implements DiffRequestPanel {
   @NotNull private final JPanel myPanel;
   @NotNull private final MyCacheDiffRequestChainProcessor myProcessor;
-  @NotNull private final MyRequestChain myChain;
 
   public DiffRequestPanelImpl(@Nullable Project project, @Nullable Window window) {
-    myChain = new MyRequestChain();
-    myProcessor = new MyCacheDiffRequestChainProcessor(project, window, myChain);
+    myProcessor = new MyCacheDiffRequestChainProcessor(project, window);
+    myProcessor.init();
 
     myPanel = new JPanel(new BorderLayout()) {
       @Override
@@ -38,13 +35,13 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
 
   @Override
   public void setRequest(@Nullable DiffRequest request) {
-    myChain.setRequest(request);
+    myProcessor.setRequest(request);
     myProcessor.updateRequest();
   }
 
   @Override
   public <T> void putContextHints(@NotNull Key<T> key, @Nullable T value) {
-    myChain.putUserData(key, value);
+    myProcessor.putContextUserData(key, value);
   }
 
   @NotNull
@@ -64,12 +61,24 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
     Disposer.dispose(myProcessor);
   }
 
-  private static class MyCacheDiffRequestChainProcessor extends CacheDiffRequestChainProcessor {
+  private static class MyCacheDiffRequestChainProcessor extends DiffRequestProcessor {
     @Nullable private final Window myWindow;
+    @NotNull private final UserDataHolder myContext = new UserDataHolderBase();
 
-    public MyCacheDiffRequestChainProcessor(@Nullable Project project, @Nullable Window window, @NotNull DiffRequestChain requestChain) {
-      super(project, requestChain);
+    @NotNull private DiffRequest myRequest = NoDiffRequest.INSTANCE;
+
+    public MyCacheDiffRequestChainProcessor(@Nullable Project project, @Nullable Window window) {
+      super(project);
       myWindow = window;
+    }
+
+    public void setRequest(@Nullable DiffRequest request) {
+      myRequest = request != null ? request : NoDiffRequest.INSTANCE;
+    }
+
+    @Override
+    public void updateRequest(boolean force, @Nullable DiffUserDataKeys.ScrollToPolicy scrollToChangePolicy) {
+      applyRequest(myRequest, force, scrollToChangePolicy);
     }
 
     @Override
@@ -78,30 +87,16 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
       if (myWindow instanceof JDialog) ((JDialog)myWindow).setTitle(title);
       if (myWindow instanceof JFrame) ((JFrame)myWindow).setTitle(title);
     }
-  }
 
-  private static class MyRequestChain extends UserDataHolderBase implements DiffRequestChain {
-    @Nullable private DiffRequest myRequest;
-
-    public void setRequest(@Nullable DiffRequest request) {
-      myRequest = request;
+    @Nullable
+    @Override
+    public <T> T getContextUserData(@NotNull Key<T> key) {
+      return myContext.getUserData(key);
     }
 
     @Override
-    public void setIndex(int index) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getIndex() {
-      return 0;
-    }
-
-    @NotNull
-    @Override
-    public List<? extends DiffRequestPresentable> getRequests() {
-      if (myRequest == null) return Collections.emptyList();
-      return Collections.singletonList(new SimpleDiffRequestChain.DiffRequestPresentableWrapper(myRequest));
+    public <T> void putContextUserData(@NotNull Key<T> key, @Nullable T value) {
+      myContext.putUserData(key, value);
     }
   }
 }
