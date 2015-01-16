@@ -29,8 +29,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import com.intellij.util.indexing.DebugAssertions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -51,7 +51,6 @@ class CodeProcessor {
 
   private final Project myProject;
   private final PsiFile myFile;
-  private final TextRangeType myProcessingType;
 
   private AbstractLayoutCodeProcessor myProcessor;
 
@@ -62,8 +61,6 @@ class CodeProcessor {
     myFile = file;
     myProject = file.getProject();
     myEditor = editor;
-
-    myProcessingType = runOptions.getTextRangeType();
 
     myShouldOptimizeImports = runOptions.isOptimizeImports();
     myShouldRearrangeCode = runOptions.isRearrangeCode();
@@ -78,30 +75,9 @@ class CodeProcessor {
       myProcessor = new OptimizeImportsProcessor(myProject, myFile);
     }
 
-    if (myProcessor != null) {
-      if (myProcessSelectedText) {
-        myProcessor = new ReformatCodeProcessor(myProcessor, myEditor.getSelectionModel());
-      }
-      else {
-        myProcessor = new ReformatCodeProcessor(myProcessor, myProcessChangesTextOnly);
-      }
-    }
-    else {
-      if (myProcessSelectedText) {
-        myProcessor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
-      }
-      else {
-        myProcessor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
-      }
-    }
-
+    myProcessor = mixWithReformatProcessor(myProcessor);
     if (myShouldRearrangeCode) {
-      if (myProcessSelectedText) {
-        myProcessor = new RearrangeCodeProcessor(myProcessor, myEditor.getSelectionModel());
-      }
-      else {
-        myProcessor = new RearrangeCodeProcessor(myProcessor);
-      }
+      myProcessor = mixWithRearrangeProcessor(myProcessor);
     }
 
     if (myShouldNotify) {
@@ -117,6 +93,37 @@ class CodeProcessor {
     }
 
     myProcessor.run();
+  }
+
+  private AbstractLayoutCodeProcessor mixWithRearrangeProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
+    if (myProcessSelectedText) {
+      processor = new RearrangeCodeProcessor(processor, myEditor.getSelectionModel());
+    }
+    else {
+      processor = new RearrangeCodeProcessor(processor);
+    }
+    return processor;
+  }
+
+  @NotNull
+  private AbstractLayoutCodeProcessor mixWithReformatProcessor(@Nullable AbstractLayoutCodeProcessor processor) {
+    if (processor != null) {
+      if (myProcessSelectedText) {
+        processor = new ReformatCodeProcessor(processor, myEditor.getSelectionModel());
+      }
+      else {
+        processor = new ReformatCodeProcessor(processor, myProcessChangesTextOnly);
+      }
+    }
+    else {
+      if (myProcessSelectedText) {
+        processor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
+      }
+      else {
+        processor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
+      }
+    }
+    return processor;
   }
 
   protected static int getProcessedLinesNumber(final Document document, final CharSequence before) {
