@@ -327,7 +327,7 @@ public abstract class ImportLayoutPanel extends JPanel {
         PackageEntry entry = packageTable.getEntryAt(row);
 
         if (entry == PackageEntry.BLANK_LINE_ENTRY) {
-          append("                                               <blank line>", SimpleTextAttributes.LINK_ATTRIBUTES);
+          append("<blank line>", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
           TextAttributes attributes = JavaHighlightingColors.KEYWORD.getDefaultAttributes();
