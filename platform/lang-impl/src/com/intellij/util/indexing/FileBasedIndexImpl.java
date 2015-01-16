@@ -377,9 +377,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
       }
       File rootDir = IndexInfrastructure.getIndexRootDir(name);
-      if (rootDir.list().length > 0) {
-        FileUtil.deleteWithRenaming(rootDir);
-      }
+      if (versionFileExisted) FileUtil.deleteWithRenaming(rootDir);
       IndexingStamp.rewriteVersion(versionFile, version);
     }
 

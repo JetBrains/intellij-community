@@ -126,13 +126,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     if (forceClean || IndexingStamp.versionDiffers(versionFile, version)) {
       final String[] children = indexRootDir.list();
       // rebuild only if there exists what to rebuild
-      needRebuild = !forceClean && (versionFileExisted || children != null && children.length > 0);
+      boolean indexRootHasChildren = children != null && children.length > 0;
+      needRebuild = !forceClean && (versionFileExisted || indexRootHasChildren);
       if (needRebuild) {
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }
-      if (indexRootDir.list().length > 0) {
-        FileUtil.deleteWithRenaming(indexRootDir);
-      }
+      if (indexRootHasChildren) FileUtil.deleteWithRenaming(indexRootDir);
       IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
     }
 
