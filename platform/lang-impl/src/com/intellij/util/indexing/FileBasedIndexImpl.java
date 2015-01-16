@@ -270,11 +270,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         ourRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
       }
 
-      final File corruptionMarker = new File(PathManager.getIndexRoot(), CORRUPTION_MARKER_NAME);
+      File indexRoot = PathManager.getIndexRoot();
+      final File corruptionMarker = new File(indexRoot, CORRUPTION_MARKER_NAME);
       final boolean currentVersionCorrupted = corruptionMarker.exists();
+      if (currentVersionCorrupted) {
+        FileUtil.deleteWithRenaming(indexRoot);
+        indexRoot.mkdirs();
+      }
       boolean versionChanged = false;
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
-        versionChanged |= registerIndexer(extension, currentVersionCorrupted);
+        versionChanged |= registerIndexer(extension);
       }
 
       for(List<ID<?, ?>> value: myFileType2IndicesWithFileTypeInfoMap.values()) {
@@ -361,19 +366,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   /**
    * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted
    */
-  private <K, V> boolean registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted)
+  private <K, V> boolean registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension)
     throws IOException {
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
     final File versionFile = IndexInfrastructure.getVersionFile(name);
     final boolean versionFileExisted = versionFile.exists();
     boolean versionChanged = false;
-    if (isCurrentVersionCorrupted || IndexingStamp.versionDiffers(versionFile, version)) {
-      if (!isCurrentVersionCorrupted && versionFileExisted) {
+    if (IndexingStamp.versionDiffers(versionFile, version)) {
+      if (versionFileExisted) {
         versionChanged = true;
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
       }
-      if (extension.hasSnapshotMapping() && (isCurrentVersionCorrupted || versionChanged)) {
+      if (extension.hasSnapshotMapping() && versionChanged) {
         FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
       }
       File rootDir = IndexInfrastructure.getIndexRootDir(name);
