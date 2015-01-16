@@ -13,6 +13,8 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
+ * An utility class to capture heap dumps of the current process
+ * 
  * @author Pavel.Sher
  */
 public class MemoryDumpHelper {
@@ -55,6 +57,9 @@ public class MemoryDumpHelper {
     ourDumpHeap = dumpHeap;
   }
 
+  /**
+   * @return whether there's an ability to capture heap dumps in this process
+   */
   public static boolean memoryDumpAvailable() {
     try {
       return ourMXBean != null;
@@ -64,6 +69,11 @@ public class MemoryDumpHelper {
     }
   }
 
+  /**
+   * Save a memory dump in a binary format to a file.
+   * @param dumpPath the name of the snapshot file
+   * @throws Exception
+   */
   public static synchronized void captureMemoryDump(@NotNull String dumpPath) throws Exception {
     ourDumpHeap.invoke(ourMXBean, dumpPath, true);
   }
