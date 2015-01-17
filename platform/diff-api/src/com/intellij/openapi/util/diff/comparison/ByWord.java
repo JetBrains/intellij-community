@@ -521,7 +521,6 @@ public class ByWord {
     }
   }
 
-  // TODO: algorithm could be more aggressive
   private static class TrimSpacesCorrector {
     @NotNull private final DiffIterable myIterable;
     @NotNull private final CharSequence myText1;

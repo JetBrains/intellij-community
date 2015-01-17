@@ -24,7 +24,6 @@ class OnesideEditorHighlighter implements EditorHighlighter {
   @NotNull private final Document myDocument;
   @NotNull private final List<Element> myPieces;
 
-  // TODO: remove code duplication with FragmentedEditorHighlighter ?
   public OnesideEditorHighlighter(@NotNull Document document,
                                   @NotNull EditorHighlighter highlighter1,
                                   @NotNull EditorHighlighter highlighter2,
