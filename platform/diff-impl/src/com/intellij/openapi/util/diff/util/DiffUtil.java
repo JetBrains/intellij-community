@@ -658,6 +658,7 @@ public class DiffUtil {
   // Writable
   //
 
+  @CalledInAwt
   public static void executeWriteCommand(@NotNull final Document document,
                                          @Nullable final Project project,
                                          @Nullable final String name,
@@ -688,13 +689,8 @@ public class DiffUtil {
 
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
-    if (document.isWritable()) return true;
     if (project == null) return false;
-
-    // TODO: show some kind of dialog ?
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
-    return !status.hasReadonlyFiles();
+    return ReadonlyStatusHandler.ensureDocumentWritable(project, document);
   }
 
   //
