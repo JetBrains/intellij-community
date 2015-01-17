@@ -172,6 +172,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         }
       });
 
+      // TODO: cache results
       // TODO: hide IGNORE_WHITESPACES_CHUNKS from settings, as it's not supported (or support merge of non-Fair Iterables)
       CharSequence[] sequences = data.getSequences();
       ComparisonPolicy comparisonPolicy = getTextSettings().getIgnorePolicy().getComparisonPolicy();
@@ -618,19 +619,6 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       else {
         myBusySpinner.suspend();
       }
-    }
-  }
-
-  private static class CompareData {
-    @NotNull private final long[] myStamps;
-
-    public CompareData(@NotNull long[] stamps) {
-      myStamps = stamps;
-    }
-
-    @NotNull
-    public long[] getStamps() {
-      return myStamps;
     }
   }
 
