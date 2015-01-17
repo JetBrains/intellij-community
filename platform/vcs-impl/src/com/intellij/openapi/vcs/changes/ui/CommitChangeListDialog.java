@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -1366,6 +1367,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private class MyChangeProcessor extends CacheChangeProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project);
+    }
+
+    @Override
+    public void init() {
+      super.init();
+      putContextUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
     }
 
     @NotNull
