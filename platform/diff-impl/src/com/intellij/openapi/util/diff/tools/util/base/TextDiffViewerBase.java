@@ -188,108 +188,128 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
   // Actions
   //
 
-  protected class HighlightPolicySettingAction extends ComboBoxAction implements DumbAware {
-    @NotNull private final DefaultActionGroup myChildren;
+  // TODO: pretty icons ?
+  protected static abstract class ComboBoxSettingAction<T> extends ComboBoxAction implements DumbAware {
+    private DefaultActionGroup myChildren;
 
-    public HighlightPolicySettingAction() {
-      // TODO: pretty icons ?
+    public ComboBoxSettingAction() {
       setEnabledInModalContext(true);
-
-      // TODO: hide "Do not highlight" in oneside mode
-      myChildren = new DefaultActionGroup();
-      for (HighlightPolicy policy : HighlightPolicy.values()) {
-        myChildren.add(new MyPolicyAction(policy));
-      }
-    }
-
-    @NotNull
-    public DefaultActionGroup getPopupGroup() {
-      return myChildren;
     }
 
     @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
+      presentation.setText(getText(getCurrentSetting()));
+    }
 
-      presentation.setText(getTextSettings().getHighlightPolicy().getText());
-
-      presentation.setEnabled(true);
+    @NotNull
+    public DefaultActionGroup getPopupGroup() {
+      initChildren();
+      return myChildren;
     }
 
     @NotNull
     @Override
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+      initChildren();
       return myChildren;
     }
 
-    private class MyPolicyAction extends AnAction implements DumbAware {
-      @NotNull private final HighlightPolicy myPolicy;
+    private void initChildren() {
+      if (myChildren == null) {
+        myChildren = new DefaultActionGroup();
+        for (T setting : getAvailableSettings()) {
+          myChildren.add(new MyAction(setting));
+        }
+      }
+    }
 
-      public MyPolicyAction(@NotNull HighlightPolicy policy) {
-        super(policy.getText());
+    @NotNull
+    protected abstract List<T> getAvailableSettings();
+
+    @NotNull
+    protected abstract String getText(@NotNull T setting);
+
+    @NotNull
+    protected abstract T getCurrentSetting();
+
+    protected abstract void applySetting(@NotNull T setting, @NotNull AnActionEvent e);
+
+    private class MyAction extends AnAction implements DumbAware {
+      @NotNull private final T mySetting;
+
+      public MyAction(@NotNull T setting) {
+        super(getText(setting));
         setEnabledInModalContext(true);
-        myPolicy = policy;
+        mySetting = setting;
       }
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        if (getTextSettings().getHighlightPolicy() == myPolicy) return;
-        getTextSettings().setHighlightPolicy(myPolicy);
-        HighlightPolicySettingAction.this.update(e);
-        rediff();
+        applySetting(mySetting, e);
       }
     }
   }
 
-  protected class IgnorePolicySettingAction extends ComboBoxAction implements DumbAware {
-    @NotNull private final DefaultActionGroup myChildren;
+  protected class HighlightPolicySettingAction extends ComboBoxSettingAction<HighlightPolicy> {
+    public HighlightPolicySettingAction() {
+    }
 
+    @Override
+    protected void applySetting(@NotNull HighlightPolicy setting, @NotNull AnActionEvent e) {
+      if (getCurrentSetting() == setting) return;
+      getTextSettings().setHighlightPolicy(setting);
+      update(e);
+      rediff();
+    }
+
+    @NotNull
+    @Override
+    protected HighlightPolicy getCurrentSetting() {
+      return getTextSettings().getHighlightPolicy();
+    }
+
+    @NotNull
+    @Override
+    protected String getText(@NotNull HighlightPolicy setting) {
+      return setting.getText();
+    }
+
+    @NotNull
+    @Override
+    protected List<HighlightPolicy> getAvailableSettings() {
+      return Arrays.asList(HighlightPolicy.values());
+    }
+  }
+
+  protected class IgnorePolicySettingAction extends ComboBoxSettingAction<IgnorePolicy> {
     public IgnorePolicySettingAction() {
-      // TODO: pretty icons ?
-      setEnabledInModalContext(true);
-
-      myChildren = new DefaultActionGroup();
-      for (IgnorePolicy policy : IgnorePolicy.values()) {
-        myChildren.add(new MyPolicyAction(policy));
-      }
-    }
-
-    @NotNull
-    public DefaultActionGroup getPopupGroup() {
-      return myChildren;
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-
-      presentation.setText(getTextSettings().getIgnorePolicy().getText());
-
-      presentation.setEnabled(true);
+    protected void applySetting(@NotNull IgnorePolicy setting, @NotNull AnActionEvent e) {
+      if (getCurrentSetting() == setting) return;
+      getTextSettings().setIgnorePolicy(setting);
+      update(e);
+      rediff();
     }
 
     @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-      return myChildren;
+    protected IgnorePolicy getCurrentSetting() {
+      return getTextSettings().getIgnorePolicy();
     }
 
-    private class MyPolicyAction extends AnAction implements DumbAware {
-      @NotNull private final IgnorePolicy myPolicy;
+    @NotNull
+    @Override
+    protected String getText(@NotNull IgnorePolicy setting) {
+      return setting.getText();
+    }
 
-      public MyPolicyAction(@NotNull IgnorePolicy policy) {
-        super(policy.getText());
-        setEnabledInModalContext(true);
-        myPolicy = policy;
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (getTextSettings().getIgnorePolicy() == myPolicy) return;
-        getTextSettings().setIgnorePolicy(myPolicy);
-        IgnorePolicySettingAction.this.update(e);
-        rediff();
-      }
+    @NotNull
+    @Override
+    protected List<IgnorePolicy> getAvailableSettings() {
+      return Arrays.asList(IgnorePolicy.values());
     }
   }
 
