@@ -1,11 +1,14 @@
 package com.intellij.openapi.util.diff.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.actions.impl.GoToChangePopupBuilder;
@@ -14,12 +17,14 @@ import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.requests.*;
 import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcessor {
@@ -75,7 +80,9 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
           requestRef[0] = presentable.process(getContext(), indicator);
         }
         catch (ProcessCanceledException e) {
-          requestRef[0] = new OperationCanceledDiffRequest(presentable.getName()); // TODO: add reload action
+          requestRef[0] = new OperationCanceledDiffRequest(presentable.getName());
+          requestRef[0].putUserData(DiffUserDataKeys.CONTEXT_ACTIONS,
+                                    Collections.<AnAction>singletonList(new ReloadRequestAction(presentable)));
         }
         catch (DiffRequestPresentableException e) {
           requestRef[0] = new ErrorDiffRequest(presentable, e);
@@ -192,5 +199,24 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
         }
       }
     });
+  }
+
+  //
+  // Actions
+  //
+
+  protected class ReloadRequestAction extends DumbAwareAction {
+    @NotNull private final DiffRequestPresentable myPresentable;
+
+    public ReloadRequestAction(@NotNull DiffRequestPresentable presentable) {
+      super("Reload", null, AllIcons.Actions.Refresh);
+      myPresentable = presentable;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myRequestCache.remove(myPresentable);
+      updateRequest(true);
+    }
   }
 }

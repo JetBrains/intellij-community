@@ -119,7 +119,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @CalledInAwt
   public void updateRequest() {
-    updateRequest(false, null);
+    updateRequest(false);
+  }
+
+  @CalledInAwt
+  public void updateRequest(boolean force) {
+    updateRequest(force, null);
   }
 
   @CalledInAwt
@@ -427,7 +432,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
       myToolOrder.add(index, myDiffTool);
 
-      updateRequest(true, null);
+      updateRequest(true);
     }
   }
 

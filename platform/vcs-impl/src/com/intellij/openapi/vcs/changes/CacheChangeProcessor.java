@@ -15,10 +15,14 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -38,6 +42,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class CacheChangeProcessor extends DiffRequestProcessor {
@@ -141,7 +146,9 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       return presentable.process(getContext(), indicator);
     }
     catch (ProcessCanceledException e) {
-      return new OperationCanceledDiffRequest(presentable.getName());
+      OperationCanceledDiffRequest request = new OperationCanceledDiffRequest(presentable.getName());
+      request.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new ReloadRequestAction(change)));
+      return request;
     }
     catch (DiffRequestPresentableException e) {
       return new ErrorDiffRequest(presentable, e);
@@ -286,5 +293,24 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   @Override
   protected boolean isNavigationEnabled() {
     return getSelectedChanges().size() > 1 || getAllChanges().size() > 1;
+  }
+
+  //
+  // Actions
+  //
+
+  protected class ReloadRequestAction extends DumbAwareAction {
+    @NotNull private final Change myChange;
+
+    public ReloadRequestAction(@NotNull Change change) {
+      super("Reload", null, AllIcons.Actions.Refresh);
+      myChange = change;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myRequestCache.remove(myChange);
+      updateRequest(true);
+    }
   }
 }
