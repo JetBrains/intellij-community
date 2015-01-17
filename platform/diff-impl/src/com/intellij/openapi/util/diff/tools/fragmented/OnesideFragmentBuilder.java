@@ -25,7 +25,7 @@ class OnesideFragmentBuilder {
   @NotNull private final List<ChangedBlock> myBlocks = new ArrayList<ChangedBlock>();
   @NotNull private final List<HighlightRange> myRanges = new ArrayList<HighlightRange>();
   @NotNull private final LineNumberConvertor.Builder myConvertor = new LineNumberConvertor.Builder();
-  @NotNull private final List<IntPair> myEqualLines = new ArrayList<IntPair>();
+  @NotNull private final List<IntPair> myChangedLines = new ArrayList<IntPair>();
 
   public OnesideFragmentBuilder(@NotNull LineFragments fragments,
                                 @NotNull Document document1,
@@ -88,7 +88,7 @@ class OnesideFragmentBuilder {
       int startOffset = myDocument1.getLineStartOffset(startLine1);
       int endOffset = myDocument1.getLineEndOffset(endLine1);
 
-      appendText(Side.LEFT, startOffset, endOffset, lines1, startLine1, -1);
+      appendTextSide(Side.LEFT, startOffset, endOffset, lines1, startLine1, -1);
     }
     blockEndOffset1 = myBuilder.length();
 
@@ -97,7 +97,7 @@ class OnesideFragmentBuilder {
       int startOffset = myDocument2.getLineStartOffset(startLine2);
       int endOffset = myDocument2.getLineEndOffset(endLine2);
 
-      appendText(Side.RIGHT, startOffset, endOffset, lines2, -1, startLine2);
+      appendTextSide(Side.RIGHT, startOffset, endOffset, lines2, -1, startLine2);
     }
     blockEndOffset2 = myBuilder.length();
 
@@ -122,12 +122,16 @@ class OnesideFragmentBuilder {
       int startOffset = myMasterSide.isLeft() ? myDocument1.getLineStartOffset(startLine1) : myDocument2.getLineStartOffset(startLine2);
       int endOffset = myMasterSide.isLeft() ? myDocument1.getLineEndOffset(endLine1) : myDocument2.getLineEndOffset(endLine2);
 
-      int linesBefore = totalLines;
       appendText(myMasterSide, startOffset, endOffset, lines, startLine1, startLine2);
-      int linesAfter = totalLines;
-
-      myEqualLines.add(new IntPair(linesBefore, linesAfter));
     }
+  }
+
+  private void appendTextSide(@NotNull Side side, int offset1, int offset2, int lines, int startLine1, int startLine2) {
+    int linesBefore = totalLines;
+    appendText(side, offset1, offset2, lines, startLine1, startLine2);
+    int linesAfter = totalLines;
+
+    myChangedLines.add(new IntPair(linesBefore, linesAfter));
   }
 
   private void appendText(@NotNull Side side, int offset1, int offset2, int lines, int startLine1, int startLine2) {
@@ -185,7 +189,7 @@ class OnesideFragmentBuilder {
   }
 
   @NotNull
-  public List<IntPair> getEqualLines() {
-    return myEqualLines;
+  public List<IntPair> getChangedLines() {
+    return myChangedLines;
   }
 }

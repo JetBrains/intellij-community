@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.actions.BufferedLineIterator;
 import com.intellij.openapi.util.diff.actions.NavigationContextChecker;
 import com.intellij.openapi.util.diff.actions.impl.OpenInEditorWithMouseAction;
-import com.intellij.openapi.util.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.IntPair;
@@ -253,13 +252,13 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       FileType fileType = content2.getContentType() == null ? content1.getContentType() : content2.getContentType();
 
       LineNumberConvertor convertor = builder.getConvertor();
-      List<IntPair> equalLines = builder.getEqualLines();
+      List<IntPair> changedLines = builder.getChangedLines();
       boolean isEqual = builder.isEqual();
 
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), highlighter, fileType,
                                                              convertor.createConvertor1(), convertor.createConvertor2());
 
-      return apply(editorData, builder.getBlocks(), convertor, equalLines, isEqual);
+      return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual);
     }
     catch (DiffTooBigException ignore) {
       return new Runnable() {
@@ -328,7 +327,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   private Runnable apply(@NotNull final CombinedEditorData data,
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor,
-                         @NotNull final List<IntPair> equalLines,
+                         @NotNull final List<IntPair> changedLines,
                          final boolean isEqual) {
     return new Runnable() {
       @Override
@@ -360,7 +359,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
         myChangedBlockData = new ChangedBlockData(diffChanges, convertor);
 
-        myFoldingModel.install(equalLines, myRequest, getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
+        myFoldingModel.install(changedLines, myRequest, getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
 
         myScrollToLineHelper.onRediff();
 

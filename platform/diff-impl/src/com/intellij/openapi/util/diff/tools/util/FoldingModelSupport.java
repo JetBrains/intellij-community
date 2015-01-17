@@ -33,14 +33,18 @@ public class FoldingModelSupport {
       super(new EditorEx[]{editor}, disposable);
     }
 
-    public void install(@Nullable List<IntPair> equalLines, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
-      if (equalLines == null) return;
+    public void install(@Nullable List<IntPair> changedLines, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
+      if (changedLines == null) return;
       if (range == -1) return;
       MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
 
-      for (IntPair line : equalLines) {
-        addRange(line.val1, line.val2, range, suggester);
+      int last = Integer.MIN_VALUE;
+      for (IntPair line : changedLines) {
+        addRange(last, line.val1, range, suggester);
+
+        last = line.val2;
       }
+      addRange(last, Integer.MAX_VALUE, range, suggester);
 
       updateLineNumbers();
     }
