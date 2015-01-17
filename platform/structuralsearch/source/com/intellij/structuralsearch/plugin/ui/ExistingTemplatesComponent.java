@@ -147,7 +147,12 @@ public class ExistingTemplatesComponent {
 
     historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    new ListSpeedSearch(historyList);
+    new ListSpeedSearch(historyList, new Convertor<Object, String>() {
+      @Override
+      public String convert(Object o) {
+        return o instanceof Configuration ? ((Configuration)o).getName() : o.toString();
+      }
+    });
 
     if (configurationManager.getHistoryConfigurations() != null) {
       for (final Configuration configuration : configurationManager.getHistoryConfigurations()) {
