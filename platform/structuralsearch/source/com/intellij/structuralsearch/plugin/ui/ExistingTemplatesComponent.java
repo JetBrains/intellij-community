@@ -134,28 +134,19 @@ public class ExistingTemplatesComponent {
 
     historyModel = new DefaultListModel();
     historyPanel = new JPanel(new BorderLayout());
-    historyPanel.add(
-      BorderLayout.NORTH,
-      new JLabel(SSRBundle.message("used.templates"))
-    );
-    Component view = historyList = new JBList(historyModel);
-    historyPanel.add(
-      BorderLayout.CENTER,
-      ScrollPaneFactory.createScrollPane(view)
-    );
+    historyPanel.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("used.templates")));
 
-    historyList.setCellRenderer(
-      new ListCellRenderer()
-    );
-
+    historyList = new JBList(historyModel);
+    historyPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(historyList));
     historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    new ListSpeedSearch(historyList, new Convertor<Object, String>() {
+    final ListSpeedSearch speedSearch = new ListSpeedSearch(historyList, new Convertor<Object, String>() {
       @Override
       public String convert(Object o) {
         return o instanceof Configuration ? ((Configuration)o).getName() : o.toString();
       }
     });
+    historyList.setCellRenderer(new ExistingTemplatesListCellRenderer(speedSearch));
 
     if (configurationManager.getHistoryConfigurations() != null) {
       for (final Configuration configuration : configurationManager.getHistoryConfigurations()) {
@@ -230,21 +221,24 @@ public class ExistingTemplatesComponent {
     return plugin.getExistingTemplatesComponent();
   }
 
-  static class ListCellRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+  private static class ExistingTemplatesListCellRenderer extends ColoredListCellRenderer {
+
+    private final ListSpeedSearch mySpeedSearch;
+
+    public ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
+      mySpeedSearch = speedSearch;
+    }
+    @Override
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean focus) {
       if (value instanceof Configuration) {
         value = ((Configuration)value).getName();
       }
-
-      Component comp = super.getListCellRendererComponent(
-        list,
-        value,
-        index,
-        isSelected,
-        cellHasFocus
-      );
-
-      return comp;
+      final Color background = (selected && !focus) ?
+                               UIUtil.getListUnfocusedSelectionBackground() : UIUtil.getListBackground(selected);
+      final Color foreground = UIUtil.getListForeground(selected);
+      setPaintFocusBorder(false);
+      SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), value.toString(), SimpleTextAttributes.STYLE_PLAIN,
+                                 foreground, background, this);
     }
   }
 
