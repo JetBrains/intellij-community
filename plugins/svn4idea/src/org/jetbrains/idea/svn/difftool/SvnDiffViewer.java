@@ -219,7 +219,7 @@ public class SvnDiffViewer implements DiffViewer {
   private static SvnDiffSettings initSettings(@NotNull DiffContext context) {
     SvnDiffSettings settings = context.getUserData(SvnDiffSettings.KEY);
     if (settings == null) {
-      settings = SvnDiffSettings.getSettingsDefaults(); // TODO: do not use defaults ?
+      settings = SvnDiffSettings.getSettings();
       context.putUserData(SvnDiffSettings.KEY, settings);
     }
     return settings;

@@ -16,36 +16,39 @@ public class SvnDiffSettingsHolder implements PersistentStateComponent<SvnDiffSe
   public static class SvnDiffSettings {
     public static final Key<SvnDiffSettings> KEY = Key.create("SvnDiffSettings");
 
-    float SPITTER_PROPORTION = 0.9f;
-    boolean HIDE_PROPERTIES = false;
+    private SharedSettings SHARED_SETTINGS = new SharedSettings();
+
+    private static class SharedSettings {
+      float SPLITTER_PROPORTION = 0.9f;
+      boolean HIDE_PROPERTIES = false;
+    }
 
     public SvnDiffSettings() {
     }
 
-    public SvnDiffSettings(float SPITTER_PROPORTION, boolean HIDE_PROPERTIES) {
-      this.SPITTER_PROPORTION = SPITTER_PROPORTION;
-      this.HIDE_PROPERTIES = HIDE_PROPERTIES;
+    public SvnDiffSettings(@NotNull SharedSettings SHARED_SETTINGS) {
+      this.SHARED_SETTINGS = SHARED_SETTINGS;
     }
 
     @NotNull
     private SvnDiffSettings copy() {
-      return new SvnDiffSettings(SPITTER_PROPORTION, HIDE_PROPERTIES);
+      return new SvnDiffSettings(SHARED_SETTINGS);
     }
 
     public boolean isHideProperties() {
-      return HIDE_PROPERTIES;
+      return SHARED_SETTINGS.HIDE_PROPERTIES;
     }
 
     public void setHideProperties(boolean value) {
-      HIDE_PROPERTIES = value;
+      SHARED_SETTINGS.HIDE_PROPERTIES = value;
     }
 
     public float getSplitterProportion() {
-      return SPITTER_PROPORTION;
+      return SHARED_SETTINGS.SPLITTER_PROPORTION;
     }
 
     public void setSplitterProportion(float value) {
-      SPITTER_PROPORTION = value;
+      SHARED_SETTINGS.SPLITTER_PROPORTION = value;
     }
 
     //
