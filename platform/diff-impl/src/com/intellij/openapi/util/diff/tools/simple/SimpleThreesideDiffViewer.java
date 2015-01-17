@@ -31,12 +31,14 @@ import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.SimpleThreesideFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport;
+import com.intellij.openapi.util.diff.tools.util.base.IgnorePolicy;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideContentPanel.DiffDivider;
 import com.intellij.openapi.util.diff.tools.util.threeside.ThreesideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.*;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -93,7 +95,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new IgnorePolicySettingAction());
+    group.add(new MyIgnorePolicySettingAction());
     //group.add(new MyHighlightPolicySettingAction()); // TODO
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new ToggleAutoScrollAction());
@@ -113,7 +115,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(Separator.getInstance());
-    group.add(new IgnorePolicySettingAction().getPopupGroup());
+    group.add(new MyIgnorePolicySettingAction().getPopupGroup());
     //group.add(Separator.getInstance());
     //group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
@@ -175,7 +177,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       // TODO: cache results
       // TODO: hide IGNORE_WHITESPACES_CHUNKS from settings, as it's not supported (or support merge of non-Fair Iterables)
       CharSequence[] sequences = data.getSequences();
-      ComparisonPolicy comparisonPolicy = getTextSettings().getIgnorePolicy().getComparisonPolicy();
+      ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
       FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
       FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
       List<MergeLineFragment> mergeFragments = MergeUtil.buildFair(fragments1, fragments2, indicator);
@@ -256,10 +258,6 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     destroyChangedBlocks();
   }
 
-  //
-  // Impl
-  //
-
   private void destroyChangedBlocks() {
     for (SimpleThreesideDiffChange change : myDiffChanges) {
       change.destroyHighlighter();
@@ -274,6 +272,10 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     myContentPanel.repaintDividers();
     myStatusPanel.update();
   }
+
+  //
+  // Impl
+  //
 
   @Override
   @CalledInAwt
@@ -350,6 +352,13 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     DiffUtil.scrollEditor(editor, line);
 
     return true;
+  }
+
+  @NotNull
+  private IgnorePolicy getIgnorePolicy() {
+    IgnorePolicy policy = getTextSettings().getIgnorePolicy();
+    if (policy == IgnorePolicy.IGNORE_WHITESPACES_CHUNKS) return IgnorePolicy.IGNORE_WHITESPACES;
+    return policy;
   }
 
   //
@@ -481,6 +490,22 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     @Override
     protected void expandAll(boolean expand) {
       myFoldingModel.expandAll(expand);
+    }
+  }
+
+  private class MyIgnorePolicySettingAction extends IgnorePolicySettingAction {
+    @NotNull
+    @Override
+    protected IgnorePolicy getCurrentSetting() {
+      return getIgnorePolicy();
+    }
+
+    @NotNull
+    @Override
+    protected List<IgnorePolicy> getAvailableSettings() {
+      ArrayList<IgnorePolicy> settings = ContainerUtil.newArrayList(IgnorePolicy.values());
+      settings.remove(IgnorePolicy.IGNORE_WHITESPACES_CHUNKS);
+      return settings;
     }
   }
 

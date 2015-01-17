@@ -36,6 +36,7 @@ import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.OnesideFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
+import com.intellij.openapi.util.diff.tools.util.base.IgnorePolicy;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.openapi.util.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.openapi.util.diff.util.*;
@@ -137,8 +138,8 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new IgnorePolicySettingAction());
-    group.add(new HighlightPolicySettingAction());
+    group.add(new MyIgnorePolicySettingAction());
+    group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(myEditorSettingsAction);
 
@@ -150,9 +151,9 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(Separator.getInstance());
-    group.add(new IgnorePolicySettingAction().getPopupGroup());
+    group.add(new MyIgnorePolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
-    group.add(new HighlightPolicySettingAction().getPopupGroup());
+    group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
     group.add(new MyToggleExpandByDefaultAction());
 
@@ -446,13 +447,20 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getIgnorePolicy(), getHighlightPolicy());
+    return new DiffUtil.DiffConfig(getIgnorePolicy(), getHighlightPolicy());
   }
 
   @NotNull
   private HighlightPolicy getHighlightPolicy() {
     HighlightPolicy policy = getTextSettings().getHighlightPolicy();
     if (policy == HighlightPolicy.DO_NOT_HIGHLIGHT) return HighlightPolicy.BY_LINE;
+    return policy;
+  }
+
+  @NotNull
+  private IgnorePolicy getIgnorePolicy() {
+    IgnorePolicy policy = getTextSettings().getIgnorePolicy();
+    if (policy == IgnorePolicy.IGNORE_WHITESPACES_CHUNKS) return IgnorePolicy.IGNORE_WHITESPACES;
     return policy;
   }
 
@@ -629,6 +637,38 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     @Override
     protected void expandAll(boolean expand) {
       myFoldingModel.expandAll(expand);
+    }
+  }
+
+  private class MyHighlightPolicySettingAction extends HighlightPolicySettingAction {
+    @NotNull
+    @Override
+    protected HighlightPolicy getCurrentSetting() {
+      return getHighlightPolicy();
+    }
+
+    @NotNull
+    @Override
+    protected List<HighlightPolicy> getAvailableSettings() {
+      ArrayList<HighlightPolicy> settings = ContainerUtil.newArrayList(HighlightPolicy.values());
+      settings.remove(HighlightPolicy.DO_NOT_HIGHLIGHT);
+      return settings;
+    }
+  }
+
+  private class MyIgnorePolicySettingAction extends IgnorePolicySettingAction {
+    @NotNull
+    @Override
+    protected IgnorePolicy getCurrentSetting() {
+      return getIgnorePolicy();
+    }
+
+    @NotNull
+    @Override
+    protected List<IgnorePolicy> getAvailableSettings() {
+      ArrayList<IgnorePolicy> settings = ContainerUtil.newArrayList(IgnorePolicy.values());
+      settings.remove(IgnorePolicy.IGNORE_WHITESPACES_CHUNKS);
+      return settings;
     }
   }
 
