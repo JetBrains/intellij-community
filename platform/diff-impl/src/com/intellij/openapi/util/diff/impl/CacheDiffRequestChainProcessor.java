@@ -74,6 +74,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
 
     final Error[] errorRef = new Error[1];
     final DiffRequest[] requestRef = new DiffRequest[1];
+    // FIXME: on initial loading, progress indicator is shown behind window
     ProgressManager.getInstance().run(new Task.Modal(getProject(), "Collecting data", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
