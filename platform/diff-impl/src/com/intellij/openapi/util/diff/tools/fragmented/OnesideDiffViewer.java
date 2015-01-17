@@ -43,6 +43,7 @@ import com.intellij.openapi.util.diff.util.*;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.DiffUtil.DocumentData;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.Contract;
@@ -93,7 +94,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
-    List<JComponent> titles = DiffUtil.createTextTitles(myRequest);
+    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, ContainerUtil.list(myEditor, myEditor));
 
 
     OnesideContentPanel contentPanel = new OnesideContentPanel(titles, myEditor);

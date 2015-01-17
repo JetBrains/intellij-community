@@ -72,8 +72,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     assert myActualContent1 != null || myActualContent2 != null;
 
 
-    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest);
     List<EditorEx> editors = createEditors();
+    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, editors);
 
     myEditor1 = editors.get(0);
     myEditor2 = editors.get(1);

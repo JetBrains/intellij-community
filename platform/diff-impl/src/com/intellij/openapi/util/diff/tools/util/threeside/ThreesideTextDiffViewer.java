@@ -74,8 +74,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     myActualContents = ContainerUtil.newArrayList((DocumentContent)contents[0], (DocumentContent)contents[1], (DocumentContent)contents[2]);
 
 
-    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest);
     myEditors = createEditors();
+    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, myEditors);
 
     myCurrentSide = ThreeSide.BASE;
 

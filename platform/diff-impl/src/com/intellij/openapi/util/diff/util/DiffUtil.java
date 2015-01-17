@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -242,7 +243,6 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
-    // TODO: add (Read only) to the title ?
     String[] titles = request.getContentTitles();
 
     List<JComponent> components = new ArrayList<JComponent>(titles.length);
@@ -254,7 +254,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static List<JComponent> createTextTitles(@NotNull ContentDiffRequest request) {
+  public static List<JComponent> createTextTitles(@NotNull ContentDiffRequest request, @NotNull List<? extends Editor> editors) {
     DiffContent[] contents = request.getContents();
     String[] titles = request.getContentTitles();
 
@@ -279,7 +279,7 @@ public class DiffUtil {
     List<JComponent> result = new ArrayList<JComponent>(contents.length);
 
     for (int i = 0; i < contents.length; i++) {
-      result.add(createTitle(titles[i], contents[i], equalCharsets, equalSeparators));
+      result.add(createTitle(titles[i], contents[i], equalCharsets, equalSeparators, editors.get(i)));
     }
 
     return result;
@@ -303,22 +303,29 @@ public class DiffUtil {
   private static JComponent createTitle(@NotNull String title,
                                         @NotNull DiffContent content,
                                         boolean equalCharsets,
-                                        boolean equalSeparators) {
+                                        boolean equalSeparators,
+                                        @Nullable Editor editor) {
     if (content instanceof EmptyContent) return null;
 
     Charset charset = equalCharsets ? null : ((DocumentContent)content).getCharset();
     LineSeparator separator = equalSeparators ? null : ((DocumentContent)content).getLineSeparator();
+    boolean isReadOnly = editor == null || editor.isViewer() || !canMakeWritable(editor.getDocument());
 
-    return createTitle(title, charset, separator);
+    return createTitle(title, charset, separator, isReadOnly);
   }
 
   @NotNull
   public static JComponent createTitle(@NotNull String title) {
-    return createTitle(title, null, null);
+    return createTitle(title, null, null, true);
   }
 
   @NotNull
-  public static JComponent createTitle(@NotNull String title, @Nullable Charset charset, @Nullable LineSeparator separator) {
+  public static JComponent createTitle(@NotNull String title,
+                                       @Nullable Charset charset,
+                                       @Nullable LineSeparator separator,
+                                       boolean readOnly) {
+    if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
+
     if (charset != null || separator != null) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(createTitlePanel(title), BorderLayout.WEST);
