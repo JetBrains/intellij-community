@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.contents.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.util.LineSeparator;
@@ -111,11 +111,7 @@ public class DiffContentFactory {
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
     }
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile file = lfs.findFileByIoFile(tempFile);
-    if (file == null) {
-      file = lfs.refreshAndFindFileByIoFile(tempFile);
-    }
+    VirtualFile file = VfsUtil.findFileByIoFile(tempFile, true);
     if (file == null) {
       throw new IOException("Can't create temp file for revision content");
     }
