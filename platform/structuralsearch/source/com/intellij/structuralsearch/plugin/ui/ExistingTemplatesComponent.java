@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -10,7 +11,9 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -194,9 +197,8 @@ public class ExistingTemplatesComponent {
     tree.setEditable(false);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
-    tree.setCellRenderer(new TreeCellRenderer());
 
-    new TreeSpeedSearch(
+    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       tree,
       new Convertor<TreePath, String>() {
         public String convert(TreePath object) {
@@ -205,6 +207,7 @@ public class ExistingTemplatesComponent {
         }
       }
     );
+    tree.setCellRenderer(new ExistingTemplatesTreeCellRenderer(speedSearch));
 
     return tree;
   }
@@ -245,38 +248,39 @@ public class ExistingTemplatesComponent {
     }
   }
 
-  static class TreeCellRenderer extends DefaultTreeCellRenderer {
-    TreeCellRenderer() {
-      setOpenIcon(null);
-      setLeafIcon(null);
-      setClosedIcon(null);
+  private static class ExistingTemplatesTreeCellRenderer extends ColoredTreeCellRenderer {
+
+    private final TreeSpeedSearch mySpeedSearch;
+
+    ExistingTemplatesTreeCellRenderer(TreeSpeedSearch speedSearch) {
+      mySpeedSearch = speedSearch;
     }
 
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean sel,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
-      Object displayValue = treeNode.getUserObject();
+    @Override
+    public void customizeCellRenderer(@NotNull JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+      final Object userObject = treeNode.getUserObject();
 
-      if (displayValue instanceof Configuration) {
-        displayValue = ((Configuration)displayValue).getName();
+      final Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeTextBackground();
+      final Color foreground = selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
+
+      final String text;
+      final int style;
+      if (userObject instanceof Configuration) {
+        text = ((Configuration)userObject).getName();
+        style = SimpleTextAttributes.STYLE_PLAIN;
       }
-
-      Component comp = super.getTreeCellRendererComponent(
-        tree,
-        displayValue,
-        sel,
-        expanded,
-        leaf,
-        row,
-        hasFocus
-      );
-
-      return comp;
+      else {
+        text = userObject.toString();
+        style = SimpleTextAttributes.STYLE_BOLD;
+      }
+      SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), text, style, foreground, background, this);
     }
   }
 
