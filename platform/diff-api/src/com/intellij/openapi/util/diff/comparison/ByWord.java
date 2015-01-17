@@ -47,10 +47,17 @@ public class ByWord {
     indicator.checkCanceled();
 
     // TODO: figure out, what do we exactly want from 'Split' logic
+    // -- it is used for trimming of ignored blocks. So we want whitespace-only leading/trailing lines to be separate block.
+    // -- old approach: split by matched '\n's
 
     // TODO: other approach could lead to better results:
     // * Compare words-only
     // * prefer big chunks
+    // -- here we can try to minimize number of matched pairs 'pair[i]' and 'pair[i+1]' such that
+    //    containsNewline(pair[i].left .. pair[i+1].left) XOR containsNewline(pair[i].right .. pair[i+1].right) == true
+    //    ex: "A X C" - "A Y C \n M C" - do not match with last 'C'
+    //    ex: "A \n" - "A B \n \n" - do not match with last '\n'
+    //    Try some greedy approach ?
     // * split into blocks
     // -- squash blocks with too small unchanged words count (1 matched word out of 40 - is a bad reason to create new block)
     // * match adjustment punctuation
@@ -105,7 +112,6 @@ public class ByWord {
                                                   @NotNull List<InlineChunk> words2,
                                                   @NotNull FairDiffIterable iterable,
                                                   @NotNull ProgressIndicator indicator) {
-    // TODO: "A X C" - "A Y C \n M C" - do not match with last 'C'
     List<Range> newRanges = new ArrayList<Range>();
 
     for (Range range : iterable.iterateUnchanged()) {
