@@ -135,6 +135,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
   @Override
   protected void onSlowRediff() {
+    super.onSlowRediff();
     myStatusPanel.setBusy(true);
   }
 

@@ -165,6 +165,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
   @Override
   protected void onSlowRediff() {
+    super.onSlowRediff();
     myPanel.setLoadingContent();
   }
 

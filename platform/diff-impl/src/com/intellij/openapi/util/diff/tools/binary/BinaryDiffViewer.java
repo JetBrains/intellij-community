@@ -236,6 +236,7 @@ class BinaryDiffViewer extends ListenerDiffViewerBase {
 
   @Override
   protected void onSlowRediff() {
+    super.onSlowRediff();
     myStatusPanel.setBusy(true);
   }
 
