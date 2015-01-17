@@ -37,6 +37,8 @@ public interface FrameDiffTool extends DiffTool {
     DiffWindow getDiffWindow();
 
     interface DiffWindow {
+      boolean isWindowFocused();
+
       boolean isFocused();
 
       void requestFocus();

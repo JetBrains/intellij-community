@@ -304,6 +304,11 @@ public class SvnDiffViewer implements DiffViewer {
   private class MyPropertyContext extends UserDataHolderBase implements DiffContext {
     private final DiffWindow myWindow = new DiffWindow() {
       @Override
+      public boolean isWindowFocused() {
+        return myContext.getDiffWindow().isWindowFocused();
+      }
+
+      @Override
       public boolean isFocused() {
         return DiffUtil.isFocusedComponent(getProject(), myPropertiesViewer.getComponent());
       }

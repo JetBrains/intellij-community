@@ -214,6 +214,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Misc
   //
 
+  public boolean isWindowFocused() {
+    Window window = SwingUtilities.getWindowAncestor(myPanel);
+    return window != null && window.isFocused();
+  }
+
   public boolean isFocused() {
     return DiffUtil.isFocusedComponent(myProject, myPanel);
   }
@@ -650,6 +655,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     public boolean isFocused() {
       return DiffRequestProcessor.this.isFocused();
+    }
+
+    @Override
+    public boolean isWindowFocused() {
+      return DiffRequestProcessor.this.isWindowFocused();
     }
 
     @Override
