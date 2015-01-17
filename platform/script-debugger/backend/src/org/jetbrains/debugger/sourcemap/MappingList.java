@@ -68,7 +68,8 @@ public abstract class MappingList {
         }
         else {
           MappingEntry nextMapping = getNextOnTheSameLine(middle, false);
-          if (nextMapping == null) {
+          // https://code.google.com/p/google-web-toolkit/issues/detail?id=9103
+          if (nextMapping == null || column > getColumn(nextMapping)) {
             return middle;
           }
           else {
