@@ -73,6 +73,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       switched = true;
       firstChildIndex = myWorkingGraph.getDownNodes(parent).get(1);
     }
+    if (firstChildIndex < currentNodeIndex) return;
 
     int x = myGraphLayout.getLayoutIndex(firstChildIndex);
     int y = myGraphLayout.getLayoutIndex(currentNodeIndex);
@@ -143,8 +144,12 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
         else {
           if (!definitelyNotTails.contains(upNodeIndex)) {
             tails.add(upNodeIndex);
+            if (li != y) {
+              myWorkingGraph.removeEdge(upNodeIndex, next); // questionable -- we remove edges to the very old commits only for tails
+              // done in sake of expanding dotted edges
+              // also, should check (I guess?) that the edge is not too long
+            }
           }
-          myWorkingGraph.removeEdge(upNodeIndex, next); // should remember this
         }
       }
 
