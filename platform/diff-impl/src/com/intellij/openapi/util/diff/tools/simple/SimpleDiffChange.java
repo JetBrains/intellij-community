@@ -89,11 +89,11 @@ class SimpleDiffChange {
 
   private void doInstallActionHighlighters() {
     if (myEditor1 != null && myEditor2 != null) {
-      if (DiffUtil.canMakeWritable(myEditor1.getDocument())) {
+      if (DiffUtil.isEditable(myEditor1)) {
         MyReplaceOperation operation = new MyReplaceOperation(Side.LEFT);
         myActionHighlighters.add(DiffOperation.createHighlighter(myEditor2, operation, myFragment.getStartOffset2()));
       }
-      if (DiffUtil.canMakeWritable(myEditor2.getDocument())) {
+      if (DiffUtil.isEditable(myEditor2)) {
         MyReplaceOperation operation = new MyReplaceOperation(Side.RIGHT);
         myActionHighlighters.add(DiffOperation.createHighlighter(myEditor1, operation, myFragment.getStartOffset1()));
       }

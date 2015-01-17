@@ -566,7 +566,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         return;
       }
 
-      if (!DiffUtil.canMakeWritable(oEditor.getDocument())) {
+      if (!DiffUtil.isEditable(oEditor)) {
         e.getPresentation().setEnabled(false);
         return;
       }

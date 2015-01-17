@@ -671,6 +671,10 @@ public class DiffUtil {
     });
   }
 
+  public static boolean isEditable(@NotNull Editor editor) {
+    return !editor.isViewer() && canMakeWritable(editor.getDocument());
+  }
+
   public static boolean canMakeWritable(@NotNull Document document) {
     if (document.isWritable()) {
       return true;
