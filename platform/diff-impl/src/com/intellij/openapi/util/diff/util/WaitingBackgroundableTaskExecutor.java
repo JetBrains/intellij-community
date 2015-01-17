@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,14 @@ public class WaitingBackgroundableTaskExecutor {
     myModificationStamp++;
     final int modificationStamp = myModificationStamp;
 
-    myProgressIndicator = new EmptyProgressIndicator();
+    final ModalityState modality = ModalityState.current();
+    myProgressIndicator = new EmptyProgressIndicator() {
+      @NotNull
+      @Override
+      public ModalityState getModalityState() {
+        return modality;
+      }
+    };
     final ProgressIndicator indicator = myProgressIndicator;
 
     final Semaphore semaphore = new Semaphore(0);
@@ -68,22 +76,27 @@ public class WaitingBackgroundableTaskExecutor {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
-          final Runnable result = backgroundTask.convert(indicator);
+          ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+            @Override
+            public void run() {
+              final Runnable result = backgroundTask.convert(indicator);
 
-          if (indicator.isCanceled()) {
-            semaphore.release();
-            return;
-          }
-
-          if (!resultRef.compareAndSet(null, result)) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                finish(result, modificationStamp, indicator);
+              if (indicator.isCanceled()) {
+                semaphore.release();
+                return;
               }
-            }, ModalityState.any());
-          }
-          semaphore.release();
+
+              if (!resultRef.compareAndSet(null, result)) {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    finish(result, modificationStamp, indicator);
+                  }
+                }, modality);
+              }
+              semaphore.release();
+            }
+          }, indicator);
         }
       });
 
