@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: check for bugs with non-fair differences
+// This class works incorrectly with non-fair differences (when chunk of matched lines has different length in left/right files)
 class OnesideFragmentBuilder {
   @NotNull private final LineFragments myFragments;
   @NotNull private final Document myDocument1;
