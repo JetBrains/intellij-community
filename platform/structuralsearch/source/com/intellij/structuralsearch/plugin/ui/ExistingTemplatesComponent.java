@@ -200,16 +200,8 @@ public class ExistingTemplatesComponent {
       tree,
       new Convertor<TreePath, String>() {
         public String convert(TreePath object) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
-          Object displayValue = node.getUserObject();
-
-          if (displayValue instanceof Configuration) {
-            displayValue = ((Configuration)displayValue).getName();
-          }
-          else {
-            displayValue = "";
-          }
-          return displayValue.toString();
+          final Object userObject = ((DefaultMutableTreeNode)object.getLastPathComponent()).getUserObject();
+          return (userObject instanceof Configuration) ? ((Configuration)userObject).getName() : userObject.toString();
         }
       }
     );
