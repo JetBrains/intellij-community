@@ -26,9 +26,12 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
+import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
 import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
@@ -166,6 +169,60 @@ class CollapsedActionManager {
     }
   };
 
+  private final static ActionCase EXPAND_ALL = new ActionCase() {
+    @Nullable
+    @Override
+    public LinearGraphAnswer performAction(@NotNull CollapsedLinearGraphController graphController, @NotNull LinearGraphAction action) {
+      if (action.getType() != GraphAction.Type.BUTTON_EXPAND) return null;
+      CollapsedGraph collapsedGraph = graphController.getCollapsedGraph();
+      LinearGraph delegateGraph = collapsedGraph.getDelegateGraph();
+
+      for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
+        int nodeId = delegateGraph.getGraphNode(nodeIndex).getNodeId();
+        collapsedGraph.setNodeVisibility(nodeId, true);
+      }
+      collapsedGraph.getGraphAdditionalEdges().removeAll();
+      collapsedGraph.updateNodeMapping(0, delegateGraph.nodesCount() - 1);
+
+      return new LinearGraphAnswer(SOME_CHANGES, null, null); // todo fix
+    }
+  };
+
+  private final static ActionCase COLLAPSE_ALL = new ActionCase() { // todo
+    @Nullable
+    @Override
+    public LinearGraphAnswer performAction(@NotNull CollapsedLinearGraphController graphController, @NotNull LinearGraphAction action) {
+      if (action.getType() != GraphAction.Type.BUTTON_COLLAPSE) return null;
+
+      CollapsedGraph collapsedGraph = graphController.getCollapsedGraph();
+      LinearGraph delegateGraph = collapsedGraph.getDelegateGraph();
+      LinearFragmentGenerator generator = new LinearFragmentGenerator(delegateGraph, Condition.FALSE);
+      FragmentGenerator fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph), Condition.FALSE);
+      for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
+        int nodeId1 = delegateGraph.getGraphNode(nodeIndex).getNodeId();
+        if (!collapsedGraph.getNodeVisibility(nodeId1)) continue;
+
+        LinearFragmentGenerator.GraphFragment fragment = generator.getLongDownFragment(nodeIndex);
+        if (fragment != null) {
+          Set<Integer> middleNodes = fragmentGenerator.getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex);
+          middleNodes.remove(fragment.upNodeIndex);
+          middleNodes.remove(fragment.downNodeIndex);
+          int upNodeId = delegateGraph.getGraphNode(fragment.upNodeIndex).getNodeId();
+          int downNodeId = delegateGraph.getGraphNode(fragment.downNodeIndex).getNodeId();
+          collapsedGraph.getGraphAdditionalEdges().createEdge(upNodeId, downNodeId, GraphEdgeType.DOTTED);
+
+          for (Integer nodeIndexForHide : middleNodes) {
+            int nodeId = delegateGraph.getGraphNode(nodeIndexForHide).getNodeId();
+            collapsedGraph.setNodeVisibility(nodeId, false);
+          }
+        }
+      }
+      collapsedGraph.updateNodeMapping(0, delegateGraph.nodesCount() - 1);
+
+      return new LinearGraphAnswer(SOME_CHANGES, null, null);
+    }
+  };
+
   private final static ActionCase LINEAR_EXPAND_CASE = new ActionCase() {
     @Nullable
     @Override
@@ -208,6 +265,7 @@ class CollapsedActionManager {
     }
   };
 
-  private final static List<ActionCase> FILTER_ACTION_CASES = ContainerUtil.list(HOVER_CASE, LINEAR_COLLAPSE_CASE, LINEAR_EXPAND_CASE);
+  private final static List<ActionCase> FILTER_ACTION_CASES =
+    ContainerUtil.list(COLLAPSE_ALL, EXPAND_ALL, HOVER_CASE, LINEAR_COLLAPSE_CASE, LINEAR_EXPAND_CASE);
 
 }

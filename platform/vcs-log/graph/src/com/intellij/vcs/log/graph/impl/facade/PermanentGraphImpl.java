@@ -108,7 +108,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
                                                    @Nullable Condition<CommitId> filter) {
     CascadeLinearGraphController controller;
     if (sortType == SortType.Bek) {
-      controller = new BekBaseLinearGraphController(this, myBekIntMap);
+      controller = new CollapsedLinearGraphController(new BekBaseLinearGraphController(this, myBekIntMap), this);
     }
     else {
       controller = new CollapsedLinearGraphController(new BaseLinearGraphController(this), this);
