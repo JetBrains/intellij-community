@@ -21,25 +21,11 @@ import com.intellij.vcs.log.graph.graph
 import org.junit.Assert.assertEquals
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.asString
-import com.intellij.vcs.log.graph.utils.TimestampGetter
+import com.intellij.vcs.log.graph.api.LinearGraph
 
 class LinearBekTest {
-
   fun runTest(beforeLinearBekBuilder: TestGraphBuilder.() -> Unit, afterLinearBekBuilder: TestGraphBuilder.() -> Unit) {
-    val beforeLinearBek = graph(beforeLinearBekBuilder)
-    val beforeLinearBekLayout = GraphLayoutBuilder.build(beforeLinearBek, {(nodeIndex1, nodeIndex2) -> nodeIndex1 - nodeIndex2 })
-
-    val afterLinearBekExpected = graph(afterLinearBekBuilder)
-    val afterLinearBek = LinearBekController.compileGraph(beforeLinearBek, beforeLinearBekLayout, object : TimestampGetter {
-      override fun getTimestamp(index: Int): Long {
-        return 0
-      }
-
-      override fun size(): Int {
-        return beforeLinearBek.nodesCount();
-      }
-    })
-    assertEquals(afterLinearBekExpected.asString(), afterLinearBek.asString())
+    assertEquals(afterLinearBekBuilder, runLinearBek(beforeLinearBekBuilder))
   }
 
   /*
