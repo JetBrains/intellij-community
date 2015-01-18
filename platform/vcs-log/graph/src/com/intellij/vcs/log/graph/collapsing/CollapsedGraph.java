@@ -119,7 +119,7 @@ public class CollapsedGraph {
   @NotNull
   private final Flags myDelegateNodesVisibility;
   @NotNull
-  private final IntToIntMap myNodesMap;
+  private final UpdatableIntToIntMap myNodesMap;
   @NotNull
   private final GraphAdditionalEdges myGraphAdditionalEdges;
   @NotNull
@@ -129,7 +129,7 @@ public class CollapsedGraph {
   private CollapsedGraph(@NotNull LinearGraph delegateGraph,
                         @NotNull UnsignedBitSet visibleNodesId,
                         @NotNull Flags delegateNodesVisibility,
-                        @NotNull IntToIntMap nodesMap,
+                        @NotNull UpdatableIntToIntMap nodesMap,
                         @NotNull GraphAdditionalEdges graphAdditionalEdges) {
     myDelegateGraph = delegateGraph;
     myVisibleNodesId = visibleNodesId;
@@ -150,6 +150,10 @@ public class CollapsedGraph {
 
   public boolean getNodeVisibility(int nodeId) {
     return myVisibleNodesId.get(nodeId);
+  }
+
+  public void updateNodeMapping(int fromDelegateNodeIndex, int toDelegateNodeIndex) {
+    myNodesMap.update(fromDelegateNodeIndex, toDelegateNodeIndex);
   }
 
   @NotNull
