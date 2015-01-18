@@ -27,6 +27,7 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
@@ -73,16 +74,27 @@ public class LinearBekController extends CascadeLinearGraphController {
   @Nullable
   @Override
   protected LinearGraphAnswer performAction(@NotNull LinearGraphAction action) {
-    if (action.getType() == GraphAction.Type.MOUSE_CLICK && action.getAffectedElement() != null) {
-      GraphElement graphElement = action.getAffectedElement().getGraphElement();
-      if (graphElement instanceof GraphEdge) {
-        GraphEdge edge = (GraphEdge)graphElement;
-        if (edge.getType() == GraphEdgeType.DOTTED) {
-          return new ExpandedEdgeAnswer(edge, myCompiledGraph.expandEdge(edge));
+    if (action.getAffectedElement() != null) {
+      if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
+        GraphElement graphElement = action.getAffectedElement().getGraphElement();
+        if (graphElement instanceof GraphEdge) {
+          GraphEdge edge = (GraphEdge)graphElement;
+          if (edge.getType() == GraphEdgeType.DOTTED) {
+            return new ExpandedEdgeAnswer(edge, myCompiledGraph.expandEdge(edge));
+          }
+        }
+      }
+      else if (action.getType() == GraphAction.Type.MOUSE_OVER) {
+        GraphElement graphElement = action.getAffectedElement().getGraphElement();
+        if (graphElement instanceof GraphEdge) {
+          GraphEdge edge = (GraphEdge)graphElement;
+          if (edge.getType() == GraphEdgeType.DOTTED){
+            return new CursorAnswer(Cursor.HAND_CURSOR);
+          }
         }
       }
     }
-    return null;
+    return new CursorAnswer(Cursor.DEFAULT_CURSOR);
   }
 
   @NotNull
@@ -220,6 +232,32 @@ public class LinearBekController extends CascadeLinearGraphController {
       public boolean removed() {
         return myRemoved;
       }
+    }
+  }
+
+  private static class CursorAnswer implements LinearGraphController.LinearGraphAnswer {
+    private final int myCursorType;
+
+    public CursorAnswer(int cursorType) {
+      myCursorType = cursorType;
+    }
+
+    @Nullable
+    @Override
+    public GraphChanges<Integer> getGraphChanges() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public Cursor getCursorToSet() {
+      return Cursor.getPredefinedCursor(myCursorType);
+    }
+
+    @Nullable
+    @Override
+    public Integer getCommitToJump() {
+      return null;
     }
   }
 }
