@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
 import java.util.List;
 
 
@@ -159,4 +158,7 @@ public class GraphAdditionalEdges {
     return (compressEdge << EDGE_TYPE_BITS) >> EDGE_TYPE_BITS;
   }
 
+  public void removeAll() {
+    myAdditionEdges.clear();
+  }
 }
