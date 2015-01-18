@@ -83,7 +83,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    */
   private final List<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
 
-  private Dimension myMinimumButtonSize = new Dimension(0, 0);
+  private Dimension myMinimumButtonSize = JBUI.emptySize();
 
   /**
    * @see ActionToolbar#getLayoutPolicy()
@@ -753,7 +753,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<Rectangle>();
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
-    if (bounds.isEmpty()) return new Dimension(0, 0);
+    if (bounds.isEmpty()) return JBUI.emptySize();
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;
@@ -1247,7 +1247,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     myMinimalMode = minimalMode;
     if (myMinimalMode) {
-      setMinimumButtonSize(new Dimension(0, 0));
+      setMinimumButtonSize(JBUI.emptySize());
       setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
       setBorder(new EmptyBorder(0, 0, 0, 0));
       setOpaque(false);

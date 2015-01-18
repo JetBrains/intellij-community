@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.DimensionRenderer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,8 +44,8 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
   public AbstractDimensionProperty(@NonNls final String name){
     super(null, name);
     myChildren=new Property[]{
-      new IntFieldProperty(this, "width", -1, new Dimension(0, 0)),
-      new IntFieldProperty(this, "height", -1, new Dimension(0, 0)),
+      new IntFieldProperty(this, "width", -1, JBUI.emptySize()),
+      new IntFieldProperty(this, "height", -1, JBUI.emptySize()),
     };
     myRenderer = new DimensionRenderer();
     myEditor = new IntRegexEditor<Dimension>(Dimension.class, myRenderer, new int[] { -1, -1 });
