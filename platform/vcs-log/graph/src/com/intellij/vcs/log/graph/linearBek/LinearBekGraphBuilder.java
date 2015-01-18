@@ -230,6 +230,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       }
       for (GraphEdge e : myDottedToRemove) {
         myDottedEdges.removeEdge(e);
+        myHiddenEdges.createEdge(e);
       }
       // TODO if we start with adding edges instead of removing we will break merge with old commit test
       // that's really bad
