@@ -16,32 +16,15 @@
 package com.intellij.vcs.log.graph.linearBek
 
 import com.intellij.vcs.log.graph.TestGraphBuilder
-import com.intellij.vcs.log.graph.graph
-import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
-import com.intellij.vcs.log.graph.utils.TimestampGetter
-import org.junit.Assert.assertEquals
-import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import org.junit.Test
 
 class LinearBekExpandTest {
   fun runTest(beforeLinearBekBuilder: TestGraphBuilder.() -> Unit, afterExpansionBuilder: TestGraphBuilder.() -> Unit, fromNodeToExpand: Int, toNodeToExpand: Int) {
-    val beforeLinearBek = graph(beforeLinearBekBuilder)
-    val beforeLinearBekLayout = GraphLayoutBuilder.build(beforeLinearBek, {(nodeIndex1, nodeIndex2) -> nodeIndex1 - nodeIndex2 })
-
-    val afterLinearBekExpected = graph(afterExpansionBuilder)
-    val afterLinearBek = LinearBekController.compileGraph(beforeLinearBek, beforeLinearBekLayout, object : TimestampGetter {
-      override fun getTimestamp(index: Int): Long {
-        return 0
-      }
-
-      override fun size(): Int {
-        return beforeLinearBek.nodesCount();
-      }
-    })
+    val afterLinearBek = runLinearBek(beforeLinearBekBuilder)
     afterLinearBek.expandEdge(GraphEdge.createNormalEdge(fromNodeToExpand, toNodeToExpand, GraphEdgeType.DOTTED));
-    assertEquals(afterLinearBekExpected.asString(), afterLinearBek.asString())
+    assertEquals(afterExpansionBuilder, afterLinearBek)
   }
 
   /*
