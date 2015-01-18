@@ -110,6 +110,24 @@ public class LinearBekGraph implements LinearGraph {
     for (GraphEdge hiddenEdge : addedEdges) {
       myHiddenEdges.removeEdge(hiddenEdge);
     }
+    if (edge.getType() == GraphEdgeType.DOTTED) {
+      myHiddenEdges.removeEdge(edge);
+    }
+
+    ArrayList<GraphEdge> hiddenDotted = ContainerUtil.newArrayList();
+    myHiddenEdges.appendAdditionalEdges(hiddenDotted, tail);
+
+    List<GraphEdge> downDottedEdges = ContainerUtil.filter(hiddenDotted, new Condition<GraphEdge>() {
+      @Override
+      public boolean value(GraphEdge graphEdge) {
+        return LinearGraphUtils.isEdgeToDown(graphEdge, tail);
+      }
+    });
+
+    for (GraphEdge graphEdge: downDottedEdges) {
+      assert graphEdge.getType() == GraphEdgeType.DOTTED;
+      addedEdges.addAll(expandEdge(graphEdge));
+    }
 
     return addedEdges;
   }
