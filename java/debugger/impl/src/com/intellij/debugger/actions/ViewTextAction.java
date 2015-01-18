@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.impl.ui.TextViewer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
@@ -95,7 +96,7 @@ public class ViewTextAction extends XFetchValueActionBase {
     protected JComponent createCenterPanel() {
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(myTextViewer, BorderLayout.CENTER);
-      panel.setPreferredSize(new Dimension(300, 200));
+      panel.setPreferredSize(JBUI.size(300, 200));
       return panel;
     }
   }

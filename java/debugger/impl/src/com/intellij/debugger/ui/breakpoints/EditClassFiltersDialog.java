@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,13 +56,13 @@ public class EditClassFiltersDialog extends DialogWrapper {
     Box mainPanel = Box.createHorizontalBox();
 
     myClassFilterEditor = new ClassFilterEditor(myProject, myChooserFilter, "reference.viewBreakpoints.classFilters.newPattern");
-    myClassFilterEditor.setPreferredSize(new Dimension(400, 200));
+    myClassFilterEditor.setPreferredSize(JBUI.size(400, 200));
     myClassFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(
       DebuggerBundle.message("class.filters.dialog.inclusion.filters.group"), false));
     mainPanel.add(myClassFilterEditor);
 
     myClassExclusionFilterEditor = new ClassFilterEditor(myProject, myChooserFilter, "reference.viewBreakpoints.classFilters.newPattern");
-    myClassExclusionFilterEditor.setPreferredSize(new Dimension(400, 200));
+    myClassExclusionFilterEditor.setPreferredSize(JBUI.size(400, 200));
     myClassExclusionFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(
       DebuggerBundle.message("class.filters.dialog.exclusion.filters.group"), false));
     mainPanel.add(myClassExclusionFilterEditor);
