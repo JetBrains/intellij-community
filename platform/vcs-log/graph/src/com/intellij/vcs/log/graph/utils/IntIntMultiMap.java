@@ -111,4 +111,8 @@ public class IntIntMultiMap {
   public int[] keys() {
     return myKeyToArrayMap.keys();
   }
+
+  public void clear() {
+    myKeyToArrayMap.clear();
+  }
 }
