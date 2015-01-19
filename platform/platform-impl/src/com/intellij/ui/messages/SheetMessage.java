@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
 
@@ -221,6 +222,7 @@ public class SheetMessage {
           staticImage = null;
           myWindow.setContentPane(myController.getPanel(myWindow));
 
+          IJSwingUtilities.moveMousePointerOn(myWindow.getRootPane().getDefaultButton());
           myController.requestFocus();
         } else {
           if (restoreFullScreenButton) {

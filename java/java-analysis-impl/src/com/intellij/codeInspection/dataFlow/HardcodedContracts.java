@@ -171,7 +171,8 @@ public class HardcodedContracts {
     }
 
     if (element instanceof PsiParameter) {
-      return hasHardcodedContracts(element.getParent().getParent());
+      PsiElement parent = element.getParent();
+      return parent != null && hasHardcodedContracts(parent.getParent());
     }
 
     return false;

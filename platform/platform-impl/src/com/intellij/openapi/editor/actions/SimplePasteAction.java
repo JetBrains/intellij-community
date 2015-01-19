@@ -19,15 +19,10 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.Producer;
-
-import java.awt.datatransfer.Transferable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -47,21 +42,9 @@ public class SimplePasteAction extends EditorAction {
     }
   }
 
-  private static class Handler extends EditorWriteActionHandler {
+  private static class Handler extends BasePasteHandler {
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
-      Producer<Transferable> producer = PasteAction.TRANSFERABLE_PROVIDER.getData(dataContext);
-      if (!editor.getCaretModel().supportsMultipleCarets() && editor.isColumnMode()) {
-        EditorModificationUtil.pasteTransferableAsBlock(editor, producer);
-      }
-      else {
-        TextRange range = EditorModificationUtil.pasteTransferable(editor, producer);
-        editor.putUserData(EditorEx.LAST_PASTED_REGION, range);
-      }
-    }
-
-    @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
+    public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return !editor.isViewer();
     }
   }
