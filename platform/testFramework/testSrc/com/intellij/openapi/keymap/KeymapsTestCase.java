@@ -565,16 +565,16 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     );
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
-    Map<String, List<String>> reassignedShortcuts = new FactoryMap<String, List<String>>() {
+    Map<Keymap, List<Shortcut>> reassignedShortcuts = new FactoryMap<Keymap, List<Shortcut>>() {
       @Override
-      protected Map<String, List<String>> createMap() {
-        return new LinkedHashMap<String, List<String>>();
+      protected Map<Keymap, List<Shortcut>> createMap() {
+        return new LinkedHashMap<Keymap, List<Shortcut>>();
       }
 
       @Nullable
       @Override
-      protected List<String> create(String key) {
-        return new ArrayList<String>();
+      protected List<Shortcut> create(Keymap key) {
+        return new ArrayList<Shortcut>();
       }
     }; 
     for (String name : duplicates.keySet()) {
@@ -597,7 +597,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
         Set<String> expectedSc = new HashSet<String>(shortcutMappings.getValue());
         for (String s : actualSc) {
           if (!expectedSc.contains(s)) {
-            reassignedShortcuts.get(keymap.getName()).add(getText(shortcut));
+            reassignedShortcuts.get(keymap).add(shortcut);
           }
         }
         for (String s : expectedSc) {
@@ -610,11 +610,19 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     }
     if (!reassignedShortcuts.isEmpty()) {
       StringBuilder message = new StringBuilder();
-      for (Map.Entry<String, List<String>> keymapToShortcuts : reassignedShortcuts.entrySet()) {
-        message.append("The following shortcuts was reassigned in keymap ").append(keymapToShortcuts.getKey())
+      for (Map.Entry<Keymap, List<Shortcut>> keymapToShortcuts : reassignedShortcuts.entrySet()) {
+        Keymap keymap = keymapToShortcuts.getKey();
+        message.append("The following shortcuts was reassigned in keymap ").append(keymap.getName())
           .append(". Please modify known duplicates list:\n");
-        for (String eachShortcut : keymapToShortcuts.getValue()) {
-          message.append(eachShortcut).append("\n");
+        for (Shortcut eachShortcut : keymapToShortcuts.getValue()) {
+          message.append(" { ").append(StringUtil.wrapWithDoubleQuote(getText(eachShortcut))).append(",\t")
+            .append(StringUtil.join(keymap.getActionIds(eachShortcut), new Function<String, String>() {
+              @Override
+              public String fun(String s) {
+                return StringUtil.wrapWithDoubleQuote(s);
+              }
+            }, ", "))
+            .append("},\n");
         }
       }
       TestCase.fail("\n" + message.toString());
