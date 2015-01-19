@@ -17,18 +17,19 @@ package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.*;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
@@ -36,13 +37,12 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +72,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @Nullable private GitPushTarget myCurrentTarget;
   @Nullable private String myError;
   @Nullable private Runnable myFireOnChangeAction;
+  private boolean myRepaintFreezed;
 
   public GitPushTargetPanel(@NotNull GitPushSupport support, @NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
     myPushSupport = support;
@@ -84,7 +85,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       @Override
       public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
         if (myRepository.getRemotes().isEmpty()) {
-          showDefineRemotePopup(event);
+          showDefineRemoteDialog();
         }
         else {
           showRemoteSelector(event);
@@ -134,75 +135,86 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myTargetEditor.setVisible(!noRemotes);
   }
 
-  private void showDefineRemotePopup(@NotNull final MouseEvent event) {
-    final JTextField remoteName = new JTextField(GitRemote.ORIGIN_NAME, 20);
-    final JTextField remoteUrl = new JTextField(20);
-    final JBPopup popup = createDefineRemotePopup(remoteName, remoteUrl);
+  private void showDefineRemoteDialog() {
+    GitDefineRemoteDialog dialog = new GitDefineRemoteDialog(myRepository.getProject());
+    if (dialog.showAndGet()) {
+      String name = dialog.getRemoteName();
+      String url = dialog.getRemoteUrl();
+      freezeRepaint(); // showing a modal progress triggers the push dialog repaint => tries to render current target which is null yet.
+      try {
+        String error = validateRemoteUnderModal(name, url);
+        if (error != null) {
+          LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", name, url, error));
+          Messages.showErrorDialog(this, error, "Invalid Remote URL");
+        }
+        else {
+          addRemoteUnderModal(name, url);
+        }
+      }
+      finally {
+        unfreezeRepaint();
+      }
+    }
 
-    popup.addListener(new JBPopupListener.Adapter() {
+  }
+
+  private void unfreezeRepaint() {
+    myRepaintFreezed = false;
+  }
+
+  private void freezeRepaint() {
+    myRepaintFreezed = true;
+  }
+
+  @Nullable
+  private String validateRemoteUnderModal(final String name, final String url) {
+    if (url.isEmpty()) {
+      return "URL can't be empty";
+    }
+    if (!GitRefNameValidator.getInstance().checkInput(name)) {
+      return "Remote name is invalid";
+    }
+
+    final Ref<String> error = Ref.create();
+    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Checking URL...", false) {
       @Override
-      public void onClosed(final LightweightWindowEvent popupEvent) {
-        if (popupEvent.isOk()) {
-          ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Adding remote", false) {
-            private GitCommandResult myResult;
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              myResult = myGit.addRemote(myRepository, remoteName.getText().trim(), remoteUrl.getText().trim());
-              myRepository.update();
-            }
-
-            @Override
-            public void onSuccess() {
-              if (myResult.success()) {
-                updateComponents(myPushSupport.getDefaultTarget(myRepository));
-                if (myFireOnChangeAction != null) {
-                  myFireOnChangeAction.run();
-                }
-              }
-              else {
-                String message = "Couldn't add remote: " + myResult.getErrorOutputAsHtmlString();
-                LOG.warn(message);
-                Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.ERROR, null).createBalloon();
-                balloon.show(new RelativePoint(event),Balloon.Position.above);
-              }
-            }
-          });
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        final GitCommandResult result = myGit.lsRemote(myRepository.getProject(), VfsUtilCore.virtualToIoFile(myRepository.getRoot()), url);
+        if (!result.success()) {
+          error.set("Remote URL is invalid: " + result.getErrorOutputAsHtmlString());
         }
       }
     });
-    popup.show(new RelativePoint(event));
+    return error.get();
   }
 
-  @NotNull
-  private static JBPopup createDefineRemotePopup(@NotNull final JTextField remoteName, @NotNull final JTextField remoteUrl) {
-    JPanel defineRemoteComponent = new JPanel(new GridBagLayout());
-    GridBag gb = new GridBag().
-      setDefaultAnchor(GridBagConstraints.LINE_START).
-      setDefaultInsets(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, 0, 0);
-    defineRemoteComponent.add(new JBLabel("Name:"), gb.nextLine().next().anchor(GridBagConstraints.EAST));
-    defineRemoteComponent.add(remoteName, gb.next());
-    defineRemoteComponent.add(new JBLabel("URL: "),
-                              gb.nextLine().next().anchor(GridBagConstraints.EAST).insets(0, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP, 0));
-    defineRemoteComponent.add(remoteUrl, gb.next());
+  private void addRemoteUnderModal(@NotNull final String remoteName, @NotNull final String remoteUrl) {
+    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Adding remote...", false) {
+      private GitCommandResult myResult;
 
-    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(defineRemoteComponent, remoteUrl).
-      setRequestFocus(true).createPopup();
-
-    new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (isRemoteDefinitionCorrect(remoteName, remoteUrl)) {
-          popup.closeOk(e.getInputEvent());
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        myResult = myGit.addRemote(myRepository, remoteName, remoteUrl);
+        myRepository.update();
+      }
+
+      @Override
+      public void onSuccess() {
+        if (myResult.success()) {
+          updateComponents(myPushSupport.getDefaultTarget(myRepository));
+          if (myFireOnChangeAction != null) {
+            myFireOnChangeAction.run();
+          }
+        }
+        else {
+          String message = "Couldn't add remote: " + myResult.getErrorOutputAsHtmlString();
+          LOG.warn(message);
+          Messages.showErrorDialog(GitPushTargetPanel.this, message, "Add Remote");
         }
       }
-    }.registerCustomShortcutSet(CommonShortcuts.ENTER, popup.getContent());
-    return popup;
-  }
-
-  private static boolean isRemoteDefinitionCorrect(@NotNull JTextField remoteName, @NotNull JTextField remoteUrl) {
-    String url = remoteUrl.getText().trim();
-    String name = remoteName.getText().trim();
-    return !url.isEmpty() && !name.isEmpty() && !url.contains(" ") && !name.contains(" ");
+    });
   }
 
   private void showRemoteSelector(@NotNull MouseEvent event) {
@@ -236,6 +248,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive) {
+    if (myRepaintFreezed) return;
+
     SimpleTextAttributes targetTextAttributes = PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
     if (myError != null) {
       renderer.append(myError, PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.ERROR_ATTRIBUTES, isActive));

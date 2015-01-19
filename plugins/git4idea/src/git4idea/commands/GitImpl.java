@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.*;
 import git4idea.config.GitVersionSpecialty;
@@ -504,6 +503,20 @@ public class GitImpl implements Git {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
     h.addParameters("add", name, url);
     return run(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult lsRemote(@NotNull final Project project, @NotNull final File workingDir, @NotNull final String url) {
+    return run(new Computable<GitLineHandler>() {
+      @Override
+      public GitLineHandler compute() {
+        GitLineHandler h = new GitLineHandler(project, workingDir, GitCommand.LS_REMOTE);
+        h.addParameters(url);
+        h.setUrl(url);
+        return h;
+      }
+    });
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {

@@ -147,4 +147,7 @@ public interface Git {
 
   @NotNull
   GitCommandResult addRemote(@NotNull GitRepository repository, @NotNull String name, @NotNull String url);
+
+  @NotNull
+  GitCommandResult lsRemote(@NotNull Project project, @NotNull File workingDir, @NotNull String url);
 }
