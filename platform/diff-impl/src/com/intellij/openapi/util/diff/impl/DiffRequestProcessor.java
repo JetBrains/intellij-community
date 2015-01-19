@@ -131,19 +131,46 @@ public abstract class DiffRequestProcessor implements Disposable {
   public abstract void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy);
 
   @NotNull
-  private FrameDiffTool getFrameTool() {
+  private FrameDiffTool getFittedTool() {
+    List<FrameDiffTool> tools = new ArrayList<FrameDiffTool>();
     for (DiffTool tool : myToolOrder) {
       if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-        return (FrameDiffTool)tool;
+        tools.add((FrameDiffTool)tool);
       }
     }
 
-    return ErrorDiffTool.INSTANCE;
+    tools = DiffUtil.filterSuppressedTools(tools);
+
+    return tools.isEmpty() ? ErrorDiffTool.INSTANCE : tools.get(0);
+  }
+
+  @NotNull
+  private List<FrameDiffTool> getAvailableFittedTools() {
+    List<FrameDiffTool> tools = new ArrayList<FrameDiffTool>();
+    for (DiffTool tool : myAvailableTools) {
+      if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
+        tools.add((FrameDiffTool)tool);
+      }
+    }
+
+    return DiffUtil.filterSuppressedTools(tools);
+  }
+
+  private void moveToolOnTop(@NotNull DiffTool tool) {
+    myToolOrder.remove(tool);
+
+    FrameDiffTool toolToReplace = getFittedTool();
+
+    int index;
+    for (index = 0; index < myToolOrder.size(); index++) {
+      if (myToolOrder.get(index) == toolToReplace) break;
+    }
+    myToolOrder.add(index, tool);
   }
 
   @NotNull
   private ViewerState createState() {
-    FrameDiffTool frameTool = getFrameTool();
+    FrameDiffTool frameTool = getFittedTool();
 
     DiffViewer viewer = frameTool.createComponent(myContext, myActiveRequest);
 
@@ -184,7 +211,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
     catch (Exception e) {
       LOG.error(e);
-      myState = new ErrorState(getFrameTool());
+      myState = new ErrorState(getFittedTool());
       myState.init();
     }
 
@@ -285,11 +312,9 @@ public abstract class DiffRequestProcessor implements Disposable {
     DefaultActionGroup group = new DefaultActionGroup();
 
     List<AnAction> selectToolActions = new ArrayList<AnAction>();
-    for (DiffTool tool : myAvailableTools) {
+    for (DiffTool tool : getAvailableFittedTools()) {
       if (tool == myState.getActiveTool()) continue;
-      if (tool.canShow(myContext, myActiveRequest)) {
-        selectToolActions.add(new DiffToolToggleAction(tool));
-      }
+      selectToolActions.add(new DiffToolToggleAction(tool));
     }
     DiffUtil.addActionBlock(group, selectToolActions);
 
@@ -388,8 +413,8 @@ public abstract class DiffRequestProcessor implements Disposable {
         presentation.setEnabledAndVisible(false);
       }
 
-      for (DiffTool tool : myAvailableTools) {
-        if (tool != activeTool && tool.canShow(myContext, myActiveRequest)) {
+      for (DiffTool tool : getAvailableFittedTools()) {
+        if (tool != activeTool) {
           presentation.setEnabledAndVisible(true);
           return;
         }
@@ -402,10 +427,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
       DefaultActionGroup group = new DefaultActionGroup();
-      for (DiffTool tool : myAvailableTools) {
-        if (tool.canShow(myContext, myActiveRequest)) {
-          group.add(new DiffToolToggleAction(tool));
-        }
+      for (DiffTool tool : getAvailableFittedTools()) {
+        group.add(new DiffToolToggleAction(tool));
       }
 
       return group;
@@ -425,12 +448,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myState.getActiveTool() == myDiffTool) return;
 
-      myToolOrder.remove(myDiffTool);
-      int index;
-      for (index = 0; index < myToolOrder.size(); index++) {
-        if (myToolOrder.get(index).canShow(myContext, myActiveRequest)) break;
-      }
-      myToolOrder.add(index, myDiffTool);
+      moveToolOnTop(myDiffTool);
 
       updateRequest(true);
     }

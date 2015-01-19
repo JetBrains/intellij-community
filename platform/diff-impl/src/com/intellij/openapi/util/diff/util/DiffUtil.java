@@ -26,7 +26,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.diff.DiffDialogHints;
+import com.intellij.openapi.util.diff.api.DiffTool;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
+import com.intellij.openapi.util.diff.api.SuppressiveDiffTool;
 import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.comparison.ComparisonUtil;
 import com.intellij.openapi.util.diff.contents.DiffContent;
@@ -767,6 +769,30 @@ public class DiffUtil {
       if (data != null) return data;
     }
     return null;
+  }
+
+  //
+  // Tools
+  //
+
+  @NotNull
+  public static <T extends DiffTool> List<T> filterSuppressedTools(@NotNull List<T> tools) {
+    if (tools.size() < 2) return tools;
+
+    List<Class<? extends DiffTool>> suppressedTools = new ArrayList<Class<? extends DiffTool>>();
+    for (T tool : tools) {
+      if (tool instanceof SuppressiveDiffTool) suppressedTools.addAll(((SuppressiveDiffTool)tool).getSuppressedTools());
+    }
+
+    if (suppressedTools.isEmpty()) return tools;
+
+    List<T> filteredTools = new ArrayList<T>();
+    for (T tool : tools) {
+      if (suppressedTools.contains(tool.getClass())) continue;
+      filteredTools.add(tool);
+    }
+
+    return filteredTools.isEmpty() ? tools : filteredTools;
   }
 
   //
