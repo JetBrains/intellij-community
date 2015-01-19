@@ -39,10 +39,6 @@ public class GraphVisitorAlgorithm {
     myBackwards = backwards;
   }
 
-  public GraphVisitorAlgorithm() {
-    this(false);
-  }
-
   public void visitGraph(@NotNull final LinearGraph graph, @NotNull GraphLayout layout, @NotNull GraphVisitor visitor) {
     final BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
     for (int head : layout.getHeadNodeIndex()) {

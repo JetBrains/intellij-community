@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph.linearBek;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.GraphLayout;
@@ -58,27 +59,15 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     myWorkingGraph.clear();
 
     List<Integer> upNodes = LinearGraphUtils.getUpNodes(myWorkingGraph, currentNodeIndex);
-    if (upNodes.size() != 1) return;
-    int parent = upNodes.get(0);
-    if (LinearGraphUtils.getDownNodes(myWorkingGraph, parent).size() != 2) {
-      return;
-    }
-
-    int firstChildIndex = LinearGraphUtils.getDownNodes(myWorkingGraph, parent).get(0);
-    boolean switched = false;
-    if (firstChildIndex == currentNodeIndex) {
-      if (firstChildIndex > LinearGraphUtils.getDownNodes(myWorkingGraph, parent).get(1)) {
-        return;
+    if (upNodes.isEmpty()) return;
+    Integer parent = ContainerUtil.find(upNodes, new Condition<Integer>() {
+      @Override
+      public boolean value(Integer it) {
+        return LinearGraphUtils.getDownNodes(myWorkingGraph, it).size() == 2;
       }
-      switched = true;
-      firstChildIndex = LinearGraphUtils.getDownNodes(myWorkingGraph, parent).get(1);
-    }
-    if (firstChildIndex < currentNodeIndex) return;
-
-    int x = myGraphLayout.getLayoutIndex(firstChildIndex);
-    int y = myGraphLayout.getLayoutIndex(currentNodeIndex);
-    if (switched && x != y) return;
-    int k = 1;
+    });
+    if (parent == null) return;
+    List<Integer> downNodes = LinearGraphUtils.getDownNodes(myWorkingGraph, parent);
 
     int headNumber = myHeads.indexOf(currentHead);
     int nextHeadIndex = headNumber == myHeads.size() - 1
@@ -86,6 +75,24 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
                         : myGraphLayout
                           .getLayoutIndex(myHeads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
     int headIndex = myGraphLayout.getLayoutIndex(currentHead);
+
+    int firstChildIndex = downNodes.get(0);
+    if (firstChildIndex == currentNodeIndex) {
+      int secondChildIndex = downNodes.get(1);
+      if (secondChildIndex > firstChildIndex) {
+        // geometrically first child is higher than the second, so switching them
+        collapse(secondChildIndex, firstChildIndex, parent, headIndex, nextHeadIndex, visited);
+      }
+    } else {
+      collapse(firstChildIndex, currentNodeIndex, parent, headIndex, nextHeadIndex, visited);
+    }
+
+  }
+
+  private void collapse(int firstChildIndex, int currentNodeIndex, int parent, int headIndex, int nextHeadIndex, BitSetFlags visited) {
+    int x = myGraphLayout.getLayoutIndex(firstChildIndex);
+    int y = myGraphLayout.getLayoutIndex(currentNodeIndex);
+    int k = 1;
 
     PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE/*todo?*/, new GraphEdgeComparator());
     addDownEdges(myWorkingGraph, currentNodeIndex, queue);
@@ -165,9 +172,6 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     }
 
     boolean mergeWithOldCommit = currentNodeIndex + k == firstChildIndex && visited.get(firstChildIndex);
-    if (switched && !mergeWithOldCommit) {
-      return;
-    }
 
     for (Integer tail : tails) {
       if (!LinearGraphUtils.getDownNodes(myWorkingGraph, tail).contains(firstChildIndex)) {
@@ -237,11 +241,6 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       for (GraphEdge e : myToAdd) {
         myDottedEdges.createEdge(e);
       }
-
-      // todo in this specific place we should remember which edges were hidden
-      // 1) we hide some edges that do not go to first child, but below it
-      // 2) we hide some dotted edges; we can not restore them
-      // we should either change collapsing algorithm (simplify it) or save some stuff here somehow
 
       clear();
     }
