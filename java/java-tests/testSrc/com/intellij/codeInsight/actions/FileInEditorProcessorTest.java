@@ -16,20 +16,13 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-
-import java.util.List;
 
 import static com.intellij.codeInsight.actions.TextRangeType.*;
 
-public class MultiActionCodeProcessorTest extends LightPlatformCodeInsightFixtureTestCase {
+public class FileInEditorProcessorTest extends LightPlatformCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {
@@ -56,7 +49,7 @@ public class MultiActionCodeProcessorTest extends LightPlatformCodeInsightFixtur
       myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, revisionContent);
     }
 
-    CodeProcessor processor = new CodeProcessor(myFixture.getFile(), myFixture.getEditor(), options);
+    FileInEditorProcessor processor = new FileInEditorProcessor(myFixture.getFile(), myFixture.getEditor(), options);
 
     processor.processCode();
     myFixture.checkResultByFile(getTestName(true) + "_after.java");

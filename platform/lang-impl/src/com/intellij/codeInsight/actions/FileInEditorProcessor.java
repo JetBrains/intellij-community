@@ -20,25 +20,21 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 import static com.intellij.codeInsight.actions.TextRangeType.*;
 
-class CodeProcessor {
-  private static final Logger LOG = Logger.getInstance(CodeProcessor.class);
+class FileInEditorProcessor {
+  private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
   private static final String COLOR = "#7D7D7D";
 
   private final Editor myEditor;
@@ -56,9 +52,9 @@ class CodeProcessor {
   private final PsiFile myFile;
   private AbstractLayoutCodeProcessor myProcessor;
 
-  public CodeProcessor(PsiFile file,
-                       Editor editor,
-                       LayoutCodeOptions runOptions)
+  public FileInEditorProcessor(PsiFile file,
+                               Editor editor,
+                               LayoutCodeOptions runOptions)
   {
     myFile = file;
     myProject = file.getProject();

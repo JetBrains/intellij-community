@@ -152,7 +152,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     currentRunOptions.setProcessingScope(processingScope);
-    new CodeProcessor(file, editor, currentRunOptions).processCode();
+    new FileInEditorProcessor(file, editor, currentRunOptions).processCode();
   }
 
 

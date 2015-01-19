@@ -71,7 +71,7 @@ public class ReformatFileAction extends AnAction implements DumbAware {
     dialog.show();
 
     if (dialog.isOK()) {
-      new CodeProcessor(file, editor, dialog.getRunOptions()).processCode();
+      new FileInEditorProcessor(file, editor, dialog.getRunOptions()).processCode();
     }
   }
 }
