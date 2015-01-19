@@ -47,14 +47,11 @@ class A {
     @Override
     public int hashCode() {
         int result = Arrays.hashCode(a1);
-        result = 31 * result +               // Probably incorrect - hashCode for high dimension arrays with Arrays.hashCode
-                Arrays.hashCode(a2);
+        result = 31 * result + Arrays.deepHashCode(a2);
         result = 31 * result + Arrays.hashCode(a3);
-        result = 31 * result +               // Probably incorrect - hashCode for high dimension arrays with Arrays.hashCode
-                Arrays.hashCode(a4);
+        result = 31 * result + Arrays.deepHashCode(a4);
         result = 31 * result + Arrays.hashCode(a5);
-        result = 31 * result +               // Probably incorrect - hashCode for high dimension arrays with Arrays.hashCode
-                Arrays.hashCode(a6);
+        result = 31 * result + Arrays.deepHashCode(a6);
         result = 31 * result + (int) a7;
         result = 31 * result + (int) a8;
         result = 31 * result + a9;

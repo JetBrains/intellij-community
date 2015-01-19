@@ -80,4 +80,10 @@ public abstract class SpeedSearchSupply {
 
   public abstract void addChangeListener(@NotNull PropertyChangeListener listener);
   public abstract void removeChangeListener(@NotNull PropertyChangeListener listener);
+
+  /**
+   * Find an element matching the searching query in the underlying component and select it there. Speed-search popup is not affected.
+   * @param searchQuery text that the selected element should match
+   */
+  public abstract void findAndSelectElement(@NotNull String searchQuery);
 }

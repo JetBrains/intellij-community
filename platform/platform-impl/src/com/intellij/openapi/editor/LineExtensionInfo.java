@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,13 @@ public class LineExtensionInfo {
     myEffectType = effectType;
     myEffectColor = effectColor;
     myFontType = fontType;
+  }
+  public LineExtensionInfo(@NotNull String text, @NotNull TextAttributes attr) {
+    myText = text;
+    myColor = attr.getForegroundColor();
+    myEffectType = attr.getEffectType();
+    myEffectColor = attr.getEffectColor();
+    myFontType = attr.getFontType();
   }
 
   @NotNull

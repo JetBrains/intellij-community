@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       myFocusProxy = new Wrapper.FocusHolder();
       myFocusProxy.setOpaque(false);
-      myFocusProxy.setPreferredSize(new Dimension(0, 0));
+      myFocusProxy.setPreferredSize(JBUI.emptySize());
 
       MyContentComponent contentComponent = new MyContentComponent();
       contentComponent.setContent(myUI.getComponent());

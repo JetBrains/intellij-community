@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -64,7 +65,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     myCompletionEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "NamedChildrenConfigurable");
 
     myTable.setDragEnabled(false);
-    myTable.setIntercellSpacing(new Dimension(0, 0));
+    myTable.setIntercellSpacing(JBUI.emptySize());
 
     myTable.getColumn(expressionColumnName).setCellEditor(new AbstractTableCellEditor() {
       public Object getCellEditorValue() {
