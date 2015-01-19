@@ -191,6 +191,12 @@ public abstract class AbstractLayoutCodeProcessor {
 
   public void setCollectInfo(boolean isCollectInfo) {
     myInfoCollector = isCollectInfo ? new LayoutCodeInfoCollector() : null;
+
+    AbstractLayoutCodeProcessor current = this;
+    while (current.myPreviousCodeProcessor != null) {
+      current = current.myPreviousCodeProcessor;
+      current.myInfoCollector = myInfoCollector;
+    }
   }
 
   public void addFileFilter(@NotNull FileFilter filter) {
