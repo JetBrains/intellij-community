@@ -17,6 +17,7 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
@@ -28,6 +29,7 @@ public class JavaVersionServiceImpl extends JavaVersionService {
     return JavaSdkVersionUtil.isAtLeast(element, version);
   }
 
+  @Nullable
   @Override
   public JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
     return JavaSdkVersionUtil.getJavaSdkVersion(element);
