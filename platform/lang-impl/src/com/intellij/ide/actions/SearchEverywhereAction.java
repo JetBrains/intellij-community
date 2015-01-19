@@ -1682,7 +1682,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                               myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (o instanceof PsiElement && !(((PsiElement)o).getParent() instanceof PsiFile)) {
+            if (isSymbol(o)) {
               final PsiElement element = (PsiElement)o;
               final PsiFile file = element.getContainingFile();
               if (!myListModel.contains(o) && !symbols.contains(o) &&
@@ -1696,6 +1696,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         });
       return symbols;
+    }
+
+    protected boolean isSymbol(Object o) {
+      if (o instanceof PsiElement) {
+        final PsiElement e = (PsiElement)o;
+        //todo[kb] need a better way to avoid mixing java classes with symbols. Same to other languages where
+        //todo[kb] symbol provider returns classes. We need kind of suppressor API & EP here.
+        return !e.getLanguage().is(Language.findLanguageByID("JAVA")) || !(e.getParent() instanceof PsiFile);
+      }
+      return false;
     }
 
     private SearchResult getClasses(String pattern, boolean includeLibs, final int max, ChooseByNamePopup chooseByNamePopup) {
