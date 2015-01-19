@@ -106,6 +106,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private boolean             myDisposed;
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
+  private String              myPropertyToSelectWhenVisible;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -208,6 +209,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     if (newEditor == this) {
       if (oldEditor instanceof TextEditor) {
         setStructureViewSelectionFromPropertiesFile(((TextEditor)oldEditor).getEditor());
+      } else if (myPropertyToSelectWhenVisible != null) {
+        setStructureViewSelection(myPropertyToSelectWhenVisible);
+        myPropertyToSelectWhenVisible = null;
       }
     }
     else if (newEditor instanceof TextEditor) {
@@ -239,6 +243,17 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     Object root = tree.getModel().getRoot();
     if (AbstractTreeUi.isLoadingChildrenFor(root)) {
+      boolean isEditorVisible = false;
+      for (FileEditor editor : FileEditorManager.getInstance(myProject).getSelectedEditors()) {
+        if (editor == this) {
+          isEditorVisible = true;
+          break;
+        }
+      }
+      if (!isEditorVisible) {
+        myPropertyToSelectWhenVisible = propertyName;
+        return;
+      }
       mySelectionChangeAlarm.cancelAllRequests();
       mySelectionChangeAlarm.addRequest(new Runnable() {
         @Override
