@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.util.diff.tools.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 
@@ -33,6 +31,7 @@ public class DiffSplitter extends Splitter {
     setDividerWidth(30);
   }
 
+  @Override
   protected Divider createDivider() {
     return new DividerImpl() {
       public void paint(Graphics g) {
