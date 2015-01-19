@@ -31,6 +31,8 @@ public interface LinearGraph {
   @NotNull
   GraphNode getGraphNode(int nodeIndex);
 
+  int getNodeId(int nodeIndex);
+
   // return null, if node doesn't exist
   @Nullable
   Integer getNodeIndexById(int nodeId);

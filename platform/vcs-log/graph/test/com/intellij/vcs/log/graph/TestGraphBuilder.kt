@@ -110,6 +110,8 @@ class TestGraphBuilder: BaseTestGraphBuilder {
 
     override fun nodesCount() = nodes.size
 
+    override fun getNodeId(nodeIndex: Int): Int = nodes[nodeIndex].getNodeId()
+
     override fun getAdjacentEdges(nodeIndex: Int) = edges[nodeIndex].toList()
 
     override fun getGraphNode(nodeIndex: Int) = nodes[nodeIndex]

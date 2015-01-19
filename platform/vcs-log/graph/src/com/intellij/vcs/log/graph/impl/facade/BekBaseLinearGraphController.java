@@ -62,6 +62,7 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
     return null;
   }
 
+  @NotNull
   public BekIntMap getBekIntMap() {
     return myBekIntMap;
   }
@@ -108,8 +109,13 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
     public GraphNode getGraphNode(int nodeIndex) {
       assert inRanges(nodeIndex);
 
-      // see com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl.getGraphNode
-      return new GraphNode(myBekIntMap.getUsualIndex(nodeIndex), nodeIndex, GraphNodeType.USUAL);
+      return new GraphNode(getNodeId(nodeIndex), nodeIndex, GraphNodeType.USUAL);
+    }
+
+    @Override
+    public int getNodeId(int nodeIndex) {
+      // see com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl.getNodeId
+      return myBekIntMap.getUsualIndex(nodeIndex);
     }
 
     @Nullable

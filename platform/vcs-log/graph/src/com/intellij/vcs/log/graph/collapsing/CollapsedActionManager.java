@@ -142,13 +142,13 @@ class CollapsedActionManager {
 
         CollapsedGraph collapsedGraph = graphController.getCollapsedGraph();
         final LinearGraph compiledGraph = collapsedGraph.getCompiledGraph();
-        int upNodeId = compiledGraph.getGraphNode(longFragment.upNodeIndex).getNodeId();
-        int downNodeId = compiledGraph.getGraphNode(longFragment.downNodeIndex).getNodeId();
+        int upNodeId = compiledGraph.getNodeId(longFragment.upNodeIndex);
+        int downNodeId = compiledGraph.getNodeId(longFragment.downNodeIndex);
 
         final List<Integer> nodeIdList = ContainerUtil.map(nodesForHide, new Function<Integer, Integer>() {
           @Override
           public Integer fun(Integer integer) {
-            return compiledGraph.getGraphNode(integer).getNodeId();
+            return compiledGraph.getNodeId(integer);
           }
         });
         for (Integer nodeId : nodeIdList) {
@@ -175,7 +175,7 @@ class CollapsedActionManager {
       LinearGraph delegateGraph = collapsedGraph.getDelegateGraph();
 
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
-        int nodeId = delegateGraph.getGraphNode(nodeIndex).getNodeId();
+        int nodeId = delegateGraph.getNodeId(nodeIndex);
         collapsedGraph.setNodeVisibility(nodeId, true);
       }
       collapsedGraph.getGraphAdditionalEdges().removeAll();
@@ -196,7 +196,7 @@ class CollapsedActionManager {
       LinearFragmentGenerator generator = new LinearFragmentGenerator(delegateGraph, Condition.FALSE);
       FragmentGenerator fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph), Condition.FALSE);
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
-        int nodeId1 = delegateGraph.getGraphNode(nodeIndex).getNodeId();
+        int nodeId1 = delegateGraph.getNodeId(nodeIndex);
         if (!collapsedGraph.getNodeVisibility(nodeId1)) continue;
 
         LinearFragmentGenerator.GraphFragment fragment = generator.getLongDownFragment(nodeIndex);
@@ -204,12 +204,12 @@ class CollapsedActionManager {
           Set<Integer> middleNodes = fragmentGenerator.getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex);
           middleNodes.remove(fragment.upNodeIndex);
           middleNodes.remove(fragment.downNodeIndex);
-          int upNodeId = delegateGraph.getGraphNode(fragment.upNodeIndex).getNodeId();
-          int downNodeId = delegateGraph.getGraphNode(fragment.downNodeIndex).getNodeId();
+          int upNodeId = delegateGraph.getNodeId(fragment.upNodeIndex);
+          int downNodeId = delegateGraph.getNodeId(fragment.downNodeIndex);
           collapsedGraph.getGraphAdditionalEdges().createEdge(upNodeId, downNodeId, GraphEdgeType.DOTTED);
 
           for (Integer nodeIndexForHide : middleNodes) {
-            int nodeId = delegateGraph.getGraphNode(nodeIndexForHide).getNodeId();
+            int nodeId = delegateGraph.getNodeId(nodeIndexForHide);
             collapsedGraph.setNodeVisibility(nodeId, false);
           }
         }
@@ -235,8 +235,8 @@ class CollapsedActionManager {
         FragmentGenerator fragmentGenerator =
           new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph),
                                 Condition.FALSE);
-        int upNodeId = graphController.getCompiledGraph().getGraphNode(dottedEdge.first).getNodeId();
-        int downNodeId = graphController.getCompiledGraph().getGraphNode(dottedEdge.second).getNodeId();
+        int upNodeId = graphController.getCompiledGraph().getNodeId(dottedEdge.first);
+        int downNodeId = graphController.getCompiledGraph().getNodeId(dottedEdge.second);
         Integer upNodeIndex = delegateGraph.getNodeIndexById(upNodeId);
         Integer downNodeIndex = delegateGraph.getNodeIndexById(downNodeId);
         Set<Integer> middleNodes =
@@ -245,7 +245,7 @@ class CollapsedActionManager {
         List<Integer> nodeIdList = ContainerUtil.map(middleNodes, new Function<Integer, Integer>() {
           @Override
           public Integer fun(Integer integer) {
-            return collapsedGraph.getDelegateGraph().getGraphNode(integer).getNodeId();
+            return collapsedGraph.getDelegateGraph().getNodeId(integer);
           }
         });
 

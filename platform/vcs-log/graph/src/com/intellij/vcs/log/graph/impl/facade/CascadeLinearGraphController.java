@@ -87,7 +87,7 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
       @NotNull
       @Override
       public Integer fun(Integer nodeIndex) {
-        int nodeId = getCompiledGraph().getGraphNode(nodeIndex).getNodeId();
+        int nodeId = getCompiledGraph().getNodeId(nodeIndex);
         if (nodeId < 0)
           return nodeId;
         return permanentGraphInfo.getPermanentGraphLayout().getLayoutIndex(nodeId);

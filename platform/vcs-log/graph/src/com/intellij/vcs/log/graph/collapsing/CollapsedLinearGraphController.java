@@ -53,7 +53,7 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
     myLinearFragmentGenerator = new LinearFragmentGenerator(myCollapsedGraph.getCompiledGraph(), new Condition<Integer>() {
       @Override
       public boolean value(Integer nodeIndex) {
-        int nodeId = myCollapsedGraph.getCompiledGraph().getGraphNode(nodeIndex).getNodeId();
+        int nodeId = myCollapsedGraph.getCompiledGraph().getNodeId(nodeIndex);
         return permanentGraphInfo.getNotCollapsedNodes().value(nodeId);
       }
     });

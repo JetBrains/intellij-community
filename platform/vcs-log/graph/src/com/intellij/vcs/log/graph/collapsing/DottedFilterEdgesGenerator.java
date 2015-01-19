@@ -51,7 +51,7 @@ public class DottedFilterEdgesGenerator {
   }
 
   private int getNodeId(int nodeIndex) {
-    return myCollapsedGraph.getDelegateGraph().getGraphNode(nodeIndex).getNodeId();
+    return myCollapsedGraph.getDelegateGraph().getNodeId(nodeIndex);
   }
 
   private void addDottedEdge(int nodeIndex1, int nodeIndex2) {

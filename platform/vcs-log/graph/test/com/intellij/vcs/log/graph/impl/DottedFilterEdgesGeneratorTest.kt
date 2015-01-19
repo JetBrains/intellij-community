@@ -32,7 +32,7 @@ public class DottedFilterEdgesGeneratorTest {
     val nodesVisibility = UnsignedBitSet()
     for(nodeIndex in 0..nodesCount() - 1) {
       val graphNode = getGraphNode(nodeIndex)
-      nodesVisibility.set(graphNode.getNodeId(), graphNode.getType() == GraphNodeType.USUAL)
+      nodesVisibility.set(getNodeId(nodeIndex), graphNode.getType() == GraphNodeType.USUAL)
     }
     val collapsedGraph = CollapsedGraph.newInstance(this, nodesVisibility)
     DottedFilterEdgesGenerator.update(collapsedGraph, upIndex, downIndex)
