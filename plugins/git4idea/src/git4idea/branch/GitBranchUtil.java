@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -436,7 +437,7 @@ public class GitBranchUtil {
       // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
       String head;
       try {
-        head = FileUtil.loadFile(new File(root.getPath(), GitRepositoryFiles.GIT_HEAD), GitUtil.UTF8_ENCODING).trim();
+        head = FileUtil.loadFile(new File(root.getPath(), GitRepositoryFiles.GIT_HEAD), CharsetToolkit.UTF8_CHARSET).trim();
         final String prefix = "ref: refs/heads/";
         return head.startsWith(prefix) ?
                Collections.singletonList(head.substring(prefix.length())) :

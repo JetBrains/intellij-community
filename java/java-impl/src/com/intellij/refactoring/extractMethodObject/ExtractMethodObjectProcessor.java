@@ -271,6 +271,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       public void visitReturnStatement(PsiReturnStatement statement) {
         returnStatements.add(statement);
       }
+
+      @Override
+      public void visitClass(PsiClass aClass) {}
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {}
     });
     if (myExtractProcessor.generatesConditionalExit()) {
       for (int i = 0; i < returnStatements.size() - 1; i++) {
@@ -307,8 +313,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
-      }
+      public void visitClass(PsiClass aClass) {}
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
       @Override
       public void visitDeclarationStatement(final PsiDeclarationStatement statement) {
@@ -638,6 +646,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public PsiClass getInnerClass() {
     return myInnerClass;
   }
+  
+  protected boolean isFoldingApplicable() {
+    return true;
+  }
 
   public class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
@@ -650,6 +662,16 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
                                         String helpId) {
       super(project, editor, elements, forcedReturnType, refactoringName, initialMethodName, helpId);
 
+    }
+
+    @Override
+    protected boolean insertNotNullCheckIfPossible() {
+      return false;
+    }
+
+    @Override
+    protected boolean isNeedToChangeCallContext() {
+      return false;
     }
 
     @Override
@@ -737,11 +759,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected boolean isNeedToChangeCallContext() {
-      return false;
-    }
-
-    @Override
     protected void declareNecessaryVariablesAfterCall(final PsiVariable outputVariable) throws IncorrectOperationException {
       if (myMultipleExitPoints) {
         final String object = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(StringUtil.decapitalize(myInnerClassName), outputVariable, true);
@@ -801,6 +818,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       else {
         super.declareNecessaryVariablesAfterCall(outputVariable);
       }
+    }
+
+    @Override
+    protected boolean isFoldingApplicable() {
+      return ExtractMethodObjectProcessor.this.isFoldingApplicable();
     }
 
     private void rebindExitStatement(final String objectName) {

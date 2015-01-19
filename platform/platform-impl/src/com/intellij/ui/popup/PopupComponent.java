@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.awt.AWTUtilities;
@@ -105,7 +106,7 @@ public interface PopupComponent {
         throw new IllegalArgumentException("Popup owner must be showing");
       }
 
-      final Window wnd = owner instanceof Window ? (Window)owner: SwingUtilities.getWindowAncestor(owner);
+      final Window wnd = UIUtil.getWindow(owner);
       if (wnd instanceof Frame) {
         myDialog = new JDialog((Frame)wnd);
       } else if (wnd instanceof Dialog) {
@@ -136,6 +137,9 @@ public interface PopupComponent {
     }
 
     public void show() {
+
+    UIUtil.suppressFocusStealing(getWindow());
+
       if (!myRequestFocus) {
         myDialog.setFocusableWindowState(false);
       }

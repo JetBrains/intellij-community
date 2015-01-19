@@ -71,5 +71,9 @@ public class AssertStatementPostfixTemplateTest extends PostfixTemplateTestCase 
   public void testSimpleWithSemicolon() {
     doTest();
   }
+
+  public void testIncompleteExpression() {
+    doTest();
+  }
 }
 

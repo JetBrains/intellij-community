@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class GitStashUtils {
     loadStashStack(project, root, Charset.forName(GitConfigUtil.getLogEncoding(project, root)), consumer);
   }
 
-  public static void loadStashStack(@NotNull Project project, @NotNull VirtualFile root, final Charset charset,
+  public static void loadStashStack(@NotNull Project project, @NotNull VirtualFile root, @NotNull Charset charset,
                                     final Consumer<StashInfo> consumer) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand());
     h.setSilent(true);

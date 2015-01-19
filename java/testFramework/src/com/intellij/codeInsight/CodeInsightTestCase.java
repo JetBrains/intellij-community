@@ -432,7 +432,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       streamsToClose.add(outputStream);
     }
     else {
-      VfsUtil.saveText(newVFile, newFileText);
+      setFileText(newVFile, newFileText);
     }
   }
 

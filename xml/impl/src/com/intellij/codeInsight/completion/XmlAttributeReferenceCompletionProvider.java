@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.impl.source.xml.XmlAttributeReference;
 import com.intellij.psi.meta.PsiPresentableMetaData;
@@ -86,6 +87,12 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
         String name = descriptor.getName(tag);
 
         InsertHandler<LookupElement> insertHandler = XmlAttributeInsertHandler.INSTANCE;
+
+        if (tag instanceof HtmlTag &&
+            HtmlUtil.isShortNotationOfBooleanAttributePreferred() &&
+            HtmlUtil.isBooleanAttribute(descriptor, tag)) {
+          insertHandler = null;
+        }
 
         if (replacementInsertHandler != null) {
           insertHandler = replacementInsertHandler;

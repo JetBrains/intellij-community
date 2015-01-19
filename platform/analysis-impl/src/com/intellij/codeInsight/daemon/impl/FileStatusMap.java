@@ -358,7 +358,7 @@ public class FileStatusMap implements Disposable {
   }
   private static final StringBuffer log = new StringBuffer();
   private static final boolean IN_TESTS = ApplicationManager.getApplication().isUnitTestMode();
-  static void log(@NonNls Object... info) {
+  public static void log(@NonNls @NotNull Object... info) {
     if (IN_TESTS) {
       if (log.length() > 10000) {
         log.replace(0, log.length()-5000, "");
@@ -373,5 +373,4 @@ public class FileStatusMap implements Disposable {
     log.setLength(0);
     return l;
   }
-
 }

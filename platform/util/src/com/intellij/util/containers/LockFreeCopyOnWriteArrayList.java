@@ -596,6 +596,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    */
   @Override
   public boolean removeAll(@NotNull Collection<?> c) {
+    if (c.isEmpty()) return false;
     while (true) {
       Object[] elements = array;
       Object[] newElements = createArrayRemoveAll(elements, c);
@@ -734,6 +735,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    */
   @Override
   public boolean addAll(@NotNull Collection<? extends E> c) {
+    if (c.isEmpty()) return false;
     Object[] cs = c.toArray();
     if (cs.length == 0) {
       return false;

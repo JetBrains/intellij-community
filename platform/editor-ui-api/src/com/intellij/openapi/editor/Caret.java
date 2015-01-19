@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a specific caret instance in the editor when it support multiple carets (see {@link CaretModel#supportsMultipleCarets()}.
+ * Represents a specific caret instance in the editor.
  * Provides methods to query and modify caret position and caret's associated selection.
  */
 public interface Caret extends UserDataHolderEx, Disposable {
@@ -41,8 +41,8 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * Tells whether this caret is valid, i.e. recognized by the caret model currently. Caret is valid since its creation till its
    * removal from caret model.
    *
-   * @see com.intellij.openapi.editor.CaretModel#addCaret(VisualPosition)
-   * @see com.intellij.openapi.editor.CaretModel#removeCaret(Caret)
+   * @see CaretModel#addCaret(VisualPosition)
+   * @see CaretModel#removeCaret(Caret)
    */
   boolean isValid();
 

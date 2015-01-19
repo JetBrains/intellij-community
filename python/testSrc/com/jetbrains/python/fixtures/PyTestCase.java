@@ -17,7 +17,6 @@ package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -29,21 +28,16 @@ import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -61,8 +55,6 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.PythonMockSdk;
-import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
@@ -303,35 +295,18 @@ public abstract class PyTestCase extends UsefulTestCase {
     handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
   }
 
-  protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
-    private final String myPythonVersion;
-
-    public PyLightProjectDescriptor(String pythonVersion) {
-      myPythonVersion = pythonVersion;
-    }
-
-    @Override
-    public ModuleType getModuleType() {
-      return PythonModuleTypeBase.getInstance();
-    }
-
-    @Override
-    public Sdk getSdk() {
-      return PythonMockSdk.findOrCreate(myPythonVersion);
-    }
-
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-    }
-
-    protected void createLibrary(ModifiableRootModel model, final String name, final String path) {
-      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary(name).getModifiableModel();
-      final VirtualFile home =
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManager.getHomePath() + path);
-
-      modifiableModel.addRoot(home, OrderRootType.CLASSES);
-      modifiableModel.commit();
-    }
+  /**
+   * Configures project by some path. It is here to emulate {@link com.intellij.platform.PlatformProjectOpenProcessor}
+   *
+   * @param path         path to open
+   * @param configurator configurator to use
+   */
+  protected void configureProjectByProjectConfigurators(@NotNull final String path,
+                                                        @NotNull final DirectoryProjectConfigurator configurator) {
+    final VirtualFile newPath =
+      myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
+    final Ref<Module> moduleRef = new Ref<Module>(myFixture.getModule());
+    configurator.configureProject(myFixture.getProject(), newPath, moduleRef);
   }
 
   public static void initPlatformPrefix() {

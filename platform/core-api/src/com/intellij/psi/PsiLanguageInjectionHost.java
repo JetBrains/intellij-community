@@ -38,10 +38,23 @@ import java.util.List;
  * For all returned injected PSI elements, {@link InjectedLanguageManager#getInjectionHost(PsiElement)} returns PsiLanguageInjectionHost they were injected into.
  */
 public interface PsiLanguageInjectionHost extends PsiElement {
+  /**
+   * @return {@code true} if this instance can accept injections, {@code false} otherwise
+   */
   boolean isValidHost();
 
+  /**
+   * Update the host element using the provided text of the injected file. It may be required to escape characters from {@code text}
+   * in accordance with the host language syntax. The implementation may delegate to {@link com.intellij.psi.ElementManipulators#handleContentChange(PsiElement, String)}
+   * if {@link com.intellij.psi.ElementManipulator} implementation is registered for this element class
+   * @param text text of the injected file
+   * @return the updated instance
+   */
   PsiLanguageInjectionHost updateText(@NotNull String text);
 
+  /**
+   * @return {@link LiteralTextEscaper} instance which will be used to convert the content of this host element to the content of injected file
+   */
   @NotNull
   LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper();
 

@@ -100,8 +100,9 @@ public abstract class DocumentCommitProcessor {
     }
   }
 
+  // public for Upsource
   @Nullable("returns runnable to execute under write action in AWT to finish the commit")
-  Processor<Document> doCommit(@NotNull final CommitTask task,
+  public Processor<Document> doCommit(@NotNull final CommitTask task,
                                @NotNull final PsiFile file,
                                final boolean synchronously) {
     Document document = task.document;

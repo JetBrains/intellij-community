@@ -16,10 +16,11 @@
 package com.intellij.codeInsight.template.emmet.tokens;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementFactory;
@@ -31,33 +32,30 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Collections;
+import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class TemplateToken extends ZenCodingToken {
   public static final String ATTRS = "ATTRS";
-  public final static TemplateToken EMPTY_TEMPLATE_TOKEN = new TemplateToken("", new ArrayList<Couple<String>>());
+  public final static TemplateToken EMPTY_TEMPLATE_TOKEN = new TemplateToken("", Collections.<String, String>emptyMap());
 
-  private final String myKey;
+  @NotNull private final String myKey;
   private TemplateImpl myTemplate;
-  private final List<Couple<String>> myAttribute2Value;
+  @NotNull private final Map<String, String> myAttributes;
   private XmlFile myFile;
 
-  public TemplateToken(String key) {
-    this(key, new ArrayList<Couple<String>>());
+  public TemplateToken(@NotNull String key) {
+    this(key, Collections.<String, String>emptyMap());
   }
 
-  public TemplateToken(String key, List<Couple<String>> attribute2value) {
+  public TemplateToken(@NotNull String key, @NotNull Map<String, String> attribute2value) {
     myKey = key;
-    myAttribute2Value = attribute2value;
+    myAttributes = attribute2value;
   }
 
-  public List<Couple<String>> getAttribute2Value() {
-    return myAttribute2Value;
+  @NotNull
+  public Map<String, String> getAttributes() {
+    return myAttributes;
   }
 
   public XmlFile getFile() {
@@ -68,23 +66,24 @@ public class TemplateToken extends ZenCodingToken {
     myFile = file;
   }
 
+  @NotNull
   public String getKey() {
     return myKey;
   }
 
-  public boolean setTemplate(TemplateImpl template, CustomTemplateCallback callback) {
+  public boolean setTemplate(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback) {
     myTemplate = template;
-    final XmlFile xmlFile = parseXmlFileInTemplate(template, callback, getAttribute2Value());
+    final XmlFile xmlFile = parseXmlFileInTemplate(template, callback, getAttributes());
     setFile(xmlFile);
     final XmlTag tag = xmlFile.getRootTag();
-    if (getAttribute2Value().size() > 0 && tag == null) {
+    if (!getAttributes().isEmpty() && tag == null) {
       return false;
     }
     return true;
   }
 
 
-  private static boolean containsAttrsVar(TemplateImpl template) {
+  private static boolean containsAttrsVar(@NotNull TemplateImpl template) {
     for (int i = 0; i < template.getVariableCount(); i++) {
       String varName = template.getVariableNameAt(i);
       if (ATTRS.equals(varName)) {
@@ -95,14 +94,13 @@ public class TemplateToken extends ZenCodingToken {
   }
 
   @NotNull
-  private static XmlFile parseXmlFileInTemplate(TemplateImpl template,
-                                                CustomTemplateCallback callback,
-                                                List<Couple<String>> attributes) {
+  private static XmlFile parseXmlFileInTemplate(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback,
+                                                @NotNull Map<String, String> attributes) {
     XmlTag dummyRootTag = null;
     String templateString = template.getString();
     final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(callback.getProject());
     if (!containsAttrsVar(template)) {
-      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, templateString);
+      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, templateString, false, true);
       dummyRootTag = dummyFile.getRootTag();
       if (dummyRootTag != null) {
         addMissingAttributes(dummyRootTag, attributes);
@@ -110,7 +108,8 @@ public class TemplateToken extends ZenCodingToken {
     }
 
     templateString = dummyRootTag != null ? dummyRootTag.getContainingFile().getText() : templateString;
-    XmlFile xmlFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), true);
+    XmlFile xmlFile =
+      (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), true);
     VirtualFile vFile = xmlFile.getVirtualFile();
     if (vFile != null) {
       vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
@@ -119,27 +118,14 @@ public class TemplateToken extends ZenCodingToken {
   }
 
 
-  private static void addMissingAttributes(XmlTag tag, List<Couple<String>> value) {
-    List<Couple<String>> attr2value = new ArrayList<Couple<String>>(value);
-    for (Iterator<Couple<String>> iterator = attr2value.iterator(); iterator.hasNext(); ) {
-      Couple<String> pair = iterator.next();
-      if (tag.getAttribute(pair.first) != null) {
-        iterator.remove();
-      }
-    }
-    addAttributesBefore(tag, attr2value);
-  }
-
-  private static void addAttributesBefore(XmlTag tag, List<Couple<String>> attr2value) {
-    XmlAttribute firstAttribute = ArrayUtil.getFirstElement(tag.getAttributes());
-    XmlElementFactory factory = XmlElementFactory.getInstance(tag.getProject());
-    for (Couple<String> pair : attr2value) {
-      XmlAttribute xmlAttribute = factory.createXmlAttribute(pair.first, "");
-      if (firstAttribute != null) {
-        tag.addBefore(xmlAttribute, firstAttribute);
-      }
-      else {
-        tag.add(xmlAttribute);
+  private static void addMissingAttributes(@NotNull XmlTag tag, @NotNull Map<String, String> attributes) {
+    for (Map.Entry<String, String> attribute : attributes.entrySet()) {
+      if (!XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME.equals(attribute.getKey()) && tag.getAttribute(attribute.getKey()) == null) {
+        XmlTag htmlTag = XmlElementFactory.getInstance(tag.getProject()).createHTMLTagFromText("<dummy " + attribute.getKey() + "=\"\"/>");
+        final XmlAttribute newAttribute = ArrayUtil.getFirstElement(htmlTag.getAttributes());
+        if (newAttribute != null) {
+          tag.add(newAttribute);
+        }
       }
     }
   }
@@ -149,6 +135,7 @@ public class TemplateToken extends ZenCodingToken {
     return myTemplate;
   }
 
+  @NotNull
   public String toString() {
     return "TEMPLATE";
   }

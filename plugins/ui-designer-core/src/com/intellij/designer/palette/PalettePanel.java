@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import java.awt.dnd.DragSourceListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -89,7 +88,7 @@ public class PalettePanel extends JPanel implements DataProvider, PaletteToolWin
       public void actionPerformed(AnActionEvent e) {
         clearActiveItem();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), scrollPane);
+    }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, scrollPane);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       DragSource.getDefaultDragSource().addDragSourceListener(myDragSourceListener);

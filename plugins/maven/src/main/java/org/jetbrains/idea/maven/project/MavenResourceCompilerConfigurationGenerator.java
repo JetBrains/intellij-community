@@ -23,6 +23,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -124,7 +125,9 @@ public class MavenResourceCompilerConfigurationGenerator {
       }
 
       Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-      resourceConfig.outputDirectory = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "outputDirectory", null);
+
+      resourceConfig.outputDirectory = getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "resources");
+      resourceConfig.testOutputDirectory = getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "testResources");
 
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
@@ -180,6 +183,20 @@ public class MavenResourceCompilerConfigurationGenerator {
         }
       }
     });
+  }
+
+  @Nullable
+  private static String getResourcesPluginGoalOutputDirectory(@NotNull MavenProject mavenProject,
+                                                              @Nullable Element pluginConfiguration,
+                                                              @NotNull String goal) {
+    final Element goalConfiguration = mavenProject.getPluginGoalConfiguration("org.apache.maven.plugins", "maven-resources-plugin", goal);
+    String outputDirectory = MavenJDOMUtil.findChildValueByPath(goalConfiguration, "outputDirectory", null);
+    if (outputDirectory == null) {
+      outputDirectory = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "outputDirectory", null);
+    }
+    return outputDirectory == null || FileUtil.isAbsolute(outputDirectory)
+           ? outputDirectory
+           : mavenProject.getDirectory() + '/' + outputDirectory;
   }
 
   private static void generateManifest(@NotNull MavenProject mavenProject, @NotNull Module module) {

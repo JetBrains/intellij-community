@@ -545,6 +545,10 @@ public class SettingsImpl implements EditorSettings {
     myUseSoftWraps = newValue;
     fireEditorRefresh();
   }
+  
+  public void setUseSoftWrapsQuiet() {
+    myUseSoftWraps = Boolean.TRUE;
+  }
 
   @Override
   public boolean isAllSoftWrapsShown() {

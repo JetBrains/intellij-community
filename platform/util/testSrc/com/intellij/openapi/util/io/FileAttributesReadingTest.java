@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public class FileAttributesReadingTest {
 
   @Before
   public void setUp() throws Exception {
-    myTempDirectory = FileUtil.createTempDirectory(getClass().getSimpleName() + ".", ".tmp");
+    myTempDirectory = FileUtil.createTempDirectory(getClass().getSimpleName() + ".", ".tmp").getCanonicalFile();
   }
 
   @After
@@ -355,7 +356,7 @@ public class FileAttributesReadingTest {
         assertTrue(getAttributes(dir).isDirectory());
 
         file = new File(dir, "file.txt");
-        FileUtil.writeToFile(file, "test".getBytes("UTF-8"));
+        FileUtil.writeToFile(file, "test".getBytes(CharsetToolkit.UTF8_CHARSET));
         assertTrue(file.exists());
         assertFileAttributes(file);
 

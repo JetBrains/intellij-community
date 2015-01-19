@@ -52,6 +52,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -71,6 +72,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   private TypeExpression myExpression;
   private boolean myReplaceSelf;
   private boolean myDeleteSelf = true;
+  private boolean mySkipTypeExpressionOnStart;
 
   public JavaVariableInplaceIntroducer(final Project project,
                                        IntroduceVariableSettings settings, PsiElement chosenAnchor, final Editor editor,
@@ -93,10 +95,18 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        rangeMarkers.toArray(new RangeMarker[rangeMarkers.size()]));
     myReplaceSelf = myExpr.getParent() instanceof PsiExpressionStatement;
+    mySkipTypeExpressionOnStart = !(myExpr instanceof PsiFunctionalExpression && myReplaceSelf);
   }
 
   @Override
   protected void beforeTemplateStart() {
+    if (!mySkipTypeExpressionOnStart) {
+      final PsiVariable variable = getVariable();
+      final PsiTypeElement typeElement = variable != null ? variable.getTypeElement() : null;
+      if (typeElement != null) {
+        myEditor.getCaretModel().moveToOffset(typeElement.getTextOffset());
+      }
+    }
     super.beforeTemplateStart();
     final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
     myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
@@ -244,7 +254,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (variable != null) {
       final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement != null) {
-        builder.replaceElement(typeElement, "Variable_Type", AbstractJavaInplaceIntroducer.createExpression(myExpression, typeElement.getText()), true, true);
+        builder.replaceElement(typeElement, "Variable_Type", AbstractJavaInplaceIntroducer.createExpression(myExpression, typeElement.getText()), true, mySkipTypeExpressionOnStart);
       }
     }
   }
@@ -261,6 +271,14 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       LOG.assertTrue(expr.isValid(), expr.getText());
       stringUsages.add(Pair.<PsiElement, TextRange>create(expr, new TextRange(0, expr.getTextLength())));
     }
+  }
+
+  @Override
+  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+    if (!isReplaceAllOccurrences() && getExpr() == null && !myReplaceSelf) {
+      return;
+    }
+    super.addReferenceAtCaret(refs);
   }
 
   private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,
@@ -381,6 +399,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       }
     }
     return super.getCaretOffset();
+  }
+
+  @Override
+  public void finish(boolean success) {
+    super.finish(success);
+    myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
   }
 
   @Override

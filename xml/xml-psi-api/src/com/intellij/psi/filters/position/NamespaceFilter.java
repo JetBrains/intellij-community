@@ -47,7 +47,9 @@ public class NamespaceFilter implements ElementFilter {
       if (psiFile instanceof XmlFile) {
         // We use file references for as dtd namespace
         // But we should also check PUBLIC ID for namespace
-        final XmlProlog prolog = ((XmlFile)psiFile).getDocument().getProlog();
+        XmlDocument document = ((XmlFile)psiFile).getDocument();
+        if (document == null) return false;
+        final XmlProlog prolog = document.getProlog();
 
         if (prolog != null) {
           final XmlDoctype doctype = prolog.getDoctype();

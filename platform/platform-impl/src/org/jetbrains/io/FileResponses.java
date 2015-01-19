@@ -24,6 +24,7 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
@@ -43,7 +44,7 @@ public class FileResponses {
     return FILE_MIMETYPE_MAP.getContentType(path);
   }
 
-  private static boolean checkCache(HttpRequest request, Channel channel, long lastModified) {
+  private static boolean checkCache(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified) {
     String ifModifiedSince = request.headers().get(HttpHeaders.Names.IF_MODIFIED_SINCE);
     if (!StringUtil.isEmpty(ifModifiedSince)) {
       try {
@@ -60,16 +61,25 @@ public class FileResponses {
     return false;
   }
 
-  public static void sendFile(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull File file) throws IOException {
-    if (checkCache(request, channel, file.lastModified())) {
-      return;
+  @Nullable
+  public static HttpResponse prepareSend(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified, @NotNull String path) {
+    if (checkCache(request, channel, lastModified)) {
+      return null;
     }
 
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-    response.headers().add(CONTENT_TYPE, getContentType(file.getPath()));
+    response.headers().add(CONTENT_TYPE, getContentType(path));
     addCommonHeaders(response);
     response.headers().set(HttpHeaders.Names.CACHE_CONTROL, "private, must-revalidate");
-    response.headers().set(HttpHeaders.Names.LAST_MODIFIED, DATE_FORMAT.get().format(new Date(file.lastModified())));
+    response.headers().set(HttpHeaders.Names.LAST_MODIFIED, DATE_FORMAT.get().format(new Date(lastModified)));
+    return response;
+  }
+
+  public static void sendFile(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull File file) throws IOException {
+    HttpResponse response = prepareSend(request, channel, file.lastModified(), file.getPath());
+    if (response == null) {
+      return;
+    }
 
     boolean keepAlive = addKeepAliveIfNeed(response, request);
 

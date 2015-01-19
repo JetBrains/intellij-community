@@ -159,8 +159,11 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
               return; // Nothing to do since the comment is the same
             }
             PsiElement next = getNextSibling(range.getLast());
-            if (next instanceof PsiWhiteSpace && countNewline(next.getText()) > 1) {
-              return;
+            if (next != null) {
+              final String text = next.getText();
+              if (StringUtil.isEmptyOrSpaces(text) && countNewline(text) > 1) {
+                return;
+              }
             }
             point = range.getFirst();
           }

@@ -196,6 +196,11 @@ public class CommonActionsPanel extends JPanel {
       }
 
       @Override
+      public boolean isDumbAware() {
+        return removeButton.isDumbAware();
+      }
+
+      @Override
       public void update(AnActionEvent e) {
         final JComponent contextComponent = removeButton.getContextComponent();
         if (contextComponent instanceof JTable && ((JTable)contextComponent).isEditing()) {

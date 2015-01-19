@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public class TextPanel extends JComponent {
 
   private boolean myDecorate = true;
   private float myAlignment;
-  private int myRightPadding = 20;
+  private int myRightPadding = JBUI.scale(14);
 
   protected TextPanel() {
     setOpaque(false);
@@ -41,7 +42,7 @@ public class TextPanel extends JComponent {
 
   @Override
   public Font getFont() {
-    return SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont();
+    return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label();
   }
 
   protected TextPanel(final boolean decorate) {

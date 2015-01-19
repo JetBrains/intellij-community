@@ -125,7 +125,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private InspectionsConfigTreeTable myTreeTable;
   private TreeExpander myTreeExpander;
   @NotNull
-  private String myInitialProfile;
+  private String myCurrentProfileName;
   private boolean myIsInRestore = false;
   private boolean myShareProfile;
   private Splitter myRightSplitter;
@@ -143,7 +143,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     super(new BorderLayout());
     myProjectProfileManager = projectProfileManager;
     mySelectedProfile = (InspectionProfileImpl)profile;
-    myInitialProfile = inspectionProfileName;
+    myCurrentProfileName = inspectionProfileName;
     myShareProfile = profile.getProfileManager() == projectProfileManager;
   }
 
@@ -324,7 +324,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       for (HighlightSeverity severity : severities) {
         final TextAttributesKey attributesKey = TextAttributesKey.find(severity.getName());
         final TextAttributes textAttributes = oppositeRegister.getTextAttributesBySeverity(severity);
-        LOG.assertTrue(textAttributes != null, severity);
+        if (textAttributes == null) {
+          continue;
+        }
         HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(severity, attributesKey);
         registrar.registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
                                    textAttributes.getErrorStripeColor());
@@ -546,12 +548,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     actions.add(new DumbAwareAction("Reset to Empty", "Reset to empty", AllIcons.Actions.Reset_to_empty){
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(mySelectedProfile != null && mySelectedProfile.isExecutable(myProjectProfileManager.getProject()));
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         mySelectedProfile.resetToEmpty(e.getProject());
         loadDescriptorsConfigs(false);
         postProcessModification();
@@ -751,7 +753,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
       group.add(new AnAction(renderSeverity(severity), renderSeverity(severity), level.getIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           setNewHighlightingLevel(level);
         }
 
@@ -798,6 +800,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     TreeUtil.sort(myRoot, new InspectionsConfigTreeComparator());
   }
 
+  // TODO 134099: see IntentionDescriptionPanel#readHTML
   private boolean readHTML(String text) {
     try {
       myBrowser.read(new StringReader(text), null);
@@ -808,6 +811,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
+  // TODO 134099: see IntentionDescriptionPanel#toHTML
   private String toHTML(String text) {
     final HintHint hintHint = new HintHint(myBrowser, new Point(0, 0));
     hintHint.setFont(UIUtil.getLabelFont());
@@ -824,22 +828,27 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (!nodes.isEmpty()) {
       final InspectionConfigTreeNode singleNode = paths.length == 1 && ((InspectionConfigTreeNode)paths[0].getLastPathComponent()).getDefaultDescriptor() != null
                                                   ? ContainerUtil.getFirstItem(nodes) : null;
-      if (singleNode != null && singleNode.getDefaultDescriptor().loadDescription() != null) {
-        // need this in order to correctly load plugin-supplied descriptions
-        final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
-        final String description = defaultDescriptor.loadDescription();
-        try {
-          if (!readHTML(SearchUtil.markup(toHTML(description), myProfileFilter.getFilter()))) {
-            readHTML(toHTML("<b>" + UNDER_CONSTRUCTION + "</b>"));
+      if (singleNode != null) {
+        if (singleNode.getDefaultDescriptor().loadDescription() != null) {
+          // need this in order to correctly load plugin-supplied descriptions
+          final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
+          final String description = defaultDescriptor.loadDescription();
+          try {
+            if (!readHTML(SearchUtil.markup(toHTML(description), myProfileFilter.getFilter()))) {
+              readHTML(toHTML("<b>" + UNDER_CONSTRUCTION + "</b>"));
+            }
           }
-        }
-        catch (Throwable t) {
-          LOG.error("Failed to load description for: " +
-                    defaultDescriptor.getToolWrapper().getTool().getClass() +
-                    "; description: " +
-                    description, t);
-        }
+          catch (Throwable t) {
+            LOG.error("Failed to load description for: " +
+                      defaultDescriptor.getToolWrapper().getTool().getClass() +
+                      "; description: " +
+                      description, t);
+          }
 
+        }
+        else {
+          readHTML(toHTML("Can't find inspection description."));
+        }
       }
       else {
         readHTML(toHTML("Multiple inspections are selected. You can edit them as a single inspection."));
@@ -1043,7 +1052,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (mySelectedProfile == modifiableModel) return;
     mySelectedProfile = (InspectionProfileImpl)modifiableModel;
     if (mySelectedProfile != null) {
-      myInitialProfile = mySelectedProfile.getName();
+      myCurrentProfileName = mySelectedProfile.getName();
     }
     initToolStates();
     filterTree();
@@ -1119,7 +1128,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myModified) return true;
     if (mySelectedProfile.isChanged()) return true;
     if (myShareProfile != (mySelectedProfile.getProfileManager() == myProjectProfileManager)) return true;
-    if (!Comparing.strEqual(myInitialProfile, mySelectedProfile.getName())) return true;
+    if (!Comparing.strEqual(myCurrentProfileName, mySelectedProfile.getName())) return true;
     if (!Comparing.equal(myInitialScopesOrder, mySelectedProfile.getScopesOrder())) return true;
     if (descriptorsAreChanged()) {
       return true;
@@ -1142,6 +1151,12 @@ public class SingleInspectionProfilePanel extends JPanel {
       return;
     }
     final ModifiableModel selectedProfile = getSelectedProfile();
+
+    if (!Comparing.equal(myCurrentProfileName, selectedProfile.getName())) {
+      selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
+      selectedProfile.setName(myCurrentProfileName);
+      selectedProfile.getProfileManager().updateProfile(selectedProfile);
+    }
     ProfileManager profileManager = myShareProfile ? myProjectProfileManager : InspectionProfileManager.getInstance();
     selectedProfile.setProjectLevel(myShareProfile);
     if (selectedProfile.getProfileManager() != profileManager) {
@@ -1206,6 +1221,15 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public void setProfileShared(boolean profileShared) {
     myShareProfile = profileShared;
+  }
+
+  @NotNull
+  public String getCurrentProfileName() {
+    return myCurrentProfileName;
+  }
+
+  public void setCurrentProfileName(@NotNull String currentProfileName) {
+    myCurrentProfileName = currentProfileName;
   }
 
   @Override

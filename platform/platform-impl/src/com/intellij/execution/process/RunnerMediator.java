@@ -74,9 +74,7 @@ public class RunnerMediator {
       injectRunnerCommand(commandLine);
     }
 
-    Process process = commandLine.createProcess();
-
-    return new CustomDestroyProcessHandler(process, commandLine, useSoftKill);
+    return new CustomDestroyProcessHandler(commandLine, useSoftKill);
   }
 
   @Nullable
@@ -144,11 +142,29 @@ public class RunnerMediator {
   public static class CustomDestroyProcessHandler extends ColoredProcessHandler {
     private final boolean mySoftKill;
 
+    /**
+     * @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine)
+     * @deprecated remove in IDEA 16
+     */
     public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
       this(process, commandLine, false);
     }
+
+    /**
+     * @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine, boolean softKill)
+     * @deprecated remove in IDEA 16
+     */
     public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, final boolean softKill) {
       super(process, commandLine.getCommandLineString());
+      mySoftKill = softKill;
+    }
+
+    public CustomDestroyProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+      this(commandLine, false);
+    }
+
+    public CustomDestroyProcessHandler(@NotNull GeneralCommandLine commandLine, final boolean softKill) throws ExecutionException {
+      super(commandLine);
       mySoftKill = softKill;
     }
 

@@ -63,7 +63,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   private final Project myProject;
   private final boolean myShouldShowCancel;
-  private       String  myCancelText;
+  private String myCancelText;
 
   private String myTitle = null;
 
@@ -100,15 +100,15 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project), false);
 
     Component parent = parentComponent;
-    if (parent == null && project == null) {
+    if (parent == null && project == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       parent = JOptionPane.getRootFrame();
     }
 
-    if (parent != null) {
-      myDialog = new MyDialog(shouldShowBackground, parent, myCancelText);
+    if (parent == null) {
+      myDialog = new MyDialog(shouldShowBackground, myProject, myCancelText);
     }
     else {
-      myDialog = new MyDialog(shouldShowBackground, myProject, myCancelText);
+      myDialog = new MyDialog(shouldShowBackground, parent, myCancelText);
     }
 
     Disposer.register(this, myDialog);
@@ -512,11 +512,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     }
 
-    public JPanel getPanel() {
+    private JPanel getPanel() {
       return myPanel;
     }
 
-    public void setShouldShowBackground(final boolean shouldShowBackground) {
+    private void setShouldShowBackground(final boolean shouldShowBackground) {
       myShouldShowBackground = shouldShowBackground;
       SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -527,17 +527,17 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       });
     }
 
-    public void changeCancelButtonText(String text) {
+    private void changeCancelButtonText(String text) {
       myCancelButton.setText(text);
     }
 
-    public void doCancelAction() {
+    private void doCancelAction() {
       if (myShouldShowCancel) {
         ProgressWindow.this.cancel();
       }
     }
 
-    public void cancel() {
+    private void cancel() {
       if (myShouldShowCancel) {
         SwingUtilities.invokeLater(new Runnable() {
           @Override
@@ -583,7 +583,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       }
     }
 
-    public synchronized void background() {
+    private synchronized void background() {
       if (myShouldShowBackground) {
         myBackgroundButton.setEnabled(false);
       }
@@ -591,7 +591,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       hide();
     }
 
-    public void hide() {
+    private void hide() {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -603,7 +603,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       });
     }
 
-    public void show() {
+    private void show() {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
       if (myParentWindow == null) return;
       if (myPopup != null) {
@@ -643,7 +643,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       myPopup.show();
     }
 
-    public boolean wasShown() {
+    private boolean wasShown() {
       return myWasShown;
     }
 

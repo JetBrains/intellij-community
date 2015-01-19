@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,13 +69,13 @@ public abstract class XFetchValueActionBase extends AnAction {
       return;
     }
 
-    ValueCollector valueCollector = new ValueCollector(e);
+    ValueCollector valueCollector = createCollector(e);
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       if (node instanceof XValueNodeImpl) {
         XValueNodeImpl valueNode = (XValueNodeImpl)node;
         XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
-        if (fullValueEvaluator == null) {
+        if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
           String rawValue;
           if (valueNode.getValueContainer() instanceof XValueTextProvider) {
             rawValue = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
@@ -97,13 +97,18 @@ public abstract class XFetchValueActionBase extends AnAction {
     valueCollector.finish(e.getProject());
   }
 
-  private final class ValueCollector {
+  @NotNull
+  protected ValueCollector createCollector(@NotNull AnActionEvent e) {
+    return new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
+  }
+
+  protected class ValueCollector {
     private final List<String> values = new SmartList<String>();
-    private final AnActionEvent myEvent;
+    private final XDebuggerTree myTree;
     private volatile boolean processed;
 
-    public ValueCollector(AnActionEvent e) {
-      myEvent = e;
+    public ValueCollector(XDebuggerTree tree) {
+      myTree = tree;
     }
 
     public void add(@NotNull String value) {
@@ -112,8 +117,12 @@ public abstract class XFetchValueActionBase extends AnAction {
 
     public void finish(Project project) {
       if (processed && !values.contains(null) && !project.isDisposed()) {
-        handle(project, StringUtil.join(values, "\n"), myEvent);
+        handleInCollector(project, StringUtil.join(values, "\n"), myTree);
       }
+    }
+
+    public void handleInCollector(final Project project, final String value, XDebuggerTree tree) {
+      handle(project, value, tree);
     }
 
     public int acquire() {
@@ -133,7 +142,7 @@ public abstract class XFetchValueActionBase extends AnAction {
     }
   }
 
-  protected abstract void handle(final Project project, final String value, AnActionEvent e);
+  protected abstract void handle(final Project project, final String value, XDebuggerTree tree);
 
   private static final class CopyValueEvaluationCallback extends HeadlessValueEvaluationCallback {
     private final int myValueIndex;

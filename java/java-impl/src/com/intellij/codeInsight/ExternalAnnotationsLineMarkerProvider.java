@@ -24,18 +24,21 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +51,24 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   private static final Function<PsiElement, String> ourTooltipProvider = new Function<PsiElement, String>() {
     @Override
     public String fun(PsiElement nameIdentifier) {
-      return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(nameIdentifier.getParent()));
+      PsiModifierListOwner owner = (PsiModifierListOwner)nameIdentifier.getParent();
+      
+      boolean hasInferred = false;
+      boolean hasExternal = false;
+      for (PsiAnnotation annotation : findSignatureNonCodeAnnotations(owner)) {
+        hasExternal |= AnnotationUtil.isExternalAnnotation(annotation);
+        hasInferred |= AnnotationUtil.isInferredAnnotation(annotation);
+      }
+      
+      String header;
+      if (hasInferred && hasExternal) {
+        header = "External and <i>inferred</i>";
+      } else if (hasInferred) {
+        header = "<i>Inferred</i>";
+      } else {
+        header = "External";
+      }
+      return XmlStringUtil.wrapInHtml(header + " annotations available. Full signature:<p>\n" + JavaDocInfoGenerator.generateSignature(owner));
     }
   };
 
@@ -63,7 +83,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
     PsiElement nameIdentifier = ((PsiNameIdentifierOwner)owner).getNameIdentifier();
     if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;
 
-    if (!shouldShowSignature((PsiModifierListOwner)owner)) {
+    if (findSignatureNonCodeAnnotations((PsiModifierListOwner)owner).isEmpty()) {
       return null;
     }
 
@@ -71,41 +91,38 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
                                           AllIcons.Gutter.ExtAnnotation,
                                           Pass.UPDATE_ALL,
                                           ourTooltipProvider, MyIconGutterHandler.INSTANCE,
-                                          GutterIconRenderer.Alignment.LEFT);
+                                          GutterIconRenderer.Alignment.RIGHT);
   }
 
-  private static boolean shouldShowSignature(PsiModifierListOwner owner) {
-    if (hasNonCodeAnnotations(owner)) {
-      return true;
-    }
+  private static List<PsiAnnotation> findSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
+    List<PsiAnnotation> result = ContainerUtil.newArrayList(findOwnNonCodeAnnotations(owner));
 
     if (owner instanceof PsiMethod) {
       for (PsiParameter parameter : ((PsiMethod)owner).getParameterList().getParameters()) {
-        if (hasNonCodeAnnotations(parameter)) {
-          return true;
-        }
+        result.addAll(findOwnNonCodeAnnotations(parameter));
       }
     }
 
-    return false;
+    return result;
   }
 
-  private static boolean hasNonCodeAnnotations(@NotNull PsiModifierListOwner element) {
+  private static List<PsiAnnotation> findOwnNonCodeAnnotations(@NotNull PsiModifierListOwner element) {
+    List<PsiAnnotation> result = ContainerUtil.newArrayList();
     Project project = element.getProject();
     PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element);
     if (externalAnnotations != null) {
       for (PsiAnnotation annotation : externalAnnotations) {
         if (isVisibleAnnotation(annotation)) {
-          return true;
+          result.add(annotation);
         }
       }
     }
     for (PsiAnnotation annotation : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)) {
       if (isVisibleAnnotation(annotation)) {
-        return true;
+        result.add(annotation);
       }
     }
-    return false;
+    return result;
   }
 
   private static boolean isVisibleAnnotation(@NotNull PsiAnnotation annotation) {
@@ -127,30 +144,41 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
       final PsiElement listOwner = nameIdentifier.getParent();
       final PsiFile containingFile = listOwner.getContainingFile();
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(listOwner);
+
       if (virtualFile != null && containingFile != null) {
         final Project project = listOwner.getProject();
-        final OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(project, virtualFile, listOwner.getTextOffset());
-        final Editor editor = FileEditorManager.getInstance(project).openTextEditor(openFileDescriptor, true);
+        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+
         if (editor != null) {
-          final DefaultActionGroup group = new DefaultActionGroup();
-          for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
-            if (action.isAvailable(project, editor, containingFile)) {
-              group.add(new ApplyIntentionAction(action, action.getText(), editor, containingFile));
+          editor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
+          final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+
+          if (file != null && virtualFile.equals(file.getVirtualFile())) {
+            final JBPopup popup = createActionGroupPopup(containingFile, project, editor);
+            if (popup != null) {
+              popup.show(new RelativePoint(e));
             }
-          }
-          if (group.getChildrenCount() > 0) {
-            editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-              @Override
-              public void run() {
-                JBPopupFactory.getInstance()
-                  .createActionGroupPopup(null, group, SimpleDataContext.getProjectContext(null),
-                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
-                  .showInBestPositionFor(editor);
-              }
-            });
           }
         }
       }
+    }
+
+    @Nullable
+    protected JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
+        if (action.isAvailable(project, editor, file)) {
+          group.add(new ApplyIntentionAction(action, action.getText(), editor, file));
+        }
+      }
+
+      if (group.getChildrenCount() > 0) {
+        final DataContext context = SimpleDataContext.getProjectContext(null);
+        return JBPopupFactory.getInstance()
+          .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+      }
+
+      return null;
     }
   }
 }

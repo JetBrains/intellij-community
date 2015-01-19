@@ -15,13 +15,11 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,15 +38,16 @@ import java.util.*;
  */
 class FTManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FTManager");
-  public static final String TEMPLATES_DIR = "fileTemplates";
   public static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   public static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;
-  public static final String CONTENT_ENCODING = CharsetToolkit.UTF8;
   private static final String ENCODED_NAME_EXT_DELIMITER = "\u0F0Fext\u0F0F.";
 
   private final String myName;
   private final boolean myInternal;
   private final String myTemplatesDir;
+  @Nullable
+  private final FTManager myOriginal;
+  private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
   private final Map<String, FileTemplateBase> myTemplates = new HashMap<String, FileTemplateBase>();
   private volatile List<FileTemplateBase> mySortedTemplates;
   private final List<DefaultTemplate> myDefaultTemplates = new ArrayList<DefaultTemplate>();
@@ -60,18 +59,34 @@ class FTManager {
   FTManager(@NotNull @NonNls String name, @NotNull @NonNls String defaultTemplatesDirName, boolean internal) {
     myName = name;
     myInternal = internal;
-    myTemplatesDir = TEMPLATES_DIR + (defaultTemplatesDirName.equals(".") ? "" : File.separator + defaultTemplatesDirName);
+    myTemplatesDir = defaultTemplatesDirName;
+    myOriginal = null;
+  }
+
+  FTManager(@NotNull FTManager original) {
+    myOriginal = original;
+    myName = original.getName();
+    myTemplatesDir = original.myTemplatesDir;
+    myInternal = original.myInternal;
+    myTemplates.putAll(original.myTemplates);
+    myDefaultTemplates.addAll(original.myDefaultTemplates);
   }
 
   public String getName() {
     return myName;
   }
 
+  public void setScheme(FileTemplatesScheme scheme) {
+    mySortedTemplates = null;
+    myScheme = scheme;
+    loadCustomizedContent();
+  }
+
   @NotNull
   public Collection<FileTemplateBase> getAllTemplates(boolean includeDisabled) {
     List<FileTemplateBase> sorted = mySortedTemplates;
     if (sorted == null) {
-      sorted = new ArrayList<FileTemplateBase>(myTemplates.values());
+      sorted = new ArrayList<FileTemplateBase>(getTemplates().values());
       Collections.sort(sorted, new Comparator<FileTemplateBase>() {
         @Override
         public int compare(FileTemplateBase t1, FileTemplateBase t2) {
@@ -101,7 +116,7 @@ class FTManager {
    */
   @Nullable
   public FileTemplateBase getTemplate(@NotNull String templateQname) {
-    return myTemplates.get(templateQname);
+    return getTemplates().get(templateQname);
   }
 
   /**
@@ -111,7 +126,7 @@ class FTManager {
    */
   @Nullable
   public FileTemplateBase findTemplateByName(@NotNull String templateName) {
-    final FileTemplateBase template = myTemplates.get(templateName);
+    final FileTemplateBase template = getTemplates().get(templateName);
     if (template != null) {
       final boolean isEnabled = !(template instanceof BundledFileTemplate) || ((BundledFileTemplate)template).isEnabled();
       if (isEnabled) {
@@ -137,7 +152,7 @@ class FTManager {
     FileTemplateBase template = getTemplate(qName);
     if (template == null) {
       template = new CustomFileTemplate(name, extension);
-      myTemplates.put(qName, template);
+      getTemplates().put(qName, template);
       mySortedTemplates = null;
     }
     else {
@@ -149,9 +164,9 @@ class FTManager {
   }
 
   public void removeTemplate(@NotNull String qName) {
-    final FileTemplateBase template = myTemplates.get(qName);
+    final FileTemplateBase template = getTemplates().get(qName);
     if (template instanceof CustomFileTemplate) {
-      myTemplates.remove(qName);
+      getTemplates().remove(qName);
       mySortedTemplates = null;
     }
     else if (template instanceof BundledFileTemplate){
@@ -167,18 +182,22 @@ class FTManager {
     for (FileTemplate template : newTemplates) {
       toDisable.remove(((FileTemplateBase)template).getQualifiedName());
     }
-    myTemplates.clear();
+    restoreDefaults(toDisable);
+    for (FileTemplate template : newTemplates) {
+      final FileTemplateBase _template = addTemplate(template.getName(), template.getExtension());
+      _template.setText(template.getText());
+      _template.setReformatCode(template.isReformatCode());
+    }
+  }
+
+  private void restoreDefaults(Set<String> toDisable) {
+    getTemplates().clear();
     mySortedTemplates = null;
     for (DefaultTemplate template : myDefaultTemplates) {
       final BundledFileTemplate bundled = createAndStoreBundledTemplate(template);
       if (toDisable.contains(bundled.getQualifiedName())) {
         bundled.setEnabled(false);
       }
-    }
-    for (FileTemplate template : newTemplates) {
-      final FileTemplateBase _template = addTemplate(template.getName(), template.getExtension());
-      _template.setText(template.getText());
-      _template.setReformatCode(template.isReformatCode());
     }
   }
 
@@ -190,12 +209,63 @@ class FTManager {
   private BundledFileTemplate createAndStoreBundledTemplate(DefaultTemplate template) {
     final BundledFileTemplate bundled = new BundledFileTemplate(template, myInternal);
     final String qName = bundled.getQualifiedName();
-    final FileTemplateBase previous = myTemplates.put(qName, bundled);
+    final FileTemplateBase previous = getTemplates().put(qName, bundled);
     mySortedTemplates = null;
 
     LOG.assertTrue(previous == null, "Duplicate bundled template " + qName +
                                      " [" + template.getTemplateURL() + ", " + previous + ']');
     return bundled;
+  }
+
+  void loadCustomizedContent() {
+    final File configRoot = getConfigRoot(false);
+    final File[] configFiles = configRoot.listFiles();
+    if (configFiles == null) {
+      return;
+    }
+
+    final List<File> templateWithDefaultExtension = new ArrayList<File>();
+    final Set<String> processedNames = new HashSet<String>();
+
+    for (File file : configFiles) {
+      if (file.isDirectory() || FileTypeManager.getInstance().isFileIgnored(file.getName()) || file.isHidden()) {
+        continue;
+      }
+      final String name = file.getName();
+      if (name.endsWith(TEMPLATE_EXTENSION_SUFFIX)) {
+        templateWithDefaultExtension.add(file);
+      }
+      else {
+        processedNames.add(name);
+        addTemplateFromFile(name, file);
+      }
+    }
+
+    for (File file : templateWithDefaultExtension) {
+      String name = file.getName();
+      // cut default template extension
+      name = name.substring(0, name.length() - TEMPLATE_EXTENSION_SUFFIX.length());
+      if (!processedNames.contains(name)) {
+        addTemplateFromFile(name, file);
+      }
+      FileUtil.delete(file);
+    }
+  }
+
+  private void addTemplateFromFile(String fileName, File file) {
+    Pair<String,String> nameExt = decodeFileName(fileName);
+    final String extension = nameExt.second;
+    final String templateQName = nameExt.first;
+    if (templateQName.length() == 0) {
+      return;
+    }
+    try {
+      final String text = FileUtil.loadFile(file, CharsetToolkit.UTF8_CHARSET);
+      addTemplate(templateQName, extension).setText(text);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   public void saveTemplates() {
@@ -247,7 +317,7 @@ class FTManager {
         else {
           // both customized content on disk and corresponding template are present
           try {
-            final String diskText = StringUtil.convertLineSeparators(FileUtil.loadFile(customizedTemplateFile, CONTENT_ENCODING));
+            final String diskText = StringUtil.convertLineSeparators(FileUtil.loadFile(customizedTemplateFile, CharsetToolkit.UTF8_CHARSET));
             final String templateText = templateToSave.getText();
             if (!diskText.equals(templateText)) {
               // save only if texts differ to avoid unnecessary file touching
@@ -278,16 +348,7 @@ class FTManager {
       FileUtil.delete(templateFile);
       fileOutputStream = new FileOutputStream(templateFile);
     }
-    OutputStreamWriter outputStreamWriter;
-    try{
-      outputStreamWriter = new OutputStreamWriter(fileOutputStream, CONTENT_ENCODING);
-    }
-    catch (UnsupportedEncodingException e){
-      Messages.showMessageDialog(IdeBundle.message("error.unable.to.save.file.template.using.encoding", template.getName(),
-                                                   CONTENT_ENCODING),
-                                 CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-      outputStreamWriter = new OutputStreamWriter(fileOutputStream);
-    }
+    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, CharsetToolkit.UTF8_CHARSET);
     String content = template.getText();
 
     if (!lineSeparator.equals("\n")){
@@ -300,7 +361,7 @@ class FTManager {
   }
 
   public File getConfigRoot(boolean create) {
-    final File templatesPath = new File(PathManager.getConfigPath(), myTemplatesDir);
+    final File templatesPath = myTemplatesDir.isEmpty() ? new File(myScheme.getTemplatesDir()) : new File(myScheme.getTemplatesDir(), myTemplatesDir);
     if (create) {
       final boolean created = templatesPath.mkdirs();
       if (!created && !templatesPath.exists()) {
@@ -332,4 +393,7 @@ class FTManager {
     return Pair.create(name, ext);
   }
 
+  public Map<String, FileTemplateBase> getTemplates() {
+    return myOriginal != null && myScheme == FileTemplatesScheme.DEFAULT ? myOriginal.myTemplates : myTemplates;
+  }
 }

@@ -33,6 +33,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
@@ -148,7 +149,7 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
 
         private void visitFunctionalExpression(PsiFunctionalExpression expression) {
           PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-          if (psiManager.areElementsEquivalent(PsiUtil.resolveClassInType(functionalInterfaceType), aClass)) {
+          if (InheritanceUtil.isInheritorOrSelf(PsiUtil.resolveClassInType(functionalInterfaceType), aClass, true)) {
             if (!consumer.process(expression)) {
               ref.set(false);
             }

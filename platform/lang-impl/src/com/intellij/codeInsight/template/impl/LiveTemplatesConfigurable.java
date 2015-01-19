@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  static final String ID = "editing.templates";
   private TemplateListPanel myPanel;
 
   @Override
@@ -67,7 +68,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
   @Override
   @NotNull
   public String getHelpTopic() {
-    return "editing.templates";
+    return ID;
   }
 
   @Override
@@ -78,8 +79,13 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
 
   @Override
   @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
+  public Runnable enableSearch(final String option) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        myPanel.selectNode(option);
+      }
+    };
   }
 
   public TemplateListPanel getTemplateListPanel() {

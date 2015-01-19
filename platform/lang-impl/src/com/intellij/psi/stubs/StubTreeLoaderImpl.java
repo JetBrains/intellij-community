@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -94,12 +95,13 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       SerializedStubTree stubTree = datas.get(0);
       
       if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
-        //todo find another way of early stub-ast mismatch prevention
-        //return processError(vFile,
-        //                    "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
-        //                    ", docSaved=" + saved +
-        //                    ", queried at " + vFile.getTimeStamp(),
-        //                    null);
+        return processError(vFile,
+                            "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
+                            ", doc=" + document +
+                            ", docSaved=" + saved +
+                            ", wasIndexedAlready=" + wasIndexedAlready +
+                            ", queried at " + vFile.getTimeStamp(),
+                            null);
       }
 
       Stub stub;
@@ -131,7 +133,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
     
     if (document != null) {
-      return document.getTextLength();
+      return PsiDocumentManager.getInstance(project).getLastCommittedText(document).length();
     }
     return -1;
   }
@@ -166,5 +168,10 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   @Override
   public boolean canHaveStub(VirtualFile file) {
     return StubUpdatingIndex.canHaveStub(file);
+  }
+
+  @Override
+  public String getIndexingStampDebugInfo(VirtualFile file) {
+    return StubUpdatingIndex.getIndexingStampInfo(file);
   }
 }

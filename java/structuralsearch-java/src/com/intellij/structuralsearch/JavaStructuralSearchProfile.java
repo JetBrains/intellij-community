@@ -6,7 +6,7 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -173,13 +173,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return new JavaCompiledPattern();
   }
 
-  @Override
-  public boolean canProcess(@NotNull FileType fileType) {
-    return fileType == StdFileTypes.JAVA;
-  }
-
   public boolean isMyLanguage(@NotNull Language language) {
-    return language == StdLanguages.JAVA;
+    return language == JavaLanguage.INSTANCE;
   }
 
   @Override

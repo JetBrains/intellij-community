@@ -33,8 +33,9 @@ import java.util.Map;
  * Concurrent weak key:K -> strong value:V map.
  * Null keys are allowed
  * Null values are NOT allowed
+ * @deprecated Use {@link ContainerUtil#createConcurrentWeakMap()} instead
  */
-final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
+public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class WeakKey<K, V> extends WeakReference<K> implements KeyReference<K, V> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
     @NotNull private final TObjectHashingStrategy<K> myStrategy;

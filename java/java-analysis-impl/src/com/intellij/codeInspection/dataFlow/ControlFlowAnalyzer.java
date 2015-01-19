@@ -96,6 +96,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiElement parent = codeFragment.getParent();
     if (parent instanceof PsiLambdaExpression && codeFragment instanceof PsiExpression) {
+      generateBoxingUnboxingInstructionFor((PsiExpression)codeFragment, 
+                                           LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
       addInstruction(new CheckReturnValueInstruction(codeFragment));
     }
 
@@ -569,9 +571,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression returnValue = statement.getReturnValue();
     if (returnValue != null) {
       returnValue.accept(this);
-      PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiMember.class);
+      PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiMember.class, PsiLambdaExpression.class);
       if (method != null) {
         generateBoxingUnboxingInstructionFor(returnValue, method.getReturnType());
+      }
+      else {
+        final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, true, PsiMember.class);
+        if (lambdaExpression != null) {
+          generateBoxingUnboxingInstructionFor(returnValue, LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression));
+        }
       }
       addInstruction(new CheckReturnValueInstruction(returnValue));
     }
@@ -639,11 +647,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             try {
               ControlFlow.ControlFlowOffset offset = getStartOffset(statement);
               PsiExpression caseValue = psiLabelStatement.getCaseValue();
-              
-              if (caseValue != null &&
+
+              if (enumValues != null && caseValue instanceof PsiReferenceExpression) {
+                //noinspection SuspiciousMethodCalls
+                enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
+              }
+
+              boolean alwaysTrue = enumValues != null && enumValues.isEmpty();
+              if (alwaysTrue) {
+                addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
+              }
+              else if (caseValue != null &&
                   caseExpression instanceof PsiReferenceExpression &&
-                  ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null &&
-                  JavaPsiFacade.getInstance(body.getProject()).getConstantEvaluationHelper().computeConstantExpression(caseValue) != null) {
+                  ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null) {
                 
                 addInstruction(new PushInstruction(myFactory.createValue(caseExpression), caseExpression));
                 caseValue.accept(this);
@@ -655,12 +671,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
               addInstruction(new ConditionalGotoInstruction(offset, false, statement));
 
-              if (enumValues != null) {
-                if (caseValue instanceof PsiReferenceExpression) {
-                  //noinspection SuspiciousMethodCalls
-                  enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
-                }
-              }
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -1482,10 +1492,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiAnnotation contractAnno = findContractAnnotation(method);
     final int paramCount = method.getParameterList().getParametersCount();
     if (contractAnno != null) {
-      if (AnnotationUtil.isInferredAnnotation(contractAnno) && PsiUtil.canBeOverriden(method)) {
-        return Collections.emptyList();
-      }
-
       return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
         @Nullable
         @Override

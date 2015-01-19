@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,9 @@ public abstract class JavaScriptDebugAware {
   public static final ExtensionPointName<JavaScriptDebugAware> EP_NAME = ExtensionPointName.create("com.jetbrains.javaScriptDebugAware");
 
   @Nullable
-  public abstract FileType getFileType();
+  public FileType getFileType() {
+    return null;
+  }
 
   @Nullable
   public XLineBreakpointType<?> getBreakpointTypeClass(@NotNull Project project) {
@@ -60,7 +63,12 @@ public abstract class JavaScriptDebugAware {
   }
 
   @Nullable
-  public MemberFilter createMemberFilter(@NotNull PsiElement element, int end) {
+  public MemberFilter createMemberFilter(@Nullable NameMapper nameMapper, @NotNull PsiElement element, int end) {
+    return null;
+  }
+
+  @Nullable
+  public PsiElement getNavigationElementForSourcemapInspector(@NotNull PsiFile file) {
     return null;
   }
 }

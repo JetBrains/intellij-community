@@ -66,7 +66,9 @@ class AttributeFinder extends RecursionSaveWalker {
 
     if (depth == 1 && (myQname == null || p.getName().contains(myQname))) {
       myLastAttr = p;
-      myAttributes.put(p, Pair.create(new LinkedHashMap<String, String>(), optional > 0));
+      if (!myAttributes.containsKey(p)) {
+        myAttributes.put(p, Pair.create(new LinkedHashMap<String, String>(), optional > 0));
+      }
       return super.onAttribute(p);
     }
     return null;

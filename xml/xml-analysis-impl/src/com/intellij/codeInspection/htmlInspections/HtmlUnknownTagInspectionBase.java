@@ -22,9 +22,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
@@ -43,31 +41,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
-public class HtmlUnknownTagInspectionBase extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
-  public static final Key<HtmlUnknownTagInspectionBase> TAG_KEY = Key.create(TAG_SHORT_NAME);
+public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
+  public static final Key<HtmlUnknownElementInspection> TAG_KEY = Key.create(TAG_SHORT_NAME);
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection");
-  public JDOMExternalizableStringList myValues;
-  public boolean myCustomValuesEnabled = true;
 
-  public HtmlUnknownTagInspectionBase(String defaultValues) {
-    myValues = reparseProperties(defaultValues);
+  public HtmlUnknownTagInspectionBase(@NotNull String defaultValues) {
+    super(defaultValues);
   }
 
   public HtmlUnknownTagInspectionBase() {
     this("nobr,noembed,comment,noscript,embed,script");
-  }
-
-  protected static JDOMExternalizableStringList reparseProperties(@NotNull final String properties) {
-    final JDOMExternalizableStringList result = new JDOMExternalizableStringList();
-
-    final StringTokenizer tokenizer = new StringTokenizer(properties, ",");
-    while (tokenizer.hasMoreTokens()) {
-      result.add(tokenizer.nextToken().toLowerCase().trim());
-    }
-
-    return result;
   }
 
   private static boolean isAbstractDescriptor(XmlElementDescriptor descriptor) {
@@ -88,50 +72,21 @@ public class HtmlUnknownTagInspectionBase extends HtmlLocalInspectionTool implem
     return TAG_SHORT_NAME;
   }
 
+  @Override
   @NotNull
   protected Logger getLogger() {
     return LOG;
   }
 
-  protected String createPropertiesString() {
-    return StringUtil.join(myValues, ",");
-  }
-
   @Override
-  public String getAdditionalEntries() {
-    return createPropertiesString();
-  }
-
   protected String getCheckboxTitle() {
     return XmlBundle.message("html.inspections.unknown.tag.checkbox.title");
   }
 
-  public void setAdditionalValues(@NotNull final String values) {
-    myValues = reparseProperties(values);
-  }
-
+  @Override
+  @NotNull
   protected String getPanelTitle() {
     return XmlBundle.message("html.inspections.unknown.tag.title");
-  }
-
-  protected boolean isCustomValue(@NotNull final String value) {
-    return myValues.contains(value.toLowerCase());
-  }
-
-  @Override
-  public void addEntry(@NotNull final String text) {
-    final String s = text.trim().toLowerCase();
-    if (!isCustomValue(s)) {
-      myValues.add(s);
-    }
-
-    if (!isCustomValuesEnabled()) {
-      myCustomValuesEnabled = true;
-    }
-  }
-
-  public boolean isCustomValuesEnabled() {
-    return myCustomValuesEnabled;
   }
 
   @Override
@@ -157,8 +112,7 @@ public class HtmlUnknownTagInspectionBase extends HtmlLocalInspectionTool implem
       final String name = tag.getName();
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
-        final AddCustomTagOrAttributeIntentionAction action =
-          new AddCustomTagOrAttributeIntentionAction(TAG_KEY, name, XmlBundle.message("add.custom.html.tag", name));
+        final AddCustomHtmlElementIntentionAction action = new AddCustomHtmlElementIntentionAction(TAG_KEY, name, XmlBundle.message("add.custom.html.tag", name));
 
         // todo: support "element is not allowed" message for html5
         // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)

@@ -113,11 +113,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     listener.after(events);
   }
 
-  @Override
-  protected String getPluginName() {
-    return "Subversion";
-  }
-
   @Before
   public void setUp() throws Exception {
     System.out.println("Native client for status: " + isUseNativeAcceleration());

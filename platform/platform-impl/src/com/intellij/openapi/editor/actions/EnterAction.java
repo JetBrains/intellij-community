@@ -69,7 +69,7 @@ public class EnterAction extends EditorAction {
         LogicalPosition pos = new LogicalPosition(caretLine + 1, 0);
         editor.getCaretModel().moveToLogicalPosition(pos);
         editor.getSelectionModel().removeSelection();
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        EditorModificationUtil.scrollToCaret(editor);
       }
       return;
     }
@@ -108,7 +108,7 @@ public class EnterAction extends EditorAction {
     String s = "\n"+buf;
     document.insertString(caretOffset, s);
     editor.getCaretModel().moveToOffset(caretOffset + s.length());
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    EditorModificationUtil.scrollToCaret(editor);
     editor.getSelectionModel().removeSelection();
   }
 }

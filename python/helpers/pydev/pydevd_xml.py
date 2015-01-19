@@ -29,6 +29,7 @@ class ExceptionOnEvaluate:
 #------------------------------------------------------------------------------------------------------ resolvers in map
 
 if not sys.platform.startswith("java"):
+
     typeMap = [
             #None means that it should not be treated as a compound variable
 
@@ -68,6 +69,13 @@ if not sys.platform.startswith("java"):
         typeMap.append((numpy.ndarray, pydevd_resolver.ndarrayResolver))
     except:
         pass  #numpy may not be installed
+
+    try:
+        from django.utils.datastructures import MultiValueDict
+        typeMap.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
+        #we should put it before dict
+    except:
+        pass  #django may not be installed
 
     if frame_type is not None:
         typeMap.append((frame_type, pydevd_resolver.frameResolver))

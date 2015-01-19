@@ -38,6 +38,8 @@ public interface ManageButtonBuilder {
 
   void editDescription();
 
+  boolean hasDescription();
+
   void export();
 
   void doImport();

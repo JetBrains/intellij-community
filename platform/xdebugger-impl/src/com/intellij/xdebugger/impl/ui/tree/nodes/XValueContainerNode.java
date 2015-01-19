@@ -82,25 +82,35 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     invokeNodeUpdate(new Runnable() {
       @Override
       public void run() {
-        if (myValueChildren == null) {
-          if (!myAlreadySorted && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
-            myValueChildren = new SortedList<XValueNodeImpl>(XValueNodeImpl.COMPARATOR);
+        List<XValueContainerNode<?>> newChildren;
+        if (children.size() > 0) {
+          newChildren = new ArrayList<XValueContainerNode<?>>(children.size());
+          if (myValueChildren == null) {
+            if (!myAlreadySorted && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
+              myValueChildren = new SortedList<XValueNodeImpl>(XValueNodeImpl.COMPARATOR);
+            }
+            else {
+              myValueChildren = new ArrayList<XValueNodeImpl>(children.size());
+            }
           }
-          else {
-            myValueChildren = new ArrayList<XValueNodeImpl>();
-          }
-        }
-        List<XValueContainerNode<?>> newChildren = new ArrayList<XValueContainerNode<?>>(children.size());
-        for (int i = 0; i < children.size(); i++) {
-          XValueNodeImpl node = new XValueNodeImpl(myTree, XValueContainerNode.this, children.getName(i), children.getValue(i));
-          myValueChildren.add(node);
-          newChildren.add(node);
+          for (int i = 0; i < children.size(); i++) {
+            XValueNodeImpl node = new XValueNodeImpl(myTree, XValueContainerNode.this, children.getName(i), children.getValue(i));
+            myValueChildren.add(node);
+            newChildren.add(node);
 
-          if (Registry.is("ide.debugger.inline") && "this".equals(node.getName()) && isUseGetChildrenHack(myTree)) { //todo[kb]: try to generify this dirty hack
-            //initialize "this" fields to display in inline view
-            node.getChildren();
+            if (Registry.is("ide.debugger.inline") && "this".equals(node.getName()) && isUseGetChildrenHack(myTree)) { //todo[kb]: try to generify this dirty hack
+              //initialize "this" fields to display in inline view
+              node.getChildren();
+            }
           }
         }
+        else {
+          newChildren = new SmartList<XValueContainerNode<?>>();
+          if (myValueChildren == null) {
+            myValueChildren = last ? Collections.<XValueNodeImpl>emptyList() : new SmartList<XValueNodeImpl>();
+          }
+        }
+
         myTopGroups = createGroupNodes(children.getTopGroups(), myTopGroups, newChildren);
         myBottomGroups = createGroupNodes(children.getBottomGroups(), myBottomGroups, newChildren);
         myCachedAllChildren = null;
@@ -123,7 +133,11 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     }
 
     RunProfile runProfile = LangDataKeys.RUN_PROFILE.getData(DataManager.getInstance().getDataContext(tree));
-    return !(runProfile instanceof RunConfiguration && ((RunConfiguration)runProfile).getType().getDisplayName().startsWith("JavaScript"));
+    if (runProfile instanceof RunConfiguration) {
+      String id = ((RunConfiguration)runProfile).getType().getId();
+      return !(id.startsWith("Javascript") || id.startsWith("Node"));
+    }
+    return true;
   }
 
   @Nullable

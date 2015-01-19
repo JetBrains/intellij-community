@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,8 +176,8 @@ public class NewExprent extends Exprent {
 
         List<VarVersionPair> sigFields = null;
         if (newnode != null) { // own class
-          if (newnode.wrapper != null) {
-            sigFields = newnode.wrapper.getMethodWrapper("<init>", invsuper.getStringDescriptor()).signatureFields;
+          if (newnode.getWrapper() != null) {
+            sigFields = newnode.getWrapper().getMethodWrapper("<init>", invsuper.getStringDescriptor()).signatureFields;
           }
           else {
             if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&
@@ -282,8 +282,8 @@ public class NewExprent extends Exprent {
 
           List<VarVersionPair> sigFields = null;
           if (newnode != null) { // own class
-            if (newnode.wrapper != null) {
-              sigFields = newnode.wrapper.getMethodWrapper("<init>", constructor.getStringDescriptor()).signatureFields;
+            if (newnode.getWrapper() != null) {
+              sigFields = newnode.getWrapper().getMethodWrapper("<init>", constructor.getStringDescriptor()).signatureFields;
             }
             else {
               if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&
@@ -389,7 +389,8 @@ public class NewExprent extends Exprent {
   private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent, BytecodeMappingTracer tracer) {
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 
-    if (node != null && node.type != ClassNode.CLASS_ROOT && (node.access & CodeConstants.ACC_STATIC) == 0) {
+    if (node != null && node.type != ClassNode.CLASS_ROOT && node.type != ClassNode.CLASS_LOCAL
+        && (node.access & CodeConstants.ACC_STATIC) == 0) {
       if (!lstParams.isEmpty()) {
         Exprent enclosing = lstParams.get(0);
 

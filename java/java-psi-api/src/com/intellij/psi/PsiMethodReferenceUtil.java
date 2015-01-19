@@ -27,8 +27,6 @@ import java.util.Map;
  * User: anna
  */
 public class PsiMethodReferenceUtil {
-  public static ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>> ourRefs = new ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>>();
-
   public static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceUtil.class.getName());
 
   public static boolean hasReceiver(PsiType[] parameterTypes, QualifierResolveResult qualifierResolveResult, PsiMethodReferenceExpression methodRef) {
@@ -97,14 +95,27 @@ public class PsiMethodReferenceUtil {
     return !varargs || parameterTypes.length - 1 <= argTypes.length - offset;
   }
 
-  @NotNull
-  public static Map<PsiMethodReferenceExpression, PsiType> getFunctionalTypeMap() {
-    Map<PsiMethodReferenceExpression, PsiType> map = ourRefs.get();
-    if (map == null) {
-      map = new HashMap<PsiMethodReferenceExpression, PsiType>();
-      ourRefs.set(map);
+  @Nullable
+  public static PsiType getQualifierType(PsiMethodReferenceExpression expression) {
+    PsiType qualifierType = null;
+    final PsiTypeElement typeElement = expression.getQualifierType();
+    if (typeElement != null) {
+      qualifierType = typeElement.getType();
+    } else {
+      final PsiElement qualifier = expression.getQualifier();
+      if (qualifier instanceof PsiExpression) {
+        qualifierType = ((PsiExpression)qualifier).getType();
+      }
     }
-    return map;
+    if (qualifierType == null) {
+      final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(expression);
+      final PsiClass containingClass = qualifierResolveResult.getContainingClass();
+      if (containingClass == null) {
+        return null;
+      }
+      qualifierType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass);
+    }
+    return qualifierType;
   }
 
   public static class QualifierResolveResult {
@@ -178,7 +189,7 @@ public class PsiMethodReferenceUtil {
         PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(type);
         containingClass = result.getElement();
         if (containingClass != null) {
-          substitutor = result.getSubstitutor();
+          return new QualifierResolveResult(containingClass, result.getSubstitutor(), true);
         }
       }
     }

@@ -39,8 +39,7 @@ class ContractChecker extends DataFlowRunner {
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
-  ContractChecker(PsiMethod method, PsiCodeBlock body, MethodContract contract, final boolean onTheFly) {
-    super(body);
+  ContractChecker(PsiMethod method, MethodContract contract, final boolean onTheFly) {
     myMethod = method;
     myContract = contract;
     myOnTheFly = onTheFly;
@@ -53,7 +52,7 @@ class ContractChecker extends DataFlowRunner {
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
 
-    ContractChecker checker = new ContractChecker(method, body, contract, onTheFly);
+    ContractChecker checker = new ContractChecker(method, contract, onTheFly);
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = checker.createMemoryState();

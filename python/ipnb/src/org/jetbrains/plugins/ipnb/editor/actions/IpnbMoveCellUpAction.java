@@ -24,7 +24,6 @@ public class IpnbMoveCellUpAction extends AnAction {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               ipnbFilePanel.moveCell(false);
-              ipnbFilePanel.saveToFile();
             }
           });
         }

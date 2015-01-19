@@ -22,6 +22,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -39,7 +40,7 @@ import java.util.Map;
  *
  * @since 5.1
  */
-public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> {
+public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> implements DumbAware {
   public CreateClassAction() {
     super("", IdeBundle.message("action.create.new.class.description"), PlatformIcons.CLASS_ICON, true);
   }
@@ -55,7 +56,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       builder.addKind("Annotation", PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
     
-    for (FileTemplate template : FileTemplateManager.getInstance().getAllTemplates()) {
+    for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       final JavaCreateFromTemplateHandler handler = new JavaCreateFromTemplateHandler();
       if (handler.handlesTemplate(template) && JavaCreateFromTemplateHandler.canCreate(directory)) {
         builder.addKind(template.getName(), JavaFileType.INSTANCE.getIcon(), template.getName());

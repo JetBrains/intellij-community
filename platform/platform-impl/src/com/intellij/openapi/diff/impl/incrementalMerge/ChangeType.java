@@ -59,7 +59,7 @@ public class ChangeType {
 
   @Nullable
   public RangeHighlighter addMarker(ChangeSide changeSide, ChangeHighlighterHolder markup) {
-    String text = changeSide.getText();
+    CharSequence text = changeSide.getText();
     if (text != null && text.length() > 0) {
       return addBlock(text, changeSide, markup, myDiffType);
     }
@@ -79,7 +79,7 @@ public class ChangeType {
   }
 
   @Nullable
-  private RangeHighlighter addBlock(String text, ChangeSide changeSide, final ChangeHighlighterHolder markup, TextDiffType diffType) {
+  private RangeHighlighter addBlock(CharSequence text, ChangeSide changeSide, final ChangeHighlighterHolder markup, TextDiffType diffType) {
     EditorColorsScheme colorScheme = markup.getEditor().getColorsScheme();
     Color separatorColor = getSeparatorColor(diffType.getLegendColor(colorScheme));
 

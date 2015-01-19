@@ -18,6 +18,7 @@ package org.jetbrains.rpc;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,15 +28,15 @@ import java.util.Arrays;
  * @param <INCOMING> type of incoming message
  * @param <INCOMING_WITH_SEQ> type of incoming message that is a command (has sequence number)
  */
-public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> extends MessageManagerBase {
-  private final ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> callbackMap = ContainerUtil.createConcurrentIntObjectMap();
-  private final Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler;
+public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS> extends MessageManagerBase {
+  private final ConcurrentIntObjectMap<RequestCallback<SUCCESS>> callbackMap = ContainerUtil.createConcurrentIntObjectMap();
+  private final Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS> handler;
 
-  public MessageManager(Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler) {
+  public MessageManager(Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS> handler) {
     this.handler = handler;
   }
 
-  public interface Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> {
+  public interface Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS> {
     int getUpdatedSequence(@NotNull OUTGOING message);
 
     boolean write(@NotNull OUTGOING message) throws IOException;
@@ -46,10 +47,10 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
 
     void acceptNonSequence(INCOMING incoming);
 
-    void call(INCOMING_WITH_SEQ response, AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback);
+    void call(INCOMING_WITH_SEQ response, RequestCallback<SUCCESS> callback);
   }
 
-  public void send(@NotNull REQUEST message, @NotNull AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback) {
+  public void send(@NotNull REQUEST message, @NotNull RequestCallback<SUCCESS> callback) {
     if (rejectIfClosed(callback)) {
       return;
     }
@@ -77,9 +78,9 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
   }
 
   private void failedToSend(int sequence) {
-    AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = callbackMap.remove(sequence);
+    RequestCallback<SUCCESS> callback = callbackMap.remove(sequence);
     if (callback != null) {
-      callback.onError("Failed to send", null);
+      callback.onError(Promise.createError("Failed to send"));
     }
   }
 
@@ -96,7 +97,7 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
       return;
     }
 
-    AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = getCallbackAndRemove(handler.getSequence(commandResponse));
+    RequestCallback<SUCCESS> callback = getCallbackAndRemove(handler.getSequence(commandResponse));
     if (rejectIfClosed(callback)) {
       return;
     }
@@ -105,13 +106,13 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
       handler.call(commandResponse, callback);
     }
     catch (Throwable e) {
-      callback.onError("Failed to dispatch response to callback", null);
+      callback.onError(e);
       CommandProcessor.LOG.error("Failed to dispatch response to callback", e);
     }
   }
 
-  public AsyncResultCallback<SUCCESS, ERROR_DETAILS> getCallbackAndRemove(int id) {
-    AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = callbackMap.remove(id);
+  public RequestCallback<SUCCESS> getCallbackAndRemove(int id) {
+    RequestCallback<SUCCESS> callback = callbackMap.remove(id);
     if (callback == null) {
       throw new IllegalArgumentException("Cannot find callback with id " + id);
     }
@@ -120,11 +121,11 @@ public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS,
 
   public void cancelWaitingRequests() {
     // we should call them in the order they have been submitted
-    ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> map = callbackMap;
+    ConcurrentIntObjectMap<RequestCallback<SUCCESS>> map = callbackMap;
     int[] keys = map.keys();
     Arrays.sort(keys);
     for (int key : keys) {
-      AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = map.get(key);
+      RequestCallback<SUCCESS> callback = map.get(key);
       if (callback != null) {
         rejectCallback(callback);
       }

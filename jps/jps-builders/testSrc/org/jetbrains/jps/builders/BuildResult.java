@@ -18,10 +18,14 @@ package org.jetbrains.jps.builders;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,11 +39,27 @@ public class BuildResult implements MessageHandler {
   private final List<BuildMessage> myWarnMessages;
   private final List<BuildMessage> myInfoMessages;
   private boolean myUpToDate = true;
+  private String myMappingsDump;
 
   public BuildResult() {
     myErrorMessages = new ArrayList<BuildMessage>();
     myWarnMessages = new ArrayList<BuildMessage>();
     myInfoMessages = new ArrayList<BuildMessage>();
+  }
+
+  void storeMappingsDump(ProjectDescriptor pd) throws IOException {
+    final ByteArrayOutputStream dump = new ByteArrayOutputStream();
+
+    final PrintStream stream = new PrintStream(dump);
+    try {
+      pd.dataManager.getMappings().toStream(stream);
+    }
+    finally {
+      stream.close();
+    }
+
+    dump.close();
+    myMappingsDump = dump.toString();
   }
 
   @Override
@@ -57,6 +77,10 @@ public class BuildResult implements MessageHandler {
     if (msg instanceof DoneSomethingNotification) {
       myUpToDate = false;
     }
+  }
+
+  public String getMappingsDump() {
+    return myMappingsDump;
   }
 
   public void assertUpToDate() {

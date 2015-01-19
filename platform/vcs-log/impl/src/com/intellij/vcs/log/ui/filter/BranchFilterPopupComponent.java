@@ -31,10 +31,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
+  private VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
   public BranchFilterPopupComponent(@NotNull VcsLogUiProperties uiProperties,
-                                    @NotNull FilterModel<VcsLogBranchFilter> filterModel) {
+                                    @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
     super("Branch", uiProperties, filterModel);
+    myBranchFilterModel = filterModel;
   }
 
   @NotNull
@@ -73,21 +75,22 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
       public AnAction fun(String name) {
         return createPredefinedValueAction(Collections.singleton(name));
       }
-    }));
+    }, myBranchFilterModel.getVisibleRoots()));
     return actionGroup;
   }
 
   public static ActionGroup constructActionGroup(@NotNull VcsLogDataPack dataPack, @Nullable ActionGroup recentItemsGroup,
-                                                 @NotNull Function<String, AnAction> actionGetter) {
-    Groups groups = prepareGroups(dataPack);
+                                                 @NotNull Function<String, AnAction> actionGetter, @Nullable Collection<VirtualFile> visibleRoots) {
+    Groups groups = prepareGroups(dataPack, visibleRoots);
     return getFilteredActionGroup(groups, recentItemsGroup, actionGetter);
   }
 
-  private static Groups prepareGroups(@NotNull VcsLogDataPack dataPack) {
+  private static Groups prepareGroups(@NotNull VcsLogDataPack dataPack, @Nullable Collection<VirtualFile> visibleRoots) {
     Groups filteredGroups = new Groups();
     Collection<VcsRef> allRefs = dataPack.getRefs().getBranches();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
+      if (visibleRoots != null && !visibleRoots.contains(root)) continue;
       Collection<VcsRef> refs = entry.getValue();
       VcsLogProvider provider = dataPack.getLogProviders().get(root);
       VcsLogRefManager refManager = provider.getReferenceManager();

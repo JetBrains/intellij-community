@@ -23,7 +23,7 @@ import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Date;
@@ -218,10 +218,11 @@ public class PortableStatus extends Status {
     return file;
   }
 
+  @NotNull
   @Override
   public SVNRevision getRevision() {
     final SVNRevision revision = super.getRevision();
-    if (revision != null && revision.isValid()) return revision;
+    if (revision.isValid()) return revision;
 
     final StatusType status = getContentsStatus();
     if (StatusType.STATUS_NONE.equals(status) || StatusType.STATUS_UNVERSIONED.equals(status) ||

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.ExtensionPoints;
+import com.intellij.ToolExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,10 +23,11 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -127,7 +128,8 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
-    ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INVALID_PROPERTY_KEY_INSPECTION_TOOL);
+    ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(
+      ToolExtensionPoints.INVALID_PROPERTY_KEY_INSPECTION_TOOL);
     final FileCheckingInspection[] fileCheckingInspections = point.getExtensions();
     for (FileCheckingInspection obj : fileCheckingInspections) {
       ProblemDescriptor[] descriptors = obj.checkFile(file, manager, isOnTheFly);
@@ -183,7 +185,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
         PsiNameValuePair nvp = (PsiNameValuePair)expression.getParent();
         if (Comparing.equal(nvp.getName(), AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER)) {
           PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(expression.getProject());
-          Module module = ModuleUtil.findModuleForPsiElement(expression);
+          Module module = ModuleUtilCore.findModuleForPsiElement(expression);
           if (module != null) {
             List<PropertiesFile> propFiles = manager.findPropertiesFiles(module, key);
             if (propFiles.isEmpty()) {
@@ -234,7 +236,8 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
                                                          @NotNull List<ProblemDescriptor> problems,
                                                          boolean onTheFly) {
       final String description = CodeInsightBundle.message("inspection.unresolved.property.key.reference.message", key);
-      final List<PropertiesFile> propertiesFiles = filterNotInLibrary(expression.getProject(), JavaI18nUtil.propertiesFilesByBundleName(bundleName, expression));
+      final List<PropertiesFile> propertiesFiles = filterNotInLibrary(expression.getProject(),
+                                                                      I18nUtil.propertiesFilesByBundleName(bundleName, expression));
       problems.add(
         manager.createProblemDescriptor(
           expression,

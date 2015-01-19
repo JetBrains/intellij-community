@@ -92,8 +92,10 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testVisitFinallyOnce() throws Throwable { doTest(); }
   public void testNotEqualsDoesntImplyNotNullity() throws Throwable { doTest(); }
   public void testEqualsEnumConstant() throws Throwable { doTest(); }
+  public void testSwitchEnumConstant() { doTest(); }
   public void testEnumConstantNotNull() throws Throwable { doTest(); }
   public void testEqualsConstant() throws Throwable { doTest(); }
+  public void testDontSaveTypeValue() { doTest(); }
   public void testFinalLoopVariableInstanceof() throws Throwable { doTest(); }
   public void testGreaterIsNotEquals() throws Throwable { doTest(); }
   public void testNotGreaterIsNotEquals() throws Throwable { doTest(); }
@@ -105,6 +107,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAccessorPlusMutator() throws Throwable { doTest(); }
   public void testClosureVariableField() throws Throwable { doTest(); }
   public void testOptionalThis() { doTest(); }
+  public void testQualifiedThis() { doTest(); }
 
   public void testAssigningNullableToNotNull() throws Throwable { doTest(); }
   public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
@@ -184,12 +187,14 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testUnknownFloatMayBeNaN() { doTest(); }
   public void testFloatEquality() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
+  
+  public void testCompileTimeConstant() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
   public void testRememberLocalTransientFieldState() { doTest(); }
   public void testFinalFieldDuringInitialization() { doTest(); }
   public void testFinalFieldDuringSuperInitialization() { doTest(); }
-  public void _testSymmetricUncheckedCast() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEABKL-6871
+  public void _testSymmetricUncheckedCast() { doTest(); } // https://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
 
@@ -211,6 +216,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testContractAnnotation() { doTest(); }
   public void testContractInapplicableComparison() { doTest(); }
   public void testContractInLoopNotTooComplex() { doTest(); }
+  public void testContractWithManyParameters() { doTest(); }
   public void testContractWithNullable() { doTest(); }
   public void testContractWithNotNull() { doTest(); }
   public void testContractPreservesUnknownNullability() { doTest(); }
@@ -268,6 +274,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testSameComparisonTwice() { doTest(); }
   public void testRootThrowableCause() { doTest(); }
 
+  public void testOverridingInferredNotNullMethod() { doTest(); }
   public void testUseInferredContracts() { doTest(); }
   public void testContractWithNoArgs() { doTest(); }
   public void testContractInferenceBewareOverriding() { doTest(); }
@@ -347,5 +354,5 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
-  public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
+  public void _testNullCheckBeforeInstanceof() { doTest(); } // https://youtrack.jetbrains.com/issue/IDEA-113220
 }

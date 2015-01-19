@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class JBTabsImpl extends JComponent
   public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<TabInfo, Toolbar>();
   public Dimension myHeaderFitSize;
 
-  private Insets myInnerInsets = JBInsets.NONE;
+  private Insets myInnerInsets = JBUI.emptyInsets();
 
   private final List<EventListener> myTabMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<TabsListener> myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -96,6 +96,8 @@ public class JBTabsImpl extends JComponent
   private boolean myStealthTabMode = false;
 
   private boolean mySideComponentOnTabs = true;
+
+  private boolean mySizeBySelected;
 
   private DataProvider myDataProvider;
 
@@ -825,6 +827,9 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback _setSelected(final TabInfo info, final boolean requestFocus) {
+    if (!isEnabled()) {
+      return ActionCallback.REJECTED;
+    }
     if (mySelectionChangeHandler != null) {
       return mySelectionChangeHandler.execute(info, requestFocus, new ActiveRunnable() {
         @NotNull
@@ -2323,6 +2328,10 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Dimension getMinimumSize() {
+    if (mySizeBySelected) {
+      return computeSizeBySelected(true);
+    }
+
     return computeSize(new Function<JComponent, Dimension>() {
       @Override
       public Dimension fun(JComponent component) {
@@ -2333,12 +2342,35 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Dimension getPreferredSize() {
+    if (mySizeBySelected) {
+      return computeSizeBySelected(false);
+    }
+
     return computeSize(new Function<JComponent, Dimension>() {
       @Override
       public Dimension fun(JComponent component) {
         return component.getPreferredSize();
       }
     }, 3);
+  }
+
+  @NotNull
+  private Dimension computeSizeBySelected(boolean minimum) {
+    Dimension size = new Dimension();
+    TabInfo tabInfo = getSelectedInfo();
+    if (tabInfo == null && myVisibleInfos.size() > 0) {
+      tabInfo = myVisibleInfos.get(0);
+    }
+
+    JComponent component = tabInfo == null ? null : tabInfo.getComponent();
+    if (component != null) {
+      Dimension tabSize = minimum ? component.getMinimumSize() : component.getPreferredSize();
+      size.width = tabSize.width;
+      size.height = tabSize.height;
+    }
+
+    addHeaderSize(size, 3);
+    return size;
   }
 
   private Dimension computeSize(Function<JComponent, Dimension> transform, int tabCount) {
@@ -2969,6 +3001,14 @@ public class JBTabsImpl extends JComponent
     relayout(true, false);
 
     return this;
+  }
+
+  public boolean isSizeBySelected() {
+    return mySizeBySelected;
+  }
+
+  public void setSizeBySelected(boolean value) {
+    mySizeBySelected = value;
   }
 
   public boolean useSmallLabels() {

@@ -305,7 +305,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
         final ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
         assertEquals(JBColor.BLACK, colorRegistry.dataById(syntaxInfo.getDefaultForeground()));
         assertEquals(JBColor.WHITE, colorRegistry.dataById(syntaxInfo.getDefaultBackground()));
-        assertEquals(getFontSize(), syntaxInfo.getFontSize());
+        assertEquals((float)getFontSize(), syntaxInfo.getFontSize(), 0.01f);
         syntaxInfo.processOutputInfo(new MarkupHandler() {
           @Override
           public void handleText(int startOffset, int endOffset) throws Exception {

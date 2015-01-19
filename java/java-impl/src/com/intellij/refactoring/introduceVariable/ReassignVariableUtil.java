@@ -15,8 +15,10 @@
  */
 package com.intellij.refactoring.introduceVariable;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 
 /**
  * User: anna
@@ -49,7 +52,8 @@ public class ReassignVariableUtil {
   private ReassignVariableUtil() {
   }
 
-  static boolean reassign(final Editor editor) {
+  @VisibleForTesting
+  public static boolean reassign(final Editor editor) {
     final SmartPsiElementPointer<PsiDeclarationStatement> pointer = editor.getUserData(DECLARATION_KEY);
     final PsiDeclarationStatement declaration = pointer != null ? pointer.getElement() : null;
     final PsiType type = getVariableType(declaration);
@@ -118,7 +122,10 @@ public class ReassignVariableUtil {
     };
     PsiElement scope = declaration;
     while (scope != null) {
-      if (scope instanceof PsiFile || scope instanceof PsiMethod || scope instanceof PsiClassInitializer) break;
+      if (scope instanceof PsiFile || 
+          scope instanceof PsiMethod || 
+          scope instanceof PsiLambdaExpression ||
+          scope instanceof PsiClassInitializer) break;
       scope = scope.getParent();
     }
     if (scope == null) return proc;
@@ -135,18 +142,13 @@ public class ReassignVariableUtil {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
         final String chosenVariableName = variable.getName();
         //would generate red code for final variables
-        PsiElement newDeclaration = elementFactory.createStatementFromText(chosenVariableName + " = " + initializer.getText() + ";",
-                                                                           declaration);
+        PsiElement newDeclaration = elementFactory.createStatementFromText(chosenVariableName + " = " + initializer.getText() + ";", declaration);
+        final Collection<PsiReference> references = ReferencesSearch.search(var).findAll();
         newDeclaration = declaration.replace(newDeclaration);
-        final PsiFile containingFile = newDeclaration.getContainingFile();
-        final RangeMarker[] occurrenceMarkers = editor.getUserData(OCCURRENCES_KEY);
-        if (occurrenceMarkers != null) {
-          for (RangeMarker marker : occurrenceMarkers) {
-            final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
-            final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-            if (expression != null) {
-              expression.replace(elementFactory.createExpressionFromText(chosenVariableName, newDeclaration));
-            }
+        for (PsiReference reference : references) {
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiExpression) {
+            element.replace(elementFactory.createExpressionFromText(chosenVariableName, newDeclaration));
           }
         }
       }

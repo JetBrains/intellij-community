@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -106,7 +107,7 @@ public class GitTagDialog extends DialogWrapper {
   /**
    * Encoding for the message file
    */
-  @NonNls private static final String MESSAGE_FILE_ENCODING = "UTF-8";
+  @NonNls private static final String MESSAGE_FILE_ENCODING = CharsetToolkit.UTF8;
 
   /**
    * A constructor

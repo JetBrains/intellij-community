@@ -26,6 +26,7 @@
     </action>
     <action id="ActivateChangesToolWindow">
       <keyboard-shortcut first-keystroke="meta 9" />
+      <keyboard-shortcut first-keystroke="meta shift 9" />
     </action>
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="control 6"/>

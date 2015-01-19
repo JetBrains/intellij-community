@@ -216,6 +216,10 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
         public Object fun(final InterpreterResponse interpreterResponse) {
           // clear
           myInputBuffer = null;
+
+          //notify listeners like xdebugger variables view re-builder
+          getConsoleCommunication().notifyCommandExecuted(interpreterResponse.more);
+
           // Handle prompt
           if (interpreterResponse.more) {
             more(console, currentEditor);
@@ -446,5 +450,9 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
 
   public boolean isEnabled() {
     return myEnabled;
+  }
+
+  public ConsoleCommunication getConsoleCommunication() {
+    return myConsoleCommunication;
   }
 }

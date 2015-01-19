@@ -521,7 +521,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     importProject(parentPom);
 
-    VfsUtil.saveText(parentPom, createPomXml(
+    myFixture.saveText(parentPom, createPomXml(
                                 "<groupId>test</groupId>" +
                                 "<artifactId>project</artifactId>" +
                                 "<version>1</version>" +

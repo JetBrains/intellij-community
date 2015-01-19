@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.java.decompiler;
 
-import com.intellij.debugger.PositionManager;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -183,7 +183,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       }
       decompiler.decompileContext();
 
-      file.putUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY, saver.myMapping);
+      if (saver.myMapping != null) {
+        file.putUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY, new ExactMatchLineNumbersMapping(saver.myMapping));
+      }
 
       return saver.myResult;
     }
@@ -337,6 +339,34 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     public void doCancelAction() {
       super.doCancelAction();
       FileEditorManager.getInstance(myProject).closeFile(myFile);
+    }
+  }
+
+  private static class ExactMatchLineNumbersMapping implements LineNumbersMapping {
+    private int[] myMapping;
+
+    private ExactMatchLineNumbersMapping(@NotNull int[] mapping) {
+      myMapping = mapping;
+    }
+
+    @Override
+    public int bytecodeToSource(int line) {
+      for (int i = 0; i < myMapping.length; i += 2) {
+        if (myMapping[i] == line) {
+          return myMapping[i + 1];
+        }
+      }
+      return -1;
+    }
+
+    @Override
+    public int sourceToBytecode(int line) {
+      for (int i = 0; i < myMapping.length; i += 2) {
+        if (myMapping[i + 1] == line) {
+          return myMapping[i];
+        }
+      }
+      return -1;
     }
   }
 }

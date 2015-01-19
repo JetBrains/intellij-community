@@ -223,7 +223,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension" order="after defaultNavbar"/>
+    <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
 
     <fileTypeDetector implementation="org.jetbrains.plugins.groovy.GroovyHashBangFileTypeDetector"/>
 
@@ -526,6 +526,8 @@
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
                          displayName="Groovy Compiler" parentId="project.propCompiler"/>
+    <java.compiler implementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings"/>
 
     <vetoSPICondition implementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider$GroovyExtensionVetoSPI"/>
 
@@ -555,8 +557,6 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerWorkspaceConfiguration"
-                    serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerWorkspaceConfiguration"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
 
@@ -1097,6 +1097,15 @@
                      enabledByDefault="false"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GroovyVariableCanBeFinalInspection"/>
+
+    <localInspection language="Groovy"
+                     groupPath="Groovy"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     groupKey="groovy.probable.bugs"
+                     key="equals.between.inconvertible.types"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrEqualsBetweenInconvertibleTypesInspection"/>
 
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>

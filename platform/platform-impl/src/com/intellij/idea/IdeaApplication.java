@@ -90,9 +90,7 @@ public class IdeaApplication {
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
 
     boolean headless = Main.isHeadless();
-    if (!headless) {
-      patchSystem();
-    }
+    patchSystem(headless);
 
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
@@ -126,10 +124,12 @@ public class IdeaApplication {
     myStarter.premain(args);
   }
 
-  private static void patchSystem() {
+  private static void patchSystem(boolean headless) {
     System.setProperty("sun.awt.noerasebackground", "true");
 
     IdeEventQueue.getInstance(); // replace system event queue
+    
+    if (headless) return;
 
     if (Patches.SUN_BUG_ID_6209673) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
@@ -319,9 +319,13 @@ public class IdeaApplication {
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
+          Project projectFromCommandLine = null;
           if (myPerformProjectLoad) {
-            loadProject();
+            projectFromCommandLine = loadProjectFromExternalCommandLine();
           }
+
+          final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+          bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
@@ -338,15 +342,13 @@ public class IdeaApplication {
     }
   }
 
-  private void loadProject() {
+  private Project loadProjectFromExternalCommandLine() {
     Project project = null;
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
       LOG.info("IdeaApplication.loadProject");
       project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
     }
-
-    final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-    bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project);
+    return project;
   }
 
   public String[] getCommandLineArguments() {

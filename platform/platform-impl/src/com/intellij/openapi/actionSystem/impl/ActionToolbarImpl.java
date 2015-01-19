@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +83,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    */
   private final List<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
 
-  private Dimension myMinimumButtonSize = new Dimension(0, 0);
+  private Dimension myMinimumButtonSize = JBUI.emptySize();
 
   /**
    * @see ActionToolbar#getLayoutPolicy()
@@ -742,7 +743,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       for (int i = getComponentCount() - 1, j = 1; i > 0; i--, j++) {
         final Component component = getComponent(i);
         if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
-          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * 25, 0, 25, maxHeight));
+          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * JBUI.scale(25), 0, JBUI.scale(25), maxHeight));
         }
       }
     }
@@ -752,7 +753,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<Rectangle>();
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
-    if (bounds.isEmpty()) return new Dimension(0, 0);
+    if (bounds.isEmpty()) return JBUI.emptySize();
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;
@@ -797,10 +798,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     public MySeparator() {
       if (myOrientation == SwingConstants.HORIZONTAL) {
-        mySize = new Dimension(6, 24);
+        mySize = JBUI.size(6, 24);
       }
       else {
-        mySize = new Dimension(24, 6);
+        mySize = JBUI.size(24, 6);
       }
     }
 
@@ -1246,7 +1247,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     myMinimalMode = minimalMode;
     if (myMinimalMode) {
-      setMinimumButtonSize(new Dimension(0, 0));
+      setMinimumButtonSize(JBUI.emptySize());
       setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
       setBorder(new EmptyBorder(0, 0, 0, 0));
       setOpaque(false);

@@ -132,7 +132,7 @@ public class IconUtil {
       if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
       final Icon providersIcon = getProvidersIcon(file, flags, project);
-      Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
+      Icon icon = providersIcon == null ? VirtualFilePresentation.getIconImpl(file) : providersIcon;
 
       final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
       for (FileIconPatcher patcher : getPatchers()) {
@@ -160,7 +160,7 @@ public class IconUtil {
   public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
-    final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file);
+    final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIconImpl(file);
     return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }
 

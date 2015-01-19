@@ -907,7 +907,7 @@ class FormatProcessor {
   }
 
   @Nullable
-  public LeafBlockWrapper getBlockAfter(final int startOffset) {
+  public LeafBlockWrapper getBlockAtOrAfter(final int startOffset) {
     int current = startOffset;
     LeafBlockWrapper result = null;
     while (current < myLastWhiteSpace.getStartOffset()) {

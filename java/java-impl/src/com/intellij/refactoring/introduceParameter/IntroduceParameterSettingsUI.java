@@ -243,6 +243,9 @@ public abstract class IntroduceParameterSettingsUI {
   }
 
   public boolean isParamToRemove(PsiParameter param) {
+    if (myCbReplaceAllOccurences != null && !myCbReplaceAllOccurences.isSelected()) {
+      return false;
+    }
     if (param.isVarArgs()) {
       return myParametersToRemove[myParametersToRemove.length - 1] != null;
     }

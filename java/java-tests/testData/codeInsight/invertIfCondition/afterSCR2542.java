@@ -1,4 +1,4 @@
-// "Invert If Condition" "true"
+// "Invert 'if' condition" "true"
 // else on the same line
 class TestInvertIf {
     void invertIf(Object object) {

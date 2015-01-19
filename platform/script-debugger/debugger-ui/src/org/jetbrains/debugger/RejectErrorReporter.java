@@ -5,7 +5,7 @@ import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class RejectErrorReporter implements Consumer<String> {
+public final class RejectErrorReporter implements Consumer<Throwable> {
   private final XDebugSession session;
   private final String description;
 
@@ -19,7 +19,7 @@ public final class RejectErrorReporter implements Consumer<String> {
   }
 
   @Override
-  public void consume(@Nullable String error) {
+  public void consume(@Nullable Throwable error) {
     session.reportError((description == null ? "" : description + ": ") + (error == null ? "Unknown error" : error));
   }
 }

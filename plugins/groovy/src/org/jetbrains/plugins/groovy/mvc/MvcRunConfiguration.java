@@ -126,6 +126,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
   public String getAlternativeJrePath() {
     return null;

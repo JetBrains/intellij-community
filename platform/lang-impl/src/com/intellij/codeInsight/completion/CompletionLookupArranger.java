@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -339,16 +339,24 @@ public class CompletionLookupArranger extends LookupArranger {
     }
 
     String selectedText = lookup.getEditor().getSelectionModel().getSelectedText();
+    int exactMatchIndex = -1;
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      boolean isTemplate = isLiveTemplate(item);
-      if (isPrefixItem(lookup, item, true) && !isTemplate ||
+      boolean isSuddenLiveTemplate = isSuddenLiveTemplate(item);
+      if (isPrefixItem(lookup, item, true) && !isSuddenLiveTemplate ||
           item.getLookupString().equals(selectedText)) {
-        return i;
+        
+        if (exactMatchIndex == -1 || item instanceof LiveTemplateLookupElement) {
+          // prefer most recent item or LiveTemplate item
+          exactMatchIndex = i;
+        }
       }
-      if (i == 0 && isTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), lookup)) {
+      else if (i == 0 && isSuddenLiveTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), lookup)) {
         return 0;
       }
+    }
+    if (exactMatchIndex >= 0) {
+      return exactMatchIndex;
     }
 
     return Math.max(0, ContainerUtil.indexOfIdentity(items, mostRelevant));
@@ -370,7 +378,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
 
-  private static boolean isLiveTemplate(LookupElement element) {
+  private static boolean isSuddenLiveTemplate(LookupElement element) {
     return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
   }
 

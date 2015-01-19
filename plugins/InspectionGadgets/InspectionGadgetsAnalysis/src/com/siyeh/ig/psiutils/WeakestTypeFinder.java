@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Bas Leijdekkers
+ * Copyright 2008-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,14 @@ public class WeakestTypeFinder {
         referenceParent = referenceElement.getParent();
       }
       final PsiElement referenceGrandParent = referenceParent.getParent();
-      if (referenceParent instanceof PsiExpressionList) {
+      if (reference instanceof PsiMethodReferenceExpression) {
+        final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)reference;
+        final PsiType type = methodReferenceExpression.getFunctionalInterfaceType();
+        final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
+        if (!PsiType.VOID.equals(returnType) && !checkType(returnType, weakestTypeClasses)) {
+          return Collections.emptyList();
+        }
+      } else if (referenceParent instanceof PsiExpressionList) {
         if (!(referenceGrandParent instanceof PsiMethodCallExpression)) {
           return Collections.emptyList();
         }
@@ -148,11 +155,17 @@ public class WeakestTypeFinder {
         checkClass(javaLangIterableClass, weakestTypeClasses);
       }
       else if (referenceParent instanceof PsiReturnStatement) {
-        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(referenceParent, PsiMethod.class);
-        if (containingMethod == null) {
+        final PsiElement owner = PsiTreeUtil.getParentOfType(referenceParent, PsiMethod.class, PsiLambdaExpression.class);
+        final PsiType type;
+        if (owner instanceof PsiMethod) {
+          type = ((PsiMethod)owner).getReturnType();
+        }
+        else if (owner instanceof PsiLambdaExpression) {
+          type = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)owner);
+        }
+        else {
           return Collections.emptyList();
         }
-        final PsiType type = containingMethod.getReturnType();
         if (!checkType(type, weakestTypeClasses)) {
           return Collections.emptyList();
         }
@@ -186,7 +199,7 @@ public class WeakestTypeFinder {
         if (referenceElement.equals(condition)) {
           return Collections.emptyList();
         }
-        final PsiType type = ExpectedTypeUtils.findExpectedType( conditionalExpression, true);
+        final PsiType type = ExpectedTypeUtils.findExpectedType(conditionalExpression, true);
         if (!checkType(type, weakestTypeClasses)) {
           return Collections.emptyList();
         }

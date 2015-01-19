@@ -19,15 +19,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.SvnFileUrlMapping;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchItem;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchItem;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
@@ -108,17 +110,7 @@ public class WcInfoLoader {
     if (wcRoot == null) {
       return null;
     }
-    final SvnBranchConfigurationNew configuration;
-    try {
-      configuration = SvnBranchConfigurationManager.getInstance(myProject).get(wcRoot);
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      return null;
-    }
-    if (configuration == null) {
-      return null;
-    }
+    final SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(myProject).get(wcRoot);
 
     final List<WCInfoWithBranches.Branch> items = new ArrayList<WCInfoWithBranches.Branch>();
     final String branchRoot = createBranchesList(url, configuration, items);

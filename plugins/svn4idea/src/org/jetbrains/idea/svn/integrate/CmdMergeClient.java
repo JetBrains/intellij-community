@@ -6,7 +6,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -48,8 +50,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
 
     List<String> parameters = new ArrayList<String>();
 
-    parameters.add("--revision");
-    parameters.add(range.getStartRevision() + ":" + range.getEndRevision());
+    CommandUtil.put(parameters, range.getStartRevision(), range.getEndRevision());
     CommandUtil.put(parameters, source);
     fillParameters(parameters, destination, depth, dryRun, recordOnly, force, false, diffOptions);
 

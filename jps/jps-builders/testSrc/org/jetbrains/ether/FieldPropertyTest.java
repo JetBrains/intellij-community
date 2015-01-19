@@ -15,6 +15,9 @@
  */
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
+import org.jetbrains.jps.model.module.JpsModule;
+
 /**
  * @author: db
  * Date: 23.09.11
@@ -34,6 +37,15 @@ public class FieldPropertyTest extends IncrementalTestCase {
 
   public void testConstantChain2() throws Exception {
     doTest();
+  }
+
+  public void testConstantChainMultiModule() throws Exception {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModule moduleC = addModule("moduleC", "moduleC/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    JpsModuleRootModificationUtil.addDependency(moduleC, moduleB);
+    doTestBuild(1).assertSuccessful();
   }
 
   public void testConstantRemove() throws Exception {

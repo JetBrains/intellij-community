@@ -59,8 +59,6 @@ public abstract class AbstractVcsTestCase {
   protected IdeaProjectTestFixture myProjectFixture;
   protected boolean myInitChangeListManager = true;
 
-  protected abstract String getPluginName();
-
   protected TestClientRunner createClientRunner() {
     return createClientRunner(null);
   }
@@ -90,42 +88,26 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected void initProject(final File clientRoot, String testName) throws Exception {
-    final String key = "idea.load.plugins.id";
-    final String was = System.getProperty(key);
-    try {
-      final String pluginName = getPluginName();
-      if (pluginName != null) {
-        System.setProperty(key, pluginName);
-      }
-      String name = testName;
-      final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
-      myProjectFixture = testFixtureBuilder.getFixture();
-      testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
-      myProjectFixture.setUp();
-      myProject = myProjectFixture.getProject();
+    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(testName);
+    myProjectFixture = testFixtureBuilder.getFixture();
+    testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
+    myProjectFixture.setUp();
+    myProject = myProjectFixture.getProject();
 
-      projectCreated();
+    projectCreated();
 
-      if (myInitChangeListManager) {
-        ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
-      }
-      ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myWorkingCopyDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(clientRoot);
-          assert myWorkingCopyDir != null;
-        }
-      });
+    if (myInitChangeListManager) {
+      ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
     }
-    finally {
-      if (was != null) {
-        System.setProperty(key, was);
-      } else {
-        System.clearProperty(key);
+    ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myWorkingCopyDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(clientRoot);
+        assert myWorkingCopyDir != null;
       }
-    }
+    });
     ((ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject)).waitForInitialized();
   }
 
@@ -150,7 +132,7 @@ public abstract class AbstractVcsTestCase {
   }
 
   public VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
-    return VcsTestUtil.createDir(myProject, parent, name);
+    return VcsTestUtil.findOrCreateDir(myProject, parent, name);
   }
 
   protected void clearDirInCommand(final VirtualFile dir, final Processor<VirtualFile> filter) {

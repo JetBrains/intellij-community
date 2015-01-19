@@ -4,6 +4,7 @@ import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.ConsumerRunnable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.debugger.Vm;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,9 +15,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * Currently WIP implementation doesn't keep such map due to protocol issue. But V8 does.
  */
-public abstract class ValueManager {
+public abstract class ValueManager<VM extends Vm> {
   private final AtomicInteger cacheStamp = new AtomicInteger();
   private volatile boolean obsolete;
+
+  protected final VM vm;
+
+  protected ValueManager(VM vm) {
+    this.vm = vm;
+  }
 
   public void clearCaches() {
     cacheStamp.incrementAndGet();
@@ -55,5 +62,10 @@ public abstract class ValueManager {
   @NotNull
   public static <T> Promise<T> reject() {
     return Promise.reject("Obsolete context");
+  }
+
+  @NotNull
+  public VM getVm() {
+    return vm;
   }
 }

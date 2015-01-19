@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -440,10 +439,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   public void updateUI() {
-  }
-
-  public void delete() {
-    RequestManagerImpl.deleteRequests(this);
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {

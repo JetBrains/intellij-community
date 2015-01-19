@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 class C {
@@ -11,6 +13,7 @@ class C {
         System.out.println("l1 = " + l1 + ", l2 = " + l2);
     }
 
+    @NotNull
     private List newMethod(Object[] array) {
         List l1 = null;
         l1 = new ArrayList(Arrays.asList(array));

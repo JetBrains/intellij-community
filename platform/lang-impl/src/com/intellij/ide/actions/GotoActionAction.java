@@ -202,7 +202,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                                                         e == null ? 0 : e.getModifiers());
 
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            if (action instanceof ActionGroup) {
+            if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
               ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(presentation.getText(),
                                                                                     (ActionGroup)action, context,
                                                                                     JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

@@ -227,8 +227,9 @@ import java.util.concurrent.locks.LockSupport;
  * @param <V> the type of mapped values
  * @author Doug Lea
  * @since 1.5
+ * @deprecated Use {@link ContainerUtil#newConcurrentMap()} instead
  */
-class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
+public final class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
   implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
 
     /*
@@ -804,7 +805,7 @@ class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
   /**
    * Creates a new, empty map with the default initial table size (16).
    */
-  ConcurrentHashMap() {
+  public ConcurrentHashMap() {
     this(DEFAULT_CAPACITY);
   }
 
@@ -818,7 +819,7 @@ class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
    * @throws IllegalArgumentException if the initial capacity of
    *                                  elements is negative
    */
-  ConcurrentHashMap(int initialCapacity) {
+  public ConcurrentHashMap(int initialCapacity) {
     this(initialCapacity, LOAD_FACTOR);
   }
 
@@ -827,7 +828,7 @@ class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
    *
    * @param m the map
    */
-  ConcurrentHashMap(Map<? extends K, ? extends V> m) {
+  public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
     this(DEFAULT_CAPACITY);
     putAll(m);
   }
@@ -846,7 +847,7 @@ class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
    *                                  elements is negative or the load factor is nonpositive
    * @since 1.6
    */
-  ConcurrentHashMap(int initialCapacity, float loadFactor) {
+  public ConcurrentHashMap(int initialCapacity, float loadFactor) {
     this(initialCapacity, loadFactor, 1);
   }
 
@@ -868,7 +869,7 @@ class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
    *                                  negative or the load factor or concurrencyLevel are
    *                                  nonpositive
    */
-  ConcurrentHashMap(int initialCapacity,
+  public ConcurrentHashMap(int initialCapacity,
              float loadFactor, int concurrencyLevel) {
     this(initialCapacity, loadFactor, concurrencyLevel, THIS);
   }
@@ -885,7 +886,7 @@ class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
     }
   };
 
-  ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  public ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
     }
@@ -900,7 +901,7 @@ class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
     myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
   }
 
-  ConcurrentHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  public ConcurrentHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     this(DEFAULT_CAPACITY, LOAD_FACTOR, NCPU, hashingStrategy);
   }
 

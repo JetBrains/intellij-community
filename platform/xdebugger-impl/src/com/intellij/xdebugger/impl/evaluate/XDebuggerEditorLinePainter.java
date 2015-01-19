@@ -31,9 +31,11 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -56,7 +58,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
 
     final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = project.getUserData(XVariablesView.DEBUG_VARIABLES);
-    final Map<VirtualFile, Long> timestamps = project.getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+    final ObjectLongHashMap<VirtualFile> timestamps = project.getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
     final Document doc = FileDocumentManager.getInstance().getDocument(file);
 
     if (map == null || timestamps == null || doc == null) {
@@ -69,12 +71,12 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       project.putUserData(CACHE, oldValues);
     }
     final Long timestamp = timestamps.get(file);
-    if (timestamp == null || timestamp < doc.getModificationStamp()) {
+    if (timestamp == -1 || timestamp < doc.getModificationStamp()) {
       return null;
     }
     Set<XValueNodeImpl> values = map.get(Pair.create(file, lineNumber));
     if (values != null && !values.isEmpty()) {
-      final int bpLine = getCurrentBreakPointLine(values);
+      final int bpLine = getCurrentBreakPointLineInFile(values, file);
       ArrayList<VariableText> result = new ArrayList<VariableText>();
       for (XValueNodeImpl value : values) {
         SimpleColoredText text = new SimpleColoredText();
@@ -95,10 +97,12 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
             }
           }
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
           continue;
         }
-        final Color color = bpLine == lineNumber ? new JBColor(new Color(0, 255, 86), new Color(255, 235, 9)) : getForeground();
+        XDebugSession session = XDebugView.getSession(values.iterator().next().getTree());
+        boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
+        final Color color = bpLine == lineNumber && isTopFrame ? new JBColor(new Color(0, 255, 86), new Color(255, 235, 9)) : getForeground();
 
         final String name = value.getName();
         if (StringUtil.isEmpty(text.toString())) {
@@ -144,13 +148,13 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     return null;
   }
 
-  private static int getCurrentBreakPointLine(Set<XValueNodeImpl> values) {
+  private static int getCurrentBreakPointLineInFile(Set<XValueNodeImpl> values, VirtualFile file) {
     try {
       final XValueNodeImpl node = values.iterator().next();
       final XDebugSession session = XDebugView.getSession(node.getTree());
       if (session != null) {
         final XSourcePosition position = session.getCurrentPosition();
-        if (position != null) {
+        if (position != null && position.getFile().equals(file)) {
           return position.getLine();
         }
       }
@@ -188,8 +192,8 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   static class Variable {
-    private int lineNumber;
-    private String name;
+    private final int lineNumber;
+    private final String name;
 
     public Variable(String name, int lineNumber) {
       this.lineNumber = lineNumber;

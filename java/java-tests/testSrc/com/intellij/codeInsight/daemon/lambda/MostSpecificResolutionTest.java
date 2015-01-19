@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -100,7 +101,9 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testJDK8042508() throws Exception {
-    doTest(false);
+    if (Registry.is("JDK8042508.bug.fixed", false)) {
+      doTest(false);
+    }
   }
 
   public void testIDEA125855() throws Exception {

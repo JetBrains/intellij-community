@@ -150,4 +150,12 @@ public class CommonTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
   
+  public void testMoveToplevelClassToAnotherFile() throws Exception {
+    doTest();
+  }
+
+  public void testMoveClassToAnotherRoot() throws Exception {
+    doTest();
+  }
+  
 }

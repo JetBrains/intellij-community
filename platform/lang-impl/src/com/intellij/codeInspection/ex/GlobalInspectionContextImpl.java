@@ -48,12 +48,10 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -185,7 +183,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               new File(outputPath).mkdirs();
               final File file = new File(outputPath, toolName + ext);
               inspectionsResults.add(file);
-              FileUtil.writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes("UTF-8"), true);
+              FileUtil.writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes(CharsetToolkit.UTF8_CHARSET), true);
             }
             catch (IOException e) {
               LOG.error(e);
@@ -221,7 +219,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               final File file = new File(outputPath, toolName + ext);
               inspectionsResults.add(file);
 
-              OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+              OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET);
               try {
                 JDOMUtil.writeDocument(doc, writer, "\n");
               }
@@ -382,17 +380,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file);
       pass.doInspectInBatch(this, inspectionManager, lTools);
 
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(globalSimpleTools, myProgressIndicator, false, new Processor<Tools>() {
+      final List<GlobalInspectionToolWrapper> tools = getWrappersFromTools(globalSimpleTools, file);
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, myProgressIndicator, false, new Processor<GlobalInspectionToolWrapper>() {
         @Override
-        public boolean process(Tools tools) {
-          GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
-          GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
-          ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, file, false);
-          ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
-          tool.checkFile(file, inspectionManager, problemsHolder, GlobalInspectionContextImpl.this, problemDescriptionProcessor);
-          InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
-          LocalDescriptorsUtil.addProblemDescriptors(problemsHolder.getResults(), false, GlobalInspectionContextImpl.this, null,
-                                                     CONVERT, toolPresentation);
+        public boolean process(GlobalInspectionToolWrapper toolWrapper) {
+            GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
+            ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, file, false);
+            ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
+            tool.checkFile(file, inspectionManager, problemsHolder, GlobalInspectionContextImpl.this, problemDescriptionProcessor);
+            InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+            LocalDescriptorsUtil.addProblemDescriptors(problemsHolder.getResults(), false, GlobalInspectionContextImpl.this, null,
+                                                       CONVERT, toolPresentation);
           return true;
         }
       });
@@ -425,25 +423,40 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       public void run() {
         final List<PsiFile> chunk = new ArrayList<PsiFile>();
         try {
-          scope.accept(new PsiElementVisitor() {
+          scope.accept(new Processor<VirtualFile>() {
             @Override
-            public void visitFile(final PsiFile file) {
-              Document document = shouldProcess(file, headlessEnvironment, localScopeFiles);
-              if (document == null) return; //do not inspect binary files
-              document.getText(); // preload text
-              chunk.add(file);
-              if (chunk.size() >= JobSchedulerImpl.CORES_COUNT) {
-                try {
-                  chunksToInspect.put(new ArrayList<PsiFile>(chunk));
+            public boolean process(final VirtualFile file) {
+              Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+                @Override
+                public Document compute() {
+                  PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
+                  Document document = psiFile == null ? null : shouldProcess(psiFile, headlessEnvironment, localScopeFiles);
+                  if (document != null) {
+                    chunk.add(psiFile);
+                  }
+                  return document;
                 }
-                catch (InterruptedException e) {
-                  LOG.error(e);
+              });
+              //do not inspect binary files
+              if (document != null) {
+                document.getText(); // preload text
+
+                if (chunk.size() >= JobSchedulerImpl.CORES_COUNT) {
+                  try {
+                    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
+                    chunksToInspect.put(new ArrayList<PsiFile>(chunk));
+                  }
+                  catch (InterruptedException e) {
+                    LOG.error(e);
+                  }
+                  chunk.clear();
                 }
-                chunk.clear();
               }
+              return true;
             }
           });
           if (!chunk.isEmpty()) {
+            LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
             chunksToInspect.put(new ArrayList<PsiFile>(chunk));
             chunk.clear();
           }
@@ -562,10 +575,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private static List<LocalInspectionToolWrapper> getWrappersFromTools(List<Tools> localTools, PsiFile file) {
-    final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
+  private static <T extends InspectionToolWrapper> List<T> getWrappersFromTools(List<Tools> localTools, PsiFile file) {
+    final List<T> lTools = new ArrayList<T>();
     for (Tools tool : localTools) {
-      final LocalInspectionToolWrapper enabledTool = (LocalInspectionToolWrapper)tool.getEnabledTool(file);
+      final T enabledTool = (T)tool.getEnabledTool(file);
       if (enabledTool != null) {
         lTools.add(enabledTool);
       }

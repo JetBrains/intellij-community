@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -48,6 +46,9 @@ public class ChangesComparator implements Comparator<Change> {
     if (myTreeCompare) {
       final String path1 = FileUtilRt.toSystemIndependentName(filePath1.getPath());
       final String path2 = FileUtilRt.toSystemIndependentName(filePath2.getPath());
+      if (path1.compareToIgnoreCase(path2) == 0) {
+        return 0;
+      }
       final int lastSlash1 = path1.lastIndexOf('/');
       final String parentPath1 = lastSlash1 >= 0 && !filePath1.isDirectory() ? path1.substring(0, lastSlash1) : path1;
       final int lastSlash2 = path2.lastIndexOf('/');
@@ -59,9 +60,9 @@ public class ChangesComparator implements Comparator<Change> {
       else if (FileUtil.isAncestor(parentPath1, parentPath2, true)) {
         return 1;
       }
-      final int compare = StringUtil.compare(parentPath1, parentPath2, !SystemInfo.isFileSystemCaseSensitive);
-      if (compare != 0) {
-        return compare;
+      int parentPathComparison = parentPath1.compareToIgnoreCase(parentPath2);
+      if (parentPathComparison != 0) {
+        return parentPathComparison;
       }
     }
     return filePath1.getName().compareToIgnoreCase(filePath2.getName());

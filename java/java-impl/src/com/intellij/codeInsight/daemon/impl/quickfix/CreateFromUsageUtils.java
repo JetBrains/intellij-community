@@ -124,7 +124,7 @@ public class CreateFromUsageUtils {
   }
 
   public static void setupMethodBody(final PsiMethod method, final PsiClass aClass) throws IncorrectOperationException {
-    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY);
+    FileTemplate template = FileTemplateManager.getInstance(method.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY);
     setupMethodBody(method, aClass, template);
   }
 

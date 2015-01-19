@@ -8,8 +8,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -172,18 +172,24 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       @Override
       public void run() {
         try {
-          new WriteAction(){
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
-            protected void run(Result result) {
-              if (!isValid()) {
-                getOKAction().setEnabled(false);
-              }
-              else {
-                getOKAction().setEnabled(true);
-                reportMessage(null, null);
-              }
+            public void run() {
+              final boolean valid = isValid();
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  if (!valid) {
+                    getOKAction().setEnabled(false);
+                  }
+                  else {
+                    getOKAction().setEnabled(true);
+                    reportMessage(null, null);
+                  }
+                }
+              });
             }
-          }.execute();
+          });
         }
         catch (RuntimeException e) {
           Logger.getInstance(SearchDialog.class).error(e);
@@ -834,11 +840,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }
     catch (MalformedPatternException ex) {
       if (myRunFindActionOnClose) {
-        reportMessage(
-          "this.pattern.is.malformed.message",
-          searchCriteriaEdit,
-          ex.getMessage() != null ? ex.getMessage() : ""
-        );
+        reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, (ex.getMessage() != null) ? ex.getMessage() : "");
         result = false;
       }
     }
@@ -847,16 +849,20 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       result = false;
     }
 
-    //getOKAction().setEnabled(result);
     return result;
   }
 
-  protected void reportMessage(@NonNls String messageId, Editor editor, Object... params) {
-    final String message = messageId != null ? SSRBundle.message(messageId, params) : "";
-    status.setText(message);
-    status.setToolTipText(message);
-    status.revalidate();
-    statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
+  protected void reportMessage(@NonNls final String messageId, final Editor editor, final Object... params) {
+    com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        final String message = messageId != null ? SSRBundle.message(messageId, params) : "";
+        status.setText(message);
+        status.setToolTipText(message);
+        status.revalidate();
+        statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
+      }
+    });
   }
 
   protected void setValuesToConfig(Configuration config) {

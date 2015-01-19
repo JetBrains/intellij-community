@@ -92,29 +92,10 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
         return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.arguments.length;
       }
       PsiType returnType = method.getReturnType();
-      if (returnType != null && !isReturnTypeCompatible(returnType, contract.returnValue)) {
+      if (returnType != null && !InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue)) {
         return "Method returns " + returnType.getPresentableText() + " but the contract specifies " + contract.returnValue;
       }
     }
     return null;
-  }
-
-  static boolean isReturnTypeCompatible(@Nullable PsiType returnType, @NotNull MethodContract.ValueConstraint returnValue) {
-    if (returnValue == MethodContract.ValueConstraint.ANY_VALUE || returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION) {
-      return true;
-    }
-    if (PsiType.VOID.equals(returnType)) return false;
-
-    if (PsiType.BOOLEAN.equals(returnType)) {
-      return returnValue == MethodContract.ValueConstraint.TRUE_VALUE ||
-             returnValue == MethodContract.ValueConstraint.FALSE_VALUE;
-    }
-
-    if (returnType instanceof PsiClassType) {
-      return returnValue == MethodContract.ValueConstraint.NULL_VALUE ||
-             returnValue == MethodContract.ValueConstraint.NOT_NULL_VALUE;
-    }
-
-    return true;
   }
 }

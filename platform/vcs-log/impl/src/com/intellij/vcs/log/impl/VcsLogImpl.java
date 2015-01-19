@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  *
@@ -72,12 +73,6 @@ public class VcsLogImpl implements VcsLog {
     return details;
   }
 
-  @Override
-  @Nullable
-  public VcsFullCommitDetails getDetailsIfAvailable(@NotNull final Hash hash) {
-    return myDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(hash);
-  }
-
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash) {
@@ -90,8 +85,9 @@ public class VcsLogImpl implements VcsLog {
     return myUi.getDataPack().getRefsModel().getAllRefs();
   }
 
+  @NotNull
   @Override
-  public void jumpToReference(final String reference) {
+  public Future<Boolean> jumpToReference(final String reference) {
     Collection<VcsRef> references = getAllReferences();
     VcsRef ref = ContainerUtil.find(references, new Condition<VcsRef>() {
       @Override
@@ -100,10 +96,10 @@ public class VcsLogImpl implements VcsLog {
       }
     });
     if (ref != null) {
-      myUi.jumpToCommit(ref.getCommitHash());
+      return myUi.jumpToCommit(ref.getCommitHash());
     }
     else {
-      myUi.jumpToCommitByPartOfHash(reference);
+      return myUi.jumpToCommitByPartOfHash(reference);
     }
   }
 

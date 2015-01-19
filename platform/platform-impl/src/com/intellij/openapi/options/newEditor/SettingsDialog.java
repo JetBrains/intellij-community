@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +48,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     myEditor = new ConfigurableEditor(myDisposable, configurable);
     myApplyButtonNeeded = showApplyButton;
     myResetButtonNeeded = showResetButton;
-    init(configurable);
+    init(configurable, project);
   }
 
   public SettingsDialog(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
@@ -56,7 +57,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     myEditor = new ConfigurableEditor(myDisposable, configurable);
     myApplyButtonNeeded = showApplyButton;
     myResetButtonNeeded = showResetButton;
-    init(configurable);
+    init(configurable, null);
   }
 
   public SettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] groups, Configurable configurable, String filter) {
@@ -64,12 +65,14 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     myDimensionServiceKey = "SettingsEditor";
     myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter);
     myApplyButtonNeeded = true;
-    init(null);
+    init(null, project);
   }
 
-  private void init(Configurable configurable) {
+  private void init(Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
-    setTitle(name == null ? CommonBundle.settingsTitle() : name.replaceAll("\n", " "));
+    String title = CommonBundle.settingsTitle();
+    if (project != null && project.isDefault()) title = "Default " + title;
+    setTitle(name == null ? title : name.replaceAll("\n", " "));
     init();
   }
 
@@ -133,7 +136,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   @Override
-  protected void doOKAction() {
+  public void doOKAction() {
     if (myEditor.apply()) {
       ApplicationManager.getApplication().saveAll();
       super.doOKAction();

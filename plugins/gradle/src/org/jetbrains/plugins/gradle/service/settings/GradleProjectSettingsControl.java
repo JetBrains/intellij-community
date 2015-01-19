@@ -18,19 +18,24 @@ package org.jetbrains.plugins.gradle.service.settings;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl;
+import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +58,8 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_PROJECT_JDK;
+
 /**
  * @author Denis Zhdanov
  * @since 4/24/13 1:45 PM
@@ -69,6 +76,9 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
   @SuppressWarnings("FieldCanBeLocal") // Used implicitly by reflection at disposeUIResources() and showUi()
   private JLabel                    myGradleHomeLabel;
+  @SuppressWarnings("FieldCanBeLocal") // Used implicitly by reflection at disposeUIResources() and showUi()
+  private JLabel myGradleJdkLabel;
+  private ExternalSystemJdkComboBox myGradleJdkComboBox;
   private TextFieldWithBrowseButton myGradleHomePathField;
   private JBRadioButton             myUseWrapperButton;
   private JBRadioButton             myUseWrapperWithVerificationButton;
@@ -111,6 +121,8 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
     myGradleHomeLabel = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
     initGradleHome();
+    myGradleJdkLabel = new JBLabel(GradleBundle.message("gradle.settings.text.jvm.path"));
+    myGradleJdkComboBox = new ExternalSystemJdkComboBox();
 
     initControls();
     content.add(myUseWrapperButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
@@ -123,6 +135,9 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
     content.add(myGradleHomeLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
     content.add(myGradleHomePathField, ExternalSystemUiUtil.getFillLineConstraints(0));
+
+    content.add(myGradleJdkLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
+    content.add(myGradleJdkComboBox, ExternalSystemUiUtil.getFillLineConstraints(0));
   }
 
   private void initControls() {
@@ -231,6 +246,9 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       GradleUtil.storeLastUsedGradleHome(gradleHomePath);
     }
 
+    final String gradleJvm = FileUtil.toCanonicalPath(myGradleJdkComboBox.getSelectedValue());
+    settings.setGradleJvm(StringUtil.isEmpty(gradleJvm) ? null : gradleJvm);
+
     if (myUseLocalDistributionButton.isSelected()) {
       settings.setDistributionType(DistributionType.LOCAL);
     } else if(myUseWrapperButton.isSelected()) {
@@ -244,6 +262,8 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   protected void updateInitialExtraSettings() {
     String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
     getInitialSettings().setGradleHome(StringUtil.isEmpty(gradleHomePath) ? null : gradleHomePath);
+    final String gradleJvm = FileUtil.toCanonicalPath(myGradleJdkComboBox.getSelectedValue());
+    getInitialSettings().setGradleJvm(StringUtil.isEmpty(gradleJvm) ? null : gradleJvm);
     if (myUseLocalDistributionButton.isSelected()) {
       getInitialSettings().setDistributionType(DistributionType.LOCAL);
     } else if(myUseWrapperButton.isSelected()) {
@@ -272,6 +292,10 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       return true;
     }
 
+    if (!StringUtil.equals(myGradleJdkComboBox.getSelectedValue(), getInitialSettings().getGradleJvm())) {
+      return true;
+    }
+
     String gradleHome = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
     if (StringUtil.isEmpty(gradleHome)) {
       return !StringUtil.isEmpty(getInitialSettings().getGradleHome());
@@ -286,7 +310,9 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     String gradleHome = getInitialSettings().getGradleHome();
     myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
     myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
-    
+
+    resetGradleJdkComboBox(getProject());
+
     updateWrapperControls(getInitialSettings().getExternalProjectPath(), isDefaultModuleCreation);
     if (!myUseLocalDistributionButton.isSelected()) {
       myGradleHomePathField.setEnabled(false);
@@ -388,6 +414,28 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     if (messageType != null) {
       new DelayedBalloonInfo(messageType, myGradleHomeSettingType, BALLOON_DELAY_MILLIS).run();
     }
+  }
+
+  /**
+   * see {@linkplain AbstractImportFromExternalSystemControl#setCurrentProject(Project)}
+   */
+  public void setCurrentProject(@Nullable Project project) {
+    super.setCurrentProject(project);
+    resetGradleJdkComboBox(project);
+  }
+
+  private void resetGradleJdkComboBox(@Nullable final Project project) {
+    final String gradleJvm = getInitialSettings().getGradleJvm();
+    myGradleJdkComboBox.setProject(project);
+
+    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return (project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s);
+      }
+    });
+
+    myGradleJdkComboBox.refreshData(sdkItem);
   }
 
   private class DelayedBalloonInfo implements Runnable {

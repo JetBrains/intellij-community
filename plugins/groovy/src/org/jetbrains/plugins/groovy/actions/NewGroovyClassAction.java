@@ -24,6 +24,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -42,7 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> {
+public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
 
   public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"),
@@ -64,7 +65,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
       .addKind("Enum", JetgroovyIcons.Groovy.Enum, GroovyTemplates.GROOVY_ENUM)
       .addKind("Annotation", JetgroovyIcons.Groovy.AnnotationType, GroovyTemplates.GROOVY_ANNOTATION);
 
-    for (FileTemplate template : FileTemplateManager.getInstance().getAllTemplates()) {
+    for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
       if (fileType.equals(GroovyFileType.GROOVY_FILE_TYPE) && JavaDirectoryService.getInstance().getPackage(directory) != null) {
         builder.addKind(template.getName(), JetgroovyIcons.Groovy.Class, template.getName());

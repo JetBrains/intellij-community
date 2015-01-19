@@ -19,14 +19,16 @@ package com.intellij.codeInsight.generation.actions;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightAction;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.codeInsight.generation.CommentByLineCommentHandler;
+import com.intellij.lang.LanguageCommenters;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.lang.LanguageCommenters;
 import org.jetbrains.annotations.NotNull;
 
 public class CommentByLineCommentAction extends MultiCaretCodeInsightAction implements DumbAware {
@@ -46,6 +48,10 @@ public class CommentByLineCommentAction extends MultiCaretCodeInsightAction impl
     if (fileType instanceof AbstractFileType) {
       return ((AbstractFileType)fileType).getCommenter() != null;
     }
-    return LanguageCommenters.INSTANCE.forLanguage(file.getLanguage()) != null || LanguageCommenters.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage()) != null;
+
+    if (LanguageCommenters.INSTANCE.forLanguage(file.getLanguage()) != null ||
+        LanguageCommenters.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage()) != null) return true;
+    PsiElement host = InjectedLanguageManager.getInstance(project).getInjectionHost(file);
+    return host != null && LanguageCommenters.INSTANCE.forLanguage(host.getLanguage()) != null;
   }
 }

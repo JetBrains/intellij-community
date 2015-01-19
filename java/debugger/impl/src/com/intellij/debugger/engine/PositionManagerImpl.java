@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -82,7 +83,7 @@ public class PositionManagerImpl implements PositionManager {
           return;
         }
 
-        if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+        if (!classHasName(psiClass)) {
           final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
 
           if (parent == null) {
@@ -116,6 +117,10 @@ public class PositionManagerImpl implements PositionManager {
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor.get(), waitPrepareFor.get());
   }
 
+  private static boolean classHasName(PsiClass psiClass) {
+    return !PsiUtil.isLocalOrAnonymousClass(psiClass) && JVMNameUtil.getNonAnonymousClassName(psiClass) != null;
+  }
+
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if(location == null) {
@@ -143,11 +148,11 @@ public class PositionManagerImpl implements PositionManager {
     if (lineNumber > -1) {
       VirtualFile file = psiFile.getVirtualFile();
       if (file != null) {
-        int[] data = file.getUserData(LINE_NUMBERS_MAPPING_KEY);
-        if (data != null) {
-          int line = mapLine(lineNumber+1, data);
+        LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+        if (mapping != null) {
+          int line = mapping.bytecodeToSource(lineNumber + 1);
           if (line > -1) {
-            return SourcePosition.createFromLine(psiFile, line-1);
+            return SourcePosition.createFromLine(psiFile, line - 1);
           }
         }
       }
@@ -177,15 +182,6 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     return SourcePosition.createFromLine(psiFile, lineNumber);
-  }
-
-  private static int mapLine(int line, int[] mapping) {
-    for (int i = 0; i < mapping.length; i+=2) {
-      if (mapping[i] == line) {
-        return mapping[i+1];
-      }
-    }
-    return -1;
   }
 
   @Nullable
@@ -249,7 +245,7 @@ public class PositionManagerImpl implements PositionManager {
         final PsiClass psiClass = JVMNameUtil.getClassAt(position);
         if (psiClass != null) {
           classAtPositionRef.set(psiClass);
-          if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+          if (!classHasName(psiClass)) {
             isLocalOrAnonymous.set(Boolean.TRUE);
             final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
             if (topLevelClass != null) {
@@ -259,7 +255,7 @@ public class PositionManagerImpl implements PositionManager {
                 baseClassNameRef.set(parentClassName);
               }
               else {
-                LOG.error("The name of a parent of a local (anonymous) class is null");
+                LOG.error("The name of a parent " + topLevelClass + " of a local (anonymous) class " + psiClass + " is null");
               }
             }
             else {
@@ -352,7 +348,6 @@ public class PositionManagerImpl implements PositionManager {
           return null;
         }
 
-        final boolean canGetSynthetic = vmProxy.canGetSyntheticAttribute();
         int rangeBegin = Integer.MAX_VALUE;
         int rangeEnd = Integer.MIN_VALUE;
         for (Location location : fromClass.allLineLocations()) {
@@ -364,7 +359,7 @@ public class PositionManagerImpl implements PositionManager {
             continue;
           }
           final Method method = location.method();
-          if (method == null || (canGetSynthetic && method.isSynthetic()) || method.isBridge()) {
+          if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge()) {
             // do not take into account synthetic stuff
             continue;
           }

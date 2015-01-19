@@ -1,4 +1,6 @@
 import <symbolName descr="null" type="CLASS_NAME">java.io</symbolName>.*; // highlight on demand import as class name
+import static <symbolName descr="null" type="CLASS_NAME">java.io.File</symbolName>.<symbolName descr="null" type="STATIC_FINAL_FIELD">pathSeparator</symbolName>;
+import static <symbolName descr="null" type="CLASS_NAME">java.io.File</symbolName>.*;
 
 class <symbolName descr="null" type="CLASS_NAME">a</symbolName> {
   void <symbolName descr="null" type="METHOD_DECLARATION">method</symbolName>() {
@@ -59,4 +61,38 @@ class <symbolName descr="null" type="CLASS_NAME">NoCtrClass</symbolName> {
 
 class <symbolName descr="null" type="CLASS_NAME">Generic</symbolName><<symbolName descr="null" type="TYPE_PARAMETER_NAME">TT</symbolName> extends <symbolName descr="null" type="INTERFACE_NAME">Runnable</symbolName>> {
   <symbolName descr="null" type="TYPE_PARAMETER_NAME">TT</symbolName> <symbolName descr="null" type="INSTANCE_FIELD">field</symbolName>;
+}
+
+class <symbolName descr="null" type="CLASS_NAME">InheritedSymbolNames</symbolName> {
+
+  private static class <symbolName descr="null" type="CLASS_NAME">A</symbolName> {
+    public <symbolName descr="null" type="CLASS_NAME">String</symbolName> <symbolName descr="null" type="METHOD_DECLARATION">getName</symbolName>() {
+      return "classA";
+    }
+  }
+
+  private static class <symbolName descr="null" type="CLASS_NAME">B</symbolName> extends <symbolName descr="null" type="CLASS_NAME">A</symbolName> {
+      {
+          new <symbolName descr="null" type="ANONYMOUS_CLASS_NAME">java.lang.Runnable</symbolName>() {
+              public void <symbolName descr="null" type="METHOD_DECLARATION">run</symbolName>() {
+                  <symbolName descr="null" type="INHERITED_METHOD">getName</symbolName>();
+              }
+          };
+          <symbolName descr="null" type="INHERITED_METHOD">getName</symbolName>();
+      }
+  }
+
+  private static class <symbolName descr="null" type="CLASS_NAME">C</symbolName> extends <symbolName descr="null" type="CLASS_NAME">A</symbolName> {
+      {
+          new <symbolName descr="null" type="ANONYMOUS_CLASS_NAME">java.lang.Runnable</symbolName>() {
+              public void <symbolName descr="null" type="METHOD_DECLARATION">run</symbolName>() {
+                  <symbolName descr="null" type="METHOD_CALL">getName</symbolName>();
+              }
+          };
+          <symbolName descr="null" type="METHOD_CALL">getName</symbolName>();
+      }
+      public <symbolName descr="null" type="CLASS_NAME">String</symbolName> <symbolName descr="null" type="METHOD_DECLARATION">getName</symbolName>() {
+          return "classC";
+      }
+  }
 }

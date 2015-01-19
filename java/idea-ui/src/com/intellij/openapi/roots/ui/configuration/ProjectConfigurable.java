@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +122,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
   private void init(final ProjectSdksModel model) {
     myPanel = new JPanel(new GridBagLayout());
-    myPanel.setPreferredSize(new Dimension(700, 500));
+    myPanel.setPreferredSize(JBUI.size(700, 500));
 
     if (((ProjectEx)myProject).getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
       final JPanel namePanel = new JPanel(new BorderLayout());

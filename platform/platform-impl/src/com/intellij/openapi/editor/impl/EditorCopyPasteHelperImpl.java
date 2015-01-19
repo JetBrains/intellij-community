@@ -26,12 +26,12 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   private static final Logger LOG = Logger.getInstance(EditorCopyPasteHelperImpl.class);
@@ -72,20 +72,14 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   @Nullable
   @Override
   public TextRange[] pasteFromClipboard(@NotNull Editor editor) {
-    CopyPasteManager manager = CopyPasteManager.getInstance();
-    if (manager.areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
-      Transferable clipboardContents = manager.getContents();
-      if (clipboardContents != null) {
-        return pasteTransferable(editor, clipboardContents);
-      }
-    }
-    return null;
+    Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(null);
+    return transferable == null ? null : pasteTransferable(editor, transferable);
   }
 
   @Nullable
   @Override
   public TextRange[] pasteTransferable(final @NotNull Editor editor, @NotNull Transferable content) {
-    String text = getStringContent(content);
+    String text = EditorModificationUtil.getStringContent(content);
     if (text == null) return null;
 
     if (editor.getCaretModel().supportsMultipleCarets()) {
@@ -130,19 +124,5 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
       return new TextRange[]{new TextRange(caretOffset, caretOffset + text.length())};
     }
-  }
-
-  @Nullable
-  private static String getStringContent(@NotNull Transferable content) {
-    RawText raw = RawText.fromTransferable(content);
-    if (raw != null) return raw.rawText;
-
-    try {
-      return (String)content.getTransferData(DataFlavor.stringFlavor);
-    }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
-
-    return null;
   }
 }

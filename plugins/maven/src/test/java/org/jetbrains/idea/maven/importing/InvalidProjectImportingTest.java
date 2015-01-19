@@ -15,6 +15,9 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
@@ -34,7 +37,13 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
   public void testUnknownProblemWithEmptyFile() throws Exception {
     createProjectPom("");
-    myProjectPom.setBinaryContent(new byte[0]);
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        myProjectPom.setBinaryContent(new byte[0]);
+      }
+    }.execute().throwException();
+
     importProject();
     
     assertModules("project");

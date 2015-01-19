@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.cloneable;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -24,9 +27,15 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.CloneUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class CloneInNonCloneableClassInspection extends BaseInspection {
+
+  private boolean onlyWarnOnPublicClone = true;
 
   @Override
   @NotNull
@@ -47,6 +56,32 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
     }
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("only.warn.on.public.clone.methods"),
+                                          this, "onlyWarnOnPublicClone");
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    for (Element option : node.getChildren("option")) {
+      if ("onlyWarnOnPublicClone".equals(option.getAttributeValue("name"))) {
+        onlyWarnOnPublicClone = Boolean.parseBoolean(option.getAttributeValue("value"));
+      }
+    }
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    if (!onlyWarnOnPublicClone) {
+      node.addContent(new Element("option").setAttribute("name", "onlyWarnOnPublicClone")
+                        .setAttribute("value", String.valueOf(onlyWarnOnPublicClone)));
+    }
+  }
+
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return DelegatingFixFactory.createMakeCloneableFix((PsiClass)infos[0]);
@@ -57,18 +92,19 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
     return new CloneInNonCloneableClassVisitor();
   }
 
-  private static class CloneInNonCloneableClassVisitor extends BaseInspectionVisitor {
+  private class CloneInNonCloneableClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
+      // only warn on public clone() option, enabled by default
       if (!CloneUtils.isClone(method)) {
         return;
       }
-      final PsiClass containingClass = method.getContainingClass();
-      if (CloneUtils.isCloneable(containingClass)) {
+      if (onlyWarnOnPublicClone && !method.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
-      if (method.hasModifierProperty(PsiModifier.FINAL) && CloneUtils.onlyThrowsCloneNotSupportedException(method)) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (CloneUtils.isCloneable(containingClass) || CloneUtils.onlyThrowsException(method)) {
         return;
       }
       registerMethodError(method, containingClass);

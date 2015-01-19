@@ -53,7 +53,7 @@ public class DataNode<T> implements Serializable {
   private transient T myData;
   private byte[] myRawData;
 
-  @Nullable private final DataNode<?> myParent;
+  @Nullable private DataNode<?> myParent;
 
   public DataNode(@NotNull Key<T> key, @NotNull T data, @Nullable DataNode<?> parent) {
     myKey = key;
@@ -176,6 +176,8 @@ public class DataNode<T> implements Serializable {
       };
       myData = (T)oIn.readObject();
       myRawData = null;
+
+      assert myData != null;
     }
     catch (IOException e) {
       throw new IllegalStateException(
@@ -239,18 +241,32 @@ public class DataNode<T> implements Serializable {
   }
 
   private void writeObject(ObjectOutputStream out) throws IOException {
+    try {
+      myRawData = getDataBytes();
+    }
+    catch (IOException e) {
+      LOG.warn("Unable to serialize the data node - " + toString());
+      throw e;
+    }
+    out.defaultWriteObject();
+  }
+
+  public byte[] getDataBytes() throws IOException {
+    if (myRawData != null) return myRawData;
+
     ByteArrayOutputStream bOut = new ByteArrayOutputStream();
     ObjectOutputStream oOut = new ObjectOutputStream(bOut);
     try {
       oOut.writeObject(myData);
+      final byte[] bytes = bOut.toByteArray();
+      myRawData = bytes;
+      return bytes;
     }
     finally {
       oOut.close();
     }
-    myRawData = bOut.toByteArray();
-    out.defaultWriteObject();
   }
-  
+
   @Override
   public int hashCode() {
     int result = myChildren.hashCode();
@@ -284,5 +300,20 @@ public class DataNode<T> implements Serializable {
       LOG.debug(e);
     }
     return String.format("%s: %s", myKey, dataDescription);
+  }
+
+  public void clear(boolean removeFromGraph) {
+    if (removeFromGraph && myParent != null) {
+      for (Iterator<DataNode<?>> iterator = myParent.getChildren().iterator(); iterator.hasNext(); ) {
+        DataNode<?> dataNode = iterator.next();
+        if (System.identityHashCode(dataNode) == System.identityHashCode(this)) {
+          iterator.remove();
+          break;
+        }
+      }
+    }
+    myParent = null;
+    myRawData = null;
+    myChildren.clear();
   }
 }

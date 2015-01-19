@@ -391,6 +391,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA18343() { doTest(false, false); }
   public void testNewExpressionClass() { doTest(false, false); }
   public void testInnerClassObjectLiteralFromSuperExpression() { doTest(false, false); }
+  public void testPrivateFieldInSuperClass() { doTest(false, false); }
 
   public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() throws Exception {
     doTest(false, false);
@@ -428,6 +429,13 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       List<HighlightInfo> fileLevel =
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
       HighlightInfo info = assertOneElement(fileLevel);
+      assertEquals("top level", info.getDescription());
+
+      type("\n\n");
+      doHighlighting();
+      fileLevel =
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
+      info = assertOneElement(fileLevel);
       assertEquals("top level", info.getDescription());
 
       type("//xxx"); //disable top level annotation

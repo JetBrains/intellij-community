@@ -23,14 +23,19 @@ import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
+import javax.swing.*;
+import java.awt.BorderLayout;
 
 /**
  * @author Sergey.Malenkov
  */
-public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, JComponent> {
+public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configurable, JComponent> {
+  @Override
+  protected Configurable prepare(Configurable key) {
+    ConfigurableWrapper.cast(Configurable.class, key); // create wrapped configurable on a pooled thread
+    return key;
+  }
+
   @Override
   protected JComponent create(final Configurable configurable) {
     return configurable == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {
@@ -41,7 +46,13 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, JCompon
           configurable.reset();
           if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
             if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
-              component.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+              if (!component.getClass().equals(JPanel.class)) {
+                // some custom components do not support borders
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(BorderLayout.CENTER, component);
+                component = panel;
+              }
+              component.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
             }
             if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
               JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);

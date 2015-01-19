@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;

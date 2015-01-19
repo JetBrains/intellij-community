@@ -186,10 +186,10 @@ public class NetUtils {
    * @param indicator           Progress indicator.
    * @param inputStream         source stream
    * @param outputStream        destination stream
-   * @param expectedContentSize expected content size, used in progress indicator. can be -1.
+   * @param expectedContentSize expected content size, used in progress indicator (negative means unknown length)
    * @return bytes copied
-   * @throws IOException                                            if IO error occur
-   * @throws com.intellij.openapi.progress.ProcessCanceledException if process was canceled.
+   * @throws IOException              if IO error occur
+   * @throws ProcessCanceledException if process was canceled.
    */
   public static int copyStreamContent(@Nullable ProgressIndicator indicator,
                                       @NotNull InputStream inputStream,

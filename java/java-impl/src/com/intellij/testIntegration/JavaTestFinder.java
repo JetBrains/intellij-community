@@ -107,7 +107,7 @@ public class JavaTestFinder implements TestFinder {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(klass.getProject());
 
     String klassName = klass.getName();
-    Pattern pattern = Pattern.compile(".*" + klassName + ".*");
+    Pattern pattern = Pattern.compile(".*" + klassName + ".*", Pattern.CASE_INSENSITIVE);
 
     HashSet<String> names = new HashSet<String>();
     cache.getAllClassNames(names);

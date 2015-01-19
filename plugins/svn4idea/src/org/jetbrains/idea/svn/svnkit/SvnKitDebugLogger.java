@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.idea.svn.NativeLogReader;
 import org.jetbrains.idea.svn.SSLExceptionsHelper;
 import org.jetbrains.idea.svn.SvnNativeLogParser;
@@ -29,7 +30,6 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
-import java.io.UnsupportedEncodingException;
 import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -121,12 +121,7 @@ public class SvnKitDebugLogger extends SVNDebugLogAdapter {
   public void log(final SVNLogType logType, final String message, final byte[] data) {
     if (shouldLog(logType)) {
       if (data != null) {
-        try {
-          myLog.info(message + "\n" + new String(data, "UTF-8"));
-        }
-        catch (UnsupportedEncodingException e) {
-          myLog.info(message + "\n" + new String(data));
-        }
+        myLog.info(message + "\n" + new String(data, CharsetToolkit.UTF8_CHARSET));
       }
       else {
         myLog.info(message);

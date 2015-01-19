@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.MouseInputListener;
@@ -109,12 +111,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
 
   private void installWindowListeners(JRootPane root, Component parent) {
-    if (parent instanceof Window) {
-      myWindow = (Window)parent;
-    }
-    else {
-      myWindow = SwingUtilities.getWindowAncestor(parent);
-    }
+    myWindow = UIUtil.getWindow(parent);
 
     if (myWindow != null) {
       if (myMouseInputListener == null) {
@@ -177,13 +174,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
           });
         }
 
-        Window currWindow;
-        if (parent instanceof Window) {
-          currWindow = (Window)parent;
-        }
-        else {
-          currWindow = SwingUtilities.getWindowAncestor(parent);
-        }
+        Window currWindow = UIUtil.getWindow(parent);
         if (myWindowListener != null) {
           myCurrentWindow
             .removeWindowListener(myWindowListener);

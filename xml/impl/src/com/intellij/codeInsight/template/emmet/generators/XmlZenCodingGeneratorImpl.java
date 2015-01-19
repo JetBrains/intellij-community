@@ -27,9 +27,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlChildRole;
@@ -38,8 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -54,7 +53,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   @Override
   @NotNull
   public String toString(@NotNull XmlTag tag,
-                         @NotNull List<Couple<String>> attribute2Value,
+                         @NotNull Map<String, String> attributes,
                          boolean hasChildren,
                          @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
@@ -66,21 +65,18 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
 
   @Override
   @NotNull
-  public String buildAttributesString(@NotNull List<Couple<String>> attribute2value,
+  public String buildAttributesString(@NotNull Map<String, String> attributes,
                                       boolean hasChildren,
                                       int numberInIteration,
                                       int totalIterations, @Nullable String surroundedText) {
     StringBuilder result = new StringBuilder();
-    for (Iterator<Couple<String>> it = attribute2value.iterator(); it.hasNext();) {
-      Couple<String> pair = it.next();
-      String name = pair.first;
-      String value = ZenCodingUtil.getValue(pair.second, numberInIteration, totalIterations, surroundedText);
+    for (Map.Entry<String, String> entry : attributes.entrySet()) {
+      String name = entry.getKey();
+      String value = ZenCodingUtil.getValue(entry.getValue(), numberInIteration, totalIterations, surroundedText);
       result.append(getAttributeString(name, value));
-      if (it.hasNext()) {
-        result.append(' ');
-      }
+      result.append(' ');
     }
-    return result.toString();
+    return result.toString().trim();
   }
 
   @Override
@@ -158,7 +154,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   
   @Nullable
   @Override
-  public UnnamedConfigurable createConfigurable() {
+  public Configurable createConfigurable() {
     return new XmlEmmetConfigurable();
   }
 }

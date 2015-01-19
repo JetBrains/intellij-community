@@ -74,5 +74,22 @@ public class WebDeploymentCredentialsHolder {
   public RemoteCredentials getSshCredentials() {
     return myRemoteCredentials;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    WebDeploymentCredentialsHolder holder = (WebDeploymentCredentialsHolder)o;
+
+    if (!myWebServerConfigId.equals(holder.myWebServerConfigId)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myWebServerConfigId.hashCode();
+  }
 }
 

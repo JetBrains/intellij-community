@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -58,7 +59,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     StringBuilder result = new StringBuilder(initial.length());
     List<byte[]> lines;
     try {
-      LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes("UTF-8")));
+      LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes(CharsetToolkit.UTF8_CHARSET)));
       lines = reader.readLines();
     }
     catch (IOException e) {

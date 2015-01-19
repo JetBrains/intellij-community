@@ -208,6 +208,9 @@ public class AntBuildModelImpl implements AntBuildModelBase {
         }
       }.fillTargets(list, model, project, sourceFile);
     }
+    if (dependencies.isEmpty()) {
+      dependencies.add(PsiModificationTracker.MODIFICATION_COUNT);
+    }
     return new Pair<List<AntBuildTargetBase>, Collection<Object>>(list, dependencies);
   }
 

@@ -36,9 +36,10 @@ public class GraphTableModel extends AbstractTableModel {
   private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
   @NotNull protected final VcsLogUiImpl myUi;
-  @NotNull protected final VisiblePack myDataPack;
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogDataHolder myLogDataHolder;
+
+  @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
@@ -114,9 +115,14 @@ public class GraphTableModel extends AbstractTableModel {
     return new GraphCommitCell(message, refs);
   }
 
+  @NotNull
+  public Integer getCommitIdAtRow(int row) {
+    return myDataPack.getVisibleGraph().getRowInfo(row).getCommit();
+  }
+
   @Nullable
   public Hash getHashAtRow(int row) {
-    return myDataHolder.getHash(myDataPack.getVisibleGraph().getRowInfo(row).getCommit());
+    return myDataHolder.getHash(getCommitIdAtRow(row));
   }
 
   public int getRowOfCommit(@NotNull final Hash hash) {
@@ -236,5 +242,11 @@ public class GraphTableModel extends AbstractTableModel {
   @Override
   public String getColumnName(int column) {
     return COLUMN_NAMES[column];
+  }
+
+  public void setVisiblePack(@NotNull VisiblePack visiblePack) {
+    myDataPack = visiblePack;
+    myMoreRequested = false;
+    fireTableDataChanged();
   }
 }

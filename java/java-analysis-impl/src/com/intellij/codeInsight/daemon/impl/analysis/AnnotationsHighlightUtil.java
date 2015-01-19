@@ -625,9 +625,17 @@ public class AnnotationsHighlightUtil {
 
   @Nullable
   public static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
-    final String errorMessage = LambdaUtil.checkFunctionalInterface(annotation, languageLevel);
-    if (errorMessage != null) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
+      final PsiAnnotationOwner owner = annotation.getOwner();
+      if (owner instanceof PsiModifierList) {
+        final PsiElement parent = ((PsiModifierList)owner).getParent();
+        if (parent instanceof PsiClass) {
+          final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent, ((PsiClass)parent).getName() + " is not a functional interface");
+          if (errorMessage != null) {
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
+          }
+        }
+      }
     }
     return null;
   }
@@ -701,7 +709,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  private static RetentionPolicy getRetentionPolicy(PsiClass annotation) {
+  public static RetentionPolicy getRetentionPolicy(@NotNull PsiClass annotation) {
     PsiModifierList modifierList = annotation.getModifierList();
     if (modifierList != null) {
       PsiAnnotation retentionAnno = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION);

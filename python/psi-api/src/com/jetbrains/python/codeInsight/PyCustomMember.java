@@ -45,6 +45,11 @@ public class PyCustomMember {
 
   boolean myFunction = false;
 
+  /**
+   * Force resolving to {@link MyInstanceElement} even if element is function
+   */
+  private boolean myAlwaysResolveToCustomElement;
+
   public PyCustomMember(@NotNull final String name, @Nullable final String type, final boolean resolveToInstance) {
     myName = name;
     myResolveToInstance = resolveToInstance;
@@ -82,6 +87,7 @@ public class PyCustomMember {
     myTypeName = typeName;
     myTypeCallback = null;
   }
+
   public PyCustomMember(@NotNull final String name, @Nullable final PsiElement target) {
     this(name, target, null);
   }
@@ -93,6 +99,15 @@ public class PyCustomMember {
 
   public PyCustomMember resolvesToClass(String classQName) {
     myPsiPath = new PyPsiPath.ToClassQName(classQName);
+    return this;
+  }
+
+  /**
+   * Force resolving to {@link MyInstanceElement} even if element is function
+   */
+  @NotNull
+  public final PyCustomMember alwaysResolveToCustomElement() {
+    myAlwaysResolveToCustomElement = true;
     return this;
   }
 
@@ -156,7 +171,7 @@ public class PyCustomMember {
     PyClass targetClass =
       myTypeName != null && myTypeName.indexOf('.') > 0 ? PyPsiFacade.getInstance(context.getProject()).findClass(myTypeName) : null;
     final PsiElement resolveTarget = findResolveTarget(context);
-    if (resolveTarget instanceof PyFunction) {
+    if (resolveTarget instanceof PyFunction && !myAlwaysResolveToCustomElement) {
       return resolveTarget;
     }
     if (resolveTarget != null || targetClass != null) {

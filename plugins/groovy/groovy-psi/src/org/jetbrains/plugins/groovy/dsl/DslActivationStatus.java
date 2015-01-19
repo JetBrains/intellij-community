@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import gnu.trove.THashMap;
@@ -38,27 +39,32 @@ public class DslActivationStatus implements PersistentStateComponent<Element> {
     return ServiceManager.getService(DslActivationStatus.class);
   }
 
-  public void activateUntilModification(@NotNull VirtualFile vfile) {
+  public synchronized void activateUntilModification(@NotNull VirtualFile vfile) {
     myStatus.put(vfile, ENABLED);
   }
 
-  public void disableFile(@NotNull VirtualFile vfile, @NotNull String error) {
+  public synchronized void disableFile(@NotNull VirtualFile vfile, @NotNull String error) {
     myStatus.put(vfile, error);
   }
 
   @Nullable
-  public String getInactivityReason(VirtualFile file) {
+  public synchronized String getInactivityReason(VirtualFile file) {
     String status = myStatus.get(file);
-    return status == null || status == ENABLED ? null : status;
+    return ENABLED.equals(status) ? null : status;
   }
 
-  public boolean isActivated(VirtualFile file) {
-    return myStatus.get(file) == ENABLED;
+  public synchronized boolean isActivated(VirtualFile file) {
+    final String status = myStatus.get(file);
+    if (status == null) {
+      myStatus.put(file, ENABLED);
+      return true;
+    }
+    return ENABLED.equals(status);
   }
 
   @Nullable
   @Override
-  public Element getState() {
+  public synchronized Element getState() {
     Element root = new Element("x");
     for (Map.Entry<VirtualFile, String> entry : myStatus.entrySet()) {
       VirtualFile file = entry.getKey();
@@ -66,20 +72,22 @@ public class DslActivationStatus implements PersistentStateComponent<Element> {
       Element element = new Element("file");
       root.addContent(element);
       element.setAttribute("url", file.getUrl());
-      element.setAttribute("status", (status == ENABLED ? "" : status));
+      if (!ENABLED.equals(status)) {
+        element.setAttribute("status", status);
+      }
     }
     return root;
   }
 
   @Override
-  public void loadState(Element state) {
+  public synchronized void loadState(Element state) {
     List<Element> children = state.getChildren("file");
     for (Element element : children) {
       String url = element.getAttributeValue("url", "");
-      String status = element.getAttributeValue("status", ENABLED);
+      String status = element.getAttributeValue("status");
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file != null) {
-        myStatus.put(file, status);
+        myStatus.put(file, StringUtil.isNotEmpty(status) ? status : ENABLED);
       }
     }
   }

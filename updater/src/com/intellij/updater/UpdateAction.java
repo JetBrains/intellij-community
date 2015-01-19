@@ -6,48 +6,54 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class UpdateAction extends BaseUpdateAction {
-  public UpdateAction(String path, long checksum) {
-    super(path, checksum);
+  public UpdateAction(Patch patch, String path, String source, long checksum, boolean move) {
+    super(patch, path, source, checksum, move);
   }
 
-  public UpdateAction(DataInputStream in) throws IOException {
-    super(in);
+  public UpdateAction(Patch patch, String path, long checksum) {
+    this(patch, path, path, checksum, false);
+  }
+
+  public UpdateAction(Patch patch, DataInputStream in) throws IOException {
+    super(patch, in);
   }
 
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    patchOutput.putNextEntry(new ZipEntry(myPath));
-    writeExecutableFlag(patchOutput, newerFile);
-    writeDiff(olderFile, newerFile, patchOutput);
-    patchOutput.closeEntry();
+    if (!myIsMove) {
+      patchOutput.putNextEntry(new ZipEntry(myPath));
+      writeExecutableFlag(patchOutput, newerFile);
+      writeDiff(olderFile, newerFile, patchOutput);
+      patchOutput.closeEntry();
+    }
   }
 
   @Override
-  protected boolean isModified(File toFile) throws IOException {
-    return myChecksum != Digester.digestRegularFile(toFile);
-  }
+  protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
+    File source = getSource(backupDir);
+    File updated;
+    if (!myIsMove) {
+      updated = Utils.createTempFile();
+      InputStream in = Utils.findEntryInputStream(patchFile, myPath);
+      boolean executable = readExecutableFlag(in);
 
-  @Override
-  protected void doApply(ZipFile patchFile, File toFile) throws IOException {
-    InputStream in = Utils.findEntryInputStream(patchFile, myPath);
-    boolean executable = readExecutableFlag(in);
-
-    File temp = Utils.createTempFile();
-    OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
-    try {
-      InputStream oldFileIn = new FileInputStream(toFile);
+      OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
       try {
-        applyDiff(in, oldFileIn, out);
+        InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized());
+        try {
+          applyDiff(in, oldFileIn, out);
+        }
+        finally {
+          oldFileIn.close();
+        }
       }
       finally {
-        oldFileIn.close();
+        out.close();
       }
+      Utils.setExecutable(updated, executable);
+    } else {
+      updated = source;
     }
-    finally {
-      out.close();
-    }
-
-    replaceUpdated(temp, toFile);
-    Utils.setExecutable(toFile, executable);
+    replaceUpdated(updated, toFile);
   }
 }

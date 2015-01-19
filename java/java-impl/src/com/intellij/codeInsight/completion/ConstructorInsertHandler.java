@@ -7,10 +7,7 @@ import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +38,7 @@ import java.util.List;
 /**
 * @author peter
 */
-public class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupItem>> {
+public class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupElement>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ConstructorInsertHandler");
   public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);
   public static final ConstructorInsertHandler BASIC_INSTANCE = new ConstructorInsertHandler(false);
@@ -54,8 +51,8 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   }
 
   @Override
-  public void handleInsert(InsertionContext context, LookupElementDecorator<LookupItem> item) {
-    @SuppressWarnings({"unchecked"}) final LookupItem<PsiClass> delegate = item.getDelegate();
+  public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+    @SuppressWarnings({"unchecked"}) final LookupElement delegate = item.getDelegate();
 
     PsiClass psiClass = (PsiClass)item.getObject();
 
@@ -74,6 +71,8 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     OffsetKey insideRef = context.trackOffset(context.getTailOffset(), false);
 
     final PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
+    if (position == null) return;
+    
     final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
     final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
     final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
@@ -145,7 +144,9 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       if (mySmart) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
       }
-      if (fillTypeArgs && JavaCompletionUtil.promptTypeArgs(context, context.getOffset(insideRef))) return;
+      if (fillTypeArgs) {
+        JavaCompletionUtil.promptTypeArgs(context, context.getOffset(insideRef));
+      }
     }
   }
 
@@ -188,7 +189,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   }
 
   public static boolean insertParentheses(InsertionContext context,
-                                          LookupItem delegate,
+                                          LookupElement delegate,
                                           final PsiClass psiClass,
                                           final boolean forAnonymous) {
     if (context.getCompletionChar() == '[') {

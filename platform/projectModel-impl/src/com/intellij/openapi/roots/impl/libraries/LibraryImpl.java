@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -165,8 +166,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public String[] getUrls(@NotNull OrderRootType rootType) {
     checkDisposed();
 
-    final VirtualFilePointerContainer result = myRoots.get(rootType);
-    return result.getUrls();
+    VirtualFilePointerContainer result = myRoots.get(rootType);
+    return result == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : result.getUrls();
   }
 
   @Override
@@ -174,8 +175,13 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
     checkDisposed();
 
-    final List<VirtualFile> expanded = new ArrayList<VirtualFile>();
-    for (VirtualFile file : myRoots.get(rootType).getFiles()) {
+    VirtualFilePointerContainer container = myRoots.get(rootType);
+    if (container == null) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+
+    List<VirtualFile> expanded = new SmartList<VirtualFile>();
+    for (VirtualFile file : container.getFiles()) {
       if (file.isDirectory()) {
         if (myJarDirectories.contains(rootType, file.getUrl())) {
           collectJarFiles(file, expanded, myJarDirectories.isRecursive(rootType, file.getUrl()));
@@ -215,7 +221,6 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return new LibraryImpl(this, this, myRootModel);
   }
 
-  @Override
   public Library cloneLibrary(RootModelImpl rootModel) {
     LOG.assertTrue(myLibraryTable == null);
     final LibraryImpl clone = new LibraryImpl(this, null, rootModel);

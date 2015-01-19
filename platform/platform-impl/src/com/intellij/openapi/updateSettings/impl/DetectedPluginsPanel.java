@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   public DetectedPluginsPanel() {
     super(PluginDownloader.class);
     final JTable entryTable = getEntryTable();
-    myHeader = new PluginHeaderPanel(null, entryTable);
+    myHeader = new PluginHeaderPanel(null);
     entryTable.setTableHeader(null);
     entryTable.setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer() {
       protected void customizeCellRenderer(final JTable table,
@@ -88,7 +88,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
           final PluginDownloader selection = getValueAt(selectedRow);
           final IdeaPluginDescriptor descriptor = selection.getDescriptor();
           if (descriptor != null) {
-            PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel, myHeader , null);
+            PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel, myHeader);
           }
         }
       }
@@ -121,7 +121,8 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   public void setChecked(final PluginDownloader downloader, final boolean checked) {
     if (checked) {
       getSkippedPlugins().remove(downloader.getPluginId());
-    } else {
+    }
+    else {
       getSkippedPlugins().add(downloader.getPluginId());
     }
     for (Listener listener : myListeners) {

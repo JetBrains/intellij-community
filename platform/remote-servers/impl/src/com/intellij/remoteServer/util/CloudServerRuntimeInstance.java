@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,16 @@ import com.intellij.remoteServer.agent.util.CloudAgent;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
 import com.intellij.remoteServer.agent.util.CloudRemoteApplication;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
+import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.util.Function;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -86,14 +89,16 @@ public abstract class CloudServerRuntimeInstance
   }
 
   @Override
-  public void computeDeployments(@NotNull final ServerRuntimeInstance.ComputeDeploymentsCallback callback) {
+  public void computeDeployments(@NotNull final ComputeDeploymentsCallback callback) {
     getTaskExecutor().submit(new ThrowableRunnable<Exception>() {
 
       @Override
       public void run() throws Exception {
         try {
           for (CloudApplicationRuntime application : getApplications()) {
-            callback.addDeployment(application.getApplicationName(), application);
+            Deployment deployment
+              = callback.addDeployment(application.getApplicationName(), application, application.getStatus(), application.getStatusText());
+            application.setDeploymentModel(deployment);
           }
           callback.succeeded();
         }
@@ -109,14 +114,19 @@ public abstract class CloudServerRuntimeInstance
 
       @Override
       public List<CloudApplicationRuntime> compute() {
-        List<CloudApplicationRuntime> result = new ArrayList<CloudApplicationRuntime>();
-        for (CloudRemoteApplication application : getAgent().getApplications()) {
-          result.add(createApplicationRuntime(application.getName()));
+        CloudRemoteApplication[] applications = getAgent().getApplications();
+        if (applications == null) {
+          return Collections.emptyList();
         }
-        return result;
+        return ContainerUtil.map(applications, new Function<CloudRemoteApplication, CloudApplicationRuntime>() {
+          @Override
+          public CloudApplicationRuntime fun(CloudRemoteApplication application) {
+            return createApplicationRuntime(application);
+          }
+        });
       }
     });
   }
 
-  protected abstract CloudApplicationRuntime createApplicationRuntime(String applicationName);
+  protected abstract CloudApplicationRuntime createApplicationRuntime(CloudRemoteApplication application);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public class ThreeComponentsSplitter extends JPanel implements Disposable {
-  public static final int MIN_SIZE = 48;
+  public static final int MIN_SIZE = 0;
 
   private int myDividerWidth;
   /**
@@ -63,8 +64,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   @Nullable private JComponent myInnerComponent;
   @Nullable private JComponent myLastComponent;
 
-  private int myFirstSize = 10;
-  private int myLastSize = 10;
+  private int myFirstSize = 0;
+  private int myLastSize = 0;
 
   private boolean myShowDividerControls;
   private int myDividerZone;
@@ -143,9 +144,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   public Dimension getMinimumSize() {
     if (isHonorMinimumSize()) {
       final int dividerWidth = getDividerWidth();
-      final Dimension firstSize = myFirstComponent != null ? myFirstComponent.getMinimumSize() : new Dimension(0, 0);
-      final Dimension lastSize = myLastComponent != null ? myLastComponent.getMinimumSize() : new Dimension(0, 0);
-      final Dimension innerSize = myInnerComponent != null ? myInnerComponent.getMinimumSize() : new Dimension(0, 0);
+      final Dimension firstSize = myFirstComponent != null ? myFirstComponent.getMinimumSize() : JBUI.emptySize();
+      final Dimension lastSize = myLastComponent != null ? myLastComponent.getMinimumSize() : JBUI.emptySize();
+      final Dimension innerSize = myInnerComponent != null ? myInnerComponent.getMinimumSize() : JBUI.emptySize();
       if (getOrientation()) {
         int width = Math.max(firstSize.width, Math.max(lastSize.width, innerSize.width));
         int height = visibleDividersCount() * dividerWidth;

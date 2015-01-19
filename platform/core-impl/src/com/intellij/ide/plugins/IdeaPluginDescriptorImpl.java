@@ -278,7 +278,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     StringInterner interner = new StringInterner();
     List<Element> extensions = copyElements(pluginBean.extensions, interner);
     if (extensions != null) {
-      myExtensions = MultiMap.createSmartList();
+      myExtensions = MultiMap.createSmart();
       for (Element extension : extensions) {
         myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension), extension);
       }
@@ -286,7 +286,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     List<Element> extensionPoints = copyElements(pluginBean.extensionPoints, interner);
     if (extensionPoints != null) {
-      myExtensionsPoints = MultiMap.createSmartList();
+      myExtensionsPoints = MultiMap.createSmart();
       for (Element extensionPoint : extensionPoints) {
         myExtensionsPoints.putValue(StringUtil.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
       }
@@ -299,7 +299,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  void registerExtensionPoints(@NotNull ExtensionsArea area) {
+  // made public for Upsource
+  public void registerExtensionPoints(@NotNull ExtensionsArea area) {
     if (myExtensionsPoints != null) {
       for (Element element : myExtensionsPoints.get(StringUtil.notNullize(area.getAreaClass()))) {
         area.registerExtensionPoint(this, element);

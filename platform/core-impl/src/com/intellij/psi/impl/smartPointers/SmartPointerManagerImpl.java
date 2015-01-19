@@ -24,11 +24,13 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.MarkersHolderFileViewProvider;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.UnsafeWeakList;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +80,16 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
           PsiFile injectedFile = psiDocumentManager.getPsiFile(injectedDoc);
           if (injectedFile == null) continue;
           RangeMarker[] cachedMarkers = getCachedRangeMarkerToInjectedFragment(injectedFile);
-          fastenBelts(injectedFile.getViewProvider().getVirtualFile(), 0, cachedMarkers);
+          boolean relevant = false;
+          for (Segment hostSegment : injectedDoc.getHostRanges()) {
+            if (offset <= hostSegment.getEndOffset()) {
+              relevant = true;
+              break;
+            }
+          }
+          if (relevant) {
+            fastenBelts(injectedFile.getViewProvider().getVirtualFile(), 0, cachedMarkers);
+          }
         }
       }
     }
@@ -133,6 +144,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
     if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
+      PsiUtilCore.ensureValid(element);
       LOG.error("Invalid element:" + element);
     }
     SmartPointerEx<E> pointer = getCachedPointer(element);

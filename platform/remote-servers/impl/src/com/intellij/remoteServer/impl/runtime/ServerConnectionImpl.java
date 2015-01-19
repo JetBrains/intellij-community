@@ -18,6 +18,7 @@ package com.intellij.remoteServer.impl.runtime;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
@@ -132,15 +133,11 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         String deploymentName = instance.getDeploymentName(source, task.getConfiguration());
         DeploymentImpl deployment;
         synchronized (myLocalDeployments) {
-          deployment = new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYING, null, null, task);
+          deployment = new DeploymentImpl(ServerConnectionImpl.this, deploymentName, DeploymentStatus.DEPLOYING, null, null, task);
           myLocalDeployments.put(deploymentName, deployment);
         }
-        DeploymentLogManagerImpl logManager = new DeploymentLogManagerImpl(task.getProject(), new Runnable() {
-          @Override
-          public void run() {
-            myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
-          }
-        });
+        DeploymentLogManagerImpl logManager = new DeploymentLogManagerImpl(task.getProject(), new ChangeListener())
+          .withMainHandlerVisible(true);
         LoggingHandlerImpl handler = logManager.getMainLoggingHandler();
         myLogManagers.put(deploymentName, logManager);
         handler.printlnSystemMessage("Deploying '" + deploymentName + "'...");
@@ -154,6 +151,16 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @Override
   public DeploymentLogManager getLogManager(@NotNull Deployment deployment) {
     return myLogManagers.get(deployment.getName());
+  }
+
+  @NotNull
+  public DeploymentLogManager getOrCreateLogManager(@NotNull Project project, @NotNull Deployment deployment) {
+    DeploymentLogManagerImpl result = (DeploymentLogManagerImpl)getLogManager(deployment);
+    if (result == null) {
+      result = new DeploymentLogManagerImpl(project, new ChangeListener());
+      myLogManagers.put(deployment.getName(), result);
+    }
+    return result;
   }
 
   @Override
@@ -177,7 +184,21 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
       @Override
       public void addDeployment(@NotNull String deploymentName, @Nullable DeploymentRuntime deploymentRuntime) {
-        myDeployments.add(new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYED, null, deploymentRuntime, null));
+        addDeployment(deploymentName, deploymentRuntime, null, null);
+      }
+
+      @Override
+      public Deployment addDeployment(@NotNull String deploymentName,
+                                      @Nullable DeploymentRuntime deploymentRuntime,
+                                      @Nullable DeploymentStatus deploymentStatus,
+                                      @Nullable String deploymentStatusText) {
+        DeploymentImpl result = new DeploymentImpl(ServerConnectionImpl.this, deploymentName,
+                                                   deploymentStatus == null ? DeploymentStatus.DEPLOYED : deploymentStatus,
+                                                   deploymentStatusText,
+                                                   deploymentRuntime,
+                                                   null);
+        myDeployments.add(result);
+        return result;
       }
 
       @Override
@@ -290,16 +311,15 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @NotNull
   @Override
   public Collection<Deployment> getDeployments() {
-    Map<String, Deployment> result;
-    synchronized (myRemoteDeployments) {
-      result = new HashMap<String, Deployment>(myRemoteDeployments);
-    }
+    Set<Deployment> result = new TreeSet<Deployment>(getServer().getType().getDeploymentComparator());
     synchronized (myLocalDeployments) {
-      for (Deployment deployment : myLocalDeployments.values()) {
-        result.put(deployment.getName(), deployment);
-      }
+      result.addAll(myLocalDeployments.values());
     }
-    return result.values();
+
+    synchronized (myRemoteDeployments) {
+      result.addAll(myRemoteDeployments.values());
+    }
+    return result;
   }
 
   @Override
@@ -361,7 +381,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       myLoggingHandler.printlnSystemMessage("'" + myDeploymentName + "' has been deployed successfully.");
       myDeployment.changeState(DeploymentStatus.DEPLOYING, DeploymentStatus.DEPLOYED, null, deploymentRuntime);
       myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
-      DebugConnector<?,?> debugConnector = myDeploymentTask.getDebugConnector();
+      DebugConnector<?, ?> debugConnector = myDeploymentTask.getDebugConnector();
       if (debugConnector != null) {
         launchDebugger(debugConnector, deploymentRuntime);
       }
@@ -395,6 +415,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       synchronized (myLocalDeployments) {
         myDeployment.changeState(DeploymentStatus.DEPLOYING, DeploymentStatus.NOT_DEPLOYED, errorMessage, null);
       }
+      myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
+    }
+  }
+
+  private class ChangeListener implements Runnable {
+
+    @Override
+    public void run() {
       myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
     }
   }

@@ -1345,13 +1345,18 @@ public class XmlUtil {
     return StringUtil.escapeXml(text);
   }
 
+  public static boolean isValidTagNameChar(char c) {
+    return Character.isLetter(c) || Character.isDigit(c) ||
+           c == ':' || c == '_' || c == '-' || c == '.';
+  }
+
   @Nullable
-  public static String extractXmlEncodingFromProlog(final byte[] content) {
+  public static String extractXmlEncodingFromProlog(@NotNull byte[] content) {
     return XmlCharsetDetector.extractXmlEncodingFromProlog(content);
   }
 
   @Nullable
-  public static String extractXmlEncodingFromProlog(String text) {
+  public static String extractXmlEncodingFromProlog(@NotNull CharSequence text) {
     return XmlCharsetDetector.extractXmlEncodingFromProlog(text);
   }
 

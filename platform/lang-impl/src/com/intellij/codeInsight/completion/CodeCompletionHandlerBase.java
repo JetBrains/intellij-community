@@ -390,17 +390,7 @@ public class CodeCompletionHandlerBase {
 
   @Nullable
   private static AutoCompletionPolicy getAutocompletionPolicy(LookupElement element) {
-    final AutoCompletionPolicy policy = AutoCompletionPolicy.getPolicy(element);
-    if (policy != null) {
-      return policy;
-    }
-
-    final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
-    if (item != null) {
-      return item.getAutoCompletionPolicy();
-    }
-
-    return null;
+    return element.getAutoCompletionPolicy();
   }
 
   private static boolean isInsideIdentifier(final OffsetMap offsetMap) {
@@ -610,42 +600,8 @@ public class CodeCompletionHandlerBase {
     }
     final int idEndOffsetDelta = idEndOffset - caretOffset;
 
-    CompletionAssertions.WatchingInsertionContext context = null;
-    if (editor.getSelectionModel().hasBlockSelection() && editor.getSelectionModel().getBlockSelectionEnds().length > 0) {
-      List<RangeMarker> insertionPoints = new ArrayList<RangeMarker>();
-      int idDelta = 0;
-      Document document = editor.getDocument();
-      int caretLine = document.getLineNumber(editor.getCaretModel().getOffset());
-
-      for (int point : editor.getSelectionModel().getBlockSelectionEnds()) {
-        insertionPoints.add(document.createRangeMarker(point, point));
-        if (document.getLineNumber(point) == document.getLineNumber(idEndOffset)) {
-          idDelta = idEndOffset - point;
-        }
-      }
-
-      List<RangeMarker> caretsAfter = new ArrayList<RangeMarker>();
-      for (RangeMarker marker : insertionPoints) {
-        if (marker.isValid()) {
-          int insertionPoint = marker.getStartOffset();
-          context = insertItem(indicator, item, completionChar, items, update, editor, indicator.getParameters().getOriginalFile(),
-                               insertionPoint, idDelta + insertionPoint, indicator.getOffsetMap());
-          int offset = editor.getCaretModel().getOffset();
-          caretsAfter.add(document.createRangeMarker(offset, offset));
-        }
-      }
-      assert context != null;
-
-      restoreBlockSelection(editor, caretsAfter, caretLine);
-
-      for (RangeMarker insertionPoint : insertionPoints) {
-        insertionPoint.dispose();
-      }
-      for (RangeMarker marker : caretsAfter) {
-        marker.dispose();
-      }
-
-    } else if (editor.getCaretModel().supportsMultipleCarets()) {
+    CompletionAssertions.WatchingInsertionContext context;
+    if (editor.getCaretModel().supportsMultipleCarets()) {
       final List<CompletionAssertions.WatchingInsertionContext> contexts = new ArrayList<CompletionAssertions.WatchingInsertionContext>();
       final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
       final PsiFile originalFile = indicator.getParameters().getOriginalFile();
@@ -665,7 +621,7 @@ public class CodeCompletionHandlerBase {
                                                                                     injectedMap);
           contexts.add(currentContext);
         }
-      }, true);
+      });
       context = contexts.get(contexts.size() - 1);
       if (context.shouldAddCompletionChar() && context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -709,29 +665,6 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private static void restoreBlockSelection(Editor editor, List<RangeMarker> caretsAfter, int caretLine) {
-    int column = -1;
-    int minLine = Integer.MAX_VALUE;
-    int maxLine = -1;
-    for (RangeMarker marker : caretsAfter) {
-      if (marker.isValid()) {
-        LogicalPosition lp = editor.offsetToLogicalPosition(marker.getStartOffset());
-        if (column == -1) {
-          column = lp.column;
-        } else if (column != lp.column) {
-          return;
-        }
-        minLine = Math.min(minLine, lp.line);
-        maxLine = Math.max(maxLine, lp.line);
-
-        if (lp.line == caretLine) {
-          editor.getCaretModel().moveToLogicalPosition(lp);
-        }
-      }
-    }
-    editor.getSelectionModel().setBlockSelection(new LogicalPosition(minLine, column), new LogicalPosition(maxLine, column));
-  }
-
   private static CompletionAssertions.WatchingInsertionContext insertItem(final CompletionProgressIndicator indicator,
                                                                           final LookupElement item,
                                                                           final char completionChar,
@@ -772,7 +705,7 @@ public class CodeCompletionHandlerBase {
         if (!editor.getCaretModel().supportsMultipleCarets()) { // done later, outside of this method
           context.stopWatching();
         }
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        EditorModificationUtil.scrollToCaret(editor);
       }
     });
     update.addSparedChars(indicator, item, context, completionChar);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package org.jetbrains.java.decompiler;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.debugger.PositionManager;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -38,11 +37,10 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.awt.*;
 
 public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -64,9 +62,11 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testStubCompatibility() {
+    Registry.get("decompiler.dump.original.lines").setValue(true);
     String path = PlatformTestUtil.getRtJarPath() + "!/java";
     VirtualFile dir = getTestFile(path);
     doTestStubCompatibility(dir);
+    Registry.get("decompiler.dump.original.lines").setValue(false);
   }
 
   private void doTestStubCompatibility(VirtualFile root) {
@@ -76,29 +76,24 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
         if (file.isDirectory()) {
           System.out.println(file.getPath());
         }
-        else if (file.getFileType() == StdFileTypes.CLASS && !file.getName().contains("$") && !skip(file)) {
+        else if (file.getFileType() == StdFileTypes.CLASS && !file.getName().contains("$")) {
           PsiFile clsFile = getPsiManager().findFile(file);
           assertNotNull(file.getPath(), clsFile);
           PsiElement mirror = ((ClsFileImpl)clsFile).getMirror();
           String decompiled = mirror.getText();
           assertTrue(file.getPath(), decompiled.contains(file.getNameWithoutExtension()));
+
+          // check that no mapped line number is on an empty line
+          String prefix = "// ";
+          for (String s : decompiled.split("\n")) {
+            int pos = s.indexOf(prefix);
+            if (pos == 0 && prefix.length() < s.length() && Character.isDigit(s.charAt(prefix.length()))) {
+              fail("Incorrect line mapping in file " + file.getPath() + " line: " + s);
+            }
+          }
         }
         return true;
       }
-
-      private boolean skip(VirtualFile file) {
-        if (!SystemInfo.isJavaVersionAtLeast("1.8")) return false;
-        String path = file.getPath();
-        int p = path.indexOf("!/");
-        return p > 0 && knowProblems.contains(path.substring(p + 2));
-      }
-
-      // todo[r.sh] drop when IDEA-129734 get fixed
-      private final Set<String> knowProblems = ContainerUtil.newHashSet(
-        "java/lang/reflect/AnnotatedElement.class", "java/util/stream/Nodes.class", "java/util/stream/FindOps.class",
-        "java/util/stream/Collectors.class", "java/util/stream/DistinctOps.class", "java/util/stream/IntPipeline.class",
-        "java/util/stream/LongPipeline.class", "java/util/stream/DoublePipeline.class"
-      );
     });
   }
 
@@ -152,13 +147,14 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
       value.setValue(true);
 
       VirtualFile file = getTestFile("LineNumbers.class");
-      assertNull(file.getUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY));
+      assertNull(file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY));
 
       new IdeaDecompiler().getText(file);
 
-      int[] mapping = file.getUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY);
+      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
       assertNotNull(mapping);
-      assertEquals(20, mapping.length);
+      assertEquals(11, mapping.bytecodeToSource(3));
+      assertEquals(23, mapping.bytecodeToSource(13));
     }
     finally {
       value.setValue(old);
@@ -177,6 +173,11 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCancellation() {
+    if (GraphicsEnvironment.isHeadless()) {
+      System.err.println("** skipped in headless env.");
+      return;
+    }
+
     final VirtualFile file = getTestFile(PlatformTestUtil.getRtJarPath() + "!/javax/swing/JTable.class");
 
     final IdeaDecompiler decompiler = (IdeaDecompiler)ClassFileDecompilers.find(file);

@@ -1,8 +1,26 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.message.BasicHeader;
@@ -110,14 +128,30 @@ public class GithubApiUtil {
   @NotNull
   public static String getScopedToken(@NotNull GithubConnection connection, @NotNull Collection<String> scopes, @NotNull String note)
     throws IOException {
-    GithubAuthorization token = findToken(connection, note);
-    if (token == null) {
+    try {
       return getNewScopedToken(connection, scopes, note).getToken();
     }
-    if (token.getScopes().containsAll(scopes)) {
-      return token.getToken();
+    catch (GithubStatusCodeException e) {
+      if (e.getError() != null && e.getError().containsErrorCode("already_exists")) {
+        // with new API we can't reuse old token, so let's just create new one
+        // we need to change note as well, because it should be unique
+
+        List<GithubAuthorization> tokens = getAllTokens(connection);
+
+        for (int i = 1; i < 100; i++) {
+          final String newNote = note + "_" + i;
+          if (ContainerUtil.find(tokens, new Condition<GithubAuthorization>() {
+            @Override
+            public boolean value(GithubAuthorization authorization) {
+              return newNote.equals(authorization.getNote());
+            }
+          }) == null) {
+            return getNewScopedToken(connection, scopes, newNote).getToken();
+          }
+        }
+      }
+      throw e;
     }
-    return updateTokenScopes(connection, token, scopes).getToken();
   }
 
   @NotNull
@@ -157,20 +191,15 @@ public class GithubApiUtil {
     }
   }
 
-  @Nullable
-  private static GithubAuthorization findToken(@NotNull GithubConnection connection, @NotNull String note) throws IOException {
+  @NotNull
+  private static List<GithubAuthorization> getAllTokens(@NotNull GithubConnection connection) throws IOException {
     try {
       String path = "/authorizations";
 
       PagedRequest<GithubAuthorization> request =
         new PagedRequest<GithubAuthorization>(path, GithubAuthorization.class, GithubAuthorizationRaw[].class, ACCEPT_V3_JSON);
 
-      List<GithubAuthorization> tokens = request.getAll(connection);
-
-      for (GithubAuthorization token : tokens) {
-        if (note.equals(token.getNote())) return token;
-      }
-      return null;
+      return request.getAll(connection);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get available tokens");
@@ -469,7 +498,7 @@ public class GithubApiUtil {
                                                    boolean withClosed) throws IOException {
     try {
       String state = withClosed ? "" : " state:open";
-      query = URLEncoder.encode("repo:" + user + "/" + repo + " " + query + state, "UTF-8");
+      query = URLEncoder.encode("repo:" + user + "/" + repo + " " + query + state, CharsetToolkit.UTF8);
       String path = "/search/issues?q=" + query;
 
       //TODO: Use bodyHtml for issues - GitHub does not support this feature for SearchApi yet

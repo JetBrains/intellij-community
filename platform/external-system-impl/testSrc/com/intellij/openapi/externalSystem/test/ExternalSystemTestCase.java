@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.test;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -33,20 +34,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.TestFileSystemItem;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -55,7 +56,9 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -70,7 +73,7 @@ import java.util.jar.Manifest;
  * @since 6/30/2014
  */
 public abstract class ExternalSystemTestCase extends UsefulTestCase {
-  private static File ourTempDir;
+  private File ourTempDir;
 
   protected IdeaProjectTestFixture myTestFixture;
 
@@ -80,6 +83,8 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected VirtualFile myProjectRoot;
   protected VirtualFile myProjectConfig;
   protected List<VirtualFile> myAllConfigs = new ArrayList<VirtualFile>();
+
+  private List<String> myAllowedRoots = new ArrayList<String>();
 
   static {
     IdeaTestCase.initPlatformPrefix();
@@ -117,6 +122,32 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
             }
           }
         });
+      }
+    });
+
+    ArrayList<String> allowedRoots = new ArrayList<String>();
+    collectAllowedRoots(allowedRoots);
+    registerAllowedRoots(allowedRoots, myTestRootDisposable);
+
+    CompilerTestUtil.enableExternalCompiler();
+  }
+
+  protected void collectAllowedRoots(List<String> roots) throws IOException {
+  }
+
+  public void registerAllowedRoots(List<String> roots, @NotNull Disposable disposable) {
+    final List<String> newRoots = new ArrayList<String>(roots);
+    newRoots.removeAll(myAllowedRoots);
+
+    final String[] newRootsArray = ArrayUtil.toStringArray(newRoots);
+    VfsRootAccess.allowRootAccess(newRootsArray);
+    myAllowedRoots.addAll(newRoots);
+
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        VfsRootAccess.disallowRootAccess(newRootsArray);
+        myAllowedRoots.removeAll(newRoots);
       }
     });
   }
@@ -490,10 +521,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         if (advanceStamps) {
-          file.setBinaryContent(content.getBytes("UTF-8"), -1, file.getTimeStamp() + 4000);
+          file.setBinaryContent(content.getBytes(CharsetToolkit.UTF8_CHARSET), -1, file.getTimeStamp() + 4000);
         }
         else {
-          file.setBinaryContent(content.getBytes("UTF-8"), file.getModificationStamp(), file.getTimeStamp());
+          file.setBinaryContent(content.getBytes(CharsetToolkit.UTF8_CHARSET), file.getModificationStamp(), file.getTimeStamp());
         }
       }
     }.execute().getResultObject();

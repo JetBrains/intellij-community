@@ -48,7 +48,7 @@ import java.awt.event.ActionListener;
  */
 public class OpenTaskDialog extends DialogWrapper {
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.SimpleOpenTaskDialog");
-  public static final String START_FROM_BRANCH = "start.from.branch";
+  private static final String START_FROM_BRANCH = "start.from.branch";
 
   private JPanel myPanel;
   @BindControl(value = "clearContext", instant = true)

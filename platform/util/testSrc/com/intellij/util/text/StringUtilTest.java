@@ -130,6 +130,10 @@ public class StringUtilTest extends TestCase {
     assertEquals("Couldn't Connect to Debugger", StringUtil.wordsToBeginFromUpperCase("Couldn't connect to debugger"));
   }
 
+  public void testSentenceCapitalization() {
+    assertEquals("couldn't connect to debugger", StringUtil.wordsToBeginFromLowerCase("Couldn't Connect to Debugger"));
+  }
+
   public void testEscapeStringCharacters() {
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(3, "\\\"\n", "\"", false, new StringBuilder()).toString());
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(2, "\"\n", "\"", false, new StringBuilder()).toString());
@@ -167,6 +171,24 @@ public class StringUtilTest extends TestCase {
     assertEquals("\'\"", StringUtil.unquoteString("\'\""));
     assertEquals("\"\'", StringUtil.unquoteString("\"\'"));
     assertEquals("\"foo\'", StringUtil.unquoteString("\"foo\'"));
+  }
+
+  public void testStripQuotesAroundValue() {
+    assertEquals("", StringUtil.stripQuotesAroundValue(""));
+    assertEquals("", StringUtil.stripQuotesAroundValue("'"));
+    assertEquals("", StringUtil.stripQuotesAroundValue("\""));
+    assertEquals("", StringUtil.stripQuotesAroundValue("''"));
+    assertEquals("", StringUtil.stripQuotesAroundValue("\"\""));
+    assertEquals("", StringUtil.stripQuotesAroundValue("'\""));
+    assertEquals("foo", StringUtil.stripQuotesAroundValue("'foo'"));
+    assertEquals("foo", StringUtil.stripQuotesAroundValue("'foo"));
+    assertEquals("foo", StringUtil.stripQuotesAroundValue("foo'"));
+    assertEquals("f'o'o", StringUtil.stripQuotesAroundValue("'f'o'o'"));
+    assertEquals("f\"o'o", StringUtil.stripQuotesAroundValue("\"f\"o'o'"));
+    assertEquals("f\"o'o", StringUtil.stripQuotesAroundValue("f\"o'o"));
+    assertEquals("\"'f\"o'o\"", StringUtil.stripQuotesAroundValue("\"\"'f\"o'o\"\""));
+    assertEquals("''f\"o'o''", StringUtil.stripQuotesAroundValue("'''f\"o'o'''"));
+    assertEquals("foo' 'bar", StringUtil.stripQuotesAroundValue("foo' 'bar"));
   }
 
   public void testUnqoteWithQuotationChar() {

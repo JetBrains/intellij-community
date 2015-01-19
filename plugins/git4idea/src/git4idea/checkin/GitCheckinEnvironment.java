@@ -99,7 +99,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @Override
   public boolean isRefreshAfterCommitNeeded() {
-    return false;
+    return true;
   }
 
   @Nullable

@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -129,11 +130,41 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
       for (Iterator<Element> iterator = element.getChildren(childTagName).iterator(); iterator.hasNext(); ) {
         Element state = iterator.next();
-        ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(state.getAttributeValue(RUNNER_ID));
+        ProgramRunner runner = findRunner(state.getAttributeValue(RUNNER_ID));
         if (runner == null) {
           iterator.remove();
         }
         add(state, runner, runner == null ? null : createSettings(runner));
+      }
+    }
+
+    private ProgramRunner findRunner(final String runnerId) {
+      List<ProgramRunner> runnersById
+        = ContainerUtil.filter(ProgramRunner.PROGRAM_RUNNER_EP.getExtensions(), new Condition<ProgramRunner>() {
+
+        @Override
+        public boolean value(ProgramRunner runner) {
+          return Comparing.equal(runnerId, runner.getRunnerId());
+        }
+      });
+
+      int runnersByIdCount = runnersById.size();
+      if (runnersByIdCount == 0) {
+        return null;
+      }
+      else if (runnersByIdCount == 1) {
+        return ContainerUtil.getFirstItem(runnersById);
+      }
+      else {
+        LOG.error("More than one runner found for ID: " + runnerId);
+        for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+          for (ProgramRunner runner : runnersById) {
+            if (runner.canRun(executor.getId(), myConfiguration)) {
+              return runner;
+            }
+          }
+        }
+        return null;
       }
     }
 

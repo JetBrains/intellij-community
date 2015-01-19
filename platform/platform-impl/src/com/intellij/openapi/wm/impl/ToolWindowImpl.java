@@ -37,6 +37,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -391,7 +392,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public final void setIcon(final Icon icon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
-    if (oldIcon != icon && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != 13 || icon.getIconWidth() != 13)) {
+    if (oldIcon != icon && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != JBUI.scale(13) || icon.getIconWidth() != JBUI.scale(13))) {
       LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
     }
     getSelectedContent().setIcon(icon);

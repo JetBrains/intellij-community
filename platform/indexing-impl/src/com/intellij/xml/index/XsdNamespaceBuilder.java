@@ -19,6 +19,7 @@ package com.intellij.xml.index;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -96,7 +97,7 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
   }
 
   @Override
-  public int compareTo(XsdNamespaceBuilder o) {
+  public int compareTo(@NotNull XsdNamespaceBuilder o) {
     return Comparing.compare(myNamespace, o.myNamespace);
   }
 

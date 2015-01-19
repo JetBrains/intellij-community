@@ -33,6 +33,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -46,6 +47,9 @@ public class InputVariables {
 
   private ParametersFolder myFolding;
   private boolean myFoldingAvailable;
+
+  private Set<PsiField> myUsedInstanceFields = null;
+  private boolean       myPassFields = false;
 
   public InputVariables(final List<? extends PsiVariable> inputVariables,
                         Project project,
@@ -74,16 +78,25 @@ public class InputVariables {
     return myFolding.isFoldable();
   }
 
+  public void setUsedInstanceFields(Set<PsiField> usedInstanceFields) {
+    myUsedInstanceFields = usedInstanceFields;
+  }
+
+  public void setPassFields(boolean passFields) {
+    if (myUsedInstanceFields == null || myUsedInstanceFields.isEmpty()) {
+      return;
+    }
+    myPassFields = passFields;
+
+    myInputVariables.clear();
+    myInputVariables.addAll(wrapInputVariables(myInitialParameters));
+  }
+
   public ArrayList<VariableData> wrapInputVariables(final List<? extends PsiVariable> inputVariables) {
+    UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     final ArrayList<VariableData> inputData = new ArrayList<VariableData>(inputVariables.size());
     for (PsiVariable var : inputVariables) {
-      String name = var.getName();
-      if (!(var instanceof PsiParameter)) {
-        JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-        VariableKind kind = codeStyleManager.getVariableKind(var);
-        name = codeStyleManager.variableNameToPropertyName(name, kind);
-        name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
-      }
+      String name = nameGenerator.generateUniqueName(getParameterName(var));
       PsiType type = var.getType();
       if (type instanceof PsiEllipsisType) {
         type = ((PsiEllipsisType)type).toArrayType();
@@ -138,7 +151,26 @@ public class InputVariables {
     }
 
 
+    if (myPassFields && myUsedInstanceFields != null) {
+      for (PsiField var : myUsedInstanceFields) {
+        final VariableData data = new VariableData(var, var.getType());
+        data.name = nameGenerator.generateUniqueName(getParameterName(var));
+        data.passAsParameter = true;
+        inputData.add(data);
+      }
+    }
     return inputData;
+  }
+
+  private String getParameterName(PsiVariable var) {
+    String name = var.getName();
+    if (!(var instanceof PsiParameter)) {
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+      VariableKind kind = codeStyleManager.getVariableKind(var);
+      name = codeStyleManager.variableNameToPropertyName(name, kind);
+      name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
+    }
+    return name;
   }
 
   @Nullable
@@ -309,5 +341,9 @@ public class InputVariables {
 
   public boolean isFoldingSelectedByDefault() {
     return myFolding.isFoldingSelectedByDefault();
+  }
+
+  public boolean hasInstanceFields() {
+    return myUsedInstanceFields != null && !myUsedInstanceFields.isEmpty();
   }
 }

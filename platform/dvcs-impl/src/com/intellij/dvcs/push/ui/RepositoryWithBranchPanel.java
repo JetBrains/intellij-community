@@ -153,18 +153,18 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
       myTextRenderer.appendFixedTextFragmentWidth(120);
     }
     else {
-      SingleRepositoryNode singleRepositoryNode = ((SingleRepositoryNode)value);
       myRepositoryCheckbox.setVisible(false);
-      myTextRenderer.setIcon(singleRepositoryNode.getEmptyIcon());
-      myTextRenderer.setIconOnTheRight(false);
-      myTextRenderer.append("");
+      myTextRenderer.append(" ");
     }
     myTextRenderer.append(getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     myTextRenderer.append(getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getVisibleRect().width - bounds.x, bounds.height));
     }
-    myDestPushTargetPanelComponent.requestFocus();
+    if (myTextRenderer.getTree().hasFocus()) {
+      //delegate focus from tree to editable component if needed
+      myDestPushTargetPanelComponent.requestFocus(true);
+    }
     revalidate();
     return this;
   }
@@ -219,11 +219,6 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
 
   public int getLoadingIconAndCheckBoxGapV() {
     return myCheckBoxLoadingIconGapV;
-  }
-
-  public int getVBorderOffset(@NotNull SimpleColoredComponent coloredRenderer) {
-    Border border = coloredRenderer.getMyBorder();
-    return border != null ? border.getBorderInsets(coloredRenderer).top : 0;
   }
 
   public int getCheckBoxHeight() {

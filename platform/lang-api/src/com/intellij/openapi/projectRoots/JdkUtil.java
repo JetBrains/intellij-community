@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -27,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -46,6 +41,9 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+/**
+ * @author max
+ */
 public class JdkUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.JdkUtil");
   private static final String WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper";
@@ -138,6 +136,7 @@ public class JdkUtil {
   public static boolean checkForRuntime(@NotNull String homePath) {
     return new File(homePath, "jre/lib/rt.jar").exists() ||          // JDK
            new File(homePath, "lib/rt.jar").exists() ||              // JRE
+           new File(homePath, "lib/modules").exists() ||             // Jigsaw JDK/JRE
            new File(homePath, "../Classes/classes.jar").exists() ||  // Apple JDK
            new File(homePath, "jre/lib/vm.jar").exists() ||          // IBM JDK
            new File(homePath, "classes").isDirectory();              // custom build
@@ -271,11 +270,8 @@ public class JdkUtil {
     if (encoding == null) {
       Charset charset = javaParameters.getCharset();
       if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
-      if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
-      if (charset != null) {
-        commandLine.addParameter("-Dfile.encoding=" + charset.name());
-        commandLine.withCharset(charset);
-      }
+      commandLine.addParameter("-Dfile.encoding=" + charset.name());
+      commandLine.withCharset(charset);
     }
     else {
       try {

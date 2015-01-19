@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +30,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +61,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
     panel.add(button,
-              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 3, 0, 3), 0, 0));
+              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(0, 3, 0, 3), 0, 0));
     return panel;
   }
 
@@ -115,11 +117,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setHorizontalAlignment(LEFT);
       setFocusable(false);
       Insets margins = getMargin();
-      setMargin(new Insets(margins.top, 2, margins.bottom, 2));
+      setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
-        setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 2));
+        setBorder(JBUI.Borders.empty(0, 2, 0, 2));
         if (!UIUtil.isUnderGTKLookAndFeel()) {
-          setFont(UIUtil.getLabelFont().deriveFont(11.0f));
+          setFont(JBUI.Fonts.label(11));
         }
       }
       addActionListener(
@@ -229,7 +231,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       };
 
       myPopup = createPopup(onDispose);
-      myPopup.show(new RelativePoint(this, new Point(0, getHeight() - 1)));
+      myPopup.show(new RelativePoint(this, new Point(-1, getHeight())));
     }
 
     @Nullable
@@ -244,7 +246,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       DataContext context = getDataContext();
       myDataContext = null;
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        myPopupTitle, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, getMaxRows());
+        myPopupTitle, group, context, false, false, false, onDispose, getMaxRows(), getPreselectCondition());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
       return popup;
     }
@@ -335,16 +337,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Insets getInsets(Insets insets) {
       final Insets result = super.getInsets(insets);
-
-      if (UIUtil.isUnderNimbusLookAndFeel() && !isSmallVariant()) {
-        result.top += 2;
-        result.left += 8;
-        result.bottom += 2;
-        result.right += 4 + ARROW_ICON.getIconWidth();
-      }
-      else {
-        result.right += ARROW_ICON.getIconWidth();
-      }
+      result.right += ARROW_ICON.getIconWidth();
 
       return result;
     }
@@ -357,9 +350,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      int width = isEmpty ? 10 + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
-      if (isSmallVariant()) width += 4;
-      return new Dimension(width, isSmallVariant() ? 19 : UIUtil.isUnderNimbusLookAndFeel() ? 24 : 21);
+      int width = isEmpty ? JBUI.scale(10) + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
+      if (isSmallVariant()) width += JBUI.scale(4);
+      return new Dimension(width, isSmallVariant() ? JBUI.scale(19) : super.getPreferredSize().height);
     }
 
     @Override
@@ -369,7 +362,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public Font getFont() {
-      return SystemInfo.isMac ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont();
+      return SystemInfo.isMac && isSmallVariant() ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont();
     }
 
     @Override
@@ -432,7 +425,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       }
       else {
-        paintComponent(g);
+        super.paint(g);
       }
     }
       final Insets insets = super.getInsets();
@@ -460,4 +453,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setSize(getPreferredSize());
     }
   }
+
+  protected Condition<AnAction> getPreselectCondition() { return null; }
 }

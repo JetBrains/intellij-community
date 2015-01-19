@@ -156,12 +156,11 @@ public class SelectionModelWindow implements SelectionModel {
 
   @Override
   public void removeBlockSelection() {
-    myHostModel.removeBlockSelection();
   }
 
   @Override
   public boolean hasBlockSelection() {
-    return myHostModel.hasBlockSelection();
+    return false;
   }
 
   @Override
@@ -186,24 +185,22 @@ public class SelectionModelWindow implements SelectionModel {
 
   @Override
   public LogicalPosition getBlockStart() {
-    LogicalPosition hostBlock = myHostModel.getBlockStart();
-    return hostBlock == null ? null : myInjectedEditor.hostToInjected(hostBlock);
+    return null;
   }
 
   @Override
   public LogicalPosition getBlockEnd() {
-    LogicalPosition hostBlock = myHostModel.getBlockEnd();
-    return hostBlock == null ? null : myInjectedEditor.hostToInjected(hostBlock);
+    return null;
   }
 
   @Override
   public boolean isBlockSelectionGuarded() {
-    return myHostModel.isBlockSelectionGuarded();
+    return false;
   }
 
   @Override
   public RangeMarker getBlockSelectionGuard() {
-    return myHostModel.getBlockSelectionGuard();
+    return null;
   }
 
   @Override

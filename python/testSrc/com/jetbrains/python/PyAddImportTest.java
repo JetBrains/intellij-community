@@ -53,7 +53,7 @@ public class PyAddImportTest extends PyTestCase {
     new WriteCommandAction(myFixture.getProject(), myFixture.getFile()) {
       @Override
       protected void run(Result result) throws Throwable {
-        AddImportHelper.addImportFrom(myFixture.getFile(), null, path, name, null, AddImportHelper.ImportPriority.BUILTIN, null);
+        AddImportHelper.addOrUpdateFromImportStatement(myFixture.getFile(), path, name, null, AddImportHelper.ImportPriority.BUILTIN, null);
       }
     }.execute();
     myFixture.checkResultByFile("addImport/" + getTestName(true) + ".after.py");

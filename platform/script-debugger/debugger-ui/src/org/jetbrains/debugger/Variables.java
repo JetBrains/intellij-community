@@ -2,12 +2,10 @@ package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncFunction;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.values.Value;
 import org.jetbrains.debugger.values.ValueType;
@@ -26,70 +24,74 @@ public final class Variables {
   };
 
   @NotNull
-  public static Promise<Void> processScopeVariables(@NotNull Scope scope,
+  public static Promise<Void> processScopeVariables(@NotNull final Scope scope,
                                                     @NotNull final XCompositeNode node,
                                                     @NotNull final VariableContext context,
                                                     final boolean isLast) {
-    return scope.getVariables().then(new AsyncFunction<List<Variable>, Void>() {
-      @NotNull
-      @Override
-      public Promise<Void> fun(List<Variable> variables) {
-        if (node.isObsolete()) {
-          return Promise.REJECTED;
+    return context.createMemberFilter()
+      .then(new ValueNodeAsyncFunction<MemberFilter, Void>(node) {
+        @NotNull
+        @Override
+        public Promise<Void> fun(final MemberFilter memberFilter) {
+          return scope.getVariablesHost().get()
+            .then(new ValueNodeAsyncFunction<List<Variable>, Void>(node) {
+              @NotNull
+              @Override
+              public Promise<Void> fun(List<Variable> variables) {
+                Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
+                List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
+                List<Variable> functions = new SmartList<Variable>();
+                for (Variable variable : variables) {
+                  if (memberFilter.isMemberVisible(variable, false)) {
+                    Value value = variable.getValue();
+                    if (value != null &&
+                        value.getType() == ValueType.FUNCTION &&
+                        value.getValueString() != null &&
+                        !UNNAMED_FUNCTION_PATTERN.matcher(value.getValueString()).lookingAt()) {
+                      functions.add(variable);
+                    }
+                    else {
+                      properties.add(variable);
+                    }
+                  }
+                }
+
+                Collections.sort(properties, memberFilter.hasNameMappings() ? new Comparator<Variable>() {
+                  @Override
+                  public int compare(@NotNull Variable o1, @NotNull Variable o2) {
+                    return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
+                  }
+                } : NATURAL_NAME_COMPARATOR);
+                sort(functions);
+
+                addAditionalVariables(variables, additionalVariables, properties, memberFilter);
+
+                if (!properties.isEmpty()) {
+                  node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast);
+                }
+
+                if (!functions.isEmpty()) {
+                  node.addChildren(XValueChildrenList.bottomGroup(new VariablesGroup("Functions", functions, context)), isLast);
+                }
+                else if (isLast && properties.isEmpty()) {
+                  node.addChildren(XValueChildrenList.EMPTY, true);
+                }
+
+                return Promise.DONE;
+              }
+            });
         }
-
-        final MemberFilter memberFilter = context.createMemberFilter();
-        Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
-        List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
-        List<Variable> functions = new SmartList<Variable>();
-        for (Variable variable : variables) {
-          if (memberFilter.isMemberVisible(variable, false)) {
-            Value value = variable.getValue();
-            if (value != null &&
-                value.getType() == ValueType.FUNCTION &&
-                value.getValueString() != null &&
-                !UNNAMED_FUNCTION_PATTERN.matcher(value.getValueString()).lookingAt()) {
-              functions.add(variable);
-            }
-            else {
-              properties.add(variable);
-            }
-          }
-        }
-
-        ContainerUtil.sort(properties, memberFilter.hasNameMappings() ? new Comparator<Variable>() {
-          @Override
-          public int compare(@NotNull Variable o1, @NotNull Variable o2) {
-            return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
-          }
-        } : NATURAL_NAME_COMPARATOR);
-        sort(functions);
-
-        addAditionalVariables(variables, additionalVariables, properties, memberFilter);
-
-        if (!properties.isEmpty()) {
-          node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast);
-        }
-
-        if (!functions.isEmpty()) {
-          node.addChildren(XValueChildrenList.bottomGroup(new VariablesGroup("Functions", functions, context)), isLast);
-        }
-        else if (isLast && properties.isEmpty()) {
-          node.addChildren(XValueChildrenList.EMPTY, true);
-        }
-
-        return Promise.DONE;
-      }
-    });
+      });
   }
 
   @Nullable
   public static List<Variable> sortFilterAndAddValueList(@NotNull List<Variable> variables,
                                                          @NotNull XCompositeNode node,
                                                          @NotNull VariableContext context,
+                                                         @NotNull MemberFilter memberFilter,
                                                          int maxChildrenToAdd,
                                                          boolean defaultIsLast) {
-    List<Variable> list = filterAndSort(variables, context, true);
+    List<Variable> list = filterAndSort(variables, memberFilter, true);
     if (list.isEmpty()) {
       if (defaultIsLast) {
         node.addChildren(XValueChildrenList.EMPTY, true);
@@ -110,12 +112,11 @@ public final class Variables {
   }
 
   @NotNull
-  public static List<Variable> filterAndSort(@NotNull List<Variable> variables, @NotNull VariableContext context, boolean filterFunctions) {
+  public static List<Variable> filterAndSort(@NotNull List<Variable> variables, @NotNull MemberFilter memberFilter, boolean filterFunctions) {
     if (variables.isEmpty()) {
       return Collections.emptyList();
     }
 
-    MemberFilter memberFilter = context.createMemberFilter();
     Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
     List<Variable> result = new ArrayList<Variable>(variables.size() + additionalVariables.size());
     for (Variable variable : variables) {
@@ -144,7 +145,7 @@ public final class Variables {
   }
 
   private static void sort(@NotNull List<Variable> result) {
-    ContainerUtil.sort(result, NATURAL_NAME_COMPARATOR);
+    Collections.sort(result, NATURAL_NAME_COMPARATOR);
   }
 
   // prefixed '_' must be last, fixed case sensitive natural compare

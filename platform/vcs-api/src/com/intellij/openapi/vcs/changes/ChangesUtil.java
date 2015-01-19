@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -79,11 +80,16 @@ public class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
   }
 
-  private static class Adder {
-    private final List<FilePath> myResult = new ArrayList<FilePath>();
-    private final Set<String> myDuplicatesControlSet = new HashSet<String>();
+  /**
+   * TODO: Provide common approach for either case sensitive or case insensitive comparison of File, FilePath, etc. depending on used VCS,
+   * TODO: OS, VCS operation (several hashing and equality strategies seems to be useful here)
+   */
+  @Deprecated
+  public static class CaseSensitiveFilePathList {
+    @NotNull private final List<FilePath> myResult = new ArrayList<FilePath>();
+    @NotNull private final Set<String> myDuplicatesControlSet = new HashSet<String>();
 
-    public void add(final FilePath file) {
+    public void add(@NotNull FilePath file) {
       final String path = file.getIOFile().getAbsolutePath();
       if (! myDuplicatesControlSet.contains(path)) {
         myResult.add(file);
@@ -91,24 +97,42 @@ public class ChangesUtil {
       }
     }
 
+    public void addParents(@NotNull FilePath file, @NotNull Condition<FilePath> condition) {
+      FilePath parent = file.getParentPath();
+
+      if (parent != null && condition.value(parent)) {
+        add(parent);
+        addParents(parent, condition);
+      }
+    }
+
+    @NotNull
     public List<FilePath> getResult() {
       return myResult;
     }
   }
 
-  public static List<FilePath> getPaths(final Collection<Change> changes) {
-    final Adder adder = new Adder();
+  @NotNull
+  public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
+    return getPathsList(changes).getResult();
+  }
+
+  @NotNull
+  public static CaseSensitiveFilePathList getPathsList(@NotNull Collection<Change> changes) {
+    CaseSensitiveFilePathList list = new CaseSensitiveFilePathList();
+
     for (Change change : changes) {
       ContentRevision beforeRevision = change.getBeforeRevision();
       if (beforeRevision != null) {
-        adder.add(beforeRevision.getFile());
+        list.add(beforeRevision.getFile());
       }
       ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
-        adder.add(afterRevision.getFile());
+        list.add(afterRevision.getFile());
       }
     }
-    return adder.getResult();
+
+    return list;
   }
 
   public static List<File> getIoFilesFromChanges(final Collection<Change> changes) {

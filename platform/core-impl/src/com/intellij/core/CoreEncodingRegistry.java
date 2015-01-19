@@ -15,44 +15,8 @@
  */
 package com.intellij.core;
 
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.nio.charset.Charset;
-
 /**
  * @author yole
  */
-public class CoreEncodingRegistry extends EncodingRegistry {
-  @Override
-  public boolean isNative2Ascii(@NotNull VirtualFile virtualFile) {
-    return false;
-  }
-
-  @Override
-  public Charset getDefaultCharset() {
-    return CharsetToolkit.getDefaultSystemCharset();
-  }
-
-  @Override
-  public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
-    return getDefaultCharset();
-  }
-
-  @Override
-  public boolean isUseUTFGuessing(VirtualFile virtualFile) {
-    return true;
-  }
-
-  @Override
-  public void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset) {
-  }
-
-  @Override
-  public boolean isNative2AsciiForPropertiesFiles() {
-    return false;
-  }
+public class CoreEncodingRegistry extends CoreEncodingProjectManager {
 }

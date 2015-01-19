@@ -19,10 +19,9 @@ import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.UIBundle;
 
@@ -100,9 +99,6 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
 
       if (editor != null) {
         if (editor.isViewer()) return;
-        if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
-          return;
-        }
 
         final AnAction pasteAction = ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE);
         AnActionEvent newEvent = new AnActionEvent(e.getInputEvent(),

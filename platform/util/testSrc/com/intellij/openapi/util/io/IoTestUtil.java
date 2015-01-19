@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Locale;
 import java.util.Set;
@@ -36,6 +38,18 @@ import static org.junit.Assert.*;
 
 public class IoTestUtil {
   private IoTestUtil() { }
+
+  @NotNull
+  public static File getTempDirectory() {
+    File dir = new File(FileUtil.getTempDirectory());
+    if (SystemInfo.isWindows && dir.getPath().contains("~")) {
+      try {
+        dir = dir.getCanonicalFile();
+      }
+      catch (IOException ignored) { }
+    }
+    return dir;
+  }
 
   @NotNull
   public static File createSymLink(@NotNull String target, @NotNull String link) throws InterruptedException, IOException {
@@ -151,7 +165,7 @@ public class IoTestUtil {
   private static File getFullLinkPath(String link) {
     File linkFile = new File(FileUtil.toSystemDependentName(link));
     if (!linkFile.isAbsolute()) {
-      linkFile = new File(FileUtil.getTempDirectory(), link);
+      linkFile = new File(getTempDirectory(), link);
     }
     assertTrue(link, !linkFile.exists() || linkFile.delete());
     final File parentDir = linkFile.getParentFile();
@@ -160,18 +174,23 @@ public class IoTestUtil {
   }
 
   private static String getJunctionExePath() throws IOException, InterruptedException {
-    final URL url = IoTestUtil.class.getClassLoader().getResource("junction.exe");
-    assertNotNull(url);
+    try {
+      URL url = IoTestUtil.class.getClassLoader().getResource("junction.exe");
+      assertNotNull(url);
 
-    final String path = url.getFile();
-    final File util = new File(path);
-    assertTrue(util.exists());
+      File util = new File(url.toURI());
+      String path = util.getPath();
+      assertTrue(path, util.exists());
 
-    final ProcessBuilder command = new ProcessBuilder(path, "/acceptEULA");
-    final int res = runCommand(command);
-    assertEquals(command.command().toString(), -1, res);
+      ProcessBuilder command = new ProcessBuilder(path, "/acceptEULA");
+      int res = runCommand(command);
+      assertEquals(command.command().toString(), -1, res);
 
-    return path;
+      return path;
+    }
+    catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
   }
 
   private static int runCommand(final ProcessBuilder command) throws IOException, InterruptedException {
@@ -228,7 +247,7 @@ public class IoTestUtil {
     try {
       for (int i = 0; i < data.length; i += 2) {
         stream.putNextEntry(new ZipEntry(data[i]));
-        stream.write(data[i + 1].getBytes("UTF-8"));
+        stream.write(data[i + 1].getBytes(CharsetToolkit.UTF8_CHARSET));
         stream.closeEntry();
       }
     }
@@ -268,7 +287,7 @@ public class IoTestUtil {
 
   @NotNull
   public static File createTestDir(@NotNull String name) {
-    return createTestDir(new File(FileUtil.getTempDirectory()), name);
+    return createTestDir(getTempDirectory(), name);
   }
 
   @NotNull
@@ -285,7 +304,7 @@ public class IoTestUtil {
 
   @NotNull
   public static File createTestFile(@NotNull String name, @Nullable String content) throws IOException {
-    return createTestFile(new File(FileUtil.getTempDirectory()), name, content);
+    return createTestFile(getTempDirectory(), name, content);
   }
 
   @NotNull

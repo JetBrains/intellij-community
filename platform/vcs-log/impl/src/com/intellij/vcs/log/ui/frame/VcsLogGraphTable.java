@@ -39,6 +39,8 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.ColorGenerator;
 import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.graph.RowInfo;
+import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphMouseAction;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
@@ -103,7 +105,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myUI = UI;
     myLogDataHolder = logDataHolder;
     myDataPack = initialDataPack;
-    myGraphCommitCellRender = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, myDataPack.getVisibleGraph(), this);
+    myGraphCommitCellRender =
+      new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, myDataPack.getVisibleGraph(), this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
@@ -213,7 +216,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     if (column == GraphTableModel.ROOT_COLUMN) {
       Object at = getValueAt(row, column);
       if (at instanceof VirtualFile) {
-        return "<html><b>" + ((VirtualFile)at).getPresentableUrl() + "</b><br/>Click to " + (myUI.isShowRootNames() ? "collapse" : "expand") + "</html>";
+        return "<html><b>" +
+               ((VirtualFile)at).getPresentableUrl() +
+               "</b><br/>Click to " +
+               (myUI.isShowRootNames() ? "collapse" : "expand") +
+               "</html>";
       }
     }
     return null;
@@ -316,16 +323,17 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   public void applyHighlighters(@NotNull Component rendererComponent, int row, boolean selected) {
+    RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
     boolean fgUpdated = false;
     for (VcsLogHighlighter highlighter : myHighlighters) {
-      Color color = highlighter.getForeground(myDataPack.getVisibleGraph().getRowInfo(row).getCommit(), selected);
+      Color color = highlighter.getForeground(rowInfo.getCommit(), selected);
       if (color != null) {
         rendererComponent.setForeground(color);
         fgUpdated = true;
       }
     }
     if (!fgUpdated) { // reset highlighting if no-one wants to change it
-      rendererComponent.setForeground(UIUtil.getTableForeground(selected));
+      rendererComponent.setForeground(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : UIUtil.getTableForeground(selected));
     }
   }
 
@@ -336,13 +344,14 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         TableModel model = getModel();
         if (model instanceof AbstractTableModel) {
           Couple<Integer> visibleRows = TableScrollingUtil.getVisibleRows(VcsLogGraphTable.this);
-          ((AbstractTableModel)model).fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
+          ((AbstractTableModel)model)
+            .fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
         }
       }
     });
   }
 
-  private boolean expandOrCollapseRoots(MouseEvent e) {
+  private boolean expandOrCollapseRoots(@NotNull MouseEvent e) {
     TableColumn column = getRootColumnOrNull(e);
     if (column != null) {
       myUI.setShowRootNames(!myUI.isShowRootNames());
@@ -357,7 +366,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   @Nullable
-  private TableColumn getRootColumnOrNull(MouseEvent e) {
+  private TableColumn getRootColumnOrNull(@NotNull MouseEvent e) {
     if (!myLogDataHolder.isMultiRoot()) return null;
     int column = convertColumnIndexToModel(columnAtPoint(e.getPoint()));
     if (column == GraphTableModel.ROOT_COLUMN) {
@@ -372,7 +381,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       @NotNull
       @Override
       public Color produce() {
-        return ColorUtil.mix(rootColor, UIUtil.getTableBackground(), 1 - (50.0 / 255));
+        return ColorUtil.mix(rootColor, UIUtil.getTableBackground(), 0.75);
       }
     });
   }
@@ -412,8 +421,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         return;
       }
 
-      if (e.getClickCount() == 1) {
-        if (expandOrCollapseRoots(e)) return;
+      if (e.getClickCount() == 1 && !expandOrCollapseRoots(e)) {
         performAction(e, MyGraphMouseAction.Type.CLICK);
       }
     }
@@ -437,8 +445,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       Collection<PrintElement> printElements = myDataPack.getVisibleGraph().getRowInfo(row).getPrintElements();
       PrintElement printElement = myGraphCellPainter.mouseOver(printElements, point.x, point.y);
 
-      GraphAnswer<Integer> answer = myDataPack.getVisibleGraph().getActionController().performMouseAction(
-        new MyGraphMouseAction(printElement, actionType));
+      GraphAnswer<Integer> answer =
+        myDataPack.getVisibleGraph().getActionController().performMouseAction(new MyGraphMouseAction(printElement, actionType));
       myUI.handleAnswer(answer, actionType == MyGraphMouseAction.Type.CLICK && printElement != null);
     }
 
@@ -500,8 +508,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     @NotNull private Color myColor = UIUtil.getTableBackground();
     @NotNull private Color myBorderColor = UIUtil.getTableBackground();
     private boolean isNarrow = true;
-    @NotNull
-    private TableCellRenderer myRenderer = new DefaultTableCellRenderer();
+    @NotNull private TableCellRenderer myRenderer = new DefaultTableCellRenderer();
 
     RootCellRenderer(@NotNull VcsLogUiImpl ui) {
       super("", CENTER);
@@ -519,7 +526,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         g.fillRect(0, 0, width - ROOT_INDICATOR_WHITE_WIDTH, HEIGHT_CELL);
         g.setColor(myBorderColor);
         g.fillRect(width - ROOT_INDICATOR_WHITE_WIDTH, 0, ROOT_INDICATOR_WHITE_WIDTH, HEIGHT_CELL);
-      } else {
+      }
+      else {
         g.fillRect(0, 0, width, HEIGHT_CELL);
       }
 
@@ -536,9 +544,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         int readableRow = TableScrollingUtil.getReadableRow(table, Math.round(HEIGHT_CELL * 0.5f));
         if (row < readableRow) {
           text = "";
-        } else if (row == 0 || !value.equals(table.getModel().getValueAt(row - 1, column)) || readableRow == row) {
+        }
+        else if (row == 0 || !value.equals(table.getModel().getValueAt(row - 1, column)) || readableRow == row) {
           text = root.getName();
-        } else {
+        }
+        else {
           text = "";
         }
         color = getRootBackgroundColor(root, myUi.getColorManager());

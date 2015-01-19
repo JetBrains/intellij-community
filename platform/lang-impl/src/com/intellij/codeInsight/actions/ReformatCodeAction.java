@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -57,7 +56,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -81,7 +79,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     PsiFile file = null;
-    final PsiDirectory dir;
+    PsiDirectory dir = null;
     boolean hasSelection = false;
 
     if (editor != null){
@@ -105,25 +103,25 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
           processor = new OptimizeImportsProcessor(processor);
         }
         if (selectedFlags.isRearrangeEntries()) {
-          processor = new RearrangeCodeProcessor(processor, null);
+          processor = new RearrangeCodeProcessor(processor);
         }
 
         processor.run();
       }
       return;
     }
-    else {
-      Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
+    else if (PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) != null || LangDataKeys.MODULE_CONTEXT.getData(dataContext) != null) {
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
-
-      if (projectContext != null || moduleContext != null) {
-        ReformatFilesOptions selectedFlags = getLayoutProjectOptions(project, moduleContext); // module menu - only 2 options available
-        if (selectedFlags != null) {
-          reformatModule(project, moduleContext, selectedFlags);
-        }
-        return;
+      ReformatFilesOptions selectedFlags = getLayoutProjectOptions(project, moduleContext);
+      if (selectedFlags != null) {
+        reformatModule(project, moduleContext, selectedFlags);
       }
-
+      return;
+    }
+    else if (files != null && files.length == 1) {
+      file = PsiManager.getInstance(project).findFile(files[0]);
+    }
+    else {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) return;
       if (element instanceof PsiDirectoryContainer) {
@@ -146,14 +144,16 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     final boolean showDialog = EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
 
-    if (file == null && dir != null) {
+    if (file == null && dir == null) return;
+    if (file == null) {
       DirectoryFormattingOptions options = getDirectoryFormattingOptions(project, dir);
       if (options != null) {
         reformatDirectory(project, dir, options);
       }
       return;
     }
-    else if (showDialog) {
+
+    if (showDialog) {
       LayoutCodeOptions selectedFlags = getLayoutCodeOptions(project, file, dir, hasSelection);
       if (selectedFlags == null)
         return;
@@ -170,8 +170,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
     }
 
-    if (file == null) return;
-
     if (!showDialog && processChangedTextOnly && isChangeNotTrackedForFile(project, file)) {
       processChangedTextOnly = false;
     }
@@ -185,20 +183,25 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       range = null;
     }
 
+    AbstractLayoutCodeProcessor processor;
     if (optimizeImports && range == null) {
-      new OptimizeImportsProcessor(new ReformatCodeProcessor(project, file, null, processChangedTextOnly)).run();
+      processor = new OptimizeImportsProcessor(project, file);
+      processor = new ReformatCodeProcessor(processor, processChangedTextOnly);
     }
     else {
-      new ReformatCodeProcessor(project, file, range, !processSelectedText && processChangedTextOnly).run();
+      processor = new ReformatCodeProcessor(project, file, range, !processSelectedText && processChangedTextOnly);
     }
 
-    if (rearrangeEntries && editor != null) {
-      SelectionModel selectionModel = editor.getSelectionModel();
-      final TextRange rangeToUse = selectionModel.hasSelection()
-                                   ? TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
-                                   : TextRange.create(0, editor.getDocument().getTextLength());
-      new RearrangeCodeProcessor(project, file, Collections.singleton(rangeToUse)).run();
+    if (rearrangeEntries) {
+      if (processSelectedText && editor != null) {
+        processor = new RearrangeCodeProcessor(processor, editor.getSelectionModel());
+      }
+      else {
+        processor = new RearrangeCodeProcessor(processor);
+      }
     }
+
+    processor.run();
   }
 
   private static boolean isChangeNotTrackedForFile(@NotNull Project project, @NotNull PsiFile file) {
@@ -251,7 +254,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processor = new OptimizeImportsProcessor(processor);
     }
     if (options.isRearrangeEntries()) {
-      processor = new RearrangeCodeProcessor(processor, null);
+      processor = new RearrangeCodeProcessor(processor);
     }
 
     processor.run();
@@ -278,7 +281,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     if (selectedFlags.isRearrangeEntries()) {
-      processor = new RearrangeCodeProcessor(processor, null);
+      processor = new RearrangeCodeProcessor(processor);
     }
 
     processor.run();

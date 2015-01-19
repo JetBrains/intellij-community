@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -57,7 +56,7 @@ import java.util.*;
 /**
  * Created by Max Medvedev on 9/20/13
  */
-public abstract class GroovyShellActionBase extends DumbAwareAction {
+public abstract class GroovyShellActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance(GroovyShellActionBase.class);
 
   public static final String GROOVY_SHELL_EXECUTE = "Groovy.Shell.Execute";

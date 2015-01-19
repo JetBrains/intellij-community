@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -123,6 +122,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   protected static long getTimeRequired() {
     return DEFAULT_TEST_TIME;
+  }
+
+  /**
+   * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
+   * Ensure they're removed
+   */
+  public static void synchronizeTempDirVfs(VirtualFile tempDir) {
+    tempDir.getChildren();
+    tempDir.refresh(false, true);
   }
 
   @Nullable
@@ -353,7 +361,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       localFileSystem.cleanupForNextTest();
     }
 
-    LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
   }
 
   private static Set<VirtualFile> eternallyLivingFiles() {
@@ -783,7 +790,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return file;
   }
 
-  public static void setContentOnDisk(File file, byte[] bom, String content, Charset charset) throws IOException {
+  public static void setContentOnDisk(@NotNull File file, byte[] bom, @NotNull String content, @NotNull Charset charset) throws IOException {
     FileOutputStream stream = new FileOutputStream(file);
     if (bom != null) {
       stream.write(bom);
@@ -797,7 +804,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  public static VirtualFile createTempFile(@NonNls String ext, @Nullable byte[] bom, @NonNls String content, Charset charset) throws IOException {
+  public static VirtualFile createTempFile(@NonNls @NotNull String ext, @Nullable byte[] bom, @NonNls @NotNull String content, @NotNull Charset charset) throws IOException {
     File temp = FileUtil.createTempFile("copy", "." + ext);
     setContentOnDisk(temp, bom, content, charset);
 

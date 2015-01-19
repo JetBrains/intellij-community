@@ -15,8 +15,6 @@
  */
 package com.intellij.ui;
 
-
-
 import com.intellij.ui.components.JBScrollPane;
 import org.intellij.lang.annotations.MagicConstant;
 
@@ -63,10 +61,18 @@ public class ScrollPaneFactory implements ScrollPaneConstants {
     return scrollPane;
   }
 
+  /**
+   * Creates a {@link JScrollPane} object for the specified {@code view} and initializes its border.
+   *
+   * @param view    the component to display in a {@code JScrollPane}'s viewport
+   * @param borders the {@link SideBorder}'s flags, which define a {@code JScrollPane}'s border
+   * @return new {@code JScrollPane} object
+   *
+   * @see IdeBorderFactory#createBorder(int)
+   */
   public static JScrollPane createScrollPane(Component view, @MagicConstant(flagsFromClass = SideBorder.class) int borders) {
     JBScrollPane scrollPane = new JBScrollPane(view);
     scrollPane.setBorder(IdeBorderFactory.createBorder(borders));
     return scrollPane;
-
   }
 }

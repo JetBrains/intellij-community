@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -58,7 +59,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
   private final int myCaretOffset;
 
-  protected IdentifierHighlighterPass(final Project project, final PsiFile file, final Editor editor) {
+  protected IdentifierHighlighterPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument(), false);
     myFile = file;
     myEditor = editor;
@@ -85,15 +86,19 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
 
     int flags = TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED;
-    PsiElement myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor, flags, myCaretOffset);
+    PsiElement myTarget;
+    try {
+      myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor, flags, myCaretOffset);
+    }
+    catch (IndexNotReadyException e) {
+      return;
+    }
     
     if (myTarget == null) {
       if (!PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         // when document is committed, try to check injected stuff - it's fast
         Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
-        if (injectedEditor != null) {
-          myTarget = TargetElementUtilBase.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset()); 
-        }
+        myTarget = TargetElementUtilBase.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset());
       }
     }
     

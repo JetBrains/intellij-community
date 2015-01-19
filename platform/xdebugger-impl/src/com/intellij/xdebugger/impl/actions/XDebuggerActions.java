@@ -41,6 +41,7 @@ public interface XDebuggerActions {
   @NonNls String JUMP_TO_TYPE_SOURCE = "XDebugger.JumpToTypeSource";
 
   @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
+  @NonNls String QUICK_EVALUATE_EXPRESSION = "QuickEvaluateExpression";
 
   @NonNls String TOOL_WINDOW_TOP_TOOLBAR_GROUP = "XDebugger.ToolWindow.TopToolbar";
   @NonNls String TOOL_WINDOW_LEFT_TOOLBAR_GROUP = "XDebugger.ToolWindow.LeftToolbar";

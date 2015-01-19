@@ -234,7 +234,7 @@ public class SingleRowLayout extends TabLayout {
     }
   }
 
-  private void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
+  protected void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
     if (data.firstGhostVisible || myTabs.isGhostsAlwaysVisible()) {
       data.firstGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
       myTabs.layout(myLeftGhost, data.firstGhost);

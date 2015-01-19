@@ -130,29 +130,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
       }
     }
     else {
-      if (myEditor.getSelectionModel().hasBlockSelection()) {
-        final LogicalPosition start = myEditor.getSelectionModel().getBlockStart();
-        final LogicalPosition end = myEditor.getSelectionModel().getBlockEnd();
-
-        assert start != null;
-        assert end != null;
-
-        int startColumn = Math.min(start.column, end.column);
-        int endColumn = Math.max(start.column, end.column);
-        int startLine = Math.min(start.line, end.line);
-        int endLine = Math.max(start.line, end.line);
-
-        for (int i = startLine; i <= endLine; i++) {
-          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, endColumn));
-          EditorModificationUtil.insertStringAtCaret(editor, suffix, true, true);
-        }
-
-        for (int i = startLine; i <= endLine; i++) {
-          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, startColumn));
-          EditorModificationUtil.insertStringAtCaret(editor, prefix, true, true);
-        }
-      }
-      else if (myCaret.hasSelection()) {
+      if (myCaret.hasSelection()) {
         int selectionStart = myCaret.getSelectionStart();
         int selectionEnd = myCaret.getSelectionEnd();
         if (commenter instanceof IndentedCommenter) {

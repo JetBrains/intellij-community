@@ -43,6 +43,7 @@ public class ElementToWorkOn {
   public static final Key<String> PREFIX = Key.create("prefix");
   public static final Key<String> SUFFIX = Key.create("suffix");
   public static final Key<RangeMarker> TEXT_RANGE = Key.create("range");
+  public static final Key<Boolean> REPLACE_NON_PHYSICAL = Key.create("replace_non_physical");
   public static final Key<Boolean> OUT_OF_CODE_BLOCK= Key.create("out_of_code_block");
 
   private ElementToWorkOn(PsiLocalVariable localVariable, PsiExpression expr) {
@@ -111,7 +112,7 @@ public class ElementToWorkOn {
           if (expressions.isEmpty()) {
             editor.getSelectionModel().selectLineAtCaret();
           }
-          else if (expressions.size() == 1) {
+          else if (!IntroduceVariableBase.isChooserNeeded(expressions)) {
             expr = expressions.get(0);
           }
           else {
@@ -171,21 +172,22 @@ public class ElementToWorkOn {
       expr = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
     }
 
-    if (localVar == null) {
-      if (expr != null) {
-        final String errorMessage = IntroduceVariableBase.getErrorMessage(expr);
-        if (errorMessage != null) {
-          CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, refactoringName, helpId);
-          return null;
-        }
-      }
-      if (expr == null) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId);
+    if (localVar == null && expr != null) {
+      final String errorMessage = IntroduceVariableBase.getErrorMessage(expr);
+      if (errorMessage != null) {
+        CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, refactoringName, helpId);
         return null;
       }
     }
     return new ElementToWorkOn(localVar, expr);
+  }
+
+  public static void showNothingSelectedErrorMessage(final Editor editor,
+                                                     final String refactoringName,
+                                                     final String helpId,
+                                                     final Project project) {
+    String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+    CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId);
   }
   
   public interface ElementsProcessor<T> {

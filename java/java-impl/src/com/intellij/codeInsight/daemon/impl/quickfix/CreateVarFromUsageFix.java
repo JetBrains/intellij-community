@@ -28,6 +28,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
+import org.jetbrains.annotations.Nls;
 
 public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
   protected final PsiReferenceExpression myReferenceExpression;
@@ -74,5 +75,6 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
     return false;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   protected abstract String getText(String varName);
 }

@@ -478,6 +478,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           tabActions[j] = new DumbAwareAction(tabs.get(index).first) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
+              myManager.setSelectedContent(content);
               ((TabbedContent)content).selectContent(index);
             }
           };

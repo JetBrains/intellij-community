@@ -32,7 +32,7 @@ public class GroovyExpressionPattern<T extends GrExpression, Self extends Groovy
     return with(new PatternCondition<T>("ofType") {
       @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-        return pattern.getCondition().accepts(t.getType(), context);
+        return pattern.accepts(t.getType(), context);
       }
     });
   }

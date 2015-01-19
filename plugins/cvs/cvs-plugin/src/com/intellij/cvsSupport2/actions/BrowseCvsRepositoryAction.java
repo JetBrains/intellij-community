@@ -99,7 +99,6 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
       });
       tabbedWindow.addTab(TITLE, browserPanel,
                           true, true, true, true, browserPanel.getActionGroup(), "cvs.browse");
-      tabbedWindow.ensureVisible(project);
     }
   }
 

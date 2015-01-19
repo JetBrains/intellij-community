@@ -74,18 +74,13 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
 
   private <T> void applyConfigValueToUserData(VirtualFile file, Key<T> userDataKey, String editorConfigKey,
                                               String configValue, Map<String, T> configMap) {
-    if (configValue.isEmpty()) {
-      file.putUserData(userDataKey, null);
-    }
-    else {
-      final T data = configMap.get(configValue);
-      if (data == null) {
-        Utils.invalidConfigMessage(myProject, configValue, editorConfigKey, file.getCanonicalPath());
-      }
-      else {
-        file.putUserData(userDataKey, data);
-        Utils.appliedConfigMessage(myProject, configValue, editorConfigKey, file.getCanonicalPath());
-      }
+    if (configValue.isEmpty()) return;
+
+    final T data = configMap.get(configValue);
+    if (data == null) {
+      Utils.invalidConfigMessage(myProject, configValue, editorConfigKey, file.getCanonicalPath());
+    } else {
+      file.putUserData(userDataKey, data);
     }
   }
 }

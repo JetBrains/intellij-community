@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -47,6 +49,7 @@ import java.util.Set;
  */
 public class FSOperations {
   public static final GlobalContextKey<Set<File>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
+  private static final GlobalContextKey<Set<BuildTarget<?>>> TARGETS_COMPLETELY_MARKED_DIRTY = GlobalContextKey.create("_targets_completely_marked_dirty_");
 
   /**
    * @param context
@@ -121,13 +124,17 @@ public class FSOperations {
   }
 
   /**
-   * @deprecated use markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk)
+   * @deprecated use markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk, FileFilter filter)
    */
   public static void markDirtyRecursively(CompileContext context, ModuleChunk chunk) throws IOException {
     markDirtyRecursively(context, CompilationRound.NEXT, chunk);
   }
 
   public static void markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk) throws IOException {
+    markDirtyRecursively(context, round, chunk, null);
+  }
+
+  public static void markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
     Set<JpsModule> modules = chunk.getModules();
     Set<ModuleBuildTarget> targets = chunk.getTargets();
     final Set<ModuleBuildTarget> dirtyTargets = new HashSet<ModuleBuildTarget>(targets);
@@ -145,7 +152,7 @@ public class FSOperations {
         for (final BuildTarget<?> target : targetChunk.getTargets()) {
           if (target instanceof ModuleBuildTarget) {
             final Set<JpsModule> deps = getDependentModulesRecursively(((ModuleBuildTarget)target).getModule(), classpathKind);
-            if (Utils.intersects(deps, modules)) {
+            if (ContainerUtil.intersects(deps, modules)) {
               for (BuildTarget<?> buildTarget : targetChunk.getTargets()) {
                 if (buildTarget instanceof ModuleBuildTarget) {
                   dirtyTargets.add((ModuleBuildTarget)buildTarget);
@@ -158,9 +165,11 @@ public class FSOperations {
       }
     }
 
+    removeTargetsAlreadyMarkedDirty(context, dirtyTargets);
+
     final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
     for (ModuleBuildTarget target : dirtyTargets) {
-      markDirtyFiles(context, target, round, timestamps, true, null, null);
+      markDirtyFiles(context, target, round, timestamps, true, null, filter);
     }
 
     if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
@@ -192,6 +201,10 @@ public class FSOperations {
                              boolean forceMarkDirty,
                              @Nullable THashSet<File> currentFiles,
                              @Nullable FileFilter filter) throws IOException {
+    if (filter == null && forceMarkDirty) {
+      addCompletelyMarkedDirtyTarget(context, target);
+    }
+
     for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
       if (!rd.getRootFile().exists() ||
           //temp roots are managed by compilers themselves
@@ -271,6 +284,26 @@ public class FSOperations {
       }
       toDelete = additionalDirs;
       additionalDirs = null;
+    }
+  }
+
+  private static void addCompletelyMarkedDirtyTarget(CompileContext context, BuildTarget<?> target) {
+    synchronized (TARGETS_COMPLETELY_MARKED_DIRTY) {
+      Set<BuildTarget<?>> targetsCompletelyMarkedDirty = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
+      if (targetsCompletelyMarkedDirty == null) {
+        targetsCompletelyMarkedDirty = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
+        TARGETS_COMPLETELY_MARKED_DIRTY.set(context, targetsCompletelyMarkedDirty);
+      }
+      targetsCompletelyMarkedDirty.add(target);
+    }
+  }
+
+  private static void removeTargetsAlreadyMarkedDirty(CompileContext context, Set<ModuleBuildTarget> targetsSetToFilter) {
+    synchronized (TARGETS_COMPLETELY_MARKED_DIRTY) {
+      Set<BuildTarget<?>> targetsCompletelyMarkedDirty = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
+      if (targetsCompletelyMarkedDirty != null) {
+        targetsSetToFilter.removeAll(targetsCompletelyMarkedDirty);
+      }
     }
   }
 }

@@ -19,12 +19,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.MockDocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Base class for {@link EditorActionHandler} instances, which need to modify the document.
+ * Implementations should override {@link #executeWriteAction(Editor, Caret, DataContext)}.
+ */
 public abstract class EditorWriteActionHandler extends EditorActionHandler {
   private boolean inExecution;
 
@@ -36,7 +38,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public final void doExecute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
+  public void doExecute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
     if (editor.isViewer()) return;
 
     if (dataContext != null) {
@@ -48,16 +50,6 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
       @Override
       public void run() {
         final Document doc = editor.getDocument();
-        final SelectionModel selectionModel = editor.getSelectionModel();
-        if (selectionModel.hasBlockSelection()) {
-          RangeMarker guard = selectionModel.getBlockSelectionGuard();
-          if (guard != null) {
-            DocumentEvent evt = new MockDocumentEvent(editor.getDocument(), editor.getCaretModel().getOffset());
-            ReadOnlyFragmentModificationException e = new ReadOnlyFragmentModificationException(evt, guard);
-            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-            return;
-          }
-        }
 
         doc.startGuardedBlockChecking();
         try {
@@ -75,7 +67,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
 
   /**
    * @deprecated Use/override
-   * {@link #executeWriteAction(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+   * {@link #executeWriteAction(Editor, Caret, DataContext)}
    * instead.
    */
   public void executeWriteAction(Editor editor, DataContext dataContext) {

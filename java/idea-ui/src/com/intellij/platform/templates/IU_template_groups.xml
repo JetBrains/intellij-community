@@ -1,4 +1,4 @@
-<template-groups xmlns="http://www.jetbrains.com/projectTemplates">
+<template-groups xmlns="https://www.jetbrains.com/projectTemplates">
   <group>
     <name>Java Samples</name>
     <path>Java</path>

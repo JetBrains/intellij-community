@@ -3,7 +3,7 @@ Properties file:Comments.properties
   PsiWhiteSpace('\n')
   PropertiesList
     Property:xx
-      PsiElement(Properties:KEY_CHARACTERS)('xx')
+      Property key: xx('xx')
       PsiElement(Properties:KEY_VALUE_SEPARATOR)('=')
       Property value: yyy('yyy')
   PsiWhiteSpace('\n')

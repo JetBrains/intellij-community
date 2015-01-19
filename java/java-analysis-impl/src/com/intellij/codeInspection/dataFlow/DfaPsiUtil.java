@@ -121,7 +121,7 @@ public class DfaPsiUtil {
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
-        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(body) {
+        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, false) {
           boolean shouldCheck;
 
           @Override

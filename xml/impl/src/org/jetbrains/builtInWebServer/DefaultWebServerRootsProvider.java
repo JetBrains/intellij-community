@@ -20,17 +20,45 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
+  private static final NotNullLazyValue<OrderRootType[]> ORDER_ROOT_TYPES = new NotNullLazyValue<OrderRootType[]>() {
+    @NotNull
+    @Override
+    protected OrderRootType[] compute() {
+      OrderRootType javaDocRootType;
+      try {
+        javaDocRootType = JavadocOrderRootType.getInstance();
+      }
+      catch (Throwable e) {
+        javaDocRootType = null;
+      }
+
+      return javaDocRootType == null
+             ? new OrderRootType[]{OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES}
+             : new OrderRootType[]{javaDocRootType, OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES};
+    }
+  };
+
   @Nullable
   @Override
   public PathInfo resolve(@NotNull String path, @NotNull Project project) {
@@ -53,9 +81,12 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
           resolver = WebServerPathToFileManager.getInstance(project).getResolver(path);
 
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-          PathInfo result = resolve(path, moduleRootManager.getSourceRoots(), resolver, moduleName);
+          PathInfo result = findByRelativePath(path, moduleRootManager.getSourceRoots(), resolver, moduleName);
           if (result == null) {
-            result = resolve(path, moduleRootManager.getContentRoots(), resolver, moduleName);
+            result = findByRelativePath(path, moduleRootManager.getContentRoots(), resolver, moduleName);
+            if (result == null) {
+              result = findInModuleLibraries(path, module, resolver);
+            }
           }
           if (result != null) {
             return result;
@@ -77,45 +108,136 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
     PathInfo result = findByRelativePath(project, path, modules, true, resolver);
     if (result == null) {
       // let's find in content roots
-      return findByRelativePath(project, path, modules, false, resolver);
+      result = findByRelativePath(project, path, modules, false, resolver);
+      if (result == null) {
+        return findInLibraries(project, modules, path, resolver);
+      }
     }
-    else {
-      return result;
+    return result;
+  }
+
+  @Nullable
+  private static PathInfo findInModuleLibraries(@NotNull String path, @NotNull Module module, @NotNull PairFunction<String, VirtualFile, VirtualFile> resolver) {
+    int index = path.indexOf('/');
+    if (index <= 0) {
+      return null;
     }
+
+    Ref<PathInfo> result = Ref.create();
+    findInModuleLibraries(resolver, path.substring(0, index), path.substring(index + 1), result, module);
+    return result.get();
+  }
+
+  @Nullable
+  private static PathInfo findInLibraries(@NotNull Project project,
+                                          @NotNull Module[] modules,
+                                          @NotNull String path,
+                                          @NotNull PairFunction<String, VirtualFile, VirtualFile> resolver) {
+    int index = path.indexOf('/');
+    if (index < 0) {
+      return null;
+    }
+
+    String libraryFileName = path.substring(0, index);
+    String relativePath = path.substring(index + 1);
+    AccessToken token = ReadAction.start();
+    try {
+      Ref<PathInfo> result = Ref.create();
+      for (Module module : modules) {
+        if (!module.isDisposed()) {
+          if (findInModuleLibraries(resolver, libraryFileName, relativePath, result, module)) {
+            return result.get();
+          }
+        }
+      }
+
+      for (Library library : LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
+        PathInfo pathInfo = findInLibrary(libraryFileName, relativePath, library, resolver);
+        if (pathInfo != null) {
+          return pathInfo;
+        }
+      }
+    }
+    finally {
+      token.finish();
+    }
+
+    return null;
+  }
+
+  private static boolean findInModuleLibraries(@NotNull final PairFunction<String, VirtualFile, VirtualFile> resolver,
+                                               @NotNull final String libraryFileName,
+                                               @NotNull final String relativePath,
+                                               @NotNull final Ref<PathInfo> result,
+                                               @NotNull Module module) {
+    ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(new Processor<Library>() {
+      @Override
+      public boolean process(Library library) {
+        result.set(findInLibrary(libraryFileName, relativePath, library, resolver));
+        return result.isNull();
+      }
+    });
+    return !result.isNull();
+  }
+
+  @Nullable
+  private static PathInfo findInLibrary(@NotNull String libraryFileName,
+                                        @NotNull String relativePath,
+                                        @NotNull Library library,
+                                        @NotNull PairFunction<String, VirtualFile, VirtualFile> resolver) {
+    for (OrderRootType rootType : ORDER_ROOT_TYPES.getValue()) {
+      for (VirtualFile root : library.getFiles(rootType)) {
+        if (StringUtil.equalsIgnoreCase(root.getNameSequence(), libraryFileName)) {
+          VirtualFile file = resolver.fun(relativePath, root);
+          if (file != null) {
+            return new PathInfo(file, root, null, true);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
   @Override
-  public PathInfo getRoot(@NotNull final VirtualFile file, @NotNull Project project) {
+  public PathInfo getRoot(@NotNull VirtualFile file, @NotNull Project project) {
     AccessToken token = ReadAction.start();
     try {
-      VirtualFile root;
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-
-      VirtualFile notExcludedParent = file;
-      while (notExcludedParent != null && fileIndex.isExcluded(notExcludedParent)) {
-        notExcludedParent = notExcludedParent.getParent();
-      }
-
-      if (notExcludedParent == null) {
+      DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
+      DirectoryInfo info = directoryIndex.getInfoForFile(file);
+      if (!info.isInProject()) {
         return null;
       }
 
-      if (fileIndex.isInSourceContent(notExcludedParent)) {
-        root = fileIndex.getSourceRootForFile(notExcludedParent);
-      }
-      else if (fileIndex.isInContent(notExcludedParent)) {
-        root = fileIndex.getContentRootForFile(notExcludedParent);
-      }
-      else if (fileIndex.isInLibraryClasses(notExcludedParent)) {
-        root = fileIndex.getClassRootForFile(notExcludedParent);
+      VirtualFile root = info.getSourceRoot();
+      boolean isLibrary;
+      if (root == null) {
+        root = info.getContentRoot();
+        if (root == null) {
+          root = info.getLibraryClassRoot();
+          isLibrary = true;
+
+          assert root != null : file.getPresentableUrl();
+        }
+        else {
+          isLibrary = false;
+        }
       }
       else {
-        // not in project
-        return null;
+        isLibrary = info.isInLibrarySource();
       }
-      assert root != null : file.getPresentableUrl();
-      return new PathInfo(file, root, getModuleNameQualifier(project, fileIndex.getModuleForFile(notExcludedParent)));
+
+      Module module = info.getModule();
+      if (isLibrary && module == null) {
+        for (OrderEntry entry : directoryIndex.getOrderEntries(info)) {
+          if (entry instanceof ModuleLibraryOrderEntryImpl) {
+            module = entry.getOwnerModule();
+            break;
+          }
+        }
+      }
+
+      return new PathInfo(file, root, getModuleNameQualifier(project, module), isLibrary);
     }
     finally {
       token.finish();
@@ -133,11 +255,14 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
   }
 
   @Nullable
-  private static PathInfo resolve(@NotNull String path, @NotNull VirtualFile[] roots, @NotNull PairFunction<String, VirtualFile, VirtualFile> resolver, @Nullable String moduleName) {
+  private static PathInfo findByRelativePath(@NotNull String path,
+                                             @NotNull VirtualFile[] roots,
+                                             @NotNull PairFunction<String, VirtualFile, VirtualFile> resolver,
+                                             @Nullable String moduleName) {
     for (VirtualFile root : roots) {
       VirtualFile file = resolver.fun(path, root);
       if (file != null) {
-        return new PathInfo(file, root, moduleName);
+        return new PathInfo(file, root, moduleName, false);
       }
     }
     return null;
@@ -152,7 +277,7 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
     for (Module module : modules) {
       if (!module.isDisposed()) {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        PathInfo result = resolve(path, inSourceRoot ? moduleRootManager.getSourceRoots() : moduleRootManager.getContentRoots(), resolver, null);
+        PathInfo result = findByRelativePath(path, inSourceRoot ? moduleRootManager.getSourceRoots() : moduleRootManager.getContentRoots(), resolver, null);
         if (result != null) {
           result.moduleName = getModuleNameQualifier(project, module);
           return result;

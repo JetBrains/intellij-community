@@ -62,20 +62,7 @@
       <option name="XSL_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;xsl:template name=&quot;...&quot;&gt;...&lt;/xsl:template&gt;" name="tn" toReformat="true" toShortenFQNames="true" value="&lt;xsl:template name=&quot;$VAR0$&quot;&gt;$END$&lt;/xsl:template&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
-    <context>
-      <option name="XSL_TEXT" value="true"/>
-    </context>
-  </template>
   <template description="&lt;xsl:apply-templates select=&quot;...&quot; mode=&quot;...&quot; /&gt;" name="ap" toReformat="true" toShortenFQNames="true" value="&lt;xsl:apply-templates select=&quot;$VAR0$&quot; mode=&quot;$VAR1$&quot; /&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
-    <context>
-      <option name="XSL_TEXT" value="true"/>
-    </context>
-  </template>
-  <template description="&lt;xsl:template match=&quot;...&quot; mode=&quot;...&quot;&gt;...&lt;/xsl:template&gt;" name="tm" toReformat="true" toShortenFQNames="true" value="&lt;xsl:template match=&quot;$VAR0$&quot; mode=&quot;$VAR1$&quot;&gt;$END$&lt;/xsl:template&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <context>
@@ -101,13 +88,6 @@
     </context>
   </template>
   <template description="&lt;xsl:variable name=&quot;...&quot; select=&quot;...&quot; /&gt;" name="vare" toReformat="true" toShortenFQNames="true" value="&lt;xsl:variable name=&quot;$VAR0$&quot; select=&quot;$VAR1$&quot; /&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
-    <context>
-      <option name="XSL_TEXT" value="true"/>
-    </context>
-  </template>
-  <template description="&lt;xsl:with-param name=&quot;...&quot; select=&quot;...&quot; /&gt;" name="wp" toReformat="true" toShortenFQNames="true" value="&lt;xsl:with-param name=&quot;$VAR0$&quot; select=&quot;$VAR1$&quot; /&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <context>

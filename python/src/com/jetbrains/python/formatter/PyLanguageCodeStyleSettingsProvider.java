@@ -124,11 +124,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     return PlatformUtils.isPyCharm() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
-  @Override
-  public boolean isIndentBasedLanguageSemantics() {
-    return true;
-  }
-
   @SuppressWarnings("FieldCanBeLocal")
   private static String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
                                                    "    dict = {1:'a', 2:'b', 3:'c'}\n" +

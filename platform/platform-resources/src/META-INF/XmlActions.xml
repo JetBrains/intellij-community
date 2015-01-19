@@ -88,9 +88,15 @@
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </group>
 
-    <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction" 
-            text="Surround with Emmet" description="Surround selected code with Emmet abbreviation"/>
-    <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction" 
-            text="Emmet Preview" description="Show preview for emmet abbreviation"/>
+    <group id="Emmet" text="Emmet">
+      <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction" 
+              text="Surround with Emmet" description="Surround selected code with Emmet abbreviation"/>
+      <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction" 
+              text="Emmet Preview" description="Show preview for emmet abbreviation"/>
+      <action id="EmmetUpdateTag" class="com.intellij.codeInsight.template.emmet.EmmetUpdateTagAction" 
+              text="Update tag with Emmet" description="Update existing HTML tag with Emmet abbreviation">
+        <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
+      </action>
+    </group>
   </actions>
 </component>

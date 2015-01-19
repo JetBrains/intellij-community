@@ -25,11 +25,16 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -47,9 +52,41 @@ public class ExternalProjectDataService implements ProjectDataService<ExternalPr
 
   @NotNull private ProjectDataManager myProjectDataManager;
 
+  private static final TObjectHashingStrategy<Pair<ProjectSystemId, File>> HASHING_STRATEGY =
+    new TObjectHashingStrategy<Pair<ProjectSystemId, File>>() {
+      @Override
+      public int computeHashCode(Pair<ProjectSystemId, File> object) {
+        try {
+          return object.first.hashCode() + FileUtil.pathHashCode(object.second.getCanonicalPath());
+        }
+        catch (IOException e) {
+          LOG.warn("unable to get canonical file path", e);
+          return object.first.hashCode() + FileUtil.fileHashCode(object.second);
+        }
+      }
+
+      @Override
+      public boolean equals(Pair<ProjectSystemId, File> o1, Pair<ProjectSystemId, File> o2) {
+        try {
+          return o1.first.equals(o2.first) && FileUtil.pathsEqual(o1.second.getCanonicalPath(), o2.second.getCanonicalPath());
+        }
+        catch (IOException e) {
+          LOG.warn("unable to get canonical file path", e);
+          return o1.first.equals(o2.first) && FileUtil.filesEqual(o1.second, o2.second);
+        }
+      }
+    };
+
+
   public ExternalProjectDataService(@NotNull ProjectDataManager projectDataManager) {
     myProjectDataManager = projectDataManager;
     myExternalRootProjects = new ConcurrentFactoryMap<Pair<ProjectSystemId, File>, ExternalProject>() {
+
+      @Override
+      protected Map<Pair<ProjectSystemId, File>, ExternalProject> createMap() {
+        return ContainerUtil.newConcurrentMap(HASHING_STRATEGY);
+      }
+
       @Nullable
       @Override
       protected ExternalProject create(Pair<ProjectSystemId, File> key) {
@@ -86,7 +123,21 @@ public class ExternalProjectDataService implements ProjectDataService<ExternalPr
 
   @Nullable
   public ExternalProject getRootExternalProject(@NotNull ProjectSystemId systemId, @NotNull File projectRootDir) {
-    return myExternalRootProjects.get(Pair.create(systemId, projectRootDir));
+    ExternalProject externalProject = myExternalRootProjects.get(Pair.create(systemId, projectRootDir));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Can not find data for project at: " + projectRootDir);
+      LOG.debug("Existing imported projects paths: " + ContainerUtil.map(
+        myExternalRootProjects.entrySet(),
+        new Function<Map.Entry<Pair<ProjectSystemId, File>, ExternalProject>, Object>() {
+          @Override
+          public Object fun(Map.Entry<Pair<ProjectSystemId, File>, ExternalProject> entry) {
+            //noinspection ConstantConditions
+            if (!(entry.getValue() instanceof ExternalProject)) return null;
+            return Pair.create(entry.getKey(), entry.getValue().getProjectDir());
+          }
+        }));
+    }
+    return externalProject;
   }
 
   public void saveExternalProject(@NotNull ExternalProject externalProject) {

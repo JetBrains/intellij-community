@@ -48,6 +48,10 @@ import static org.junit.Assert.assertArrayEquals;
  * @since 11/18/10 7:43 PM
  */
 public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
+  protected void initText(@NotNull @NonNls String fileText) throws IOException {
+    init(fileText, TestFileType.TEXT);
+  }
+  
   protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) throws IOException {
     configureFromFileText(getFileName(type), fileText);
   }
@@ -265,5 +269,9 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
       softWrapPositions.add(softWrap.getStart());
     }
     assertArrayEquals(positions, softWrapPositions.toArray());
+  }
+
+  protected static void configureSoftWraps(int charCountToWrapAt) {
+    EditorTestUtil.configureSoftWraps(myEditor, charCountToWrapAt);
   }
 }

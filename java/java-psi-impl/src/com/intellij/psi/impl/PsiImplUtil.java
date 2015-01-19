@@ -273,6 +273,7 @@ public class PsiImplUtil {
     return types;
   }
 
+  @NotNull
   public static PsiType getType(@NotNull PsiClassObjectAccessExpression classAccessExpression) {
     GlobalSearchScope resolveScope = classAccessExpression.getResolveScope();
     PsiManager manager = classAccessExpression.getManager();
@@ -746,8 +747,8 @@ public class PsiImplUtil {
       return JavaResolveResult.EMPTY_ARRAY;
     }
     if (element instanceof PsiMethodReferenceExpression) {
-      // method refs: do not cache results during parent conflict resolving
-      final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
+      // method refs: do not cache results during parent conflict resolving, acceptable checks, etc
+      final Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
       if (map != null && map.containsKey(element)) {
         return (JavaResolveResult[])resolver.resolve(element, psiFile, incompleteCode);
       }

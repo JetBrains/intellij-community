@@ -41,6 +41,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingUtil;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
@@ -91,11 +92,12 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) return null;
     if (!file.isPhysical()) return null;
-    if (file.getViewProvider().getBaseLanguage() != file.getLanguage()) return null;
+    FileViewProvider viewProvider = file.getViewProvider();
+    if (viewProvider.getBaseLanguage() != file.getLanguage()) return null;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
     if (!virtualFile.isInLocalFileSystem()) return null;
-    String text = file.getText();
+    CharSequence text = viewProvider.getContents();
     Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
 
     // no sense in checking transparently decoded file: all characters there are already safely encoded
@@ -165,7 +167,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   private static void checkIfCharactersWillBeLostAfterSave(@NotNull PsiFile file,
                                                            @NotNull InspectionManager manager,
                                                            boolean isOnTheFly,
-                                                           @NotNull String text,
+                                                           @NotNull CharSequence text,
                                                            @NotNull Charset charset,
                                                            @NotNull List<ProblemDescriptor> descriptors) {
     int errorCount = 0;

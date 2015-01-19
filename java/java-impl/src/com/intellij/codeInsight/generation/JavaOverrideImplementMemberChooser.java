@@ -36,7 +36,6 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
   @NonNls public static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
   @NonNls public static final String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
 
-  private ToggleAction mySortByOverridingAction;
   private ToggleAction myMergeAction;
   private final PsiMethodMember[] myAllElements;
   private final PsiMethodMember[] myOnlyPrimaryElements;
@@ -147,11 +146,11 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     super.fillToolbarActions(group);
     if (myToImplement) return;
 
-    mySortByOverridingAction = new MySortByOverridingAction();
+    ToggleAction sortByOverridingAction = new MySortByOverridingAction();
     if (mySortedByOverriding) {
       changeSortComparator(PsiMethodWithOverridingPercentMember.COMPARATOR);
     }
-    group.add(mySortByOverridingAction, Constraints.FIRST);
+    group.add(sortByOverridingAction, Constraints.FIRST);
 
     myMergeAction = new MyMergeAction();
     group.add(myMergeAction);
@@ -223,6 +222,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
         mySortedByOverriding = false;
       }
       resetElements(state ? myAllElements : myOnlyPrimaryElements, null, true);
+      restoreTree();
       setTitle(getChooserTitle(false, myMerge));
     }
   }

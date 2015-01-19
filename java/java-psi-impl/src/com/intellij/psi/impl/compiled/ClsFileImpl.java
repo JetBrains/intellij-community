@@ -470,7 +470,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     // build newStub out of lock to avoid deadlock
     StubTree newStubTree = (StubTree)StubTreeLoader.getInstance().readOrBuild(getProject(), getVirtualFile(), this);
     if (newStubTree == null) {
-      LOG.warn("No stub for class file in index: " + getVirtualFile().getPresentableUrl());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("No stub for class file in index: " + getVirtualFile().getPresentableUrl());
+      }
       newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
     }
 

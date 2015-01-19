@@ -66,8 +66,8 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   @Override
   // first pass - adjacent carets are grouped into blocks
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     myProject = project;
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     file = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
 
     PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
@@ -122,18 +122,18 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
 
     Block lastBlock = myBlocks.isEmpty() ? null : myBlocks.get(myBlocks.size() - 1);
     Block currentBlock;
-    if (lastBlock == null || lastBlock.editor != editor || lastBlock.psiFile != file || endLine < (lastBlock.startLine - 1)) {
+    if (lastBlock == null || lastBlock.editor != editor || lastBlock.psiFile != file || startLine > (lastBlock.endLine + 1)) {
       currentBlock = new Block();
       currentBlock.editor = editor;
       currentBlock.psiFile = file;
-      currentBlock.endLine = endLine;
+      currentBlock.startLine = startLine;
       myBlocks.add(currentBlock);
     }
     else {
       currentBlock = lastBlock;
     }
     currentBlock.carets.add(caret);
-    currentBlock.startLine = startLine;
+    currentBlock.endLine = endLine;
 
     boolean wholeLinesSelected = !hasSelection ||
                                  startOffset == document.getLineStartOffset(document.getLineNumber(startOffset)) &&
@@ -654,8 +654,8 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       final CharSequence chars = document.getCharsSequence();
       offset = CharArrayUtil.shiftForward(chars, offset, " \t");
       if (endOffset == textLength) {
-        final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t");
-        if (shifted < textLength - 1) endOffset = shifted;
+        final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t") + 1;
+        if (shifted < textLength) endOffset = shifted;
       }
       else {
         endOffset = CharArrayUtil.shiftBackward(chars, endOffset, " \t");

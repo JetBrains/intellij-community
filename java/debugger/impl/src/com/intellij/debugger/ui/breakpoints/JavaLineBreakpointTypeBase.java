@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -128,9 +127,6 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
               if (statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == line) {
                 result.set(JavaLineBreakpointType.class);
               }
-            }
-            else if (file.getUserData(PositionManager.LINE_NUMBERS_MAPPING_KEY) != null) {
-              result.set(JavaLineBreakpointType.class);
             }
           }
           if (result.isNull()) {

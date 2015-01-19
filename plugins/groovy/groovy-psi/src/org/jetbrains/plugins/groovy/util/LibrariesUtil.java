@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -132,14 +133,16 @@ public class LibrariesUtil {
 
   @Nullable
   public static String getGroovyHomePath(@NotNull Module module) {
-    final VirtualFile local = findJarWithClass(module, SOME_GROOVY_CLASS);
-    if (local != null) {
-      final VirtualFile parent = local.getParent();
-      if (parent != null) {
-        if (("lib".equals(parent.getName()) || "embeddable".equals(parent.getName())) && parent.getParent() != null) {
-          return parent.getParent().getPath();
+    if (!DumbService.isDumb(module.getProject())) {
+      final VirtualFile local = findJarWithClass(module, SOME_GROOVY_CLASS);
+      if (local != null) {
+        final VirtualFile parent = local.getParent();
+        if (parent != null) {
+          if (("lib".equals(parent.getName()) || "embeddable".equals(parent.getName())) && parent.getParent() != null) {
+            return parent.getParent().getPath();
+          }
+          return parent.getPath();
         }
-        return parent.getPath();
       }
     }
 

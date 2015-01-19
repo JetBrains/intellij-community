@@ -32,11 +32,8 @@ import java.awt.*;
 import java.util.Comparator;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Dec 11, 2003
- * Time: 2:55:50 PM
- * To change this template use Options | File Templates.
+ * @author stathik
+ * @since Dec 11, 2003
  */
 class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   public static final int COLUMN_NAME = 0;
@@ -44,9 +41,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   public static final int COLUMN_RATE = 2;
   public static final int COLUMN_DATE = 3;
   public static final int COLUMN_CATEGORY = 4;
-  private static final float mgByte = 1024.0f * 1024.0f;
-  private static final float kByte = 1024.0f;
-
 
   public static final String[] COLUMNS = {
     IdeBundle.message("column.plugins.name"),
@@ -55,6 +49,11 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     IdeBundle.message("column.plugins.date"),
     IdeBundle.message("column.plugins.category")
   };
+
+  private static final float MB = 1024.0f * 1024.0f;
+  private static final float KB = 1024.0f;
+
+  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   private final int columnIdx;
   private final PluginTableModel myModel;
@@ -89,9 +88,8 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     else if (columnIdx == COLUMN_RATE) {
       return ((PluginNode)base).getRating();
     }
-    else
-    // For COLUMN_STATUS - set of icons show the actual state of installed plugins.
-    {
+    else {
+      // For COLUMN_STATUS - set of icons show the actual state of installed plugins.
       return "";
     }
   }
@@ -112,14 +110,13 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     return myModel.isSortByStatus();
   }
 
-
   public static boolean isDownloaded(@NotNull PluginNode node) {
     if (node.getStatus() == PluginNode.STATUS_DOWNLOADED) return true;
     final PluginId pluginId = node.getPluginId();
     if (PluginManager.isPluginInstalled(pluginId)) {
       return false;
     }
-    return PluginManagerUISettings.getInstance().getInstalledPlugins().contains(pluginId.getIdString());
+    return ourState.wasInstalled(pluginId);
   }
 
   public Comparator<IdeaPluginDescriptor> getComparator() {
@@ -146,8 +143,8 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
 
             if (status1 == PluginNode.STATUS_INSTALLED) {
               if (status2 !=PluginNode.STATUS_INSTALLED) return up;
-              final boolean hasNewerVersion1 = InstalledPluginsTableModel.hasNewerVersion(o1.getPluginId());
-              final boolean hasNewerVersion2 = InstalledPluginsTableModel.hasNewerVersion(o2.getPluginId());
+              final boolean hasNewerVersion1 = ourState.hasNewerVersion(o1.getPluginId());
+              final boolean hasNewerVersion2 = ourState.hasNewerVersion(o2.getPluginId());
               if (hasNewerVersion1 != hasNewerVersion2) {
                 if (hasNewerVersion1) return up;
                 return -up;
@@ -207,25 +204,17 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     };
   }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    public static String getFormattedSize (String size){
-      if (size.equals("-1")) {
-        return IdeBundle.message("plugin.info.unknown");
-      }
-      else if (size.length() >= 4) {
-        if (size.length() < 7) {
-          size = String.format("%.1f", (float)Integer.parseInt(size) / kByte) + " K";
-        }
-        else {
-          size = String.format("%.1f", (float)Integer.parseInt(size) / mgByte) + " M";
-        }
-      }
-      return size;
+  public static String getFormattedSize(String size) {
+    if (size.equals("-1")) {
+      return IdeBundle.message("plugin.info.unknown");
     }
-
-  public static int getRealNodeState(PluginNode node) {
-    if (node.getStatus() == PluginNode.STATUS_DOWNLOADED) return PluginNode.STATUS_DOWNLOADED;
-    return PluginNode.STATUS_MISSING;
+    if (size.length() >= 7) {
+      size = String.format("%.1f", (float)Integer.parseInt(size) / MB) + " M";
+    }
+    else if (size.length() >= 4) {
+      size = String.format("%.1f", (float)Integer.parseInt(size) / KB) + " K";
+    }
+    return size;
   }
 
   public Class getColumnClass() {
@@ -235,10 +224,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     else {
       return String.class;
     }
-  }
-
-  protected static Font getNameFont() {
-    return UIUtil.getLabelFont();
   }
 
   public TableCellRenderer getRenderer(IdeaPluginDescriptor o) {
@@ -294,7 +279,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       }
       if (myPluginDescriptor.getStatus() == PluginNode.STATUS_INSTALLED) {
         PluginId pluginId = myPluginDescriptor.getPluginId();
-        final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginId);
+        final boolean hasNewerVersion = ourState.hasNewerVersion(pluginId);
         if (hasNewerVersion) {
           if (!isSelected) myLabel.setBackground(LightColors.BLUE);
         }

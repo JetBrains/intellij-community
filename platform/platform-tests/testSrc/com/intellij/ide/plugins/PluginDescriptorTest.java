@@ -1,21 +1,50 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.File;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author Dmitry Avdeev
- *         Date: 7/14/11
  */
-public class PluginDescriptorTest extends TestCase {
+public class PluginDescriptorTest {
+  private static String getTestDataPath() {
+    return PathManagerEx.getTestDataPath() + "/ide/plugins/pluginDescriptor";
+  }
 
-  public void testDescriptorLoading() throws Exception {
-    String path = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/ide/plugins/pluginDescriptor";
-    File file = new File(path + "/asp.jar");
+  @Test
+  public void testDescriptorLoading() {
+    File file = new File(getTestDataPath(), "asp.jar");
     assertTrue(file + " not exist", file.exists());
-    IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(file);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromJar(file);
     assertNotNull(descriptor);
+  }
+
+  @Test
+  public void testInvalidFileDescriptor() {
+    File file = new File(getTestDataPath(), "malformed");
+    assertTrue(file + " not exist", file.exists());
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromDir(file, PluginManagerCore.PLUGIN_XML);
+    assertNull(descriptor);
   }
 }

@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionTool {
   // deprecated fields remain to minimize changes to users inspection profiles (which are often located in version control).
@@ -269,6 +270,12 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @NotNull
   private static String getPresentableAnnoName(@NotNull PsiModifierListOwner owner) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
+    Set<String> names = ContainerUtil.newHashSet(manager.getNullables());
+    names.addAll(manager.getNotNulls());
+
+    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(owner, names);
+    if (annotation != null) return getPresentableAnnoName(annotation);
+    
     String anno = manager.getNotNull(owner);
     return StringUtil.getShortName(anno != null ? anno : StringUtil.notNullize(manager.getNullable(owner), "???"));
   }
@@ -362,7 +369,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
     if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
       for (PsiMethod superMethod : superMethods) {
-        if (!nullableManager.hasNullability(method) && isNotNullNotInferred(superMethod, true, false)) {
+        if (!nullableManager.hasNullability(method) && isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL)) {
           final String defaultNotNull = nullableManager.getDefaultNotNull();
           final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
           final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull)
@@ -528,7 +535,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     return true;
   }
 
-  private static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
+  public static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     if (!manager.isNullable(owner, checkBases)) return false;

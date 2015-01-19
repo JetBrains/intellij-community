@@ -39,7 +39,7 @@ public class PackageViewModuleGroupNode extends ModuleGroupNode {
   @Override
   protected AbstractTreeNode createModuleNode(Module module)
     throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
-    return createTreeNode(PackageViewModuleNode.class, module.getProject(), module, getSettings());
+    return new PackageViewModuleNode(module.getProject(), module, getSettings());
   }
 
   @Override

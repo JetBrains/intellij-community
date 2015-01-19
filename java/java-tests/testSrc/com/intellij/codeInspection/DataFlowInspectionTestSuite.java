@@ -30,6 +30,8 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
     suite.addTestSuite(ContractCheckTest.class);
     suite.addTestSuite(ContractInferenceFromSourceTest.class);
+    suite.addTestSuite(NullityInferenceFromSourceTestCase.DfaInferenceTest.class);
+    suite.addTestSuite(NullityInferenceFromSourceTestCase.LightInferenceTest.class);
     suite.addTestSuite(PurityInferenceFromSourceTest.class);
     suite.addTestSuite(SliceTreeTest.class);
     suite.addTestSuite(SliceBackwardTest.class);

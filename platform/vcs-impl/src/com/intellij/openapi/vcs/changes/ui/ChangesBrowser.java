@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vcs.changes.actions.DiffExtendUIFactory;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +46,7 @@ import java.util.List;
  * @author max
  */
 public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
+  private static final Logger LOG = Logger.getInstance(ChangesBrowser.class);
   // for backgroundable rollback to mark
   private boolean myDataIsDirty;
   protected final ChangesTreeList<Change> myViewer;
@@ -168,7 +171,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
-      final List<Change> list = myViewer.getSelectedChanges();
+      List<Change> list = myViewer.getSelectedChanges();
+      if (list.isEmpty()) list = getCurrentDisplayedChanges();
       sink.put(VcsDataKeys.CHANGES, list.toArray(new Change [list.size()]));
     }
     else if (key == VcsDataKeys.CHANGE_LISTS) {
@@ -334,8 +338,15 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   protected List<Change> sortChanges(final List<Change> list) {
-    Collections.sort(list, ChangesComparator.getInstance(myViewer.isShowFlatten()));
-    return list;
+    List<Change> sortedList;
+    try {
+      sortedList = ContainerUtil.sorted(list, ChangesComparator.getInstance(myViewer.isShowFlatten()));
+    }
+    catch (IllegalArgumentException e) {
+      sortedList = ContainerUtil.newArrayList(list);
+      LOG.error("Couldn't sort these changes: " + list, e);
+    }
+    return sortedList;
   }
 
   public ChangeList getSelectedChangeList() {

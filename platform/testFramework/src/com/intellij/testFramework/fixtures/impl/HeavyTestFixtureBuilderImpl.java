@@ -21,7 +21,7 @@ import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
-import com.intellij.util.pico.IdeaPicoContainer;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
@@ -40,7 +40,7 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
     myFixture = fixture;
     myProviders = providers;
 
-    myContainer = new IdeaPicoContainer();
+    myContainer = new DefaultPicoContainer();
     myContainer.registerComponentInstance(this);
   }
 

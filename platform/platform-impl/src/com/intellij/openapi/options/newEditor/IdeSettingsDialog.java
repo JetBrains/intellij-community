@@ -274,7 +274,7 @@ public class IdeSettingsDialog extends DialogWrapper implements DataProvider {
     if (OptionsEditor.KEY.is(dataId)) {
       return myEditor;
     }
-    return null;
+    return myEditor == null ? null : myEditor.getData(dataId);
   }
 
   private class ApplyAction extends AbstractAction {

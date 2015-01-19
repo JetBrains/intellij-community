@@ -289,11 +289,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
+  public void serializeInto(@NotNull Element element, boolean preserveCompatibility) {
     // must be first - compatibility
     element.setAttribute(VERSION_TAG, VALID_VERSION);
 
-    super.writeExternal(element);
+    super.serializeInto(element, preserveCompatibility);
+
     synchronized (myExternalInfo) {
       if (!myInitialized) {
         for (Element el : myUninstalledInspectionsSettings.values()) {
@@ -311,18 +312,25 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         diffMap.put(toolName, false);
       }
 
-      for (final String toolName : diffMap.keySet()) {
+      for (String toolName : diffMap.keySet()) {
         if (!myLockedProfile && diffMap.get(toolName).booleanValue()) {
           markSettingsMerged(toolName, element);
           continue;
         }
-        final Element toolElement = myUninstalledInspectionsSettings.get(toolName);
+
+        Element toolElement = myUninstalledInspectionsSettings.get(toolName);
         if (toolElement == null) {
-          final ToolsImpl toolList = myTools.get(toolName);
+          ToolsImpl toolList = myTools.get(toolName);
           LOG.assertTrue(toolList != null);
-          final Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
+          Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
           inspectionElement.setAttribute(CLASS_TAG, toolName);
-          toolList.writeExternal(inspectionElement);
+          try {
+            toolList.writeExternal(inspectionElement);
+          }
+          catch (WriteExternalException e) {
+            LOG.error(e);
+            continue;
+          }
 
           if (!areSettingsMerged(toolName, inspectionElement)) {
             element.addContent(inspectionElement);
@@ -800,10 +808,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void setDescription(String description) {
-    if (Comparing.strEqual(description, myDescription)) {
-      return;
-    }
-    setModified(true);
     myDescription = description;
   }
 

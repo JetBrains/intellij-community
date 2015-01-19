@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.JsonElement;
@@ -5,7 +20,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.apache.http.*;
@@ -317,51 +332,52 @@ public class GithubConnection {
       case HttpStatus.SC_UNAUTHORIZED:
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
-        String message = getErrorMessage(response);
+        //noinspection ThrowableResultOfMethodCallIgnored
+        GithubStatusCodeException error = getStatusCodeException(response);
 
         Header headerOTP = response.getFirstHeader("X-GitHub-OTP");
         if (headerOTP != null) {
           for (HeaderElement element : headerOTP.getElements()) {
             if ("required".equals(element.getName())) {
-              throw new GithubTwoFactorAuthenticationException(message);
+              throw new GithubTwoFactorAuthenticationException(error.getMessage());
             }
           }
         }
 
-        if (message.contains("API rate limit exceeded")) {
-          throw new GithubRateLimitExceededException(message);
+        if (error.getError() != null && error.getError().containsReasonMessage("API rate limit exceeded")) {
+          throw new GithubRateLimitExceededException(error.getMessage());
         }
 
-        throw new GithubAuthenticationException("Request response: " + message);
+        throw new GithubAuthenticationException("Request response: " + error.getMessage());
       case HttpStatus.SC_BAD_REQUEST:
       case HttpStatus.SC_UNPROCESSABLE_ENTITY:
-        if (body != null) {
-          LOG.info(body);
-        }
-        throw new GithubStatusCodeException(code + ": " + getErrorMessage(response), code);
+        LOG.info("body message:" + body);
+        throw getStatusCodeException(response);
       default:
-        throw new GithubStatusCodeException(code + ": " + getErrorMessage(response), code);
+        throw getStatusCodeException(response);
     }
   }
 
   @NotNull
-  private static String getErrorMessage(@NotNull CloseableHttpResponse response) {
+  private static GithubStatusCodeException getStatusCodeException(@NotNull CloseableHttpResponse response) {
+    StatusLine statusLine = response.getStatusLine();
     try {
       HttpEntity entity = response.getEntity();
       if (entity != null) {
-        GithubErrorMessageRaw error = fromJson(parseResponse(entity.getContent()), GithubErrorMessageRaw.class);
-        return response.getStatusLine().getReasonPhrase() + " - " + error.getMessage();
+        GithubErrorMessage error = fromJson(parseResponse(entity.getContent()), GithubErrorMessage.class);
+        String message = statusLine.getReasonPhrase() + " - " + error.getMessage();
+        return new GithubStatusCodeException(message, error, statusLine.getStatusCode());
       }
     }
     catch (IOException e) {
       LOG.info(e);
     }
-    return response.getStatusLine().getReasonPhrase();
+    return new GithubStatusCodeException(statusLine.getReasonPhrase(), statusLine.getStatusCode());
   }
 
   @NotNull
   private static JsonElement parseResponse(@NotNull InputStream githubResponse) throws IOException {
-    Reader reader = new InputStreamReader(githubResponse, "UTF-8");
+    Reader reader = new InputStreamReader(githubResponse, CharsetToolkit.UTF8_CHARSET);
     try {
       return new JsonParser().parse(reader);
     }

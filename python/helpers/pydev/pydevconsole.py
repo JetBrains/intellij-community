@@ -281,7 +281,7 @@ def start_server(host, port, interpreter):
             server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
-        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
+        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, interpreter.client_port))
         raise
 
     # Tell UMD the proper default namespace
@@ -309,7 +309,7 @@ def start_server(host, port, interpreter):
         (h, port) = server.socket.getsockname()
 
         print(port)
-        print(client_port)
+        print(interpreter.client_port)
 
 
     sys.stderr.write(interpreter.get_greeting_msg())
@@ -336,7 +336,7 @@ def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
-        # fake return_controll_callback function just to prevent exception in PyCharm bebug console
+        # fake return_controll_callback function just to prevent exception in PyCharm debug console
         from pydev_ipython.inputhook import set_return_control_callback
         set_return_control_callback(lambda x: True)
 

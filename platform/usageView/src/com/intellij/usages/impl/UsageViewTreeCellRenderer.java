@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -31,7 +32,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -47,12 +47,13 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
   private static final SimpleTextAttributes ourNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
   private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
-  public static final Insets STANDARD_IPAD_NOWIFI = new Insets(1, 2, 1, 2);
-  private static final Rectangle EMPTY_RECTANGLE = new Rectangle();
+  private static final Insets STANDARD_IPAD_NOWIFI = new Insets(1, 2, 1, 2);
   private boolean myRowBoundsCalled = false;
 
   private final UsageViewPresentation myPresentation;
   private final UsageView myView;
+  private boolean myCalculated;
+  private int myRowHeight = AllIcons.Nodes.AbstractClass.getIconHeight()+2;
 
   UsageViewTreeCellRenderer(@NotNull UsageView view) {
     myView = view;
@@ -61,10 +62,16 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
 
   private Dimension cachedPreferredSize;
 
+  @NotNull
   @Override
-  public void customizeCellRenderer(@Nullable JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public Dimension getPreferredSize() {
+    return myCalculated ? super.getPreferredSize() : new Dimension(10, myRowHeight);
+  }
+
+  @Override
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     boolean showAsReadOnly = false;
-    if (value instanceof Node && tree != null && value != tree.getModel().getRoot()) {
+    if (value instanceof Node && value != tree.getModel().getRoot()) {
       Node node = (Node)value;
       if (!node.isValid()) {
         append(UsageViewBundle.message("node.invalid") + " ", UIUtil.isUnderDarcula() ? ourInvalidAttributesDarcula : ourInvalidAttributes);
@@ -74,19 +81,18 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       }
     }
 
+    myCalculated = false;
     if (value instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       Object userObject = treeNode.getUserObject();
 
-      Rectangle visibleRect = tree == null ? EMPTY_RECTANGLE : ((JViewport)tree.getParent()).getViewRect();
+      Rectangle visibleRect = ((JViewport)tree.getParent()).getViewRect();
       if (!visibleRect.isEmpty()) {
         //Protection against SOE on some OSes and JDKs IDEA-120631
         RowLocation visible = myRowBoundsCalled ? RowLocation.INSIDE_VISIBLE_RECT : isRowVisible(row, visibleRect);
         myRowBoundsCalled = false;
         if (visible != RowLocation.INSIDE_VISIBLE_RECT) {
-          // for the node outside visible rect just set its preferred size to the whole visible rect
-          // and do not compute (expensive) presentation
-          setIpad(new Insets(1,visibleRect.width, 1, 0));
+          // for the node outside visible rect do not compute (expensive) presentation
           return;
         }
         if (!getIpad().equals(STANDARD_IPAD_NOWIFI)) {
@@ -94,6 +100,10 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           setIpad(STANDARD_IPAD_NOWIFI);
         }
       }
+
+      // we can be called recursively via isRowVisible()
+      if (myCalculated) return;
+      myCalculated = true;
 
       if (userObject instanceof UsageTarget) {
         UsageTarget usageTarget = (UsageTarget)userObject;
@@ -152,14 +162,12 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     else {
       append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    if (tree != null) {
-      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, mySelected);
-    }
+    SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, mySelected);
   }
 
   // computes the node text regardless of the node visibility
   @NotNull
-  public String getPlainTextForNode(Object value) {
+  String getPlainTextForNode(Object value) {
     boolean showAsReadOnly = false;
     StringBuilder result = new StringBuilder();
     if (value instanceof Node) {
@@ -202,7 +210,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         }
 
         int count = node.getRecursiveUsageCount();
-        result.append(" (" + StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count) + ")");
+        result.append(" (").append(StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count)).append(")");
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;
@@ -234,8 +242,9 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   enum RowLocation {
     BEFORE_VISIBLE_RECT, INSIDE_VISIBLE_RECT, AFTER_VISIBLE_RECT
   }
+
   @NotNull
-  public RowLocation isRowVisible(int row, @NotNull Rectangle visibleRect) {
+  RowLocation isRowVisible(int row, @NotNull Rectangle visibleRect) {
     Dimension pref;
     if (cachedPreferredSize == null) {
       cachedPreferredSize = pref = getPreferredSize();
@@ -248,6 +257,9 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     JTree tree = getTree();
     final Rectangle bounds = tree == null ? null : tree.getRowBounds(row);
     myRowBoundsCalled = false;
+    if (bounds != null) {
+      myRowHeight = bounds.height;
+    }
     int y = bounds == null ? 0 : bounds.y;
     TextRange vis = TextRange.from(Math.max(0, visibleRect.y - pref.height), visibleRect.height + pref.height * 2);
     boolean inside = vis.contains(y);

@@ -42,9 +42,9 @@ public abstract class PyIntroduceTestCase extends PyTestCase {
 
   protected Collection<String> buildSuggestions(Class<? extends PyExpression> parentClass) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    IntroduceHandler handler = createHandler();
-    PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()),
-                                                    parentClass);
+    final IntroduceHandler handler = createHandler();
+    final PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), parentClass);
+    assertNotNull(expr);
     return handler.getSuggestedNames(expr);
   }
 

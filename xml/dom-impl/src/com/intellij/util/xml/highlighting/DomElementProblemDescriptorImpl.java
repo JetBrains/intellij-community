@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -146,7 +147,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     }
     PsiElement element = myPair.second;
     if (element != null) {
-      assert element.isValid();
+      PsiUtilCore.ensureValid(element);
     }
     return myPair;
   }

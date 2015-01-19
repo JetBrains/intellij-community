@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
@@ -112,7 +111,8 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   private ConfigurationBean myConfigurationBean = new ConfigurationBean();
   private final NewRootBunch myBunch;
 
-  public SvnBranchConfigurationNew get(@NotNull final VirtualFile vcsRoot) throws VcsException {
+  @NotNull
+  public SvnBranchConfigurationNew get(@NotNull final VirtualFile vcsRoot) {
     return myBunch.getConfig(vcsRoot);
   }
 

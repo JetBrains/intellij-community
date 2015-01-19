@@ -215,7 +215,7 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   private static int fixCaretOffset(final Editor editor) {
     final int caret = editor.getCaretModel().getOffset();
-    if (editor.getSelectionModel().hasSelection() && !editor.getSelectionModel().hasBlockSelection()) {
+    if (editor.getSelectionModel().hasSelection()) {
       if (caret == editor.getSelectionModel().getSelectionEnd()) {
         return Math.max(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd() - 1);
       }

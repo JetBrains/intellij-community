@@ -3,6 +3,8 @@ package com.jetbrains.env.python;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
@@ -506,6 +508,145 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return Sets.newHashSet("python3");
+      }
+    });
+  }
+
+  public void testPyQtQThreadInheritor() throws Exception {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+      return; //Don't run under Windows
+    }
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyqt1.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 8);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyqt5");
+      }
+    });
+  }
+
+  public void testPyQtMoveToThread() throws Exception {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+      return; //Don't run under Windows
+    }
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyqt2.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 10);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyqt5");
+      }
+    });
+  }
+
+
+  public void testPyQtQRunnableInheritor() throws Exception {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+      return; //Don't run under Windows
+    }
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyqt3.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 9);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyqt5");
+      }
+    });
+  }
+
+  public void testTryImportWithReload() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_try_import.py") {
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 29);
+        toggleBreakpoint(getScriptPath(), 30);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("result.__name__").hasValue("'datetime'");
+        resume();
+        waitForPause();
+        eval("result").hasValue("None");
+        resume();
       }
     });
   }

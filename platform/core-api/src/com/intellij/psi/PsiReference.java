@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.psi.PsiReferenceService#getReferences(PsiElement, com.intellij.psi.PsiReferenceService.Hints)
  * @see com.intellij.psi.PsiReferenceBase
  * @see com.intellij.psi.PsiReferenceContributor
+ * @see com.intellij.psi.search.searches.ReferencesSearch
  */
 
 public interface PsiReference {

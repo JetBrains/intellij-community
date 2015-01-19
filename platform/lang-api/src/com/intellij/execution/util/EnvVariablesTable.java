@@ -19,6 +19,7 @@ package com.intellij.execution.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,6 +36,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
+  public EnvVariablesTable() {
+    getTableView().getEmptyText().setText("No variables");
+  }
+  
   @Override
   protected ListTableModel createListModel() {
     final ColumnInfo name = new ElementsColumnInfoBase<EnvironmentVariable>("Name") {
@@ -93,6 +98,28 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     return new ListTableModel((new ColumnInfo[]{name, value}));
   }
 
+  public void editVariableName(final EnvironmentVariable environmentVariable) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+      @Override
+      public void run() {
+        final EnvironmentVariable actualEnvVar = ContainerUtil.find(getElements(), new Condition<EnvironmentVariable>() {
+          @Override
+          public boolean value(EnvironmentVariable item) {
+            return StringUtil.equals(environmentVariable.getName(), item.getName());
+          }
+        });
+        if (actualEnvVar == null) {
+          return;
+        }
+
+        setSelection(actualEnvVar);
+        if (actualEnvVar.getNameIsWriteable()) {
+          editSelection(0);
+        }
+      }
+    });
+  }
 
   public List<EnvironmentVariable> getEnvironmentVariables() {
     return getElements();

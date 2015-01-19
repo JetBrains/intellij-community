@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.*;
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -230,8 +231,8 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     if (SEPARATOR_THICKNESS > 0 && myShowSeparatorLine) {
       myHistoryViewer.getComponent().setBorder(new SideBorder(JBColor.LIGHT_GRAY, SideBorder.BOTTOM));
     }
-    myHistoryViewer.getComponent().setMinimumSize(new Dimension(0, 0));
-    myHistoryViewer.getComponent().setPreferredSize(new Dimension(0, 0));
+    myHistoryViewer.getComponent().setMinimumSize(JBUI.emptySize());
+    myHistoryViewer.getComponent().setPreferredSize(JBUI.emptySize());
     myHistoryViewer.setCaretEnabled(false);
 
     myConsoleEditor.setHorizontalScrollbarVisible(true);

@@ -16,6 +16,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;

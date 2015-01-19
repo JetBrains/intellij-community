@@ -9,7 +9,7 @@ public class ValidationResult implements Comparable<ValidationResult> {
   }
 
   public enum Action {
-    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), NO_ACTION("");
+    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), NO_ACTION(""), VALIDATE("Validate");
 
     private final String myDisplayString;
 
@@ -24,7 +24,7 @@ public class ValidationResult implements Comparable<ValidationResult> {
   }
 
   public enum Option {
-    IGNORE, KEEP, REPLACE, DELETE, KILL_PROCESS
+    NONE, IGNORE, KEEP, REPLACE, DELETE, KILL_PROCESS
   }
 
   public static final String ABSENT_MESSAGE = "Absent";

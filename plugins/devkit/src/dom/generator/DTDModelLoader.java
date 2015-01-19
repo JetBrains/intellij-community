@@ -152,10 +152,6 @@ public class DTDModelLoader implements ModelLoader {
               if (!visitedElements.contains(nel)) {
                 elements[ptr++] = nel;
               }
-            } else if (hasTextContents) {
-              fd1.clType = FieldDesc.STR;
-              fd1.type = "String";
-              fd1.def = "null";
             } else {
               fd1.clType = FieldDesc.BOOL;
               fd1.type = "boolean";

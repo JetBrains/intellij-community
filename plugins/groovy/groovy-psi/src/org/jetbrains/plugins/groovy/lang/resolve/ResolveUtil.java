@@ -381,11 +381,13 @@ public class ResolveUtil {
     else {
       key = base.getCanonicalText();
     }
-    Map<String, PsiType> result = cache.get(key);
+    Map<String, PsiType> result = key == null ? null : cache.get(key);
     if (result == null) {
       result = new HashMap<String, PsiType>();
       collectSuperTypes(base, result, project);
-      cache.put(key, result);
+      if (key != null) {
+        cache.put(key, result);
+      }
     }
     return result;
   }

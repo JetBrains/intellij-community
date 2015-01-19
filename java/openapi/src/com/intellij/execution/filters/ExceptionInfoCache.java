@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
@@ -58,6 +59,10 @@ public class ExceptionInfoCache {
       return cached;
     }
 
+    if (DumbService.isDumb(myProject)) {
+      return Pair.create(PsiClass.EMPTY_ARRAY, PsiFile.EMPTY_ARRAY);
+    }
+    
     PsiClass[] classes = findClassesPreferringMyScope(className);
     if (classes.length == 0) {
       final int dollarIndex = className.indexOf('$');

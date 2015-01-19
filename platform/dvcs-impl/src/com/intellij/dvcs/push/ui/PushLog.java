@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.EditSourceForDialogAction;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
@@ -47,7 +48,7 @@ import java.util.List;
 
 public class PushLog extends JPanel implements TypeSafeDataProvider {
 
-  private final static String COMMIT_MENU = "Vcs.Push.ContextMenu";
+  private final static String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
@@ -159,18 +160,31 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         updateChangesView();
       }
     });
+    myTree.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
+        if (node != null && node instanceof RepositoryNode && myTree.isEditing()) {
+          //need to force repaint foreground  for non-focused editing node
+          myTree.getCellEditor().getTreeCellEditorComponent(myTree, node, true, false, false, myTree.getRowForPath(
+            TreeUtil.getPathFromRoot(node)));
+        }
+      }
+    });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     //override default tree behaviour.
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    PopupHandler.installPopupHandler(myTree, VcsLogUiImpl.POPUP_ACTION_GROUP, COMMIT_MENU);
+    PopupHandler.installPopupHandler(myTree, VcsLogUiImpl.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
     myChangesBrowser =
       new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
                          null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
-    myChangesBrowser.addToolbarAction(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+    final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
+    editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
+    myChangesBrowser.addToolbarAction(editSourceAction);
     setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
@@ -183,17 +197,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     add(splitter);
     myTree.setMinimumSize(new Dimension(200, myTree.getPreferredSize().height));
     myTree.setRowHeight(0);
-  }
-
-  private void updateChangesView() {
-    List<CommitNode> commitNodes = getSelectedCommitNodes();
-    if (!commitNodes.isEmpty()) {
-      myChangesBrowser.getViewer().setEmptyText("No differences");
-    }
-    else {
-      setDefaultEmptyText();
-    }
-    myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
   }
 
   @NotNull
@@ -240,6 +243,27 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     return nodes;
   }
 
+  @NotNull
+  private static List<Integer> getSortedRows(@NotNull int[] rows) {
+    List<Integer> sorted = ContainerUtil.newArrayList();
+    for (int row : rows) {
+      sorted.add(row);
+    }
+    Collections.sort(sorted, Collections.reverseOrder());
+    return sorted;
+  }
+
+  private void updateChangesView() {
+    List<CommitNode> commitNodes = getSelectedCommitNodes();
+    if (!commitNodes.isEmpty()) {
+      myChangesBrowser.getViewer().setEmptyText("No differences");
+    }
+    else {
+      setDefaultEmptyText();
+    }
+    myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
+  }
+
   private void setDefaultEmptyText() {
     myChangesBrowser.getViewer().setEmptyText("No commits selected");
   }
@@ -271,16 +295,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       return collectSelectedCommitNodes(selectedNodes);
     }
     return ContainerUtil.emptyList();
-  }
-
-  @NotNull
-  private static List<Integer> getSortedRows(@NotNull int[] rows) {
-    List<Integer> sorted = ContainerUtil.newArrayList();
-    for (int row : rows) {
-      sorted.add(row);
-    }
-    Collections.sort(sorted, Collections.reverseOrder());
-    return sorted;
   }
 
   @NotNull
@@ -328,68 +342,6 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private class MyTreeCellEditor extends AbstractCellEditor implements TreeCellEditor {
-
-    private RepositoryWithBranchPanel myValue;
-
-    @Override
-    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
-      RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
-      myValue = panel;
-      myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, false, true);
-      return panel.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row, true);
-    }
-
-    @Override
-    public boolean isCellEditable(EventObject anEvent) {
-      if (anEvent instanceof MouseEvent) {
-        MouseEvent me = ((MouseEvent)anEvent);
-        final TreePath path = myTree.getClosestPathForLocation(me.getX(), me.getY());
-        final int row = myTree.getRowForLocation(me.getX(), me.getY());
-        myTree.getCellRenderer().getTreeCellRendererComponent(myTree, path.getLastPathComponent(), false, false, true, row, true);
-        Object tag = me.getClickCount() >= 1
-                     ? PushLogTreeUtil.getTagAtForRenderer(myTreeCellRenderer, me)
-                     : null;
-        return tag instanceof VcsEditableComponent;
-      }
-      //if keyboard event - then anEvent will be null =( See BasicTreeUi
-      TreePath treePath = myTree.getAnchorSelectionPath();
-      //there is no selection path if we start editing during initial validation//
-      if (treePath == null) return true;
-      Object treeNode = treePath.getLastPathComponent();
-      return treeNode instanceof EditableTreeNode;
-    }
-
-    public Object getCellEditorValue() {
-      return myValue;
-    }
-  }
-
-  private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
-
-    @Override
-    public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (!(value instanceof DefaultMutableTreeNode)) {
-        return;
-      }
-      myCheckbox.setBorder(null); //checkBox may have no border by default, but insets are not null,
-      // it depends on LaF, OS and isItRenderedPane, see com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.
-      // null border works as expected always.
-      if (value instanceof RepositoryNode) {
-        //todo simplify, remove instance of
-        myCheckbox.setVisible(((RepositoryNode)value).isCheckboxVisible());
-      }
-      Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      ColoredTreeCellRenderer renderer = getTextRenderer();
-      if (value instanceof CustomRenderedTreeNode) {
-        ((CustomRenderedTreeNode)value).render(renderer);
-      }
-      else {
-        renderer.append(userObject == null ? "" : userObject.toString());
-      }
-    }
-  }
-
   public void setChildren(@NotNull DefaultMutableTreeNode parentNode,
                           @NotNull Collection<? extends DefaultMutableTreeNode> childrenNodes) {
     parentNode.removeAllChildren();
@@ -431,6 +383,68 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       if (((RepositoryNode)childNode).isChecked()) {
         myTree.expandPath(path);
       }
+    }
+  }
+
+  private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+
+    @Override
+    public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      if (!(value instanceof DefaultMutableTreeNode)) {
+        return;
+      }
+      myCheckbox.setBorder(null); //checkBox may have no border by default, but insets are not null,
+      // it depends on LaF, OS and isItRenderedPane, see com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.
+      // null border works as expected always.
+      if (value instanceof RepositoryNode) {
+        //todo simplify, remove instance of
+        myCheckbox.setVisible(((RepositoryNode)value).isCheckboxVisible());
+      }
+      Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+      ColoredTreeCellRenderer renderer = getTextRenderer();
+      if (value instanceof CustomRenderedTreeNode) {
+        ((CustomRenderedTreeNode)value).render(renderer);
+      }
+      else {
+        renderer.append(userObject == null ? "" : userObject.toString());
+      }
+    }
+  }
+
+  private class MyTreeCellEditor extends AbstractCellEditor implements TreeCellEditor {
+
+    private RepositoryWithBranchPanel myValue;
+
+    @Override
+    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
+      RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
+      myValue = panel;
+      myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, false, true);
+      return panel.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row, true);
+    }
+
+    @Override
+    public boolean isCellEditable(EventObject anEvent) {
+      if (anEvent instanceof MouseEvent) {
+        MouseEvent me = ((MouseEvent)anEvent);
+        final TreePath path = myTree.getClosestPathForLocation(me.getX(), me.getY());
+        final int row = myTree.getRowForLocation(me.getX(), me.getY());
+        myTree.getCellRenderer().getTreeCellRendererComponent(myTree, path.getLastPathComponent(), false, false, true, row, true);
+        Object tag = me.getClickCount() >= 1
+                     ? PushLogTreeUtil.getTagAtForRenderer(myTreeCellRenderer, me)
+                     : null;
+        return tag instanceof VcsEditableComponent;
+      }
+      //if keyboard event - then anEvent will be null =( See BasicTreeUi
+      TreePath treePath = myTree.getAnchorSelectionPath();
+      //there is no selection path if we start editing during initial validation//
+      if (treePath == null) return true;
+      Object treeNode = treePath.getLastPathComponent();
+      return treeNode instanceof EditableTreeNode;
+    }
+
+    public Object getCellEditorValue() {
+      return myValue;
     }
   }
 

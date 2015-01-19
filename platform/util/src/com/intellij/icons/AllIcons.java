@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,6 +215,7 @@ public class AllIcons {
     public static final Icon Class_filter = IconLoader.getIcon("/debugger/class_filter.png"); // 16x16
     public static final Icon CommandLine = IconLoader.getIcon("/debugger/commandLine.png"); // 16x16
     public static final Icon Console = IconLoader.getIcon("/debugger/console.png"); // 16x16
+    public static final Icon Console_log = IconLoader.getIcon("/debugger/console_log.png"); // 16x16
     public static final Icon Db_array = IconLoader.getIcon("/debugger/db_array.png"); // 16x16
     public static final Icon Db_db_object = IconLoader.getIcon("/debugger/db_db_object.png"); // 16x16
     public static final Icon Db_dep_exception_breakpoint = IconLoader.getIcon("/debugger/db_dep_exception_breakpoint.png"); // 12x12
@@ -273,6 +274,7 @@ public class AllIcons {
     public static final Icon NewWatch = IconLoader.getIcon("/debugger/newWatch.png"); // 16x16
     public static final Icon RestoreLayout = IconLoader.getIcon("/debugger/restoreLayout.png"); // 16x16
     public static final Icon ShowCurrentFrame = IconLoader.getIcon("/debugger/showCurrentFrame.png"); // 16x16
+    public static final Icon SmartStepInto = IconLoader.getIcon("/debugger/smartStepInto.png"); // 16x16
     public static final Icon StackFrame = IconLoader.getIcon("/debugger/stackFrame.png"); // 16x16
     public static final Icon ThreadAtBreakpoint = IconLoader.getIcon("/debugger/threadAtBreakpoint.png"); // 16x16
     public static final Icon ThreadCurrent = IconLoader.getIcon("/debugger/threadCurrent.png"); // 16x16
@@ -444,7 +446,6 @@ public class AllIcons {
     public static final Icon InspectionsOff = IconLoader.getIcon("/general/inspectionsOff.png"); // 16x16
     public static final Icon InspectionsPause = IconLoader.getIcon("/general/inspectionsPause.png"); // 12x12
     public static final Icon Jdk = IconLoader.getIcon("/general/jdk.png"); // 16x16
-    public static final Icon JetbrainsTvIdea = IconLoader.getIcon("/general/jetbrainsTvIdea.png"); // 32x32
     public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png"); // 13x13
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png"); // 32x32
     public static final Icon Locate = IconLoader.getIcon("/general/locate.png"); // 14x16
@@ -511,7 +512,6 @@ public class AllIcons {
     public static final Icon TemplateProjectSettings = IconLoader.getIcon("/general/TemplateProjectSettings.png"); // 32x32
     public static final Icon TemplateProjectStructure = IconLoader.getIcon("/general/TemplateProjectStructure.png"); // 32x32
     public static final Icon Tip = IconLoader.getIcon("/general/tip.png"); // 32x32
-    public static final Icon TipsOfTheDay = IconLoader.getIcon("/general/tipsOfTheDay.png"); // 32x32
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.png"); // 12x12
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.png"); // 12x12
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.png"); // 12x12
@@ -699,13 +699,17 @@ public class AllIcons {
     public static final Icon WebModule = IconLoader.getIcon("/javaee/webModule.png"); // 16x16
     public static final Icon WebModuleGroup = IconLoader.getIcon("/javaee/webModuleGroup.png"); // 16x16
     public static final Icon WebService = IconLoader.getIcon("/javaee/WebService.png"); // 16x16
+    public static final Icon WebService2 = IconLoader.getIcon("/javaee/WebService2.png"); // 16x16
     public static final Icon WebServiceClient = IconLoader.getIcon("/javaee/WebServiceClient.png"); // 16x16
+    public static final Icon WebServiceClient2 = IconLoader.getIcon("/javaee/WebServiceClient2.png"); // 16x16
 
   }
   
   public static class Json {
     public static final Icon Array = IconLoader.getIcon("/json/array.png"); // 16x16
     public static final Icon Object = IconLoader.getIcon("/json/object.png"); // 16x16
+    public static final Icon Property_braces = IconLoader.getIcon("/json/property_braces.png"); // 16x16
+    public static final Icon Property_brackets = IconLoader.getIcon("/json/property_brackets.png"); // 16x16
 
   }
   public static final Icon Logo_welcomeScreen = IconLoader.getIcon("/Logo_welcomeScreen.png"); // 80x80
@@ -1178,6 +1182,12 @@ public class AllIcons {
     public static final Icon FromVCS = IconLoader.getIcon("/welcome/fromVCS.png"); // 16x16
     public static final Icon ImportProject = IconLoader.getIcon("/welcome/importProject.png"); // 16x16
     public static final Icon OpenProject = IconLoader.getIcon("/welcome/openProject.png"); // 16x16
+    
+    public static class Project {
+      public static final Icon Remove_hover = IconLoader.getIcon("/welcome/project/remove-hover.png"); // 10x10
+      public static final Icon Remove = IconLoader.getIcon("/welcome/project/remove.png"); // 10x10
+
+    }
     public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
 
   }
@@ -1190,7 +1200,7 @@ public class AllIcons {
       public static final Icon Chromium16 = IconLoader.getIcon("/xml/browsers/chromium16.png"); // 16x16
       public static final Icon Explorer16 = IconLoader.getIcon("/xml/browsers/explorer16.png"); // 16x16
       public static final Icon Firefox16 = IconLoader.getIcon("/xml/browsers/firefox16.png"); // 16x16
-      public static final Icon Node_webkit16 = IconLoader.getIcon("/xml/browsers/node-webkit16.png"); // 16x16
+      public static final Icon Nwjs16 = IconLoader.getIcon("/xml/browsers/nwjs16.png"); // 16x16
       public static final Icon Opera16 = IconLoader.getIcon("/xml/browsers/opera16.png"); // 16x16
       public static final Icon Safari16 = IconLoader.getIcon("/xml/browsers/safari16.png"); // 16x16
       public static final Icon Yandex16 = IconLoader.getIcon("/xml/browsers/yandex16.png"); // 16x16

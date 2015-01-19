@@ -36,4 +36,19 @@
     <description>Fully qualified name &lt;code&gt;java.   util.   List&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
   </problem>
 
+  <problem>
+    <file>UnnecessaryFQNJavadoc.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
+    <description>Fully qualified name &lt;code&gt;java.util.Map&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryFQNJavadoc.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
+    <description>Fully qualified name &lt;code&gt;java.util.HashMap&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+  </problem>
+
+
 </problems>

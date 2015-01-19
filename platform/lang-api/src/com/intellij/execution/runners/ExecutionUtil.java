@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -34,7 +35,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +100,7 @@ public class ExecutionUtil {
     final String fullMessage = title + ":<br>" + description;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.error(fullMessage);
+      LOG.error(fullMessage, e);
     }
 
     if (listener == null && e instanceof HyperlinkListener) {
@@ -124,7 +124,12 @@ public class ExecutionUtil {
         else {
           Messages.showErrorDialog(project, UIUtil.toHtml(fullMessage), "");
         }
-        NotificationListener notificationListener = ObjectUtils.tryCast(finalListener, NotificationListener.class);
+        NotificationListener notificationListener = finalListener == null ? null : new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            finalListener.hyperlinkUpdate(event);
+          }
+        };
         ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, notificationListener).notify(project);
       }
     });

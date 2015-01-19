@@ -302,6 +302,10 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     myLogger.assertCompiled(builderName, new File[]{myProjectDir, myDataStorageRoot}, paths);
   }
 
+  public void checkFullLog(File expectedLogFile) {
+    assertSameLinesWithFile(expectedLogFile.getAbsolutePath(), myLogger.getFullLog(myProjectDir, myDataStorageRoot));
+  }
+
   protected void assertDeleted(String... paths) {
     myLogger.assertDeleted(new File[]{myProjectDir, myDataStorageRoot}, paths);
   }
@@ -313,8 +317,12 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     try {
       beforeBuildStarted(descriptor);
       builder.build(scopeBuilder.build(), false);
+      result.storeMappingsDump(descriptor);
     }
     catch (RebuildRequestedException e) {
+      throw new RuntimeException(e);
+    }
+    catch (IOException e) {
       throw new RuntimeException(e);
     }
     return result;
@@ -323,8 +331,29 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected void beforeBuildStarted(@NotNull ProjectDescriptor descriptor) {
   }
 
+  protected void deleteFile(String relativePath) {
+    delete(new File(getOrCreateProjectDir(), relativePath).getAbsolutePath());
+  }
+
+  protected void changeFile(String relativePath) {
+    changeFile(relativePath, null);
+  }
+
+  protected void changeFile(String relativePath, String newContent) {
+    change(new File(getOrCreateProjectDir(), relativePath).getAbsolutePath(), newContent);
+  }
+
   protected String createFile(String relativePath) {
     return createFile(relativePath, "");
+  }
+
+  protected String createDir(String relativePath) {
+    File dir = new File(getOrCreateProjectDir(), relativePath);
+    boolean created = dir.mkdirs();
+    if (!created && !dir.isDirectory()) {
+      fail("Cannot create " + dir.getAbsolutePath() + " directory");
+    }
+    return FileUtil.toSystemIndependentName(dir.getAbsolutePath());
   }
 
   public String createFile(String relativePath, final String text) {
@@ -385,5 +414,13 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       myJdk = addJdk("1.6");
     }
     return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), null, myJdk);
+  }
+
+  protected void checkMappingsAreSameAfterRebuild(BuildResult makeResult) {
+    String makeDump = makeResult.getMappingsDump();
+    BuildResult rebuildResult = doBuild(CompileScopeTestBuilder.rebuild().allModules());
+    rebuildResult.assertSuccessful();
+    String rebuildDump = rebuildResult.getMappingsDump();
+    assertEquals(rebuildDump, makeDump);
   }
 }

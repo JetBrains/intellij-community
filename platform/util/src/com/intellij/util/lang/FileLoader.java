@@ -17,6 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
@@ -109,8 +110,10 @@ class FileLoader extends Loader {
     return null;
   }
 
+  @NotNull
   @Override
-  void buildCache(ClasspathCache.LoaderData loaderData) throws IOException {
+  public ClasspathCache.LoaderData buildData() throws IOException {
+    ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
     File index = new File(myRootDir, "classpath.index");
     if (index.exists()) {
       BufferedReader reader = new BufferedReader(new FileReader(index));
@@ -132,6 +135,7 @@ class FileLoader extends Loader {
       loaderData.addResourceEntry("bar.properties");
       buildPackageCache(myRootDir, loaderData);
     }
+    return loaderData;
   }
 
   private class MyResource extends Resource {

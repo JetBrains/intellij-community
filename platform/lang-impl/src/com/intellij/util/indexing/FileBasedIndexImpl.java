@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -254,13 +255,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
-    if (fileType instanceof InternalFileType) return true;
-    VirtualFile parent = file.isDirectory() ? file: file.getParent();
-    while (parent != null) {
-      if (Comparing.equal(parent.getNameSequence(), ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR, SystemInfoRt.isFileSystemCaseSensitive)) return true;
-      parent = parent.getParent();
-    }
-    return false;
+    return ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
   }
 
   @Override
@@ -275,11 +270,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         ourRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
       }
 
-      final File corruptionMarker = new File(PathManager.getIndexRoot(), CORRUPTION_MARKER_NAME);
+      File indexRoot = PathManager.getIndexRoot();
+      final File corruptionMarker = new File(indexRoot, CORRUPTION_MARKER_NAME);
       final boolean currentVersionCorrupted = corruptionMarker.exists();
+      if (currentVersionCorrupted) {
+        FileUtil.deleteWithRenaming(indexRoot);
+        indexRoot.mkdirs();
+      }
       boolean versionChanged = false;
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
-        versionChanged |= registerIndexer(extension, currentVersionCorrupted);
+        versionChanged |= registerIndexer(extension);
       }
 
       for(List<ID<?, ?>> value: myFileType2IndicesWithFileTypeInfoMap.values()) {
@@ -366,22 +366,23 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   /**
    * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted
    */
-  private <K, V> boolean registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted)
+  private <K, V> boolean registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension)
     throws IOException {
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
     final File versionFile = IndexInfrastructure.getVersionFile(name);
     final boolean versionFileExisted = versionFile.exists();
     boolean versionChanged = false;
-    if (isCurrentVersionCorrupted || IndexingStamp.versionDiffers(versionFile, version)) {
-      if (!isCurrentVersionCorrupted && versionFileExisted) {
+    if (IndexingStamp.versionDiffers(versionFile, version)) {
+      if (versionFileExisted) {
         versionChanged = true;
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
       }
-      if (extension.hasSnapshotMapping() && (isCurrentVersionCorrupted || versionChanged)) {
+      if (extension.hasSnapshotMapping() && versionChanged) {
         FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
       }
-      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(name));
+      File rootDir = IndexInfrastructure.getIndexRootDir(name);
+      if (versionFileExisted) FileUtil.deleteWithRenaming(rootDir);
       IndexingStamp.rewriteVersion(versionFile, version);
     }
 
@@ -792,7 +793,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (filter == GlobalSearchScope.EMPTY_SCOPE) {
       return;
     }
-    if (isDumb(project)) {
+    if (ActionUtil.isDumbMode(project)) {
       handleDumbMode(project);
     }
 
@@ -845,18 +846,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     throw new IndexNotReadyException();
-  }
-
-  private static boolean isDumb(@Nullable Project project) {
-    if (project != null) {
-      return DumbServiceImpl.getInstance(project).isDumb();
-    }
-    for (Project proj : ProjectManager.getInstance().getOpenProjects()) {
-      if (DumbServiceImpl.getInstance(proj).isDumb()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override
@@ -2566,12 +2555,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
         if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator, visitedRoots);
+          iterateRecursively(root, processor, indicator, visitedRoots, null);
         }
       }
       for (VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(provider, project)) {
         if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator, visitedRoots);
+          iterateRecursively(root, processor, indicator, visitedRoots, null);
         }
       }
     }
@@ -2594,7 +2583,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
               for (VirtualFile root : roots) {
                 if (visitedRoots.add(root)) {
-                  iterateRecursively(root, processor, indicator, null);
+                  iterateRecursively(root, processor, indicator, null, projectFileIndex);
                 }
               }
             }
@@ -2607,8 +2596,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private static void iterateRecursively(@Nullable final VirtualFile root,
                                          @NotNull final ContentIterator processor,
                                          @Nullable final ProgressIndicator indicator,
-                                         @Nullable final Set<VirtualFile> visitedRoots
-                                         ) {
+                                         @Nullable final Set<VirtualFile> visitedRoots,
+                                         @Nullable final ProjectFileIndex projectFileIndex) {
     if (root == null) {
       return;
     }
@@ -2618,6 +2607,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       public boolean visitFile(@NotNull VirtualFile file) {
         if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
           return false; // avoid visiting files more than once, e.g. additional indexed roots intersect sometimes
+        }
+        if (projectFileIndex != null && projectFileIndex.isExcluded(file)) {
+          return false;
         }
         if (indicator != null) indicator.checkCanceled();
 

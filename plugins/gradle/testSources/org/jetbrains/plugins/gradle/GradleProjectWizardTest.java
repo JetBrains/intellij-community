@@ -45,6 +45,6 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setupJdk();
+    configureJdk();
   }
 }

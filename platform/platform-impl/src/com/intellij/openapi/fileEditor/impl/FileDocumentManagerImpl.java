@@ -55,7 +55,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.ExternalChangeAction;
@@ -190,7 +189,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           document.putUserData(FILE_KEY, file);
         }
 
-        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
+        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem)) {
           document.addDocumentListener(
             new DocumentAdapter() {
               @Override
@@ -748,7 +747,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     VirtualFile virtualFile = event.getFile();
-    if (virtualFile.getFileType() == UnknownFileType.INSTANCE && virtualFile.getLength() == 0) {
+    // check file type in second order to avoid content detection running
+    if (virtualFile.getLength() == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
   }

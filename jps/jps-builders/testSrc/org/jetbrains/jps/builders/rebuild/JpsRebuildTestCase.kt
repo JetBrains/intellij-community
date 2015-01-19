@@ -63,7 +63,7 @@ fun fs(init: TestFileSystemBuilderBuilder.() -> Unit): TestFileSystemItem {
   return builder.build()
 }
 
-class TestFileSystemBuilderBuilder(private val current: TestFileSystemBuilder) {
+class TestFileSystemBuilderBuilder(val current: TestFileSystemBuilder) {
   fun file(name: String) {
     current.file(name)
   }
@@ -72,13 +72,13 @@ class TestFileSystemBuilderBuilder(private val current: TestFileSystemBuilder) {
     current.file(name, content)
   }
 
-  fun dir(name: String, init: TestFileSystemBuilderBuilder.() -> Unit) {
+  inline fun dir(name: String, init: TestFileSystemBuilderBuilder.() -> Unit) {
     val dir = current.dir(name)
     TestFileSystemBuilderBuilder(dir).init()
     dir.end()
   }
 
-  fun archive(name: String, init: TestFileSystemBuilderBuilder.() -> Unit) {
+  inline fun archive(name: String, init: TestFileSystemBuilderBuilder.() -> Unit) {
     val dir = current.archive(name)
     TestFileSystemBuilderBuilder(dir).init()
     dir.end()

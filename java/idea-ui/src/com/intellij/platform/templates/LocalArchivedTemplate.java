@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,6 @@ import java.util.zip.ZipInputStream;
  *         Date: 10/1/12
  */
 public class LocalArchivedTemplate extends ArchivedProjectTemplate {
-
   public static final String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
   static final String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
 
@@ -55,16 +53,11 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
     myArchivePath = archivePath;
     myModuleType = computeModuleType(this);
-    String s = readEntry(new Condition<ZipEntry>() {
-      @Override
-      public boolean value(ZipEntry entry) {
-        return entry.getName().endsWith(TEMPLATE_DESCRIPTOR);
-      }
-    });
+    String s = readEntry(TEMPLATE_DESCRIPTOR);
     if (s != null) {
       try {
         Element templateElement = JDOMUtil.loadDocument(s).getRootElement();
-        populateFromElement(templateElement, Namespace.NO_NAMESPACE);
+        populateFromElement(templateElement);
         String iconPath = templateElement.getChildText("icon-path");
         if (iconPath != null) {
           myIcon = IconLoader.findIcon(iconPath, classLoader);
@@ -83,12 +76,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   @Override
   public String getDescription() {
-    return readEntry(new Condition<ZipEntry>() {
-      @Override
-      public boolean value(ZipEntry entry) {
-        return entry.getName().endsWith(DESCRIPTION_PATH);
-      }
-    });
+    return readEntry(DESCRIPTION_PATH);
   }
 
   @Override
@@ -97,34 +85,29 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   @Nullable
-  String readEntry(Condition<ZipEntry> condition) {
-    ZipInputStream stream = null;
+  String readEntry(@NotNull final String endsWith) {
     try {
-      stream = getStream();
-      ZipEntry entry;
-      while ((entry = stream.getNextEntry()) != null) {
-        if (condition.value(entry)) {
-          return StreamUtil.readText(stream, TemplateModuleBuilder.UTF_8);
+      return processStream(new StreamProcessor<String>() {
+        @Override
+        public String consume(@NotNull ZipInputStream stream) throws IOException {
+          ZipEntry entry;
+          while ((entry = stream.getNextEntry()) != null) {
+            if (entry.getName().endsWith(endsWith)) {
+              return StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
+            }
+          }
+          return null;
         }
-      }
+      });
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
       return null;
     }
-    finally {
-      StreamUtil.closeStream(stream);
-    }
-    return null;
   }
 
   @NotNull
   private static ModuleType computeModuleType(LocalArchivedTemplate template) {
-    String iml = template.readEntry(new Condition<ZipEntry>() {
-      @Override
-      public boolean value(ZipEntry entry) {
-        return entry.getName().endsWith(".iml");
-      }
-    });
+    String iml = template.readEntry(".iml");
     if (iml == null) return ModuleType.EMPTY;
     try {
       Document document = JDOMUtil.loadDocument(iml);
@@ -142,8 +125,8 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   @Override
-  public ZipInputStream getStream() throws IOException {
-    return new ZipInputStream(myArchivePath.openStream());
+  public <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException {
+    return consumeZipStream(consumer, new ZipInputStream(myArchivePath.openStream()));
   }
 
   public URL getArchivePath() {

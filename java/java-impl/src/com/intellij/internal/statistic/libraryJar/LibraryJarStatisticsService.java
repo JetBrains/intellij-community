@@ -37,9 +37,8 @@ import java.net.URL;
  * @author Ivan Chirkov
  */
 public class LibraryJarStatisticsService extends SettingsConnectionService implements StartupActivity, DumbAware {
-
   private static final String FILE_NAME = "statistics/library-jar-statistics.xml";
-  private static final String DEFAULT_SETTINGS_URL = "http://www.jetbrains.com/idea/download-assistant.xml";
+  private static final String DEFAULT_SETTINGS_URL = "https://www.jetbrains.com/idea/download-assistant.xml";
   private static final String DEFAULT_SERVICE_URL = "http://frameworks.jetbrains.com";
 
   private static final LibraryJarStatisticsService myInstance = new LibraryJarStatisticsService();

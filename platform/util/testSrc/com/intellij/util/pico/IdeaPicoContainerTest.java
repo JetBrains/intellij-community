@@ -25,7 +25,7 @@ public class IdeaPicoContainerTest {
 
   @Before
   public void setUp() throws Exception {
-    myContainer = new IdeaPicoContainer();
+    myContainer = new DefaultPicoContainer();
   }
 
   @Test

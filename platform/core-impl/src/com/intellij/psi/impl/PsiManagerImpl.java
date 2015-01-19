@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -113,9 +114,6 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public boolean isInProject(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    if (file != null && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) return true;
-
     if (element instanceof PsiDirectoryContainer) {
       PsiDirectory[] dirs = ((PsiDirectoryContainer)element).getDirectories();
       for (PsiDirectory dir : dirs) {
@@ -124,6 +122,7 @@ public class PsiManagerImpl extends PsiManagerEx {
       return true;
     }
 
+    PsiFile file = element.getContainingFile();
     VirtualFile virtualFile = null;
     if (file != null) {
       virtualFile = file.getViewProvider().getVirtualFile();
@@ -131,6 +130,8 @@ public class PsiManagerImpl extends PsiManagerEx {
     else if (element instanceof PsiFileSystemItem) {
       virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
     }
+    if (file != null && file.isPhysical() && virtualFile instanceof LightVirtualFile) return true;
+    if (virtualFile != null && virtualFile.getFileType() instanceof InternalFileType) return true;
 
     if (virtualFile != null) {
       return myExcludedFileIndex.isInContent(virtualFile);

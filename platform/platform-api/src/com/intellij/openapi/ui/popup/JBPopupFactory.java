@@ -127,6 +127,10 @@ public abstract class JBPopupFactory {
     List<JBPopup> popups = getChildPopups(parent);
     for (JBPopup each : popups) {
       if (each.isFocused()) return each;
+      JBPopup childFocusedPopup = getChildFocusedPopup(each.getContent());
+      if (childFocusedPopup != null) {
+        return childFocusedPopup;
+      }
     }
     return null;
   }
@@ -239,6 +243,18 @@ public abstract class JBPopupFactory {
    */
   @NotNull
   public abstract ListPopup createListPopup(@NotNull ListPopupStep step);
+
+  /**
+   * Creates a custom list popup with the specified step.
+   *
+   * @param step        the custom step for the list popup.
+   * @param maxRowCount the number of visible rows to show in the popup (if the popup has more items,
+   *                    a scrollbar will be displayed).
+   * @return the popup instance.
+   * @since 14.1
+   */
+  @NotNull
+  public abstract ListPopup createListPopup(@NotNull ListPopupStep step, int maxRowCount);
 
   @NotNull
   public abstract TreePopup createTree(JBPopup parent, @NotNull TreePopupStep step, Object parentValue);

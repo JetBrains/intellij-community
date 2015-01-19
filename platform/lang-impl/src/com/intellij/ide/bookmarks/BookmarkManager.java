@@ -21,6 +21,9 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -65,8 +68,14 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     return project.getComponent(BookmarkManager.class);
   }
 
-  public BookmarkManager(Project project, MessageBus bus, PsiDocumentManager documentManager) {
+  public BookmarkManager(Project project, MessageBus bus, PsiDocumentManager documentManager, EditorColorsManager colorsManager) {
     super(project);
+    colorsManager.addEditorColorsListener(new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        colorsChanged();
+      }
+    }, project);
     myBus = bus;
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);

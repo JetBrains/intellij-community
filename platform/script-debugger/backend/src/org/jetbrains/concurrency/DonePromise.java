@@ -15,33 +15,45 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   @NotNull
   @Override
   public Promise<T> done(@NotNull Consumer<T> done) {
-    done.consume(result);
+    if (!AsyncPromise.isObsolete(done)) {
+      done.consume(result);
+    }
     return this;
   }
 
   @NotNull
   @Override
-  public Promise<T> rejected(@NotNull Consumer<String> rejected) {
+  public Promise<T> processed(@NotNull AsyncPromise<T> fulfilled) {
+    fulfilled.setResult(result);
     return this;
   }
 
   @Override
   public void processed(@NotNull Consumer<T> processed) {
-    processed.consume(result);
+    done(processed);
+  }
+
+  @NotNull
+  @Override
+  public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
+    return this;
   }
 
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done) {
-    //noinspection unchecked
-    return (Promise<SUB_RESULT>)this;
+    if (done instanceof Obsolescent && ((Obsolescent)done).isObsolete()) {
+      return Promise.reject("obsolete");
+    }
+    else {
+      return Promise.resolve(done.fun(result));
+    }
   }
 
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull AsyncFunction<T, SUB_RESULT> done) {
-    //noinspection unchecked
-    return (Promise<SUB_RESULT>)this;
+    return done.fun(result);
   }
 
   @NotNull
@@ -53,5 +65,10 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   @Override
   public T get() {
     return result;
+  }
+
+  @Override
+  void notify(@NotNull AsyncPromise<T> child) {
+    child.setResult(result);
   }
 }

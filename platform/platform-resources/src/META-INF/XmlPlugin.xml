@@ -1,12 +1,21 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/components/*)">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/component/*)"/>
-  <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/relaxng-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/relaxng-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <application-components>
     <component>
       <implementation-class>com.intellij.javaee.DefaultHtmlDoctypeInitialConfigurator</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer</implementation-class>
     </component>
   </application-components>
 
@@ -152,7 +161,10 @@
     <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
 
     <breadcrumbsInfoProvider implementation="com.intellij.xml.breadcrumbs.XmlLanguageBreadcrumbsInfoProvider"/>
-    <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
+    <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"
+                                 id="editor.preferences.webOptions"
+                                 key="web.editor.configuration.title"
+                                 bundle="messages.XmlBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"
                                   id="WebEditorAppearanceConfigurable"/>
 
@@ -184,7 +196,8 @@
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
 
-    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
+    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" id="reference.idesettings.emmet"
+                             dynamic="true" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
     <applicationService serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
@@ -412,6 +425,9 @@
     <localInspection language="XML" shortName="HtmlUnknownAttribute" bundle="messages.XmlBundle" key="html.inspections.unknown.attribute" groupName="HTML"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection"/>
+    <localInspection language="XML" bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute" groupName="HTML"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
     <localInspection language="XML" shortName="XmlUnboundNsPrefix" bundle="messages.XmlBundle" key="xml.inspections.unbound.prefix"
                      groupKey="xml.inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection"/>
@@ -527,7 +543,7 @@
     <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
 
     <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer"/>
-    <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider"/>
+    <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider" order="last"/>
 
     <customPortServerManager implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$MyCustomPortServerManager"/>
     <xdebugger.configurableProvider implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$BuiltInServerDebuggerConfigurableProvider"/>

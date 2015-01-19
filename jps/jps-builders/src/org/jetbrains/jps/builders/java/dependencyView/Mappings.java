@@ -101,7 +101,7 @@ public class Mappings {
     myLock = base.myLock;
     myIsDelta = true;
     myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-    myChangedFiles = new THashSet(FileUtil.FILE_HASHING_STRATEGY);
+    myChangedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     myDeletedClasses = new HashSet<Pair<ClassRepr, File>>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myAddedClasses = new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myDeltaIsTransient = base.myDeltaIsTransient;
@@ -238,7 +238,11 @@ public class Mappings {
     final Set<Pair<ClassRepr, File>> deleted = myDeletedClasses;
     if (deleted != null) {
       for (Pair<ClassRepr, File> pair : deleted) {
-        myChangedClasses.remove(pair.first.name);
+        final int deletedClassName = pair.first.name;
+        final Collection<File> sources = myClassToSourceFile.get(deletedClassName);
+        if (sources == null || sources.isEmpty()) { // if really deleted and not e.g. moved 
+          myChangedClasses.remove(deletedClassName);
+        }
       }
     }
     for (Runnable pass = myPostPasses.poll(); pass != null; pass = myPostPasses.poll()) {
@@ -1861,15 +1865,46 @@ public class Mappings {
         // checking if this newly added class duplicates already existing one
         for (ClassRepr c : addedClasses) {
           if (!c.isLocal() && !c.isAnonymous() && isEmpty(c.getOuterClassName())) {
-            final Collection<File> currentSources = myClassToSourceFile.get(c.name);
-            final File currentlyMappedTo = currentSources != null && currentSources.size() == 1? currentSources.iterator().next() : null;
-            // only check, if exactly one file is mapped
-            if (currentlyMappedTo != null && !FileUtil.filesEqual(currentlyMappedTo, srcFile) && currentlyMappedTo.exists() && myFilter.belongsToCurrentTargetChunk(currentlyMappedTo)) {
-              // Same classes from different source files.
+            final Set<File> candidates = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            final Collection<File> currentlyMapped = myClassToSourceFile.get(c.name);
+            if (currentlyMapped != null) {
+              candidates.addAll(currentlyMapped);
+            }
+            candidates.removeAll(myCompiledFiles);
+            final Collection<File> newSources = myDelta.myClassToSourceFile.get(c.name);
+            if (newSources != null) {
+              candidates.removeAll(newSources);
+            }
+            final Set<File> nonExistentOrOutOfScope = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            for (final File candidate : candidates) {
+              if (!candidate.exists() || !myFilter.belongsToCurrentTargetChunk(candidate)) {
+                nonExistentOrOutOfScope.add(candidate);
+              }
+            }
+            candidates.removeAll(nonExistentOrOutOfScope);
+
+            if (!candidates.isEmpty()) {
+              // Possibly duplicate classes from different sets of source files
               // Schedule for recompilation both to make possible 'duplicate sources' error evident
-              debug("Scheduling for recompilation duplicated sources: ", currentlyMappedTo.getPath() + "; " + srcFile.getPath());
-              myAffectedFiles.add(currentlyMappedTo);
-              myAffectedFiles.add(srcFile);
+              candidates.clear(); // just reusing the container
+              if (currentlyMapped != null) {
+                candidates.addAll(currentlyMapped);
+              }
+              if (newSources != null) {
+                candidates.addAll(newSources);
+              }
+              candidates.removeAll(nonExistentOrOutOfScope);
+
+              if (myDebugS.isDebugEnabled()) {
+                final StringBuilder msg = new StringBuilder();
+                msg.append("Possibly duplicated classes; Scheduling for recompilation sources: ");
+                for (File file : candidates) {
+                  msg.append(file.getPath()).append("; ");
+                }
+                debug(msg.toString());
+              }
+
+              myAffectedFiles.addAll(candidates);
               return; // do not process this file because it should not be integrated
             }
           }
@@ -1996,51 +2031,64 @@ public class Mappings {
         debug("Begin of Differentiate:");
         debug("Easy mode: ", myEasyMode);
 
-        processDisappearedClasses();
+        try {
+          processDisappearedClasses();
 
-        final List<FileClasses> newClasses = new ArrayList<FileClasses>();
-        myDelta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
-          @Override
-          public boolean execute(File fileName, Collection<ClassRepr> classes) {
-            newClasses.add(new FileClasses(fileName, classes));
-            return true;
-          }
-        });
+          final List<FileClasses> newClasses = new ArrayList<FileClasses>();
+          myDelta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
+            @Override
+            public boolean execute(File fileName, Collection<ClassRepr> classes) {
+              if (myFilesToCompile == null || myFilesToCompile.contains(fileName)) {
+                // Consider only files actually compiled in this round.
+                // For other sources the list of classes taken from this map will be possibly incomplete.
+                newClasses.add(new FileClasses(fileName, classes));
+              }
+              return true;
+            }
+          });
 
-        for (final FileClasses compiledFile : newClasses) {
-          final File fileName = compiledFile.myFileName;
-          final Set<ClassRepr> classes = compiledFile.myFileClasses;
-          final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
-          final DiffState state = new DiffState(Difference.make(pastClasses, classes));
-
-          if (!processChangedClasses(state)) {
+          for (final FileClasses compiledFile : newClasses) {
+            final File fileName = compiledFile.myFileName;
+            final Set<ClassRepr> classes = compiledFile.myFileClasses;
+            final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
+            final DiffState state = new DiffState(Difference.make(pastClasses, classes));
+  
+            if (!processChangedClasses(state)) {
+              if (!myEasyMode) {
+                // turning non-incremental
+                return false;
+              }
+            }
+  
+            processRemovedClases(state, fileName);
+            processAddedClasses(state, fileName);
+  
             if (!myEasyMode) {
-              // turning non-incremental
-              return false;
+              calculateAffectedFiles(state);
             }
           }
 
-          processRemovedClases(state, fileName);
-          processAddedClasses(state, fileName);
+          debug("End of Differentiate.");
 
-          if (!myEasyMode) {
-            calculateAffectedFiles(state);
+          if (myEasyMode) {
+            return false;
+          }
+
+          final Collection<String> removed = myDelta.myRemovedFiles;
+          if (removed != null) {
+            for (final String r : removed) {
+              myAffectedFiles.remove(new File(r));
+            }
+          }
+          return myDelayedWorks.doWork(myAffectedFiles);
+        }
+        finally {
+          if (myFilesToCompile != null) {
+            // if some class is associated with several sources, 
+            // some of them may not have been compiled in this round, so such files should be considered unchanged
+            myDelta.myChangedFiles.retainAll(myFilesToCompile);
           }
         }
-
-        debug("End of Differentiate.");
-
-        if (myEasyMode) {
-          return false;
-        }
-
-        final Collection<String> removed = myDelta.myRemovedFiles;
-        if (removed != null) {
-          for (final String r : removed) {
-            myAffectedFiles.remove(new File(r));
-          }
-        }
-        return myDelayedWorks.doWork(myAffectedFiles);
       }
     }
   }
@@ -2225,6 +2273,50 @@ public class Mappings {
               return true;
             }
           });
+          
+          // some classes may be associated with multiple sources.
+          // In case some of these sources was not compiled, but the class was changed, we need to update
+          // sourceToClasses mapping for such sources to include the updated ClassRepr version of the changed class
+          final THashSet<File> unchangedSources = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+          delta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
+            @Override
+            public boolean execute(File source, Collection<ClassRepr> b) {
+              unchangedSources.add(source);
+              return true;
+            }
+          });
+          unchangedSources.removeAll(delta.getChangedFiles());
+          if (!unchangedSources.isEmpty()) {
+            unchangedSources.forEach(new TObjectProcedure<File>() {
+              @Override
+              public boolean execute(File unchangedSource) {
+                final Collection<ClassRepr> updatedClasses = delta.mySourceFileToClasses.get(unchangedSource);
+                if (updatedClasses != null && !updatedClasses.isEmpty()) {
+                  final List<ClassRepr> classesToPut = new ArrayList<ClassRepr>();
+                  final TIntHashSet updatedClassNames = new TIntHashSet();
+                  for (ClassRepr aClass : updatedClasses) {
+                    // from all generated classes on this round consider only 'differentiated' ones, for
+                    // which we can reliably say that the class has changed. Keep classes, for which no such checks were made,
+                    // to make it possible to create a diff and compare changes on next compilation rounds. 
+                    if (delta.getChangedClasses().contains(aClass.name)) {
+                      classesToPut.add(aClass);
+                      updatedClassNames.add(aClass.name);
+                    }
+                  }
+                  Collection<ClassRepr> currentClasses = mySourceFileToClasses.get(unchangedSource);
+                  if (currentClasses != null) {
+                    for (ClassRepr aClass : currentClasses) {
+                      if (!updatedClassNames.contains(aClass.name)) {
+                        classesToPut.add(aClass);
+                      }
+                    }
+                  }
+                  mySourceFileToClasses.replace(unchangedSource, classesToPut);
+                }
+                return true;
+              }
+            });
+          }
         }
         else {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);

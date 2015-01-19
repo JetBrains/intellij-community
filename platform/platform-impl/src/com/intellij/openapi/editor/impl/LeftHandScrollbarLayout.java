@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij.openapi.editor.impl;
+
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -777,11 +779,11 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
     Component view = (viewport != null) ? viewport.getView() : null;
     Dimension viewPrefSize =
       (view != null) ? view.getPreferredSize()
-      : new Dimension(0, 0);
+      : JBUI.emptySize();
 
     Dimension extentSize =
       (viewport != null) ? viewport.toViewCoordinates(availR.getSize())
-      : new Dimension(0, 0);
+      : JBUI.emptySize();
 
     boolean viewTracksViewportWidth = false;
     boolean viewTracksViewportHeight = false;

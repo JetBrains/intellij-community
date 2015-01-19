@@ -51,5 +51,9 @@ public abstract class CloudApplicationRuntimeBase extends CloudApplicationRuntim
     }, callback);
   }
 
+  protected ServerTaskExecutor getTaskExecutor() {
+    return myTaskExecutor;
+  }
+
   protected abstract CloudAgentApplication getApplication();
 }

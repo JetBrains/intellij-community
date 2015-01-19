@@ -41,7 +41,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -57,6 +56,7 @@ import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.PowerSupplyKit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,8 +77,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
   private static boolean myUpdatingTitle;
 
-  private static String xdgCurrentDesktop = System.getenv("XDG_CURRENT_DESKTOP");
-
   private String myTitle;
   private String myFileTitle;
   private File myCurrentFile;
@@ -92,11 +90,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx,
                       ActionManagerEx actionManager,
-                      UISettings uiSettings,
                       DataManager dataManager,
                       Application application) {
     super(applicationInfoEx.getFullApplicationName());
-    myRootPane = createRootPane(actionManager, uiSettings, dataManager, application);
+    myRootPane = createRootPane(actionManager, UISettings.getInstance(), dataManager, application);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateWindowIcon(this);
@@ -115,10 +112,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     new MnemonicHelper().register(this);
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, new Insets(8, 8, 8, 8));
-
-    if (!Registry.is("ide.windowSystem.focusAppOnStartup") && !isThereActiveFrame()) {
-      setFocusableWindowState(false);
-    }
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
@@ -143,7 +136,18 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     });
 
     IdeMenuBar.installAppMenuIfNeeded(this);
+
+    // UIUtil.suppressFocusStealing();
+
   }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    PowerSupplyKit.checkPowerSupply();
+  }
+
+
 
   private void updateBorder() {
     int state = getExtendedState();
@@ -166,7 +170,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
           if (insets.left != 0) mask |= SideBorder.LEFT;
           if (insets.bottom != 0) mask |= SideBorder.BOTTOM;
           if (insets.right != 0) mask |= SideBorder.RIGHT;
-          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, false, 3));
+          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, 3));
           break;
         }
       }
@@ -202,22 +206,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     return null;
   }
 
-  public static boolean isThereActiveFrame() {
-    Frame[] all = Frame.getFrames();
-    for (Frame each : all) {
-      if (each.isActive()) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   @SuppressWarnings({"deprecation", "SSBasedInspection"})
   @Override
   public void show() {
     super.show();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         setFocusableWindowState(true);
       }
@@ -497,6 +491,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
     if (myProject != null) {
       PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, String.valueOf(state));
+      doLayout();
     }
   }
 

@@ -137,7 +137,7 @@ public final class IterationState {
     LOG.assertTrue(myStartOffset <= myEnd);
     myHighlighterIterator = useOnlyFullLineHighlighters ? null : editor.getHighlighter().createIterator(start);
 
-    boolean hasSelection = useCaretAndSelection && (editor.getCaretModel().supportsMultipleCarets() || editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection());
+    boolean hasSelection = useCaretAndSelection && (editor.getCaretModel().supportsMultipleCarets() || editor.getSelectionModel().hasSelection());
     if (!hasSelection) {
       mySelectionStarts = ArrayUtilRt.EMPTY_INT_ARRAY;
       mySelectionEnds = ArrayUtilRt.EMPTY_INT_ARRAY;
@@ -269,7 +269,7 @@ public final class IterationState {
     advanceCurrentVirtualSelectionIndex();
 
     if (!myUseOnlyFullLineHighlighters) {
-      myCurrentFold = myFoldingModel.fetchOutermost(myStartOffset);
+      myCurrentFold = myFoldingModel.getCollapsedRegionAtOffset(myStartOffset);
     }
     if (myCurrentFold != null) {
       myEndOffset = myCurrentFold.getEndOffset();

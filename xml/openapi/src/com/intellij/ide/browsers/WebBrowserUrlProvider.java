@@ -52,7 +52,7 @@ public abstract class WebBrowserUrlProvider {
   }
 
   @Nullable
-  protected Url getUrl(@NotNull OpenInBrowserRequest request, @NotNull VirtualFile virtualFile) throws BrowserException {
+  protected Url getUrl(@NotNull OpenInBrowserRequest request, @NotNull VirtualFile file) throws BrowserException {
     return null;
   }
 
@@ -61,7 +61,9 @@ public abstract class WebBrowserUrlProvider {
     return ContainerUtil.createMaybeSingletonList(getUrl(request, request.getVirtualFile()));
   }
 
+  @SuppressWarnings({"UnusedParameters", "unused"})
   @Nullable
+  @Deprecated
   public String getOpenInBrowserActionDescription(@NotNull PsiFile file) {
     return null;
   }

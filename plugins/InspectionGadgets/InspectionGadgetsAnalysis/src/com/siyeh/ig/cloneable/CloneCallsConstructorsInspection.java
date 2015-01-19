@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,11 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (!CloneUtils.isClone(method)) {
+      if (!CloneUtils.isClone(method) || method.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null || aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       method.accept(new JavaRecursiveElementVisitor() {

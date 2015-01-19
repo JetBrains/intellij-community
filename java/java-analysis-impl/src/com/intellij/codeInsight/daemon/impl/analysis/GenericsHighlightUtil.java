@@ -455,9 +455,11 @@ public class GenericsHighlightUtil {
                   HighlightUtil.formatClass(superContainingClass),
                   JavaHighlightUtil.formatMethod(superMethod),
                   HighlightUtil.formatClass(superContainingClass, false));
-                return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                   .range(classIdentifier).descriptionAndTooltip(message)
                   .create();
+                QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+                return info;
               }
 
               if (isDefault || !isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -471,9 +473,11 @@ public class GenericsHighlightUtil {
                                                                HighlightUtil.formatClass(containingClass) +
                                                                " and " +
                                                                HighlightUtil.formatClass(superContainingClass);
-                return HighlightInfo
+                final HighlightInfo info = HighlightInfo
                   .newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(inheritUnrelatedDefaultsMessage)
                   .create();
+                QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+                return info;
               }
             }
           }
@@ -1173,7 +1177,7 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkEnumMustNotBeLocal(final PsiClass aClass) {
     if (!aClass.isEnum()) return null;
     PsiElement parent = aClass.getParent();
-    if (!(parent instanceof PsiClass || parent instanceof PsiFile)) {
+    if (!(parent instanceof PsiClass || parent instanceof PsiFile || parent instanceof PsiClassLevelDeclarationStatement)) {
       String description = JavaErrorMessages.message("local.enum");
       TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();

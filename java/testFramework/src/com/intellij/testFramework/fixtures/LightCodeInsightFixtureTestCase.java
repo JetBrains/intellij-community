@@ -152,6 +152,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     return myFixture.getProject();
   }
 
+  protected PsiFile getFile() { return myFixture.getFile(); }
+
   protected PsiManager getPsiManager() {
     return PsiManager.getInstance(getProject());
   }

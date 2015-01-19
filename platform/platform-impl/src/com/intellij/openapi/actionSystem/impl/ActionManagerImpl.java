@@ -23,6 +23,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -372,6 +373,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     else {
       LOG.error(new PluginException(message, null, pluginId));
+    }
+  }
+  private static void reportActionWarning(final PluginId pluginId, @NonNls @NotNull String message) {
+    if (pluginId == null) {
+      LOG.warn(message);
+    }
+    else {
+      LOG.warn(new PluginException(message, null, pluginId).getMessage());
     }
   }
 
@@ -919,7 +928,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     Keymap keymap = myKeymapManager.getKeymap(keymapName);
     if (keymap == null) {
-      reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
+      reportActionWarning(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
     }
     final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);
@@ -1271,6 +1280,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         @Override
         public void run() {
           try {
+            SearchableOptionsRegistrar.getInstance(); // load inspection descriptions etc. to be used in Goto Action, Search Everywhere 
             doPreloadActions();
           } catch (RuntimeInterruptedException ignore) {
           }

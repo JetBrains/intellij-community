@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
+import org.zmlx.hg4idea.provider.commit.HgCloseBranchExecutor;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.roots.HgIntegrationEnabler;
@@ -104,7 +105,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private HgExecutableValidator myExecutableValidator;
   private final Object myExecutableValidatorLock = new Object();
   private File myPromptHooksExtensionFile;
-  private CommitExecutor myCommitAndPushExecutor;
+  private final CommitExecutor myCommitAndPushExecutor;
+  private final HgCloseBranchExecutor myCloseBranchExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
   private HgStatusWidget myStatusWidget;
@@ -112,7 +114,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private HgIncomingOutgoingWidget myOutgoingWidget;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
-  public HgVcs(Project project,
+  public HgVcs(@NotNull Project project,
                @NotNull HgGlobalSettings globalSettings,
                @NotNull HgProjectSettings projectSettings,
                ProjectLevelVcsManager vcsManager) {
@@ -130,6 +132,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     committedChangesProvider = new HgCachingCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
+    myCloseBranchExecutor = new HgCloseBranchExecutor(checkinEnvironment);
   }
 
   public String getDisplayName() {
@@ -254,7 +257,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
    */
   @NotNull
   public File getPromptHooksExtensionFile() {
-    if (myPromptHooksExtensionFile == null) {
+    if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
       // check that hooks are available
       myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
       if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
@@ -396,6 +399,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return Collections.singletonList(myCommitAndPushExecutor);
   }
 
+  @NotNull
+  public HgCloseBranchExecutor getCloseBranchExecutor() {
+    return myCloseBranchExecutor;
+  }
+
   public static VcsKey getKey() {
     return ourKey;
   }
@@ -468,13 +476,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
         String message = HgVcsMessages.message("hg4idea.unable.to.run.hg", executable);
         vcsNotifier.notifyError(message,
-                                  String.format(
-                                    reason +
-                                    "<br/> Please check your hg executable path in <a href='" +
-                                    SETTINGS_LINK +
-                                    "'> settings </a>"
-                                  ),
-                                  linkAdapter
+                                reason +
+                                "<br/> Please check your hg executable path in <a href='" +
+                                SETTINGS_LINK +
+                                "'> settings </a>",
+                                linkAdapter
         );
       }
     }

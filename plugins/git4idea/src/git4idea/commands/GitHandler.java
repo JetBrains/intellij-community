@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,12 +28,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IdeaWideProxySelector;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
@@ -87,7 +93,8 @@ public abstract class GitHandler {
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   @NonNls
-  private Charset myCharset = Charset.forName("UTF-8"); // Character set to use for IO
+  @NotNull
+  private Charset myCharset = CharsetToolkit.UTF8_CHARSET; // Character set to use for IO
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -119,18 +126,20 @@ public abstract class GitHandler {
     myCommand = command;
     myAppSettings = GitVcsApplicationSettings.getInstance();
     myProjectSettings = GitVcsSettings.getInstance(myProject);
-    myEnv = new HashMap<String, String>(System.getenv());
-    myVcs = GitVcs.getInstance(project);
+    myEnv = new HashMap<String, String>(EnvironmentUtil.getEnvironmentMap());
+    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
     if (myAppSettings != null) {
       myCommandLine.setExePath(myAppSettings.getPathToGit());
     }
     myCommandLine.setWorkDirectory(myWorkingDirectory);
-    if (command.name().length() > 0) {
-      myCommandLine.addParameter(command.name());
+    if (GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(myVcs.getVersion())) {
+      myCommandLine.addParameters("-c", "core.quotepath=false");
     }
+    myCommandLine.addParameter(command.name());
     myStdoutSuppressed = true;
+    mySilent = myCommand.lockingPolicy() == GitCommand.LockingPolicy.READ;
   }
 
   /**
@@ -438,7 +447,7 @@ public abstract class GitHandler {
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
 
         final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY;
+        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, myUrl);
         myEnv.put(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
 
         if (useHttpProxy) {
@@ -472,6 +481,9 @@ public abstract class GitHandler {
       myProcess = startProcess();
       startHandlingStreams();
     }
+    catch (ProcessCanceledException pce) {
+      cleanupEnv();
+    }
     catch (Throwable t) {
       if (!ApplicationManager.getApplication().isUnitTestMode() || !myProject.isDisposed()) {
         LOG.error(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
@@ -481,13 +493,19 @@ public abstract class GitHandler {
     }
   }
 
+  protected static boolean isSshUrlExcluded(@NotNull HttpConfigurable httpConfigurable, @NotNull String url) {
+    String host = URLUtil.parseHostFromSshUrl(url);
+    return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
+  }
+
   private void addAuthListener(@NotNull final GitHttpAuthenticator authenticator) {
     // TODO this code should be located in GitLineHandler, and the other remote code should be move there as well
     if (this instanceof GitLineHandler) {
       ((GitLineHandler)this).addLineListener(new GitLineHandlerAdapter() {
         @Override
-        public void onLineAvailable(String line, Key outputType) {
-          if (line.toLowerCase().contains("authentication failed")) {
+        public void onLineAvailable(@NonNls String line, Key outputType) {
+          String lowerCaseLine = line.toLowerCase();
+          if (lowerCaseLine.contains("authentication failed") || lowerCaseLine.contains("403 forbidden")) {
             myHttpAuthFailed = true;
           }
         }
@@ -622,6 +640,7 @@ public abstract class GitHandler {
   /**
    * @return a character set to use for IO
    */
+  @NotNull
   public Charset getCharset() {
     return myCharset;
   }
@@ -632,7 +651,7 @@ public abstract class GitHandler {
    * @param charset a character set
    */
   @SuppressWarnings({"SameParameterValue"})
-  public void setCharset(final Charset charset) {
+  public void setCharset(@NotNull Charset charset) {
     myCharset = charset;
   }
 

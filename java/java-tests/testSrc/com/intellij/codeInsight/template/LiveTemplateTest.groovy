@@ -385,6 +385,13 @@ class Foo {
     checkResult();
   }
 
+  public void testIterParameterizedInnerInMethod() {
+    configure();
+    startTemplate("iter", "iterations")
+    stripTrailingSpaces();
+    checkResult();
+  }
+
   public void testAsListToar() {
     configure();
     startTemplate("toar", "other")
@@ -478,7 +485,7 @@ class Foo {
     writeCommand(runnable)
   }
 
-  private writeCommand(Runnable runnable) {
+  private static writeCommand(Runnable runnable) {
     WriteCommandAction.runWriteCommandAction(null, runnable)
   }
 
@@ -887,7 +894,7 @@ class Foo {
 class Foo {
   {
       System.out.println();
-    sout 
+      System.out.println();
       System.out.println();
   }
 }
@@ -917,8 +924,7 @@ class Foo {
 class Foo {
   {
       System.out.println();
-    sout
-            
+      System.out.println();
       System.out.println();
   }
 }
@@ -949,12 +955,10 @@ class Foo {
 class Foo {
   {
       System.out.println();
-    sout
+      System.out.println();
       System.out.println();
   }
 }
 """)
   }
-
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,6 +212,12 @@ public class ContainerUtil extends ContainerUtilRt {
         return size;
       }
     };
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> List<T> newSmartList() {
+    return new SmartList<T>();
   }
 
   @NotNull
@@ -846,6 +852,27 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  @Contract(pure = true)
+  public static <T, KEY, VALUE> Map<KEY, VALUE> map2MapNotNull(@NotNull T[] collection,
+                                                               @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
+    return map2MapNotNull(Arrays.asList(collection), mapper);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <T, KEY, VALUE> Map<KEY, VALUE> map2MapNotNull(@NotNull Collection<? extends T> collection,
+                                                               @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
+    final Map<KEY, VALUE> set = new THashMap<KEY, VALUE>(collection.size());
+    for (T t : collection) {
+      Pair<KEY, VALUE> pair = mapper.fun(t);
+      if (pair != null) {
+        set.put(pair.first, pair.second);
+      }
+    }
+    return set;
+  }
+
+  @NotNull
   @Contract(pure=true)
   public static <KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull Collection<Pair<KEY, VALUE>> collection) {
     final Map<KEY, VALUE> result = new THashMap<KEY, VALUE>(collection.size());
@@ -927,6 +954,18 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> List<T> filter(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
     return findAll(collection, condition);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <K, V> Map<K, V> filter(@NotNull Map<K, ? extends V> map, @NotNull Condition<? super K> keyFilter) {
+    Map<K, V> result = newHashMap();
+    for (Map.Entry<K, ? extends V> entry : map.entrySet()) {
+      if (keyFilter.value(entry.getKey())) {
+        result.put(entry.getKey(), entry.getValue());
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -1389,10 +1428,18 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure=true)
   public static <T> boolean intersects(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
-    for (T t : collection1) {
-      //noinspection SuspiciousMethodCalls
-      if (collection2.contains(t)) {
-        return true;
+    if (collection1.size() <= collection2.size()) {
+      for (T t : collection1) {
+        if (collection2.contains(t)) {
+          return true;
+        }
+      }
+    }
+    else {
+      for (T t : collection2) {
+        if (collection1.contains(t)) {
+          return true;
+        }
       }
     }
     return false;
@@ -1426,8 +1473,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> T getFirstItem(@Nullable final Collection<T> items, @Nullable final T def) {
-    return items == null || items.isEmpty() ? def : items.iterator().next();
+  public static <T> T getFirstItem(@Nullable final Collection<T> items, @Nullable final T defaultResult) {
+    return items == null || items.isEmpty() ? defaultResult : items.iterator().next();
   }
 
   /**
@@ -1594,6 +1641,12 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> sorted(@NotNull Collection<T> list, @NotNull Comparator<T> comparator) {
+    return sorted((Iterable<T>)list, comparator);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> List<T> sorted(@NotNull Iterable<T> list, @NotNull Comparator<T> comparator) {
     List<T> sorted = newArrayList(list);
     sort(sorted, comparator);
     return sorted;
@@ -2242,6 +2295,9 @@ public class ContainerUtil extends ContainerUtilRt {
    * - faster modification in the uncontended case
    * - less memory
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
+   *
+   * N.B. Avoid using <code>list.toArray(new T[list.size()])</code> on this list because it is inherently racey and
+   * therefore can return array with null elements at the end.
    */
   @NotNull
   @Contract(pure=true)
@@ -2258,25 +2314,36 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
+    //noinspection deprecation
     return new ConcurrentIntObjectHashMap<V>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
+    //noinspection deprecation
     return new ConcurrentSoftValueIntObjectHashMap<V>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
+    //noinspection deprecation
     return new ConcurrentLongObjectHashMap<V>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakValueMap() {
+    //noinspection deprecation
     return new ConcurrentWeakValueHashMap<K, V>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
+    //noinspection deprecation
+    return new ConcurrentWeakValueIntObjectHashMap<V>();
   }
 
   @NotNull
@@ -2285,24 +2352,28 @@ public class ContainerUtil extends ContainerUtilRt {
                                                                              float loadFactor,
                                                                              int concurrencyLevel,
                                                                              @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
+    //noinspection deprecation
     return new ConcurrentSoftValueHashMap<K, V>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentSoftMap() {
+    //noinspection deprecation
     return new ConcurrentSoftHashMap<K, V>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
+    //noinspection deprecation
     return new ConcurrentWeakHashMap<K, V>();
   }
   @NotNull
@@ -2311,9 +2382,13 @@ public class ContainerUtil extends ContainerUtilRt {
                                  float loadFactor,
                                  int concurrencyLevel,
                                  @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    //noinspection deprecation
     return new ConcurrentWeakHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
+  /**
+   * @see {@link #createLockFreeCopyOnWriteList()}
+   */
   @NotNull
   @Contract(pure=true)
   public static <T> ConcurrentList<T> createConcurrentList() {
@@ -2539,6 +2614,24 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     }
     return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
+  }
+
+  /**
+   * Returns a String representation of the given map, by listing all key-value pairs contained in the map.
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String toString(@NotNull Map<?, ?> map) {
+    StringBuilder sb = new StringBuilder("{");
+    for (Iterator<? extends Map.Entry<?, ?>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<?, ?> entry = iterator.next();
+      sb.append(entry.getKey()).append('=').append(entry.getValue());
+      if (iterator.hasNext()) {
+        sb.append(", ");
+      }
+    }
+    sb.append('}');
+    return sb.toString();
   }
 }
 

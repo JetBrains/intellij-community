@@ -31,32 +31,38 @@ import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteParameterCallHierarchyUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
+abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   private final PsiMethod myMethod;
   private final Project myProject;
-  private final int myParameterIndex;
   private final ArrayList<UsageInfo> myResult;
 
-  public SafeDeleteJavaCallerChooser(PsiMethod method, Project project, int parameterIndex, ArrayList<UsageInfo> result) {
+  public SafeDeleteJavaCallerChooser(PsiMethod method, Project project, ArrayList<UsageInfo> result) {
     super(method, project, "Select Methods To Propagate Parameter Deletion", null, Consumer.EMPTY_CONSUMER);
     myMethod = method;
     myProject = project;
-    myParameterIndex = parameterIndex;
     myResult = result;
   }
+
+  protected abstract ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> getTopLevelItems();
+  protected abstract int getParameterIdx();
 
   @Override
   protected JavaMethodNode createTreeNode(PsiMethod nodeMethod,
                                           com.intellij.util.containers.HashSet<PsiMethod> called,
                                           Runnable cancelCallback) {
-    return new SafeDeleteJavaMethodNode(nodeMethod, called, cancelCallback, myParameterIndex, nodeMethod != null ? nodeMethod.getProject() : myProject);
+    final SafeDeleteJavaMethodNode node = new SafeDeleteJavaMethodNode(nodeMethod, called, cancelCallback, getParameterIdx(),
+                                                                       nodeMethod != null ? nodeMethod.getProject() : myProject);
+    if (getTopMethod().equals(nodeMethod)) {
+      node.setEnabled(false);
+      node.setChecked(true);
+    }
+    return node;
   }
 
   @Override
@@ -70,7 +76,7 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
           final PsiMethod nodeMethod = methodNode.getMethod();
           if (nodeMethod.equals(myMethod)) continue;
           final PsiParameter parameter = nodeMethod.getParameterList().getParameters()[methodNode.myParameterIdx];
-          foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter));
+          foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter, nodeMethod));
           ReferencesSearch.search(nodeMethod).forEach(new Processor<PsiReference>() {
             public boolean process(final PsiReference reference) {
               final PsiElement element = reference.getElement();
@@ -106,37 +112,47 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
         final PsiExpression[] expressions = argumentList.getExpressions();
         if (expressions.length > parameterIndex) {
           final PsiExpression expression = PsiUtil.deparenthesizeExpression(expressions[parameterIndex]);
-          if (expression instanceof PsiReferenceExpression) {
-            final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
-            if (resolve instanceof PsiParameter && !((PsiParameter)resolve).isVarArgs()) {
-              final PsiElement scope = ((PsiParameter)resolve).getDeclarationScope();
+          if (expression != null) {
+            final Set<PsiParameter> paramRefs = new HashSet<PsiParameter>();
+            expression.accept(new JavaRecursiveElementWalkingVisitor() {
+              @Override
+              public void visitReferenceExpression(PsiReferenceExpression expression) {
+                super.visitReferenceExpression(expression);
+                final PsiElement resolve = expression.resolve();
+                if (resolve instanceof PsiParameter) {
+                  paramRefs.add((PsiParameter)resolve);
+                }
+              }
+            });
+
+            final PsiParameter parameter = ContainerUtil.getFirstItem(paramRefs);
+            if (parameter != null && !parameter.isVarArgs()) {
+              final PsiElement scope = parameter.getDeclarationScope();
               if (scope instanceof PsiMethod && ((PsiMethod)scope).findDeepestSuperMethods().length == 0) {
                 final Ref<Boolean> ref = new Ref<Boolean>(false);
-                if (ReferencesSearch.search(resolve, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
+                if (ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
                   @Override
                   public boolean process(PsiReference reference) {
                     final PsiElement element = reference.getElement();
                     if (element instanceof PsiReferenceExpression) {
-                      final PsiElement parent = element.getParent();
-                      if (parent instanceof PsiExpressionList) {
-                        final PsiElement gParent = parent.getParent();
-                        if (gParent instanceof PsiCallExpression) {
-                          final PsiMethod resolved = ((PsiCallExpression)gParent).resolveMethod();
-                          if (scope.equals(resolved)) {
-                            return true;
-                          }
-                          if (nodeMethod.equals(resolved)) {
-                            ref.set(true);
-                            return true;
-                          }
+                      PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
+                      while (parent != null) {
+                        final PsiMethod resolved = ((PsiCallExpression)parent).resolveMethod();
+                        if (scope.equals(resolved)) {
+                          return true;
                         }
+                        if (nodeMethod.equals(resolved)) {
+                          ref.set(true);
+                          return true;
+                        }
+                        parent = PsiTreeUtil.getParentOfType(parent, PsiCallExpression.class, true);
                       }
                       return false;
                     }
                     return true;
                   }
                 }) && ref.get()) {
-                  return (PsiParameter)resolve;
+                  return (PsiParameter)parameter;
                 }
               }
             }
@@ -147,7 +163,7 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     return null;
   }
 
-  private static class SafeDeleteJavaMethodNode extends JavaMethodNode {
+  private class SafeDeleteJavaMethodNode extends JavaMethodNode {
 
     private final int myParameterIdx;
 
@@ -163,6 +179,20 @@ class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     @Override
     protected MethodNodeBase<PsiMethod> createNode(PsiMethod caller, HashSet<PsiMethod> called) {
       return new SafeDeleteJavaMethodNode(caller, called, myCancelCallback, getParameterIndex(caller), myProject);
+    }
+
+    @Override
+    protected List<PsiMethod> computeCallers() {
+      if (getTopMethod().equals(getMethod())) {
+        final ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> items = getTopLevelItems();
+        return ContainerUtil.map(items, new Function<SafeDeleteParameterCallHierarchyUsageInfo, PsiMethod>() {
+          @Override
+          public PsiMethod fun(SafeDeleteParameterCallHierarchyUsageInfo info) {
+            return info.getCallerMethod();
+          }
+        });
+      }
+      return super.computeCallers();
     }
 
     @Override

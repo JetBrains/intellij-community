@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.jar.JarFile;
 
@@ -70,6 +71,7 @@ public class JarFileSystemTest extends PlatformLangTestCase {
     byte[] bytes = file4.contentsToByteArray();
     assertNotNull(bytes);
     assertTrue(bytes.length > 10);
+    assertEquals(0xCAFEBABE, ByteBuffer.wrap(bytes).getInt());
   }
 
   public void testMetaInf() {

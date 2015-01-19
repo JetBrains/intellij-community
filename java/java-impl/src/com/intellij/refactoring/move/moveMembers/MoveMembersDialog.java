@@ -15,10 +15,7 @@
  */
 package com.intellij.refactoring.move.moveMembers;
 
-import com.intellij.ide.util.ClassFilter;
-import com.intellij.ide.util.PackageUtil;
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.ide.util.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -38,6 +35,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
@@ -61,7 +59,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class MoveMembersDialog extends RefactoringDialog implements MoveMembersOptions {
+public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOptions {
   @NonNls private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
   private MyMemberInfoModel myMemberInfoModel;
 
@@ -75,6 +73,16 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
   JavaVisibilityPanel myVisibilityPanel;
   private final JCheckBox myIntroduceEnumConstants = new JCheckBox(RefactoringBundle.message("move.enum.constant.cb"), true);
+
+  @Override
+  protected String getMovePropertySuffix() {
+    return "Member";
+  }
+
+  @Override
+  protected String getCbTitle() {
+    return "Open moved members in editor";
+  }
 
   public MoveMembersDialog(Project project,
                            PsiClass sourceClass,
@@ -195,6 +203,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     myVisibilityPanel = new JavaVisibilityPanel(true, true);
     myVisibilityPanel.setVisibility(null);
     panel.add(myVisibilityPanel, BorderLayout.EAST);
+    panel.add(initOpenInEditorCb(), BorderLayout.SOUTH);
 
     return panel;
   }
@@ -246,8 +255,9 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       public String getTargetClassName() {
         return MoveMembersDialog.this.getTargetClassName();
       }
-    }));
+    }, isOpenInEditor()));
 
+    saveOpenInEditorOption();
     JavaRefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages();
   }
 

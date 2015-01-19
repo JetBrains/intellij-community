@@ -22,12 +22,14 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -35,7 +37,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
+import org.jetbrains.jps.incremental.groovy.GroovycOutputParser;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.grape.GrabDependencies;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -77,7 +79,8 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
       params.getProgramParametersList().add("--debug");
     }
 
-    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.getScriptPath()));
+    String path = ScriptFileUtil.getLocalFilePath(StringUtil.notNullize(configuration.getScriptPath()));
+    params.getProgramParametersList().add(FileUtil.toSystemDependentName(path));
     params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 
@@ -121,10 +124,10 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
       addClasspathFromRootModel(module, tests, params, true);
     }
 
-    if (params.getVMParametersList().getPropertyValue(GroovycOSProcessHandler.GRAPE_ROOT) == null) {
-      String sysRoot = System.getProperty(GroovycOSProcessHandler.GRAPE_ROOT);
+    if (params.getVMParametersList().getPropertyValue(GroovycOutputParser.GRAPE_ROOT) == null) {
+      String sysRoot = System.getProperty(GroovycOutputParser.GRAPE_ROOT);
       if (sysRoot != null) {
-        params.getVMParametersList().defineProperty(GroovycOSProcessHandler.GRAPE_ROOT, sysRoot);
+        params.getVMParametersList().defineProperty(GroovycOutputParser.GRAPE_ROOT, sysRoot);
       }
     }
   }

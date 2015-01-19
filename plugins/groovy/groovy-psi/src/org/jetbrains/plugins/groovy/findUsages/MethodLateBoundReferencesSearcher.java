@@ -46,7 +46,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
   @Override
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiMethod method = queryParameters.getMethod();
-    SearchScope searchScope = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getScope()).intersectWith(getUseScope(method));
+    SearchScope searchScope = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getEffectiveSearchScope()).intersectWith(getUseScope(method));
     PsiClass aClass = method.getContainingClass();
     String className = aClass == null ? null : aClass.getName();
     orderSearching(searchScope, method.getName(), method, queryParameters.getOptimizer(), method.getParameterList().getParametersCount());

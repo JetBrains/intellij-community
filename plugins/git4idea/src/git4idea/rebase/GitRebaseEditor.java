@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
@@ -167,8 +168,9 @@ public class GitRebaseEditor extends DialogWrapper {
     while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.skip) {
       i++;
     }
-    if (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.squash) {
-      setErrorText(GitBundle.getString("rebase.editor.invalid.squash"));
+    GitRebaseEntry.Action action = entries.get(i).getAction();
+    if (i < entries.size() && (action == GitRebaseEntry.Action.squash || action == GitRebaseEntry.Action.fixup)) {
+      setErrorText(GitBundle.message("rebase.editor.invalid.squash", StringUtil.toLowerCase(action.name())));
       setOKActionEnabled(false);
       return;
     }
@@ -351,10 +353,9 @@ public class GitRebaseEditor extends DialogWrapper {
           continue;
         }
         String action = s.spaceToken();
-        assert "pick".equals(action) : "Initial action should be pick: " + action;
         String hash = s.spaceToken();
         String comment = s.line();
-        myEntries.add(new GitRebaseEntry(hash, comment));
+        myEntries.add(new GitRebaseEntry(action, hash, comment));
       }
     }
 

@@ -718,6 +718,7 @@ public class RefactoringUtil {
     PsiUtil.setModifierProperty(method, PsiModifier.FINAL, false);
     PsiUtil.setModifierProperty(method, PsiModifier.SYNCHRONIZED, false);
     PsiUtil.setModifierProperty(method, PsiModifier.NATIVE, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, false);
     removeFinalParameters(method);
   }
 
@@ -890,7 +891,7 @@ public class RefactoringUtil {
       final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
       LOG.assertTrue(lambdaExpressionBody != null);
       final PsiStatement lastBodyStatement;
-      if (LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression) == PsiType.VOID) {
+      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
         lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
         ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
       }
