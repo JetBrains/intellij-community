@@ -64,7 +64,7 @@ public class ArrangementEngine implements UserNotificationInfoProvider {
   @Override
   public String getUserNotificationInfo() {
     if (myCodeChanged) {
-      return "code rearranged";
+      return "rearranged code";
     }
     return null;
   }

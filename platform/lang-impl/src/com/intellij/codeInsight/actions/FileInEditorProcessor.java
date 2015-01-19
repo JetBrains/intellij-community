@@ -148,13 +148,13 @@ class FileInEditorProcessor {
         String reformatInfo = notifications.getReformatCodeNotification();
         String rearrangeInfo = notifications.getRearrangeCodeNotification();
 
-        String firstNotificationLine = joinWithCommaAndCapitalize(reformatInfo, rearrangeInfo);
+        builder.append(joinWithCommaAndCapitalize(reformatInfo, rearrangeInfo));
+
         if (myProcessChangesTextOnly) {
-          builder.append("Changes since last revision: ");
-          firstNotificationLine = StringUtil.decapitalize(firstNotificationLine);
+          builder.append(" in changes since last revision");
         }
 
-        builder.append(firstNotificationLine).append("<br>");
+        builder.append("<br>");
       }
       else if (myNoChangesDetected) {
         builder.append("Nothing to format");
