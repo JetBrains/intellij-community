@@ -133,7 +133,7 @@ public class GraphAdditionalEdges {
       return GraphEdge.createNormalEdge(nodeIndex, anotherNodeIndex, edgeType);
     }
     else {
-      return GraphEdge.createEdgeWithAdditionInfo(nodeIndex, retrievedId != NULL_ID ? retrievedId : null, edgeType);
+      return GraphEdge.createEdgeWithTargetId(nodeIndex, retrievedId != NULL_ID ? retrievedId : null, edgeType);
     }
   }
 
@@ -145,12 +145,12 @@ public class GraphAdditionalEdges {
         return Pair.create(mainId, myGetNodeIdByIndex.fun(graphEdge.getDownNodeIndex()));
       }
       else {
-        return Pair.create(mainId, convertToInt(graphEdge.getAdditionInfo()));
+        return Pair.create(mainId, convertToInt(graphEdge.getTargetId()));
       }
     }
     else {
       assert graphEdge.getDownNodeIndex() != null;
-      return Pair.create(myGetNodeIdByIndex.fun(graphEdge.getDownNodeIndex()), convertToInt(graphEdge.getAdditionInfo()));
+      return Pair.create(myGetNodeIdByIndex.fun(graphEdge.getDownNodeIndex()), convertToInt(graphEdge.getTargetId()));
     }
   }
 

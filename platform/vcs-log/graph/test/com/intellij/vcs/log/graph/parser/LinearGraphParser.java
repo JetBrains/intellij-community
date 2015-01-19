@@ -72,7 +72,7 @@ public class LinearGraphParser {
           case NOT_LOAD_COMMIT:
           case DOTTED_ARROW_DOWN:
           case DOTTED_ARROW_UP:
-            edge = GraphEdge.createEdgeWithAdditionInfo(graphNode.getNodeIndex(), pairEdge.first, type);
+            edge = GraphEdge.createEdgeWithTargetId(graphNode.getNodeIndex(), pairEdge.first, type);
             break;
 
           default:
