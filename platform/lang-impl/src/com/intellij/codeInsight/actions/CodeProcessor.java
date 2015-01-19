@@ -149,36 +149,6 @@ class CodeProcessor {
     return totalLinesProcessed;
   }
 
-
-  /**
-   * Current structure:
-   * In general message is shown, when some processor has changed something. If it changed nothing, nothing will be shown.
-   * If there was not any changes at all, then we show message, why that happened.
-   *
-   * First message line, about rearrange and reformat processors(only if one if them changed something)
-   *     Next line is shown only if there is info from one of processors:
-   *         #info from reformat and rearrange code processors#
-   *
-   *     If we process changed lines, next message is shown:
-   *         Processed lines, changed since last revision:  #info from reformat and rearrange code processors#
-   *
-   *     If we process changed lines, but they are none of them, we show:
-   *         Nothing to format, no changes since last revision
-   *         Nothing to format and rearrange, no changes since last revision
-   *
-   * Optimize imports text
-   *
-   * Info about how to show reformat code dialog
-   *
-   * When nothing changed:
-   * - because reformat, optimize and rearrange changed nothing: "Code processed, changed nothing" is returned.
-   * - because processed are only changed lines and there was not any:
-   *      "Nothing to format" and
-   *      "Nothing to format and rearrange",
-   *   depending on what we were invoking
-   *
-   * @return message to show after reformat code action invoked in editor
-   */
   @NotNull
   private String prepareMessage() {
     StringBuilder builder = new StringBuilder("<html>");
@@ -195,18 +165,16 @@ class CodeProcessor {
     }
     else {
       if (notifications.hasReformatOrRearrangeNotification()) {
-        String reformatNotification = notifications.getReformatCodeNotification();
-        String rearrangeNotification = notifications.getRearrangeCodeNotification();
+        String reformatInfo = notifications.getReformatCodeNotification();
+        String rearrangeInfo = notifications.getRearrangeCodeNotification();
 
-        if (rearrangeNotification != null || reformatNotification != null) {
-          String firstNotificationLine = joinAndCapitalizeFirst(reformatNotification, rearrangeNotification);
-          if (myProcessChangesTextOnly) {
-            builder.append("Changes since last revision: ");
-            firstNotificationLine = StringUtil.decapitalize(firstNotificationLine);
-          }
-          builder.append(firstNotificationLine);
-          builder.append("<br>");
+        String firstNotificationLine = joinWithCommaAndCapitalize(reformatInfo, rearrangeInfo);
+        if (myProcessChangesTextOnly) {
+          builder.append("Changes since last revision: ");
+          firstNotificationLine = StringUtil.decapitalize(firstNotificationLine);
         }
+
+        builder.append(firstNotificationLine).append("<br>");
       }
       else if (myNoChangesDetected) {
         builder.append("Nothing to format");
@@ -233,7 +201,7 @@ class CodeProcessor {
   }
 
   @NotNull
-  private String joinAndCapitalizeFirst(String reformatNotification, String rearrangeNotification) {
+  private String joinWithCommaAndCapitalize(String reformatNotification, String rearrangeNotification) {
     String firstNotificationLine = reformatNotification != null ? reformatNotification : rearrangeNotification;
     if (reformatNotification != null && rearrangeNotification != null) {
       firstNotificationLine += ", " + rearrangeNotification;
