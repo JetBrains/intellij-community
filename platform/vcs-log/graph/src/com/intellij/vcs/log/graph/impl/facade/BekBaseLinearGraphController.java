@@ -24,7 +24,6 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekChecker;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,18 +79,6 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
     @Override
     public int nodesCount() {
       return myPermanentGraph.nodesCount();
-    }
-
-    @NotNull
-    @Override
-    public List<Integer> getUpNodes(int nodeIndex) {
-      return LinearGraphUtils.getUpNodes(this, nodeIndex);
-    }
-
-    @NotNull
-    @Override
-    public List<Integer> getDownNodes(int nodeIndex) {
-      return LinearGraphUtils.getDownNodes(this, nodeIndex);
     }
 
     @Nullable
