@@ -33,7 +33,7 @@ public class TestGraphBuilderTest extends AbstractTestWithTwoTextFile {
   @Override
   protected void runTest(String in, String out) {
     LinearGraph graph = LinearGraphParser.parse(in);
-    assertEquals(out, GraphPackage.asString(graph));
+    assertEquals(out, GraphPackage.asString(graph, false));
   }
 
   @Test
