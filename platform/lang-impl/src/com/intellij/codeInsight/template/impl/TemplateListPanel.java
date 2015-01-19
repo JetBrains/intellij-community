@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
@@ -947,20 +948,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   void selectNode(@NotNull String searchQuery) {
-    for (TemplateGroup group : myTemplateGroups) {
-      for (TemplateImpl template : group.getElements()) {
-        if (StringUtil.startsWithIgnoreCase(template.getKey(), searchQuery)) {
-          selectTemplate(group.getName(), template.getKey());
-          return;
-        }
-      }
-    }
-    for (TemplateGroup group : myTemplateGroups) {
-      if (StringUtil.startsWithIgnoreCase(group.getName(), searchQuery)) {
-        selectTemplate(group.getName(), null);
-        return;
-      }
-    }
+    ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(searchQuery);
   }
 
   private void selectTemplate(@Nullable final String groupName, @Nullable final String templateKey) {

@@ -99,7 +99,7 @@ public class ChooseModulesDialog extends DialogWrapper {
 
     myView.setShowGrid(false);
     myView.setTableHeader(null);
-    myView.setIntercellSpacing(new Dimension(0, 0));
+    myView.setIntercellSpacing(JBUI.emptySize());
     TableUtil.setupCheckboxColumn(myView, 0);
     myView.getModel().addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {

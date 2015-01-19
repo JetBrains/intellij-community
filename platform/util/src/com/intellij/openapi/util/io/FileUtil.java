@@ -497,7 +497,7 @@ public class FileUtil extends FileUtilRt {
     }
 
     if (SystemInfo.isUnix && fromFile.canExecute()) {
-      FileSystemUtil.clonePermissions(fromFile.getPath(), toFile.getPath());
+      FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
     }
   }
 
