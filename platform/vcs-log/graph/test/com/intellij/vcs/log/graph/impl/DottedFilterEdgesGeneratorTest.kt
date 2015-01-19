@@ -24,7 +24,7 @@ import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.graph
 import org.junit.Assert.*
 import org.junit.Test
-import com.intellij.vcs.log.graph.asString
+import com.intellij.vcs.log.graph.asTestGraphString
 
 public class DottedFilterEdgesGeneratorTest {
 
@@ -40,7 +40,7 @@ public class DottedFilterEdgesGeneratorTest {
     val expectedResultGraph = graph(result)
     val actualResultGraph = collapsedGraph.getCompiledGraph()
 
-    assertEquals(expectedResultGraph.asString(true), actualResultGraph.asString(true))
+    assertEquals(expectedResultGraph.asTestGraphString(true), actualResultGraph.asTestGraphString(true))
   }
 
   Test fun simple() = graph {

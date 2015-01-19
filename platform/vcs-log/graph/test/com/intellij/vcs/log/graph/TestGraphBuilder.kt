@@ -20,12 +20,20 @@ import java.util.ArrayList
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphNode
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.HashMap
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleNode
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
+import com.intellij.openapi.util.Condition
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.graph.utils.TimestampGetter
+import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.test.assertNull
 
 trait BaseTestGraphBuilder {
   val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
@@ -74,22 +82,24 @@ class TestGraphBuilder: BaseTestGraphBuilder {
 
   private class TestLinearGraph(buildNodes: List<NodeWithEdges>): LinearGraph {
     private val nodes: List<GraphNode>
-    private val reverseMap: Map<Int, Int>
+    private val nodeIndexToId: Map<Int, Int>
+    private val nodeIdToIndex: Map<Int, Int>
     private val edges = MultiMap<Int, GraphEdge>()
 
-    val SimpleEdge.toIndex: Int?  get() = toNode?.let{reverseMap[it]}
+    val SimpleEdge.toIndex: Int?  get() = toNode?.let{ nodeIdToIndex[it]}
 
     ;{
       val idsMap = HashMap<Int, Int>()
       nodes = buildNodes.map2 { (index, it) ->
-        idsMap[it.nodeId] = index
+        idsMap[index] = it.nodeId
         GraphNode(it.nodeId, index, it.type)
       }
-      reverseMap = idsMap
+      nodeIndexToId = idsMap
+      nodeIdToIndex = ContainerUtil.reverseMap(idsMap)
 
       // create edges
       for (node in buildNodes) {
-        val nodeIndex = reverseMap[node.nodeId]!!
+        val nodeIndex = nodeIdToIndex[node.nodeId]!!
         for (simpleEdge in node.edges) {
           val edgeType = simpleEdge.type
 
@@ -108,18 +118,90 @@ class TestGraphBuilder: BaseTestGraphBuilder {
 
     }
 
-    override fun nodesCount() = nodes.size
+    override fun nodesCount() = nodes.size()
 
-    override fun getNodeId(nodeIndex: Int): Int = nodes[nodeIndex].getNodeId()
+    override fun getNodeId(nodeIndex: Int): Int = nodeIndexToId[nodeIndex]!!
 
     override fun getAdjacentEdges(nodeIndex: Int) = edges[nodeIndex].toList()
 
     override fun getGraphNode(nodeIndex: Int) = nodes[nodeIndex]
 
-    override fun getNodeIndexById(nodeId: Int) = reverseMap[nodeId]
+    override fun getNodeIndexById(nodeId: Int) = nodeIdToIndex[nodeId]
 
   }
 }
+
+private fun LinearGraph.assertEdge(nodeIndex: Int, edge: GraphEdge) {
+  if (edge.getType().isNormalEdge()) {
+    if (nodeIndex == edge.getUpNodeIndex()) {
+      assertTrue(getAdjacentEdges(edge.getDownNodeIndex()).contains(edge))
+    }
+    else {
+      assertTrue(nodeIndex == edge.getDownNodeIndex())
+      assertTrue(getAdjacentEdges(edge.getUpNodeIndex()).contains(edge))
+    }
+  } else {
+    when (edge.getType()) {
+      GraphEdgeType.NOT_LOAD_COMMIT, GraphEdgeType.DOTTED_ARROW_DOWN -> {
+        assertTrue(nodeIndex == edge.getUpNodeIndex())
+        assertNull(edge.getDownNodeIndex())
+      }
+      GraphEdgeType.DOTTED_ARROW_UP -> {
+        assertTrue(nodeIndex == edge.getDownNodeIndex())
+        assertNull(edge.getUpNodeIndex())
+      }
+    }
+  }
+}
+
+fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuilder {
+  for(nodeIndex in 0..nodesCount() - 1) {
+    val node = getGraphNode(nodeIndex)
+    append(getNodeId(nodeIndex))
+    assertEquals(nodeIndex, node.getNodeIndex(),
+      "nodeIndex: $nodeIndex, but for node with this index(nodeId: ${getNodeId(nodeIndex)}) nodeIndex: ${node.getNodeIndex()}"
+    )
+    when (node.getType()) {
+      GraphNodeType.GRAY -> append(".G")
+      GraphNodeType.NOT_LOAD_COMMIT -> append(".NOT_LOAD")
+    }
+
+    // edges
+    var adjacentEdges = getAdjacentEdges(nodeIndex)
+    if (sorted) {
+      adjacentEdges = adjacentEdges.sortBy(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
+    }
+
+    append("(")
+    adjacentEdges.map {
+      assertEdge(nodeIndex, it)
+      if (it.getUpNodeIndex() == nodeIndex) {
+        val startId = if (it.getType().isNormalEdge()) {
+          getNodeId(it.getDownNodeIndex()).toString()
+        }
+        else if (it.getAdditionInfo() != null) {
+          it.getAdditionInfo().toString()
+        }
+        else {
+          "null"
+        }
+
+        when (it.getType()!!) {
+          GraphEdgeType.USUAL -> startId
+          GraphEdgeType.DOTTED -> "$startId.dot"
+          GraphEdgeType.DOTTED_ARROW_UP -> "$startId.up_dot"
+          GraphEdgeType.DOTTED_ARROW_DOWN -> "$startId.down_dot"
+          GraphEdgeType.NOT_LOAD_COMMIT -> "$startId.not_load"
+        }
+      } else {
+        null
+      }
+    }.mapNotNull { it }.joinTo(this, separator = ", ")
+
+    append(")")
+    append("\n")
+  }
+}.toString()
 
 fun graph(f: TestGraphBuilder.() -> Unit): LinearGraph {
   val builder = TestGraphBuilder()
@@ -135,4 +217,52 @@ private fun <T, R> Iterable<T>.map2(transform: (Int, T) -> R): List<R> {
     index++
   }
   return result
+}
+
+class TestPermanentGraphInfo(
+    val graph: LinearGraph,
+    vararg val headsOrder: Int = IntArray(0),
+    val branchNodes: Set<Int> = emptySet()
+) : PermanentGraphInfo<Int> {
+
+  val commitInfo = object : PermanentCommitsInfo<Int> {
+    override fun getCommitId(nodeId: Int) = nodeId
+    override fun getTimestamp(nodeId: Int) = nodeId.toLong()
+    override fun getNodeId(commitId: Int) = commitId
+    override fun convertToNodeIds(heads: MutableCollection<Int>) = ContainerUtil.newHashSet(heads)
+  }
+
+  val timestampGetter = object : TimestampGetter {
+    override fun size() = graph.nodesCount()
+    override fun getTimestamp(index: Int) = commitInfo.getTimestamp(graph.getNodeId(index))
+  }
+
+  val graphLayout = GraphLayoutBuilder.build(graph) { (x, y) ->
+    if (headsOrder.isEmpty()) {
+      graph.getNodeId(x) - graph.getNodeId(y)
+    }
+    else {
+      val t = if (headsOrder.indexOf(x) == -1) x else if(headsOrder.indexOf(y) == -1) y else -1
+      if (t != -1) throw IllegalStateException("Not found headsOrder for $t node by id")
+      headsOrder.indexOf(x) - headsOrder.indexOf(y)
+    }
+  }
+
+  object colorManager : GraphColorManager<Int> {
+    override fun getColorOfBranch(headCommit: Int): Int = headCommit
+
+    override fun getColorOfFragment(headCommit: Int?, magicIndex: Int): Int = magicIndex
+
+    override fun compareHeads(head1: Int, head2: Int): Int = head1.compareTo(head2)
+  }
+
+  override fun getPermanentCommitsInfo() = commitInfo
+  override fun getPermanentLinearGraph() = graph
+  override fun getPermanentGraphLayout() = graphLayout
+
+  override fun getNotCollapsedNodes() = object : Condition<Int> {
+    override fun value(nodeId: Int) = branchNodes.contains(nodeId)
+  }
+
+  override fun getGraphColorManager() = colorManager
 }
