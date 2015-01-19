@@ -2,6 +2,7 @@ package com.intellij.openapi.util.diff.tools.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -11,7 +12,6 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.IntPair;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
@@ -33,18 +33,26 @@ public class FoldingModelSupport {
       super(new EditorEx[]{editor}, disposable);
     }
 
-    public void install(@Nullable List<IntPair> changedLines, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
+    public void install(@Nullable final List<IntPair> changedLines,
+                        @NotNull UserDataHolder context,
+                        boolean defaultExpanded,
+                        final int range) {
       if (changedLines == null) return;
       if (range == -1) return;
-      MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
+      final MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
 
-      int last = Integer.MIN_VALUE;
-      for (IntPair line : changedLines) {
-        addRange(last, line.val1, range, suggester);
+      invokeBatchOperation(new Runnable() {
+        @Override
+        public void run() {
+          int last = Integer.MIN_VALUE;
+          for (IntPair line : changedLines) {
+            addRange(last, line.val1, range, suggester);
 
-        last = line.val2;
-      }
-      addRange(last, Integer.MAX_VALUE, range, suggester);
+            last = line.val2;
+          }
+          addRange(last, Integer.MAX_VALUE, range, suggester);
+        }
+      });
 
       updateLineNumbers();
     }
@@ -94,21 +102,26 @@ public class FoldingModelSupport {
       }
     }
 
-    public void install(@Nullable LineFragments lineFragments, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
+    public void install(@Nullable LineFragments lineFragments, @NotNull UserDataHolder context, boolean defaultExpanded, final int range) {
       if (lineFragments == null) return;
       if (range == -1) return;
-      List<? extends LineFragment> fragments = lineFragments.getFragments();
-      MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
+      final List<? extends LineFragment> fragments = lineFragments.getFragments();
+      final MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
 
-      int last1 = Integer.MIN_VALUE;
-      int last2 = Integer.MIN_VALUE;
-      for (LineFragment fragment : fragments) {
-        addRange(last1, fragment.getStartLine1(), last2, fragment.getStartLine2(), range, suggester);
+      invokeBatchOperation(new Runnable() {
+        @Override
+        public void run() {
+          int last1 = Integer.MIN_VALUE;
+          int last2 = Integer.MIN_VALUE;
+          for (LineFragment fragment : fragments) {
+            addRange(last1, fragment.getStartLine1(), last2, fragment.getStartLine2(), range, suggester);
 
-        last1 = fragment.getEndLine1();
-        last2 = fragment.getEndLine2();
-      }
-      addRange(last1, Integer.MAX_VALUE, last2, Integer.MAX_VALUE, range, suggester);
+            last1 = fragment.getEndLine1();
+            last2 = fragment.getEndLine2();
+          }
+          addRange(last1, Integer.MAX_VALUE, last2, Integer.MAX_VALUE, range, suggester);
+        }
+      });
 
       updateLineNumbers();
     }
@@ -167,29 +180,34 @@ public class FoldingModelSupport {
       }
     }
 
-    public void install(@Nullable List<MergeLineFragment> fragments, @NotNull UserDataHolder context,
-                        boolean defaultExpanded, int range) {
+    public void install(@Nullable final List<MergeLineFragment> fragments, @NotNull UserDataHolder context,
+                        boolean defaultExpanded, final int range) {
       if (fragments == null) return;
       if (range == -1) return;
-      MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
+      final MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
 
-      int last1 = Integer.MIN_VALUE;
-      int last2 = Integer.MIN_VALUE;
-      int last3 = Integer.MIN_VALUE;
-      for (MergeLineFragment fragment : fragments) {
-        addRange(last1, fragment.getStartLine(ThreeSide.LEFT),
-                 last2, fragment.getStartLine(ThreeSide.BASE),
-                 last3, fragment.getStartLine(ThreeSide.RIGHT),
-                 range, suggester);
+      invokeBatchOperation(new Runnable() {
+        @Override
+        public void run() {
+          int last1 = Integer.MIN_VALUE;
+          int last2 = Integer.MIN_VALUE;
+          int last3 = Integer.MIN_VALUE;
+          for (MergeLineFragment fragment : fragments) {
+            addRange(last1, fragment.getStartLine(ThreeSide.LEFT),
+                     last2, fragment.getStartLine(ThreeSide.BASE),
+                     last3, fragment.getStartLine(ThreeSide.RIGHT),
+                     range, suggester);
 
-        last1 = fragment.getEndLine(ThreeSide.LEFT);
-        last2 = fragment.getEndLine(ThreeSide.BASE);
-        last3 = fragment.getEndLine(ThreeSide.RIGHT);
-      }
-      addRange(last1, Integer.MAX_VALUE,
-               last2, Integer.MAX_VALUE,
-               last3, Integer.MAX_VALUE,
-               range, suggester);
+            last1 = fragment.getEndLine(ThreeSide.LEFT);
+            last2 = fragment.getEndLine(ThreeSide.BASE);
+            last3 = fragment.getEndLine(ThreeSide.RIGHT);
+          }
+          addRange(last1, Integer.MAX_VALUE,
+                   last2, Integer.MAX_VALUE,
+                   last3, Integer.MAX_VALUE,
+                   range, suggester);
+        }
+      });
 
       updateLineNumbers();
     }
@@ -264,6 +282,28 @@ public class FoldingModelSupport {
     // Init
     //
 
+    protected void invokeBatchOperation(@NotNull Runnable runnable) {
+      Runnable lastRunnable = runnable;
+
+      for (int i = 0; i < myCount; i++) {
+        final Editor editor = myEditors[i];
+        final Runnable finalRunnable = lastRunnable;
+        lastRunnable = new Runnable() {
+          @Override
+          public void run() {
+            editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+              @Override
+              public void run() {
+                finalRunnable.run();
+              }
+            });
+          }
+        };
+      }
+
+      lastRunnable.run();
+    }
+
     @Nullable
     protected static FoldRegion addFolding(@NotNull final EditorEx editor, int start, int end, final boolean expanded) {
       assert ApplicationManager.getApplication().isReadAccessAllowed();
@@ -273,16 +313,9 @@ public class FoldingModelSupport {
       final int startOffset = document.getLineStartOffset(start);
       final int endOffset = document.getLineEndOffset(end - 1);
 
-      final Ref<FoldRegion> ref = new Ref<FoldRegion>();
-      editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          FoldRegion value = editor.getFoldingModel().addFoldRegion(startOffset, endOffset, "");
-          if (value != null) value.setExpanded(expanded);
-          ref.set(value);
-        }
-      });
-      return ref.get();
+      FoldRegion value = editor.getFoldingModel().addFoldRegion(startOffset, endOffset, "");
+      if (value != null) value.setExpanded(expanded);
+      return value;
     }
 
     public void destroy() {
