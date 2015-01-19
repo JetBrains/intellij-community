@@ -157,7 +157,7 @@ class LinearBekTest {
   | 1           1
   |/|    ->     :
   2 |           2
-  \|            |
+  \|            :
   3             3
    */
   Test fun differentDiagonalTest() = runTest({
@@ -168,7 +168,7 @@ class LinearBekTest {
   }, {
     0(1)
     1(2.dot)
-    2(3)
+    2(3.dot)
     3()
   })
 

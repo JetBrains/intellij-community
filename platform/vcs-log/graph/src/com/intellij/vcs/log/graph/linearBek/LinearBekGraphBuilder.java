@@ -60,7 +60,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
 
     List<Integer> upNodes = LinearGraphUtils.getUpNodes(myWorkingGraph, currentNodeIndex);
     if (upNodes.isEmpty()) return;
-    Integer parent = ContainerUtil.find(upNodes, new Condition<Integer>() {
+    Integer parent = ContainerUtil.find(ContainerUtil.reverse(ContainerUtil.sorted(upNodes)), new Condition<Integer>() {
       @Override
       public boolean value(Integer it) {
         return LinearGraphUtils.getDownNodes(myWorkingGraph, it).size() == 2;
