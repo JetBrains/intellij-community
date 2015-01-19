@@ -37,7 +37,7 @@ import kotlin.test.assertNull
 
 trait BaseTestGraphBuilder {
   val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
-  val Int.G: SimpleNode get() = SimpleNode(this, GraphNodeType.GRAY)
+  val Int.UNM: SimpleNode get() = SimpleNode(this, GraphNodeType.UNMATCHED)
   val Int.NOT_LOAD: SimpleNode get() = SimpleNode(this, GraphNodeType.NOT_LOAD_COMMIT)
 
   val Int.u: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.USUAL)
@@ -92,7 +92,7 @@ class TestGraphBuilder: BaseTestGraphBuilder {
       val idsMap = HashMap<Int, Int>()
       nodes = buildNodes.map2 { (index, it) ->
         idsMap[index] = it.nodeId
-        GraphNode(it.nodeId, index, it.type)
+        GraphNode(index, it.type)
       }
       nodeIndexToId = idsMap
       nodeIdToIndex = ContainerUtil.reverseMap(idsMap)
@@ -162,7 +162,7 @@ fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuild
       "nodeIndex: $nodeIndex, but for node with this index(nodeId: ${getNodeId(nodeIndex)}) nodeIndex: ${node.getNodeIndex()}"
     )
     when (node.getType()) {
-      GraphNodeType.GRAY -> append(".G")
+      GraphNodeType.UNMATCHED -> append(".UNM")
       GraphNodeType.NOT_LOAD_COMMIT -> append(".NOT_LOAD")
     }
 

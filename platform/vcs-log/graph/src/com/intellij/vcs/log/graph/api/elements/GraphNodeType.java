@@ -18,5 +18,5 @@ package com.intellij.vcs.log.graph.api.elements;
 public enum GraphNodeType {
   USUAL,
   NOT_LOAD_COMMIT,
-  GRAY;
+  UNMATCHED;
 }

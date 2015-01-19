@@ -45,7 +45,7 @@ public class DottedFilterEdgesGeneratorTest {
 
   Test fun simple() = graph {
     1(2)
-    2.G(3)
+    2.UNM(3)
     3()
   }.assert {
     1(3.dot)
@@ -55,7 +55,7 @@ public class DottedFilterEdgesGeneratorTest {
   Test fun simple2Up() = graph {
     1(3)
     2(3)
-    3.G(4)
+    3.UNM(4)
     4()
   }.assert {
     1(4.dot)
@@ -65,7 +65,7 @@ public class DottedFilterEdgesGeneratorTest {
 
   Test fun simple2Down() = graph {
     1(2)
-    2.G(3, 4)
+    2.UNM(3, 4)
     3()
     4()
   }.assert {
@@ -83,8 +83,8 @@ public class DottedFilterEdgesGeneratorTest {
  */
   Test fun downTree() = graph {
     0(1,2)
-    1.G(3,4)
-    2.G(4,5)
+    1.UNM(3,4)
+    2.UNM(4,5)
     3()
     4()
     5()
@@ -106,8 +106,8 @@ public class DottedFilterEdgesGeneratorTest {
     0(3)
     1(3,4)
     2(4)
-    3.G(5)
-    4.G(5)
+    3.UNM(5)
+    4.UNM(5)
     5()
   }.assert {
     0(5.dot)
@@ -130,8 +130,8 @@ public class DottedFilterEdgesGeneratorTest {
     1(2, 3)
     2(4)
     3(5)
-    4.G(6)
-    5.G(6)
+    4.UNM(6)
+    5.UNM(6)
     6()
   }.assert {
     1(2, 3)
@@ -142,8 +142,8 @@ public class DottedFilterEdgesGeneratorTest {
 
   Test fun simpleMerge2() = graph {
     1(2, 3)
-    2.G(4)
-    3.G(5)
+    2.UNM(4)
+    3.UNM(5)
     4(6)
     5(6)
     6()

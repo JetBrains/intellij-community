@@ -109,7 +109,7 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
     public GraphNode getGraphNode(int nodeIndex) {
       assert inRanges(nodeIndex);
 
-      return new GraphNode(getNodeId(nodeIndex), nodeIndex, GraphNodeType.USUAL);
+      return new GraphNode(nodeIndex, GraphNodeType.USUAL);
     }
 
     @Override
