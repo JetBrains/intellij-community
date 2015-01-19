@@ -19,10 +19,10 @@ import com.intellij.vcs.log.graph.utils.TimestampGetter
 import com.intellij.vcs.log.graph.TestGraphBuilder
 import com.intellij.vcs.log
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
-import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.graph
 import org.junit.Assert.assertEquals
+import com.intellij.vcs.log.graph.asTestGraphString
 
 public class DummyTimestampGetter(val nodesCount: Int) : TimestampGetter {
   override fun size(): Int {
@@ -43,5 +43,5 @@ public fun runLinearBek(graphBuilder: TestGraphBuilder.() -> Unit): LinearBekGra
 }
 
 public fun assertEquals(expected: TestGraphBuilder.() -> Unit, actual: LinearGraph): Unit {
-  assertEquals(graph(expected).asString(), actual.asString())
+  assertEquals(graph(expected).asTestGraphString(), actual.asTestGraphString())
 }

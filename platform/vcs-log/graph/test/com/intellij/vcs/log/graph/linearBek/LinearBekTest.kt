@@ -17,11 +17,6 @@ package com.intellij.vcs.log.graph.linearBek
 
 import org.junit.Test
 import com.intellij.vcs.log.graph.TestGraphBuilder
-import com.intellij.vcs.log.graph.graph
-import org.junit.Assert.assertEquals
-import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
-import com.intellij.vcs.log.graph.asString
-import com.intellij.vcs.log.graph.api.LinearGraph
 
 class LinearBekTest {
   fun runTest(beforeLinearBekBuilder: TestGraphBuilder.() -> Unit, afterLinearBekBuilder: TestGraphBuilder.() -> Unit) {
