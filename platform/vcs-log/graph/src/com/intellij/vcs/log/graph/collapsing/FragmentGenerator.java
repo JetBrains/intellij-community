@@ -47,7 +47,7 @@ public class FragmentGenerator {
     }
 
     @NotNull
-    public Collection<Integer> getMiddleGreenNodes() {
+    public Set<Integer> getMiddleGreenNodes() {
       return myMiddleGreenNodes;
     }
   }
