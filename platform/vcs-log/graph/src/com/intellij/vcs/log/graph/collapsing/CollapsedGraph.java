@@ -34,7 +34,7 @@ public class CollapsedGraph {
     if (initVisibility == null) { // todo fix performance
       initVisibility = new UnsignedBitSet();
       for (int i = 0; i < delegateGraph.nodesCount(); i++) {
-        initVisibility.set(delegateGraph.getGraphNode(i).getNodeId(), true);
+        initVisibility.set(delegateGraph.getNodeId(i), true);
       }
     }
 
@@ -68,14 +68,12 @@ public class CollapsedGraph {
 
       @Override
       public boolean get(int index) {
-        GraphNode graphNode = delegateGraph.getGraphNode(index);
-        return visibleNodesId.get(graphNode.getNodeId());
+        return visibleNodesId.get(delegateGraph.getNodeId(index));
       }
 
       @Override
       public void set(int index, boolean value) {
-        GraphNode graphNode = delegateGraph.getGraphNode(index);
-        visibleNodesId.set(graphNode.getNodeId(), value);
+        visibleNodesId.set(delegateGraph.getNodeId(index), value);
       }
 
       @Override
@@ -92,7 +90,7 @@ public class CollapsedGraph {
       @Override
       public Integer fun(Integer nodeIndex) {
         int delegateIndex = nodesMap.getLongIndex(nodeIndex);
-        return delegateGraph.getGraphNode(delegateIndex).getNodeId();
+        return delegateGraph.getNodeId(delegateIndex);
       }
     };
   }
@@ -221,6 +219,12 @@ public class CollapsedGraph {
       int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
       GraphNode graphNode = myDelegateGraph.getGraphNode(delegateIndex);
       return new GraphNode(graphNode.getNodeId(), nodeIndex, graphNode.getType());
+    }
+
+    @Override
+    public int getNodeId(int nodeIndex) {
+      int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
+      return myDelegateGraph.getNodeId(delegateIndex);
     }
 
     @Override

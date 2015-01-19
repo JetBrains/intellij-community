@@ -68,6 +68,11 @@ public class LinearBekGraph implements LinearGraph {
     return myGraph.getGraphNode(nodeIndex);
   }
 
+  @Override
+  public int getNodeId(int nodeIndex) {
+    return myGraph.getNodeId(nodeIndex);
+  }
+
   @Nullable
   @Override
   public Integer getNodeIndexById(int nodeId) {

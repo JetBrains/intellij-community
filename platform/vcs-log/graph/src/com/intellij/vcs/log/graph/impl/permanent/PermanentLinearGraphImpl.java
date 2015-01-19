@@ -79,6 +79,12 @@ public class PermanentLinearGraphImpl implements LinearGraph {
   }
 
   @Override
+  public int getNodeId(int nodeIndex) {
+    assert nodeIndex >= 0 && nodeIndex < nodesCount() : "Bad nodeIndex: " + nodeIndex;
+    return nodeIndex;
+  }
+
+  @Override
   public Integer getNodeIndexById(int nodeId) {
     if (nodeId >= 0 && nodeId < nodesCount())
       return nodeId;

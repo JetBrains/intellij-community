@@ -38,6 +38,7 @@ public final class GraphNode implements GraphElement {
     return myNodeIndex;
   }
 
+  @Deprecated
   public int getNodeId() {
     return myNodeId;
   }

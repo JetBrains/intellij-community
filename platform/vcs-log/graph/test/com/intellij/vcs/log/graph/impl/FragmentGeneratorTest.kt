@@ -35,7 +35,7 @@ private fun LinearGraph.redNodes(vararg redNode: Int = IntArray(0)): FragmentGen
   val redNodes = redNode.toSet()
 
   return FragmentGenerator(lite) {
-    redNodes contains getGraphNode(it).getNodeId()
+    redNodes contains getNodeId(it)
   }
 }
 

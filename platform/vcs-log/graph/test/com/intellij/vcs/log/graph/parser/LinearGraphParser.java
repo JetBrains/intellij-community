@@ -144,6 +144,12 @@ public class LinearGraphParser {
     }
 
     @Override
+    public int getNodeId(int nodeIndex) {
+      assert nodeIndex > 0 && nodeIndex < nodesCount() : "Bad nodeIndex: "+ nodeIndex;
+      return nodeIndex;
+    }
+
+    @Override
     @Nullable
     public Integer getNodeIndexById(int nodeId) {
       if (nodeId >= 0 && nodeId < nodesCount())

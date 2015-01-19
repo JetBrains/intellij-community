@@ -88,7 +88,7 @@ public class ColorGetterByLayoutIndex<CommitId> {
   }
 
   private int getNodeId(int upNodeIndex) {
-    return myLinearGraph.getGraphNode(upNodeIndex).getNodeId();
+    return myLinearGraph.getNodeId(upNodeIndex);
   }
 
 }
