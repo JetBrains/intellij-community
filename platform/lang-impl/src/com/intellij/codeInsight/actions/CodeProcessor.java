@@ -186,7 +186,12 @@ class CodeProcessor {
     LOG.assertTrue(notifications != null);
 
     if (notifications.isEmpty() && !myNoChangesDetected) {
-      builder.append("Code processed, nothing changed").append("<br>");
+      if (myProcessChangesTextOnly) {
+        builder.append("Changes since last revision: processed, nothing modified").append("<br>");
+      }
+      else {
+        builder.append("Code processed, nothing modified").append("<br>");
+      }
     }
     else {
       if (notifications.hasReformatOrRearrangeNotification()) {
@@ -196,7 +201,7 @@ class CodeProcessor {
         if (rearrangeNotification != null || reformatNotification != null) {
           String firstNotificationLine = joinAndCapitalizeFirst(reformatNotification, rearrangeNotification);
           if (myProcessChangesTextOnly) {
-            builder.append("Processed lines, changed since last revision: ");
+            builder.append("Changes since last revision: ");
             firstNotificationLine = StringUtil.decapitalize(firstNotificationLine);
           }
           builder.append(firstNotificationLine);
