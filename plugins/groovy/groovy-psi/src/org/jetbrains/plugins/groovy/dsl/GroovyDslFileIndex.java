@@ -74,7 +74,7 @@ import java.util.regex.Pattern;
  */
 public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final Key<Pair<GroovyDslExecutor, Long>> CACHED_EXECUTOR = Key.create("CachedGdslExecutor");
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
+  private static final Logger LOG = Logger.getInstance(GroovyDslFileIndex.class);
 
   @NonNls public static final ID<String, Void> NAME = ID.create("GroovyDslFileIndex");
   @NonNls private static final String OUR_KEY = "ourKey";
@@ -412,7 +412,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
           if (!vfile.isValid()) {
             continue;
           }
-          if (!fileIndex.isInLibraryClasses(vfile) && !fileIndex.isInLibrarySource(vfile)) {
+          if (fileIndex.isInLibrarySource(vfile)) {
+            continue;
+          } 
+          if (!fileIndex.isInLibraryClasses(vfile)) {
             if (!fileIndex.isInSourceContent(vfile) || !isActivated(vfile)) {
               continue;
             }
