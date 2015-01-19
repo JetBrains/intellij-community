@@ -29,6 +29,7 @@ import com.intellij.openapi.util.diff.tools.util.SyncScrollSupport.ThreesideSync
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.openapi.util.diff.util.*;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -380,7 +381,12 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       if (mySyncScrollListener != null) mySyncScrollListener.visibleAreaChanged(e);
-      myContentPanel.repaintDivider(mySide);
+      if (Registry.is("diff.divider.repainting.fix")) {
+        myContentPanel.repaint();
+      }
+      else {
+        myContentPanel.repaintDivider(mySide);
+      }
     }
   }
 
