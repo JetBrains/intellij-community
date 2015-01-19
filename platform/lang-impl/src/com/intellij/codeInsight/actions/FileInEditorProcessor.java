@@ -35,7 +35,7 @@ import static com.intellij.codeInsight.actions.TextRangeType.*;
 
 class FileInEditorProcessor {
   private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
-  private static final String COLOR = "#7D7D7D";
+  private static final String SHORTCUT_TEXT_COLOR = "#7D7D7D";
 
   private final Editor myEditor;
 
@@ -83,6 +83,7 @@ class FileInEditorProcessor {
     }
 
     if (myShouldNotify) {
+      myProcessor.setCollectInfo(true);
       myProcessor.setPostRunnable(new Runnable() {
         @Override
         public void run() {
@@ -131,7 +132,7 @@ class FileInEditorProcessor {
   @NotNull
   private String prepareMessage() {
     StringBuilder builder = new StringBuilder("<html>");
-    LayoutCodeNotification notifications = myProcessor.getNotificationInfo();
+    LayoutCodeInfoCollector notifications = myProcessor.getInfoCollector();
     LOG.assertTrue(notifications != null);
 
     if (notifications.isEmpty() && !myNoChangesDetected) {
@@ -170,10 +171,8 @@ class FileInEditorProcessor {
     }
 
     String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ReformatFile"));
-    builder.append("<span style='color:").append(COLOR).append("'>")
-           .append("Show reformat dialog: ")
-           .append(shortcutText)
-           .append("</span>")
+    builder.append("<span style='color:").append(SHORTCUT_TEXT_COLOR).append("'>")
+           .append("Show reformat dialog: ").append(shortcutText).append("</span>")
            .append("</html>");
 
     return builder.toString();

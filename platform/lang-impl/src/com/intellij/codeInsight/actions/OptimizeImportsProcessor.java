@@ -18,7 +18,6 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.notification.UserNotificationInfoProvider;
 import com.intellij.openapi.module.Module;
@@ -30,7 +29,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
@@ -105,19 +103,17 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   private void prepareUserInfoMessage(Set<ImportOptimizer> optimizers) {
+    if (getInfoCollector() == null) return;
+
     if (optimizers.size() == 1) {
       ImportOptimizer optimizer = optimizers.iterator().next();
       if (optimizer instanceof UserNotificationInfoProvider) {
         String info = ((UserNotificationInfoProvider)optimizer).getUserNotificationInfo();
-        if (info != null && getNotificationInfo() != null) {
-          getNotificationInfo().setOptimizeImportsNotification(info);
-        }
+        getInfoCollector().setOptimizeImportsNotification(info);
         return;
       }
     }
 
-    if (getNotificationInfo() != null) {
-      getNotificationInfo().setOptimizeImportsNotification("imports optimized");
-    }
+    getInfoCollector().setOptimizeImportsNotification("imports optimized");
   }
 }

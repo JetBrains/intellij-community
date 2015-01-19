@@ -18,10 +18,6 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingProgressTask;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
@@ -120,7 +116,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
           Collection<TextRange> ranges = getRangesToFormat(processChangedTextOnly, file);
 
           CharSequence before = null;
-          if (isSingleFileProcessed()) {
+          if (getInfoCollector() != null) {
             myDocument = PsiDocumentManager.getInstance(myProject).getDocument(file);
             LOG.assertTrue(myDocument != null);
             before = myDocument.getImmutableCharSequence();
@@ -150,10 +146,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {
+    LOG.assertTrue(getInfoCollector() != null);
     int number = getProcessedLinesNumber(document, before);
-    if (number > 0 && getNotificationInfo() != null) {
+    if (number > 0) {
       String message = "formatted " + number + " line" + (number > 1 ? "s" : "");
-      getNotificationInfo().setReformatCodeNotification(message);
+      getInfoCollector().setReformatCodeNotification(message);
     }
   }
 

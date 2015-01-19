@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.actions;
 
-public class LayoutCodeNotification {
+public class LayoutCodeInfoCollector {
 
   private String optimizeImportsNotification = null;
   private String reformatCodeNotification = null;

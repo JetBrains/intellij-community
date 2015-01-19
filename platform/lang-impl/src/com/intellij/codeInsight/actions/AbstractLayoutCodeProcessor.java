@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -81,7 +80,7 @@ public abstract class AbstractLayoutCodeProcessor {
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
   private List<FileFilter> myFilters = ContainerUtil.newArrayList();
 
-  private LayoutCodeNotification myNotificationInfo;
+  private LayoutCodeInfoCollector myInfoCollector;
 
   protected AbstractLayoutCodeProcessor(Project project, String commandName, String progressText, boolean processChangedTextOnly) {
     this(project, (Module)null, commandName, progressText, processChangedTextOnly);
@@ -104,7 +103,7 @@ public abstract class AbstractLayoutCodeProcessor {
     myCommandName = commandName;
     myPreviousCodeProcessor = previous;
     myFilters = previous.myFilters;
-    myNotificationInfo = previous.myNotificationInfo;
+    myInfoCollector = previous.myInfoCollector;
   }
 
   protected AbstractLayoutCodeProcessor(Project project,
@@ -153,7 +152,6 @@ public abstract class AbstractLayoutCodeProcessor {
     myCommandName = commandName;
     myPostRunnable = null;
     myProcessChangedTextOnly = processChangedTextOnly;
-    myNotificationInfo = new LayoutCodeNotification();
   }
 
   protected AbstractLayoutCodeProcessor(Project project,
@@ -189,6 +187,10 @@ public abstract class AbstractLayoutCodeProcessor {
   private FutureTask<Boolean> getPreviousProcessorTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
     return myPreviousCodeProcessor != null ? myPreviousCodeProcessor.preprocessFile(file, processChangedTextOnly)
                                            : null;
+  }
+
+  public void setCollectInfo(boolean isCollectInfo) {
+    myInfoCollector = isCollectInfo ? new LayoutCodeInfoCollector() : null;
   }
 
   public void addFileFilter(@NotNull FileFilter filter) {
@@ -614,11 +616,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   @Nullable
-  public LayoutCodeNotification getNotificationInfo() {
-    return myNotificationInfo;
-  }
-
-  protected boolean isSingleFileProcessed() {
-    return myFile != null;
+  public LayoutCodeInfoCollector getInfoCollector() {
+    return myInfoCollector;
   }
 }

@@ -106,9 +106,9 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
       @Override
       public void run() {
         engine.arrange(file, ranges);
-        String info = engine.getUserNotificationInfo();
-        if (info != null && getNotificationInfo() != null) {
-          getNotificationInfo().setRearrangeCodeNotification(info);
+        if (getInfoCollector() != null) {
+          String info = engine.getUserNotificationInfo();
+          getInfoCollector().setRearrangeCodeNotification(info);
         }
       }
     };
