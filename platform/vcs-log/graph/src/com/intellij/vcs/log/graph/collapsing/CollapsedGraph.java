@@ -140,6 +140,10 @@ public class CollapsedGraph {
     myVisibleNodesId.set(nodeId, visible);
   }
 
+  public boolean getNodeVisibility(int nodeId) {
+    return myVisibleNodesId.get(nodeId);
+  }
+
   @NotNull
   public GraphAdditionalEdges getGraphAdditionalEdges() {
     return myGraphAdditionalEdges;

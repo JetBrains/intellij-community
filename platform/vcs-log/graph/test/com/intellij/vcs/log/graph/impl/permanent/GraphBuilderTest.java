@@ -47,7 +47,7 @@ public abstract class GraphBuilderTest<CommitId extends Comparable<CommitId>> ex
       }
     });
 
-    String actual = GraphPackage.asString(graph);
+    String actual = GraphPackage.asString(graph, false);
     assertEquals(out, actual);
   }
 
