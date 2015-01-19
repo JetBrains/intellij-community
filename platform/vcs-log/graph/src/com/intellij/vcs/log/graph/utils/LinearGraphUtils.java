@@ -138,7 +138,7 @@ public class LinearGraphUtils {
   }
 
   @NotNull
-  public static LinearGraphController.LinearGraphAnswer createHoverAnswer(boolean handCursor) {
+  public static LinearGraphController.LinearGraphAnswer createCursorAnswer(boolean handCursor) {
     Cursor cursor = Cursor.getDefaultCursor();
     if (handCursor) cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 

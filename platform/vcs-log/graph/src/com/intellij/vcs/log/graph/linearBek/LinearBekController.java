@@ -27,15 +27,13 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
-import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearBekGraph myCompiledGraph;
@@ -89,12 +87,12 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (graphElement instanceof GraphEdge) {
           GraphEdge edge = (GraphEdge)graphElement;
           if (edge.getType() == GraphEdgeType.DOTTED){
-            return new CursorAnswer(Cursor.HAND_CURSOR);
+            return LinearGraphUtils.createCursorAnswer(/*handCursor =*/ true);
           }
         }
       }
     }
-    return new CursorAnswer(Cursor.DEFAULT_CURSOR);
+    return LinearGraphUtils.createCursorAnswer(/*handCursor =*/ false);
   }
 
   @NotNull
@@ -155,10 +153,13 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   }
 
-  private static class ExpandedEdgeAnswer implements LinearGraphAnswer {
-    private final GraphChanges<Integer> myChanges;
-
+  private static class ExpandedEdgeAnswer extends LinearGraphAnswer {
     private ExpandedEdgeAnswer(@NotNull GraphEdge expanded, @NotNull Collection<GraphEdge> addedEdges) {
+      super(calculateChanges(expanded, addedEdges), null, null); // TODO
+      calculateChanges(expanded, addedEdges);
+    }
+
+    private static GraphChanges<Integer> calculateChanges(GraphEdge expanded, Collection<GraphEdge> addedEdges) {
       final Set<GraphChanges.Edge<Integer>> edgeChanges = ContainerUtil.newHashSet();
 
       edgeChanges.add(new ChangedEdge(expanded.getUpNodeIndex(), expanded.getDownNodeIndex(), true));
@@ -166,7 +167,7 @@ public class LinearBekController extends CascadeLinearGraphController {
         edgeChanges.add(new ChangedEdge(edge.getUpNodeIndex(), edge.getDownNodeIndex(), false));
       }
 
-      myChanges = new GraphChanges<Integer>() {
+      return new GraphChanges<Integer>() {
         @NotNull
         @Override
         public Collection<Node<Integer>> getChangedNodes() {
@@ -179,24 +180,6 @@ public class LinearBekController extends CascadeLinearGraphController {
           return edgeChanges;
         }
       };
-    }
-
-    @Nullable
-    @Override
-    public GraphChanges<Integer> getGraphChanges() {
-      return myChanges;
-    }
-
-    @Nullable
-    @Override
-    public Cursor getCursorToSet() {
-      return null; // TODO
-    }
-
-    @Nullable
-    @Override
-    public Integer getCommitToJump() {
-      return null; // TODO
     }
 
     private static class ChangedEdge implements GraphChanges.Edge<Integer> {
@@ -235,29 +218,4 @@ public class LinearBekController extends CascadeLinearGraphController {
     }
   }
 
-  private static class CursorAnswer implements LinearGraphController.LinearGraphAnswer {
-    private final int myCursorType;
-
-    public CursorAnswer(int cursorType) {
-      myCursorType = cursorType;
-    }
-
-    @Nullable
-    @Override
-    public GraphChanges<Integer> getGraphChanges() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public Cursor getCursorToSet() {
-      return Cursor.getPredefinedCursor(myCursorType);
-    }
-
-    @Nullable
-    @Override
-    public Integer getCommitToJump() {
-      return null;
-    }
-  }
 }

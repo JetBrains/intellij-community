@@ -46,18 +46,6 @@ public class LinearBekGraph implements LinearGraph {
 
   @NotNull
   @Override
-  public List<Integer> getUpNodes(int nodeIndex) {
-    return LinearGraphUtils.getUpNodes(this, nodeIndex);
-  }
-
-  @NotNull
-  @Override
-  public List<Integer> getDownNodes(int nodeIndex) {
-    return LinearGraphUtils.getDownNodes(this, nodeIndex);
-  }
-
-  @NotNull
-  @Override
   public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
     List<GraphEdge> result = new ArrayList<GraphEdge>();
     result.addAll(myGraph.getAdjacentEdges(nodeIndex));
