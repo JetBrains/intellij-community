@@ -29,7 +29,15 @@ import java.util.List;
 
 public class CollapsedGraph {
 
-  public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph, @NotNull UnsignedBitSet initVisibility) {
+  // initVisibility == null means, what all nodes is Visible
+  public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph, @Nullable UnsignedBitSet initVisibility) {
+    if (initVisibility == null) { // todo fix performance
+      initVisibility = new UnsignedBitSet();
+      for (int i = 0; i < delegateGraph.nodesCount(); i++) {
+        initVisibility.set(delegateGraph.getGraphNode(i).getNodeId(), true);
+      }
+    }
+
     UnsignedBitSet visibleNodesId = initVisibility.clone();
     Flags delegateNodesVisibility = createDelegateNodesVisibility(delegateGraph, visibleNodesId);
     UpdatableIntToIntMap nodesMap = ListIntToIntMap.newInstance(delegateNodesVisibility);

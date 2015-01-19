@@ -24,21 +24,14 @@ import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FilterLinearGraphController extends CascadeLinearGraphController {
+public class CollapsedLinearGraphController extends CascadeLinearGraphController {
   @NotNull
   private CollapsedGraph myCollapsedGraph;
-  @NotNull
-  private final UnsignedBitSet myFilterNodeId;
-  private final boolean myAllowCollapseFilterNodes;
 
-  protected FilterLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
-                                        @NotNull PermanentGraphInfo permanentGraphInfo,
-                                        @NotNull UnsignedBitSet filterNodeId,
-                                        boolean allowCollapseFilterNodes) {
+  protected CollapsedLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
+                                           @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(delegateLinearGraphController, permanentGraphInfo);
-    myFilterNodeId = filterNodeId;
-    myAllowCollapseFilterNodes = allowCollapseFilterNodes;
-    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), filterNodeId);
+    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), null);
   }
 
   @NotNull
@@ -78,12 +71,4 @@ public class FilterLinearGraphController extends CascadeLinearGraphController {
     return myCollapsedGraph;
   }
 
-  @NotNull
-  protected UnsignedBitSet getFilterNodeId() {
-    return myFilterNodeId;
-  }
-
-  protected boolean isAllowCollapseFilterNodes() {
-    return myAllowCollapseFilterNodes;
-  }
 }
