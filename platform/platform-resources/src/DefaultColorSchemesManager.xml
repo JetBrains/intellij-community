@@ -33,6 +33,27 @@
 
     <attributes>
 
+      <option name="DEBUGGER_INLINED_VALUES">
+        <value>
+          <option name="FOREGROUND" value="868686" />
+          <option name="FONT_TYPE" value="2" />
+          <option name="EFFECT_TYPE" value="0" />
+        </value>
+      </option>
+      <option name="DEBUGGER_INLINED_VALUES_EXECUTION_LINE">
+        <value>
+          <option name="FOREGROUND" value="ff56" />
+          <option name="FONT_TYPE" value="2" />
+          <option name="EFFECT_TYPE" value="0" />
+        </value>
+      </option>
+      <option name="DEBUGGER_INLINED_VALUES_MODIFIED">
+        <value>
+          <option name="FOREGROUND" value="ca8021" />
+          <option name="FONT_TYPE" value="2" />
+          <option name="EFFECT_TYPE" value="0" />
+        </value>
+      </option>
       <option name="DEFAULT_TEMPLATE_LANGUAGE_COLOR">
         <value>
           <option name="BACKGROUND" value="f7faff"/>
