@@ -312,7 +312,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myBrowser.getViewer().addSelectionListener(new Runnable() {
       @Override
       public void run() {
-        changeDetails();
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            changeDetails();
+          }
+        });
       }
     });
     myDiffDetails.init();

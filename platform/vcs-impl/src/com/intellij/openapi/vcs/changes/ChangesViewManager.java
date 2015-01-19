@@ -127,7 +127,12 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         if (LOG.isDebugEnabled()) {
           LOG.debug("selection changed. selected:  " + toStringPaths(myView.getSelectionPaths()) + " from: " + DebugUtil.currentStackTrace());
         }
-        changeDetails();
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            changeDetails();
+          }
+        });
       }
 
       private String toStringPaths(TreePath[] paths) {
