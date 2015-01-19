@@ -716,9 +716,6 @@
   <action id="IntroduceParameter">
     <keyboard-shortcut first-keystroke="control alt P"/>
   </action>
-  <action id="IntroduceFunctionalParameter">
-    <keyboard-shortcut first-keystroke="control alt shift P"/>
-  </action>
   <action id="NextOccurence">
     <keyboard-shortcut first-keystroke="control alt DOWN"/>
   </action>
