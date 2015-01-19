@@ -23,24 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface LinearGraph {
-  @Deprecated
-  int NOT_LOAD_COMMIT = Integer.MAX_VALUE;
-
   int nodesCount();
-
-  @Deprecated
-  @NotNull
-  List<Integer> getUpNodes(int nodeIndex);
-
-  /**
-   *
-   * @param nodeIndex
-   * @return list adjacent nodes, which index > nodeIndex.
-   * If one of adjacent node wasn't load, it nodeIndex = NOT_LOAD_COMMIT
-   */
-  @Deprecated
-  @NotNull
-  List<Integer> getDownNodes(int nodeIndex);
 
   @NotNull
   List<GraphEdge> getAdjacentEdges(int nodeIndex);

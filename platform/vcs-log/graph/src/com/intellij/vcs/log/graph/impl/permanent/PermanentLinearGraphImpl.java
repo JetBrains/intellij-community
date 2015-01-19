@@ -23,7 +23,6 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntList;
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,18 +46,6 @@ public class PermanentLinearGraphImpl implements LinearGraph {
   @Override
   public int nodesCount() {
     return mySimpleNodes.size();
-  }
-
-  @NotNull
-  @Override
-  public List<Integer> getUpNodes(int nodeIndex) {
-    return LinearGraphUtils.getUpNodes(this, nodeIndex);
-  }
-
-  @NotNull
-  @Override
-  public List<Integer> getDownNodes(int nodeIndex) {
-    return LinearGraphUtils.getDownNodes(this, nodeIndex);
   }
 
 
