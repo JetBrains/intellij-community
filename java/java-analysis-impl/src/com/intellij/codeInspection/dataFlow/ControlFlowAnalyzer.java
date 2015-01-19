@@ -647,11 +647,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             try {
               ControlFlow.ControlFlowOffset offset = getStartOffset(statement);
               PsiExpression caseValue = psiLabelStatement.getCaseValue();
-              
-              if (caseValue != null &&
+
+              if (enumValues != null && caseValue instanceof PsiReferenceExpression) {
+                //noinspection SuspiciousMethodCalls
+                enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
+              }
+
+              boolean alwaysTrue = enumValues != null && enumValues.isEmpty();
+              if (alwaysTrue) {
+                addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
+              }
+              else if (caseValue != null &&
                   caseExpression instanceof PsiReferenceExpression &&
-                  ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null &&
-                  JavaPsiFacade.getInstance(body.getProject()).getConstantEvaluationHelper().computeConstantExpression(caseValue) != null) {
+                  ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null) {
                 
                 addInstruction(new PushInstruction(myFactory.createValue(caseExpression), caseExpression));
                 caseValue.accept(this);
@@ -663,12 +671,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
               addInstruction(new ConditionalGotoInstruction(offset, false, statement));
 
-              if (enumValues != null) {
-                if (caseValue instanceof PsiReferenceExpression) {
-                  //noinspection SuspiciousMethodCalls
-                  enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
-                }
-              }
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
