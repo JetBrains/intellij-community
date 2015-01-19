@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,9 @@ public class InvocationExprent extends Exprent {
       }
       else {
         // FIXME: remove the first parameter completely from the list. It's the object type for a virtual lambda method.
-        instance = lstParameters.get(0);
+        if (!lstParameters.isEmpty()) {
+          instance = lstParameters.get(0);
+        }
       }
     }
     else if (opcode == CodeConstants.opc_invokestatic) {

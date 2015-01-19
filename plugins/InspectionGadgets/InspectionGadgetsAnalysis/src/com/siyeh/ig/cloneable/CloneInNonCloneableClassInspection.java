@@ -104,10 +104,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (CloneUtils.isCloneable(containingClass)) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.FINAL) && CloneUtils.onlyThrowsCloneNotSupportedException(method)) {
+      if (CloneUtils.isCloneable(containingClass) || CloneUtils.onlyThrowsException(method)) {
         return;
       }
       registerMethodError(method, containingClass);

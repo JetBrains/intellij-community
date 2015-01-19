@@ -25,8 +25,10 @@ import com.intellij.execution.application.ApplicationConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
+import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +102,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
         final PsiFile file = location.getPsiElement().getContainingFile();
         if (file instanceof GroovyFile) {
           final VirtualFile vfile = file.getVirtualFile();
-          if (vfile != null && FileUtil.toSystemIndependentName(path).equals(vfile.getPath())) {
+          if (vfile != null && FileUtil.toSystemIndependentName(path).equals(ScriptFileUtil.getScriptFilePath(vfile))) {
             if (!((GroovyFile)file).isScript() ||
                 GroovyScriptUtil.getScriptType((GroovyFile)file).isConfigurationByLocation(existing, location)) {
               return existingConfiguration;
@@ -127,15 +129,17 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
     final PsiFile file = aClass.getContainingFile().getOriginalFile();
     final PsiDirectory dir = file.getContainingDirectory();
-    if (dir == null) return null;
-    configuration.setWorkDir(dir.getVirtualFile().getPath());
+    if (dir != null) {
+      configuration.setWorkDir(dir.getVirtualFile().getPath());
+    }
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return null;
-    configuration.setScriptPath(vFile.getPath());
+    String path = ScriptFileUtil.getScriptFilePath(vFile);
+    configuration.setScriptPath(path);
     RunConfigurationModule module = configuration.getConfigurationModule();
 
     String name = GroovyRunnerUtil.getConfigurationName(aClass, module);
-    configuration.setName(name);
+    configuration.setName(StringUtil.isEmpty(name) ? vFile.getName() : name);
     configuration.setModule(JavaExecutionUtil.findModule(aClass));
     return settings;
   }

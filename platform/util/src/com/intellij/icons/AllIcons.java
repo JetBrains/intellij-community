@@ -215,6 +215,7 @@ public class AllIcons {
     public static final Icon Class_filter = IconLoader.getIcon("/debugger/class_filter.png"); // 16x16
     public static final Icon CommandLine = IconLoader.getIcon("/debugger/commandLine.png"); // 16x16
     public static final Icon Console = IconLoader.getIcon("/debugger/console.png"); // 16x16
+    public static final Icon Console_log = IconLoader.getIcon("/debugger/console_log.png"); // 16x16
     public static final Icon Db_array = IconLoader.getIcon("/debugger/db_array.png"); // 16x16
     public static final Icon Db_db_object = IconLoader.getIcon("/debugger/db_db_object.png"); // 16x16
     public static final Icon Db_dep_exception_breakpoint = IconLoader.getIcon("/debugger/db_dep_exception_breakpoint.png"); // 12x12
@@ -1181,10 +1182,13 @@ public class AllIcons {
     public static final Icon FromVCS = IconLoader.getIcon("/welcome/fromVCS.png"); // 16x16
     public static final Icon ImportProject = IconLoader.getIcon("/welcome/importProject.png"); // 16x16
     public static final Icon OpenProject = IconLoader.getIcon("/welcome/openProject.png"); // 16x16
-    public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
+    
+    public static class Project {
+      public static final Icon Remove_hover = IconLoader.getIcon("/welcome/project/remove-hover.png"); // 10x10
+      public static final Icon Remove = IconLoader.getIcon("/welcome/project/remove.png"); // 10x10
 
-    public static final Icon RemoveRecentProject = IconLoader.getIcon("/welcome/project/remove.png"); // 10x10
-    public static final Icon RemoveRecentProjectHover = IconLoader.getIcon("/welcome/project/remove-hover.png"); // 10x10
+    }
+    public static final Icon Register = IconLoader.getIcon("/welcome/register.png"); // 32x32
 
   }
   
@@ -1196,7 +1200,7 @@ public class AllIcons {
       public static final Icon Chromium16 = IconLoader.getIcon("/xml/browsers/chromium16.png"); // 16x16
       public static final Icon Explorer16 = IconLoader.getIcon("/xml/browsers/explorer16.png"); // 16x16
       public static final Icon Firefox16 = IconLoader.getIcon("/xml/browsers/firefox16.png"); // 16x16
-      public static final Icon Node_webkit16 = IconLoader.getIcon("/xml/browsers/node-webkit16.png"); // 16x16
+      public static final Icon Nwjs16 = IconLoader.getIcon("/xml/browsers/nwjs16.png"); // 16x16
       public static final Icon Opera16 = IconLoader.getIcon("/xml/browsers/opera16.png"); // 16x16
       public static final Icon Safari16 = IconLoader.getIcon("/xml/browsers/safari16.png"); // 16x16
       public static final Icon Yandex16 = IconLoader.getIcon("/xml/browsers/yandex16.png"); // 16x16

@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.course.Task;
 import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import org.jetbrains.annotations.Nullable;
 
 public class StudyState {
   private final StudyEditor myStudyEditor;
@@ -15,7 +16,7 @@ public class StudyState {
   private final Task myTask;
   private final VirtualFile myTaskDir;
 
-  public StudyState(final StudyEditor studyEditor) {
+  public StudyState(@Nullable final StudyEditor studyEditor) {
     myStudyEditor = studyEditor;
     myEditor = studyEditor != null ? studyEditor.getEditor() : null;
     myTaskFile = studyEditor != null ? studyEditor.getTaskFile() : null;

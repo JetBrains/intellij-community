@@ -38,10 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
@@ -165,6 +162,15 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public boolean isPassParentEnvironment() {
     return myPassParentEnvironment;
+  }
+
+  /**
+   * @return Environment, that will be passed to the process if isPassParentEnvironment() == true
+   */
+  @NotNull
+  public Map<String, String> getParentEnvironment() {
+    return Collections.unmodifiableMap(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
+                                                                 : EnvironmentUtil.getEnvironmentMap());
   }
 
   public void addParameters(final String... parameters) {
@@ -317,8 +323,7 @@ public class GeneralCommandLine implements UserDataHolder {
     environment.clear();
 
     if (myPassParentEnvironment) {
-      environment.putAll(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
-                                                   : EnvironmentUtil.getEnvironmentMap());
+      environment.putAll(getParentEnvironment());
     }
     
     if (!myEnvParams.isEmpty()) {

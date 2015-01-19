@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,12 @@ import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -135,7 +135,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
     pointers.addAll(task.getArtifactPointers());
     ArtifactChooser chooser = new ArtifactChooser(new ArrayList<ArtifactPointer>(pointers));
     chooser.markElements(task.getArtifactPointers());
-    chooser.setPreferredSize(new Dimension(400, 300));
+    chooser.setPreferredSize(JBUI.size(400, 300));
 
     DialogBuilder builder = new DialogBuilder(myProject);
     builder.setTitle(CompilerBundle.message("build.artifacts.before.run.selector.title"));

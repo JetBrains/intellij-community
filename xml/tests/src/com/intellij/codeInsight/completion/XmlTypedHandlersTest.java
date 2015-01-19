@@ -60,7 +60,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
                           "</bar>");
   }
 
-  public void _testCloseTagOnSlashWithMultiCaretsInDifferentContexts() {
+  public void testCloseTagOnSlashWithMultiCaretsInDifferentContexts() {
     doTest("<bar>\n" +
            "<foo><<caret>\n" +
            "<fiz><<caret>\n" +
@@ -70,7 +70,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
                           "</bar>");
   }
 
-  public void _testCloseTagOnGtWithMultiCaretsInDifferentContexts() {
+  public void testCloseTagOnGtWithMultiCaretsInDifferentContexts() {
     doTest("<bar>\n" +
            "<foo<caret>\n" +
            "<fiz<caret>\n" +

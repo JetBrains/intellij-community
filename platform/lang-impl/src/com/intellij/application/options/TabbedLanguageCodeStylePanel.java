@@ -83,7 +83,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected void initTabs(CodeStyleSettings settings) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
     addIndentOptionsTab(settings);
-    if (provider != null && !provider.usesSharedPreview()) {
+    if (provider != null) {
       addSpacesTab(settings);
       addWrappingAndBracesTab(settings);
       addBlankLinesTab(settings);
@@ -391,7 +391,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     public MySpacesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
@@ -402,13 +401,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected void customizeSettings() {
-      customizePanel(this);
+    protected boolean shouldHideOptions() {
+      return true;
     }
 
     @Override
-    protected boolean shouldHideOptions() {
-      return true;
+    public Language getDefaultLanguage() {
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
   }
 
@@ -416,12 +415,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     public MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
-    }
-
-    @Override
-    protected void customizeSettings() {
-      customizePanel(this);
     }
 
     @Override
@@ -431,18 +424,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
     }
 
+    @Override
+    public Language getDefaultLanguage() {
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
+    }
   }
 
   protected class MyWrappingAndBracesPanel extends WrappingAndBracesPanel {
 
     public MyWrappingAndBracesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
-    }
-
-    @Override
-    protected void customizeSettings() {
-      customizePanel(this);
     }
 
     @Override
@@ -451,12 +442,10 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
       previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
     }
-  }
 
-  private void customizePanel(MultilanguageCodeStyleAbstractPanel panel) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
-    if (provider != null) {
-      provider.customizeSettings(panel, panel.getSettingsType());
+    @Override
+    public Language getDefaultLanguage() {
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
   }
 

@@ -44,6 +44,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -77,7 +78,22 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       WriteCommandAction.runWriteCommandAction(project, new Runnable() {
         @Override
         public void run() {
-          doGenerate(project, editor, aClass, members);
+          final int offset = editor.getCaretModel().getOffset();
+          try {
+            doGenerate(project, editor, aClass, members);
+          }
+          catch (GenerateCodeException e) {
+            final String message = e.getMessage();
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (!editor.isDisposed()) {
+                  editor.getCaretModel().moveToOffset(offset);
+                  HintManager.getInstance().showErrorHint(editor, message);
+                }
+              }
+            }, project.getDisposed());
+          }
         }
       });
     }

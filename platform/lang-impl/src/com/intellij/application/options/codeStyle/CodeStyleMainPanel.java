@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -38,7 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListener {
+public class CodeStyleMainPanel extends JPanel {
   private final CardLayout myLayout = new CardLayout();
   private final JPanel mySettingsPanel = new JPanel(myLayout);
 
@@ -48,7 +47,6 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesPanel mySchemesPanel;
-  private final LanguageSelector myLangSelector;
   private boolean myIsDisposed = false;
   private final Action mySetFromAction = new AbstractAction("Set from...") {
     @Override
@@ -64,12 +62,11 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
 
 
-  public CodeStyleMainPanel(CodeStyleSchemesModel model, LanguageSelector langSelector, CodeStyleSettingsPanelFactory factory) {
+  public CodeStyleMainPanel(CodeStyleSchemesModel model, CodeStyleSettingsPanelFactory factory) {
     super(new BorderLayout());
     myModel = model;
     myFactory = factory;
     mySchemesPanel = new CodeStyleSchemesPanel(model);
-    myLangSelector = langSelector;
 
     model.addListener(new CodeStyleSettingsListener(){
       @Override
@@ -100,8 +97,6 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
         ensurePanel(scheme).reset();
       }
     });
-
-    myLangSelector.addListener(this);
 
     addWaitCard();
 
@@ -217,12 +212,10 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     String name = scheme.getName();
     if (!mySettingsPanels.containsKey(name)) {
       NewCodeStyleSettingsPanel panel = myFactory.createPanel(scheme);
-      panel.setLanguageSelector(myLangSelector);
       panel.reset();
       panel.setModel(myModel);
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
-      panel.setLanguage(myLangSelector.getLanguage());
     }
 
     return mySettingsPanels.get(name);
@@ -235,7 +228,6 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   public void disposeUIResources() {
     myAlarm.cancelAllRequests();
     clearPanels();
-    myLangSelector.removeListener(this);
     myIsDisposed = true;
   }
 
@@ -245,13 +237,6 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     }
 
     return mySettingsPanels.get(scheme.getName()).isModified();
-  }
-
-  @Override
-  public void languageChanged(Language lang) {
-    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
-      panel.setLanguage(lang);
-    }
   }
   
   public Set<String> processListOptions() {

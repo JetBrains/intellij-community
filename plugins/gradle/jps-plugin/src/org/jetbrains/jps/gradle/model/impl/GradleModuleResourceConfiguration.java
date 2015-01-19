@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.gradle.model.impl;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -60,6 +61,17 @@ public class GradleModuleResourceConfiguration {
     int result = computeModuleConfigurationHash();
 
     final List<ResourceRootConfiguration> _resources = forTestResources ? testResources : resources;
+    result = 31 * result;
+    for (ResourceRootConfiguration resource : _resources) {
+      result += resource.computeConfigurationHash();
+    }
+    return result;
+  }
+
+  public int computeConfigurationHash() {
+    int result = computeModuleConfigurationHash();
+
+    final List<ResourceRootConfiguration> _resources = ContainerUtil.concat(testResources, resources);
     result = 31 * result;
     for (ResourceRootConfiguration resource : _resources) {
       result += resource.computeConfigurationHash();

@@ -23,7 +23,7 @@ import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.vfs.JrtFileSystem;
+import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;

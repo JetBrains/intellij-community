@@ -131,8 +131,19 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   private void createDialog(final Window owner) throws GlasspanePeerUnavailableException {
     Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (!(active instanceof JDialog) && owner instanceof IdeFrame) {
-      final JFrame frame = (JFrame) owner;
-      final JComponent glassPane = (JComponent) frame.getGlassPane();
+
+      Component glassPane;
+
+      // Not all successor of IdeFrame are frames
+      if (owner instanceof JFrame) {
+        glassPane = ((JFrame)owner).getGlassPane();
+      }
+      else if (owner instanceof JDialog) {
+        glassPane = ((JDialog)owner).getGlassPane();
+      }
+      else {
+        throw new IllegalStateException("Cannot find glass pane for " + owner.getClass().getName());
+      }
 
       assert glassPane instanceof IdeGlassPaneEx : "GlassPane should be instance of IdeGlassPane!";
       myDialog = new MyDialog((IdeGlassPaneEx) glassPane, myWrapper, myProject);

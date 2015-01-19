@@ -108,4 +108,8 @@ public class Lesson implements Stateful {
     }
     return myCourse.getLessons().get(myIndex - 1);
   }
+
+  public Course getCourse() {
+    return myCourse;
+  }
 }

@@ -68,7 +68,7 @@ public class AuxiliaryRightPanel extends JPanel {
 
     myLayout = new CardLayout();
     myCardPanel.setLayout(myLayout);
-    myCardPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 6, 0));
+    myCardPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 4, 0));
 
     new ClickListener() {
       @Override

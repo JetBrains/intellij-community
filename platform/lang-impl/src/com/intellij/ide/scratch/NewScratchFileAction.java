@@ -23,9 +23,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -39,7 +37,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.LanguageSubstitutors;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,7 +73,7 @@ public class NewScratchFileAction extends DumbAwareAction {
 
   @NotNull
   public static List<String> getLastUsedLanguagesIds(Project project) {
-    String[] values = PropertiesComponent.getInstance(project).getValues(ScratchpadManager.class.getName());
+    String[] values = PropertiesComponent.getInstance(project).getValues(ScratchFileService.class.getName());
     return values == null ? ContainerUtil.<String>emptyList() : ContainerUtil.list(values);
   }
   
@@ -111,29 +111,18 @@ public class NewScratchFileAction extends DumbAwareAction {
   public Language getLanguageFromCaret(@NotNull Project project,
                                        @Nullable Editor editor,
                                        @Nullable PsiFile psiFile) {
-    if (editor == null) return null;
-    if (psiFile == null) return null;
+    if (editor == null || psiFile == null) return null;
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     int offset = caret.getOffset();
     PsiElement element = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
-    element = element == null ? psiFile.findElementAt(offset) : element;
-    Language language = element != null ? element.getLanguage() : psiFile.getLanguage();
-    return substitute(project, language);
+    PsiFile file = element != null ? element.getContainingFile() : psiFile;
+    return file.getLanguage();
   }
 
   public static void openNewFile(@NotNull Project project, @NotNull Language language, @NotNull final String text) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
-    VirtualFile file = ScratchpadManager.getInstance(project).createScratchFile(substitute(project, language));
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    final Document document = psiFile == null ? null : PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    if (document != null && StringUtil.isNotEmpty(text)) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          document.setText(text);
-        }
-      });
-    }
+    VirtualFile file = ScratchFileService.getInstance().createScratchFile(project, language, text);
+    if (file == null) return;
     FileEditorManager.getInstance(project).openFile(file, true);
   }
 

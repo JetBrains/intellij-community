@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -54,7 +55,7 @@ class ComboContentLayout extends ContentLayout {
   @Override
   public void layout() {
     Rectangle bounds = myUi.getBounds();
-    Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : new Dimension(0, 0);
+    Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : JBUI.emptySize();
 
     int eachX = 0;
     int eachY = 0;

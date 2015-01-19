@@ -33,6 +33,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class DuplicatesInspectionBase extends LocalInspectionTool {
+  private static final int MIN_FRAGMENT_SIZE = 3;
+
   @Nullable
   @Override
   public ProblemDescriptor[] checkFile(@NotNull final PsiFile psiFile, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
@@ -145,11 +147,10 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final SmartList<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
 
     if (processor != null) {
-
       for(Map.Entry<Integer, TextRange> entry:processor.reportedRanges.entrySet()) {
         final Integer offset = entry.getKey();
         // todo 3 statements constant
-        if (processor.fragmentSize.get(offset) < 3) continue;
+        if (processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
         final VirtualFile file = processor.reportedFiles.get(offset);
         String message = "Found duplicated code in " + file.getPath();
 
@@ -158,8 +159,12 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
         final int offsetInOtherFile = processor.reportedOffsetInOtherFiles.get(offset);
 
         LocalQuickFix fix = createNavigateToDupeFix(file, offsetInOtherFile);
+        int hash = processor.fragmentHash.get(offset);
+
+        LocalQuickFix viewAllDupesFix = hash != 0 ? createShowOtherDupesFix(virtualFile, offset, hash, psiFile.getProject()) : null;
+
         ProblemDescriptor descriptor = manager
-          .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.WEAK_WARNING, isOnTheFly, fix);
+          .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.WEAK_WARNING, isOnTheFly, fix, viewAllDupesFix);
         descriptors.add(descriptor);
       }
     }
@@ -170,6 +175,9 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
   protected LocalQuickFix createNavigateToDupeFix(@NotNull VirtualFile file, int offsetInOtherFile) {
     return null;
   }
+  protected LocalQuickFix createShowOtherDupesFix(VirtualFile file, int offset, int hash, Project project) {
+    return null;
+  }
 
   static abstract class DuplicatedCodeProcessor<T> implements FileBasedIndex.ValueProcessor<TIntArrayList> {
     final TreeMap<Integer, TextRange> reportedRanges = new TreeMap<Integer, TextRange>();
@@ -177,10 +185,12 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final TIntObjectHashMap<PsiElement> reportedPsi = new TIntObjectHashMap<PsiElement>();
     final TIntIntHashMap reportedOffsetInOtherFiles = new TIntIntHashMap();
     final TIntIntHashMap fragmentSize = new TIntIntHashMap();
+    final TIntIntHashMap fragmentHash = new TIntIntHashMap();
     final VirtualFile virtualFile;
     final Project project;
     final ProjectFileIndex myProjectFileIndex;
     T myNode;
+    int myHash;
 
     DuplicatedCodeProcessor(VirtualFile file, Project project) {
       virtualFile = file;
@@ -191,6 +201,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     void process(int hash, T node) {
       ProgressManager.checkCanceled();
       myNode = node;
+      myHash = hash;
       FileBasedIndex.getInstance().processValues(DuplicatesIndex.NAME, hash, null, this, GlobalSearchScope.projectScope(project));
     }
 
@@ -229,7 +240,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
         reportedOffsetInOtherFiles.put(fragmentStartOffsetInteger, value);
         reportedPsi.put(fragmentStartOffsetInteger, target);
         fragmentSize.put(fragmentStartOffsetInteger, newFragmentSize);
-
+        if (newFragmentSize >= MIN_FRAGMENT_SIZE) fragmentHash.put(fragmentStartOffsetInteger, myHash);
         return false;
       }
       return true;

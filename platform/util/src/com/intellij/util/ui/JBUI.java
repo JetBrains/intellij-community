@@ -56,6 +56,10 @@ public class JBUI {
     return (EmptyIcon)EmptyIcon.create(scale(i));
   }
 
+  public static JBDimension emptySize() {
+    return new JBDimension(0, 0);
+  }
+
   public static float scale(float f) {
     return f * scale(1);
   }

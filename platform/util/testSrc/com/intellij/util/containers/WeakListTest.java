@@ -15,9 +15,9 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.GCUtil;
 import org.junit.Test;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -225,11 +225,6 @@ public class WeakListTest {
   }
 
   private static void gc() {
-    ConcurrentMapsTest.tryGcSoftlyReachableObjects();
-    WeakReference<Object> weakReference = new WeakReference<Object>(new Object());
-    do {
-      System.gc();
-    }
-    while (weakReference.get() != null);
+    GCUtil.tryForceGC();
   }
 }

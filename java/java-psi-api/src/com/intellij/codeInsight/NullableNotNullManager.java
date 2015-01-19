@@ -192,7 +192,9 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
     return findNullabilityDefaultInHierarchy(owner, nullable);
   }
 
-  protected abstract boolean hasHardcodedContracts(PsiElement element);
+  protected boolean hasHardcodedContracts(PsiElement element) {
+    return false;
+  }
 
   @Nullable
   private static PsiType getOwnerType(PsiModifierListOwner owner) {

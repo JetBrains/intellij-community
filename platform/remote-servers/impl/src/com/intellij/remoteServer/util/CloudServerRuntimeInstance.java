@@ -21,6 +21,7 @@ import com.intellij.remoteServer.agent.util.CloudAgent;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
 import com.intellij.remoteServer.agent.util.CloudRemoteApplication;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
+import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.Function;
@@ -95,7 +96,9 @@ public abstract class CloudServerRuntimeInstance
       public void run() throws Exception {
         try {
           for (CloudApplicationRuntime application : getApplications()) {
-            callback.addDeployment(application.getApplicationName(), application, application.getStatus(), application.getStatusText());
+            Deployment deployment
+              = callback.addDeployment(application.getApplicationName(), application, application.getStatus(), application.getStatusText());
+            application.setDeploymentModel(deployment);
           }
           callback.succeeded();
         }

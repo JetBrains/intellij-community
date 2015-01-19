@@ -52,6 +52,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -270,6 +271,14 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       LOG.assertTrue(expr.isValid(), expr.getText());
       stringUsages.add(Pair.<PsiElement, TextRange>create(expr, new TextRange(0, expr.getTextLength())));
     }
+  }
+
+  @Override
+  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+    if (!isReplaceAllOccurrences() && getExpr() == null && !myReplaceSelf) {
+      return;
+    }
+    super.addReferenceAtCaret(refs);
   }
 
   private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,

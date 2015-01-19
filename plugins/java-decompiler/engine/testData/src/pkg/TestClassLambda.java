@@ -15,7 +15,9 @@
  */
 package pkg;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
+import java.util.Arrays;
 import java.util.function.IntBinaryOperator;
 import java.util.function.Supplier;
 
@@ -61,6 +63,10 @@ public class TestClassLambda {
     int bottom = list.size() * 2;
     int top = list.size() * 5;
     list.removeIf(s -> (bottom >= s.length() && s.length() <= top));
+  }
+
+  public static void testLambda7(Annotation[] annotations) {
+    Arrays.stream(annotations).map(Annotation::annotationType);
   }
 
   public static OptionalInt reduce(IntBinaryOperator op) {

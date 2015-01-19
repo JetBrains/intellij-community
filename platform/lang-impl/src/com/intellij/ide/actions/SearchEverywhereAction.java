@@ -1565,7 +1565,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
     private synchronized void buildSymbols(final String pattern) {
-      final SearchResult symbols = getSymbols(pattern, MAX_SYMBOLS, mySymbolsChooseByName);
+      final SearchResult symbols = getSymbols(pattern, MAX_SYMBOLS, showAll.get(), mySymbolsChooseByName);
       check();
 
       if (symbols.size() > 0) {
@@ -1670,7 +1670,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private SearchResult getSymbols(String pattern, final int max, ChooseByNamePopup chooseByNamePopup) {
+    private SearchResult getSymbols(String pattern, final int max, final boolean includeLibs, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult symbols = new SearchResult();
       if (!Registry.is("search.everywhere.symbols")) {
         return symbols;
@@ -1678,16 +1678,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
       if (chooseByNamePopup == null) return symbols;
       final ChooseByNameItemProvider provider = chooseByNamePopup.getProvider();
-      provider.filterElements(chooseByNamePopup, pattern, false,
+      provider.filterElements(chooseByNamePopup, pattern, includeLibs,
                               myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (o instanceof PsiElement && !(((PsiElement)o).getParent() instanceof PsiFile)) {
+            if (isSymbol(o)) {
               final PsiElement element = (PsiElement)o;
               final PsiFile file = element.getContainingFile();
-              if (!myListModel.contains(o) &&
+              if (!myListModel.contains(o) && !symbols.contains(o) &&
                   //some elements are non-physical like DB columns
-                  (file == null || (file.getVirtualFile() != null && scope.accept(file.getVirtualFile())))) {
+                  (file == null || (file.getVirtualFile() != null && (includeLibs || scope.accept(file.getVirtualFile()))))) {
                 symbols.add(o);
               }
             }
@@ -1696,6 +1696,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         });
       return symbols;
+    }
+
+    protected boolean isSymbol(Object o) {
+      if (o instanceof PsiElement) {
+        final PsiElement e = (PsiElement)o;
+        //todo[kb] need a better way to avoid mixing java classes with symbols. Same to other languages where
+        //todo[kb] symbol provider returns classes. We need kind of suppressor API & EP here.
+        return !e.getLanguage().is(Language.findLanguageByID("JAVA")) || !(e.getParent() instanceof PsiFile);
+      }
+      return false;
     }
 
     private SearchResult getClasses(String pattern, boolean includeLibs, final int max, ChooseByNamePopup chooseByNamePopup) {
@@ -2087,7 +2097,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
                   : id == WidgetID.FILES ? getFiles(pattern, DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
                   : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
-                  : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, mySymbolsChooseByName)
+                  : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, showAll.get(), mySymbolsChooseByName)
                   : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
                   : id == WidgetID.SETTINGS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, false)
                   : new SearchResult();

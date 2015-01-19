@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,11 +126,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     if (forceClean || IndexingStamp.versionDiffers(versionFile, version)) {
       final String[] children = indexRootDir.list();
       // rebuild only if there exists what to rebuild
-      needRebuild = !forceClean && (versionFileExisted || children != null && children.length > 0);
+      boolean indexRootHasChildren = children != null && children.length > 0;
+      needRebuild = !forceClean && (versionFileExisted || indexRootHasChildren);
       if (needRebuild) {
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }
-      FileUtil.deleteWithRenaming(indexRootDir);
+      if (indexRootHasChildren) FileUtil.deleteWithRenaming(indexRootDir);
       IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
     }
 
