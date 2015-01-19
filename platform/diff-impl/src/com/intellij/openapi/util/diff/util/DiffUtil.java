@@ -351,7 +351,10 @@ public class DiffUtil {
   @NotNull
   private static JComponent createTitlePanel(@NotNull String title) {
     if (title.isEmpty()) title = " "; // do not collapse
-    return new JLabel(title);
+    JTextField field = new JTextField(title);
+    field.setEditable(false);
+    field.setBorder(null);
+    return field;
   }
 
   @NotNull
