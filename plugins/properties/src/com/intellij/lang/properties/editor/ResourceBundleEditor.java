@@ -251,9 +251,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         }
       }
       if (!isEditorVisible) {
+        myPropertyToSelectWhenVisible = propertyName;
         return;
       }
-      myPropertyToSelectWhenVisible = propertyName;
       mySelectionChangeAlarm.cancelAllRequests();
       mySelectionChangeAlarm.addRequest(new Runnable() {
         @Override
