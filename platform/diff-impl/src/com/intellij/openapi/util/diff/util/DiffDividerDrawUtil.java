@@ -19,7 +19,6 @@ import com.intellij.openapi.diff.impl.splitter.Transformation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.diff.util.DiffDrawUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -239,8 +238,8 @@ public class DiffDividerDrawUtil {
     }
 
     private void paintOnScrollbar(Graphics2D g, int width) {
-      int startY = myStart1;
-      int endY = myEnd1;
+      int startY = myStart1 - 1;
+      int endY = myEnd1 - 1;
       int height = endY - startY;
 
       int startX = 0;
