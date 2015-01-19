@@ -67,7 +67,7 @@ public class PrintElementGeneratorTest extends AbstractTestWithTwoTextFile {
     @Override
     public int getColorId(@NotNull GraphElement element) {
       if (element instanceof GraphNode) {
-        return ((GraphNode)element).getNodeId();
+        return ((GraphNode)element).getNodeIndex();
       }
 
       if (element instanceof GraphEdge) {

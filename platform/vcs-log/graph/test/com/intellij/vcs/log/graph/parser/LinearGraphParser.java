@@ -45,11 +45,11 @@ public class LinearGraphParser {
     Map<Integer, Integer> nodeIdToNodeIndex = ContainerUtil.newHashMap();
 
     for (String line : toLines(in)) { // parse input and create nodes
-      Pair<GraphNode, List<String>> graphNodePair = parseLine(line, graphNodes.size());
-      GraphNode graphNode = graphNodePair.first;
+      Pair<Pair<Integer, GraphNode>, List<String>> graphNodePair = parseLine(line, graphNodes.size());
+      GraphNode graphNode = graphNodePair.first.second;
 
       edges.put(graphNode, graphNodePair.second);
-      nodeIdToNodeIndex.put(graphNode.getNodeId(), graphNodes.size());
+      nodeIdToNodeIndex.put(graphNodePair.first.first, graphNodes.size());
       graphNodes.add(graphNode);
     }
 
@@ -90,7 +90,7 @@ public class LinearGraphParser {
    * Example input line:
    * 0_U|-1_U 2_D
    */
-  public static Pair<GraphNode, List<String>> parseLine(@NotNull String line, int lineNumber) {
+  public static Pair<Pair<Integer, GraphNode>, List<String>> parseLine(@NotNull String line, int lineNumber) {
     int separatorIndex = nextSeparatorIndex(line, 0);
     Pair<Integer, Character> pair = parseNumberWithChar(line.substring(0, separatorIndex));
 
@@ -105,7 +105,7 @@ public class LinearGraphParser {
         return s;
       }
     });
-    return Pair.create(graphNode, normalEdges);
+    return Pair.create(Pair.create(pair.first, graphNode), normalEdges);
   }
 
   private static Pair<Integer, Character> parseNumberWithChar(@NotNull String in) {

@@ -41,7 +41,7 @@ fun LinearGraph.asString(sorted: Boolean = false): String {
   return s.toString();
 }
 
-fun GraphNode.asString(): String = "${getNodeIndex()}:${getNodeId()}_${toChar(getType())}"
+fun GraphNode.asString(): String = "${getNodeIndex()}_${toChar(getType())}"
 
 fun Int?.asString() = if (this == null) "n" else toString()
 
