@@ -49,12 +49,6 @@ public class JavaImportOptimizer implements ImportOptimizer, UserNotificationInf
     final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
     if (newImportList == null) return EmptyRunnable.getInstance();
 
-    PsiImportList oldList = ((PsiJavaFile)file).getImportList();
-    if (oldList != null) {
-      //todo: better decision is to move calculation into runnable, since here we only plan to do things
-      //todo: and perform them after. Some exception may interrupt and we will see notification but nothing has happened
-      myImportListLengthDiff = oldList.getAllImportStatements().length - newImportList.getAllImportStatements().length;
-    }
     return new Runnable() {
       @Override
       public void run() {
@@ -66,7 +60,9 @@ public class JavaImportOptimizer implements ImportOptimizer, UserNotificationInf
           }
           final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
           assert oldImportList != null;
+          int importsBefore = oldImportList.getAllImportStatements().length;
           oldImportList.replace(newImportList);
+          myImportListLengthDiff = importsBefore - newImportList.getAllImportStatements().length;
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

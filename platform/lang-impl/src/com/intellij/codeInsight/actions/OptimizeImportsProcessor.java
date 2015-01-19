@@ -83,9 +83,9 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       }
     }
 
-    prepareUserInfoMessage(optimizers);
+    final ImportOptimizer optimizer = getInfoCollector() != null && optimizers.size() == 1 ? optimizers.iterator().next() : null;
 
-    Runnable runnable = runnables.isEmpty() ? EmptyRunnable.getInstance() : new Runnable() {
+    Runnable runnable = !runnables.isEmpty() ? new Runnable() {
       @Override
       public void run() {
         CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
@@ -93,27 +93,22 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
           for (Runnable runnable : runnables) {
             runnable.run();
           }
+          if (optimizer != null) prepareUserInfoMessage(optimizer);
         }
         finally {
           CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
         }
       }
-    };
+    } : EmptyRunnable.getInstance();
     return new FutureTask<Boolean>(runnable, true);
   }
 
-  private void prepareUserInfoMessage(Set<ImportOptimizer> optimizers) {
-    if (getInfoCollector() == null) return;
-
-    if (optimizers.size() == 1) {
-      ImportOptimizer optimizer = optimizers.iterator().next();
-      if (optimizer instanceof UserNotificationInfoProvider) {
-        String info = ((UserNotificationInfoProvider)optimizer).getUserNotificationInfo();
-        getInfoCollector().setOptimizeImportsNotification(info);
-        return;
-      }
+  private void prepareUserInfoMessage(@NotNull ImportOptimizer optimizer) {
+    assert getInfoCollector() != null;
+    String info = "imports optimized";
+    if (optimizer instanceof UserNotificationInfoProvider) {
+        info = ((UserNotificationInfoProvider)optimizer).getUserNotificationInfo();
     }
-
-    getInfoCollector().setOptimizeImportsNotification("imports optimized");
+    getInfoCollector().setOptimizeImportsNotification(info);
   }
 }
