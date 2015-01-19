@@ -492,7 +492,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         myDetailsSplitter.initOn();
       }
     }
-    changeDetails();
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        changeDetails();
+      }
+    });
   }
 
   private void updateOnListSelection() {
