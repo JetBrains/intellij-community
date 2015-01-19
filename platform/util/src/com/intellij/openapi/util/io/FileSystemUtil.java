@@ -305,12 +305,13 @@ public class FileSystemUtil {
     @Override
     protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception {
       if (SystemInfo.isUnix) {
-        Object pathObj = myGetPath.invoke(myDefaultFileSystem, source, ArrayUtil.EMPTY_STRING_ARRAY);
-        Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "posix:permissions", myLinkOptions);
+        Object sourcePath = myGetPath.invoke(myDefaultFileSystem, source, ArrayUtil.EMPTY_STRING_ARRAY);
+        Object targetPath = myGetPath.invoke(myDefaultFileSystem, target, ArrayUtil.EMPTY_STRING_ARRAY);
+        Map attributes = (Map)myReadAttributes.invoke(null, sourcePath, "posix:permissions", myLinkOptions);
         if (attributes != null) {
           Object permissions = attributes.get("permissions");
           if (permissions instanceof Collection) {
-            mySetAttribute.invoke(null, pathObj, "posix:permissions", permissions, myLinkOptions);
+            mySetAttribute.invoke(null, targetPath, "posix:permissions", permissions, myLinkOptions);
             return true;
           }
         }
