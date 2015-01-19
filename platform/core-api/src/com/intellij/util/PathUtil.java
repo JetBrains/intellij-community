@@ -86,6 +86,13 @@ public class PathUtil {
     return PathUtilRt.getFileName(path);
   }
 
+  @Nullable
+  public static String getFileExtension(@NotNull String name) {
+    int index = name.lastIndexOf('.');
+    if (index < 0) return null;
+    return name.substring(index + 1);
+  }
+
   @NotNull
   public static String getParentPath(@NotNull String path) {
     return PathUtilRt.getParentPath(path);

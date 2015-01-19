@@ -501,8 +501,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       else if (childType == JavaElementType.FIELD) {
         child = processField(result, child, alignmentStrategy, defaultWrap, childIndent);
       }
-      else if (childType == JavaElementType.LOCAL_VARIABLE ||
-               childType == JavaElementType.DECLARATION_STATEMENT && myNode.getElementType() == JavaElementType.METHOD) {
+      else if (childType == JavaElementType.LOCAL_VARIABLE
+               || childType == JavaElementType.DECLARATION_STATEMENT
+                  && (nodeType == JavaElementType.METHOD || nodeType == JavaElementType.CODE_BLOCK))
+      {
         result.add(new SimpleJavaBlock(child, defaultWrap, alignmentStrategy, childIndent, mySettings, myJavaSettings));
       }
       else {
@@ -1137,10 +1139,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, Indent.getNoneIndent());
     child = child.getTreeNext();
 
-    ChildAlignmentStrategyProvider alignmentStrategyProvider = ChildAlignmentStrategyProvider.NULL_STRATEGY_PROVIDER;
-    if (mySettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
-      alignmentStrategyProvider = new SubsequentFieldAligner(mySettings);
-    }
+    ChildAlignmentStrategyProvider alignmentStrategyProvider = getStrategyProvider();
 
     while (child != null) {
       if (FormatterUtil.containsWhiteSpacesOnly(child)) {
@@ -1165,6 +1164,20 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     result.add(createCodeBlockBlock(localResult, indent, childrenIndent));
     return null;
+  }
+
+  private ChildAlignmentStrategyProvider getStrategyProvider() {
+    if (mySettings.ALIGN_GROUP_FIELD_DECLARATIONS && myNode.getElementType() == JavaElementType.CLASS) {
+      return new SubsequentFieldAligner(mySettings);
+    }
+
+    ASTNode parent = myNode.getTreeParent();
+    IElementType parentType = parent != null ? parent.getElementType() : null;
+    if (mySettings.ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS && parentType == JavaElementType.METHOD) {
+      return new SubsequentVariablesAligner();
+    }
+
+    return ChildAlignmentStrategyProvider.NULL_STRATEGY_PROVIDER;
   }
 
   private Indent getIndentForCodeBlock(ASTNode child, int childrenIndent) {

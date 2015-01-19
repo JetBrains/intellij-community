@@ -111,7 +111,7 @@ public abstract class Change {
       int offset = target.getStartOffset();
       document.deleteString(offset, target.getEndOffset());
     }
-    String text = DocumentUtil.getText(original);
+    CharSequence text = original.getDocument().getImmutableCharSequence().subSequence(original.getStartOffset(), original.getEndOffset());
     int startOffset = target.getStartOffset();
     if (DocumentUtil.isEmpty(target)) {
       document.insertString(startOffset, text);

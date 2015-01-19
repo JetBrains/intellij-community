@@ -221,13 +221,14 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   private boolean checkFile(List<LocalInspectionTool> inspections, final PsiFile file, final CompileContext context) {
+    boolean hasErrors = false;
     if (!checkUnderReadAction(file, context, new Computable<Map<ProblemDescriptor, HighlightDisplayLevel>>() {
       @Override
       public Map<ProblemDescriptor, HighlightDisplayLevel> compute() {
         return myValidator.checkAdditionally(file);
       }
     })) {
-      return false;
+      hasErrors = true;
     }
 
     if (!checkUnderReadAction(file, context, new Computable<Map<ProblemDescriptor, HighlightDisplayLevel>>() {
@@ -238,7 +239,9 @@ public class InspectionValidatorWrapper implements Validator {
         }
         return Collections.emptyMap();
       }
-    })) return false;
+    })) {
+      hasErrors = true;
+    }
 
 
     final InspectionProfile inspectionProfile = myProfileManager.getInspectionProfile();
@@ -252,9 +255,11 @@ public class InspectionValidatorWrapper implements Validator {
           }
           return Collections.emptyMap();
         }
-      })) return false;
+      })) {
+        hasErrors = true;
+      }
     }
-    return true;
+    return !hasErrors;
   }
 
   private boolean checkUnderReadAction(final PsiFile file, final CompileContext context, final Computable<Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {

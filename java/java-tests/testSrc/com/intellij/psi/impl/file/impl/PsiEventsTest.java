@@ -190,6 +190,7 @@ public class PsiEventsTest extends PsiTestCase {
 
     PlatformTestUtil.tryGcSoftlyReachableObjects();
 
+
     if (((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
       Processor<PsiDirectory> isReallyLeak = new Processor<PsiDirectory>() {
         @Override
@@ -200,7 +201,13 @@ public class PsiEventsTest extends PsiTestCase {
       LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiDirectory.class, isReallyLeak);
       LeakHunter.checkLeak(IdeEventQueue.getInstance(), PsiDirectory.class, isReallyLeak);
       LeakHunter.checkLeak(LaterInvocator.getLaterInvocatorQueue(), PsiDirectory.class, isReallyLeak);
-      MemoryDumpHelper.captureMemoryDump("testRenameFileWithoutDir.hprof");
+
+      String dumpPath = FileUtil.createTempFile(
+        new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))), "testRenameFileWithoutDir", ".hprof",
+                 false, false).getPath();
+      MemoryDumpHelper.captureMemoryDump(dumpPath);
+      System.out.println(dumpPath);
+
       assertNull(((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1));
       fail("directory just died");
     }

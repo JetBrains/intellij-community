@@ -416,7 +416,7 @@ public final class SourceMapDecoder {
   }
 
   private static final class GeneratedMappingList extends MappingList {
-    public GeneratedMappingList(List<MappingEntry> mappings) {
+    public GeneratedMappingList(@NotNull List<MappingEntry> mappings) {
       super(mappings);
     }
 

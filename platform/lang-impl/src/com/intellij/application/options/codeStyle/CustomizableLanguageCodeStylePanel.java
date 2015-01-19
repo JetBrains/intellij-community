@@ -29,16 +29,12 @@ import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.ui.AncestorListenerAdapter;
-import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,9 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,14 +55,10 @@ import java.util.Set;
  *
  * @author rvishnyakov
  */
-public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstractPanel implements CodeStyleSettingsCustomizable {
+public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstractPanel implements CodeStyleSettingsCustomizable {
   private static final Logger LOG = Logger.getInstance("com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
 
-  private Language myLanguage;
-  private int myLangSelectionIndex;
-  private JTabbedPane tabbedPane;
-
-  protected MultilanguageCodeStyleAbstractPanel(CodeStyleSettings settings) {
+  protected CustomizableLanguageCodeStylePanel(CodeStyleSettings settings) {
     super(settings);
   }
 
@@ -78,76 +67,41 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   }
 
   protected void customizeSettings() {
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
-      if (provider.usesSharedPreview()) {
-        resetDefaultNames();
-        provider.customizeSettings(this, getSettingsType());
-      }
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
+    if (provider != null) {
+      provider.customizeSettings(this, getSettingsType());
     }
-  }
-
-  @Override
-  public boolean setPanelLanguage(Language language) {
-
-    boolean languageProviderFound = false;
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
-      if (provider.getLanguage().is(language)) {
-        resetDefaultNames();
-        provider.customizeSettings(this, getSettingsType());
-        languageProviderFound = true;
-        break;
-      }
-    }
-    if (!languageProviderFound) return false;
-
-    myLanguage = language;
-
-    setSkipPreviewHighlighting(true);
-    try {
-      onLanguageChange(language);
-    }
-    finally {
-      setSkipPreviewHighlighting(false);
-    }
-    updatePreview(true);
-    return true;
-  }
-
-  public Language getSelectedLanguage() {
-    return myLanguage;
   }
 
   public abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();
 
-  protected void onLanguageChange(Language language) {
-  }
 
   protected void resetDefaultNames() {
   }
 
   @Override
   protected String getPreviewText() {
-    if (myLanguage == null) return "";
-    String sample = LanguageCodeStyleSettingsProvider.getCodeSample(myLanguage, getSettingsType());
+    if (getDefaultLanguage() == null) return "";
+    String sample = LanguageCodeStyleSettingsProvider.getCodeSample(getDefaultLanguage(), getSettingsType());
     if (sample == null) return "";
     return sample;
   }
 
   @Override
   protected PsiFile createFileFromText(final Project project, final String text) {
-    final PsiFile file = LanguageCodeStyleSettingsProvider.createFileFromText(myLanguage, project, text);
+    final PsiFile file = LanguageCodeStyleSettingsProvider.createFileFromText(getDefaultLanguage(), project, text);
     return file != null ? file : super.createFileFromText(project, text);
   }
 
   @Override
   protected int getRightMargin() {
-    if (myLanguage == null) return -1;
-    return LanguageCodeStyleSettingsProvider.getRightMargin(myLanguage, getSettingsType());
+    if (getDefaultLanguage() == null) return -1;
+    return LanguageCodeStyleSettingsProvider.getRightMargin(getDefaultLanguage(), getSettingsType());
   }
 
   @Override
   protected String getFileExt() {
-    String fileExt = LanguageCodeStyleSettingsProvider.getFileExt(myLanguage);
+    String fileExt = LanguageCodeStyleSettingsProvider.getFileExt(getDefaultLanguage());
     if (fileExt != null) return fileExt;
     return super.getFileExt();
   }
@@ -155,17 +109,11 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   @NotNull
   @Override
   protected FileType getFileType() {
-    if (myLanguage != null) {
-      FileType assocType = myLanguage.getAssociatedFileType();
+    if (getDefaultLanguage() != null) {
+      FileType assocType = getDefaultLanguage().getAssociatedFileType();
       if (assocType != null) {
         return assocType;
       }
-    }
-    Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
-    if (langs.length > 0) {
-      myLanguage = langs[0];
-      FileType type = langs[0].getAssociatedFileType();
-      if (type != null) return type;
     }
     return StdFileTypes.JAVA;
   }
@@ -210,84 +158,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   protected static JPanel createPreviewPanel() {
     return new JPanel(new BorderLayout());
-  }
-
-
-  @Override
-  protected void installPreviewPanel(final JPanel previewPanel) {
-    if (getSettingsType() != LanguageCodeStyleSettingsProvider.SettingsType.LANGUAGE_SPECIFIC) {
-      tabbedPane = new JBTabbedPane();
-      tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-      Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithSharedPreview();
-      if (langs.length == 0) return;
-      for (Language lang : langs) {
-        tabbedPane.addTab(getTabName(lang), createDummy());
-      }
-      tabbedPane.setComponentAt(0, getEditor().getComponent());
-      myLangSelectionIndex = 0;
-      if (myLanguage == null) {
-        setPanelLanguage(langs[0]);
-      }
-      else {
-        updatePreview(true);
-      }
-      tabbedPane.addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          onTabSelection((JTabbedPane)e.getSource());
-        }
-      });
-      previewPanel.add(tabbedPane, BorderLayout.CENTER);
-      previewPanel.addAncestorListener(new AncestorListenerAdapter() {
-        @Override
-        public void ancestorAdded(AncestorEvent event) {
-          selectCurrentLanguageTab();
-        }
-      });
-    }
-    else {
-      // If settings are language-specific
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
-      updatePreview(true);
-    }
-  }
-
-  private void selectCurrentLanguageTab() {
-    for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-      if (getTabName(myLanguage).equals(tabbedPane.getTitleAt(i))) {
-        tabbedPane.setSelectedIndex(i);
-        return;
-      }
-    }
-  }
-
-  private void onTabSelection(JTabbedPane tabs) {
-    int i = tabs.getSelectedIndex();
-    tabs.setComponentAt(myLangSelectionIndex, createDummy());
-    tabs.setComponentAt(i, getEditor().getComponent());
-    myLangSelectionIndex = i;
-    String selectionTitle = tabs.getTitleAt(i);
-    Language lang = LanguageCodeStyleSettingsProvider.getLanguage(selectionTitle);
-    if (lang != null && getLanguageSelector() != null) {
-      getLanguageSelector().setLanguage(lang);
-    }
-  }
-
-
-  private static JComponent createDummy() {
-    return new JLabel("");
-  }
-
-  private static String getTabName(Language language) {
-    String tabName = LanguageCodeStyleSettingsProvider.getLanguageName(language);
-    if (tabName == null) tabName = language.getDisplayName();
-    return tabName;
-  }
-
-  @Override
-  public Language getDefaultLanguage() {
-    return getSelectedLanguage();
   }
 
   @Override

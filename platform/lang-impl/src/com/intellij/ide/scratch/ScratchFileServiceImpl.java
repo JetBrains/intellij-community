@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
@@ -36,6 +37,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -57,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -76,8 +79,8 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
     @NotNull
     @Override
-    public String getRootPath(@NotNull RootType rootType) {
-      return FileUtil.toSystemIndependentName(PathManager.getConfigPath()) + "/" + rootType.getId();
+    public String getRootPath(@NotNull RootId rootId) {
+      return FileUtil.toSystemIndependentName(PathManager.getConfigPath()) + "/" + rootId.getId();
     }
 
     public App(WindowManager windowManager) {
@@ -167,9 +170,9 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
     @NotNull
     @Override
-    public String getRootPath(@NotNull RootType rootType) {
-      if (rootType == SCRATCHES) return ScratchFileService.getInstance().getRootPath(rootType);
-      return FileUtil.toSystemIndependentName(StringUtil.notNullize(PathUtil.getParentPath(myProject.getProjectFilePath()))) + "/" + rootType.getId();
+    public String getRootPath(@NotNull RootId rootId) {
+      if (rootId == SCRATCHES) return ScratchFileService.getInstance().getRootPath(rootId);
+      return FileUtil.toSystemIndependentName(StringUtil.notNullize(PathUtil.getParentPath(myProject.getProjectFilePath()))) + "/" + rootId.getId();
     }
 
     @Nullable
@@ -260,19 +263,20 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
   @Nullable
   @Override
   public VirtualFile createScratchFile(@NotNull Project project, @NotNull final Language language, @NotNull final String initialContent) {
+    final String fileName = "scratch";
     RunResult<VirtualFile> result =
       new WriteCommandAction<VirtualFile>(project, UIBundle.message("file.chooser.create.new.file.command.name")) {
         @Override
         protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
           VirtualFile dir = VfsUtil.createDirectories(getRootPath(SCRATCHES));
-          VirtualFile file = VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, "scratch", "");
+          VirtualFile file = VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, "");
           getScratchesMapping().setMapping(file, language);
           VfsUtil.saveText(file, initialContent);
           result.setResult(file);
         }
       }.execute();
     if (result.hasException()) {
-      Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", "scratch"),
+      Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),
                                  UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
       return null;
     }
@@ -280,11 +284,27 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
   }
 
   @Override
-  public boolean isFileInRoot(@NotNull VirtualFile file, @NotNull RootType rootType) {
-    return rootType == SCRATCHES ? file.getFileType() == SCRATCH_FILE_TYPE : isFileInRootImpl(file, rootType);
+  public boolean isFileInRoot(@NotNull VirtualFile file, @NotNull RootId rootId) {
+    return rootId == SCRATCHES ? file.getFileType() == SCRATCH_FILE_TYPE : isFileInRootImpl(file, rootId);
   }
 
-  private static boolean isFileInRootImpl(@NotNull VirtualFile file, RootType scratches) {
+  @Nullable
+  @Override
+  public VirtualFile getOrCreateFile(@NotNull final RootId rootId, @NotNull final String pathName) throws IOException {
+    return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+      @Override
+      public VirtualFile compute() throws IOException {
+        VirtualFile dir = VfsUtil.createDirectories(getRootPath(rootId));
+        VirtualFile existingFile = dir.findChild(pathName);
+        if (existingFile != null && !existingFile.isDirectory()) return existingFile;
+        String ext = PathUtil.getFileExtension(pathName);
+        String name = ext == null ? pathName : StringUtil.trimEnd(pathName, "." + ext);
+        return VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, name, StringUtil.notNullize(ext));
+      }
+    });
+  }
+
+  private static boolean isFileInRootImpl(@NotNull VirtualFile file, RootId scratches) {
     String rootPath = ScratchFileService.getInstance().getRootPath(scratches);
     return file.getPath().startsWith(rootPath);
   }

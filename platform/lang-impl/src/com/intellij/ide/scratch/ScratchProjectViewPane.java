@@ -106,12 +106,12 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   @Nullable
   @Override
   protected PsiElement getPSIElement(@Nullable Object element) {
-    return element instanceof ScratchFileService.RootType ? getDirectory(myProject, (ScratchFileService.RootType)element) : super.getPSIElement(element);
+    return element instanceof ScratchFileService.RootId ? getDirectory(myProject, (ScratchFileService.RootId)element) : super.getPSIElement(element);
   }
 
   @Nullable
-  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull ScratchFileService.RootType rootType) {
-    String path = ScratchFileService.getInstance().getRootPath(rootType);
+  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull ScratchFileService.RootId rootId) {
+    String path = ScratchFileService.getInstance().getRootPath(rootId);
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
@@ -144,9 +144,9 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode> list = ContainerUtil.newArrayList();
-      for (ScratchFileService.RootType rootType : ScratchFileService.RootType.getAllRootTypes()) {
-        if (rootType.isHidden()) continue;
-        list.add(new MyRootNode(getProject(), rootType));
+      for (ScratchFileService.RootId rootId : ScratchFileService.RootId.getAllRootIds()) {
+        if (rootId.isHidden()) continue;
+        list.add(new MyRootNode(getProject(), rootId));
       }
       return list;
     }
@@ -156,17 +156,17 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
   }
 
-  private static class MyRootNode extends AbstractTreeNode<ScratchFileService.RootType> {
+  private static class MyRootNode extends AbstractTreeNode<ScratchFileService.RootId> {
 
-    MyRootNode(Project project, ScratchFileService.RootType type) {
+    MyRootNode(Project project, ScratchFileService.RootId type) {
       super(project, type);
     }
 
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      ScratchFileService.RootType rootType = getValue();
-      PsiDirectory directory = getDirectory(getProject(), rootType);
+      ScratchFileService.RootId rootId = getValue();
+      PsiDirectory directory = getDirectory(getProject(), rootId);
       if (directory == null) return Collections.emptyList();
       return new MyPsiNode(getProject(), directory).getChildren();
     }

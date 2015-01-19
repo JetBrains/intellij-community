@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle;
+package com.siyeh.ig.cloneable;
 
-import com.intellij.lang.Language;
-
-import java.util.EventListener;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Must be implemented by components willing to be notified on current code style language
- * change.
+ * @author Bas Leijdekkers.
  */
-public interface LanguageSelectorListener extends EventListener {
+public class CloneCallsSuperCloneInspectionTest extends LightInspectionTestCase {
 
-  void languageChanged(Language lang);
+  public void testCloneCallsSuperClone() {
+    doTest();
+  }
 
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new CloneCallsSuperCloneInspection();
+  }
 }

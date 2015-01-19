@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.structuralsearch.SSRBundle;
@@ -9,7 +11,9 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -90,25 +94,37 @@ public class ExistingTemplatesComponent {
     }
 
     panel = ToolbarDecorator.createDecorator(patternTree)
-      .setAddAction(new AnActionButtonRunnable() {
+      .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          addSelectedTreeNodeAndClose();
+          final Object selection = patternTree.getLastSelectedPathComponent();
+          if (!(selection instanceof DefaultMutableTreeNode)) {
+            return;
+          }
+          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+          if (!(node.getUserObject() instanceof Configuration)) {
+            return;
+          }
+          final Configuration configuration = (Configuration)node.getUserObject();
+          if (configuration.isPredefined()) {
+            return;
+          }
+          patternTreeModel.removeNodeFromParent(node);
+          configurationManager.removeConfiguration(configuration);
         }
-      }).setRemoveAction(new AnActionButtonRunnable() {
+      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public void run(AnActionButton button) {
-          Object selection = patternTree.getLastSelectedPathComponent();
-
+        public boolean isEnabled(AnActionEvent e) {
+          final Object selection = patternTree.getLastSelectedPathComponent();
           if (selection instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-
-            if (node.getUserObject() instanceof Configuration) {
-              Configuration configuration = (Configuration)node.getUserObject();
-              patternTreeModel.removeNodeFromParent(node);
-              configurationManager.removeConfiguration(configuration);
+            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+            final Object userObject = node.getUserObject();
+            if (userObject instanceof Configuration) {
+              final Configuration configuration = (Configuration)userObject;
+              return !configuration.isPredefined();
             }
           }
+          return false;
         }
       }).createPanel();
 
@@ -118,23 +134,19 @@ public class ExistingTemplatesComponent {
 
     historyModel = new DefaultListModel();
     historyPanel = new JPanel(new BorderLayout());
-    historyPanel.add(
-      BorderLayout.NORTH,
-      new JLabel(SSRBundle.message("used.templates"))
-    );
-    Component view = historyList = new JBList(historyModel);
-    historyPanel.add(
-      BorderLayout.CENTER,
-      ScrollPaneFactory.createScrollPane(view)
-    );
+    historyPanel.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("used.templates")));
 
-    historyList.setCellRenderer(
-      new ListCellRenderer()
-    );
-
+    historyList = new JBList(historyModel);
+    historyPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(historyList));
     historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    new ListSpeedSearch(historyList);
+    final ListSpeedSearch speedSearch = new ListSpeedSearch(historyList, new Convertor<Object, String>() {
+      @Override
+      public String convert(Object o) {
+        return o instanceof Configuration ? ((Configuration)o).getName() : o.toString();
+      }
+    });
+    historyList.setCellRenderer(new ExistingTemplatesListCellRenderer(speedSearch));
 
     if (configurationManager.getHistoryConfigurations() != null) {
       for (final Configuration configuration : configurationManager.getHistoryConfigurations()) {
@@ -167,13 +179,6 @@ public class ExistingTemplatesComponent {
     }.installOn(component);
   }
 
-  private void addSelectedTreeNodeAndClose() {
-    addConfigurationToUserTemplates(
-      Configuration.getConfigurationCreator().createConfiguration()
-    );
-    owner.close(DialogWrapper.OK_EXIT_CODE);
-  }
-
   private static Tree createTree(TreeModel treeModel) {
     final Tree tree = new Tree(treeModel);
 
@@ -183,25 +188,17 @@ public class ExistingTemplatesComponent {
     tree.setEditable(false);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
-    tree.setCellRenderer(new TreeCellRenderer());
 
-    new TreeSpeedSearch(
+    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       tree,
       new Convertor<TreePath, String>() {
         public String convert(TreePath object) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
-          Object displayValue = node.getUserObject();
-
-          if (displayValue instanceof Configuration) {
-            displayValue = ((Configuration)displayValue).getName();
-          }
-          else {
-            displayValue = "";
-          }
-          return displayValue.toString();
+          final Object userObject = ((DefaultMutableTreeNode)object.getLastPathComponent()).getUserObject();
+          return (userObject instanceof Configuration) ? ((Configuration)userObject).getName() : userObject.toString();
         }
       }
     );
+    tree.setCellRenderer(new ExistingTemplatesTreeCellRenderer(speedSearch));
 
     return tree;
   }
@@ -224,56 +221,60 @@ public class ExistingTemplatesComponent {
     return plugin.getExistingTemplatesComponent();
   }
 
-  static class ListCellRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+  private static class ExistingTemplatesListCellRenderer extends ColoredListCellRenderer {
+
+    private final ListSpeedSearch mySpeedSearch;
+
+    public ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
+      mySpeedSearch = speedSearch;
+    }
+    @Override
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean focus) {
       if (value instanceof Configuration) {
         value = ((Configuration)value).getName();
       }
-
-      Component comp = super.getListCellRendererComponent(
-        list,
-        value,
-        index,
-        isSelected,
-        cellHasFocus
-      );
-
-      return comp;
+      final Color background = (selected && !focus) ?
+                               UIUtil.getListUnfocusedSelectionBackground() : UIUtil.getListBackground(selected);
+      final Color foreground = UIUtil.getListForeground(selected);
+      setPaintFocusBorder(false);
+      SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), value.toString(), SimpleTextAttributes.STYLE_PLAIN,
+                                 foreground, background, this);
     }
   }
 
-  static class TreeCellRenderer extends DefaultTreeCellRenderer {
-    TreeCellRenderer() {
-      setOpenIcon(null);
-      setLeafIcon(null);
-      setClosedIcon(null);
+  private static class ExistingTemplatesTreeCellRenderer extends ColoredTreeCellRenderer {
+
+    private final TreeSpeedSearch mySpeedSearch;
+
+    ExistingTemplatesTreeCellRenderer(TreeSpeedSearch speedSearch) {
+      mySpeedSearch = speedSearch;
     }
 
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean sel,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
-      Object displayValue = treeNode.getUserObject();
+    @Override
+    public void customizeCellRenderer(@NotNull JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+      final Object userObject = treeNode.getUserObject();
 
-      if (displayValue instanceof Configuration) {
-        displayValue = ((Configuration)displayValue).getName();
+      final Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeTextBackground();
+      final Color foreground = selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
+
+      final String text;
+      final int style;
+      if (userObject instanceof Configuration) {
+        text = ((Configuration)userObject).getName();
+        style = SimpleTextAttributes.STYLE_PLAIN;
       }
-
-      Component comp = super.getTreeCellRendererComponent(
-        tree,
-        displayValue,
-        sel,
-        expanded,
-        leaf,
-        row,
-        hasFocus
-      );
-
-      return comp;
+      else {
+        text = userObject.toString();
+        style = SimpleTextAttributes.STYLE_BOLD;
+      }
+      SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), text, style, foreground, background, this);
     }
   }
 

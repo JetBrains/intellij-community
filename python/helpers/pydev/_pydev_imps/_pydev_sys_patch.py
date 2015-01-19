@@ -4,14 +4,14 @@ import sys
 
 def patch_sys_module():
     def patched_exc_info(fun):
-        def inner():
+        def pydev_debugger_exc_info():
             type, value, traceback = fun()
             if type == ImportError:
                 #we should not show frame added by plugin_import call
                 if traceback and hasattr(traceback, "tb_next"):
                     return type, value, traceback.tb_next
             return type, value, traceback
-        return inner
+        return pydev_debugger_exc_info
 
     system_exc_info = sys.exc_info
     sys.exc_info = patched_exc_info(system_exc_info)
@@ -20,12 +20,12 @@ def patch_sys_module():
 
 
 def patched_reload(orig_reload):
-    def inner(module):
+    def pydev_debugger_reload(module):
         orig_reload(module)
         if module.__name__ == "sys":
             # if sys module was reloaded we should patch it again
             patch_sys_module()
-    return inner
+    return pydev_debugger_reload
 
 
 def patch_reload():

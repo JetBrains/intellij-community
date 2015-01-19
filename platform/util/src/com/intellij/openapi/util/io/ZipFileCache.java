@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +69,7 @@ public class ZipFileCache {
   }
 
   private static final boolean ourEnabled =
-    ZipFileCache.class.getClassLoader().getClass().getName().equals(UrlClassLoader.class.getName());
+    ZipFileCache.class.getClassLoader().getResource("com/intellij/openapi/application/Application.class") != null;
 
   private static final Object ourLock = new Object();
   private static final Map<String, CacheRecord> ourPathCache = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
@@ -91,7 +90,8 @@ public class ZipFileCache {
           }
         }
       }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
-    } else {
+    }
+    else {
       ourExecutor = null;
     }
   }

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
@@ -27,7 +28,10 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -40,6 +44,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,18 +150,18 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
       if (myState == State.APPLYING) return;
 
+      final Document document = event.getDocument();
       if (myState == State.INITIAL) {
-        final Document document = event.getDocument();
-
         final PsiFile file = myDocumentManager.getPsiFile(document);
-
         if (file == null) return;
 
         final SmartList<RangeMarker> leaders = new SmartList<RangeMarker>();
         for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
           final RangeMarker leader = createTagNameMarker(caret);
           if (leader == null) {
-            clearMarkers();
+            for (RangeMarker marker : leaders) {
+              marker.dispose();
+            }
             return;
           }
           leader.setGreedyToLeft(true);
@@ -189,8 +194,14 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       final int newLength = event.getNewLength();
       final int oldLength = event.getOldLength();
 
+      if (document.getUserData(XmlTagInsertHandler.ENFORCING_TAG) == Boolean.TRUE) {
+        // xml completion inserts extra space after tag name to ensure correct parsing
+        // we need to ignore it
+        return;
+      }
+
       for (int i = 0; i < newLength; i++) {
-        if (!isValidTagNameChar(fragment.charAt(i))) {
+        if (!XmlUtil.isValidTagNameChar(fragment.charAt(i))) {
           clearMarkers();
           return;
         }
@@ -231,22 +242,18 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
           start = i + 1;
           break;
         }
-        if (!isValidTagNameChar(c)) break;
+        if (!XmlUtil.isValidTagNameChar(c)) break;
       }
       if (start < 0) return null;
       for (int i = offset; i < Math.min(document.getTextLength(), offset + 50); i++) {
         final char c = sequence.charAt(i);
-        if (!isValidTagNameChar(c)) {
+        if (!XmlUtil.isValidTagNameChar(c)) {
           end = i;
           break;
         }
       }
       if (end < 0 || start >= end) return null;
       return document.createRangeMarker(start, end, true);
-    }
-
-    private static boolean isValidTagNameChar(char c) {
-      return Character.isJavaIdentifierPart(c) || c == ':';
     }
 
     public void beforeCommandFinished() {

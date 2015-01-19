@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Factory;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -147,14 +148,14 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
         final JPanel eqPanel = new JPanel(new BorderLayout());
         eqPanel.add(new TitledSeparator("Equals Template:"), BorderLayout.NORTH);
         final JComponent eqPane = equalsConfigurable.createComponent();
-        eqPane.setPreferredSize(new Dimension(300, 200));
+        eqPane.setPreferredSize(JBUI.size(300, 200));
         eqPanel.add(eqPane, BorderLayout.CENTER);
         splitter.setFirstComponent(eqPanel);
 
         final JPanel hcPanel = new JPanel(new BorderLayout());
         hcPanel.add(new TitledSeparator("HashCode Template:"), BorderLayout.NORTH);
         final JComponent hcPane = hashCodeConfigurable.createComponent();
-        hcPane.setPreferredSize(new Dimension(300, 200));
+        hcPane.setPreferredSize(JBUI.size(300, 200));
         hcPanel.add(hcPane, BorderLayout.CENTER);
         splitter.setSecondComponent(hcPanel);
 

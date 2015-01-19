@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
       }
     });
     myTemplatesList.setEmptyText("No user-defined project templates");
-    myTemplatesList.setPreferredSize(new Dimension(300, 100));
+    myTemplatesList.setPreferredSize(JBUI.size(300, 100));
     myTemplatesList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -83,7 +84,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
     myPanel.add(ToolbarDecorator.createDecorator(myTemplatesList).disableUpDownActions().createPanel());
 
     myDescriptionPane = new JTextPane();
-    myDescriptionPane.setPreferredSize(new Dimension(300, 50));
+    myDescriptionPane.setPreferredSize(JBUI.size(300, 50));
     Messages.installHyperlinkSupport(myDescriptionPane);
     myPanel.add(ScrollPaneFactory.createScrollPane(myDescriptionPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.SOUTH);

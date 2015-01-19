@@ -345,7 +345,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     public LoggingHandlerImpl getLoggingHandler() {
       DeploymentLogManagerImpl logManager = getLogManager();
-      return logManager != null ? logManager.getMainLoggingHandler() : null;
+      return logManager != null && logManager.isMainHandlerVisible() ? logManager.getMainLoggingHandler() : null;
     }
 
     @Nullable

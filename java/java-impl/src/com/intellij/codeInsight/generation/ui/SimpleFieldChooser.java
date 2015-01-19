@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,7 +61,7 @@ public class SimpleFieldChooser extends DialogWrapper {
       }
     }.installOn(myList);
 
-    myList.setPreferredSize(new Dimension(300, 400));
+    myList.setPreferredSize(JBUI.size(300, 400));
     return myList;
   }
 
