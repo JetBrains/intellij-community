@@ -173,7 +173,7 @@ public class CollapsedGraph {
 
     @NotNull
     private GraphEdge createEdge(@NotNull GraphEdge delegateEdge, @Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex) {
-      return new GraphEdge(upNodeIndex, downNodeIndex, delegateEdge.getAdditionInfo(), delegateEdge.getType());
+      return new GraphEdge(upNodeIndex, downNodeIndex, delegateEdge.getTargetId(), delegateEdge.getType());
     }
 
     @Nullable

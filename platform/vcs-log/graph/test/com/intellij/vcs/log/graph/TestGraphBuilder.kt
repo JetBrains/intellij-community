@@ -111,7 +111,7 @@ class TestGraphBuilder: BaseTestGraphBuilder {
             edges.putValue(nodeIndex, graphEdge)
             edges.putValue(anotherNodeIndex, graphEdge)
           } else {
-            edges.putValue(nodeIndex, GraphEdge.createEdgeWithAdditionInfo(nodeIndex, simpleEdge.toNode, edgeType))
+            edges.putValue(nodeIndex, GraphEdge.createEdgeWithTargetId(nodeIndex, simpleEdge.toNode, edgeType))
           }
         }
       }
@@ -179,8 +179,8 @@ fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuild
         val startId = if (it.getType().isNormalEdge()) {
           getNodeId(it.getDownNodeIndex()).toString()
         }
-        else if (it.getAdditionInfo() != null) {
-          it.getAdditionInfo().toString()
+        else if (it.getTargetId() != null) {
+          it.getTargetId().toString()
         }
         else {
           "null"

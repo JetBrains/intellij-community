@@ -45,7 +45,7 @@ fun GraphNode.asString(): String = "${getNodeIndex()}_${toChar(getType())}"
 
 fun Int?.asString() = if (this == null) "n" else toString()
 
-fun GraphEdge.asString(): String = "${getUpNodeIndex().asString()}:${getDownNodeIndex().asString()}:${getAdditionInfo().asString()}_${toChar(getType())}"
+fun GraphEdge.asString(): String = "${getUpNodeIndex().asString()}:${getDownNodeIndex().asString()}:${getTargetId().asString()}_${toChar(getType())}"
 
 fun GraphElement.asString(): String = when(this) {
   is GraphNode -> asString()

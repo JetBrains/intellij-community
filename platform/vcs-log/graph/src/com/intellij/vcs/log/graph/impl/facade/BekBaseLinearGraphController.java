@@ -99,7 +99,7 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
       return map(myPermanentGraph.getAdjacentEdges(myBekIntMap.getUsualIndex(nodeIndex)), new Function<GraphEdge, GraphEdge>() {
         @Override
         public GraphEdge fun(GraphEdge edge) {
-          return new GraphEdge(getNodeIndex(edge.getUpNodeIndex()), getNodeIndex(edge.getDownNodeIndex()), edge.getAdditionInfo(), edge.getType());
+          return new GraphEdge(getNodeIndex(edge.getUpNodeIndex()), getNodeIndex(edge.getDownNodeIndex()), edge.getTargetId(), edge.getType());
         }
       });
     }

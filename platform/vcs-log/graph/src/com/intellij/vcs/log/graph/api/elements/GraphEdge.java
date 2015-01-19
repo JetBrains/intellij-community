@@ -21,44 +21,40 @@ import org.jetbrains.annotations.Nullable;
 
 public final class GraphEdge implements GraphElement {
   public static GraphEdge createNormalEdge(int nodeIndex1, int nodeIndex2, @NotNull GraphEdgeType type) {
-    assert type.isNormalEdge();
-    return new GraphEdge(
-      Math.min(nodeIndex1, nodeIndex2),
-      Math.max(nodeIndex1, nodeIndex2),
-      null,
-      type);
+    assert type.isNormalEdge() : "Unexpected edge type: " + type;
+    return new GraphEdge(Math.min(nodeIndex1, nodeIndex2), Math.max(nodeIndex1, nodeIndex2), null, type);
   }
 
-  public static GraphEdge createEdgeWithAdditionInfo(int nodeIndex, @Nullable Integer additionInfo, @NotNull GraphEdgeType type) {
+  public static GraphEdge createEdgeWithTargetId(int nodeIndex, @Nullable Integer targetId, @NotNull GraphEdgeType type) {
     switch (type) {
       case DOTTED_ARROW_UP:
-        return new GraphEdge(null, nodeIndex, additionInfo, type);
+        return new GraphEdge(null, nodeIndex, targetId, type);
       case NOT_LOAD_COMMIT:
       case DOTTED_ARROW_DOWN:
-        return new GraphEdge(nodeIndex, null, additionInfo, type);
+        return new GraphEdge(nodeIndex, null, targetId, type);
 
-      default: throw new AssertionError("Unexpected edge type: " + type);
+      default:
+        throw new AssertionError("Unexpected edge type: " + type);
     }
   }
 
-  @Nullable
-  private final Integer myUpNodeIndex;
-  @Nullable
-  private final Integer myDownNodeIndex;
-  @Nullable
-  private final Integer myAdditionInfo;
-  @NotNull
-  private final GraphEdgeType myType;
+  @Nullable private final Integer myUpNodeIndex;
+  @Nullable private final Integer myDownNodeIndex;
+  @Nullable private final Integer myTargetId;
+  @NotNull private final GraphEdgeType myType;
 
   @Deprecated
   public GraphEdge(@Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex, @NotNull GraphEdgeType type) {
     this(upNodeIndex, downNodeIndex, null, type);
   }
 
-  public GraphEdge(@Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex, @Nullable Integer additionInfo, @NotNull GraphEdgeType type) {
+  public GraphEdge(@Nullable Integer upNodeIndex,
+                   @Nullable Integer downNodeIndex,
+                   @Nullable Integer targetId,
+                   @NotNull GraphEdgeType type) {
     myUpNodeIndex = upNodeIndex;
     myDownNodeIndex = downNodeIndex;
-    myAdditionInfo = additionInfo;
+    myTargetId = targetId;
     myType = type;
   }
 
@@ -73,8 +69,8 @@ public final class GraphEdge implements GraphElement {
   }
 
   @Nullable
-  public Integer getAdditionInfo() {
-    return myAdditionInfo;
+  public Integer getTargetId() {
+    return myTargetId;
   }
 
   @NotNull
@@ -92,7 +88,7 @@ public final class GraphEdge implements GraphElement {
     if (myType != graphEdge.myType) return false;
     if (myUpNodeIndex != null ? !myUpNodeIndex.equals(graphEdge.myUpNodeIndex) : graphEdge.myUpNodeIndex != null) return false;
     if (myDownNodeIndex != null ? !myDownNodeIndex.equals(graphEdge.myDownNodeIndex) : graphEdge.myDownNodeIndex != null) return false;
-    if (myAdditionInfo != null ? !myAdditionInfo.equals(graphEdge.myAdditionInfo) : graphEdge.myAdditionInfo != null) return false;
+    if (myTargetId != null ? !myTargetId.equals(graphEdge.myTargetId) : graphEdge.myTargetId != null) return false;
 
     return true;
   }
@@ -101,7 +97,7 @@ public final class GraphEdge implements GraphElement {
   public int hashCode() {
     int result = myUpNodeIndex != null ? myUpNodeIndex.hashCode() : 0;
     result = 31 * result + (myDownNodeIndex != null ? myDownNodeIndex.hashCode() : 0);
-    result = 31 * result + (myAdditionInfo != null ? myAdditionInfo.hashCode() : 0);
+    result = 31 * result + (myTargetId != null ? myTargetId.hashCode() : 0);
     result = 31 * result + myType.hashCode();
     return result;
   }

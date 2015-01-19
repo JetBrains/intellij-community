@@ -102,7 +102,7 @@ public class LinearGraphUtils {
       public Integer fun(GraphEdge graphEdge) {
         if (isEdgeToDown(graphEdge, nodeIndex)) {
           if (graphEdge.getType() == GraphEdgeType.NOT_LOAD_COMMIT)
-            return graphEdge.getAdditionInfo();
+            return graphEdge.getTargetId();
           return graphEdge.getDownNodeIndex();
         }
         return null;
