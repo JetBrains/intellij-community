@@ -61,7 +61,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestPresentable.class);
 
   private static Key<List<String>> CONTEXT_KEY = Key.create("Diff.ChangeDiffRequestPresentableContextKey");
-  public static Key<ContentRevision[]> CONTENT_REVISIONS = Key.create("DiffRequestPresentable.CONTENT_REVISIONS");
+  public static Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
 
   @NotNull private final Project myProject;
   @NotNull private final Change myChange;
@@ -202,7 +202,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
       LOG.info("Wrapper: " + wrapperException.getMessage());
     }
 
-    request.putUserData(CONTENT_REVISIONS, new ContentRevision[]{myChange.getBeforeRevision(), myChange.getAfterRevision()});
+    request.putUserData(CHANGE_KEY, myChange);
     request.putUserData(DiffViewerWrapper.KEY, wrapper);
 
     for (Map.Entry<Key, Object> entry : myChangeContext.entrySet()) {
