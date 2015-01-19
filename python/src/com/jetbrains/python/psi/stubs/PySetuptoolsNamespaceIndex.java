@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
@@ -58,7 +59,7 @@ public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
   private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(@NotNull VirtualFile file) {
-      return file.getName().endsWith(NAMESPACE_FILE_SUFFIX);
+      return StringUtil.endsWith(file.getNameSequence(), NAMESPACE_FILE_SUFFIX);
     }
   };
 
