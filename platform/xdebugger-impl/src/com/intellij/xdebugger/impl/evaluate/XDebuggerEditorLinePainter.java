@@ -27,10 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugSession;
@@ -177,7 +174,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         @NotNull
         @Override
         public Color produce() {
-          return Registry.getColor(isDarkEditor() ? "ide.debugger.inline.dark.fg.color" : "ide.debugger.inline.fg.color", new Color(0x3d8065));
+          return isDarkEditor() ? new Color(0x3d8065) : Gray._135;
         }
       }), null, null, null, Font.ITALIC);
     }
@@ -192,8 +189,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         @NotNull
         @Override
         public Color produce() {
-          return isDarkEditor() ? Registry.getColor("ide.debugger.inline.dark.fg.modified.color", new Color(0xa1830a))
-                                : Registry.getColor("ide.debugger.inline.fg.modified.color", new Color(0xca8021));
+          return isDarkEditor() ? new Color(0xa1830a) : new Color(0xca8021);
         }
       }), null, null, null, Font.ITALIC);
     }
