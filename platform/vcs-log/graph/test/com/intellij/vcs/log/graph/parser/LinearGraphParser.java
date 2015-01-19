@@ -24,7 +24,6 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,18 +129,6 @@ public class LinearGraphParser {
     @Override
     public int nodesCount() {
       return myGraphNodes.size();
-    }
-
-    @NotNull
-    @Override
-    public List<Integer> getUpNodes(int nodeIndex) {
-      return LinearGraphUtils.getUpNodes(this, nodeIndex);
-    }
-
-    @NotNull
-    @Override
-    public List<Integer> getDownNodes(int nodeIndex) {
-      return LinearGraphUtils.getDownNodes(this, nodeIndex);
     }
 
     @NotNull
