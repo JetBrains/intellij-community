@@ -49,9 +49,13 @@ public class PyProjectStructureDetector extends ProjectStructureDetector {
                                                @NotNull List<DetectedProjectRoot> result) {
     LOG.info("Detecting roots under "  + dir);
     for (File child : children) {
-      if (FileUtilRt.extensionEquals(child.getName(), "py")) {
+      final String name = child.getName();
+      if (FileUtilRt.extensionEquals(name, "py")) {
         LOG.info("Found Python file " + child.getPath());
         result.add(new DetectedContentRoot(dir, "Python", PythonModuleTypeBase.getInstance(), WebModuleType.getInstance()));
+        return DirectoryProcessingResult.SKIP_CHILDREN;
+      }
+      if ("node_modules".equals(name)) {
         return DirectoryProcessingResult.SKIP_CHILDREN;
       }
     }
