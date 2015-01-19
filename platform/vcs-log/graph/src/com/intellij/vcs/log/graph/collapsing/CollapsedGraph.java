@@ -218,7 +218,7 @@ public class CollapsedGraph {
     public GraphNode getGraphNode(int nodeIndex) {
       int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
       GraphNode graphNode = myDelegateGraph.getGraphNode(delegateIndex);
-      return new GraphNode(graphNode.getNodeId(), nodeIndex, graphNode.getType());
+      return new GraphNode(nodeIndex, graphNode.getType());
     }
 
     @Override

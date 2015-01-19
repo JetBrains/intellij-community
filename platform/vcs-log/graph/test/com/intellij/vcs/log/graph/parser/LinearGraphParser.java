@@ -94,7 +94,7 @@ public class LinearGraphParser {
     int separatorIndex = nextSeparatorIndex(line, 0);
     Pair<Integer, Character> pair = parseNumberWithChar(line.substring(0, separatorIndex));
 
-    GraphNode graphNode = new GraphNode(pair.first, lineNumber, parseGraphNodeType(pair.second));
+    GraphNode graphNode = new GraphNode(lineNumber, parseGraphNodeType(pair.second));
 
     String[] edges = line.substring(separatorIndex + 2).split("\\s");
     List<String> normalEdges = ContainerUtil.mapNotNull(edges, new Function<String, String>() {

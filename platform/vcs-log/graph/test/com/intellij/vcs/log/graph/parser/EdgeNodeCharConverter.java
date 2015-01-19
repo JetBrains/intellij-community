@@ -31,7 +31,7 @@ public class EdgeNodeCharConverter {
 
   static {
     GRAPH_NODE_TYPE_MAP.put('U', GraphNodeType.USUAL);
-    GRAPH_NODE_TYPE_MAP.put('G', GraphNodeType.GRAY);
+    GRAPH_NODE_TYPE_MAP.put('G', GraphNodeType.UNMATCHED);
     GRAPH_NODE_TYPE_MAP.put('N', GraphNodeType.NOT_LOAD_COMMIT);
 
     GRAPH_EDGE_TYPE_MAP.put('U', GraphEdgeType.USUAL);

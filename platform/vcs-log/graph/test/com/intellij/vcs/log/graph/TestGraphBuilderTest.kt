@@ -52,7 +52,7 @@ class TestGraphBuilderTest : AbstractTestWithTextFile("testGraphBuilder")  {
 
   Test fun specialNodes() = runTest("specialNodes") {
     2.U(3, 4)
-    3.G(4.dot)
+    3.UNM(4.dot)
     4.U()
     100.NOT_LOAD()
   }
