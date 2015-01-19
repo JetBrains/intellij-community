@@ -23,6 +23,9 @@ import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 class FileLoader extends Loader {
   private final File myRootDir;
@@ -62,7 +65,11 @@ class FileLoader extends Loader {
   }
 
   private String getRelativeResourcePath(final File file) {
-    String relativePath = file.getAbsolutePath().substring(myRootDirAbsolutePath.length());
+    return getRelativeResourcePath(file.getAbsolutePath());
+  }
+
+  private String getRelativeResourcePath(final String absFilePath) {
+    String relativePath = absFilePath.substring(myRootDirAbsolutePath.length());
     relativePath = relativePath.replace(File.separatorChar, '/');
     if (relativePath.startsWith("/")) relativePath = relativePath.substring(1);
     return relativePath;
@@ -110,31 +117,156 @@ class FileLoader extends Loader {
     return null;
   }
 
+  private static final AtomicInteger totalLoaders = new AtomicInteger();
+  private static final AtomicLong totalScanning = new AtomicLong();
+  private static final AtomicLong totalSaving = new AtomicLong();
+  private static final AtomicLong totalReading = new AtomicLong();
+  private static final boolean INDEX_PERSISTENCE_DISABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.disabled", "true"));
+  private static final Boolean doLogging = false;
+
+  private ClasspathCache.LoaderData tryReadFromIndex() {
+    if (INDEX_PERSISTENCE_DISABLED) return null;
+    long started = System.nanoTime();
+    ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
+    File index = getIndexFileFile();
+
+    BufferedReader reader = null;
+    try {
+      reader = new BufferedReader(new FileReader(index));
+      readList(reader, loaderData.getResourcePaths());
+      readList(reader, loaderData.getNames());
+
+      return loaderData;
+    } catch (Exception ex) {
+      if (!(ex instanceof FileNotFoundException)) index.delete();
+    }
+    finally {
+      if (reader != null) {
+        try {
+          reader.close();
+        } catch (IOException ignore) {}
+      }
+      totalReading.addAndGet(System.nanoTime() - started);
+    }
+
+    return null;
+  }
+
+  private static void readList(BufferedReader reader, List<String> paths) throws IOException {
+    String line = reader.readLine();
+    int numberOfElements = Integer.parseInt(line);
+    for(int i = 0; i < numberOfElements; ++i) paths.add(reader.readLine());
+  }
+
+  private void trySaveToIndex(ClasspathCache.LoaderData data) {
+    if (INDEX_PERSISTENCE_DISABLED) return;
+    long started = System.nanoTime();
+    File index = getIndexFileFile();
+    BufferedWriter writer = null;
+
+    try {
+      writer = new BufferedWriter(new FileWriter(index));
+      writeList(writer, data.getResourcePaths());
+      writeList(writer, data.getNames());
+    } catch (IOException ex) {
+      index.delete();
+    }
+    finally {
+      if (writer != null) {
+        try {
+          writer.close();
+        } catch (IOException ignore) {}
+      }
+      totalSaving.addAndGet(System.nanoTime() - started);
+    }
+  }
+
+  private static void writeList(BufferedWriter writer, List<String> paths) throws IOException {
+    writer.append(Integer.toString(paths.size())).append('\n');
+    for(String s: paths) writer.append(s).append('\n');
+  }
+
+  @NotNull
+  private File getIndexFileFile() {
+    return new File(myRootDir, "classpath.index");
+  }
+
   @NotNull
   @Override
   public ClasspathCache.LoaderData buildData() throws IOException {
-    ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
-    File index = new File(myRootDir, "classpath.index");
-    if (index.exists()) {
-      BufferedReader reader = new BufferedReader(new FileReader(index));
-      try {
-        do {
-          String line = reader.readLine();
-          if (line == null) break;
-          loaderData.addResourceEntry(line);
-          loaderData.addNameEntry(line);
-        }
-        while (true);
+    ClasspathCache.LoaderData fromIndex = tryReadFromIndex();
+    final ClasspathCache.LoaderData loaderData = fromIndex != null ? fromIndex : new ClasspathCache.LoaderData();
+
+    final int nsMsFactor = 1000000;
+    int currentLoaders = totalLoaders.incrementAndGet();
+    long currentScanning;
+    if (fromIndex == null) {
+      long started = System.nanoTime();
+/*    // todo code below uses java 7 api, uncomment once we are done with Java 6
+      if (SystemInfo.isJavaVersionAtLeast("1.7") && !SystemProperties.getBooleanProperty("idea.no.nio.class.scanning", false) && false) {
+        final Path start = Paths.get(myRootDir.getPath());
+        Files.walkFileTree(start, new FileVisitor<Path>() {
+          final Stack<Boolean> containsClasses = new Stack<Boolean>();
+          @Override
+          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            containsClasses.push(Boolean.FALSE);
+            if (dir != start) loaderData.addNameEntry(dir.getFileName().toString());
+            loaderData.addResourceEntry(getRelativeResourcePath(dir.toAbsolutePath().toString()));
+            return FileVisitResult.CONTINUE;
+          }
+
+          @Override
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+            throws IOException {
+            String fileName = file.getFileName().toString();
+            final boolean isClass = fileName.endsWith(UrlClassLoader.CLASS_EXTENSION);
+            if (isClass) {
+              Boolean dirContainClasses = containsClasses.peek();
+              if (dirContainClasses == Boolean.FALSE) {
+                loaderData.addResourceEntry(getRelativeResourcePath(file.toAbsolutePath().toString()));
+                containsClasses.set(containsClasses.size() - 1, Boolean.TRUE);
+              }
+              loaderData.addNameEntry(fileName);
+            }
+            else {
+              loaderData.addNameEntry(fileName);
+              loaderData.addResourceEntry(getRelativeResourcePath(file.toAbsolutePath().toString()));
+            }
+            return FileVisitResult.CONTINUE;
+          }
+
+          @Override
+          public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+            throw exc;
+          }
+
+          @Override
+          public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            containsClasses.pop();
+            return FileVisitResult.CONTINUE;
+          }
+        });
+      } else {  */
+        buildPackageCache(myRootDir, loaderData);
+      /* } */
+      final long doneNanos = System.nanoTime() - started;
+      currentScanning = totalScanning.addAndGet(doneNanos);
+      if (doLogging) {
+        System.out.println("Scanned: " + myRootDirAbsolutePath + " for " + (doneNanos / nsMsFactor) + "ms");
       }
-      finally {
-        reader.close();
-      }
+      trySaveToIndex(loaderData);
+    } else {
+      currentScanning = totalScanning.get();
     }
-    else {
-      loaderData.addResourceEntry("foo.class");
-      loaderData.addResourceEntry("bar.properties");
-      buildPackageCache(myRootDir, loaderData);
+
+    loaderData.addResourceEntry("foo.class");
+    loaderData.addResourceEntry("bar.properties");
+
+    if (doLogging) {
+      System.out.println("Scanning: " + (currentScanning / nsMsFactor) + "ms, saving: " + (totalSaving.get() / nsMsFactor) +
+                         "ms, loading:" + (totalReading.get() / nsMsFactor) + "ms for " + currentLoaders + " loaders");
     }
+
     return loaderData;
   }
 
