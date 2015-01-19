@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,7 +255,7 @@ public class PositionManagerImpl implements PositionManager {
                 baseClassNameRef.set(parentClassName);
               }
               else {
-                LOG.error("The name of a parent of a local (anonymous) class is null");
+                LOG.error("The name of a parent " + topLevelClass + " of a local (anonymous) class " + psiClass + " is null");
               }
             }
             else {
