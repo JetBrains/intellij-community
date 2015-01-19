@@ -132,23 +132,6 @@ class CodeProcessor {
     return processor;
   }
 
-  protected static int getProcessedLinesNumber(final Document document, final CharSequence before) {
-    int totalLinesProcessed = 0;
-    try {
-      List<TextRange> ranges = FormatChangedTextUtil.calculateChangedTextRanges(document, before);
-      for (TextRange range : ranges) {
-        int lineStartNumber = document.getLineNumber(range.getStartOffset());
-        int lineEndNumber = document.getLineNumber(range.getEndOffset());
-
-        totalLinesProcessed += lineEndNumber - lineStartNumber + 1;
-      }
-    }
-    catch (FilesTooBigForDiffException e) {
-      return -1;
-    }
-    return totalLinesProcessed;
-  }
-
   @NotNull
   private String prepareMessage() {
     StringBuilder builder = new StringBuilder("<html>");
