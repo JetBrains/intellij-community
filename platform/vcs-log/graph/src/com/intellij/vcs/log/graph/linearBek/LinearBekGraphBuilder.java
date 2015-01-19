@@ -57,21 +57,21 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
   public void leaveSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
     myWorkingGraph.clear();
 
-    List<Integer> upNodes = myWorkingGraph.getUpNodes(currentNodeIndex);
+    List<Integer> upNodes = LinearGraphUtils.getUpNodes(myWorkingGraph, currentNodeIndex);
     if (upNodes.size() != 1) return;
     int parent = upNodes.get(0);
-    if (myWorkingGraph.getDownNodes(parent).size() != 2) {
+    if (LinearGraphUtils.getDownNodes(myWorkingGraph, parent).size() != 2) {
       return;
     }
 
-    int firstChildIndex = myWorkingGraph.getDownNodes(parent).get(0);
+    int firstChildIndex = LinearGraphUtils.getDownNodes(myWorkingGraph, parent).get(0);
     boolean switched = false;
     if (firstChildIndex == currentNodeIndex) {
-      if (firstChildIndex > myWorkingGraph.getDownNodes(parent).get(1)) {
+      if (firstChildIndex > LinearGraphUtils.getDownNodes(myWorkingGraph, parent).get(1)) {
         return;
       }
       switched = true;
-      firstChildIndex = myWorkingGraph.getDownNodes(parent).get(1);
+      firstChildIndex = LinearGraphUtils.getDownNodes(myWorkingGraph, parent).get(1);
     }
     if (firstChildIndex < currentNodeIndex) return;
 
@@ -170,7 +170,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     }
 
     for (Integer tail : tails) {
-      if (!myWorkingGraph.getDownNodes(tail).contains(firstChildIndex)) {
+      if (!LinearGraphUtils.getDownNodes(myWorkingGraph, tail).contains(firstChildIndex)) {
         myWorkingGraph.addEdge(tail, firstChildIndex);
       }
       else if (mergeWithOldCommit) {

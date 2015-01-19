@@ -26,12 +26,9 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
-import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
-import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
 import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +83,7 @@ class CollapsedActionManager {
 
   private static LinearGraphAnswer clearHover(@NotNull CollapsedLinearGraphController graphController) {
     graphController.setSelectedNodes(Collections.<Integer>emptySet());
-    return LinearGraphUtils.createHoverAnswer(false); // todo check performance
+    return LinearGraphUtils.createCursorAnswer(false); // todo check performance
   }
 
   private final static ActionCase HOVER_CASE = new ActionCase() {
@@ -98,7 +95,7 @@ class CollapsedActionManager {
       GraphEdge dottedEdge = getDottedEdge(action.getAffectedElement(), graphController.getCompiledGraph());
       if (dottedEdge != null) {
         graphController.setSelectedElements(ContainerUtil.<GraphElement>set(dottedEdge));
-        return LinearGraphUtils.createHoverAnswer(true);
+        return LinearGraphUtils.createCursorAnswer(true);
       }
 
       if (action.getAffectedElement() == null) return clearHover(graphController);
@@ -108,7 +105,7 @@ class CollapsedActionManager {
       if (fragment != null) {
         Set<Integer> middleNodes = graphController.getFragmentGenerator().getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex);
         graphController.setSelectedNodes(middleNodes);
-        return LinearGraphUtils.createHoverAnswer(true);
+        return LinearGraphUtils.createCursorAnswer(true);
       }
 
       return clearHover(graphController);
