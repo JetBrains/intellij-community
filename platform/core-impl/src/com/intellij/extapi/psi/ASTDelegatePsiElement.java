@@ -176,18 +176,17 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Nullable
-  protected PsiElement findChildByType(IElementType type) {
+  protected <T extends PsiElement> T findChildByType(IElementType type) {
     ASTNode node = getNode().findChildByType(type);
-    return node == null ? null : node.getPsi();
+    return node == null ? null : (T)node.getPsi();
   }
 
-
   @Nullable
-  protected PsiElement findLastChildByType(IElementType type) {
+  protected <T extends PsiElement> T findLastChildByType(IElementType type) {
     PsiElement child = getLastChild();
     while (child != null) {
       final ASTNode node = child.getNode();
-      if (node != null && node.getElementType() == type) return child;
+      if (node != null && node.getElementType() == type) return (T)child;
       child = child.getPrevSibling();
     }
     return null;
@@ -196,14 +195,14 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
 
   @NotNull
-  protected PsiElement findNotNullChildByType(IElementType type) {
-    return notNullChild(findChildByType(type));
+  protected <T extends PsiElement> T findNotNullChildByType(IElementType type) {
+    return notNullChild(this.<T>findChildByType(type));
   }
 
   @Nullable
-  protected PsiElement findChildByType(TokenSet type) {
+  protected <T extends PsiElement> T findChildByType(TokenSet type) {
     ASTNode node = getNode().findChildByType(type);
-    return node == null ? null : node.getPsi();
+    return node == null ? null : (T)node.getPsi();
   }
 
   @NotNull
