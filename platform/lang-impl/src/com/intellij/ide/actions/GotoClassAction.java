@@ -96,8 +96,9 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
         AccessToken token = ReadAction.start();
         try {
           if (element instanceof PsiElement) {
-            final PsiElement psiElement = getElement(((PsiElement)element), popup);
-            final VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+            PsiElement psiElement = getElement(((PsiElement)element), popup);
+            psiElement = psiElement.getNavigationElement();
+            VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
 
             if (file != null && popup.getLinePosition() != -1) {
               OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
@@ -108,7 +109,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
               }
             }
 
-            if (psiElement != null && file != null && popup.getMemberPattern() != null) {
+            if (file != null && popup.getMemberPattern() != null) {
               NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
               Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
               if (member != null) {
@@ -186,6 +187,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     return null;
   }
 
+  @NotNull
   private static PsiElement getElement(@NotNull PsiElement element, ChooseByNamePopup popup) {
     final String path = popup.getPathToAnonymous();
     if (path != null) {
