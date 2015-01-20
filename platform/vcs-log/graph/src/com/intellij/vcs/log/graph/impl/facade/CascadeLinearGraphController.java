@@ -23,11 +23,9 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex;
 import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import com.sun.xml.internal.ws.server.UnsupportedMediaException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Comparator;
 
 public abstract class CascadeLinearGraphController implements LinearGraphController {
@@ -111,12 +109,6 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
     @Override
     public boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement) {
       return CascadeLinearGraphController.this.elementIsSelected(printElement);
-    }
-
-    @Nullable
-    @Override
-    public Cursor performOverElement(@Nullable PrintElementWithGraphElement printElement) {
-      throw new UnsupportedMediaException();
     }
 
     @Override
