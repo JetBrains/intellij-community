@@ -30,10 +30,8 @@ import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder;
 import com.intellij.vcs.log.graph.parser.LinearGraphParser;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.Comparator;
 
@@ -56,12 +54,6 @@ public class PrintElementGeneratorTest extends AbstractTestWithTwoTextFile {
     @Override
     public boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement) {
       return false;
-    }
-
-    @Nullable
-    @Override
-    public Cursor performOverElement(@Nullable PrintElementWithGraphElement printElement) {
-      return null;
     }
 
     @Override

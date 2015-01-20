@@ -27,10 +27,6 @@ public interface PrintElementsManager {
 
   boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement);
 
-  @Deprecated
-  @Nullable
-  Cursor performOverElement(@Nullable PrintElementWithGraphElement printElement); // return special Cursor for UI
-
   int getColorId(@NotNull GraphElement element);
 
   @NotNull
