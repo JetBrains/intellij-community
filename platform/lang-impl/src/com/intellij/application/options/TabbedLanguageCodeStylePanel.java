@@ -43,6 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -62,6 +64,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private TabbedPaneWrapper myTabbedPane;
   private final PredefinedCodeStyle[] myPredefinedCodeStyles;
   private JPopupMenu myCopyFromMenu;
+  private @Nullable TabChangeListener myListener;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
@@ -123,6 +126,17 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myPanel = new JPanel();
       myPanel.setLayout(new BorderLayout());
       myTabbedPane = new TabbedPaneWrapper(this);
+      myTabbedPane.addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          if (myListener != null) {
+            String title = myTabbedPane.getSelectedTitle();
+            if (title != null) {
+              myListener.tabChanged(TabbedLanguageCodeStylePanel.this, title);
+            }
+          }
+        }
+      });
       myTabs = new ArrayList<CodeStyleAbstractPanel>();
       myPanel.add(myTabbedPane.getComponent());
       initTabs(getSettings());
@@ -661,5 +675,17 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myEditor.setEnabled(true);
     }
 
+  }
+
+  public interface TabChangeListener {
+    void tabChanged(@NotNull TabbedLanguageCodeStylePanel source, @NotNull String tabTitle);
+  }
+
+  public void setListener(@Nullable TabChangeListener listener) {
+    myListener = listener;
+  }
+
+  public void changeTab(@NotNull String tabTitle) {
+    myTabbedPane.setSelectedTitle(tabTitle);
   }
 }
