@@ -18,6 +18,9 @@ package com.intellij.openapi.util.diff.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.diff.impl.DiffRequestFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,30 +38,41 @@ public class CompareFilesAction extends BaseShowDiffAction {
     }
 
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (files == null || files.length != 2) {
+    if (files == null) {
       return false;
     }
 
-    if (!files[0].isValid() || !files[1].isValid()) {
+    if (files.length == 1) {
+      return files[0].isValid();
+    }
+    else if (files.length == 2) {
+      return files[0].isValid() && files[1].isValid();
+    }
+    else {
       return false;
     }
-
-    return true;
   }
 
   @Nullable
   @Override
   protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
-    final DiffRequest diffRequest = DIFF_REQUEST.getData(e.getDataContext());
+    Project project = e.getProject();
+    DiffRequest diffRequest = e.getData(DIFF_REQUEST);
     if (diffRequest != null) {
       return diffRequest;
     }
 
-    final VirtualFile[] data = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
-    if (data == null || data.length != 2) {
-      return null;
-    }
+    VirtualFile[] data = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (data.length == 1) {
+      // TODO: filter depending on type of file: file, directory, archieve ?
+      FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, true, false);
+      VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, data[0]);
+      if (result.length != 1 || result[0] == null) return null;
 
-    return DiffRequestFactory.createFromFile(e.getProject(), data[0], data[1]);
+      return DiffRequestFactory.createFromFile(project, data[0], result[0]);
+    }
+    else {
+      return DiffRequestFactory.createFromFile(project, data[0], data[1]);
+    }
   }
 }

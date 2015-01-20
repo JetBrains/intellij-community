@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
@@ -40,10 +41,11 @@ abstract class BaseShowDiffAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
     DiffRequest request = getDiffRequest(e);
     if (request == null) return;
 
-    DiffManager.getInstance().showDiff(e.getProject(), request, DiffDialogHints.FRAME);
+    DiffManager.getInstance().showDiff(project, request, DiffDialogHints.FRAME);
   }
 
   protected abstract boolean isAvailable(@NotNull AnActionEvent e);
