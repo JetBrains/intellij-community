@@ -97,7 +97,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
           if (oldContent != null) {
             String content = fileAnnotation.getAnnotatedContent();
             try {
-              newLine = Diff.translateLine(oldContent, content, oldLine);
+              newLine = Diff.translateLine(oldContent, content, oldLine, true);
             }
             catch (FilesTooBigForDiffException ignore) {
             }
