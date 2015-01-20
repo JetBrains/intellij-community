@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,16 +44,16 @@ class PersistentIntList implements Disposable {
   public PersistentIntList(@NotNull File dataFile, int initialSize) throws IOException {
     data = new RandomAccessFile(dataFile, "rw").getChannel();
     int pointersBase;
-    int initialCapacity = initialSize + 256;
-    if (initialSize != 0) {
+    int initialCapacity = Math.min((initialSize+1)*2, initialSize + 256);
+    if (initialSize == 0) {
+      pointersBase = readInt(data, 0);
+    }
+    else {
       writeInt(data, 0, 4); // base of the pointers array
       writeInt(data, 4, initialSize);
       writeInt(data, 8, initialCapacity);
       fillWithZeros(data, 4 + 8, initialCapacity *4);
       pointersBase = 4;
-    }
-    else {
-      pointersBase = readInt(data, 0);
     }
     pointers = new IntArray(data, pointersBase);
     if (initialSize != 0) {
