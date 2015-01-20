@@ -59,7 +59,7 @@ import java.util.List;
  *  Class to show the user the request for search
  */
 @SuppressWarnings({"RefusedBequest", "AssignmentToStaticFieldFromInstanceMethod"})
-public class SearchDialog extends DialogWrapper implements ConfigurationCreator {
+public class SearchDialog extends DialogWrapper {
   protected SearchContext searchContext;
 
   // text for search
@@ -457,7 +457,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     setTitle(getDefaultTitle() + " - " + configuration.getName());
   }
 
-  @Override
   public Configuration createConfiguration() {
     SearchConfiguration configuration = new SearchConfiguration();
     configuration.setName(USER_DEFINED);
@@ -743,7 +742,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   @Override
   public void show() {
     StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
-    Configuration.setActiveCreator(this);
     searchCriteriaEdit.putUserData(
       SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY,
       model.getConfig()
@@ -895,7 +893,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   @Override
   public void dispose() {
-    Configuration.setActiveCreator(null);
     disposeEditorContent();
 
     myAlarm.cancelAllRequests();
