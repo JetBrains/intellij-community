@@ -35,5 +35,5 @@ public interface LinearGraph {
 
   // return null, if node doesn't exist
   @Nullable
-  Integer getNodeIndexById(int nodeId);
+  Integer getNodeIndex(int nodeId);
 }

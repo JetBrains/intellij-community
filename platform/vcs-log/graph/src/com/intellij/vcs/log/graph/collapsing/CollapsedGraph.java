@@ -103,7 +103,7 @@ public class CollapsedGraph {
       @Override
       public Integer fun(Integer nodeId) {
         assert visibleNodesId.get(nodeId);
-        Integer delegateIndex = delegateGraph.getNodeIndexById(nodeId);
+        Integer delegateIndex = delegateGraph.getNodeIndex(nodeId);
         assert delegateIndex != null;
         return nodesMap.getShortIndex(delegateIndex);
       }
@@ -230,8 +230,8 @@ public class CollapsedGraph {
 
     @Override
     @Nullable
-    public Integer getNodeIndexById(int nodeId) {
-      Integer delegateIndex = myDelegateGraph.getNodeIndexById(nodeId);
+    public Integer getNodeIndex(int nodeId) {
+      Integer delegateIndex = myDelegateGraph.getNodeIndex(nodeId);
       if (delegateIndex == null)
         return null;
       if (myDelegateNodesVisibility.get(delegateIndex))

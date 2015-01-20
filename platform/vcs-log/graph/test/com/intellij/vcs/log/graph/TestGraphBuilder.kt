@@ -136,7 +136,7 @@ class TestGraphBuilder: BaseTestGraphBuilder {
 
     override fun getGraphNode(nodeIndex: Int) = nodes[nodeIndex]
 
-    override fun getNodeIndexById(nodeId: Int) = nodeIdToIndex[nodeId]
+    override fun getNodeIndex(nodeId: Int) = nodeIdToIndex[nodeId]
 
   }
 }

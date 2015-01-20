@@ -93,7 +93,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @Nullable
   public Integer getVisibleRowIndex(@NotNull CommitId commitId) {
     int nodeId = myPermanentGraph.getPermanentCommitsInfo().getNodeId(commitId);
-    return myGraphController.getCompiledGraph().getNodeIndexById(nodeId);
+    return myGraphController.getCompiledGraph().getNodeIndex(nodeId);
   }
 
   @NotNull
