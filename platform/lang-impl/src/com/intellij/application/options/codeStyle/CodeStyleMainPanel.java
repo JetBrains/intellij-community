@@ -18,6 +18,8 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -27,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,7 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class CodeStyleMainPanel extends JPanel {
+public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
   private final CardLayout myLayout = new CardLayout();
   private final JPanel mySettingsPanel = new JPanel(myLayout);
 
@@ -61,12 +64,16 @@ public class CodeStyleMainPanel extends JPanel {
   @NonNls
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
 
+  private final PropertiesComponent myProperties;
+
+  private final static String SELECTED_TAB = "settings.code.style.selected.tab";
 
   public CodeStyleMainPanel(CodeStyleSchemesModel model, CodeStyleSettingsPanelFactory factory) {
     super(new BorderLayout());
     myModel = model;
     myFactory = factory;
     mySchemesPanel = new CodeStyleSchemesPanel(model);
+    myProperties = PropertiesComponent.getInstance();
 
     model.addListener(new CodeStyleSettingsListener(){
       @Override
@@ -214,6 +221,15 @@ public class CodeStyleMainPanel extends JPanel {
       NewCodeStyleSettingsPanel panel = myFactory.createPanel(scheme);
       panel.reset();
       panel.setModel(myModel);
+      CodeStyleAbstractPanel settingsPanel = panel.getSelectedPanel();
+      if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {
+        TabbedLanguageCodeStylePanel tabbedPanel = (TabbedLanguageCodeStylePanel)settingsPanel;
+        tabbedPanel.setListener(this);
+        String currentTab = myProperties.getValue(getSelectedTabPropertyName(tabbedPanel));
+        if (currentTab != null) {
+          tabbedPanel.changeTab(currentTab);
+        }
+      }
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
     }
@@ -243,5 +259,19 @@ public class CodeStyleMainPanel extends JPanel {
     final CodeStyleScheme defaultScheme = CodeStyleSchemes.getInstance().getDefaultScheme();
     final NewCodeStyleSettingsPanel panel = ensurePanel(defaultScheme);
     return panel.processListOptions();
+  }
+
+  @Override
+  public void tabChanged(@NotNull TabbedLanguageCodeStylePanel source, @NotNull String tabTitle) {
+    myProperties.setValue(getSelectedTabPropertyName(source), tabTitle);
+    for (NewCodeStyleSettingsPanel panel : getPanels()) {
+      panel.tabChanged(source, tabTitle);
+    }
+  }
+
+  @NotNull
+  private static String getSelectedTabPropertyName(@NotNull TabbedLanguageCodeStylePanel panel) {
+    Language language = panel.getDefaultLanguage();
+    return SELECTED_TAB + (language != null ? "." + language.getID() : "");
   }
 }

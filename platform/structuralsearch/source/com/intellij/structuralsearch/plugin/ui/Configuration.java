@@ -71,8 +71,9 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     return name.equals(other.name);
   }
 
+  @Override
   public int hashCode() {
-    return getMatchOptions().hashCode();
+    return 31 * name.hashCode() + (category != null ? category.hashCode() : 0);
   }
 
   public static void setActiveCreator(ConfigurationCreator creator) {

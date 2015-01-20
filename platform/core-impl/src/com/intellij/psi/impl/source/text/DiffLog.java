@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,11 +70,11 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     }
   }
 
-  public void appendReplaceElementWithEvents(CompositeElement oldRoot, CompositeElement newRoot) {
+  void appendReplaceElementWithEvents(@NotNull CompositeElement oldRoot, @NotNull CompositeElement newRoot) {
     myEntries.add(new ReplaceElementWithEvents(oldRoot, newRoot));
   }
 
-  public void appendReplaceFileElement(FileElement oldNode, FileElement newNode) {
+  void appendReplaceFileElement(@NotNull FileElement oldNode, @NotNull FileElement newNode) {
     myEntries.add(new ReplaceFileElement(oldNode, newNode));
   }
 
@@ -92,7 +92,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private final ASTNode myOldChild;
     private final ASTNode myNewChild;
 
-    public ReplaceEntry(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
+    private ReplaceEntry(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
       myOldChild = oldNode;
       myNewChild = newNode;
       ASTNode parent = oldNode.getTreeParent();
@@ -133,10 +133,10 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   }
 
   private static class DeleteEntry extends LogEntry {
-    private final ASTNode myOldParent;
-    private final ASTNode myOldNode;
+    @NotNull private final ASTNode myOldParent;
+    @NotNull private final ASTNode myOldNode;
 
-    public DeleteEntry(ASTNode oldParent, ASTNode oldNode) {
+    private DeleteEntry(@NotNull ASTNode oldParent, @NotNull ASTNode oldNode) {
       myOldParent = oldParent;
       myOldNode = oldNode;
     }
@@ -167,11 +167,11 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   }
 
   private static class InsertEntry extends LogEntry {
-    private final ASTNode myOldParent;
-    private final ASTNode myNewNode;
+    @NotNull private final ASTNode myOldParent;
+    @NotNull private final ASTNode myNewNode;
     private final int myPos;
 
-    public InsertEntry(@NotNull ASTNode oldParent, @NotNull ASTNode newNode, int pos) {
+    private InsertEntry(@NotNull ASTNode oldParent, @NotNull ASTNode newNode, int pos) {
       assert oldParent instanceof CompositeElement : oldParent;
       myOldParent = oldParent;
       myNewNode = newNode;
@@ -226,10 +226,10 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   }
 
   private static class ReplaceFileElement extends LogEntry {
-    private final FileElement myOldNode;
-    private final FileElement myNewNode;
+    @NotNull private final FileElement myOldNode;
+    @NotNull private final FileElement myNewNode;
 
-    public ReplaceFileElement(FileElement oldNode, FileElement newNode) {
+    private ReplaceFileElement(@NotNull FileElement oldNode, @NotNull FileElement newNode) {
       myOldNode = oldNode;
       myNewNode = newNode;
     }
@@ -250,10 +250,10 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   }
 
   private static class ReplaceElementWithEvents extends LogEntry {
-    private final CompositeElement myOldRoot;
-    private final CompositeElement myNewRoot;
+    @NotNull private final CompositeElement myOldRoot;
+    @NotNull private final CompositeElement myNewRoot;
 
-    public ReplaceElementWithEvents(CompositeElement oldRoot, CompositeElement newRoot) {
+    private ReplaceElementWithEvents(@NotNull CompositeElement oldRoot, @NotNull CompositeElement newRoot) {
       myOldRoot = oldRoot;
       myNewRoot = newRoot;
     }

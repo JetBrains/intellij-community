@@ -13,25 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.branch;
 
-import com.intellij.dvcs.repo.RepositoryManager;
-import org.jetbrains.annotations.NotNull;
+public class TestInnerSignature<A,B,C> {
+  A a;
+  B b;
+  C c;
 
-/**
- * @see RepositoryManager#isSyncEnabled()
- */
-public interface DvcsSyncSettings {
-
-  enum Value {
-    SYNC,
-    DONT_SYNC,
-    NOT_DECIDED
+  public TestInnerSignature(A a,B b,C c) {
+    this.a = a;
+    this.b = b;
+    this.c = c;
   }
 
-  @NotNull
-  Value getSyncSetting();
+  public class Inner {
+    A a;
+    B b;
+    C c;
 
-  void setSyncSetting(@NotNull Value syncSetting);
+    public Inner(A a, B b, C c) {
+      this.a = a;
+      this.b = b;
+      this.c = c;
+    }
+  }
 
+  public static class InnerStatic<A,B,C> {
+    A a;
+    B b;
+    C c;
+
+    public InnerStatic(A a, B b, C c) {
+      this.a = a;
+      this.b = b;
+      this.c = c;
+    }
+  }
 }
