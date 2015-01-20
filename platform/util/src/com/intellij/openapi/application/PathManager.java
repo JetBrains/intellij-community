@@ -69,7 +69,6 @@ public class PathManager {
     if (ourHomePath != null) return ourHomePath;
 
     String fromProperty = System.getProperty(PROPERTY_HOME_PATH);
-    System.out.println("Path to IDEA: " + fromProperty);
     if (fromProperty != null) {
       ourHomePath = getAbsolutePath(fromProperty);
       if (!new File(ourHomePath).isDirectory()) {
@@ -92,7 +91,6 @@ public class PathManager {
       catch (IOException ignored) { }
     }
 
-    System.out.println("Path to IDEA(ourHomePath): " + ourHomePath);
     return ourHomePath;
   }
 
@@ -113,8 +111,7 @@ public class PathManager {
 
   private static boolean isIdeaHome(final File root) {
     return new File(root, FileUtil.toSystemDependentName("bin/idea.properties")).exists() ||
-           new File(root, FileUtil.toSystemDependentName("community/bin/idea.properties")).exists() ||
-           new File(root, FileUtil.toSystemDependentName("Contents/Info.plist")).exists();  // MacOS bundle doesn't include idea.properties
+           new File(root, FileUtil.toSystemDependentName("community/bin/idea.properties")).exists();
   }
 
   @NotNull
@@ -160,6 +157,11 @@ public class PathManager {
   @NotNull
   public static String getDefaultConfigPathFor(@NotNull String selector) {
     return platformPath(selector, "Library/Preferences", CONFIG_FOLDER);
+  }
+
+  @NotNull
+  public static String getDefaultPluginPathFor(@NotNull String selector) {
+    return platformPath(selector, "Library/Application Support", PLUGINS_FOLDER);
   }
 
   public static void ensureConfigFolderExists() {
@@ -307,39 +309,53 @@ public class PathManager {
     return resultPath;
   }
 
+  public static String getUserPropertiesPath() {
+    if (PATHS_SELECTOR != null) {
+      return platformPath(PATHS_SELECTOR, "Library/Preferences", ".");
+    }
+    else {
+      return getUserHome();
+    }
+  }
+
   public static void loadProperties() {
-    File propFile = FileUtil.findFirstThatExist(
+    String[] propFiles = new String[]{
       System.getProperty(PROPERTIES_FILE),
-      getUserHome() + "/idea.properties",
+      getUserPropertiesPath() + "/idea.properties",
       getHomePath() + "/bin/idea.properties",
-      getHomePath() + "/community/bin/idea.properties");
+      getHomePath() + "/community/bin/idea.properties"};
 
-    if (propFile != null) {
-      try {
-        Reader fis = new BufferedReader(new FileReader(propFile));
-        try {
-          Map<String, String> properties = FileUtil.loadProperties(fis);
+    for (String path : propFiles) {
+      if (path != null) {
+        File propFile = new File(path);
+        if (propFile.exists()) {
+          try {
+            Reader fis = new BufferedReader(new FileReader(propFile));
+            try {
+              Map<String, String> properties = FileUtil.loadProperties(fis);
 
-          String home = properties.get("idea.home");
-          if (home != null && ourHomePath == null) {
-            ourHomePath = getAbsolutePath(substituteVars(home));
-          }
+              String home = properties.get("idea.home");
+              if (home != null && ourHomePath == null) {
+                ourHomePath = getAbsolutePath(substituteVars(home));
+              }
 
-          Properties sysProperties = System.getProperties();
-          for (String key : properties.keySet()) {
-            if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
-              String value = substituteVars(properties.get(key));
-              sysProperties.setProperty(key, value);
+              Properties sysProperties = System.getProperties();
+              for (String key : properties.keySet()) {
+                if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
+                  String value = substituteVars(properties.get(key));
+                  sysProperties.setProperty(key, value);
+                }
+              }
+            }
+            finally {
+              fis.close();
             }
           }
+          catch (IOException e) {
+            //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
+            System.err.println("Problem reading from property file: " + propFile.getPath());
+          }
         }
-        finally{
-          fis.close();
-        }
-      }
-      catch (IOException e) {
-        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
-        System.err.println("Problem reading from property file: " + propFile.getPath());
       }
     }
   }
@@ -414,7 +430,7 @@ public class PathManager {
 
   private static String getAbsolutePath(String path) {
     path = FileUtil.expandUserHome(path);
-    return new File(path).getAbsolutePath();
+    return FileUtil.toCanonicalPath(new File(path).getAbsolutePath());
   }
 
   private static String trimPathQuotes(String path){

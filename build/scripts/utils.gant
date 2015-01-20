@@ -56,6 +56,7 @@ binding.setVariable("isEap", {
 binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=150m")
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=225m")
 binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                        "-Djna.nosys=true -Djna.boot.library.path=  -Djna.debug_load=true -Djna.debug_load.jna=true " +
                                         "-Djsse.enableSNIExtension=false " +
                                         "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
 
@@ -167,7 +168,10 @@ projectBuilder.compressJars = false
 
 binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
   if (!artifactPath.startsWith(home)) {
-    projectBuilder.error("Artifact path $artifactPath should start with $home")
+    // AndroidStudio: make this to be just an info as the out folder is typically
+    // not in the home folder
+    projectBuilder.info("Artifact path $artifactPath should start with $home")
+    return
   }
   def relativePath = artifactPath.substring(home.length())
   if (relativePath.startsWith("/")) {
@@ -221,7 +225,8 @@ binding.setVariable("copyAndPatchFiles", { Closure files, String target, Map arg
 
 binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
   ant.tstamp()
-  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
+  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP,
+          "PACKAGE_CODE": buildNumber.substring(0, buildNumber.indexOf('-'))])
 })
 
 binding.setVariable("commonJvmArgs", {
@@ -232,9 +237,10 @@ binding.setVariable("commonJvmArgs", {
    "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
    "-XX:+HeapDumpOnOutOfMemoryError",
    "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
-   "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
-   "-Xdebug",
-   "-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendUntilDebuggerConnect,address=$debugPort"]
+   "-Didea.config.path=${p("teamcity.build.tempDir")}/config"]
+   // We don't want this on the Jenkins build server
+   // "-Xdebug",
+   // "-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendUntilDebuggerConnect,address=$debugPort"]
 })
 
 binding.setVariable("classPathLibs", [
@@ -344,7 +350,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   Map properties = readIdeaProperties(args)
 
-  def coreKeys = ["idea.platform.prefix", "idea.paths.selector"]
+  def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
 
   String coreProperties = submapToXml(properties, coreKeys);
 
@@ -360,7 +366,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   if (isEap() && !args.mac_no_yjp) {
     ideaVmOptions += " ${yjpOptions(args.system_selector)}"
   }
-  new File("$path/bin/idea.vmoptions").text = ideaVmOptions
+  new File("$path/bin/${executable}.vmoptions").text = ideaVmOptions
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -403,6 +409,9 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@bundle_name@@", value: fullName)
     replacefilter(token: "@@bundle_identifier@@", value: args.bundleIdentifier)
     replacefilter(token: "@@year@@", value: "$todayYear")
+    replacefilter(token: "@@company_name@@", value: args.companyName)
+    replacefilter(token: "@@min_year@@", value: "2013")
+    replacefilter(token: "@@max_year@@", value: "$todayYear")
     replacefilter(token: "@@version@@", value: version)
     replacefilter(token: "@@vmoptions@@", value: vmOptions)
     replacefilter(token: "@@idea_properties@@", value: coreProperties)
@@ -430,8 +439,8 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
 binding.setVariable("winScripts", { String target, String home, String name, Map args ->
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
-  String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase()
-  String vm_options = args.vm_options != null ? args.vm_options : "${p("component.names.product").toLowerCase()}.exe"
+  String product_uc = args.product_uc != null ? args.product_uc : p("component.names.product").toUpperCase().replace(" ", "_")
+  String vm_options = args.vm_options != null ? args.vm_options : "${p("component.names.product").toLowerCase().replace(" ", "-")}.exe"
   if (vm_options.endsWith(".exe")) {
     vm_options = vm_options.replace(".exe", "%BITS%.exe")
   }
@@ -504,14 +513,19 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
   ant.fixcrlf(srcdir: "$target/bin", includes: "*.sh", eol: "unix")
 })
 
-binding.setVariable("winVMOptions", { String target, String system_selector, String name, String name64 = null ->
+binding.setVariable("winVMOptions", { String target, Map args, String name, String name64 = null ->
   if (name != null) {
-    def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
+    def options = vmOptions32()
+    options = options.replace(" -XX:+UseCodeCacheFlushing", "")
+    options += " -Didea.platform.prefix=" + args.platform_prefix
+    options += " -Didea.paths.selector="  + args.system_selector
     ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
   }
 
   if (name64 != null) {
-    def options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
+    def options = vmOptions64()
+    options += " -Didea.platform.prefix=" + args.platform_prefix
+    options += " -Didea.paths.selector="  + args.system_selector
     ant.echo(file: "$target/bin/${name64}.vmoptions", message: options.replace(' ', '\n'))
   }
 
@@ -535,6 +549,7 @@ binding.setVariable("unixReadme", { String target, String home, Map args ->
                    ["product_full": fullName,
                     "product": p("component.names.product").toLowerCase(),
                     "system_selector": args.system_selector,
+                    "script_name" : args.script_name,
                     "settings_dir": settings_dir], "@@")
   ant.fixcrlf(file: "$target/bin/Install-Linux-tar.txt", eol: "unix")
 })
@@ -646,6 +661,7 @@ private Map readIdeaProperties(Map args) {
                            "JVMVersion": "1.6*",
                            "com.apple.mrj.application.live-resize": "false",
                            "idea.paths.selector": args.system_selector,
+                           "idea.executable": args.executable,
                            "java.endorsed.dirs": "",
                            "idea.smooth.progress": "false",
                            "apple.laf.useScreenMenuBar": "true",
@@ -712,14 +728,14 @@ binding.setVariable("getCustomJDK", { File customJdkDir ->
   }
 })
 
-binding.setVariable("buildWinZip", { String zipPath, List paths ->
+binding.setVariable("buildWinZip", { String zipRoot, String zipPath, List paths ->
   projectBuilder.stage(".win.zip")
 
   fixIdeaPropertiesEol(paths, "dos")
 
   ant.zip(zipfile: zipPath) {
     paths.each {
-      fileset(dir: it)
+      zipfileset(dir: it, prefix: zipRoot)
     }
   }
 
@@ -834,6 +850,14 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
       resourcePaths.each {
         pathelement(location: it)
       }
+    }
+  }
+})
+
+binding.setVariable("layoutUpdater", { String target, String jarName = "updater.jar" ->
+  layout(target) {
+    jar(jarName) {
+      module("updater")
     }
   }
 })

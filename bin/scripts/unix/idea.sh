@@ -133,15 +133,41 @@ if [ -z "$MAIN_CLASS_NAME" ]; then
   MAIN_CLASS_NAME="com.intellij.idea.Main"
 fi
 
-VM_OPTIONS_FILE="$@@product_uc@@_VM_OPTIONS"
-if [ -z "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS_FILE="$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"
+VM_OPTIONS_FILES_0=$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions
+VM_OPTIONS_FILES_1=$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions
+VM_OPTIONS_FILES_2=$@@product_uc@@_VM_OPTIONS
+
+VM_OPTIONS=""
+VM_OPTIONS_FILES_USED=""
+
+if [ -r "$VM_OPTIONS_FILES_0" ]; then
+  VM_OPTIONS_DATA=`"$CAT" "$VM_OPTIONS_FILES_0" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+  if [ -n "$VM_OPTIONS_FILES_USED" ]; then
+    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
+  fi
+  VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$VM_OPTIONS_FILES_0"
 fi
 
-if [ -r "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
-  VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILE\""
+if [ -r "$VM_OPTIONS_FILES_1" ]; then
+  VM_OPTIONS_DATA=`"$CAT" "$VM_OPTIONS_FILES_1" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+  if [ -n "$VM_OPTIONS_FILES_USED" ]; then
+    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
+  fi
+  VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$VM_OPTIONS_FILES_1"
 fi
+
+if [ -r "$VM_OPTIONS_FILES_2" ]; then
+  VM_OPTIONS_DATA=`"$CAT" "$VM_OPTIONS_FILES_2" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+  if [ -n "$VM_OPTIONS_FILES_USED" ]; then
+    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
+  fi
+  VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$VM_OPTIONS_FILES_2"
+fi
+
+VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILES_USED\""
 
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
@@ -152,9 +178,9 @@ if [ "$IS_EAP" = "true" ]; then
   fi
 fi
 
-COMMON_JVM_ARGS="\"-Xbootclasspath/a:$IDE_HOME/lib/boot.jar\" -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
+COMMON_JVM_ARGS="-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log \"-Xbootclasspath/a:$IDE_HOME/lib/boot.jar\" -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
 IDE_JVM_ARGS="@@ide_jvm_args@@"
-ALL_JVM_ARGS="-XX:ErrorFile=$HOME/java_error.log $VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
+ALL_JVM_ARGS="$VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
