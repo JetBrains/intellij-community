@@ -22,9 +22,9 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
-import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl;
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl;
 import org.jetbrains.annotations.NotNull;
 

@@ -21,7 +21,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplePrintElementImpl extends AbstractPrintElement implements SimplePrintElement {
+public class SimplePrintElementImpl extends PrintElementWithGraphElement implements SimplePrintElement {
 
   @NotNull
   private final Type myType;

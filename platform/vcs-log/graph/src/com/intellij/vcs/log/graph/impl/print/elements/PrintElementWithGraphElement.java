@@ -16,12 +16,12 @@
 
 package com.intellij.vcs.log.graph.impl.print.elements;
 
+import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractPrintElement implements PrintElementWithGraphElement {
+public abstract class PrintElementWithGraphElement implements PrintElement {
 
   protected final int myRowIndex;
   protected final int myPositionInCurrentRow;
@@ -31,17 +31,16 @@ public abstract class AbstractPrintElement implements PrintElementWithGraphEleme
   @NotNull
   protected final PrintElementsManager myPrintElementsManager;
 
-  protected AbstractPrintElement(int rowIndex,
-                                 int positionInCurrentRow,
-                                 @NotNull GraphElement graphElement,
-                                 @NotNull PrintElementsManager printElementsManager) {
+  protected PrintElementWithGraphElement(int rowIndex,
+                                         int positionInCurrentRow,
+                                         @NotNull GraphElement graphElement,
+                                         @NotNull PrintElementsManager printElementsManager) {
     myRowIndex = rowIndex;
     myPositionInCurrentRow = positionInCurrentRow;
     myGraphElement = graphElement;
     myPrintElementsManager = printElementsManager;
   }
 
-  @Override
   @NotNull
   public GraphElement getGraphElement() {
     return myGraphElement;

@@ -17,15 +17,14 @@ package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;

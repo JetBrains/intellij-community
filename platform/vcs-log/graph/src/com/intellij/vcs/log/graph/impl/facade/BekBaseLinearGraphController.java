@@ -22,9 +22,9 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekChecker;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
