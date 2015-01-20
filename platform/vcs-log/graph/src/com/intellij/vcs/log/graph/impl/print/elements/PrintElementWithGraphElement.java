@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.impl.print.elements;
 
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PrintElementWithGraphElement implements PrintElement {
@@ -29,16 +29,16 @@ public abstract class PrintElementWithGraphElement implements PrintElement {
   @NotNull
   protected final GraphElement myGraphElement;
   @NotNull
-  protected final PrintElementsManager myPrintElementsManager;
+  protected final PrintElementManager myPrintElementManager;
 
   protected PrintElementWithGraphElement(int rowIndex,
                                          int positionInCurrentRow,
                                          @NotNull GraphElement graphElement,
-                                         @NotNull PrintElementsManager printElementsManager) {
+                                         @NotNull PrintElementManager printElementManager) {
     myRowIndex = rowIndex;
     myPositionInCurrentRow = positionInCurrentRow;
     myGraphElement = graphElement;
-    myPrintElementsManager = printElementsManager;
+    myPrintElementManager = printElementManager;
   }
 
   @NotNull
@@ -58,11 +58,11 @@ public abstract class PrintElementWithGraphElement implements PrintElement {
 
   @Override
   public int getColorId() {
-    return myPrintElementsManager.getColorId(myGraphElement);
+    return myPrintElementManager.getColorId(myGraphElement);
   }
 
   @Override
   public boolean isSelected() {
-    return myPrintElementsManager.elementIsSelected(this);
+    return myPrintElementManager.isSelected(this);
   }
 }

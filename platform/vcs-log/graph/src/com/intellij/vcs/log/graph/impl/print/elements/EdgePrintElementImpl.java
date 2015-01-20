@@ -19,7 +19,7 @@ package com.intellij.vcs.log.graph.impl.print.elements;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import org.jetbrains.annotations.NotNull;
 
 public class EdgePrintElementImpl extends PrintElementWithGraphElement implements EdgePrintElement {
@@ -49,8 +49,8 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
                               int positionInOtherRow,
                               @NotNull Type type,
                               @NotNull GraphEdge graphEdge,
-                              @NotNull PrintElementsManager printElementsManager) {
-    super(rowIndex, positionInCurrentRow, graphEdge, printElementsManager);
+                              @NotNull PrintElementManager printElementManager) {
+    super(rowIndex, positionInCurrentRow, graphEdge, printElementManager);
     myType = type;
     myLineStyle = convertToLineStyle(graphEdge.getType());
     myPositionInOtherRow = positionInOtherRow;

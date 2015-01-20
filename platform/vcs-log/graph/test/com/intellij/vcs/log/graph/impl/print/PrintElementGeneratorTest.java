@@ -24,7 +24,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.parser.LinearGraphParser;
@@ -43,7 +43,7 @@ public class PrintElementGeneratorTest extends AbstractTestWithTwoTextFile {
     super("elementGenerator");
   }
 
-  private static class TestPrintElementManager implements PrintElementsManager {
+  private static class TestPrintElementManager implements PrintElementManager {
     @NotNull
     private final Comparator<GraphElement> myGraphElementComparator;
 
@@ -52,7 +52,7 @@ public class PrintElementGeneratorTest extends AbstractTestWithTwoTextFile {
     }
 
     @Override
-    public boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement) {
+    public boolean isSelected(@NotNull PrintElementWithGraphElement printElement) {
       return false;
     }
 
