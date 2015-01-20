@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,13 @@ import org.jetbrains.annotations.Nullable;
 * User: cdr
 */
 class AnchorElementInfo extends SelfElementInfo {
-  private int stubId = -1;
+  private int stubId;
   private IStubElementType myStubElementType;
 
   AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
-    super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), containingFile,
-          LanguageUtil.getRootLanguage(anchor));
+    super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), containingFile, LanguageUtil.getRootLanguage(anchor));
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
+    stubId = -1;
   }
   // will restore by stub index until file tree get loaded
   AnchorElementInfo(@NotNull PsiElement anchor,
