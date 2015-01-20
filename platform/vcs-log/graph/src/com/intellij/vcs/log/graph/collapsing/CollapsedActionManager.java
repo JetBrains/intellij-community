@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.actions.GraphAction;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
@@ -71,7 +72,7 @@ class CollapsedActionManager {
     if (graphElement instanceof GraphEdge && ((GraphEdge)graphElement).getType() == GraphEdgeType.DOTTED) return (GraphEdge)graphElement;
     if (graphElement instanceof GraphNode) {
       GraphNode node = (GraphNode)graphElement;
-      for (GraphEdge edge : graph.getAdjacentEdges(node.getNodeIndex())) {
+      for (GraphEdge edge : graph.getAdjacentEdges(node.getNodeIndex(), EdgeFilter.NORMAL_ALL)) {
         if (edge.getType() == GraphEdgeType.DOTTED) {
           return edge;
         }

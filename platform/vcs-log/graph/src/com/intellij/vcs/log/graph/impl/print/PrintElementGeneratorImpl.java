@@ -21,6 +21,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.graph.SimplePrintElement;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
@@ -102,11 +103,10 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
       GraphElement element = visibleElements.get(startPosition);
       if (element instanceof GraphNode) {
         int nodeIndex = ((GraphNode)element).getNodeIndex();
-        for (GraphEdge edge : myLinearGraph.getAdjacentEdges(nodeIndex)) {
+        for (GraphEdge edge : myLinearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL)) {
           if (isEdgeToDown(edge, nodeIndex)) {
             Integer endPos = endPosition.fun(edge);
-            if (endPos != null)
-              result.add(new ShortEdge(edge, startPosition, endPos));
+            if (endPos != null) result.add(new ShortEdge(edge, startPosition, endPos));
           }
         }
       }
@@ -114,8 +114,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
       if (element instanceof GraphEdge) {
         GraphEdge edge = (GraphEdge) element;
         Integer endPos = endPosition.fun(edge);
-        if (endPos != null)
-          result.add(new ShortEdge(edge, startPosition, endPos));
+        if (endPos != null) result.add(new ShortEdge(edge, startPosition, endPos));
       }
     }
 
@@ -223,15 +222,15 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
 
   private void addSpecialEdges(@NotNull List<GraphElement> result, int rowIndex) {
     if (rowIndex > 0) {
-      for (GraphEdge edge : myLinearGraph.getAdjacentEdges(rowIndex - 1)) {
-        if (isEdgeToDown(edge, rowIndex - 1) && !edge.getType().isNormalEdge())
-          result.add(edge);
+      for (GraphEdge edge : myLinearGraph.getAdjacentEdges(rowIndex - 1, EdgeFilter.SPECIAL)) {
+        assert !edge.getType().isNormalEdge();
+        if (isEdgeToDown(edge, rowIndex - 1)) result.add(edge);
       }
     }
     if (rowIndex < myLinearGraph.nodesCount() - 1) {
-      for (GraphEdge edge : myLinearGraph.getAdjacentEdges(rowIndex + 1)) {
-        if (isEdgeToUp(edge, rowIndex + 1) && !edge.getType().isNormalEdge())
-          result.add(edge);
+      for (GraphEdge edge : myLinearGraph.getAdjacentEdges(rowIndex + 1, EdgeFilter.SPECIAL)) {
+        assert !edge.getType().isNormalEdge();
+        if (isEdgeToUp(edge, rowIndex + 1)) result.add(edge);
       }
     }
   }

@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.util.SmartList;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -70,7 +71,7 @@ public class DottedFilterEdgesGenerator {
 
   private boolean hasDottedEdges(int nodeIndex, boolean toUp) {
     SmartList<GraphEdge> additionalEdges = new SmartList<GraphEdge>();
-    myCollapsedGraph.getGraphAdditionalEdges().appendAdditionalEdges(additionalEdges, getNodeId(nodeIndex));
+    myCollapsedGraph.getGraphAdditionalEdges().appendAdditionalEdges(additionalEdges, getNodeId(nodeIndex), EdgeFilter.ALL);
     for (GraphEdge edge : additionalEdges) {
       Integer anotherNodeIndex;
       if (toUp) anotherNodeIndex = edge.getDownNodeIndex(); else anotherNodeIndex = edge.getUpNodeIndex();

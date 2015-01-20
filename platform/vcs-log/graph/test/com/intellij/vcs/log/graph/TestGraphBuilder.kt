@@ -34,6 +34,8 @@ import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertNull
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.api.EdgeFilter
 
 trait BaseTestGraphBuilder {
   val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
@@ -122,7 +124,17 @@ class TestGraphBuilder: BaseTestGraphBuilder {
 
     override fun getNodeId(nodeIndex: Int): Int = nodeIndexToId[nodeIndex]!!
 
-    override fun getAdjacentEdges(nodeIndex: Int) = edges[nodeIndex].toList()
+    override fun getAdjacentEdges(nodeIndex: Int) = getAdjacentEdges(nodeIndex, EdgeFilter.ALL)
+
+    override fun getAdjacentEdges(nodeIndex: Int, filter: EdgeFilter)
+        = edges[nodeIndex].filter {
+      if (it.getType().isNormalEdge()) {
+        (LinearGraphUtils.isEdgeToUp(it, nodeIndex) && filter.upNormal)
+        || (LinearGraphUtils.isEdgeToDown(it, nodeIndex) && filter.downNormal)
+      } else {
+        filter.special
+      }
+    }
 
     override fun getGraphNode(nodeIndex: Int) = nodes[nodeIndex]
 
@@ -134,11 +146,11 @@ class TestGraphBuilder: BaseTestGraphBuilder {
 private fun LinearGraph.assertEdge(nodeIndex: Int, edge: GraphEdge) {
   if (edge.getType().isNormalEdge()) {
     if (nodeIndex == edge.getUpNodeIndex()) {
-      assertTrue(getAdjacentEdges(edge.getDownNodeIndex()).contains(edge))
+      assertTrue(getAdjacentEdges(edge.getDownNodeIndex(), EdgeFilter.NORMAL_UP).contains(edge))
     }
     else {
       assertTrue(nodeIndex == edge.getDownNodeIndex())
-      assertTrue(getAdjacentEdges(edge.getUpNodeIndex()).contains(edge))
+      assertTrue(getAdjacentEdges(edge.getUpNodeIndex(), EdgeFilter.NORMAL_DOWN).contains(edge))
     }
   } else {
     when (edge.getType()) {
@@ -167,7 +179,7 @@ fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuild
     }
 
     // edges
-    var adjacentEdges = getAdjacentEdges(nodeIndex)
+    var adjacentEdges = getAdjacentEdges(nodeIndex, EdgeFilter.ALL)
     if (sorted) {
       adjacentEdges = adjacentEdges.sortBy(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
     }

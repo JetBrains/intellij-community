@@ -25,6 +25,8 @@ import java.util.ArrayList
 import com.intellij.vcs.log.graph.utils.sortR
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.asString
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.EdgeFilter
 
 public class GraphAdditionalEdgesTest : BaseTestGraphBuilder {
   val nodeIdByIndex: (Int) -> Int = { it - 10 }
@@ -50,7 +52,7 @@ public class GraphAdditionalEdgesTest : BaseTestGraphBuilder {
 
   fun GraphAdditionalEdges.asString(): String = getKnownIds().sortR().map {
       val edges = ArrayList<GraphEdge>()
-      appendAdditionalEdges(edges, nodeIndexById(it))
+      appendAdditionalEdges(edges, nodeIndexById(it), EdgeFilter.ALL)
       edges.map { it.asString() }.joinToString(",")
   }.joinToString("|-")
 

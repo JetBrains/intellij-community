@@ -43,11 +43,6 @@ public final class GraphEdge implements GraphElement {
   @Nullable private final Integer myTargetId;
   @NotNull private final GraphEdgeType myType;
 
-  @Deprecated
-  public GraphEdge(@Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex, @NotNull GraphEdgeType type) {
-    this(upNodeIndex, downNodeIndex, null, type);
-  }
-
   public GraphEdge(@Nullable Integer upNodeIndex,
                    @Nullable Integer downNodeIndex,
                    @Nullable Integer targetId,

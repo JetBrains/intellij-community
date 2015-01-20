@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.utils;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -70,33 +71,29 @@ public class LinearGraphUtils {
 
   @NotNull
   public static List<Integer> getUpNodes(@NotNull LinearGraph graph, final int nodeIndex) {
-    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex), new Function<GraphEdge, Integer>() {
+    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_UP), new Function<GraphEdge, Integer>() {
       @Nullable
       @Override
       public Integer fun(GraphEdge graphEdge) {
-        if (isEdgeToUp(graphEdge, nodeIndex))
-          return graphEdge.getUpNodeIndex();
-        return null;
+        return graphEdge.getUpNodeIndex();
       }
     });
   }
 
   @NotNull
   public static List<Integer> getDownNodes(@NotNull LinearGraph graph, final int nodeIndex) {
-    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex), new Function<GraphEdge, Integer>() {
+    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_DOWN), new Function<GraphEdge, Integer>() {
       @Nullable
       @Override
       public Integer fun(GraphEdge graphEdge) {
-        if (isEdgeToDown(graphEdge, nodeIndex))
-          return graphEdge.getDownNodeIndex();
-        return null;
+        return graphEdge.getDownNodeIndex();
       }
     });
   }
 
   @NotNull
   public static List<Integer> getDownNodesIncludeNotLoad(@NotNull final LinearGraph graph, final int nodeIndex) {
-    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex), new Function<GraphEdge, Integer>() {
+    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL), new Function<GraphEdge, Integer>() {
       @Nullable
       @Override
       public Integer fun(GraphEdge graphEdge) {
@@ -120,16 +117,13 @@ public class LinearGraphUtils {
 
       @NotNull
       @Override
-      public List<Integer> getNodes(final int nodeIndex, final NodeFilter filter) {
-        return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex), new Function<GraphEdge, Integer>() {
-          @Nullable
+      public List<Integer> getNodes(final int nodeIndex, @NotNull final NodeFilter filter) {
+        return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, filter.edgeFilter), new Function<GraphEdge, Integer>() {
           @Override
           public Integer fun(GraphEdge edge) {
-            if (isEdgeToDown(edge, nodeIndex) && filter.down)
-              return edge.getDownNodeIndex();
+            if (isEdgeToUp(edge, nodeIndex)) return edge.getUpNodeIndex();
+            if (isEdgeToDown(edge, nodeIndex)) return edge.getDownNodeIndex();
 
-            if (isEdgeToUp(edge, nodeIndex) && filter.up)
-              return edge.getUpNodeIndex();
             return null;
           }
         });
@@ -147,9 +141,9 @@ public class LinearGraphUtils {
 
   @Nullable
   public static GraphEdge getEdge(@NotNull LinearGraph graph, int up, int down) {
-    List<GraphEdge> edges = graph.getAdjacentEdges(up);
+    List<GraphEdge> edges = graph.getAdjacentEdges(up, EdgeFilter.NORMAL_DOWN);
     for (GraphEdge edge : edges) {
-      if (edge.getDownNodeIndex() != null && edge.getDownNodeIndex() == down) {
+      if (intEqual(edge.getDownNodeIndex(), down)) {
         return edge;
       }
     }

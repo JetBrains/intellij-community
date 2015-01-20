@@ -15,8 +15,8 @@
  */
 package com.intellij.vcs.log.graph.impl.print;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUMap;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
 
 public class EdgesInRowGenerator {
   private static final int CACHE_SIZE = 10;
@@ -146,23 +144,11 @@ public class EdgesInRowGenerator {
   }
 
   public List<GraphEdge> createUpEdges(int nodeIndex) {
-    List<GraphEdge> result = new SmartList<GraphEdge>();
-    for (GraphEdge edge : myGraph.getAdjacentEdges(nodeIndex)) {
-      if (isNormalEdge(edge) && isEdgeToUp(edge, nodeIndex)) {
-        result.add(edge);
-      }
-    }
-    return result;
+    return myGraph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_UP);
   }
 
   public List<GraphEdge> createDownEdges(int nodeIndex) {
-    List<GraphEdge> result = new SmartList<GraphEdge>();
-    for (GraphEdge edge : myGraph.getAdjacentEdges(nodeIndex)) {
-      if (isNormalEdge(edge) && isEdgeToDown(edge, nodeIndex)) {
-        result.add(edge);
-      }
-    }
-    return result;
+    return myGraph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_DOWN);
   }
 
   private static class GraphEdges {

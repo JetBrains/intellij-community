@@ -17,6 +17,7 @@ package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
@@ -47,15 +48,21 @@ public class LinearBekGraph implements LinearGraph {
   @NotNull
   @Override
   public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
+    return getAdjacentEdges(nodeIndex, EdgeFilter.ALL);
+  }
+
+  @NotNull
+  @Override
+  public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
     List<GraphEdge> result = new ArrayList<GraphEdge>();
-    result.addAll(myGraph.getAdjacentEdges(nodeIndex));
-    myHiddenEdges.removeAdditionalEdges(result, nodeIndex);
-    myDottedEdges.appendAdditionalEdges(result, nodeIndex);
+    result.addAll(myGraph.getAdjacentEdges(nodeIndex, filter));
+    myHiddenEdges.removeAdditionalEdges(result, nodeIndex, filter);
+    myDottedEdges.appendAdditionalEdges(result, nodeIndex, filter);
 
     Collections.sort(result, new Comparator<GraphEdge>() {
       @Override
       public int compare(GraphEdge o1, GraphEdge o2) {
-        return o1.getUpNodeIndex().compareTo(o2.getUpNodeIndex());
+        return o1.getUpNodeIndex().compareTo(o2.getUpNodeIndex()); // todo special edges
       }
     });
 
@@ -108,7 +115,7 @@ public class LinearBekGraph implements LinearGraph {
     }
 
     ArrayList<GraphEdge> hiddenDotted = ContainerUtil.newArrayList();
-    myHiddenEdges.appendAdditionalEdges(hiddenDotted, tail);
+    myHiddenEdges.appendAdditionalEdges(hiddenDotted, tail, EdgeFilter.ALL);
 
     List<GraphEdge> downDottedEdges = ContainerUtil.filter(hiddenDotted, new Condition<GraphEdge>() {
       @Override

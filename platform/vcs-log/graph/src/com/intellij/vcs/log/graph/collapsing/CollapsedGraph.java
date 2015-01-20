@@ -17,6 +17,7 @@ package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
@@ -197,18 +198,24 @@ public class CollapsedGraph {
     @NotNull
     @Override
     public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
+      return getAdjacentEdges(nodeIndex, EdgeFilter.ALL);
+    }
+
+    @NotNull
+    @Override
+    public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
       List<GraphEdge> result = ContainerUtil.newSmartList();
       int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
 
       // add delegate edges
-      for (GraphEdge delegateEdge : myDelegateGraph.getAdjacentEdges(delegateIndex)) {
+      for (GraphEdge delegateEdge : myDelegateGraph.getAdjacentEdges(delegateIndex, filter)) {
         Integer compiledUpIndex = compiledNodeIndex(delegateEdge.getUpNodeIndex());
         Integer compiledDownIndex = compiledNodeIndex(delegateEdge.getDownNodeIndex());
         if (isVisibleEdge(compiledUpIndex, compiledDownIndex))
           result.add(createEdge(delegateEdge, compiledUpIndex, compiledDownIndex));
       }
 
-      myGraphAdditionalEdges.appendAdditionalEdges(result, nodeIndex);
+      myGraphAdditionalEdges.appendAdditionalEdges(result, nodeIndex, filter);
 
       return result;
     }

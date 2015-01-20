@@ -16,7 +16,8 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
@@ -48,26 +49,33 @@ public class PermanentLinearGraphImpl implements LinearGraph {
     return mySimpleNodes.size();
   }
 
-
-  // upEdges come firstly
   @NotNull
   @Override
   public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
-    List<GraphEdge> result = ContainerUtil.newArrayList();
+    return getAdjacentEdges(nodeIndex, EdgeFilter.ALL);
+  }
 
-    if (nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1))
-      result.add(GraphEdge.createNormalEdge(nodeIndex - 1, nodeIndex, USUAL));
+  @NotNull
+  @Override
+  public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+    List<GraphEdge> result = new SmartList<GraphEdge>();
+
+    boolean hasUpSimpleEdge = nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1);
+    if (hasUpSimpleEdge && filter.upNormal) result.add(new GraphEdge(nodeIndex - 1, nodeIndex, null, USUAL));
 
     for (int i = myNodeToEdgeIndex.get(nodeIndex); i < myNodeToEdgeIndex.get(nodeIndex + 1); i++) {
-      int node = myLongEdges.get(i);
-      if (node < 0)
-        result.add(GraphEdge.createEdgeWithTargetId(nodeIndex, node, GraphEdgeType.NOT_LOAD_COMMIT));
-      else
-        result.add(GraphEdge.createNormalEdge(nodeIndex, node, USUAL));
+      int adjacentNode = myLongEdges.get(i);
+
+      if (adjacentNode < 0 && filter.special) {
+        result.add(GraphEdge.createEdgeWithTargetId(nodeIndex, adjacentNode, GraphEdgeType.NOT_LOAD_COMMIT));
+      }
+      if (adjacentNode < 0) continue;
+
+      if (nodeIndex > adjacentNode && filter.upNormal) result.add(new GraphEdge(adjacentNode, nodeIndex, null, USUAL));
+      if (nodeIndex < adjacentNode && filter.downNormal) result.add(new GraphEdge(nodeIndex, adjacentNode, null, USUAL));
     }
 
-    if (mySimpleNodes.get(nodeIndex))
-      result.add(GraphEdge.createNormalEdge(nodeIndex, nodeIndex + 1, USUAL));
+    if (mySimpleNodes.get(nodeIndex) && filter.downNormal) result.add(new GraphEdge(nodeIndex, nodeIndex + 1, null, USUAL));
 
     return result;
   }
