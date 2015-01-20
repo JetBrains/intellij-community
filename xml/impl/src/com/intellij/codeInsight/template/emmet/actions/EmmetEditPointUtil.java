@@ -87,6 +87,7 @@ public class EmmetEditPointUtil {
   }
 
   static boolean isApplicableFile(PsiFile file) {
+    if (file == null) return false;
     for (Language language : file.getViewProvider().getLanguages()) {
       if (language.isKindOf(XMLLanguage.INSTANCE)) return true;
     }
