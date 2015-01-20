@@ -231,7 +231,7 @@ class LinearBekTest {
   6 | |            6
   |/ /             |
   7 /              7
-  |/               |
+  |/               :
   8                8
    */
   Test fun interestingTest() = runTest({
@@ -252,7 +252,7 @@ class LinearBekTest {
     4(5)
     5(6.dot)
     6(7)
-    7(8)
+    7(8.dot)
     8()
   })
 
@@ -273,7 +273,7 @@ class LinearBekTest {
     7 | /            7
     |/ /             |
     8 /              8
-    |/               |
+    |/               :
     9                9
      */
     Test fun interestingTest2() = runTest({
@@ -294,9 +294,9 @@ class LinearBekTest {
       3(4.dot)
       4(5.dot)
       5(6)
-      6(7)
+      6(7.dot)
       7(8)
-      8(9)
+      8(9.dot)
       9()
     })
 
@@ -337,13 +337,14 @@ class LinearBekTest {
   |\               |
   | 1              1
   | 2              2
-  | |\             |\
-  | | 3            | 3
-  | | 4            | 4
-  | | |\           | 5
-  | | | 5    ->    6 :
-  | 6 | |          7 :
-  | 7 | |          :'
+  | |\             |
+  | | 3            3
+  | | 4            4
+  | | |\           5
+  | | | \          :
+  | | | 5    ->    6
+  | 6 | |          7
+  | 7 | |          :
   8 |/  |          8
   |/|   |          |
   9 |  /           9
@@ -367,10 +368,10 @@ class LinearBekTest {
   }, {
     0(1)
     1(2)
-    2(6, 3)
+    2(3)
     3(4)
     4(5)
-    5(8.dot)
+    5(6.dot)
     6(7)
     7(8.dot)
     8(9)
