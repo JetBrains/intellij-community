@@ -4,6 +4,7 @@ public class A extends B {
   void method2Move() {
     new I() {
       {
+        super.foo();
         foo();
         bar();
       }
