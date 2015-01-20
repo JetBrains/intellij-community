@@ -55,12 +55,12 @@ public class ProblemsHolder {
     myOnTheFly = onTheFly;
   }
 
-  public void registerProblem(@NotNull PsiElement psiElement, @NotNull @Nls String descriptionTemplate, LocalQuickFix... fixes) {
+  public void registerProblem(@NotNull PsiElement psiElement, @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate, LocalQuickFix... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
-                              @NotNull String descriptionTemplate,
+                              @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                               ProblemHighlightType highlightType,
                               LocalQuickFix... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));

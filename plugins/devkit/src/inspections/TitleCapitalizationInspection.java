@@ -114,19 +114,31 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
             }
           }
         }
+
+        PsiMethod psiMethod = expression.resolveMethod();
+        if (psiMethod != null) {
+          PsiExpression[] args = expression.getArgumentList().getExpressions();
+          PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+          for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
+            PsiParameter parameter = parameters[i];
+            Nls.Capitalization capitalization = getCapitalizationFromAnno(parameter);
+            checkCapitalization(args[i], holder, capitalization);
+          }
+        }
       }
     };
   }
 
-  public Nls.Capitalization getCapitalizationFromAnno(PsiMethod method) {
-    PsiAnnotation nls = AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(Nls.class.getName()));
+  public Nls.Capitalization getCapitalizationFromAnno(PsiModifierListOwner modifierListOwner) {
+    PsiAnnotation nls = AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, Collections.singleton(Nls.class.getName()));
     if (nls == null) return Nls.Capitalization.NotSpecified;
     PsiAnnotationMemberValue capitalization = nls.findAttributeValue("capitalization");
-    Object cap = JavaPsiFacade.getInstance(method.getProject()).getConstantEvaluationHelper().computeConstantExpression(capitalization);
+    Object cap = JavaPsiFacade.getInstance(modifierListOwner.getProject()).getConstantEvaluationHelper().computeConstantExpression(capitalization);
     return cap instanceof Nls.Capitalization ? (Nls.Capitalization)cap : Nls.Capitalization.NotSpecified;
   }
 
   private static void checkCapitalization(PsiExpression element, @NotNull ProblemsHolder holder, Nls.Capitalization capitalization) {
+    if (capitalization == Nls.Capitalization.NotSpecified) return;
     String titleValue = getTitleValue(element);
     if (!checkCapitalization(titleValue, capitalization)) {
       holder.registerProblem(element, "String '" + titleValue + "' is not properly capitalized. It should have " +
