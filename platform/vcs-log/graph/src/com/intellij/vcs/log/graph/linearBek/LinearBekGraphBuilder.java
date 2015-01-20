@@ -56,16 +56,14 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
 
   @Override
   public void leaveSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
-    myWorkingGraph.clear();
-
-    List<Integer> upNodes = LinearGraphUtils.getUpNodes(myWorkingGraph, currentNodeIndex);
-    if (upNodes.isEmpty()) return;
-    Integer parent = ContainerUtil.find(ContainerUtil.reverse(ContainerUtil.sorted(upNodes)), new Condition<Integer>() {
-      @Override
-      public boolean value(Integer it) {
-        return LinearGraphUtils.getDownNodes(myWorkingGraph, it).size() == 2;
-      }
-    });
+    Integer parent = ContainerUtil
+      .find(ContainerUtil.reverse(ContainerUtil.sorted(LinearGraphUtils.getUpNodes(myWorkingGraph, currentNodeIndex))),
+            new Condition<Integer>() {
+              @Override
+              public boolean value(Integer it) {
+                return LinearGraphUtils.getDownNodes(myWorkingGraph, it).size() == 2;
+              }
+            });
     if (parent == null) return;
     List<Integer> downNodes = LinearGraphUtils.getDownNodes(myWorkingGraph, parent);
 
@@ -81,15 +79,25 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       int secondChildIndex = downNodes.get(1);
       if (secondChildIndex > firstChildIndex) {
         // geometrically first child is higher than the second, so switching them
-        collapse(secondChildIndex, firstChildIndex, parent, headIndex, nextHeadIndex, visited);
+        if (collapse(secondChildIndex, firstChildIndex, parent, headIndex, nextHeadIndex, visited)) {
+          myWorkingGraph.apply();
+        }
+        else {
+          myWorkingGraph.clear();
+        }
       }
-    } else {
-      collapse(firstChildIndex, currentNodeIndex, parent, headIndex, nextHeadIndex, visited);
     }
-
+    else {
+      if (collapse(firstChildIndex, currentNodeIndex, parent, headIndex, nextHeadIndex, visited)) {
+        myWorkingGraph.apply();
+      }
+      else {
+        myWorkingGraph.clear();
+      }
+    }
   }
 
-  private void collapse(int firstChildIndex, int currentNodeIndex, int parent, int headIndex, int nextHeadIndex, BitSetFlags visited) {
+  private boolean collapse(int firstChildIndex, int currentNodeIndex, int parent, int headIndex, int nextHeadIndex, BitSetFlags visited) {
     int x = myGraphLayout.getLayoutIndex(firstChildIndex);
     int y = myGraphLayout.getLayoutIndex(currentNodeIndex);
     int k = 1;
@@ -102,7 +110,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     while (!queue.isEmpty()) {
       GraphEdge nextEdge = queue.poll();
       Integer next = nextEdge.getDownNodeIndex();
-      if (next == null) return; // well, what do you do
+      if (next == null) return false; // well, what do you do
 
       Integer upNodeIndex = nextEdge.getUpNodeIndex();
 
@@ -123,11 +131,11 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       else if (next > currentNodeIndex + k && next < firstChildIndex) {
         int li = myGraphLayout.getLayoutIndex(next);
         if (li > y) {
-          return;
+          return false;
         }
         if (li <= x) {
           if (!(li >= headIndex && li < nextHeadIndex)) {
-            return;
+            return false;
           }
         }
         k++;
@@ -141,11 +149,11 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       else if (next > firstChildIndex) {
         int li = myGraphLayout.getLayoutIndex(next);
         if (li > y) {
-          return;
+          return false;
         }
         if (li < x) {
           if (!(li >= headIndex && li < nextHeadIndex)) {
-            return;
+            return false;
           }
         }
         else {
@@ -161,13 +169,13 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       }
 
       if (k >= MAX_BLOCK_SIZE) {
-        return;
+        return false;
       }
       if (Math.abs(myTimestampGetter.getTimestamp(currentNodeIndex) - myTimestampGetter.getTimestamp(currentNodeIndex + k - 1)) >
           MAX_DELTA_TIME) {
         // there is a big question what we should really check here
         // maybe we should also ensure that we do not remove edges to very old commits too
-        return;
+        return false;
       }
     }
 
@@ -186,7 +194,8 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     if (!tails.isEmpty() || mergeWithOldCommit) {
       myWorkingGraph.removeEdge(parent, firstChildIndex);
     }
-    myWorkingGraph.apply();
+
+    return true;
   }
 
   private static void addDownEdges(@NotNull LinearGraph graph, int node, @NotNull Collection<GraphEdge> collection) {
