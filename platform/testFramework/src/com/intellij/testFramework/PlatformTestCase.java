@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -699,8 +700,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  protected boolean isRunInEdt() {
+    return true;
+  }
+
   protected void runBareRunnable(Runnable runnable) throws Throwable {
-    SwingUtilities.invokeAndWait(runnable);
+    if (isRunInEdt()) {
+      SwingUtilities.invokeAndWait(runnable);
+    }
+    else {
+      runnable.run();
+    }
   }
 
   protected boolean isRunInWriteAction() {
@@ -889,6 +899,24 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       @Override
       protected void run() throws Throwable {
         vFile1.rename(this, newName);
+      }
+    }.execute().throwException();
+  }
+
+  public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        VfsUtil.saveText(file, text);
+      }
+    }.execute().throwException();
+  }
+
+  public static void setBinaryContent(final VirtualFile file, final byte[] content) {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        file.setBinaryContent(content);
       }
     }.execute().throwException();
   }
