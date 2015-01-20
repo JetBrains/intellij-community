@@ -22,7 +22,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import org.jetbrains.annotations.NotNull;
 
-public class EdgePrintElementImpl extends AbstractPrintElement implements EdgePrintElement {
+public class EdgePrintElementImpl extends PrintElementWithGraphElement implements EdgePrintElement {
   @NotNull
   public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdgeType edgeType) {
     switch (edgeType) {

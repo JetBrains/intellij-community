@@ -22,8 +22,8 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.parser.CommitParser
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
 import com.intellij.vcs.log.graph.api.elements.GraphElement
-import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement
 import com.intellij.vcs.log.graph.api.EdgeFilter
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 
 fun LinearGraph.asString(sorted: Boolean = false): String {
   val s = StringBuilder()
