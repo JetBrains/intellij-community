@@ -181,7 +181,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = myViewer.getSelectedChanges();
-      if (list.isEmpty()) list = getCurrentDisplayedChanges();
+      if (list.isEmpty()) list = myViewer.getChanges();
       sink.put(VcsDataKeys.CHANGES, list.toArray(new Change [list.size()]));
     }
     else if (key == VcsDataKeys.CHANGE_LISTS) {
@@ -260,10 +260,9 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     List<Change> changes = myViewer.getSelectedChanges();
 
     if (changes.size() < 2) {
-      changes = getCurrentDisplayedChanges();
+      changes = myViewer.getChanges();
     }
 
-    changes = sortChanges(changes);
     Change[] changesArray = changes.toArray(new Change[changes.size()]);
 
     if (leadSelection != null) {
@@ -404,7 +403,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return myDiffAction;
   }
 
-  public static enum MyUseCase {
+  public enum MyUseCase {
     LOCAL_CHANGES,
     COMMITTED_CHANGES
   }
