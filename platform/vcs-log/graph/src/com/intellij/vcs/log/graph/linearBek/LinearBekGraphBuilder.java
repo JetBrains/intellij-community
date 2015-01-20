@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.linearBek;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -103,7 +104,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     int k = 1;
 
     PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE/*todo?*/, new GraphEdgeComparator());
-    addDownEdges(myWorkingGraph, currentNodeIndex, queue);
+    queue.addAll(myWorkingGraph.getAdjacentEdges(currentNodeIndex, EdgeFilter.NORMAL_DOWN));
 
     Set<Integer> definitelyNotTails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
     Set<Integer> tails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
@@ -128,7 +129,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       else if (next == currentNodeIndex + k) {
         // all is fine, continuing
         k++;
-        addDownEdges(myWorkingGraph, next, queue);
+        queue.addAll(myWorkingGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
         definitelyNotTails.add(upNodeIndex);
       }
       else if (next > currentNodeIndex + k && next < firstChildIndex) {
@@ -142,7 +143,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
           }
         }
         k++;
-        addDownEdges(myWorkingGraph, next, queue);
+        queue.addAll(myWorkingGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
 
         // here we have to decide whether next is a part of the block or not
         if (visited.get(next)) { // TODO should get rid of visited here (same problem as with merge with old commit detection)?
@@ -195,14 +196,6 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     }
 
     return true;
-  }
-
-  private static void addDownEdges(@NotNull LinearGraph graph, int node, @NotNull Collection<GraphEdge> collection) {
-    for (GraphEdge edge : graph.getAdjacentEdges(node)) {
-      if (LinearGraphUtils.isEdgeToDown(edge, node)) {
-        collection.add(edge);
-      }
-    }
   }
 
   private static class GraphEdgeComparator implements Comparator<GraphEdge> {

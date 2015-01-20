@@ -47,12 +47,6 @@ public class LinearBekGraph implements LinearGraph {
 
   @NotNull
   @Override
-  public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
-    return getAdjacentEdges(nodeIndex, EdgeFilter.ALL);
-  }
-
-  @NotNull
-  @Override
   public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
     List<GraphEdge> result = new ArrayList<GraphEdge>();
     result.addAll(myGraph.getAdjacentEdges(nodeIndex, filter));
@@ -94,18 +88,8 @@ public class LinearBekGraph implements LinearGraph {
     myDottedEdges.removeEdge(edge);
 
     Set<GraphEdge> addedEdges = ContainerUtil.newHashSet();
-    addedEdges.addAll(ContainerUtil.filter(myGraph.getAdjacentEdges(tail), new Condition<GraphEdge>() {
-      @Override
-      public boolean value(GraphEdge it) {
-        return LinearGraphUtils.isEdgeToDown(it, tail);
-      }
-    }));
-    addedEdges.addAll(ContainerUtil.filter(myGraph.getAdjacentEdges(firstChild), new Condition<GraphEdge>() {
-      @Override
-      public boolean value(GraphEdge it) {
-        return LinearGraphUtils.isEdgeToUp(it, firstChild); // TODO should rename that :)
-      }
-    }));
+    addedEdges.addAll(myGraph.getAdjacentEdges(tail, EdgeFilter.NORMAL_DOWN));
+    addedEdges.addAll(myGraph.getAdjacentEdges(firstChild, EdgeFilter.NORMAL_UP));
 
     for (GraphEdge hiddenEdge : addedEdges) {
       myHiddenEdges.removeEdge(hiddenEdge);

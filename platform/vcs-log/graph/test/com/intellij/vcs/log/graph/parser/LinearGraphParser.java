@@ -134,12 +134,6 @@ public class LinearGraphParser {
 
     @NotNull
     @Override
-    public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
-      return getAdjacentEdges(nodeIndex, EdgeFilter.ALL);
-    }
-
-    @NotNull
-    @Override
     public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
       List<GraphEdge> result = ContainerUtil.newArrayList();
 
