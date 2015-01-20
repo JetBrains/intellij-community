@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-public interface PrintElementsManager {
+public interface PrintElementManager {
 
-  boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement);
+  boolean isSelected(@NotNull PrintElementWithGraphElement printElement);
 
   int getColorId(@NotNull GraphElement element);
 

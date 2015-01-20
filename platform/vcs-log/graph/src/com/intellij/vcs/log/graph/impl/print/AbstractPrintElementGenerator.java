@@ -22,7 +22,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl;
@@ -36,11 +36,11 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
   @NotNull
   protected final LinearGraph myLinearGraph;
   @NotNull
-  protected final PrintElementsManager myPrintElementsManager;
+  protected final PrintElementManager myPrintElementManager;
 
-  protected AbstractPrintElementGenerator(@NotNull LinearGraph linearGraph, @NotNull PrintElementsManager printElementsManager) {
+  protected AbstractPrintElementGenerator(@NotNull LinearGraph linearGraph, @NotNull PrintElementManager printElementManager) {
     myLinearGraph = linearGraph;
-    myPrintElementsManager = printElementsManager;
+    myPrintElementManager = printElementManager;
   }
 
   @NotNull
@@ -67,7 +67,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
   }
 
   private SimplePrintElementImpl createSimplePrintElement(int rowIndex, SimpleRowElement rowElement) {
-    return new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myType, rowElement.myElement, myPrintElementsManager);
+    return new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myType, rowElement.myElement, myPrintElementManager);
   }
 
   private EdgePrintElementImpl createEdgePrintElement(int rowIndex, @NotNull ShortEdge shortEdge, @NotNull EdgePrintElement.Type type) {
@@ -79,7 +79,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
       positionInCurrentRow = shortEdge.myDownPosition;
       positionInOtherRow = shortEdge.myUpPosition;
     }
-    return new EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, myPrintElementsManager);
+    return new EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, myPrintElementManager);
   }
 
   @NotNull

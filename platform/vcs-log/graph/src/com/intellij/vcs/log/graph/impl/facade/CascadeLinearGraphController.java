@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.impl.facade;
 import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex;
 import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
@@ -58,7 +58,7 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
 
   @NotNull
   @Override
-  public PrintElementsManager getPrintElementManager() {
+  public PrintElementManager getPrintElementManager() {
     if (myPrintElementManager == null) {
       myPrintElementManager = createPrintElementManager(myPermanentGraphInfo);
     }
@@ -95,7 +95,7 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
     return new PrintElementManagerImpl(graphElementComparator, colorGetter);
   }
 
-  private class PrintElementManagerImpl implements PrintElementsManager {
+  private class PrintElementManagerImpl implements PrintElementManager {
     @NotNull
     private final Comparator<GraphElement> myGraphElementComparator;
     @NotNull
@@ -107,7 +107,7 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
     }
 
     @Override
-    public boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement) {
+    public boolean isSelected(@NotNull PrintElementWithGraphElement printElement) {
       return CascadeLinearGraphController.this.elementIsSelected(printElement);
     }
 

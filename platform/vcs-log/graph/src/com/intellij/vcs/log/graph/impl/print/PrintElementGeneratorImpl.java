@@ -26,7 +26,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,11 +58,11 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private final int myAddNearArrowSize;
 
   public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
-                                   @NotNull PrintElementsManager printElementsManager,
+                                   @NotNull PrintElementManager printElementManager,
                                    boolean showLongEdges) {
-    super(graph, printElementsManager);
+    super(graph, printElementManager);
     myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
-    myGraphElementComparator = printElementsManager.getGraphElementComparator();
+    myGraphElementComparator = printElementManager.getGraphElementComparator();
     if (showLongEdges) {
       myLongSize = VERY_LONG_EDGE_SIZE;
       myShowingPartSize = VERY_LONG_EDGE_PART_SIZE;
@@ -79,13 +79,13 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
 
   @TestOnly
   public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
-                                   @NotNull PrintElementsManager printElementsManager,
+                                   @NotNull PrintElementManager printElementManager,
                                    int longSize,
                                    int showingPartSize,
                                    int addNearArrowSize) {
-    super(graph, printElementsManager);
+    super(graph, printElementManager);
     myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
-    myGraphElementComparator = printElementsManager.getGraphElementComparator();
+    myGraphElementComparator = printElementManager.getGraphElementComparator();
     myLongSize = longSize;
     myShowingPartSize = showingPartSize;
     myAddNearArrowSize = addNearArrowSize;

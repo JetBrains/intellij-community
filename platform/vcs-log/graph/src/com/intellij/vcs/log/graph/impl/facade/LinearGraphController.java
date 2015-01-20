@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.impl.facade;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +31,7 @@ public interface LinearGraphController {
   LinearGraph getCompiledGraph();
 
   @NotNull
-  PrintElementsManager getPrintElementManager();
+  PrintElementManager getPrintElementManager();
 
   // Integer = nodeId
   @NotNull
