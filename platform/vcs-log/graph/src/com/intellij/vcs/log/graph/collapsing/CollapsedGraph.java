@@ -197,12 +197,6 @@ public class CollapsedGraph {
 
     @NotNull
     @Override
-    public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
-      return getAdjacentEdges(nodeIndex, EdgeFilter.ALL);
-    }
-
-    @NotNull
-    @Override
     public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
       List<GraphEdge> result = ContainerUtil.newSmartList();
       int delegateIndex = myNodesMap.getLongIndex(nodeIndex);

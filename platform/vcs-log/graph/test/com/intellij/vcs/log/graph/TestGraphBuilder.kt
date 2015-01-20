@@ -124,8 +124,6 @@ class TestGraphBuilder: BaseTestGraphBuilder {
 
     override fun getNodeId(nodeIndex: Int): Int = nodeIndexToId[nodeIndex]!!
 
-    override fun getAdjacentEdges(nodeIndex: Int) = getAdjacentEdges(nodeIndex, EdgeFilter.ALL)
-
     override fun getAdjacentEdges(nodeIndex: Int, filter: EdgeFilter)
         = edges[nodeIndex].filter {
       if (it.getType().isNormalEdge()) {

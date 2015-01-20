@@ -96,12 +96,6 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
 
     @NotNull
     @Override
-    public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
-      return getAdjacentEdges(nodeIndex, EdgeFilter.ALL);
-    }
-
-    @NotNull
-    @Override
     public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
       return map(myPermanentGraph.getAdjacentEdges(myBekIntMap.getUsualIndex(nodeIndex), filter), new Function<GraphEdge, GraphEdge>() {
         @Override
