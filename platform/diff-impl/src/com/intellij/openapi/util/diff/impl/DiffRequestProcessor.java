@@ -527,6 +527,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
       if (iterable != null && iterable.canGoNext()) {
         iterable.goNext();
+        myIterationState = IterationState.NONE;
         return;
       }
 
@@ -563,6 +564,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
       if (iterable != null && iterable.canGoPrev()) {
         iterable.goPrev();
+        myIterationState = IterationState.NONE;
         return;
       }
 
