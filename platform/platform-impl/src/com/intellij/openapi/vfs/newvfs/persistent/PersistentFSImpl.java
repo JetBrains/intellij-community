@@ -1323,7 +1323,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     @NotNull
     @Override
     public CharSequence getNameSequence() {
-      return myParentLocalFile.getName();
+      return myParentLocalFile.getNameSequence();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -436,7 +435,7 @@ public class DaemonListeners implements Disposable {
     if (activeVcs == null) return Result.NOT_SURE;
 
     FilePath path = VcsUtil.getFilePath(virtualFile);
-    boolean vcsIsThinking = !myVcsDirtyScopeManager.whatFilesDirty(Arrays.asList(path)).isEmpty();
+    boolean vcsIsThinking = !myVcsDirtyScopeManager.whatFilesDirty(Collections.singletonList(path)).isEmpty();
     if (vcsIsThinking) return Result.NOT_SURE; // do not modify file which is in the process of updating
 
     FileStatus status = myFileStatusManager.getStatus(virtualFile);
@@ -573,16 +572,12 @@ public class DaemonListeners implements Disposable {
     if (myTogglePopupHintsPanel != null) myTogglePopupHintsPanel.updateStatus();
   }
 
-  private class MyAnActionListener implements AnActionListener {
+  private class MyAnActionListener extends AnActionListener.Adapter {
     private final AnAction escapeAction = myActionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
 
     @Override
     public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
       myEscPressed = action == escapeAction;
-    }
-
-    @Override
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
     @Override

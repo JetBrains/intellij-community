@@ -16,64 +16,49 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import java.awt.*;
 
 import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
 import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
 import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT;
 
 public class FullyQualifiedNamesInJavadocOptionProvider {
-  
-  private JRadioButton myFullyQualifyNamesAlways;
-  private JRadioButton myShortenNamesAlways;
-  private JRadioButton myFullyQualifyIfNotImported;
-  
+
   private JPanel myPanel;
+  private ComboBox myComboBox;
 
   public FullyQualifiedNamesInJavadocOptionProvider(@NotNull CodeStyleSettings settings) {
     composePanel();
     reset(settings);
   }
-  
+
   public void reset(@NotNull CodeStyleSettings settings) {
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-    int classNamesInJavadoc = javaSettings.CLASS_NAMES_IN_JAVADOC;
-    
-    if (classNamesInJavadoc == FULLY_QUALIFY_NAMES_ALWAYS) {
-      myFullyQualifyNamesAlways.setSelected(true);
-    }
-    else if (classNamesInJavadoc == SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT) {
-      myShortenNamesAlways.setSelected(true);
-    }
-    else {
-      myFullyQualifyIfNotImported.setSelected(true);  
-    }
+    QualifyJavadocOptions option = QualifyJavadocOptions.fromIntValue(javaSettings.CLASS_NAMES_IN_JAVADOC);
+    myComboBox.setSelectedItem(option);
   }
   
   public void apply(@NotNull CodeStyleSettings settings) {
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-    javaSettings.CLASS_NAMES_IN_JAVADOC = getIntValueFromSelectedRadioButton();
+    javaSettings.CLASS_NAMES_IN_JAVADOC = getSelectedIntOptionValue();
   }
   
   public boolean isModified(CodeStyleSettings settings) {
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-    return javaSettings.CLASS_NAMES_IN_JAVADOC != getIntValueFromSelectedRadioButton();
+    return javaSettings.CLASS_NAMES_IN_JAVADOC != getSelectedIntOptionValue();
   }
   
-  private int getIntValueFromSelectedRadioButton() {
-    if (myFullyQualifyNamesAlways.isSelected()) {
-      return FULLY_QUALIFY_NAMES_ALWAYS;
-    }
-    else if (myShortenNamesAlways.isSelected()) {
-      return SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT;
-    }
-    else {
-      return FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
-    }
+  private int getSelectedIntOptionValue() {
+    QualifyJavadocOptions item = (QualifyJavadocOptions)myComboBox.getSelectedItem();
+    return item.getIntOptionValue();
   }
   
   @NotNull
@@ -82,30 +67,63 @@ public class FullyQualifiedNamesInJavadocOptionProvider {
   }
 
   private void composePanel() {
-    myPanel = new JPanel();
-    BoxLayout boxLayout = new BoxLayout(myPanel, BoxLayout.Y_AXIS);
-    myPanel.setLayout(boxLayout);
+    myPanel = new JPanel(new GridBagLayout());
+
+    myComboBox = new ComboBox();
+    for (QualifyJavadocOptions options : QualifyJavadocOptions.values()) {
+      myComboBox.addItem(options);
+    }
+    myComboBox.setRenderer(new ListCellRendererWrapper() {
+      @Override
+      public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+        if (value instanceof QualifyJavadocOptions) {
+          setText(((QualifyJavadocOptions)value).getPresentableText());
+        }
+      }
+    });
 
     JLabel title = new JLabel(ApplicationBundle.message("radio.use.fully.qualified.class.names.in.javadoc"));
-    title.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-    
-    myFullyQualifyNamesAlways = new JRadioButton(ApplicationBundle.message("radio.use.fully.qualified.class.names.in.javadoc.always"));
-    myFullyQualifyNamesAlways.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0));
+    myPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
-    myShortenNamesAlways = new JRadioButton(ApplicationBundle.message("radio.use.fully.qualified.class.names.in.javadoc.never"));
-    myShortenNamesAlways.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0));
+    GridBagConstraints left = new GridBagConstraints();
+    left.anchor = GridBagConstraints.WEST;
 
-    myFullyQualifyIfNotImported = new JRadioButton(ApplicationBundle.message("radio.use.fully.qualified.class.names.in.javadoc.if.not.imported"));
-    myFullyQualifyIfNotImported.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0));
+    GridBagConstraints right = new GridBagConstraints();
+    right.anchor = GridBagConstraints.WEST;
+    right.weightx = 1.0;
+    right.insets = new Insets(0, 5, 0, 0);
 
-    ButtonGroup group = new ButtonGroup();
-    group.add(myFullyQualifyNamesAlways);
-    group.add(myShortenNamesAlways);
-    group.add(myFullyQualifyIfNotImported);
+    myPanel.add(title, left);
+    myPanel.add(myComboBox, right);
+  }
+}
 
-    myPanel.add(title);
-    myPanel.add(myFullyQualifyNamesAlways);
-    myPanel.add(myFullyQualifyIfNotImported);
-    myPanel.add(myShortenNamesAlways);
+enum QualifyJavadocOptions {
+
+  FQ_ALWAYS(FULLY_QUALIFY_NAMES_ALWAYS, ApplicationBundle.message("radio.use.fully.qualified.class.names.in.javadoc.always")),
+  SHORTEN_ALWAYS(SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT, ApplicationBundle.message("radio.use.fully.qualified.class.names.in.javadoc.never")),
+  FQ_WHEN_NOT_IMPORTED(FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED, ApplicationBundle.message("radio.use.fully.qualified.class.names.in.javadoc.if.not.imported"));
+
+  private final String myText;
+  private final int myOption;
+
+  public String getPresentableText() {
+    return myText;
+  }
+
+  public int getIntOptionValue() {
+    return myOption;
+  }
+
+  public static QualifyJavadocOptions fromIntValue(int value) {
+    for (QualifyJavadocOptions option : values()) {
+      if (option.myOption == value) return option;
+    }
+    return FQ_WHEN_NOT_IMPORTED;
+  }
+
+  QualifyJavadocOptions(int option, String text) {
+    myOption = option;
+    myText = text;
   }
 }
