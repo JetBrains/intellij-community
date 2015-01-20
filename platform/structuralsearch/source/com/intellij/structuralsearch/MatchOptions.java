@@ -26,7 +26,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private boolean resultIsContextMatch = false;
   private FileType myFileType = StructuralSearchUtil.getDefaultFileType();
   private Language myDialect = null;
-  private int maxMatches = Integer.MAX_VALUE;
 
   private SearchScope scope;
   private SearchScope downUpMatchScope;
@@ -35,10 +34,9 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
   private String myPatternContext;
 
-  @NonNls private static final String DISTINCT_ATTRIBUTE_NAME = "distinct";
+  @NonNls private static final String LOOSE_MATCHING_ATTRIBUTE_NAME = "loose";
   @NonNls private static final String RECURSIVE_ATTRIBUTE_NAME = "recursive";
   @NonNls private static final String CASESENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
-  //private static final String SCOPE_ATTRIBUTE_NAME = "scope";
   @NonNls private static final String CONSTRAINT_TAG_NAME = "constraint";
   @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
   @NonNls private static final String DIALECT_ATTR_NAME = "dialect";
@@ -91,9 +89,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     result.append(searchCriteria);
     result.append("\nsearch scope:\n");
 
-    // @TODO print scope
-    //result.append((scopeHandler!=null)?scopeHandler.toString():"undefined scope");
-
     result.append("\nrecursive:");
     result.append(recursiveSearch);
 
@@ -127,10 +122,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     return searchCriteria;
   }
 
-  public int getMaxMatchesCount() {
-    return maxMatches;
-  }
-
   public boolean isResultIsContextMatch() {
     return resultIsContextMatch;
   }
@@ -156,15 +147,16 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   }
 
   public void writeExternal(Element element) {
-    element.setAttribute(TEXT_ATTRIBUTE_NAME,getSearchPattern());
+    element.setAttribute(TEXT_ATTRIBUTE_NAME, searchCriteria);
+    if (!looseMatching) {
+      element.setAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME, String.valueOf(looseMatching));
+    }
     element.setAttribute(RECURSIVE_ATTRIBUTE_NAME,String.valueOf(recursiveSearch));
     element.setAttribute(CASESENSITIVE_ATTRIBUTE_NAME,String.valueOf(caseSensitiveMatch));
 
     //@TODO serialize scope!
 
-    //if (myFileType != StdFileTypes.JAVA) {
-      element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
-    //}
+    element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
 
     if (myDialect != null) {
       element.setAttribute(DIALECT_ATTR_NAME, myDialect.getID());
@@ -181,10 +173,19 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   }
 
   public void readExternal(Element element) {
-    setSearchPattern(element.getAttribute(TEXT_ATTRIBUTE_NAME).getValue());
+    searchCriteria = element.getAttribute(TEXT_ATTRIBUTE_NAME).getValue();
 
-    Attribute attr = element.getAttribute(RECURSIVE_ATTRIBUTE_NAME);
-    if (attr!=null) {
+    Attribute attr = element.getAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME);
+    if (attr != null) {
+      try {
+        looseMatching = attr.getBooleanValue();
+      } catch (DataConversionException ignored) {
+        looseMatching = true; // default is loose
+      }
+    }
+
+    attr = element.getAttribute(RECURSIVE_ATTRIBUTE_NAME);
+    if (attr != null) {
       try {
         recursiveSearch = attr.getBooleanValue();
       } catch(DataConversionException ignored) {}
