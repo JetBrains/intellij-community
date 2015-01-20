@@ -16,11 +16,14 @@
 package com.intellij.codeInsight.template.emmet.actions;
 
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
 
 /**
@@ -28,15 +31,11 @@ import com.intellij.psi.xml.XmlTokenType;
  */
 public class EmmetEditPointUtil {
   public static void moveForward(Editor editor, PsiFile file) {
-    final int offset = editor.getCaretModel().getOffset();
+    int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null || !element.getLanguage().isKindOf(XMLLanguage.INSTANCE)) return;
 
-    do {
-      element = PsiTreeUtil.nextLeaf(element);
-    } while (element != null && !isEmptyEditPoint(element));
-
-    moveCaret(editor, element);
+    moveToNextPoint(editor, file, offset, 1);
   }
 
   public static void moveBackward(Editor editor, PsiFile file) {
@@ -45,25 +44,33 @@ public class EmmetEditPointUtil {
     element = element == null ? file.findElementAt(offset - 1) : element;
     if (element == null || !element.getLanguage().isKindOf(XMLLanguage.INSTANCE)) return;
 
-    do {
-      element = PsiTreeUtil.prevLeaf(element);
-    }
-    while (element != null && !isEmptyEditPoint(element));
-
-    moveCaret(editor, element);
+   moveToNextPoint(editor, file, offset, -1);
   }
 
-  public static void moveCaret(Editor editor, PsiElement element) {
-    if (element != null) {
-      int offset = element.getTextRange().getStartOffset();
-      if (XmlTokenType.WHITESPACES.contains(element.getNode().getElementType())) {
-        final String text = element.getText();
-        if (text.startsWith("\n")) {
-          final int pos = text.indexOf('\n', 1);
-          offset += pos > 0 ? pos : 1;
+  private static void moveToNextPoint(Editor editor, PsiFile file, int offset, int inc) {
+    final Document doc = editor.getDocument();
+    for (int i = offset + inc; i < doc.getTextLength() && i >= 0; i += inc) {
+      PsiElement current = file.findElementAt(i);
+      if (current == null) continue;
+
+      if (current.getParent() instanceof XmlText) {
+        final int line = doc.getLineNumber(i);
+        final int lineStart = doc.getLineStartOffset(line);
+        final int lineEnd = doc.getLineEndOffset(line);
+        if (lineEnd == offset) continue;
+
+        final CharSequence text = doc.getCharsSequence().subSequence(lineStart, lineEnd);
+        if (StringUtil.isEmptyOrSpaces(text)) {
+          editor.getCaretModel().moveToOffset(lineEnd);
+          return;
         }
+      } else if (isEmptyEditPoint(current)) {
+        final int elementStart = current.getTextRange().getStartOffset();
+        if (elementStart == offset) continue;
+
+        editor.getCaretModel().moveToOffset(elementStart);
+        return;
       }
-      editor.getCaretModel().moveToOffset(offset);
     }
   }
 
@@ -73,15 +80,9 @@ public class EmmetEditPointUtil {
       final PsiElement prev = PsiTreeUtil.prevLeaf(element);
       return prev != null && prev.getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER;
     }
-    if (type == XmlTokenType.XML_END_TAG_START) {
-      final PsiElement tag = element.getParent();
-      final PsiElement prev = PsiTreeUtil.prevLeaf(element, true);
-      return prev != null && prev.getParent() == tag && prev.getNode().getElementType() == XmlTokenType.XML_TAG_END;
-    }
-    if (XmlTokenType.WHITESPACES.contains(type)) {
-      final PsiElement text = element.getParent();
-      final PsiElement prev = PsiTreeUtil.prevLeaf(element, true);
-      return prev != null && prev.getParent() != text.getParent() && prev.getNode().getElementType() == XmlTokenType.XML_TAG_END;
+    if (type == XmlTokenType.XML_END_TAG_START || type == XmlTokenType.XML_START_TAG_START) {
+      final PsiElement prev = PsiTreeUtil.prevLeaf(element);
+      return prev != null && prev.getNode().getElementType() == XmlTokenType.XML_TAG_END;
     }
     return false;
   }
