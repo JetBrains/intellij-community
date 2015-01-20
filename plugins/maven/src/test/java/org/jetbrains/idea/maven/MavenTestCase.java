@@ -323,12 +323,14 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   private static String createSettingsXmlContent(String content) {
     String mirror = System.getProperty("idea.maven.test.mirror",
-                                       "http://maven.labs.intellij.net:8081/nexus/content/groups/public/");
+                                       // use JB maven proxy server for internal use by default, see details at
+                                       // https://confluence.jetbrains.com/display/JBINT/Maven+proxy+server
+                                       "http://maven.labs.intellij.net/remote-repos/");
     return "<settings>" +
            content +
            "<mirrors>" +
            "  <mirror>" +
-           "    <id>Nexus</id>" +
+           "    <id>jb-central-proxy</id>" +
            "    <url>" + mirror + "</url>" +
            "    <mirrorOf>*</mirrorOf>" +
            "  </mirror>" +
