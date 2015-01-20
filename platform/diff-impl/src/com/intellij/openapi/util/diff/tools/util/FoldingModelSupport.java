@@ -78,9 +78,7 @@ public class FoldingModelSupport {
       public boolean getExpanded(int start1, int end1) {
         Boolean expanded1 = getCachedExpanded(start1, end1, 0);
 
-        if (start1 == end1) return myDefault;
-        if (expanded1 == null) return myDefault;
-        return expanded1;
+        return selectState(expanded1);
       }
     }
 
@@ -152,12 +150,7 @@ public class FoldingModelSupport {
         Boolean expanded1 = getCachedExpanded(start1, end1, 0);
         Boolean expanded2 = getCachedExpanded(start2, end2, 1);
 
-        if (start1 == end1 && start2 == end2) return myDefault;
-        if (start1 == end1) return expanded2 != null ? expanded2 : myDefault;
-        if (start2 == end2) return expanded1 != null ? expanded1 : myDefault;
-
-        if (expanded1 == null || expanded2 == null) return myDefault;
-        return expanded1;
+        return selectState(expanded1, expanded2);
       }
     }
 
@@ -242,13 +235,9 @@ public class FoldingModelSupport {
       public boolean getExpanded(int start1, int end1, int start2, int end2, int start3, int end3) {
         Boolean expanded1 = getCachedExpanded(start1, end1, 0);
         Boolean expanded2 = getCachedExpanded(start2, end2, 1);
+        Boolean expanded3 = getCachedExpanded(start3, end3, 2);
 
-        if (start1 == end1 && start2 == end2) return myDefault;
-        if (start1 == end1) return expanded2 != null ? expanded2 : myDefault;
-        if (start2 == end2) return expanded1 != null ? expanded1 : myDefault;
-
-        if (expanded1 == null || expanded2 == null) return myDefault;
-        return expanded1;
+        return selectState(expanded1, expanded2, expanded3);
       }
     }
 
@@ -503,6 +492,19 @@ public class FoldingModelSupport {
       public ExpandSuggesterBase(@Nullable FoldingCache cache, boolean defaultValue) {
         myCache = cache;
         myDefault = defaultValue;
+      }
+
+      protected boolean selectState(Boolean... sides) {
+        Boolean state = null;
+        for (Boolean side : sides) {
+          if (side == null) continue;
+          if (state == null) {
+            state = side;
+            continue;
+          }
+          if (state != side) return myDefault;
+        }
+        return state == null ? myDefault : state;
       }
 
       @Nullable
