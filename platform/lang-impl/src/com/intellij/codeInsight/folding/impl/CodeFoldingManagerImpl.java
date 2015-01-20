@@ -248,6 +248,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   private void initFolding(@NotNull final Editor editor) {
+    if (!editor.getSettings().isCodeFoldingEnabled()) return;
     final Document document = editor.getDocument();
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       @Override
