@@ -148,7 +148,7 @@ public class Diff {
       if (line >= currentChange.line0 + currentChange.deleted) {
         result += currentChange.inserted - currentChange.deleted;
       } else {
-        if (approximate) return currentChange.line1;
+        return approximate ? currentChange.line1 : -1;
       }
 
       currentChange = currentChange.link;
