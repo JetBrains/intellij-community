@@ -151,15 +151,13 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
         if (li > y) {
           return false;
         }
-        if (li < x) {
-          if (!(li >= headIndex && li < nextHeadIndex)) {
-            return false;
-          }
+        if (li < x && !(li >= headIndex && li < nextHeadIndex)) {
+          return false;
         }
         else {
           if (!definitelyNotTails.contains(upNodeIndex)) {
             tails.add(upNodeIndex);
-            if (li != y) {
+            if (li != y && (li >= x)) {
               myWorkingGraph.removeEdge(upNodeIndex, next); // questionable -- we remove edges to the very old commits only for tails
               // done in sake of expanding dotted edges
               // also, should check (I guess?) that the edge is not too long
