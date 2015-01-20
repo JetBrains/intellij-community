@@ -290,7 +290,13 @@ public class FoldingModelSupport {
         };
       }
 
-      lastRunnable.run();
+      myDuringSynchronize = true;
+      try {
+        lastRunnable.run();
+      }
+      finally {
+        myDuringSynchronize = false;
+      }
     }
 
     @Nullable
