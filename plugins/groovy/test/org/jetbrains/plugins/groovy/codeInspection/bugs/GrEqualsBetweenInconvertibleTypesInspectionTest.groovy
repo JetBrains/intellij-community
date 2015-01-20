@@ -43,17 +43,17 @@ C c = new C()
 b == c
 <warning descr="'==' between objects of inconvertible types 'C' and 'A'">c == a</warning>
 
-s.<warning descr="'equals()' between objects of inconvertible types 'Integer' and 'String'">equals</warning>(i)
-i.<warning descr="'equals()' between objects of inconvertible types 'String' and 'Integer'">equals</warning>(s)
-a.<warning descr="'equals()' between objects of inconvertible types 'B' and 'A'">equals</warning>(b)
+s.<warning descr="'equals()' between objects of inconvertible types 'String' and 'Integer'">equals</warning>(i)
+i.<warning descr="'equals()' between objects of inconvertible types 'Integer' and 'String'">equals</warning>(s)
+a.<warning descr="'equals()' between objects of inconvertible types 'A' and 'B'">equals</warning>(b)
 b.equals(c)
-c.<warning descr="'equals()' between objects of inconvertible types 'A' and 'C'">equals</warning>(a)
+c.<warning descr="'equals()' between objects of inconvertible types 'C' and 'A'">equals</warning>(a)
 
-s.<warning descr="'equals()' between objects of inconvertible types 'Integer' and 'String'">equals</warning> i
-i.<warning descr="'equals()' between objects of inconvertible types 'String' and 'Integer'">equals</warning> s
-a.<warning descr="'equals()' between objects of inconvertible types 'B' and 'A'">equals</warning> b
+s.<warning descr="'equals()' between objects of inconvertible types 'String' and 'Integer'">equals</warning> i
+i.<warning descr="'equals()' between objects of inconvertible types 'Integer' and 'String'">equals</warning> s
+a.<warning descr="'equals()' between objects of inconvertible types 'A' and 'B'">equals</warning> b
 b.equals c
-c.<warning descr="'equals()' between objects of inconvertible types 'A' and 'C'">equals</warning> a
+c.<warning descr="'equals()' between objects of inconvertible types 'C' and 'A'">equals</warning> a
 ''')
   }
 }

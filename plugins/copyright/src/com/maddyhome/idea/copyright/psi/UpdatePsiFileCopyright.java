@@ -120,7 +120,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
       final LinkedHashSet<CommentRange> found = new LinkedHashSet<CommentRange>();
       Document doc = null;
       if (!StringUtil.isEmpty(keyword)) {
-        Pattern pattern = Pattern.compile(keyword, Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile(StringUtil.escapeToRegexp(keyword), Pattern.CASE_INSENSITIVE);
         doc = FileDocumentManager.getInstance().getDocument(getFile().getVirtualFile());
         for (int i = 0; i < comments.size(); i++) {
           PsiComment comment = comments.get(i);

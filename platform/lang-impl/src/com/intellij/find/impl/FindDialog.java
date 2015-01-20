@@ -61,6 +61,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -128,6 +129,7 @@ public class FindDialog extends DialogWrapper {
   private JBTable myResultsPreviewTable;
   private UsagePreviewPanel myUsagePreviewPanel;
   private TabbedPane myContent;
+  private Alarm mySearchRescheduleOnCancellationsAlarm;
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
   public FindDialog(@NotNull Project project, @NotNull FindModel model, @NotNull Consumer<FindModel> myOkHandler){
@@ -176,6 +178,7 @@ public class FindDialog extends DialogWrapper {
   @Override
   protected void dispose() {
     finishPreviousPreviewSearch();
+    if (mySearchRescheduleOnCancellationsAlarm != null) Disposer.dispose(mySearchRescheduleOnCancellationsAlarm);
     if (myUsagePreviewPanel != null) Disposer.dispose(myUsagePreviewPanel);
     for(Map.Entry<EditorTextField, DocumentAdapter> e: myComboBoxListeners.entrySet()) {
       e.getKey().removeDocumentListener(e.getValue());
@@ -324,6 +327,7 @@ public class FindDialog extends DialogWrapper {
       if (state == ModalityState.NON_MODAL) return; // skip initial changes
 
       finishPreviousPreviewSearch();
+      mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
       final DefaultTableModel model = new DefaultTableModel() {
         @Override
         public boolean isCellEditable(int row, int column) {
@@ -337,7 +341,6 @@ public class FindDialog extends DialogWrapper {
       applyTo(modelClone, false);
 
       ValidationInfo result = getValidationInfo(modelClone);
-      if (result != null) return;  // todo
 
       final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(modelClone, myProject);
 
@@ -345,6 +348,12 @@ public class FindDialog extends DialogWrapper {
       myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
 
       myResultsPreviewTable.setModel(model);
+
+      if (result != null) {
+        myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+        return;
+      }
+
       myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new UsageTableCellRenderer());
 
       myResultsPreviewTable.getEmptyText().setText("Searching...");
@@ -375,7 +384,7 @@ public class FindDialog extends DialogWrapper {
               return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
             }
           }, processPresentation);
-          if (resultsCount.get() == 0) {
+          if (resultsCount.get() == 0 && !progressIndicatorWhenSearchStarted.isCanceled()) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
@@ -389,8 +398,14 @@ public class FindDialog extends DialogWrapper {
 
         @Override
         public void onCanceled(@NotNull ProgressIndicator indicator) {
-          if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && resultsCount.get() == 0) {
-            myResultsPreviewTable.getEmptyText().setText("Cancelled");
+          if (isShowing() && progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress) {
+            mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
+            mySearchRescheduleOnCancellationsAlarm.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                findSettingsChanged();
+              }
+            }, 100);
           }
         }
       });
@@ -513,6 +528,7 @@ public class FindDialog extends DialogWrapper {
             }
           }
         });
+        mySearchRescheduleOnCancellationsAlarm = new Alarm();
         previewSplitter.setFirstComponent(new JBScrollPane(myResultsPreviewTable));
         previewSplitter.setSecondComponent(myUsagePreviewPanel.createComponent());
         myPreviewSplitter = previewSplitter;

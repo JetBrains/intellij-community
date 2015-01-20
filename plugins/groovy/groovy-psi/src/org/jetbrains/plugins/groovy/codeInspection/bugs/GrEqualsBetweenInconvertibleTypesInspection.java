@@ -15,22 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 public class GrEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
@@ -62,6 +60,7 @@ public class GrEqualsBetweenInconvertibleTypesInspection extends BaseInspection 
     @Override
     public void visitBinaryExpression(GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
+      if (expression.getOperationTokenType() != GroovyTokenTypes.mEQUAL) return;
       if (expression.getRightOperand() == null) return;
       final PsiType rightType = expression.getRightOperand().getType();
       final PsiType leftType = expression.getLeftOperand().getType();
@@ -72,37 +71,23 @@ public class GrEqualsBetweenInconvertibleTypesInspection extends BaseInspection 
 
     private void processMethodCall(GrMethodCall methodCall) {
       final PsiMethod method = methodCall.resolveMethod();
-      if (method == null || method instanceof GrGdkMethod || !method.getName().equals("equals")) return;
-
-      final GrExpression rightExpression, leftExpression;
+      if (method == null || !method.getName().equals("equals")) return;
 
       final GrArgumentList argumentList = methodCall.getArgumentList();
       final GrExpression[] arguments = argumentList.getExpressionArguments();
-      if (method.hasModifierProperty(PsiModifier.STATIC)) return;
-      if (!MethodUtils.isEquals(method)) return;
       if (arguments.length != 1) return;
-      assert methodCall.getInvokedExpression() instanceof GrReferenceExpression;
-      final GrReferenceExpression methodExpression = (GrReferenceExpression)methodCall.getInvokedExpression();
-      rightExpression = arguments[0];
-      leftExpression = methodExpression.getQualifierExpression();
-
-      final PsiType rightType = rightExpression.getType();
+      final PsiType rightType = arguments[0].getType();
       if (rightType == null) return;
 
-      final PsiType leftType;
-      if (leftExpression == null) {
-        final PsiClass aClass = PsiTreeUtil.getParentOfType(methodCall, GrClassDefinition.class);
-        if (aClass == null) return;
-        leftType = TypeUtils.getType(aClass);
-      }
-      else {
-        leftType = leftExpression.getType();
-      }
+      if (method.hasModifierProperty(PsiModifier.STATIC)) return;
+      if (!MethodUtils.isEquals(method)) return;
+      assert methodCall.getInvokedExpression() instanceof GrReferenceExpression;
+      final GrReferenceExpression methodExpression = (GrReferenceExpression)methodCall.getInvokedExpression();
+      final PsiType leftType = PsiImplUtil.getQualifierType(methodExpression);
       if (leftType == null) return;
 
       if (TypeUtils.areConvertible(rightType, leftType)) return;
-
-      registerMethodCallError(methodCall, "equals()", rightType.getPresentableText(), leftType.getPresentableText());
+      registerMethodCallError(methodCall, "equals()", leftType.getPresentableText(), rightType.getPresentableText());
     }
   }
 }

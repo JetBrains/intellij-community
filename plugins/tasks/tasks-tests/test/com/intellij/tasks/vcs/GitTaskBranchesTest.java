@@ -58,7 +58,7 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
 
   @Override
   protected int getNumberOfBranches(@NotNull Repository repository) {
-    return repository instanceof GitRepository ? ((GitRepository)repository).getBranches().getLocalBranches().size() : 0;
+    return ((GitRepository)repository).getBranches().getLocalBranches().size();
   }
 
   @Override
