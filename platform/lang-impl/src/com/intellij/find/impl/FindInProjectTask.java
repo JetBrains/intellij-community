@@ -82,7 +82,7 @@ class FindInProjectTask {
   private final Condition<VirtualFile> myFileMask;
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
-  private final Set<PsiFile> myLargeFiles = ContainerUtil.newTroveSet();
+  private final Set<VirtualFile> myLargeFiles = ContainerUtil.newTroveSet();
   private boolean myWarningShown;
 
   FindInProjectTask(@NotNull final FindModel findModel,
@@ -122,9 +122,9 @@ class FindInProjectTask {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning indexed files...");
-      final Set<PsiFile> filesForFastWordSearch = ApplicationManager.getApplication().runReadAction(new Computable<Set<PsiFile>>() {
+      final Set<VirtualFile> filesForFastWordSearch = ApplicationManager.getApplication().runReadAction(new Computable<Set<VirtualFile>>() {
         @Override
-        public Set<PsiFile> compute() {
+        public Set<VirtualFile> compute() {
           return getFilesForFastWordSearch();
         }
       });
@@ -138,7 +138,7 @@ class FindInProjectTask {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning non-indexed files...");
       boolean skipIndexed = canRelyOnIndices();
-      final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch, skipIndexed);
+      final Collection<VirtualFile> otherFiles = collectFilesInScope(filesForFastWordSearch, skipIndexed);
       myProgress.setIndeterminate(false);
 
       if (LOG.isDebugEnabled()) {
@@ -167,13 +167,13 @@ class FindInProjectTask {
     }
   }
 
-  private static void logStats(Collection<PsiFile> otherFiles, long start) {
+  private static void logStats(Collection<VirtualFile> otherFiles, long start) {
     long time = System.currentTimeMillis() - start;
 
     final Multiset<String> stats = HashMultiset.create();
-    for (PsiFile file : otherFiles) {
+    for (VirtualFile file : otherFiles) {
       //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-      stats.add(StringUtil.notNullize(file.getViewProvider().getVirtualFile().getExtension()).toLowerCase());
+      stats.add(StringUtil.notNullize(file.getExtension()).toLowerCase());
     }
 
     List<String> extensions = ContainerUtil.newArrayList(stats.elementSet());
@@ -194,17 +194,16 @@ class FindInProjectTask {
     LOG.info(message);
   }
 
-  private void searchInFiles(@NotNull Collection<PsiFile> psiFiles,
+  private void searchInFiles(@NotNull Collection<VirtualFile> virtualFiles,
                              @NotNull FindUsagesProcessPresentation processPresentation,
                              @NotNull final Processor<UsageInfo> consumer) {
     int i = 0;
     long totalFilesSize = 0;
     int count = 0;
 
-    for (final PsiFile psiFile : psiFiles) {
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
+    for (final VirtualFile virtualFile : virtualFiles) {
       final int index = i++;
-      if (virtualFile == null) continue;
+      if (!virtualFile.isValid()) continue;
 
       long fileLength = UsageViewManagerImpl.getFileLength(virtualFile);
       if (fileLength == -1) continue; // Binary or invalid
@@ -213,16 +212,25 @@ class FindInProjectTask {
       if (skipProjectFile && !Registry.is("find.search.in.project.files")) continue;
 
       if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
-        myLargeFiles.add(psiFile);
+        myLargeFiles.add(virtualFile);
         continue;
       }
 
       myProgress.checkCanceled();
-      myProgress.setFraction((double)index / psiFiles.size());
+      myProgress.setFraction((double)index / virtualFiles.size());
       String text = FindBundle.message("find.searching.for.string.in.file.progress",
                                        myFindModel.getStringToFind(), virtualFile.getPresentableUrl());
       myProgress.setText(text);
       myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
+
+      PsiFile psiFile = findFile(virtualFile);
+      if (psiFile == null) continue;
+
+      if (!(psiFile instanceof PsiBinaryFile)) {
+        PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
+        if (sourceFile != null) psiFile = sourceFile;
+        if (psiFile.getFileType().isBinary()) continue;
+      }
 
       int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, myFindModel, new Processor<UsageInfo>() {
         @Override
@@ -258,7 +266,7 @@ class FindInProjectTask {
   }
 
   @NotNull
-  private Collection<PsiFile> collectFilesInScope(@NotNull final Set<PsiFile> alreadySearched, final boolean skipIndexed) {
+  private Collection<VirtualFile> collectFilesInScope(@NotNull final Set<VirtualFile> alreadySearched, final boolean skipIndexed) {
     SearchScope customScope = myFindModel.getCustomScope();
     final GlobalSearchScope globalCustomScope = toGlobal(customScope);
 
@@ -266,7 +274,7 @@ class FindInProjectTask {
     final boolean hasTrigrams = hasTrigrams(myFindModel.getStringToFind());
 
     class EnumContentIterator implements ContentIterator {
-      final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>();
+      final Set<VirtualFile> myFiles = new LinkedHashSet<VirtualFile>();
 
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
@@ -285,14 +293,7 @@ class FindInProjectTask {
               return;
             }
 
-            PsiFile psiFile = myPsiManager.findFile(virtualFile);
-            if (psiFile != null && !(psiFile instanceof PsiBinaryFile) && !alreadySearched.contains(psiFile)) {
-              PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
-              if (sourceFile != null) psiFile = sourceFile;
-              if (!psiFile.getFileType().isBinary()) {
-                myFiles.add(psiFile);
-              }
-            }
+            if (!alreadySearched.contains(virtualFile)) myFiles.add(virtualFile);
           }
 
           private final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
@@ -309,7 +310,7 @@ class FindInProjectTask {
       }
 
       @NotNull
-      private Collection<PsiFile> getFiles() {
+      private Collection<VirtualFile> getFiles() {
         return myFiles;
       }
     }
@@ -425,7 +426,7 @@ class FindInProjectTask {
 
 
   @NotNull
-  private Set<PsiFile> getFilesForFastWordSearch() {
+  private Set<VirtualFile> getFilesForFastWordSearch() {
     String stringToFind = myFindModel.getStringToFind();
     if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb()) {
       return Collections.emptySet();
@@ -443,7 +444,7 @@ class FindInProjectTask {
       scope = ProjectScope.getContentScope(myProject);
     }
 
-    final Set<PsiFile> resultFiles = new LinkedHashSet<PsiFile>();
+    final Set<VirtualFile> resultFiles = new LinkedHashSet<VirtualFile>();
 
     if (TrigramIndex.ENABLED) {
       final Set<Integer> keys = ContainerUtil.newTroveSet();
@@ -468,10 +469,7 @@ class FindInProjectTask {
 
         for (VirtualFile hit : hits) {
           if (myFileMask.value(hit)) {
-            PsiFile file = findFile(hit);
-            if (file != null) {
-              resultFiles.add(file);
-            }
+            resultFiles.add(hit);
           }
         }
 
@@ -484,7 +482,7 @@ class FindInProjectTask {
       @Override
       public boolean process(VirtualFile file) {
         if (myFileMask.value(file)) {
-          ContainerUtil.addIfNotNull(resultFiles, findFile(file));
+          ContainerUtil.addIfNotNull(resultFiles, file);
         }
         return true;
       }
@@ -492,9 +490,10 @@ class FindInProjectTask {
 
     // in case our word splitting is incorrect
     CacheManager cacheManager = CacheManager.SERVICE.getInstance(myProject);
-    PsiFile[] filesWithWord = cacheManager.getFilesWithWord(stringToFind, UsageSearchContext.ANY, scope, myFindModel.isCaseSensitive());
-    for (PsiFile file : filesWithWord) {
-      if (myFileMask.value(file.getVirtualFile())) {
+    VirtualFile[] filesWithWord = cacheManager.getVirtualFilesWithWord(stringToFind, UsageSearchContext.ANY, scope,
+                                                                       myFindModel.isCaseSensitive());
+    for (VirtualFile file : filesWithWord) {
+      if (myFileMask.value(file)) {
         resultFiles.add(file);
       }
     }

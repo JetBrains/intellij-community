@@ -413,7 +413,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     ArrayList<BranchInfo> infos = new ArrayList<BranchInfo>();
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
-      VcsTaskHandler.TaskInfo[] tasks = handler.getCurrentTasks();
+      VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
       for (VcsTaskHandler.TaskInfo info : tasks) {
         infos.addAll(ContainerUtil.filter(BranchInfo.fromTaskInfo(info, false), new Condition<BranchInfo>() {
           @Override
@@ -434,22 +434,24 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {
+    if (branches.isEmpty()) return new VcsTaskHandler.TaskInfo(null, Collections.<String>emptyList());
     MultiMap<String, String> map = new MultiMap<String, String>();
     for (BranchInfo branch : branches) {
       map.putValue(branch.name, branch.repository);
     }
-    return new VcsTaskHandler.TaskInfo(map);
+    Map.Entry<String, Collection<String>> next = map.entrySet().iterator().next();
+    return new VcsTaskHandler.TaskInfo(next.getKey(), next.getValue());
   }
 
   public void createBranch(LocalTask task, LocalTask previousActive, String name) {
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
-      VcsTaskHandler.TaskInfo info = handler.getActiveTask();
+      VcsTaskHandler.TaskInfo[] info = handler.getCurrentTasks();
       if (previousActive != null && previousActive.getBranches(false).isEmpty()) {
         addBranches(previousActive, info, false);
       }
       addBranches(task, info, true);
-      addBranches(task, handler.startNewTask(name), false);
+      addBranches(task, new VcsTaskHandler.TaskInfo[] { handler.startNewTask(name) }, false);
     }
   }
 
@@ -463,10 +465,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
-  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo info, boolean original) {
-    List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(info, original);
-    for (BranchInfo branchInfo : branchInfos) {
-      task.addBranch(branchInfo);
+  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo[] info, boolean original) {
+    for (VcsTaskHandler.TaskInfo taskInfo : info) {
+      List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(taskInfo, original);
+      for (BranchInfo branchInfo : branchInfos) {
+        task.addBranch(branchInfo);
+      }
     }
   }
 

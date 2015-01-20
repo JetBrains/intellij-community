@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
@@ -27,6 +28,7 @@ public class GCUtil {
    * Try to force VM to collect all the garbage along with soft- and weak-references.
    * Method doesn't guarantee to succeed, and should not be used in the production code.
    */
+  @TestOnly
   public static void tryForceGC() {
     tryGcSoftlyReachableObjects();
     WeakReference<Object> weakReference = new WeakReference<Object>(new Object());
@@ -40,6 +42,7 @@ public class GCUtil {
    * Try to force VM to collect soft references if possible.
    * Method doesn't guarantee to succeed, and should not be used in the production code.
    */
+  @TestOnly
   public static void tryGcSoftlyReachableObjects() {
     ReferenceQueue<Object> q = new ReferenceQueue<Object>();
     SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);

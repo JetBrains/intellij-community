@@ -362,6 +362,27 @@
     <option name="Class">
       <value />
     </option>
+    <option name="DEBUGGER_INLINED_VALUES">
+      <value>
+        <option name="FOREGROUND" value="3d8065" />
+        <option name="FONT_TYPE" value="2" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="DEBUGGER_INLINED_VALUES_EXECUTION_LINE">
+      <value>
+        <option name="FOREGROUND" value="ffeb09" />
+        <option name="FONT_TYPE" value="2" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="DEBUGGER_INLINED_VALUES_MODIFIED">
+      <value>
+        <option name="FOREGROUND" value="ca7e03" />
+        <option name="FONT_TYPE" value="2" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
     <option name="DEFAULT_BRACES">
       <value />
     </option>
