@@ -356,6 +356,9 @@ public class DiffUtil {
     JTextField field = new JTextField(title);
     field.setEditable(false);
     field.setBorder(null);
+    field.setFont(UIUtil.getLabelFont());
+    field.setBackground(UIUtil.TRANSPARENT_COLOR);
+    field.setOpaque(false);
     return field;
   }
 
