@@ -17,6 +17,7 @@ package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
@@ -98,17 +99,25 @@ public class GraphAdditionalEdges {
     return myAdditionEdges.keys();
   }
 
-  public void appendAdditionalEdges(List<GraphEdge> result, int nodeIndex) {
+  private static boolean correctEdge(int startNodeIndex, @NotNull GraphEdge edge, @NotNull EdgeFilter filter) {
+    if (edge.getType().isNormalEdge()) {
+      return (startNodeIndex == convertToInt(edge.getDownNodeIndex()) && filter.upNormal)
+        || (startNodeIndex == convertToInt(edge.getUpNodeIndex()) && filter.downNormal);
+    }
+    else return filter.special;
+  }
+
+  public void appendAdditionalEdges(@NotNull List<GraphEdge> result, int nodeIndex, @NotNull EdgeFilter filter) {
     for (int compressEdge : myAdditionEdges.get(myGetNodeIdByIndex.fun(nodeIndex))) {
       GraphEdge edge = decompressEdge(nodeIndex, compressEdge);
-      if (edge != null) result.add(edge);
+      if (edge != null && correctEdge(nodeIndex, edge, filter)) result.add(edge);
     }
   }
 
-  public void removeAdditionalEdges(List<GraphEdge> result, int nodeIndex) {
+  public void removeAdditionalEdges(@NotNull List<GraphEdge> result, int nodeIndex, @NotNull EdgeFilter filter) {
     for (int compressedEdge : myAdditionEdges.get(myGetNodeIdByIndex.fun(nodeIndex))) {
       GraphEdge edge = decompressEdge(nodeIndex, compressedEdge);
-      if (edge != null) result.remove(edge);
+      if (edge != null && correctEdge(nodeIndex, edge, filter)) result.remove(edge);
     }
   }
 

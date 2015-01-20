@@ -26,7 +26,11 @@ public interface LinearGraph {
   int nodesCount();
 
   @NotNull
+  @Deprecated
   List<GraphEdge> getAdjacentEdges(int nodeIndex);
+
+  @NotNull
+  List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter);
 
   @NotNull
   GraphNode getGraphNode(int nodeIndex);

@@ -23,6 +23,7 @@ import com.intellij.vcs.log.graph.parser.CommitParser
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement
+import com.intellij.vcs.log.graph.api.EdgeFilter
 
 fun LinearGraph.asString(sorted: Boolean = false): String {
   val s = StringBuilder()
@@ -32,7 +33,7 @@ fun LinearGraph.asString(sorted: Boolean = false): String {
     val node = getGraphNode(nodeIndex)
     s.append(node.asString()).append(CommitParser.SEPARATOR)
 
-    var adjEdges = getAdjacentEdges(nodeIndex)
+    var adjEdges = getAdjacentEdges(nodeIndex, EdgeFilter.ALL)
     if (sorted) {
       adjEdges = adjEdges.sortBy(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
     }

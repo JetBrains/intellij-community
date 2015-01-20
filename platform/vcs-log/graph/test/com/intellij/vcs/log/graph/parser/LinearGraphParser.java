@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
@@ -134,7 +135,25 @@ public class LinearGraphParser {
     @NotNull
     @Override
     public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
-      return ContainerUtil.newArrayList(ContainerUtil.concat(myUpEdges.get(nodeIndex), myDownEdges.get(nodeIndex)));
+      return getAdjacentEdges(nodeIndex, EdgeFilter.ALL);
+    }
+
+    @NotNull
+    @Override
+    public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+      List<GraphEdge> result = ContainerUtil.newArrayList();
+
+      for(GraphEdge upEdge : myUpEdges.get(nodeIndex)) {
+        if (upEdge.getType().isNormalEdge() && filter.upNormal) result.add(upEdge);
+        if (!upEdge.getType().isNormalEdge() && filter.special) result.add(upEdge);
+      }
+
+      for(GraphEdge downEdge : myDownEdges.get(nodeIndex)) {
+        if (downEdge.getType().isNormalEdge() && filter.downNormal) result.add(downEdge);
+        if (!downEdge.getType().isNormalEdge() && filter.special) result.add(downEdge);
+      }
+
+      return result;
     }
 
     @NotNull

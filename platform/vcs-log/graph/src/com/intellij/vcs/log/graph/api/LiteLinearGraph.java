@@ -19,6 +19,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.vcs.log.graph.api.EdgeFilter.NORMAL_ALL;
+import static com.intellij.vcs.log.graph.api.EdgeFilter.NORMAL_DOWN;
+import static com.intellij.vcs.log.graph.api.EdgeFilter.NORMAL_UP;
+
 public interface LiteLinearGraph {
   int nodesCount();
 
@@ -26,16 +30,19 @@ public interface LiteLinearGraph {
   List<Integer> getNodes(int nodeIndex, NodeFilter filter);
 
   enum NodeFilter {
-    UP(true, false),
-    DOWN(false, true),
-    ALL(true, true);
+    UP(true, false, NORMAL_UP),
+    DOWN(false, true, NORMAL_DOWN),
+    ALL(true, true, NORMAL_ALL);
 
     public final boolean up;
     public final boolean down;
+    @NotNull
+    public final EdgeFilter edgeFilter;
 
-    NodeFilter(boolean up, boolean down) {
+    NodeFilter(boolean up, boolean down, @NotNull EdgeFilter edgeFilter) {
       this.up = up;
       this.down = down;
+      this.edgeFilter = edgeFilter;
     }
 
     public static NodeFilter filter(boolean toUp) {

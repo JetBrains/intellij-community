@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.util.Function;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
@@ -96,7 +97,13 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
     @NotNull
     @Override
     public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
-      return map(myPermanentGraph.getAdjacentEdges(myBekIntMap.getUsualIndex(nodeIndex)), new Function<GraphEdge, GraphEdge>() {
+      return getAdjacentEdges(nodeIndex, EdgeFilter.ALL);
+    }
+
+    @NotNull
+    @Override
+    public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+      return map(myPermanentGraph.getAdjacentEdges(myBekIntMap.getUsualIndex(nodeIndex), filter), new Function<GraphEdge, GraphEdge>() {
         @Override
         public GraphEdge fun(GraphEdge edge) {
           return new GraphEdge(getNodeIndex(edge.getUpNodeIndex()), getNodeIndex(edge.getDownNodeIndex()), edge.getTargetId(), edge.getType());
