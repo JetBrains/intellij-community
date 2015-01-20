@@ -6,13 +6,17 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.util.DiffUtil;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 @State(
   name = "TextDiffSettings",
   storages = {@Storage(
     file = DiffUtil.DIFF_CONFIG)})
-public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiffSettingsHolder.TextDiffSettings> {
+public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiffSettingsHolder.State> {
   public static class TextDiffSettings {
     public static final Key<TextDiffSettings> KEY = Key.create("TextDiffSettings");
 
@@ -142,23 +146,44 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     @NotNull
     public static TextDiffSettings getSettings() {
-      return getInstance().getState().copy();
+      return getSettings(null);
     }
 
     @NotNull
-    public static TextDiffSettings getSettingsDefaults() {
-      return getInstance().getState();
+    public static TextDiffSettings getSettingsDefaults() { // TODO: remove default settings?
+      return getInstance().getSettings(null);
+    }
+
+    @NotNull
+    public static TextDiffSettings getSettings(@Nullable String name) {
+      if (name == null) return getInstance().getSettings(null).copy();
+      return getInstance().getSettings(name);
     }
   }
 
-  private TextDiffSettings myState = new TextDiffSettings();
+  public static class State {
+    public Map<String, TextDiffSettings> MAP = new HashMap<String, TextDiffSettings>();
+  }
+
+  private State myState = new State();
 
   @NotNull
-  public TextDiffSettings getState() {
+  public TextDiffSettings getSettings(@Nullable String name) {
+    if (name == null) name = "default";
+    TextDiffSettings settings = myState.MAP.get(name);
+    if (settings == null) {
+      settings = new TextDiffSettings();
+      myState.MAP.put(name, settings);
+    }
+    return settings;
+  }
+
+  @NotNull
+  public State getState() {
     return myState;
   }
 
-  public void loadState(TextDiffSettings state) {
+  public void loadState(State state) {
     myState = state;
   }
 

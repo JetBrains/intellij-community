@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -561,6 +562,12 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private class MyChangeProcessor extends CacheChangeProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project);
+    }
+
+    @Override
+    public void init() {
+      super.init();
+      putContextUserData(DiffUserDataKeys.PLACE, "ChangesView");
     }
 
     @Override

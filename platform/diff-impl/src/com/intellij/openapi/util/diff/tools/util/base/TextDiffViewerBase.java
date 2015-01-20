@@ -111,7 +111,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
   private static TextDiffSettings initTextSettings(@NotNull DiffContext context) {
     TextDiffSettings settings = context.getUserData(TextDiffSettings.KEY);
     if (settings == null) {
-      settings = TextDiffSettings.getSettings();
+      settings = TextDiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
       context.putUserData(TextDiffSettings.KEY, settings);
       if (context.getUserData(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES) != null) {
         settings.setIgnorePolicy(IgnorePolicy.DEFAULT);

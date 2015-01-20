@@ -30,6 +30,8 @@ public interface DiffUserDataKeys {
   Key<Object> DO_NOT_IGNORE_WHITESPACES = Key.create("Diff.DoNotIgnoreWhitespaces");
   Key<String> DIALOG_GROUP_KEY = Key.create("Diff.DialogGroupKey");
 
+  Key<String> PLACE = Key.create("Diff.Place");
+
   //
   // DiffContext / DiffRequest
   //

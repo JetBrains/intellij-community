@@ -1383,6 +1383,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     public void init() {
       super.init();
       putContextUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
+      putContextUserData(DiffUserDataKeys.PLACE, "CommitDialog");
     }
 
     @NotNull
