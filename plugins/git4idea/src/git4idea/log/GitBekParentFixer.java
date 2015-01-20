@@ -24,17 +24,13 @@ import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 class GitBekParentFixer {
-  @NotNull private static final String MAGIC_TEXT_FOR_IDEA_PULLS = "Merge remote";
-  @NotNull private static final String MAGIC_REGEXP_FOR_COMMAND_LINE_PULLS = "^Merge branch .* of [^ ]*$";
-  @NotNull private static final VcsLogFilterCollection MAGIC_IDEA_PULLS_FILTER = createIdeaPullFilterCollection();
-  @NotNull private static final VcsLogFilterCollection MAGIC_COMMAND_LINE_PULLS_FILTER = createCommandLinePullFilterCollection();
-  @NotNull private static final Pattern NAME_WITH_DOT = Pattern.compile("(\\w*)\\.(\\w*)");
-  @NotNull private static final Pattern NAME_WITH_SPACE = Pattern.compile("(\\w*) (\\w*)");
+  @NotNull private static final String MAGIC_TEXT = "Merge remote";
+  @NotNull private static final VcsLogFilterCollection MAGIC_FILTER = createVcsLogFilterCollection();
 
   @NotNull private final Set<Hash> myWrongCommits;
 
@@ -60,64 +56,13 @@ class GitBekParentFixer {
 
   @NotNull
   private static Set<Hash> getWrongCommits(@NotNull GitLogProvider provider, @NotNull VirtualFile root) throws VcsException {
-    List<TimedVcsCommit> ideaPulls = provider.getCommitsMatchingFilter(root, MAGIC_IDEA_PULLS_FILTER, -1);
-    List<TimedVcsCommit> commandLinePullCandidates = provider.getCommitsMatchingFilter(root, MAGIC_COMMAND_LINE_PULLS_FILTER, -1);
-
-    Set<Hash> result = new HashSet<Hash>();
-    Function<TimedVcsCommit, Hash> function = new Function<TimedVcsCommit, Hash>() {
+    List<TimedVcsCommit> commitsMatchingFilter = provider.getCommitsMatchingFilter(root, MAGIC_FILTER, -1);
+    return ContainerUtil.map2Set(commitsMatchingFilter, new Function<TimedVcsCommit, Hash>() {
       @Override
       public Hash fun(TimedVcsCommit timedVcsCommit) {
         return timedVcsCommit.getId();
       }
-    };
-    result.addAll(ContainerUtil.map2Set(ideaPulls, function));
-
-    Set<Hash> commandLinePulls = new HashSet<Hash>();
-    for (TimedVcsCommit candidate : commandLinePullCandidates) {
-      List<Hash> parents = candidate.getParents();
-      if (parents.size() < 2) continue;
-
-      ArrayList<String> hashes = new ArrayList<String>(3);
-      hashes.add(candidate.getId().asString());
-      for (Hash parent : parents) {
-        hashes.add(parent.asString());
-      }
-      List<? extends VcsShortCommitDetails> shortDetails = provider.readShortDetails(root, hashes);
-      String mergeCommitter = null;
-      String firstParentCommitter = null;
-      for (VcsShortCommitDetails detail : shortDetails) {
-        if (detail.getId().equals(candidate.getId())) {
-          mergeCommitter = detail.getCommitter().getName();
-        }
-        else if (detail.getId().equals(parents.get(0))) {
-          firstParentCommitter = detail.getCommitter().getName();
-        }
-      }
-
-      if (mergeCommitter != null &&
-          firstParentCommitter != null &&
-          getNameInStandardForm(mergeCommitter).equals(getNameInStandardForm(firstParentCommitter))) {
-        // actually, even that does not work all the time
-        // a person can make a commit and then merge someones pull-request
-        commandLinePulls.add(candidate.getId());
-      }
-    }
-
-    result.addAll(commandLinePulls);
-    return result;
-  }
-
-  @NotNull
-  private static String getNameInStandardForm(@NotNull String name) {
-    Matcher nameWithDotMatcher = NAME_WITH_DOT.matcher(name);
-    if (nameWithDotMatcher.matches()) {
-      return nameWithDotMatcher.group(1).toLowerCase() + " " + nameWithDotMatcher.group(2).toLowerCase();
-    }
-    Matcher nameWithSpaceMatcher = NAME_WITH_SPACE.matcher(name);
-    if (nameWithSpaceMatcher.matches()) {
-      return nameWithSpaceMatcher.group(1).toLowerCase() + " " + nameWithSpaceMatcher.group(2).toLowerCase();
-    }
-    return name.toLowerCase();
+    });
   }
 
   @NotNull
@@ -142,155 +87,73 @@ class GitBekParentFixer {
     };
   }
 
-  private static VcsLogFilterCollection createIdeaPullFilterCollection() {
+  private static VcsLogFilterCollection createVcsLogFilterCollection() {
     final VcsLogTextFilter textFilter = new VcsLogTextFilter() {
       @NotNull
       @Override
       public String getText() {
-        return MAGIC_TEXT_FOR_IDEA_PULLS;
+        return MAGIC_TEXT;
       }
 
       @Override
       public boolean matches(@NotNull VcsCommitMetadata details) {
-        return details.getFullMessage().contains(MAGIC_TEXT_FOR_IDEA_PULLS);
+        return details.getFullMessage().contains(MAGIC_TEXT);
       }
     };
 
-    return new FilterCollectionWithTextFilter(textFilter);
-  }
+    return new VcsLogFilterCollection() {
+      @Nullable
+      @Override
+      public VcsLogBranchFilter getBranchFilter() {
+        return null;
+      }
 
-  private static VcsLogFilterCollection createCommandLinePullFilterCollection() {
-    final VcsLogTextFilter textFilter = new VcsLogTextFilter() {
-      private final Pattern myPattern = Pattern.compile(MAGIC_REGEXP_FOR_COMMAND_LINE_PULLS, Pattern.MULTILINE);
+      @Nullable
+      @Override
+      public VcsLogUserFilter getUserFilter() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public VcsLogDateFilter getDateFilter() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public VcsLogTextFilter getTextFilter() {
+        return textFilter;
+      }
+
+      @Nullable
+      @Override
+      public VcsLogHashFilter getHashFilter() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public VcsLogStructureFilter getStructureFilter() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public VcsLogRootFilter getRootFilter() {
+        return null;
+      }
+
+      @Override
+      public boolean isEmpty() {
+        return false;
+      }
 
       @NotNull
       @Override
-      public String getText() {
-        return MAGIC_REGEXP_FOR_COMMAND_LINE_PULLS;
-      }
-
-      @Override
-      public boolean matches(@NotNull VcsCommitMetadata details) {
-        return myPattern.matcher(details.getFullMessage()).matches();
+      public List<VcsLogDetailsFilter> getDetailsFilters() {
+        return Collections.<VcsLogDetailsFilter>singletonList(textFilter);
       }
     };
-
-    return new FilterCollectionWithTextFilter(textFilter);
-  }
-
-  private static class FilterCollectionWithTextFilter implements VcsLogFilterCollection {
-    private final VcsLogTextFilter myTextFilter;
-
-    public FilterCollectionWithTextFilter(VcsLogTextFilter textFilter) {
-      myTextFilter = textFilter;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogBranchFilter getBranchFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogUserFilter getUserFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogDateFilter getDateFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogTextFilter getTextFilter() {
-      return myTextFilter;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogHashFilter getHashFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogStructureFilter getStructureFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogRootFilter getRootFilter() {
-      return null;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public List<VcsLogDetailsFilter> getDetailsFilters() {
-      return Collections.<VcsLogDetailsFilter>singletonList(myTextFilter);
-    }
-  }
-
-  private static class EmptyFilterCollection implements VcsLogFilterCollection {
-    @Nullable
-    @Override
-    public VcsLogBranchFilter getBranchFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogUserFilter getUserFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogDateFilter getDateFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogTextFilter getTextFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogHashFilter getHashFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogStructureFilter getStructureFilter() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public VcsLogRootFilter getRootFilter() {
-      return null;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public List<VcsLogDetailsFilter> getDetailsFilters() {
-      return null;
-    }
   }
 }
