@@ -375,7 +375,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs) {
-    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file);
+    showAnnotation(annotation, file, vcs, 0);
+  }
+
+  public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
+    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file, line, 0);
     Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
     if (editor == null) {
       Messages.showMessageDialog(VcsBundle.message("message.text.cannot.open.editor", file.getPresentableUrl()),

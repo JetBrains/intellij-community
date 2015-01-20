@@ -65,6 +65,18 @@ public class IndexCacheManagerImpl implements CacheManager{
     return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(PsiFile.EMPTY_ARRAY);
   }
 
+  @Override
+  @NotNull
+  public VirtualFile[] getVirtualFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+    if (myProject.isDefault()) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+
+    final List<VirtualFile> vFiles = new ArrayList<VirtualFile>(5);
+    collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(vFiles), word, occurenceMask, scope, caseSensitively);
+    return vFiles.isEmpty() ? VirtualFile.EMPTY_ARRAY : vFiles.toArray(new VirtualFile[vFiles.size()]);
+  }
+
   // IMPORTANT!!!
   // Since implementation of virtualFileProcessor.process() may call indices directly or indirectly,
   // we cannot call it inside FileBasedIndex.processValues() method except in collecting form

@@ -139,10 +139,10 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
 
   protected void performReformatActionOnSelectedFile(PsiFile file) {
     final AnAction action = getReformatCodeAction();
-    action.actionPerformed(createEventFor(action, ContainerUtil.newArrayList(file), getProject(), new AdditionalEventInfo().setPsiElement(file)));
+    action.actionPerformed(createEventFor(action, ContainerUtil.newArrayList(file.getVirtualFile()), getProject(), new AdditionalEventInfo().setPsiElement(file)));
   }
 
-  protected void performReformatActionOnModule(Module module, List<PsiFile> files) {
+  protected void performReformatActionOnModule(Module module, List<VirtualFile> files) {
     final AnAction action = getReformatCodeAction();
     action.actionPerformed(createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module)));
   }
@@ -156,7 +156,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     final AnAction action = getReformatCodeAction();
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     Editor editor = EditorFactory.getInstance().createEditor(document);
-    action.actionPerformed(createEventFor(action, ContainerUtil.newArrayList(file), getProject(), new AdditionalEventInfo().setEditor(editor)));
+    action.actionPerformed(createEventFor(action, ContainerUtil.newArrayList(file.getVirtualFile()), getProject(), new AdditionalEventInfo().setEditor(editor)));
     EditorFactory.getInstance().releaseEditor(editor);
   }
 
@@ -199,13 +199,12 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     }, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
   }
 
-  protected AnActionEvent createEventFor(AnAction action, List<PsiFile> files, final Project project, @NotNull final AdditionalEventInfo eventInfo) {
-    final VirtualFile[] vFilesArray = getVirtualFileArrayFrom(files);
+  protected AnActionEvent createEventFor(AnAction action, final List<VirtualFile> files, final Project project, @NotNull final AdditionalEventInfo eventInfo) {
     return new AnActionEvent(null, new DataContext() {
       @Nullable
       @Override
       public Object getData(@NonNls String dataId) {
-        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return vFilesArray;
+        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files.toArray(new VirtualFile[files.size()]);
         if (CommonDataKeys.PROJECT.is(dataId)) return project;
         if (CommonDataKeys.EDITOR.is(dataId)) return eventInfo.getEditor();
         if (LangDataKeys.MODULE_CONTEXT.is(dataId)) return eventInfo.getModule();

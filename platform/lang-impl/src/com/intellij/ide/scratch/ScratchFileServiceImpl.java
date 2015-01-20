@@ -36,7 +36,9 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -305,8 +307,13 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
   }
 
   private static boolean isFileInRootImpl(@NotNull VirtualFile file, RootId scratches) {
+    // files are created under scratches.getId() directory, quickly check parent name to avoid calling getPath()
+    VirtualFile parent = file.getParent();
+    if (parent == null) return false;
+    if (!Comparing.equal(parent.getNameSequence(), scratches.getId(), SystemInfo.isFileSystemCaseSensitive)) return false;
+
     String rootPath = ScratchFileService.getInstance().getRootPath(scratches);
-    return file.getPath().startsWith(rootPath);
+    return FileUtil.startsWith(file.getPath(), rootPath);
   }
 
   private static class MyFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, InternalFileType {

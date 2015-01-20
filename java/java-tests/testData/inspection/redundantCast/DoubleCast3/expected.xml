@@ -3,12 +3,17 @@
   <problem>
     <file>DoubleCast3.java</file>
     <line>4</line>
-    <description>Casting '(String) o' to String is redundant</description>
+    <description>Casting 'o' to String is redundant</description>
   </problem>
   <problem>
     <file>DoubleCast3.java</file>
-    <line>4</line>
-    <description>Casting 'o' to String is redundant</description>
+    <line>6</line>
+    <description>Casting '(String) s' to String is redundant</description>
+  </problem>
+  <problem>
+    <file>DoubleCast3.java</file>
+    <line>6</line>
+    <description>Casting 's' to String is redundant</description>
   </problem>
 </problems>
 
