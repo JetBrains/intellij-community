@@ -107,6 +107,8 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
 
     Set<Integer> definitelyNotTails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
     Set<Integer> tails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
+    boolean mergeWithOldCommit = false;
+
     while (!queue.isEmpty()) {
       GraphEdge nextEdge = queue.poll();
       Integer next = nextEdge.getDownNodeIndex();
@@ -117,6 +119,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       if (next == firstChildIndex) {
         // found first child
         tails.add(upNodeIndex);
+        mergeWithOldCommit = true;
       }
       else if (next < currentNodeIndex + k) {
         // or we were here before
@@ -142,7 +145,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
         addDownEdges(myWorkingGraph, next, queue);
 
         // here we have to decide whether next is a part of the block or not
-        if (visited.get(next)) {
+        if (visited.get(next)) { // TODO should get rid of visited here (same problem as with merge with old commit detection)?
           definitelyNotTails.add(upNodeIndex);
         }
       }
@@ -176,8 +179,6 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
         return false;
       }
     }
-
-    boolean mergeWithOldCommit = currentNodeIndex + k == firstChildIndex && visited.get(firstChildIndex);
 
     for (Integer tail : tails) {
       if (!LinearGraphUtils.getDownNodes(myWorkingGraph, tail).contains(firstChildIndex)) {
