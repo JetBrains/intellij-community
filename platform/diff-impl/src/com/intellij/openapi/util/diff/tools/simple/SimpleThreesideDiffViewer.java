@@ -124,7 +124,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @Override
   protected void updateContextHints() {
     super.updateContextHints();
-    myFoldingModel.updateContext(myRequest);
+    myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
   }
 
   //
@@ -231,7 +231,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         if (myEditors.get(1).getDocument().getModificationStamp() != stamps[1]) return;
         if (myEditors.get(2).getDocument().getModificationStamp() != stamps[2]) return;
 
-        myFoldingModel.updateContext(myRequest);
+        myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
         clearDiffPresentation();
 
         for (MergeLineFragment fragment : fragments) {

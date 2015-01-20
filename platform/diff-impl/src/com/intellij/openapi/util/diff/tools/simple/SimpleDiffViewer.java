@@ -138,7 +138,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   @Override
   protected void updateContextHints() {
     super.updateContextHints();
-    if (myFoldingModel != null) myFoldingModel.updateContext(myRequest);
+    if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
   }
 
   //
@@ -264,7 +264,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (myEditor1 != null && myEditor1.getDocument().getModificationStamp() != data.getStamp1()) return;
         if (myEditor2 != null && myEditor2.getDocument().getModificationStamp() != data.getStamp2()) return;
 
-        if (myFoldingModel != null) myFoldingModel.updateContext(myRequest);
+        if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
         clearDiffPresentation();
 
         if (data.isEqualContent()) myPanel.addContentsEqualNotification();

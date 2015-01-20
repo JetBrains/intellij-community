@@ -131,7 +131,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
   private void updateContextHints() {
     myScrollToLineHelper.updateContext();
-    myFoldingModel.updateContext(myRequest);
+    myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
   }
 
   @NotNull
@@ -333,7 +333,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     return new Runnable() {
       @Override
       public void run() {
-        myFoldingModel.updateContext(myRequest);
+        myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
 
         clearDiffPresentation();
         if (isEqual) myPanel.addContentsEqualNotification();

@@ -497,7 +497,7 @@ public class FoldingModelSupport {
 
     protected abstract class ExpandSuggesterBase {
       @Nullable private final FoldingCache myCache;
-      private int[] myIndex = new int[myCount];
+      private final int[] myIndex = new int[myCount];
       protected final boolean myDefault;
 
       public ExpandSuggesterBase(@Nullable FoldingCache cache, boolean defaultValue) {
@@ -509,6 +509,7 @@ public class FoldingModelSupport {
       protected Boolean getCachedExpanded(int start, int end, int index) {
         if (myCache == null || myCache.myRanges.length != myCount) return null;
         if (start == end) return null;
+        if (myDefault != myCache.myExpandByDefault) return myDefault;
 
         List<FoldedRange> ranges = myCache.myRanges[index];
         for (; myIndex[index] < ranges.size(); myIndex[index]++) {
@@ -523,13 +524,13 @@ public class FoldingModelSupport {
       }
     }
 
-    public void updateContext(@NotNull UserDataHolder context) {
+    public void updateContext(@NotNull UserDataHolder context, boolean defaultState) {
       if (myFoldings.isEmpty()) return; // do not rewrite cache by initial state
-      context.putUserData(CACHE_KEY, getFoldingCache());
+      context.putUserData(CACHE_KEY, getFoldingCache(defaultState));
     }
 
     @NotNull
-    private FoldingCache getFoldingCache() {
+    private FoldingCache getFoldingCache(final boolean defaultState) {
       return ApplicationManager.getApplication().runReadAction(new Computable<FoldingCache>() {
         @Override
         public FoldingCache compute() {
@@ -537,7 +538,7 @@ public class FoldingModelSupport {
           for (int i = 0; i < myCount; i++) {
             result[i] = getFoldedRanges(i);
           }
-          return new FoldingCache(result);
+          return new FoldingCache(result, defaultState);
         }
       });
     }
@@ -558,10 +559,12 @@ public class FoldingModelSupport {
     }
 
     protected static class FoldingCache {
+      public final boolean myExpandByDefault;
       @NotNull public final List<FoldedRange>[] myRanges;
 
-      public FoldingCache(@NotNull List<FoldedRange>[] ranges) {
+      public FoldingCache(@NotNull List<FoldedRange>[] ranges, boolean expandByDefault) {
         myRanges = ranges;
+        myExpandByDefault = expandByDefault;
       }
     }
 
