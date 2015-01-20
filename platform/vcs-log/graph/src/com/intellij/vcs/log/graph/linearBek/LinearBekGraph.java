@@ -76,8 +76,8 @@ public class LinearBekGraph implements LinearGraph {
 
   @Nullable
   @Override
-  public Integer getNodeIndexById(int nodeId) {
-    return myGraph.getNodeIndexById(nodeId);
+  public Integer getNodeIndex(int nodeId) {
+    return myGraph.getNodeIndex(nodeId);
   }
 
   public Collection<GraphEdge> expandEdge(@NotNull final GraphEdge edge) {

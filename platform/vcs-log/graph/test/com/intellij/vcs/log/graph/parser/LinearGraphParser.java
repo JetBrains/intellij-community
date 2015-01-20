@@ -164,7 +164,7 @@ public class LinearGraphParser {
 
     @Override
     @Nullable
-    public Integer getNodeIndexById(int nodeId) {
+    public Integer getNodeIndex(int nodeId) {
       if (nodeId >= 0 && nodeId < nodesCount())
         return nodeId;
       return null;

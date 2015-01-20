@@ -158,8 +158,8 @@ class CollapsedActionManager {
         collapsedGraph.getGraphAdditionalEdges().createEdge(upNodeId, downNodeId, GraphEdgeType.DOTTED);
 
 
-        collapsedGraph.updateNodeMapping(collapsedGraph.getDelegateGraph().getNodeIndexById(upNodeId),
-                                         collapsedGraph.getDelegateGraph().getNodeIndexById(downNodeId));
+        collapsedGraph.updateNodeMapping(collapsedGraph.getDelegateGraph().getNodeIndex(upNodeId),
+                                         collapsedGraph.getDelegateGraph().getNodeIndex(downNodeId));
         return new LinearGraphAnswer(SOME_CHANGES, null, null); // todo fix
       }
 
@@ -238,8 +238,8 @@ class CollapsedActionManager {
                                 Condition.FALSE);
         int upNodeId = graphController.getCompiledGraph().getNodeId(dottedEdge.first);
         int downNodeId = graphController.getCompiledGraph().getNodeId(dottedEdge.second);
-        Integer upNodeIndex = delegateGraph.getNodeIndexById(upNodeId);
-        Integer downNodeIndex = delegateGraph.getNodeIndexById(downNodeId);
+        Integer upNodeIndex = delegateGraph.getNodeIndex(upNodeId);
+        Integer downNodeIndex = delegateGraph.getNodeIndex(downNodeId);
         Set<Integer> middleNodes =
           fragmentGenerator.getMiddleNodes(upNodeIndex, downNodeIndex);
 

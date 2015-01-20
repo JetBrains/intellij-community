@@ -121,7 +121,7 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
 
     @Nullable
     @Override
-    public Integer getNodeIndexById(int nodeId) {
+    public Integer getNodeIndex(int nodeId) {
       if (!inRanges(nodeId)) return null;
 
       return myBekIntMap.getBekIndex(nodeId);
