@@ -29,7 +29,12 @@ public class NamedScriptableDefinition implements JDOMExternalizable, Cloneable 
   }
 
   public void setScriptCodeConstraint(String scriptCodeConstraint) {
-    this.scriptCodeConstraint = scriptCodeConstraint;
+    if ("\"\"".equals(scriptCodeConstraint)) {
+      this.scriptCodeConstraint = "";
+    }
+    else {
+      this.scriptCodeConstraint = scriptCodeConstraint;
+    }
   }
 
   public Object clone() {
@@ -48,13 +53,13 @@ public class NamedScriptableDefinition implements JDOMExternalizable, Cloneable 
 
     String s = element.getAttributeValue(SCRIPT);
     if (s != null) {
-      setScriptCodeConstraint(s);
+      scriptCodeConstraint = s;
     }
   }
 
   public void writeExternal(Element element) {
     element.setAttribute(NAME,name);
-    if (scriptCodeConstraint.length() > 0 && !scriptCodeConstraint.equals("\"\"")) element.setAttribute(SCRIPT,scriptCodeConstraint);
+    if (scriptCodeConstraint.length() > 0) element.setAttribute(SCRIPT,scriptCodeConstraint);
   }
 
   @Override
