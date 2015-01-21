@@ -120,8 +120,6 @@
     <extensionPoint name="debugger.nodeRenderer"
                     interface="com.intellij.debugger.ui.tree.render.NodeRenderer"/>
 
-    <extensionPoint name="debugger.jvmDebugProvider"
-                    interface="com.intellij.debugger.engine.JVMDebugProvider"/>
     <extensionPoint name="debugger.javaDebugAware"
                     interface="com.intellij.debugger.engine.JavaDebugAware"/>
 

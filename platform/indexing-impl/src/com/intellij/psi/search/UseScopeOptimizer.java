@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Excludes scope from use scope of PSI element. The extension should be used only for optimization, i.e. it should throw off scopes
+ * which can't contain references to provided PSI element.
+ *
  * @author Konstantin.Ulitin
  */
 public abstract class UseScopeOptimizer {

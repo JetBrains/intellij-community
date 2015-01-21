@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.format.Course;
 import com.jetbrains.edu.coursecreator.format.Lesson;
 import com.jetbrains.edu.coursecreator.format.Task;
@@ -62,4 +63,16 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     data.setPresentableText(valueName);
   }
 
+  @Override
+  public int getTypeSortWeight(boolean sortByType) {
+    String name = myValue.getName();
+    String lessonDirName = "lesson";
+    String taskDirName = "task";
+    if (name.startsWith(lessonDirName) || name.startsWith(taskDirName)) {
+      String logicalName = name.contains(lessonDirName) ? lessonDirName : taskDirName;
+      int index = CCUtils.getIndex(name, logicalName) + 1;
+      return index != -1 ? index : 0;
+    }
+    return 0;
+  }
 }

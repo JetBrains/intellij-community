@@ -46,7 +46,16 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
     assertEmpty(myFixture.filterAvailableIntentions("Properly capitalize"));
   }
 
-  public void doTest(boolean fix) {
+  public void testIntention() throws Exception {
+    myFixture.configureByFile("Intention.java");
+    AnnotateCapitalizationIntention intention = new AnnotateCapitalizationIntention();
+    assertTrue(intention.isAvailable(getProject(), getEditor(), getFile()));
+    intention.invoke(getProject(), getEditor(), getFile());
+    myFixture.checkResultByFile("Intention_after.java");
+    assertFalse(intention.isAvailable(getProject(), getEditor(), getFile()));
+  }
+
+  private void doTest(boolean fix) {
     myFixture.testHighlighting(getTestName(false) + ".java");
     if (!fix) return;
 

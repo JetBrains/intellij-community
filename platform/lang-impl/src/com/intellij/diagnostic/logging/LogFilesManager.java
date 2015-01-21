@@ -18,28 +18,91 @@ package com.intellij.diagnostic.logging;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
+import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
-import java.util.Set;
-import java.util.TreeMap;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 public class LogFilesManager {
   private final LogConsoleManager myManager;
+  private final List<LogFile> myLogFiles = new ArrayList<LogFile>();
+  private final SingleAlarm myUpdateAlarm;
 
-  public LogFilesManager(@NotNull LogConsoleManager manager) {
+  public LogFilesManager(@NotNull final Project project, @NotNull LogConsoleManager manager, @NotNull Disposable parentDisposable) {
     myManager = manager;
+
+    myUpdateAlarm = new SingleAlarm(new Runnable() {
+      @Override
+      public void run() {
+        if (project.isDisposed()) {
+          return;
+        }
+
+        for (final LogFile logFile : new ArrayList<LogFile>(myLogFiles)) {
+          ProcessHandler process = logFile.getProcess();
+          if (process != null && process.isProcessTerminated()) {
+            myLogFiles.remove(logFile);
+            continue;
+          }
+
+          final Set<String> oldPaths = logFile.getPaths();
+          final Set<String> newPaths = logFile.getOptions().getPaths(); // should not be called in UI thread
+          logFile.setPaths(newPaths);
+
+          final Set<String> obsoletePaths = new THashSet<String>(oldPaths);
+          obsoletePaths.removeAll(newPaths);
+
+          try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                if (project.isDisposed()) {
+                  return;
+                }
+
+                addConfigurationConsoles(logFile.getOptions(), new Condition<String>() {
+                  @Override
+                  public boolean value(final String file) {
+                    return !oldPaths.contains(file);
+                  }
+                }, newPaths, logFile.getConfiguration());
+                for (String each : obsoletePaths) {
+                  myManager.removeLogConsole(each);
+                }
+              }
+            });
+          }
+          catch (InterruptedException ignored) {
+
+          }
+          catch (InvocationTargetException ignored) {
+
+          }
+        }
+
+        if (!myLogFiles.isEmpty()) {
+          myUpdateAlarm.request();
+        }
+      }
+    }, 500, Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
   public void addLogConsoles(@NotNull RunConfigurationBase runConfiguration, @Nullable ProcessHandler startedProcess) {
     for (LogFileOptions logFileOptions : runConfiguration.getAllLogFiles()) {
       if (logFileOptions.isEnabled()) {
-        addConfigurationConsoles(logFileOptions, Conditions.<String>alwaysTrue(), logFileOptions.getPaths(), runConfiguration);
+        myLogFiles.add(new LogFile(logFileOptions, runConfiguration, startedProcess));
       }
     }
+    myUpdateAlarm.request();
     runConfiguration.createAdditionalTabComponents(myManager, startedProcess);
   }
 
@@ -71,6 +134,40 @@ public class LogFilesManager {
       String path = titleToPath.get(title);
       assert path != null;
       myManager.addLogConsole(title, path, logFile.getCharset(), logFile.isSkipContent() ? new File(path).length() : 0, runConfiguration);
+    }
+  }
+
+  private static class LogFile {
+
+    private final LogFileOptions myOptions;
+    private final RunConfigurationBase myConfiguration;
+    private final ProcessHandler myProcess;
+    private Set<String> myPaths = new HashSet<String>();
+
+    public LogFile(LogFileOptions options, RunConfigurationBase configuration, ProcessHandler process) {
+      myOptions = options;
+      myConfiguration = configuration;
+      myProcess = process;
+    }
+
+    public LogFileOptions getOptions() {
+      return myOptions;
+    }
+
+    public RunConfigurationBase getConfiguration() {
+      return myConfiguration;
+    }
+
+    public ProcessHandler getProcess() {
+      return myProcess;
+    }
+
+    public Set<String> getPaths() {
+      return myPaths;
+    }
+
+    public void setPaths(Set<String> paths) {
+      myPaths = paths;
     }
   }
 }
