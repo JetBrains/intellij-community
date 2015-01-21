@@ -221,9 +221,10 @@ public final class LanguageConsoleBuilder {
 
     @NotNull
     @Override
-    protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
+    protected PsiFile createFile(@NotNull Project project,
+                                 @NotNull VirtualFile virtualFile) {
       if (psiFileFactory == null) {
-        return super.createFile(virtualFile, document, project);
+        return super.createFile(project, virtualFile);
       }
       else {
         return psiFileFactory.fun(virtualFile, project);

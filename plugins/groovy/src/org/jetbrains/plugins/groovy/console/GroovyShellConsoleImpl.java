@@ -16,10 +16,10 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.testFramework.LightVirtualFile;
@@ -49,8 +49,9 @@ public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
 
   @NotNull
   @Override
-  protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
-    return new GroovyShellCodeFragment(project, virtualFile);
+  protected PsiFile createFile(@NotNull Project project,
+                               @NotNull VirtualFile virtualFile) {
+    return new GroovyShellCodeFragment(project, (LightVirtualFile)virtualFile);
   }
 
   @NotNull
