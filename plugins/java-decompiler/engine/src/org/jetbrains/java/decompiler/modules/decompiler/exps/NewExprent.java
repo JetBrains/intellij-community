@@ -253,7 +253,7 @@ public class NewExprent extends Exprent {
         }
         Exprent methodObject = constructor == null ? null : constructor.getInstance();
         TextBuffer clsBuf = new TextBuffer();
-        new ClassWriter().classLambdaToJava(child, clsBuf, methodObject, indent);
+        new ClassWriter().classLambdaToJava(child, clsBuf, methodObject, indent, tracer);
         buf.append(clsBuf);
         tracer.incrementCurrentSourceLine(clsBuf.countLines());
       }
