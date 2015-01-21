@@ -471,6 +471,17 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-14408
+  public void testIndentsWithTabsInsideDictLiteral() {
+    getCommonSettings().getIndentOptions().USE_TAB_CHARACTER = true;
+    try {
+      doTest();
+    }
+    finally {
+      getCommonSettings().getIndentOptions().USE_TAB_CHARACTER = false;
+    }
+  }
+
   /**
    * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
    * is possible for Python sources.
