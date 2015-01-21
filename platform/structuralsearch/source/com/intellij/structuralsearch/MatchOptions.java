@@ -82,20 +82,12 @@ public class MatchOptions implements JDOMExternalizable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuffer result = new StringBuffer();
-
-    result.append("match options:\n");
-    result.append("search pattern:\n");
-    result.append(searchCriteria);
-    result.append("\nsearch scope:\n");
-
-    result.append("\nrecursive:");
-    result.append(recursiveSearch);
-
-    result.append("\ncasesensitive:");
-    result.append(caseSensitiveMatch);
-
-    return result.toString();
+    return "match options:\n" +
+           "pattern:\n" + searchCriteria +
+           "\nscope:\n" + ((scope != null) ? scope.toString() : "undefined scope") +
+           "\nrecursive: " + recursiveSearch +
+           "\ncase sensitive: " + caseSensitiveMatch +
+           "\nloose: " + looseMatching;
   }
 
   public boolean isRecursiveSearch() {
