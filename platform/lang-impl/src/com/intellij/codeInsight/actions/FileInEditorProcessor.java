@@ -137,10 +137,10 @@ class FileInEditorProcessor {
 
     if (notifications.isEmpty() && !myNoChangesDetected) {
       if (myProcessChangesTextOnly) {
-        builder.append("Changes since last revision: processed, nothing modified").append("<br>");
+        builder.append("No lines changed: changes since last revision are already properly formatted").append("<br>");
       }
       else {
-        builder.append("Code processed, nothing modified").append("<br>");
+        builder.append("No lines changed: code is already properly formatted").append("<br>");
       }
     }
     else {
@@ -157,11 +157,7 @@ class FileInEditorProcessor {
         builder.append("<br>");
       }
       else if (myNoChangesDetected) {
-        builder.append("Nothing to format");
-        if (myShouldRearrangeCode) {
-          builder.append(" and rearrange");
-        }
-        builder.append(", no changes since last revision").append("<br>");
+        builder.append("No lines changed: no changes since last revision").append("<br>");
       }
 
       String optimizeImportsNotification = notifications.getOptimizeImportsNotification();
