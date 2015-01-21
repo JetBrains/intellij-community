@@ -269,10 +269,7 @@ class TestPermanentGraphInfo(
   override fun getPermanentCommitsInfo() = commitInfo
   override fun getPermanentLinearGraph() = graph
   override fun getPermanentGraphLayout() = graphLayout
-
-  override fun getNotCollapsedNodes() = object : Condition<Int> {
-    override fun value(nodeId: Int) = branchNodes.contains(nodeId)
-  }
+  override fun getBranchNodeIds() = branchNodes
 
   override fun getGraphColorManager() = colorManager
 }

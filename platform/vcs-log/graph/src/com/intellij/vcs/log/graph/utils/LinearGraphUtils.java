@@ -28,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class LinearGraphUtils {
   public static final LinearGraphController.LinearGraphAnswer DEFAULT_GRAPH_ANSWER =
@@ -158,6 +160,28 @@ public class LinearGraphUtils {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static Set<Integer> convertNodeIndexesToIds(@NotNull final LinearGraph graph, @NotNull Collection<Integer> nodeIndexes) {
+    return ContainerUtil.map2Set(nodeIndexes, new Function<Integer, Integer>() {
+      @Override
+      public Integer fun(Integer nodeIndex) {
+        return graph.getNodeId(nodeIndex);
+      }
+    });
+  }
+
+  @NotNull
+  public static Set<Integer> convertIdsToNodeIndexes(@NotNull final LinearGraph graph, @NotNull Collection<Integer> ids) {
+    return ContainerUtil.map2Set(ids, new Function<Integer, Integer>() {
+      @Override
+      public Integer fun(Integer id) {
+        Integer nodeIndex = graph.getNodeIndex(id);
+        assert nodeIndex != null;
+        return nodeIndex;
+      }
+    });
   }
 
 }

@@ -184,14 +184,4 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     return myBranchNodeIds;
   }
 
-  @NotNull
-  public Condition<Integer> getNotCollapsedNodes() {
-    return new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return myBranchNodeIds.contains(integer);
-      }
-    };
-  }
-
 }
