@@ -15,26 +15,16 @@
  */
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.util.NotNullFunction;
-import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
-import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex;
-import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Comparator;
 
 public abstract class CascadeLinearGraphController implements LinearGraphController {
   @Nullable
   private final CascadeLinearGraphController myDelegateLinearGraphController;
   @NotNull
   protected final PermanentGraphInfo myPermanentGraphInfo;
-  @Nullable
-  private PrintElementManagerImpl myPrintElementManager;
 
   protected CascadeLinearGraphController(@Nullable CascadeLinearGraphController delegateLinearGraphController,
                                          @NotNull PermanentGraphInfo permanentGraphInfo) {
@@ -49,20 +39,10 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
     if (answer == null && myDelegateLinearGraphController != null) {
       answer = myDelegateLinearGraphController.performLinearGraphAction(action);
       answer = performDelegateUpdate(answer);
-      myPrintElementManager = createPrintElementManager(myPermanentGraphInfo);
     }
     if (answer != null)
       return answer;
     return LinearGraphUtils.DEFAULT_GRAPH_ANSWER;
-  }
-
-  @NotNull
-  @Override
-  public PrintElementManager getPrintElementManager() {
-    if (myPrintElementManager == null) {
-      myPrintElementManager = createPrintElementManager(myPermanentGraphInfo);
-    }
-    return myPrintElementManager;
   }
 
   @NotNull
@@ -71,8 +51,6 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
     return myDelegateLinearGraphController;
   }
 
-  protected abstract boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement);
-
   @NotNull
   protected abstract LinearGraphAnswer performDelegateUpdate(@NotNull LinearGraphAnswer delegateAnswer);
 
@@ -80,46 +58,4 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   @Nullable
   protected abstract LinearGraphAnswer performAction(@NotNull LinearGraphAction action);
 
-  private <CommitId> PrintElementManagerImpl createPrintElementManager(final PermanentGraphInfo<CommitId> permanentGraphInfo) {
-    Comparator<GraphElement> graphElementComparator = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Integer nodeIndex) {
-        int nodeId = getCompiledGraph().getNodeId(nodeIndex);
-        if (nodeId < 0)
-          return nodeId;
-        return permanentGraphInfo.getPermanentGraphLayout().getLayoutIndex(nodeId);
-      }
-    });
-    ColorGetterByLayoutIndex<CommitId> colorGetter = new ColorGetterByLayoutIndex<CommitId>(getCompiledGraph(), permanentGraphInfo);
-    return new PrintElementManagerImpl(graphElementComparator, colorGetter);
-  }
-
-  private class PrintElementManagerImpl implements PrintElementManager {
-    @NotNull
-    private final Comparator<GraphElement> myGraphElementComparator;
-    @NotNull
-    private final ColorGetterByLayoutIndex myColorGetter;
-
-    private PrintElementManagerImpl(@NotNull Comparator<GraphElement> graphElementComparator, @NotNull ColorGetterByLayoutIndex colorGetter) {
-      myGraphElementComparator = graphElementComparator;
-      myColorGetter = colorGetter;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull PrintElementWithGraphElement printElement) {
-      return CascadeLinearGraphController.this.elementIsSelected(printElement);
-    }
-
-    @Override
-    public int getColorId(@NotNull GraphElement element) {
-      return myColorGetter.getColorId(element);
-    }
-
-    @NotNull
-    @Override
-    public Comparator<GraphElement> getGraphElementComparator() {
-      return myGraphElementComparator;
-    }
-  }
 }

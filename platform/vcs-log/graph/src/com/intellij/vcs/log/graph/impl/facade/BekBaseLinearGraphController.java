@@ -24,7 +24,6 @@ import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekChecker;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,11 +43,6 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
     myBekGraph = new BekLinearGraph();
 
     assert BekChecker.checkLinearGraph(myBekGraph); // todo drop later
-  }
-
-  @Override
-  protected boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement) {
-    return false;
   }
 
   @NotNull

@@ -40,6 +40,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getCursor;
+
 class CollapsedActionManager {
 
   private CollapsedActionManager() {}
@@ -82,9 +84,17 @@ class CollapsedActionManager {
     return null;
   }
 
-  private static LinearGraphAnswer clearHover(@NotNull CollapsedLinearGraphController graphController) {
-    graphController.setSelectedNodes(Collections.<Integer>emptySet());
-    return LinearGraphUtils.createCursorAnswer(false); // todo check performance
+  private static LinearGraphAnswer clearHover() {
+    return new LinearGraphAnswer(null, getCursor(false), null, Collections.<Integer>emptySet());
+  }
+
+  private static LinearGraphAnswer selectedAnswer(@NotNull LinearGraph linearGraph, Collection<Integer> selectedNodeIndexes) {
+    Set<Integer> selectedId = ContainerUtil.newHashSet();
+    for (Integer nodeIndex : selectedNodeIndexes) {
+      if (nodeIndex == null) continue;
+      selectedId.add(linearGraph.getNodeId(nodeIndex));
+    }
+    return new LinearGraphAnswer(null, getCursor(true), null, selectedId);
   }
 
   private final static ActionCase HOVER_CASE = new ActionCase() {
@@ -95,21 +105,19 @@ class CollapsedActionManager {
 
       GraphEdge dottedEdge = getDottedEdge(action.getAffectedElement(), graphController.getCompiledGraph());
       if (dottedEdge != null) {
-        graphController.setSelectedElements(ContainerUtil.<GraphElement>set(dottedEdge));
-        return LinearGraphUtils.createCursorAnswer(true);
+        return selectedAnswer(graphController.getCompiledGraph(), ContainerUtil.set(dottedEdge.getDownNodeIndex(), dottedEdge.getUpNodeIndex()));
       }
 
-      if (action.getAffectedElement() == null) return clearHover(graphController);
+      if (action.getAffectedElement() == null) return clearHover();
 
       GraphElement element = action.getAffectedElement().getGraphElement();
       LinearFragmentGenerator.GraphFragment fragment = graphController.getLinearFragmentGenerator().getPartLongFragment(element);
       if (fragment != null) {
         Set<Integer> middleNodes = graphController.getFragmentGenerator().getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex);
-        graphController.setSelectedNodes(middleNodes);
-        return LinearGraphUtils.createCursorAnswer(true);
+        return selectedAnswer(graphController.getCompiledGraph(), middleNodes);
       }
 
-      return clearHover(graphController);
+      return clearHover();
     }
   };
 
@@ -160,7 +168,7 @@ class CollapsedActionManager {
 
         collapsedGraph.updateNodeMapping(collapsedGraph.getDelegateGraph().getNodeIndex(upNodeId),
                                          collapsedGraph.getDelegateGraph().getNodeIndex(downNodeId));
-        return new LinearGraphAnswer(SOME_CHANGES, null, null); // todo fix
+        return new LinearGraphAnswer(SOME_CHANGES, null, null, null); // todo fix
       }
 
       return null;
@@ -182,7 +190,7 @@ class CollapsedActionManager {
       collapsedGraph.getGraphAdditionalEdges().removeAll();
       collapsedGraph.updateNodeMapping(0, delegateGraph.nodesCount() - 1);
 
-      return new LinearGraphAnswer(SOME_CHANGES, null, null); // todo fix
+      return new LinearGraphAnswer(SOME_CHANGES, null, null, null); // todo fix
     }
   };
 
@@ -217,7 +225,7 @@ class CollapsedActionManager {
       }
       collapsedGraph.updateNodeMapping(0, delegateGraph.nodesCount() - 1);
 
-      return new LinearGraphAnswer(SOME_CHANGES, null, null);
+      return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
     }
   };
 
@@ -256,7 +264,7 @@ class CollapsedActionManager {
         }
 
         collapsedGraph.updateNodeMapping(upNodeIndex, downNodeIndex);
-        return new LinearGraphAnswer(SOME_CHANGES, null, null); // todo
+        return new LinearGraphAnswer(SOME_CHANGES, null, null, null); // todo
       }
 
       return null;

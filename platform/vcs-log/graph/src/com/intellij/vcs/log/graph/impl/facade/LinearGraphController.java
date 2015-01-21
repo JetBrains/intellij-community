@@ -15,25 +15,21 @@
  */
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphAction;
+import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Set;
 
 public interface LinearGraphController {
 
   @NotNull
   LinearGraph getCompiledGraph();
 
-  @NotNull
-  PrintElementManager getPrintElementManager();
-
-  // Integer = nodeId
   @NotNull
   LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphAction action);
 
@@ -43,15 +39,21 @@ public interface LinearGraphController {
     PrintElementWithGraphElement getAffectedElement();
   }
 
+  // Integer = nodeId
   class LinearGraphAnswer implements GraphAnswer<Integer> {
     @Nullable private final GraphChanges<Integer> myGraphChanges;
     @Nullable private final Cursor myCursorToSet;
     @Nullable private final Integer myCommitToJump;
+    @Nullable private final Set<Integer> mySelectedNodeIds;
 
-    public LinearGraphAnswer(@Nullable GraphChanges<Integer> graphChanges, @Nullable Cursor cursorToSet, @Nullable Integer commitToJump) {
+    public LinearGraphAnswer(@Nullable GraphChanges<Integer> graphChanges,
+                             @Nullable Cursor cursorToSet,
+                             @Nullable Integer commitToJump,
+                             @Nullable Set<Integer> selectedNodeIds) {
       myGraphChanges = graphChanges;
       myCursorToSet = cursorToSet;
       myCommitToJump = commitToJump;
+      mySelectedNodeIds = selectedNodeIds;
     }
 
     @Nullable
@@ -69,6 +71,11 @@ public interface LinearGraphController {
     @Override
     public Integer getCommitToJump() {
       return myCommitToJump;
+    }
+
+    @Nullable
+    public Set<Integer> getSelectedNodeIds() {
+      return mySelectedNodeIds;
     }
   }
 
