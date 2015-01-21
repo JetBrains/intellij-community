@@ -41,7 +41,7 @@ public class DottedFilterEdgesGenerator {
 
   private DottedFilterEdgesGenerator(@NotNull CollapsedGraph collapsedGraph, int upIndex, int downIndex) {
     myCollapsedGraph = collapsedGraph;
-    myLiteDelegateGraph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.getDelegateGraph());
+    myLiteDelegateGraph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.getDelegatedGraph());
     myUpIndex = upIndex;
     myDownIndex = downIndex;
     myNumbers = new ShiftNumber(upIndex, downIndex);
@@ -52,7 +52,7 @@ public class DottedFilterEdgesGenerator {
   }
 
   private int getNodeId(int nodeIndex) {
-    return myCollapsedGraph.getDelegateGraph().getNodeId(nodeIndex);
+    return myCollapsedGraph.getDelegatedGraph().getNodeId(nodeIndex);
   }
 
   private void addDottedEdge(int nodeIndex1, int nodeIndex2) {

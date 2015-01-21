@@ -47,15 +47,15 @@ public class CollapsedGraph {
     return new CollapsedGraph(delegateGraph, delegateNodesVisibility, nodesMap, graphAdditionalEdges);
   }
 
-  public static CollapsedGraph updateInstance(@NotNull CollapsedGraph prevCollapsedGraph, @NotNull LinearGraph delegateGraph) {
+  public static CollapsedGraph updateInstance(@NotNull CollapsedGraph prevCollapsedGraph, @NotNull LinearGraph newDelegateGraph) {
     UnsignedBitSet visibleNodesId = prevCollapsedGraph.myDelegateNodesVisibility.getNodeVisibilityById();
-    GraphNodesVisibility delegateNodesVisibility = new GraphNodesVisibility(delegateGraph, visibleNodesId);
+    GraphNodesVisibility delegateNodesVisibility = new GraphNodesVisibility(newDelegateGraph, visibleNodesId);
     UpdatableIntToIntMap nodesMap = ListIntToIntMap.newInstance(delegateNodesVisibility.asFlags());
     GraphAdditionalEdges graphAdditionalEdges =
       GraphAdditionalEdges
-        .updateInstance(prevCollapsedGraph.myGraphAdditionalEdges, createGetNodeIndexById(delegateGraph, visibleNodesId, nodesMap),
-                        createGetNodeIdByIndex(delegateGraph, nodesMap));
-    return new CollapsedGraph(delegateGraph, delegateNodesVisibility, nodesMap, graphAdditionalEdges);
+        .updateInstance(prevCollapsedGraph.myGraphAdditionalEdges, createGetNodeIndexById(newDelegateGraph, visibleNodesId, nodesMap),
+                        createGetNodeIdByIndex(newDelegateGraph, nodesMap));
+    return new CollapsedGraph(newDelegateGraph, delegateNodesVisibility, nodesMap, graphAdditionalEdges);
   }
 
   private static Function<Integer, Integer> createGetNodeIdByIndex(final LinearGraph delegateGraph, final IntToIntMap nodesMap) {
@@ -82,9 +82,8 @@ public class CollapsedGraph {
     };
   }
 
-
   @NotNull
-  private final LinearGraph myDelegateGraph;
+  private final LinearGraph myDelegatedGraph;
   @NotNull
   private final GraphNodesVisibility myDelegateNodesVisibility;
   @NotNull
@@ -93,13 +92,14 @@ public class CollapsedGraph {
   private final GraphAdditionalEdges myGraphAdditionalEdges;
   @NotNull
   private final CompiledGraph myCompiledGraph;
+  @Nullable private Modification myCurrentModification = null;
 
 
-  private CollapsedGraph(@NotNull LinearGraph delegateGraph,
+  private CollapsedGraph(@NotNull LinearGraph delegatedGraph,
                          @NotNull GraphNodesVisibility delegateNodesVisibility,
                          @NotNull UpdatableIntToIntMap nodesMap,
                          @NotNull GraphAdditionalEdges graphAdditionalEdges) {
-    myDelegateGraph = delegateGraph;
+    myDelegatedGraph = delegatedGraph;
     myDelegateNodesVisibility = delegateNodesVisibility;
     myNodesMap = nodesMap;
     myGraphAdditionalEdges = graphAdditionalEdges;
@@ -107,36 +107,101 @@ public class CollapsedGraph {
   }
 
   @NotNull
-  public LinearGraph getCompiledGraph() {
-    return myCompiledGraph;
-  }
-
-  public void setNodeVisibility(int nodeId, boolean visible) {
-    myDelegateNodesVisibility.getNodeVisibilityById().set(nodeId, visible);
+  public LinearGraph getDelegatedGraph() {
+    return myDelegatedGraph;
   }
 
   public boolean isNodeVisible(int delegateNodeIndex) {
     return myDelegateNodesVisibility.isVisible(delegateNodeIndex);
   }
 
+  @NotNull
+  public Modification startModification() {
+    assert myCurrentModification == null;
+    myCurrentModification = new Modification();
+    return myCurrentModification;
+  }
+
+  @NotNull
+  public LinearGraph getCompiledGraph() {
+    assertNotUnderModification();
+    return myCompiledGraph;
+  }
+
+  @Deprecated
+  public void setNodeVisibility(int nodeId, boolean visible) {
+    myDelegateNodesVisibility.getNodeVisibilityById().set(nodeId, visible);
+  }
+
+  @Deprecated
   public void updateNodeMapping(int fromDelegateNodeIndex, int toDelegateNodeIndex) {
     myNodesMap.update(fromDelegateNodeIndex, toDelegateNodeIndex);
   }
 
+  @Deprecated
   @NotNull
   public GraphAdditionalEdges getGraphAdditionalEdges() {
     return myGraphAdditionalEdges;
   }
 
-  @NotNull
-  public LinearGraph getDelegateGraph() {
-    return myDelegateGraph;
+  // all nodeIndexes means node indexes in delegated graph
+  public class Modification {
+    private boolean done = false;
+    private int minAffectedNodeIndex = Integer.MAX_VALUE;
+    private int maxAffectedNodeIndex = Integer.MIN_VALUE;
+
+    private void touchIndex(int nodeIndex) {
+      assert !done;
+      minAffectedNodeIndex = Math.min(minAffectedNodeIndex, nodeIndex);
+      maxAffectedNodeIndex = Math.max(maxAffectedNodeIndex, nodeIndex);
+    }
+
+    private void touchEdge(@NotNull GraphEdge edge) {
+      assert !done;
+      if (edge.getUpNodeIndex() != null) touchIndex(edge.getUpNodeIndex());
+      if (edge.getDownNodeIndex() != null) touchIndex(edge.getDownNodeIndex());
+    }
+
+    public void showNode(int nodeIndex) {
+      touchIndex(nodeIndex);
+      myDelegateNodesVisibility.show(nodeIndex);
+    }
+
+    public void hideNode(int nodeIndex) {
+      touchIndex(nodeIndex);
+      myDelegateNodesVisibility.hide(nodeIndex);
+    }
+
+    public void createEdge(@NotNull GraphEdge edge) {
+      touchEdge(edge);
+      myGraphAdditionalEdges.createEdge(edge);
+    }
+
+    public void removeEdge(@NotNull GraphEdge edge) { // todo add support for removing edge from delegate graph
+      touchEdge(edge);
+      myGraphAdditionalEdges.removeEdge(edge);
+    }
+
+    public void apply() {
+      assert myCurrentModification == this;
+      done = true;
+      myCurrentModification = null;
+
+      if (minAffectedNodeIndex == Integer.MAX_VALUE || maxAffectedNodeIndex == Integer.MIN_VALUE) return;
+
+      myNodesMap.update(minAffectedNodeIndex, maxAffectedNodeIndex);
+    }
+  }
+
+  private void assertNotUnderModification() {
+    if (myCurrentModification != null) throw new IllegalStateException("CompiledGraph is under modification");
   }
 
   private class CompiledGraph implements LinearGraph {
 
     @Override
     public int nodesCount() {
+      assertNotUnderModification();
       return myNodesMap.shortSize();
     }
 
@@ -166,11 +231,12 @@ public class CollapsedGraph {
     @NotNull
     @Override
     public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+      assertNotUnderModification();
       List<GraphEdge> result = ContainerUtil.newSmartList();
       int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
 
       // add delegate edges
-      for (GraphEdge delegateEdge : myDelegateGraph.getAdjacentEdges(delegateIndex, filter)) {
+      for (GraphEdge delegateEdge : myDelegatedGraph.getAdjacentEdges(delegateIndex, filter)) {
         Integer compiledUpIndex = compiledNodeIndex(delegateEdge.getUpNodeIndex());
         Integer compiledDownIndex = compiledNodeIndex(delegateEdge.getDownNodeIndex());
         if (isVisibleEdge(compiledUpIndex, compiledDownIndex))
@@ -185,21 +251,24 @@ public class CollapsedGraph {
     @NotNull
     @Override
     public GraphNode getGraphNode(int nodeIndex) {
+      assertNotUnderModification();
       int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
-      GraphNode graphNode = myDelegateGraph.getGraphNode(delegateIndex);
+      GraphNode graphNode = myDelegatedGraph.getGraphNode(delegateIndex);
       return new GraphNode(nodeIndex, graphNode.getType());
     }
 
     @Override
     public int getNodeId(int nodeIndex) {
+      assertNotUnderModification();
       int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
-      return myDelegateGraph.getNodeId(delegateIndex);
+      return myDelegatedGraph.getNodeId(delegateIndex);
     }
 
     @Override
     @Nullable
     public Integer getNodeIndex(int nodeId) {
-      Integer delegateIndex = myDelegateGraph.getNodeIndex(nodeId);
+      assertNotUnderModification();
+      Integer delegateIndex = myDelegatedGraph.getNodeIndex(nodeId);
       if (delegateIndex == null)
         return null;
       if (myDelegateNodesVisibility.isVisible(delegateIndex))

@@ -166,8 +166,8 @@ class CollapsedActionManager {
         collapsedGraph.getGraphAdditionalEdges().createEdge(upNodeId, downNodeId, GraphEdgeType.DOTTED);
 
 
-        collapsedGraph.updateNodeMapping(collapsedGraph.getDelegateGraph().getNodeIndex(upNodeId),
-                                         collapsedGraph.getDelegateGraph().getNodeIndex(downNodeId));
+        collapsedGraph.updateNodeMapping(collapsedGraph.getDelegatedGraph().getNodeIndex(upNodeId),
+                                         collapsedGraph.getDelegatedGraph().getNodeIndex(downNodeId));
         return new LinearGraphAnswer(SOME_CHANGES, null, null, null); // todo fix
       }
 
@@ -181,7 +181,7 @@ class CollapsedActionManager {
     public LinearGraphAnswer performAction(@NotNull CollapsedLinearGraphController graphController, @NotNull LinearGraphAction action) {
       if (action.getType() != GraphAction.Type.BUTTON_EXPAND) return null;
       CollapsedGraph collapsedGraph = graphController.getCollapsedGraph();
-      LinearGraph delegateGraph = collapsedGraph.getDelegateGraph();
+      LinearGraph delegateGraph = collapsedGraph.getDelegatedGraph();
 
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
         int nodeId = delegateGraph.getNodeId(nodeIndex);
@@ -201,7 +201,7 @@ class CollapsedActionManager {
       if (action.getType() != GraphAction.Type.BUTTON_COLLAPSE) return null;
 
       CollapsedGraph collapsedGraph = graphController.getCollapsedGraph();
-      LinearGraph delegateGraph = collapsedGraph.getDelegateGraph();
+      LinearGraph delegateGraph = collapsedGraph.getDelegatedGraph();
       LinearFragmentGenerator generator = new LinearFragmentGenerator(delegateGraph, Condition.FALSE);
       FragmentGenerator fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph), Condition.FALSE);
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
@@ -239,7 +239,7 @@ class CollapsedActionManager {
         dottedEdge = LinearGraphUtils.asNormalEdge(getDottedEdge(action.getAffectedElement(), graphController.getCompiledGraph()));
       if (dottedEdge != null) {
         final CollapsedGraph collapsedGraph = graphController.getCollapsedGraph();
-        LinearGraph delegateGraph = collapsedGraph.getDelegateGraph();
+        LinearGraph delegateGraph = collapsedGraph.getDelegatedGraph();
         FragmentGenerator fragmentGenerator =
           new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph),
                                 Condition.FALSE);
@@ -253,7 +253,7 @@ class CollapsedActionManager {
         List<Integer> nodeIdList = ContainerUtil.map(middleNodes, new Function<Integer, Integer>() {
           @Override
           public Integer fun(Integer integer) {
-            return collapsedGraph.getDelegateGraph().getNodeId(integer);
+            return collapsedGraph.getDelegatedGraph().getNodeId(integer);
           }
         });
 
