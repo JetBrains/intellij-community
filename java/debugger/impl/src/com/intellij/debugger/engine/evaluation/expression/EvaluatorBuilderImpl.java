@@ -233,7 +233,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       Evaluator bodyEvaluator = accept(statement.getBody());
       Evaluator conditionEvaluator = accept(statement.getCondition());
       if (conditionEvaluator != null) {
-        myResult = new DoWhileStatementEvaluator(conditionEvaluator, bodyEvaluator, getLabel(statement));
+        myResult = new DoWhileStatementEvaluator(new UnBoxingEvaluator(conditionEvaluator), bodyEvaluator, getLabel(statement));
       }
     }
 
@@ -242,7 +242,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       Evaluator bodyEvaluator = accept(statement.getBody());
       Evaluator conditionEvaluator = accept(statement.getCondition());
       if (conditionEvaluator != null) {
-        myResult = new WhileStatementEvaluator(conditionEvaluator, bodyEvaluator, getLabel(statement));
+        myResult = new WhileStatementEvaluator(new UnBoxingEvaluator(conditionEvaluator), bodyEvaluator, getLabel(statement));
       }
     }
 
@@ -250,6 +250,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitForStatement(PsiForStatement statement) {
       Evaluator initializerEvaluator = accept(statement.getInitialization());
       Evaluator conditionEvaluator = accept(statement.getCondition());
+      if (conditionEvaluator != null) {
+        conditionEvaluator = new UnBoxingEvaluator(conditionEvaluator);
+      }
       Evaluator updateEvaluator = accept(statement.getUpdate());
       Evaluator bodyEvaluator = accept(statement.getBody());
       if (bodyEvaluator != null) {
@@ -302,7 +305,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if(condition == null) return;
       condition.accept(this);
 
-      myResult = new IfStatementEvaluator(myResult, thenEvaluator, elseEvaluator);
+      myResult = new IfStatementEvaluator(new UnBoxingEvaluator(myResult), thenEvaluator, elseEvaluator);
     }
 
     @Override
@@ -582,7 +585,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (myResult == null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", condition.getText())); return;
       }
-      Evaluator conditionEvaluator = myResult;
+      Evaluator conditionEvaluator = new UnBoxingEvaluator(myResult);
       thenExpression.accept(this);
       if (myResult == null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", thenExpression.getText())); return;
