@@ -48,22 +48,14 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
     "__module__",
     "__dict__"
   );
-  public static final PsiElementPattern.Capture<PsiElement> ATTRIBUTE_PATTERN =
+  private static final PsiElementPattern.Capture<PsiElement> ATTRIBUTE_PATTERN =
     psiElement(PyTokenTypes.IDENTIFIER).afterLeaf(psiElement(PyTokenTypes.DOT)).withParent(psiElement(PyReferenceExpression.class));
 
   public PyStructuralTypeAttributesCompletionContributor() {
     extend(CompletionType.SMART, ATTRIBUTE_PATTERN, new AttributesCompletionProvider());
   }
 
-  @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    super.fillCompletionVariants(parameters, result);
-  }
-
   private static class AttributesCompletionProvider extends CompletionProvider<CompletionParameters> {
-    private TypeEvalContext myContext;
-    private Map<PyClass, Set<PyClass>> myAncestorsCache;
-
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   ProcessingContext context,
@@ -75,16 +67,14 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         return;
       }
 
-      myContext = TypeEvalContext.codeCompletion(refExpr.getProject(), parameters.getOriginalFile());
-      myAncestorsCache = Maps.newHashMap();
-
+      final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(refExpr.getProject(), parameters.getOriginalFile());
       //noinspection ConstantConditions
-      final PyStructuralType structType = as(myContext.getType(refExpr.getQualifier()), PyStructuralType.class);
+      final PyStructuralType structType = as(typeEvalContext.getType(refExpr.getQualifier()), PyStructuralType.class);
       if (structType != null) {
         final Set<String> names = Sets.newHashSet(structType.getAttributeNames());
         // Remove "dummy" identifier from the set of attributes
         names.remove(refExpr.getReferencedName());
-        for (PyClass pyClass : suggestClassesFromUsedAttributes(refExpr, names)) {
+        for (PyClass pyClass : suggestClassesFromUsedAttributes(refExpr, names, typeEvalContext)) {
           final PsiElement origPosition = parameters.getOriginalPosition();
           final String prefix;
           if (origPosition != null && origPosition.getNode().getElementType() == PyTokenTypes.IDENTIFIER) {
@@ -103,16 +93,19 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       }
     }
 
-    private Set<PyClass> suggestClassesFromUsedAttributes(@NotNull PyReferenceExpression expression, @NotNull Set<String> seenAttrs) {
+    private Set<PyClass> suggestClassesFromUsedAttributes(@NotNull PsiElement anchor,
+                                                          @NotNull Set<String> seenAttrs,
+                                                          @NotNull TypeEvalContext context) {
       final Set<PyClass> candidates = Sets.newHashSet();
+      final Map<PyClass, Set<PyClass>> ancestorsCache = Maps.newHashMap();
       for (String attribute : seenAttrs) {
         // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
         // and we probably don't want to confuse user with PyNames.FAKE_OLD_BASE anyway
         if (COMMON_OBJECT_ATTRIBUTES.contains(attribute)) {
-          candidates.add(PyBuiltinCache.getInstance(expression).getClass(PyNames.OBJECT));
+          candidates.add(PyBuiltinCache.getInstance(anchor).getClass(PyNames.OBJECT));
         }
         else {
-          final Collection<PyClass> declaringClasses = PyClassAttributesIndex.find(attribute, expression.getProject());
+          final Collection<PyClass> declaringClasses = PyClassAttributesIndex.find(attribute, anchor.getProject());
           candidates.addAll(declaringClasses);
         }
       }
@@ -122,7 +115,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
           continue;
         }
-        if (getAllInheritedAttributeNames(candidate).containsAll(seenAttrs)) {
+        if (getAllInheritedAttributeNames(candidate, context, ancestorsCache).containsAll(seenAttrs)) {
           suitableClasses.add(candidate);
         }
       }
@@ -130,9 +123,11 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
     }
 
     @NotNull
-    private Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate) {
+    private Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
+                                                      @NotNull TypeEvalContext context,
+                                                      @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<String> availableAttrs = Sets.newHashSet(PyClassAttributesIndex.getAllDeclaredAttributeNames(candidate));
-      for (PyClass parent : getAncestorClassesFast(candidate)) {
+      for (PyClass parent : getAncestorClassesFast(candidate, context, ancestorsCache)) {
         availableAttrs.addAll(PyClassAttributesIndex.getAllDeclaredAttributeNames(parent));
       }
       return availableAttrs;
@@ -144,28 +139,30 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
      * intermediate results in case of a large class hierarchy.
      */
     @NotNull
-    private Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass) {
-      final Set<PyClass> ancestors = myAncestorsCache.get(pyClass);
+    private Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
+                                                @NotNull TypeEvalContext context,
+                                                @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
+      final Set<PyClass> ancestors = ancestorsCache.get(pyClass);
       if (ancestors != null) {
         return ancestors;
       }
       // Sentinel value to prevent infinite recursion
-      myAncestorsCache.put(pyClass, Collections.<PyClass>emptySet());
+      ancestorsCache.put(pyClass, Collections.<PyClass>emptySet());
       final Set<PyClass> result = Sets.newHashSet();
       try {
-        for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(myContext)) {
+        for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(context)) {
           if (!(baseType instanceof PyClassType)) {
             continue;
           }
           final PyClass baseClass = ((PyClassType)baseType).getPyClass();
           result.add(baseClass);
-          result.addAll(getAncestorClassesFast(baseClass));
+          result.addAll(getAncestorClassesFast(baseClass, context, ancestorsCache));
         }
       }
       finally {
         // May happen in case of cyclic inheritance
         result.remove(pyClass);
-        myAncestorsCache.put(pyClass, Collections.unmodifiableSet(result));
+        ancestorsCache.put(pyClass, Collections.unmodifiableSet(result));
       }
       return result;
     }
