@@ -205,8 +205,7 @@ class CollapsedActionManager {
       LinearFragmentGenerator generator = new LinearFragmentGenerator(delegateGraph, Condition.FALSE);
       FragmentGenerator fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph), Condition.FALSE);
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
-        int nodeId1 = delegateGraph.getNodeId(nodeIndex);
-        if (!collapsedGraph.getNodeVisibility(nodeId1)) continue;
+        if (!collapsedGraph.isNodeVisible(nodeIndex)) continue;
 
         LinearFragmentGenerator.GraphFragment fragment = generator.getLongDownFragment(nodeIndex);
         if (fragment != null) {
