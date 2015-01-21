@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning.course;
 
+import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -30,7 +31,11 @@ import java.util.List;
  */
 
 public class TaskFile implements Stateful {
+  public String name;
+  String text;
+  @SerializedName("placeholders")
   public List<TaskWindow> taskWindows = new ArrayList<TaskWindow>();
+
   private Task myTask;
   @Transient
   private TaskWindow mySelectedTaskWindow = null;

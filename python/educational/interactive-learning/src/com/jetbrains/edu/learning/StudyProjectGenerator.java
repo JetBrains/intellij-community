@@ -26,11 +26,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.course.*;
+import com.jetbrains.edu.learning.stepic.StudyStepicConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +51,7 @@ public class StudyProjectGenerator {
   public static final String AUTHOR_ATTRIBUTE = "author";
   private final File myCoursesDir = new File(PathManager.getConfigPath(), "courses");
   private static final String CACHE_NAME = "courseNames.txt";
-  private Map<CourseInfo, File> myCourses = new HashMap<CourseInfo, File>();
+  private Map<CourseInfo, File> myCourses = new HashMap<CourseInfo, File>();   // TODO: replace with list
   private File mySelectedCourseFile;
   private Project myProject;
 
@@ -260,19 +262,20 @@ public class StudyProjectGenerator {
    * @return map with course names and course files location
    */
   public Map<CourseInfo, File> loadCourses() {
-    Map<CourseInfo, File> courses = new HashMap<CourseInfo, File>();
-    if (myCoursesDir.exists()) {
-      File[] courseDirs = myCoursesDir.listFiles(new FileFilter() {
-        @Override
-        public boolean accept(File pathname) {
-          return pathname.isDirectory();
-        }
-      });
-      for (File courseDir : courseDirs) {
-        addCourse(courses, courseDir);
-      }
-    }
-    return courses;
+    final List<CourseInfo> courses = StudyStepicConnector.getCourses();
+    //Map<CourseInfo, File> courses = new HashMap<CourseInfo, File>();
+    //if (myCoursesDir.exists()) {
+    //  File[] courseDirs = myCoursesDir.listFiles(new FileFilter() {
+    //    @Override
+    //    public boolean accept(File pathname) {
+    //      return pathname.isDirectory();
+    //    }
+    //  });
+    //  for (File courseDir : courseDirs) {
+    //    addCourse(courses, courseDir);
+    //  }
+    //}
+    return Collections.singletonMap(courses.get(0), null);
   }
 
   /**
@@ -386,20 +389,20 @@ public class StudyProjectGenerator {
     if (!myCourses.isEmpty()) {
       return myCourses;
     }
-    if (myCoursesDir.exists()) {
-      File cacheFile = new File(myCoursesDir, CACHE_NAME);
-      if (cacheFile.exists()) {
-        myCourses = getCoursesFromCache(cacheFile);
-        if (!myCourses.isEmpty()) {
-          return myCourses;
-        }
-      }
-      myCourses = loadCourses();
-      if (!myCourses.isEmpty()) {
-        return myCourses;
-      }
-    }
-    downloadAndUnzip(false);
+    //if (myCoursesDir.exists()) {
+    //  File cacheFile = new File(myCoursesDir, CACHE_NAME);
+    //  if (cacheFile.exists()) {
+    //    myCourses = getCoursesFromCache(cacheFile);
+    //    if (!myCourses.isEmpty()) {
+    //      return myCourses;
+    //    }
+    //  }
+    //  myCourses = loadCourses();
+    //  if (!myCourses.isEmpty()) {
+    //    return myCourses;
+    //  }
+    //}
+    //downloadAndUnzip(false);
     myCourses = loadCourses();
     flushCache();
     return myCourses;

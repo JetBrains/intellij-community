@@ -22,7 +22,8 @@ public class Task implements Stateful {
   public static final String TASK_DIR = "task";
   private static final String ourTestFile = "tests.py";
   public String name;
-  private static final String ourTextFile = "task.html";
+  public String text;
+  public String testsText;
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
   private Lesson myLesson;
   public int myIndex;
@@ -75,7 +76,7 @@ public class Task implements Stateful {
   }
 
   public String getText() {
-    return ourTextFile;
+    return text;
   }
 
   /**

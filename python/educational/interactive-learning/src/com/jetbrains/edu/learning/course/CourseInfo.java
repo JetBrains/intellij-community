@@ -1,13 +1,22 @@
 package com.jetbrains.edu.learning.course;
 
+import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
+
 /**
  * Implementation of class which contains information to be shawn in course description in tool window
  * and when project is being created
  */
 public class CourseInfo {
+  boolean is_public;
+  public List<Integer> sections;
+  @SerializedName("title")
   private String myName;
-  private String myAuthor;
+  @SerializedName("summary")
   private String myDescription;
+
+  private String myAuthor;
   public static CourseInfo INVALID_COURSE = new CourseInfo("", "", "");
 
   public CourseInfo(String name, String author, String description) {

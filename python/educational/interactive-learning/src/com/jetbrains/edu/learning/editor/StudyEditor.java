@@ -119,7 +119,7 @@ public class StudyEditor implements TextEditor {
     myTaskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
     if (myTaskFile != null) {
       Task currentTask = myTaskFile.getTask();
-      String taskText = currentTask.getResourceText(project, currentTask.getText(), false);
+      String taskText = currentTask.getText();
       initializeTaskText(studyPanel, taskText);
       JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
       JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));

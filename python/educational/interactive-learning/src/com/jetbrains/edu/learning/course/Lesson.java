@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning.course;
 
+import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -11,7 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lesson implements Stateful {
+  String id;
+  public List<Integer> steps;
+  public List<String> tags;
+  Boolean is_public;
+  @SerializedName("title")
   public String name;
+
   public List<Task> taskList = new ArrayList<Task>();
   private Course myCourse = null;
   public int myIndex = -1;
