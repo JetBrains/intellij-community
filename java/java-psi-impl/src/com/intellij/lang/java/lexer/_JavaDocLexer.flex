@@ -1,4 +1,4 @@
-/* It's an automatically generated code. Do not modify it. */
+  /* It's an automatically generated code. Do not modify it. */
 package com.intellij.lang.java.lexer;
 
 import com.intellij.lexer.DocCommentTokenTypes;
@@ -46,6 +46,7 @@ import com.intellij.psi.tree.IElementType;
 %state DOC_TAG_VALUE_IN_PAREN
 %state DOC_TAG_VALUE_IN_LTGT
 %state INLINE_TAG_NAME
+%state CODE_TAG
 
 WHITE_DOC_SPACE_CHAR=[\ \t\f\n\r]
 WHITE_DOC_SPACE_NO_LR=[\ \t\f]
@@ -94,10 +95,11 @@ IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
     return myTokenTypes.inlineTagStart();
   }
 }
+<INLINE_TAG_NAME> "@code" { yybegin(CODE_TAG); return myTokenTypes.tagName(); }
 <INLINE_TAG_NAME> "@"{IDENTIFIER} { yybegin(TAG_DOC_SPACE); return myTokenTypes.tagName(); }
-<COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE> "}" { yybegin(COMMENT_DATA); return myTokenTypes.inlineTagEnd(); }
+<COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, CODE_TAG> "}" { yybegin(COMMENT_DATA); return myTokenTypes.inlineTagEnd(); }
 
-<COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE> . { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
+<COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE, CODE_TAG> . { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
 <COMMENT_DATA_START> "@"{IDENTIFIER} { yybegin(TAG_DOC_SPACE); return myTokenTypes.tagName();  }
 
 <TAG_DOC_SPACE>  {WHITE_DOC_SPACE_CHAR}+ {
