@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public abstract class ForStatementEvaluatorBase extends LoopEvaluator {
 
     while (true) {
       // condition
-      Object codition = evaluateCondition(context);
+      Object codition = UnBoxingEvaluator.unbox(evaluateCondition(context), context);
       if (codition instanceof Boolean) {
         if (!(Boolean)codition) break;
       }
