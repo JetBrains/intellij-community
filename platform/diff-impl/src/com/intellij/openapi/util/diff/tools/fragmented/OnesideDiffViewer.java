@@ -178,13 +178,15 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       assert myActualContent1 != null || myActualContent2 != null;
 
       if (myActualContent1 == null) {
-        DocumentContent content = myActualContent2;
+        final DocumentContent content = myActualContent2;
         final Document document = content.getDocument();
 
         OnesideDocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<OnesideDocumentData>() {
           @Override
           public OnesideDocumentData compute() {
-            return new OnesideDocumentData(document.getImmutableCharSequence(), getLineCount(document));
+            EditorHighlighter highlighter = DiffUtil.createEditorHighlighter(myProject, content);
+            OnesideEditorRangeHighlighter rangeHighlighter = new OnesideEditorRangeHighlighter(myProject, content.getDocument());
+            return new OnesideDocumentData(document.getImmutableCharSequence(), getLineCount(document), highlighter, rangeHighlighter);
           }
         });
 
@@ -192,23 +194,25 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         blocks.add(ChangedBlock.createInserted(data.getText().length() + 1, data.getLines()));
 
         indicator.checkCanceled();
-        EditorHighlighter highlighter = DiffUtil.createEditorHighlighter(myProject, content);
         LineNumberConvertor convertor = LineNumberConvertor.Builder.createLeft(data.getLines());
 
-        CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), highlighter,
-                                                               content.getContentType(), convertor.createConvertor1(), null);
+        CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), data.getHighlighter(),
+                                                               data.getRangeHighlighter(), content.getContentType(),
+                                                               convertor.createConvertor1(), null);
 
         return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
       }
 
       if (myActualContent2 == null) {
-        DocumentContent content = myActualContent1;
+        final DocumentContent content = myActualContent1;
         final Document document = content.getDocument();
 
         OnesideDocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<OnesideDocumentData>() {
           @Override
           public OnesideDocumentData compute() {
-            return new OnesideDocumentData(document.getImmutableCharSequence(), getLineCount(document));
+            EditorHighlighter highlighter = DiffUtil.createEditorHighlighter(myProject, content);
+            OnesideEditorRangeHighlighter rangeHighlighter = new OnesideEditorRangeHighlighter(myProject, content.getDocument());
+            return new OnesideDocumentData(document.getImmutableCharSequence(), getLineCount(document), highlighter, rangeHighlighter);
           }
         });
 
@@ -216,21 +220,21 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         blocks.add(ChangedBlock.createDeleted(data.getText().length() + 1, data.getLines()));
 
         indicator.checkCanceled();
-        EditorHighlighter highlighter = DiffUtil.createEditorHighlighter(myProject, content);
         LineNumberConvertor convertor = LineNumberConvertor.Builder.createRight(data.getLines());
 
-        CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), highlighter,
-                                                               content.getContentType(), convertor.createConvertor2(), null);
+        CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), data.getHighlighter(),
+                                                               data.getRangeHighlighter(), content.getContentType(),
+                                                               convertor.createConvertor2(), null);
 
         return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
       }
 
-      DocumentContent content1 = myActualContent1;
-      DocumentContent content2 = myActualContent2;
+      final DocumentContent content1 = myActualContent1;
+      final DocumentContent content2 = myActualContent2;
       final Document document1 = content1.getDocument();
       final Document document2 = content2.getDocument();
 
-      DocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<DocumentData>() {
+      final DocumentData documentData = ApplicationManager.getApplication().runReadAction(new Computable<DocumentData>() {
         @Override
         public DocumentData compute() {
           return new DocumentData(document1.getImmutableCharSequence(), document2.getImmutableCharSequence(),
@@ -238,25 +242,39 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         }
       });
 
-      LineFragments fragments = DiffUtil.compareWithCache(myRequest, data, getDiffConfig(), indicator);
+      final LineFragments fragments = DiffUtil.compareWithCache(myRequest, documentData, getDiffConfig(), indicator);
 
       indicator.checkCanceled();
-      OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2,
-                                                                  getHighlightPolicy().isFineFragments(),
-                                                                  myMasterSide);
-      builder.exec();
+      TwosideDocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<TwosideDocumentData>() {
+        @Override
+        public TwosideDocumentData compute() {
+          indicator.checkCanceled();
+          OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2,
+                                                                      getHighlightPolicy().isFineFragments(),
+                                                                      myMasterSide);
+          builder.exec();
 
-      indicator.checkCanceled();
+          indicator.checkCanceled();
 
-      EditorHighlighter highlighter = buildHighlighter(myProject, content1, content2,
-                                                       data.getText1(), data.getText2(), builder.getRanges(), builder.getText().length());
+          EditorHighlighter highlighter = buildHighlighter(myProject, content1, content2,
+                                                           documentData.getText1(), documentData.getText2(), builder.getRanges(),
+                                                           builder.getText().length());
+
+          OnesideEditorRangeHighlighter rangeHighlighter = new OnesideEditorRangeHighlighter(myProject, document1, document2,
+                                                                                             builder.getRanges());
+
+          return new TwosideDocumentData(builder, highlighter, rangeHighlighter);
+        }
+      });
+      OnesideFragmentBuilder builder = data.getBuilder();
+
       FileType fileType = content2.getContentType() == null ? content1.getContentType() : content2.getContentType();
 
       LineNumberConvertor convertor = builder.getConvertor();
       List<IntPair> changedLines = builder.getChangedLines();
       boolean isEqual = builder.isEqual();
 
-      CombinedEditorData editorData = new CombinedEditorData(builder.getText(), highlighter, fileType,
+      CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(), fileType,
                                                              convertor.createConvertor1(), convertor.createConvertor2());
 
       return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual);
@@ -351,6 +369,8 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
         if (data.getHighlighter() != null) myEditor.setHighlighter(data.getHighlighter());
         DiffUtil.setEditorCodeStyle(myProject, myEditor, data.getFileType());
+
+        if (data.getRangeHighlighter() != null) data.getRangeHighlighter().apply(myProject, myDocument);
 
 
         ArrayList<OnesideDiffChange> diffChanges = new ArrayList<OnesideDiffChange>(blocks.size());
@@ -780,14 +800,21 @@ class OnesideDiffViewer extends TextDiffViewerBase {
       myTextLabel.setText(DiffBundle.message("diff.count.differences.status.text", changes));
     }
   }
-
   private static class OnesideDocumentData {
     @NotNull private final CharSequence myText;
     private final int myLines;
 
-    public OnesideDocumentData(@NotNull CharSequence text, int lines) {
+    @Nullable private final EditorHighlighter myHighlighter;
+    @Nullable private final OnesideEditorRangeHighlighter myRangeHighlighter;
+
+    public OnesideDocumentData(@NotNull CharSequence text,
+                               int lines,
+                               @Nullable EditorHighlighter highlighter,
+                               @Nullable OnesideEditorRangeHighlighter rangeHighlighter) {
       myText = text;
       myLines = lines;
+      myHighlighter = highlighter;
+      myRangeHighlighter = rangeHighlighter;
     }
 
     @NotNull
@@ -797,6 +824,45 @@ class OnesideDiffViewer extends TextDiffViewerBase {
 
     public int getLines() {
       return myLines;
+    }
+
+    @Nullable
+    public EditorHighlighter getHighlighter() {
+      return myHighlighter;
+    }
+
+    @Nullable
+    public OnesideEditorRangeHighlighter getRangeHighlighter() {
+      return myRangeHighlighter;
+    }
+  }
+
+  private static class TwosideDocumentData {
+    @NotNull private final OnesideFragmentBuilder myBuilder;
+    @Nullable private final EditorHighlighter myHighlighter;
+    @Nullable private final OnesideEditorRangeHighlighter myRangeHighlighter;
+
+    public TwosideDocumentData(@NotNull OnesideFragmentBuilder builder,
+                               @Nullable EditorHighlighter highlighter,
+                               @Nullable OnesideEditorRangeHighlighter rangeHighlighter) {
+      myBuilder = builder;
+      myHighlighter = highlighter;
+      myRangeHighlighter = rangeHighlighter;
+    }
+
+    @NotNull
+    public OnesideFragmentBuilder getBuilder() {
+      return myBuilder;
+    }
+
+    @Nullable
+    public EditorHighlighter getHighlighter() {
+      return myHighlighter;
+    }
+
+    @Nullable
+    public OnesideEditorRangeHighlighter getRangeHighlighter() {
+      return myRangeHighlighter;
     }
   }
 
@@ -824,17 +890,20 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   private static class CombinedEditorData {
     @NotNull private final CharSequence myText;
     @Nullable private final EditorHighlighter myHighlighter;
+    @Nullable private final OnesideEditorRangeHighlighter myRangeHighlighter;
     @Nullable private final FileType myFileType;
     @NotNull private final TIntFunction myLineConvertor1;
     @Nullable private final TIntFunction myLineConvertor2;
 
     public CombinedEditorData(@NotNull CharSequence text,
                               @Nullable EditorHighlighter highlighter,
+                              @Nullable OnesideEditorRangeHighlighter rangeHighlighter,
                               @Nullable FileType fileType,
                               @NotNull TIntFunction convertor1,
                               @Nullable TIntFunction convertor2) {
       myText = text;
       myHighlighter = highlighter;
+      myRangeHighlighter = rangeHighlighter;
       myFileType = fileType;
       myLineConvertor1 = convertor1;
       myLineConvertor2 = convertor2;
@@ -848,6 +917,11 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     @Nullable
     public EditorHighlighter getHighlighter() {
       return myHighlighter;
+    }
+
+    @Nullable
+    public OnesideEditorRangeHighlighter getRangeHighlighter() {
+      return myRangeHighlighter;
     }
 
     @Nullable

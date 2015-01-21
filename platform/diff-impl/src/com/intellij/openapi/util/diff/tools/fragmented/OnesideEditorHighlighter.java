@@ -1,5 +1,6 @@
 package com.intellij.openapi.util.diff.tools.fragmented;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -34,10 +35,12 @@ class OnesideEditorHighlighter implements EditorHighlighter {
     init(highlighter1.createIterator(0), highlighter2.createIterator(0), ranges, textLength);
   }
 
-  public void init(@NotNull HighlighterIterator it1,
-                   @NotNull HighlighterIterator it2,
-                   @NotNull List<HighlightRange> ranges,
-                   int textLength) {
+  private void init(@NotNull HighlighterIterator it1,
+                    @NotNull HighlighterIterator it2,
+                    @NotNull List<HighlightRange> ranges,
+                    int textLength) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
     int offset = 0;
 
     for (HighlightRange range : ranges) {
