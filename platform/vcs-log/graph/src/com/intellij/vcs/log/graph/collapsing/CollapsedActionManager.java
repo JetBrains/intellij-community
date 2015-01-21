@@ -26,6 +26,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer;
@@ -51,6 +52,53 @@ class CollapsedActionManager {
       @NotNull CollapsedLinearGraphController graphController,
       @NotNull LinearGraphAction action
     );
+  }
+
+  private static class ActionContext {
+    @NotNull private final CollapsedGraph myCollapsedGraph;
+    @NotNull private final PermanentGraphInfo myPermanentGraphInfo;
+    @NotNull private final LinearGraphAction myGraphAction;
+    @NotNull private final FragmentGenerators myDelegatedFragmentGenerators;
+    @NotNull private final FragmentGenerators myCompiledFragmentGenerators;
+
+    private ActionContext(@NotNull CollapsedGraph collapsedGraph,
+                          @NotNull PermanentGraphInfo permanentGraphInfo,
+                          @NotNull LinearGraphAction graphAction
+    ) {
+      myCollapsedGraph = collapsedGraph;
+      myPermanentGraphInfo = permanentGraphInfo;
+      myGraphAction = graphAction;
+      myDelegatedFragmentGenerators = new FragmentGenerators(collapsedGraph.getDelegatedGraph(), permanentGraphInfo);
+      myCompiledFragmentGenerators = new FragmentGenerators(collapsedGraph.getCompiledGraph(), permanentGraphInfo);
+    }
+
+    @NotNull
+    GraphAction.Type getActionType() {
+      return myGraphAction.getType();
+    }
+
+    @NotNull
+    LinearGraph getDelegatedGraph() {
+      return myCollapsedGraph.getDelegatedGraph();
+    }
+
+    @NotNull
+    LinearGraph getCompiledGraph() {
+      return myCollapsedGraph.getCompiledGraph();
+    }
+
+  }
+
+  private static class FragmentGenerators {
+    @NotNull private final FragmentGenerator fragmentGenerator;
+    @NotNull private final LinearFragmentGenerator linearFragmentGenerator;
+
+    private FragmentGenerators(@NotNull LinearGraph linearGraph, @NotNull PermanentGraphInfo<?> permanentGraphInfo) {
+      fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(linearGraph), Condition.FALSE);
+
+      Set<Integer> branchNodeIndexes = LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, permanentGraphInfo.getBranchNodeIds());
+      linearFragmentGenerator = new LinearFragmentGenerator(LinearGraphUtils.asLiteLinearGraph(linearGraph), branchNodeIndexes);
+    }
   }
 
   @Nullable
