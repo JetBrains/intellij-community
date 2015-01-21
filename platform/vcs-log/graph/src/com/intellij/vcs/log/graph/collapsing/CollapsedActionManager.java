@@ -202,7 +202,7 @@ class CollapsedActionManager {
 
       CollapsedGraph collapsedGraph = graphController.getCollapsedGraph();
       LinearGraph delegateGraph = collapsedGraph.getDelegatedGraph();
-      LinearFragmentGenerator generator = new LinearFragmentGenerator(delegateGraph, Condition.FALSE);
+      LinearFragmentGenerator generator = new LinearFragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph), Collections.<Integer>emptySet());
       FragmentGenerator fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph), Condition.FALSE);
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
         if (!collapsedGraph.isNodeVisible(nodeIndex)) continue;

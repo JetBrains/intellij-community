@@ -15,26 +15,26 @@
  */
 package com.intellij.vcs.log.graph.api.permanent;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.vcs.log.graph.GraphColorManager;
-import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.Set;
 
 public interface PermanentGraphInfo<CommitId> {
 
   @NotNull
   PermanentCommitsInfo<CommitId> getPermanentCommitsInfo();
+
   @NotNull
   LinearGraph getPermanentLinearGraph();
+
   @NotNull
   GraphLayout getPermanentGraphLayout();
-  // by nodeId
+
   @NotNull
-  Condition<Integer> getNotCollapsedNodes();
+  Set<Integer> getBranchNodeIds();
 
   @NotNull
   GraphColorManager<CommitId> getGraphColorManager();

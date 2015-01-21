@@ -25,6 +25,8 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public class CollapsedLinearGraphController extends CascadeLinearGraphController {
   @NotNull
   private CollapsedGraph myCollapsedGraph;
@@ -34,22 +36,21 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
   private FragmentGenerator myFragmentGenerator;
 
   public CollapsedLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
-                                           @NotNull final PermanentGraphInfo permanentGraphInfo) {
+                                           @NotNull final PermanentGraphInfo<?> permanentGraphInfo) {
     super(delegateLinearGraphController, permanentGraphInfo);
     myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), null);
-    myLinearFragmentGenerator = new LinearFragmentGenerator(myCollapsedGraph.getCompiledGraph(), new Condition<Integer>() {
-      @Override
-      public boolean value(Integer nodeIndex) {
-        int nodeId = myCollapsedGraph.getCompiledGraph().getNodeId(nodeIndex);
-        return permanentGraphInfo.getNotCollapsedNodes().value(nodeId);
-      }
-    });
-    myFragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(myCollapsedGraph.getCompiledGraph()), new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return false;
-      }
-    });
+
+    Set<Integer> branchNodeIndexes =
+      LinearGraphUtils.convertIdsToNodeIndexes(myCollapsedGraph.getCompiledGraph(), permanentGraphInfo.getBranchNodeIds());
+    myLinearFragmentGenerator =
+      new LinearFragmentGenerator(LinearGraphUtils.asLiteLinearGraph(myCollapsedGraph.getCompiledGraph()), branchNodeIndexes);
+    myFragmentGenerator =
+      new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(myCollapsedGraph.getCompiledGraph()), new Condition<Integer>() {
+        @Override
+        public boolean value(Integer integer) {
+          return false;
+        }
+      });
   }
 
   @NotNull
