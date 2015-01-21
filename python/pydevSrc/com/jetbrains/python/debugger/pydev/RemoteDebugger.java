@@ -55,6 +55,7 @@ public class RemoteDebugger implements ProcessDebugger {
   private Socket mySocket;
   private volatile boolean myConnected = false;
   private int mySequence = -1;
+  private final Object mySequenceObject = new Object(); // for synchronization on mySequence
   private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<String, PyThreadInfo>();
   private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<Integer, ProtocolFrame>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
@@ -285,8 +286,10 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   int getNextSequence() {
-    mySequence += 2;
-    return mySequence;
+    synchronized (mySequenceObject) {
+      mySequence += 2;
+      return mySequence;
+    }
   }
 
   void placeResponse(final int sequence, final ProtocolFrame response) {

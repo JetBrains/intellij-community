@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.projectView;
+package com.intellij.lang;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.editorActions.QuoteHandler;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+/**
+ * @author gregsh
+ */
+public class LanguageQuoteHandling extends LanguageExtension<QuoteHandler> {
+  public static final LanguageQuoteHandling INSTANCE = new LanguageQuoteHandling();
 
-public interface RootsProvider {
-
-  Set<VirtualFile> EMPTY_ROOTS = Collections.emptySet();
-
-  @NotNull
-  Collection<VirtualFile> getRoots();
-
+  private LanguageQuoteHandling() {
+    super("com.intellij.lang.quoteHandler");
+  }
 }
