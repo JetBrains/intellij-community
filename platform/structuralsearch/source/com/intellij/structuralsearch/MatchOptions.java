@@ -179,9 +179,9 @@ public class MatchOptions implements JDOMExternalizable {
     if (attr != null) {
       try {
         looseMatching = attr.getBooleanValue();
-      } catch (DataConversionException ignored) {
-        looseMatching = true; // default is loose
-      }
+      } catch (DataConversionException ignored) {}
+    } else {
+      looseMatching = true; // default is loose
     }
 
     attr = element.getAttribute(RECURSIVE_ATTRIBUTE_NAME);
