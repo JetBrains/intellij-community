@@ -32,7 +32,7 @@ import java.util.List;
 
 public class TaskFile implements Stateful {
   public String name;
-  String text;
+  public String text;
   @SerializedName("placeholders")
   public List<TaskWindow> taskWindows = new ArrayList<TaskWindow>();
 

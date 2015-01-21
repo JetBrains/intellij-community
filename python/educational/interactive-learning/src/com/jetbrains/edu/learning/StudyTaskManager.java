@@ -17,6 +17,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -70,10 +73,9 @@ import java.util.Map;
 public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class.getName());
   public static final String COURSE_ELEMENT = "courseElement";
-  private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private static Map<String, String> myDeletedShortcuts = new HashMap<String, String>();
   private final Project myProject;
-  private Course myCourse;
+  public Course myCourse;
   private FileCreatedListener myListener;
 
 
@@ -82,10 +84,8 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   }
 
   private StudyTaskManager(@NotNull final Project project) {
-    myTaskManagers.put(project.getBasePath(), this);
     myProject = project;
   }
-
 
   @Nullable
   public Course getCourse() {
@@ -243,15 +243,11 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     if (myCourse == null) {
       return;
     }
-    File resourceFile = new File(myCourse.getResourcePath());
-    if (!resourceFile.exists()) {
+    File resourceDirectory = new File(myCourse.getCourseDirectory());
+    if (!resourceDirectory.exists()) {
       return;
     }
-    final File courseDir = resourceFile.getParentFile();
-    if (!courseDir.exists()) {
-      return;
-    }
-    final File[] files = courseDir.listFiles();
+    final File[] files = resourceDirectory.listFiles();
     if (files == null) return;
     for (File file : files) {
       if (file.getName().equals(StudyNames.TEST_HELPER)) {
@@ -360,10 +356,9 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   }
 
   public static StudyTaskManager getInstance(@NotNull final Project project) {
-    StudyTaskManager item = myTaskManagers.get(project.getBasePath());
-    return item != null ? item : new StudyTaskManager(project);
+    final Module module = ModuleManager.getInstance(project).getModules()[0];
+    return ModuleServiceManager.getService(module, StudyTaskManager.class);
   }
-
 
   @Nullable
   public TaskFile getTaskFile(@NotNull final VirtualFile file) {

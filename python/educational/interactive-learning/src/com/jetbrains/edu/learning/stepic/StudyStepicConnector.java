@@ -56,6 +56,7 @@ public class StudyStepicConnector {
       catch (IOException e) {
         LOG.error("IOException " + e.getMessage());
       }
+      return course;
     }
 
     try {
@@ -107,9 +108,12 @@ public class StudyStepicConnector {
         task.testsText = step.options.test;
 
         task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
-        for (TaskFile taskFile : step.options.files) {
-          task.taskFiles.put(taskFile.name, taskFile);
+        if (step.options.files != null) {
+          for (TaskFile taskFile : step.options.files) {
+            task.taskFiles.put(taskFile.name, taskFile);
+          }
         }
+        lesson.taskList.add(task);
       }
     }
     return lessons;
@@ -137,7 +141,6 @@ public class StudyStepicConnector {
   }
 
   private static class Step {
-
     StepOptions options;
     String text;
     String name;
@@ -146,13 +149,11 @@ public class StudyStepicConnector {
   private static class StepOptions {
     String test;
     List<TaskFile> files;
-
   }
 
   private static class StepRaw {
     Step block;
   }
-
 
   private static class CoursesContainer {
     public List<CourseInfo> courses;

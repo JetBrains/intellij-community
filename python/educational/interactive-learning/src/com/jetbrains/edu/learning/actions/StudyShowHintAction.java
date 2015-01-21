@@ -21,9 +21,6 @@ import com.jetbrains.edu.learning.course.TaskWindow;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 public class StudyShowHintAction extends DumbAwareAction {
   public static final String ACTION_ID = "ShowHintAction";
@@ -61,7 +58,7 @@ public class StudyShowHintAction extends DumbAwareAction {
     }
     String hintText = OUTSIDE_TASK_WINDOW_MESSAGE;
     if (taskWindow != null) {
-      hintText = getHintText(taskWindow, course);
+      hintText = taskWindow.getHint();
     }
     int offset = editor.getDocument().getLineStartOffset(pos.line) + pos.column;
     PsiElement element = file.findElementAt(offset);
@@ -69,23 +66,6 @@ public class StudyShowHintAction extends DumbAwareAction {
     DocumentationComponent component = new DocumentationComponent(documentationManager);
     component.setData(element != null ? element : file, element != null ? hintText : OUTSIDE_TASK_WINDOW_MESSAGE, true, null);
     showHintPopUp(project, editor, component);
-  }
-
-  @Nullable
-  private static String getHintText(@NotNull final TaskWindow taskWindow, @NotNull final Course course) {
-    String hintFileName = taskWindow.getHint();
-    String hintText = HINT_NOT_AVAILABLE;
-    if (hintFileName != null && !hintFileName.isEmpty()) {
-      File resourceFile = new File(course.getResourcePath());
-      File resourceRoot = resourceFile.getParentFile();
-      if (resourceRoot != null && resourceRoot.exists()) {
-        File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
-        if (hintsDir.exists()) {
-          hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hintFileName, true, "UTF-8");
-        }
-      }
-    }
-    return  hintText != null ? hintText : OUTSIDE_TASK_WINDOW_MESSAGE;
   }
 
   private static void showHintPopUp(Project project, Editor editor, DocumentationComponent component) {

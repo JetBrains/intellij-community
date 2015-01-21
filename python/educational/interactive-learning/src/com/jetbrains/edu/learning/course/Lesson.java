@@ -12,9 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lesson implements Stateful {
+  @Transient
   String id;
+  @Transient
   public List<Integer> steps;
+  @Transient
   public List<String> tags;
+  @Transient
   Boolean is_public;
   @SerializedName("title")
   public String name;

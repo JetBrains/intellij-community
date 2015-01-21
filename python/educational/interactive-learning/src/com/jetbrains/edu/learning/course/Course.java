@@ -14,16 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Course {
-
   private static final Logger LOG = Logger.getInstance(Course.class.getName());
   public static final String SANDBOX_DIR = "Sandbox";
   public List<Lesson> lessons = new ArrayList<Lesson>();
   public String description;
   public String name;
-  public String myResourcePath = "";
-  public String author;
-  public static final String COURSE_DIR = "course";
-  public static final String HINTS_DIR = "hints";
+  public String myCourseDirectory = "";
+  public String author="";
   public boolean myUpToDate = false;
 
 
@@ -93,12 +90,12 @@ public class Course {
     return name;
   }
 
-  public void setResourcePath(@NotNull final String resourcePath) {
-    myResourcePath = resourcePath;
+  public void setCourseDirectory(@NotNull final String courseDirectory) {
+    myCourseDirectory = courseDirectory;
   }
 
-  public String getResourcePath() {
-    return myResourcePath;
+  public String getCourseDirectory() {
+    return myCourseDirectory;
   }
 
   public String getDescription() {

@@ -119,13 +119,12 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     String lessonDir = Lesson.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
     String taskDir = Task.TASK_DIR + String.valueOf(task.getIndex() + 1);
     Course course = task.getLesson().getCourse();
-    File resourceFile = new File(course.getResourcePath());
-    File resourceRoot = resourceFile.getParentFile();
-    if (!resourceFile.exists() || resourceRoot == null) {
+    File resourceFile = new File(course.getCourseDirectory());
+    if (!resourceFile.exists()) {
       showBalloon(project, "Course was deleted", MessageType.ERROR);
       return false;
     }
-    String patternPath = FileUtil.join(resourceRoot.getPath(), lessonDir, taskDir, fileName);
+    String patternPath = FileUtil.join(resourceFile.getPath(), lessonDir, taskDir, fileName);
     VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
     if (patternFile == null) {
       return false;

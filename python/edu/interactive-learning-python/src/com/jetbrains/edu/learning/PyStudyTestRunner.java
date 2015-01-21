@@ -39,12 +39,8 @@ public class PyStudyTestRunner extends StudyTestRunner {
         commandLine.addParameter(testRunner.getPath());
         final Course course = StudyTaskManager.getInstance(project).getCourse();
         assert course != null;
-        File resourceFile = new File(course.getResourcePath());
-        String resourceFolder = resourceFile.getParent();
-        if (resourceFolder == null) {
-          return null;
-        }
-        commandLine.addParameter(resourceFolder);
+        File resourceFile = new File(course.getCourseDirectory());
+        commandLine.addParameter(resourceFile.getPath());
         commandLine.addParameter(FileUtil.toSystemDependentName(executablePath));
         return commandLine.createProcess();
       }
