@@ -110,6 +110,13 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
+  @Bombed(month = Calendar.FEBRUARY, day = 20)
+  public void testGenericComparator() throws Exception {
+    final String name = getTestName(false);
+    myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
   private void doTest() {
     final String name = getTestName(false);
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
