@@ -50,15 +50,16 @@ public interface IntentionAction {
   @NotNull String getText();
 
   /**
-   * Returns the identifier of the family of intentions. This id is used to externalize
+   * Returns the name of the family of intentions. It is used to externalize
    * "auto-show" state of intentions. When user clicks on a lightbulb in intention list,
-   * all intentions with the same family name get enabled/disabled. The identifier
-   * is also used to locate the description and preview text for the intention.
+   * all intentions with the same family name get enabled/disabled.
+   * The name is also shown in settings tree.
    *
-   * @return the intention family ID.
+   * @return the intention family name.
    * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
    */
   @NotNull
+  @Nls
   String getFamilyName();
 
   /**
