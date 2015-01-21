@@ -147,28 +147,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
 
   private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {
     LOG.assertTrue(getInfoCollector() != null);
-    int number = getProcessedLinesNumber(document, before);
+    int number = FormatChangedTextUtil.calculateChangedLinesNumber(document, before);
     if (number > 0) {
       String message = "formatted " + number + " line" + (number > 1 ? "s" : "");
       getInfoCollector().setReformatCodeNotification(message);
     }
-  }
-
-  protected static int getProcessedLinesNumber(final Document document, final CharSequence before) {
-    int totalLinesProcessed = 0;
-    try {
-      List<TextRange> ranges = FormatChangedTextUtil.calculateChangedTextRanges(document, before);
-      for (TextRange range : ranges) {
-        int lineStartNumber = document.getLineNumber(range.getStartOffset());
-        int lineEndNumber = document.getLineNumber(range.getEndOffset());
-
-        totalLinesProcessed += lineEndNumber - lineStartNumber + 1;
-      }
-    }
-    catch (FilesTooBigForDiffException e) {
-      return -1;
-    }
-    return totalLinesProcessed;
   }
 
   @NotNull

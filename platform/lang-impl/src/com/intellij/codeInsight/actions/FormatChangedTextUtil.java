@@ -292,9 +292,46 @@ public class FormatChangedTextUtil {
   protected static List<TextRange> calculateChangedTextRanges(@NotNull Document document,
                                                               @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
   {
+    return getChangedTextRanges(document, getRanges(document, contentFromVcs));
+  }
+
+  @NotNull
+  private static List<Range> getRanges(@NotNull Document document,
+                                       @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
+  {
     Document documentFromVcs = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(contentFromVcs, true, false);
-    List<Range> changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
-    return getChangedTextRanges(document, changedRanges);
+    return new RangesBuilder(document, documentFromVcs).getRanges();
+  }
+
+  protected static int calculateChangedLinesNumber(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
+    try {
+      List<Range> changedRanges = getRanges(document, contentFromVcs);
+      int linesChanges = 0;
+      for (Range range : changedRanges) {
+        linesChanges += countLines(range);
+      }
+      return linesChanges;
+    } catch (FilesTooBigForDiffException e) {
+      LOG.info("File too big, can not calculate changed lines number");
+      return -1;
+    }
+  }
+
+  private static int countLines(Range range) {
+    byte rangeType = range.getType();
+    if (rangeType == Range.MODIFIED) {
+      int currentChangedLines = range.getLine2() - range.getLine1();
+      int revisionLinesChanged = range.getVcsLine2() - range.getVcsLine1();
+      return Math.max(currentChangedLines, revisionLinesChanged);
+    }
+    else if (rangeType == Range.DELETED) {
+      return range.getVcsLine2() - range.getVcsLine1();
+    }
+    else if (rangeType == Range.INSERTED) {
+      return range.getLine2() - range.getLine1();
+    }
+
+    return 0;
   }
 
   @NotNull
