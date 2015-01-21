@@ -48,7 +48,7 @@ public class DottedFilterEdgesGenerator {
   }
 
   private boolean nodeIsVisible(int nodeIndex) {
-    return myCollapsedGraph.getNodeVisibility(getNodeId(nodeIndex));
+    return myCollapsedGraph.isNodeVisible(nodeIndex);
   }
 
   private int getNodeId(int nodeIndex) {
