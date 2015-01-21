@@ -52,6 +52,7 @@ import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +64,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.IllegalArgumentException;
-import java.lang.String;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -1495,7 +1494,7 @@ public abstract class DialogWrapper {
    * @param title title
    * @see JDialog#setTitle
    */
-  public void setTitle(String title) {
+  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
     myPeer.setTitle(title);
   }
 

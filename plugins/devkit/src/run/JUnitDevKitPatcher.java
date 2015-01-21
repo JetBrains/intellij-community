@@ -21,12 +21,14 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,8 +38,13 @@ import java.io.IOException;
  * Date: Mar 4, 2005
  */
 public class JUnitDevKitPatcher extends JUnitPatcher{
+  public static final String JAVA_SYSTEM_CLASS_LOADER_PROPERTY = "-Djava.system.class.loader";
 
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
+    if (module != null && PsiUtil.isIdeaProject(module.getProject()) && 
+        !javaParameters.getVMParametersList().hasParameter(JAVA_SYSTEM_CLASS_LOADER_PROPERTY)) {
+      javaParameters.getVMParametersList().add(JAVA_SYSTEM_CLASS_LOADER_PROPERTY + "=" + UrlClassLoader.class.getName());
+    }
     Sdk jdk = javaParameters.getJdk();
     jdk = IdeaJdk.findIdeaJdk(jdk);
     if (jdk == null) return;

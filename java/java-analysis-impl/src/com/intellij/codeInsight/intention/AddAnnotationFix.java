@@ -23,17 +23,18 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
 public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAction {
-  public AddAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner modifierListOwner, @NotNull String... annotationsToRemove) {
+  public AddAnnotationFix(@NotNull String fqn, @Nullable PsiModifierListOwner modifierListOwner, @NotNull String... annotationsToRemove) {
     this(fqn, modifierListOwner, PsiNameValuePair.EMPTY_ARRAY, annotationsToRemove);
   }
 
   public AddAnnotationFix(@NotNull String fqn,
-                          @NotNull PsiModifierListOwner modifierListOwner,
+                          @Nullable PsiModifierListOwner modifierListOwner,
                           @NotNull PsiNameValuePair[] values,
                           @NotNull String... annotationsToRemove) {
     super(fqn, modifierListOwner, values, annotationsToRemove);

@@ -20,10 +20,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -89,63 +85,36 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
 
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        String calledName = methodExpression.getReferenceName();
-        if (calledName == null) return;
-        if ("setTitle".equals(calledName)) {
-          if (!isMethodOfClass(expression, DialogWrapper.class.getName(), FileChooserDescriptor.class.getName())) return;
+        PsiMethod psiMethod = expression.resolveMethod();
+        if (psiMethod != null) {
           PsiExpression[] args = expression.getArgumentList().getExpressions();
-          if (args.length == 0) {
-            return;
-          }
-          checkCapitalization(args[0], holder, Nls.Capitalization.Title);
-        }
-        else if (calledName.startsWith("show") && (calledName.endsWith("Dialog") || calledName.endsWith("Message"))) {
-          if (!isMethodOfClass(expression, Messages.class.getName())) return;
-          PsiExpression[] args = expression.getArgumentList().getExpressions();
-          PsiMethod psiMethod = expression.resolveMethod();
-          assert psiMethod != null;
           PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          for (int i = 0, parametersLength = parameters.length; i < parametersLength; i++) {
+          for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
             PsiParameter parameter = parameters[i];
-            if ("title".equals(parameter.getName()) && i < args.length) {
-              checkCapitalization(args[i], holder, Nls.Capitalization.Title);
-              break;
-            }
+            Nls.Capitalization capitalization = getCapitalizationFromAnno(parameter);
+            checkCapitalization(args[i], holder, capitalization);
           }
         }
       }
     };
   }
 
-  public Nls.Capitalization getCapitalizationFromAnno(PsiMethod method) {
-    PsiAnnotation nls = AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(Nls.class.getName()));
+  public Nls.Capitalization getCapitalizationFromAnno(PsiModifierListOwner modifierListOwner) {
+    PsiAnnotation nls = AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, Collections.singleton(Nls.class.getName()));
     if (nls == null) return Nls.Capitalization.NotSpecified;
     PsiAnnotationMemberValue capitalization = nls.findAttributeValue("capitalization");
-    Object cap = JavaPsiFacade.getInstance(method.getProject()).getConstantEvaluationHelper().computeConstantExpression(capitalization);
+    Object cap = JavaPsiFacade.getInstance(modifierListOwner.getProject()).getConstantEvaluationHelper().computeConstantExpression(capitalization);
     return cap instanceof Nls.Capitalization ? (Nls.Capitalization)cap : Nls.Capitalization.NotSpecified;
   }
 
   private static void checkCapitalization(PsiExpression element, @NotNull ProblemsHolder holder, Nls.Capitalization capitalization) {
+    if (capitalization == Nls.Capitalization.NotSpecified) return;
     String titleValue = getTitleValue(element);
     if (!checkCapitalization(titleValue, capitalization)) {
       holder.registerProblem(element, "String '" + titleValue + "' is not properly capitalized. It should have " +
                                       StringUtil.toLowerCase(capitalization.toString()) + " capitalization",
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new TitleCapitalizationFix(titleValue, capitalization));
     }
-  }
-
-  private static boolean isMethodOfClass(PsiMethodCallExpression expression, String... classNames) {
-    PsiMethod psiMethod = expression.resolveMethod();
-    if (psiMethod == null) {
-      return false;
-    }
-    PsiClass containingClass = psiMethod.getContainingClass();
-    if (containingClass == null) {
-      return false;
-    }
-    String name = containingClass.getQualifiedName();
-    return ArrayUtil.contains(name, classNames);
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-package org.jetbrains.rpc;
+package org.jetbrains.io;
 
 import com.intellij.util.text.StringFactory;
 import io.netty.buffer.ByteBuf;
