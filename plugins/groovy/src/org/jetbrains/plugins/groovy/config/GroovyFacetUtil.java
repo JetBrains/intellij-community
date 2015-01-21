@@ -77,15 +77,15 @@ public class GroovyFacetUtil {
   }
 
   public static File getBundledGroovyJar() {
-    String root;
-    if (new File(PathUtil.getJarPathForClass(GroovyFacetUtil.class)).isDirectory()) {
-      root = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../lib/");
-    }
-    else {
-      root = PathManager.getHomePath() + "/lib/";
-    }
-    final File[] groovyJars = LibrariesUtil.getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    final File[] groovyJars = LibrariesUtil.getFilesInDirectoryByPattern(getLibDirectory(), GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
     assert groovyJars.length == 1;
     return groovyJars[0];
+  }
+
+  public static String getLibDirectory() {
+    if (new File(PathUtil.getJarPathForClass(GroovyFacetUtil.class)).isDirectory()) {
+      return FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../lib/");
+    }
+    return PathManager.getHomePath() + "/lib/";
   }
 }
