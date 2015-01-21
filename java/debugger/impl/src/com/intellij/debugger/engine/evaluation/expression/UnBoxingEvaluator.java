@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -86,8 +86,6 @@ public class UnBoxingEvaluator implements Evaluator{
                                   conversionMethodName + conversionMethodSignature);
     }
 
-    final Method method = methods.get(0);
-
-    return process.invokeMethod(context, value, method, new ArrayList());
+    return process.invokeMethod(context, value, methods.get(0), Collections.emptyList());
   }
 }
