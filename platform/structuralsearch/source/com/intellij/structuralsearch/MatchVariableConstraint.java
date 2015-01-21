@@ -516,8 +516,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     if (wholeWordsOnly) element.setAttribute(WHOLE_WORDS_ONLY,TRUE);
     if (invertContainsConstraint) element.setAttribute(NEGATE_CONTAINS_CONDITION,TRUE);
     if (invertWithinConstraint) element.setAttribute(NEGATE_WITHIN_CONDITION,TRUE);
-    element.setAttribute(WITHIN_CONDITION, withinConstraint);
-    element.setAttribute(CONTAINS_CONDITION, containsConstraint);
+    if (withinConstraint.length() > 0) element.setAttribute(WITHIN_CONDITION, withinConstraint);
+    if (containsConstraint.length() > 0) element.setAttribute(CONTAINS_CONDITION, containsConstraint);
   }
 
   public String getWithinConstraint() {
