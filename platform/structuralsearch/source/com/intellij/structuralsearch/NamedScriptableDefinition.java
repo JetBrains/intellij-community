@@ -1,8 +1,8 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.JDOMExternalizable;
-import org.jdom.Element;
 import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -54,7 +54,7 @@ public class NamedScriptableDefinition implements JDOMExternalizable, Cloneable 
 
   public void writeExternal(Element element) {
     element.setAttribute(NAME,name);
-    if (scriptCodeConstraint.length() > 0) element.setAttribute(SCRIPT,scriptCodeConstraint);
+    if (scriptCodeConstraint.length() > 0 && !scriptCodeConstraint.equals("\"\"")) element.setAttribute(SCRIPT,scriptCodeConstraint);
   }
 
   @Override
