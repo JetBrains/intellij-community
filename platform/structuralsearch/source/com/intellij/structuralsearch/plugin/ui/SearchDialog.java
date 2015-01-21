@@ -616,13 +616,14 @@ public class SearchDialog extends DialogWrapper {
               if (name == null) return;
             }
 
-            model.getConfig().setName(name);
-            setValuesToConfig(model.getConfig());
-            setDialogTitle(model.getConfig());
+            final Configuration configuration = model.getConfig();
+            configuration.setName(name);
+            setValuesToConfig(configuration);
+            setDialogTitle(configuration);
 
-            if (model.getShadowConfig() == null ||
-                model.getShadowConfig().isPredefined()) {
-              existingTemplatesComponent.addConfigurationToUserTemplates(model.getConfig());
+            if (model.getShadowConfig() == null || model.getShadowConfig().isPredefined()) {
+              filterOutUnusedVariableConstraints(configuration);
+              existingTemplatesComponent.addConfigurationToUserTemplates(configuration);
             }
             else {  // ???
               setValuesToConfig(model.getShadowConfig());
@@ -802,23 +803,33 @@ public class SearchDialog extends DialogWrapper {
     findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
+      final Configuration configuration = model.getConfig();
       if (model.getShadowConfig() != null) {
         if (model.getShadowConfig().isPredefined()) {
-          model.getConfig().setName(
-            model.getShadowConfig().getName()
+          configuration.setName(model.getShadowConfig().getName()
           );
         } //else {
         //  // user template, save it
         //  setValuesToConfig(model.getShadowConfig());
         //}
       }
-      existingTemplatesComponent.addConfigurationToHistory(model.getConfig());
+      filterOutUnusedVariableConstraints(configuration);
+      existingTemplatesComponent.addConfigurationToHistory(configuration);
 
       startSearching();
     }
     catch (MalformedPatternException ex) {
       reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, ex.getMessage());
     }
+  }
+
+  private void filterOutUnusedVariableConstraints(Configuration configuration) {
+    final List<Variable> variables = getVariablesFromListeners();
+    final List<String> variableNames = new ArrayList<String>();
+    for (Variable variable : variables) {
+      variableNames.add(variable.getName());
+    }
+    configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 
   public Configuration getConfiguration() {

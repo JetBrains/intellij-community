@@ -4,15 +4,13 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.search.SearchScope;
+import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * match options
@@ -58,6 +56,16 @@ public class MatchOptions implements JDOMExternalizable {
 
   public void clearVariableConstraints() {
     variableConstraints=null;
+  }
+
+  public void retainVariableConstraints(Collection<String> names) {
+    final THashSet<String> nameSet = new THashSet<String>(names);
+    for (Iterator<String> iterator = variableConstraints.keySet().iterator(); iterator.hasNext(); ) {
+      final String key = iterator.next();
+      if (!nameSet.contains(key)) {
+        iterator.remove();
+      }
+    }
   }
 
   public MatchVariableConstraint getVariableConstraint(String name) {
