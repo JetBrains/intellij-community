@@ -39,7 +39,7 @@ public class WhileStatementEvaluator extends LoopEvaluator {
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object value;
     while (true) {
-      value = UnBoxingEvaluator.unbox(myConditionEvaluator.evaluate(context), context);
+      value = myConditionEvaluator.evaluate(context);
       if (!(value instanceof BooleanValue)) {
         throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
       }

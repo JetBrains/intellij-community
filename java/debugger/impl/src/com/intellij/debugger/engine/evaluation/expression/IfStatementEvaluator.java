@@ -41,7 +41,7 @@ public class IfStatementEvaluator implements Evaluator {
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object value = UnBoxingEvaluator.unbox(myConditionEvaluator.evaluate(context), context);
+    Object value = myConditionEvaluator.evaluate(context);
     if(!(value instanceof BooleanValue)) {
       throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
     } else {
