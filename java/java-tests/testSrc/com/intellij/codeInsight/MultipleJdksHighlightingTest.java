@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -27,6 +28,8 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.Consumer;
+
+import java.util.Calendar;
 
 public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
@@ -84,7 +87,30 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTest();
   }
 
-  protected void doTest() {
+  @Bombed(month = Calendar.FEBRUARY, day = 20)
+  public void testWrongSuperInLibrary() throws Exception {
+    final String name = getTestName(false);
+    for (Module module : new Module[] {myJava7Module, myJava8Module}) {
+      ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
+        @Override
+        public void consume(ModifiableRootModel model) {
+          ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar");
+        }
+      });
+    }
+
+    myFixture.configureByFile("java8/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+  
+  @Bombed(month = Calendar.FEBRUARY, day = 20)
+  public void testWrongComparator() throws Exception {
+    final String name = getTestName(false);
+    myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  private void doTest() {
     final String name = getTestName(false);
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
       ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
