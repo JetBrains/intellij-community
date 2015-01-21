@@ -1402,5 +1402,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     protected void selectChange(@NotNull Change change) {
       myBrowser.select(Collections.singletonList(change));
     }
+
+    @Override
+    protected void onAfterNavigate() {
+      doCancelAction();
+    }
   }
 }
