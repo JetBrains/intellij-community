@@ -551,9 +551,9 @@ public abstract class DebuggerUtils {
     return isDebugAware(file, true);
   }
 
-  @SuppressWarnings("deprecation")
   private static boolean isDebugAware(@NotNull PsiFile file, boolean breakpointAware) {
     FileType fileType = file.getFileType();
+    //noinspection deprecation
     if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).isJVMDebuggingSupported()) {
       return true;
     }
