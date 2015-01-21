@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * match options
  */
-public class MatchOptions implements JDOMExternalizable, Cloneable {
+public class MatchOptions implements JDOMExternalizable {
   @NonNls private static final String TEXT_ATTRIBUTE_NAME = "text";
 
   private boolean looseMatching;
@@ -300,14 +300,5 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
   public void setPatternContext(String patternContext) {
     myPatternContext = patternContext;
-  }
-
-  public MatchOptions clone() {
-    try {
-      return (MatchOptions) super.clone();
-    } catch (CloneNotSupportedException e) {
-      e.printStackTrace();
-      return null;
-    }
   }
 }
