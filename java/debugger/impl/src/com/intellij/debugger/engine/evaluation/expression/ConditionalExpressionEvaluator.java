@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.BooleanValue;
+import com.sun.jdi.Value;
 
 class ConditionalExpressionEvaluator implements Evaluator {
   private final Evaluator myConditionEvaluator;
@@ -44,8 +45,8 @@ class ConditionalExpressionEvaluator implements Evaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object condition = UnBoxingEvaluator.unbox(myConditionEvaluator.evaluate(context), context);
-    if (!(condition instanceof BooleanValue)) {
+    Value condition = (Value)myConditionEvaluator.evaluate(context);
+    if (condition == null || !(condition instanceof BooleanValue)) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.condition.expected"));
     }
     return ((BooleanValue)condition).booleanValue()? myThenEvaluator.evaluate(context) : myElseEvaluator.evaluate(context);

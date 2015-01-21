@@ -34,7 +34,7 @@ public abstract class ForStatementEvaluatorBase extends LoopEvaluator {
 
     while (true) {
       // condition
-      Object codition = UnBoxingEvaluator.unbox(evaluateCondition(context), context);
+      Object codition = evaluateCondition(context);
       if (codition instanceof Boolean) {
         if (!(Boolean)codition) break;
       }

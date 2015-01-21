@@ -41,7 +41,7 @@ public class DoWhileStatementEvaluator extends LoopEvaluator {
     while (true) {
       if (body(context)) break;
 
-      value = UnBoxingEvaluator.unbox(myConditionEvaluator.evaluate(context), context);
+      value = myConditionEvaluator.evaluate(context);
       if (!(value instanceof BooleanValue)) {
         throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
       }

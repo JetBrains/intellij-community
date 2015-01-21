@@ -24,6 +24,7 @@ import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -52,7 +53,7 @@ public class UnBoxingEvaluator implements Evaluator{
     return TYPES_TO_CONVERSION_METHOD_MAP.containsKey(typeName);
   }
 
-  public UnBoxingEvaluator(Evaluator operand) {
+  public UnBoxingEvaluator(@NotNull Evaluator operand) {
     myOperand = new DisableGC(operand);
   }
 
