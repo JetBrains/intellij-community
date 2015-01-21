@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1900,6 +1900,11 @@ public abstract class DialogWrapper {
       c = c.getParent();
     }
     return null;
+  }
+
+  @Nullable
+  public static DialogWrapper findInstanceFromFocus() {
+    return findInstance(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
   }
 
   private void resizeWithAnimation(@NotNull final Dimension size) {
