@@ -82,6 +82,7 @@ public class JavadocParsingTest extends JavaParsingTestCase {
   public void testParameterlessTag() { doTest(true); }
 
   public void testCodeTag() { doTest(true); }
-  
+  public void testLiteralTag() { doTest(true); }
+
   public void testIDEADEV_41403() { doTest(true); }
 }

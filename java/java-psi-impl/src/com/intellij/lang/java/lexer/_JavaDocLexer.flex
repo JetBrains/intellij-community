@@ -96,6 +96,7 @@ IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
   }
 }
 <INLINE_TAG_NAME> "@code" { yybegin(CODE_TAG); return myTokenTypes.tagName(); }
+<INLINE_TAG_NAME> "@literal" { yybegin(CODE_TAG); return myTokenTypes.tagName(); }
 <INLINE_TAG_NAME> "@"{IDENTIFIER} { yybegin(TAG_DOC_SPACE); return myTokenTypes.tagName(); }
 <COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, CODE_TAG> "}" { yybegin(COMMENT_DATA); return myTokenTypes.inlineTagEnd(); }
 
