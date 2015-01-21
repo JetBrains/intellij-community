@@ -132,7 +132,7 @@ public class OpenTaskDialog extends DialogWrapper {
               });
             }
             if (info == null) {
-              info = handler.getActiveTask();
+              info = tasks[0];
             }
             myBranchFrom.setSelectedItem(info);
             myBranchFrom.addActionListener(new ActionListener() {
@@ -213,7 +213,7 @@ public class OpenTaskDialog extends DialogWrapper {
           taskManager.createBranch(localTask, activeTask, myBranchName.getText());
         }
       };
-      if (item != null && !item.equals(myVcsTaskHandler.getActiveTask())) {
+      if (item != null) {
         myVcsTaskHandler.switchToTask(item, createBranch);
       }
       else {

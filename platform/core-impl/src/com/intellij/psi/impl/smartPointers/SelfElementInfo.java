@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -47,15 +46,11 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   private volatile RangeMarker myRangeMarker; //maintains hard reference during modification
   protected final Language myLanguage;
 
-  protected SelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor) {
-    this(project, ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), anchor.getContainingFile(),
-         LanguageUtil.getRootLanguage(anchor));
-  }
-  public SelfElementInfo(@NotNull Project project,
-                         @NotNull ProperTextRange range,
-                         @NotNull Class anchorClass,
-                         @NotNull PsiFile containingFile,
-                         @NotNull Language language) {
+  SelfElementInfo(@NotNull Project project,
+                  @NotNull ProperTextRange range,
+                  @NotNull Class anchorClass,
+                  @NotNull PsiFile containingFile,
+                  @NotNull Language language) {
     myLanguage = language;
     myVirtualFile = PsiUtilCore.getVirtualFile(containingFile);
     myType = anchorClass;

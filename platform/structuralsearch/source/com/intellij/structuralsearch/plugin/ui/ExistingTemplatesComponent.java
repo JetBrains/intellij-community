@@ -36,7 +36,7 @@ public class ExistingTemplatesComponent {
   private final DefaultTreeModel patternTreeModel;
   private final DefaultMutableTreeNode userTemplatesNode;
   private final JComponent panel;
-  private final DefaultListModel historyModel;
+  private final CollectionListModel<Configuration> historyModel;
   private final JList historyList;
   private final JComponent historyPanel;
   private DialogWrapper owner;
@@ -132,13 +132,14 @@ public class ExistingTemplatesComponent {
 
     configureSelectTemplateAction(patternTree);
 
-    historyModel = new DefaultListModel();
+    historyModel = new CollectionListModel<Configuration>(configurationManager.getHistoryConfigurations());
     historyPanel = new JPanel(new BorderLayout());
     historyPanel.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("used.templates")));
 
     historyList = new JBList(historyModel);
     historyPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(historyList));
     historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    historyList.setSelectedIndex(0);
 
     final ListSpeedSearch speedSearch = new ListSpeedSearch(historyList, new Convertor<Object, String>() {
       @Override
@@ -147,15 +148,6 @@ public class ExistingTemplatesComponent {
       }
     });
     historyList.setCellRenderer(new ExistingTemplatesListCellRenderer(speedSearch));
-
-    if (configurationManager.getHistoryConfigurations() != null) {
-      for (final Configuration configuration : configurationManager.getHistoryConfigurations()) {
-        historyModel.addElement(configuration);
-      }
-
-      historyList.setSelectedIndex(0);
-    }
-
     configureSelectTemplateAction(historyList);
   }
 
@@ -279,18 +271,16 @@ public class ExistingTemplatesComponent {
   }
 
   void addConfigurationToHistory(Configuration configuration) {
-    //configuration.setName( configuration.getName() +" "+new Date());
-    historyModel.insertElementAt(configuration, 0);
-    ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
+    historyModel.remove(configuration);
+    historyModel.add(0, configuration);
+    final ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
     configurationManager.addHistoryConfigurationToFront(configuration);
     historyList.setSelectedIndex(0);
 
     if (historyModel.getSize() > 25) {
-      configurationManager.removeHistoryConfiguration(
-        (Configuration)historyModel.getElementAt(25)
-      );
+      configurationManager.removeHistoryConfiguration(historyModel.getElementAt(25));
       // we add by one!
-      historyModel.removeElementAt(25);
+      historyModel.remove(25);
     }
   }
 
@@ -314,10 +304,6 @@ public class ExistingTemplatesComponent {
     insertNode(configuration, userTemplatesNode, userTemplatesNode.getChildCount());
     ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
     configurationManager.addConfiguration(configuration);
-  }
-
-  boolean isConfigurationFromHistory(Configuration config) {
-    return historyModel.indexOf(config) != -1;
   }
 
   public JList getHistoryList() {

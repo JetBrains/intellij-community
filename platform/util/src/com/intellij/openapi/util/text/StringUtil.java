@@ -2036,6 +2036,14 @@ public class StringUtil extends StringUtilRt {
     return buf.toString();
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public static String unescapeChar(@NotNull final String str, char unescapeChar) {
+    final StringBuilder buf = new StringBuilder(str.length());
+    unescapeChar(buf, str, unescapeChar);
+    return buf.toString();
+  }
+
   private static void unescapeChar(@NotNull StringBuilder buf, @NotNull String str, char unescapeChar) {
     final int length = str.length();
     final int last = length - 1;

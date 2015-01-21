@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -639,7 +639,16 @@ public class ClassWriter {
           descriptor = GenericMain.parseMethodSignature(attr.getSignature());
           if (descriptor != null) {
             int actualParams = md.params.length;
-            if (isEnum && init) actualParams -= 2;
+            List<VarVersionPair> sigFields = methodWrapper.signatureFields;
+            if (sigFields != null) {
+               actualParams = 0;
+              for (VarVersionPair field : methodWrapper.signatureFields) {
+                if (field == null) {
+                  actualParams++;
+                }
+              }
+            }
+            else if (isEnum && init) actualParams -= 2;
             if (actualParams != descriptor.params.size()) {
               String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor();
               DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
@@ -685,10 +694,11 @@ public class ClassWriter {
 
         boolean firstParameter = true;
         int index = isEnum && init ? 3 : thisVar ? 1 : 0;
-        int start = isEnum && init && descriptor == null ? 2 : 0;
-        int params = descriptor == null ? md.params.length : descriptor.params.size();
+        boolean hasDescriptor = descriptor != null;
+        int start = isEnum && init && !hasDescriptor ? 2 : 0;
+        int params = hasDescriptor ? descriptor.params.size() : md.params.length;
         for (int i = start; i < params; i++) {
-          if (signFields == null || signFields.get(i) == null) {
+          if (hasDescriptor || (signFields == null || signFields.get(i) == null)) {
             if (!firstParameter) {
               buffer.append(", ");
             }
