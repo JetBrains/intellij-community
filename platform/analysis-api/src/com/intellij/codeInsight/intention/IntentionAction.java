@@ -59,7 +59,7 @@ public interface IntentionAction {
    * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
    */
   @NotNull
-  @Nls
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getFamilyName();
 
   /**
