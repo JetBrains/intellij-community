@@ -26,15 +26,19 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testTitleCapitalization() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testSentenceCapitalization() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testMultipleReturns() throws Exception {
-    doTest();
+    doTest(true);
+  }
+
+  public void testArgument() throws Exception {
+    doTest(false);
   }
 
   public void testRecursiveMethod() throws Exception {
@@ -42,8 +46,19 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
     assertEmpty(myFixture.filterAvailableIntentions("Properly capitalize"));
   }
 
-  public void doTest() {
+  public void testIntention() throws Exception {
+    myFixture.configureByFile("Intention.java");
+    AnnotateCapitalizationIntention intention = new AnnotateCapitalizationIntention();
+    assertTrue(intention.isAvailable(getProject(), getEditor(), getFile()));
+    intention.invoke(getProject(), getEditor(), getFile());
+    myFixture.checkResultByFile("Intention_after.java");
+    assertFalse(intention.isAvailable(getProject(), getEditor(), getFile()));
+  }
+
+  private void doTest(boolean fix) {
     myFixture.testHighlighting(getTestName(false) + ".java");
+    if (!fix) return;
+
     final IntentionAction action = myFixture.filterAvailableIntentions("Properly capitalize").get(0);
     new WriteCommandAction.Simple(getProject()) {
       @Override

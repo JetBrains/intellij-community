@@ -119,9 +119,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       return loadTreeElement();
     }
 
-    synchronized (PsiLock.LOCK) {
-      return derefTreeElement();
-    }
+    return null;
   }
 
   private FileElement derefTreeElement() {

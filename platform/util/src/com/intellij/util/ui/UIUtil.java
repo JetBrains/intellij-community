@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2368,6 +2368,7 @@ public class UIUtil {
       runnable.run();
     }
     else {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(runnable);
     }
   }
@@ -2377,8 +2378,9 @@ public class UIUtil {
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
     if (SwingUtilities.isEventDispatchThread()) {
@@ -2399,8 +2401,9 @@ public class UIUtil {
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   *
    * @param computable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static <T> T invokeAndWaitIfNeeded(@NotNull final Computable<T> computable) {
     final Ref<T> result = Ref.create();
@@ -2418,15 +2421,16 @@ public class UIUtil {
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
     if (SwingUtilities.isEventDispatchThread()) {
       runnable.run();
     }
     else {
-      final Ref<Throwable> ref = new Ref<Throwable>();
+      final Ref<Throwable> ref = Ref.create();
       SwingUtilities.invokeAndWait(new Runnable() {
         @Override
         public void run() {

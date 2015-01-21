@@ -26,6 +26,7 @@ import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import java.util.List;
 
 public class StringCompareToInspection extends BaseInspection {
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -58,7 +60,7 @@ public class StringCompareToInspection extends BaseInspection {
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final PsiMethodCallExpression methodCallExpression =
       (PsiMethodCallExpression)infos[0];
-    final List<InspectionGadgetsFix> result = new ArrayList();
+    final List<InspectionGadgetsFix> result = new ArrayList<InspectionGadgetsFix>();
     final PsiReferenceExpression methodExpression =
       methodCallExpression.getMethodExpression();
     final PsiModifierListOwner annotatableQualifier =

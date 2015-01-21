@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,18 +93,19 @@ public class DiffTreeTest extends TestCase {
   }
 
   private static class NodeComparator implements ShallowNodeComparator<Node, Node> {
+    @NotNull
     @Override
-    public ThreeState deepEqual(final Node node, final Node node1) {
+    public ThreeState deepEqual(@NotNull final Node node, @NotNull final Node node1) {
       return ThreeState.UNSURE;
     }
 
     @Override
-    public boolean typesEqual(final Node node, final Node node1) {
+    public boolean typesEqual(@NotNull final Node node, @NotNull final Node node1) {
       return node.getId() == node1.getId();
     }
 
     @Override
-    public boolean hashCodesEqual(final Node node, final Node node1) {
+    public boolean hashCodesEqual(@NotNull final Node node, @NotNull final Node node1) {
       return node.hashCode() == node1.hashCode();
     }
   }

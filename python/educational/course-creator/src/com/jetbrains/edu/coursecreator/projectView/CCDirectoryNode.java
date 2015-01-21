@@ -62,4 +62,28 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     data.setPresentableText(valueName);
   }
 
+  private static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
+    if (!fullName.startsWith(logicalName)) {
+      throw new IllegalArgumentException();
+    }
+    try {
+      return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+    }
+    catch (NumberFormatException e) {
+      return -1;
+    }
+  }
+
+  @Override
+  public int getTypeSortWeight(boolean sortByType) {
+    String name = myValue.getName();
+    String lessonDirName = "lesson";
+    String taskDirName = "task";
+    if (name.startsWith(lessonDirName) || name.startsWith(taskDirName)) {
+      String logicalName = name.contains(lessonDirName) ? lessonDirName : taskDirName;
+      int index = getIndex(name, logicalName) + 1;
+      return index != -1 ? index : 0;
+    }
+    return 0;
+  }
 }
