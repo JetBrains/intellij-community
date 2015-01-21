@@ -25,14 +25,14 @@ public class WCInfoWithBranches extends WCInfo {
 
   @NotNull private final List<Branch> myBranches;
   @NotNull private final VirtualFile myRoot;
-  private final String myTrunkRoot;
+  private final Branch myCurrentBranch;
 
-  public WCInfoWithBranches(@NotNull WCInfo info, @NotNull List<Branch> branches, @NotNull VirtualFile root, final String trunkToot) {
+  public WCInfoWithBranches(@NotNull WCInfo info, @NotNull List<Branch> branches, @NotNull VirtualFile root, Branch currentBranch) {
     super(info.getRootInfo(), info.isIsWcRoot(), info.getStickyDepth());
 
     myBranches = branches;
     myRoot = root;
-    myTrunkRoot = trunkToot;
+    myCurrentBranch = currentBranch;
   }
 
   // to be used in combo
@@ -47,6 +47,9 @@ public class WCInfoWithBranches extends WCInfo {
     return myRoot;
   }
 
+  /**
+   * List of all branches according to branch configuration. Does not contain {@code getCurrentBranch()} branch.
+   */
   @NotNull
   public List<Branch> getBranches() {
     return myBranches;
@@ -57,8 +60,11 @@ public class WCInfoWithBranches extends WCInfo {
     return myRoot;
   }
 
-  public String getTrunkRoot() {
-    return myTrunkRoot;
+  /**
+   * Current branch of this working copy instance (working copy url) according to branch configuration.
+   */
+  public Branch getCurrentBranch() {
+    return myCurrentBranch;
   }
 
   public static class Branch {

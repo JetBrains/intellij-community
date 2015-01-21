@@ -148,7 +148,7 @@ public class BranchInfo {
 
   private void checkPaths(final long number, @NotNull Collection<String> paths, @NotNull String branchPath, final String subPathUnderBranch,
                           @NotNull MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result) {
-    final String myTrunkPathCorrespondingToLocalBranchPath = SVNPathUtil.append(myInfo.getTrunkRoot(), subPathUnderBranch);
+    final String myTrunkPathCorrespondingToLocalBranchPath = SVNPathUtil.append(myInfo.getCurrentBranch().getUrl(), subPathUnderBranch);
     for (String path : paths) {
       final String absoluteInTrunkPath = SVNPathUtil.append(myInfo.getRepoUrl(), path);
       if (! absoluteInTrunkPath.startsWith(myTrunkPathCorrespondingToLocalBranchPath)) {

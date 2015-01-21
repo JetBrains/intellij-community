@@ -91,18 +91,19 @@ public class WcInfoLoader {
   private WCInfoWithBranches createInfoWithBranches(@NotNull WCInfo info, @NotNull RootUrlInfo rootUrlInfo) {
     SvnBranchConfigurationNew configuration =
       SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootUrlInfo.getVirtualFile());
-    Ref<String> branchRoot = Ref.create();
+    Ref<WCInfoWithBranches.Branch> workingCopyBranch = Ref.create();
     List<WCInfoWithBranches.Branch> branches = ContainerUtil.newArrayList();
     String url = info.getUrl().toString();
 
+    // TODO: Probably could utilize SvnBranchConfigurationNew.UrlListener and SvnBranchConfigurationNew.iterateUrls() behavior
     String trunkUrl = configuration.getTrunkUrl();
     if (trunkUrl != null) {
-      add(url, trunkUrl, branches, branchRoot);
+      add(url, trunkUrl, branches, workingCopyBranch);
     }
 
     for (String branchUrl : configuration.getBranchUrls()) {
       for (SvnBranchItem branchItem : configuration.getBranches(branchUrl)) {
-        add(url, branchItem.getUrl(), branches, branchRoot);
+        add(url, branchItem.getUrl(), branches, workingCopyBranch);
       }
     }
 
@@ -112,18 +113,20 @@ public class WcInfoLoader {
       }
     });
 
-    return new WCInfoWithBranches(info, branches, rootUrlInfo.getRoot(), branchRoot.get());
+    return new WCInfoWithBranches(info, branches, rootUrlInfo.getRoot(), workingCopyBranch.get());
   }
 
   private static void add(@NotNull String url,
                           @NotNull String branchUrl,
                           @NotNull List<WCInfoWithBranches.Branch> branches,
-                          @NotNull Ref<String> branchRoot) {
+                          @NotNull Ref<WCInfoWithBranches.Branch> workingCopyBranch) {
+    WCInfoWithBranches.Branch branch = new WCInfoWithBranches.Branch(branchUrl);
+
     if (!SVNPathUtil.isAncestor(branchUrl, url)) {
-      branches.add(new WCInfoWithBranches.Branch(branchUrl));
+      branches.add(branch);
     }
     else {
-      branchRoot.set(branchUrl);
+      workingCopyBranch.set(branch);
     }
   }
 }

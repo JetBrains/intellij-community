@@ -104,8 +104,8 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     final String repoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    myWCInfoWithBranches =
-      new WCInfoWithBranches(myWCInfo, Collections.<WCInfoWithBranches.Branch>emptyList(), vcsRoot, repoUrl + "/trunk");
+    myWCInfoWithBranches = new WCInfoWithBranches(myWCInfo, Collections.<WCInfoWithBranches.Branch>emptyList(), vcsRoot,
+                                                  new WCInfoWithBranches.Branch(repoUrl + "/trunk"));
     myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl + "/branch"));
   }
 
