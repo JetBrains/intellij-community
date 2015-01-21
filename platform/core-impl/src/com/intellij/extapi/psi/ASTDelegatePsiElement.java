@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,12 +153,12 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
-  public <T> T getCopyableUserData(Key<T> key) {
+  public <T> T getCopyableUserData(@NotNull Key<T> key) {
     return getNode().getCopyableUserData(key);
   }
 
   @Override
-  public <T> void putCopyableUserData(Key<T> key, T value) {
+  public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
     getNode().putCopyableUserData(key, value);
   }
 

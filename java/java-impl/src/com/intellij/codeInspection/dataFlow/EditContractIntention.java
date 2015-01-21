@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
@@ -80,7 +81,7 @@ public class EditContractIntention extends BaseIntentionAction {
       @Nullable
       @Override
       public String getErrorText(String inputString) {
-        if (com.intellij.openapi.util.text.StringUtil.isEmpty(inputString)) return null;
+        if (StringUtil.isEmpty(inputString)) return null;
 
         return ContractInspection.checkContract(method, inputString);
       }
@@ -101,7 +102,7 @@ public class EditContractIntention extends BaseIntentionAction {
     try {
       ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
       manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-      if (!com.intellij.openapi.util.text.StringUtil.isEmpty(newContract)) {
+      if (!StringUtil.isEmpty(newContract)) {
         PsiAnnotation mockAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@Foo(\"" + newContract + "\")", null);
         manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, file,
                                    mockAnno.getParameterList().getAttributes());
