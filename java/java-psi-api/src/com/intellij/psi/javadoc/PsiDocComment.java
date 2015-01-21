@@ -49,6 +49,7 @@ public interface PsiDocComment extends PsiComment, PsiDocCommentBase {
 
   /**
    * Finds the first JavaDoc tag with the specified name.
+   * @param name The name of the tags to find (not including the leading @ character).
    * @return the tag with the specified name, or null if not found.
    */
   @Nullable
@@ -56,6 +57,7 @@ public interface PsiDocComment extends PsiComment, PsiDocCommentBase {
 
   /**
    * Finds all JavaDoc tags with the specified name.
+   * @param name The name of the tags to find (not including the leading @ character).
    */
   @NotNull
   PsiDocTag[] findTagsByName(@NonNls String name);
