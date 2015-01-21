@@ -75,7 +75,10 @@ public class CodeInsightTestUtil {
 
   @TestOnly
   public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) {
-    doIntentionTest(fixture, actionText, file + ".xml", file + "_after.xml");
+    String extension = FileUtilRt.getExtension(file);
+    file = FileUtil.getNameWithoutExtension(file);
+    if (extension.isEmpty()) extension = "xml";
+    doIntentionTest(fixture, actionText, file + "." + extension, file + "_after." + extension);
   }
 
   @TestOnly

@@ -16,6 +16,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -153,6 +154,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   }
 
   protected PsiFile getFile() { return myFixture.getFile(); }
+
+  protected Editor getEditor() { return myFixture.getEditor(); }
 
   protected PsiManager getPsiManager() {
     return PsiManager.getInstance(getProject());

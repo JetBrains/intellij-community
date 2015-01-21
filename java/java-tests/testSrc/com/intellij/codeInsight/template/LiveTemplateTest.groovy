@@ -257,10 +257,6 @@ class Foo {
     assert 'Bar' in myFixture.lookupElementStrings
   }
 
-  private Editor getEditor() {
-    return myFixture.getEditor();
-  }
-
   private void checkResult() {
     checkResultByFile(getTestName(false) + "-out.java");
   }
