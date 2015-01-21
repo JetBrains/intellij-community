@@ -252,12 +252,16 @@ public class NewExprent extends Exprent {
           buf.setLength(0);  // remove the usual 'new <class>()', it will be replaced with lambda style '() ->'
         }
         Exprent methodObject = constructor == null ? null : constructor.getInstance();
-        new ClassWriter().classLambdaToJava(child, buf, methodObject, indent);
-        tracer.incrementCurrentSourceLine(buf.countLines());
+        TextBuffer clsBuf = new TextBuffer();
+        new ClassWriter().classLambdaToJava(child, clsBuf, methodObject, indent);
+        buf.append(clsBuf);
+        tracer.incrementCurrentSourceLine(clsBuf.countLines());
       }
       else {
-        new ClassWriter().classToJava(child, buf, indent, tracer);
-        tracer.incrementCurrentSourceLine(buf.countLines());
+        TextBuffer clsBuf = new TextBuffer();
+        new ClassWriter().classToJava(child, clsBuf, indent, tracer);
+        buf.append(clsBuf);
+        tracer.incrementCurrentSourceLine(clsBuf.countLines());
       }
     }
     else if (directArrayInit) {
