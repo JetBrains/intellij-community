@@ -33,22 +33,17 @@ import java.awt.*;
 import java.util.Collection;
 
 public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
-  @NotNull
-  private final LinearGraphController myGraphController;
-  @NotNull
-  private final PermanentGraphInfo<CommitId> myPermanentGraph;
+  @NotNull private final LinearGraphController myGraphController;
+  @NotNull private final PermanentGraphInfo<CommitId> myPermanentGraph;
 
-  @NotNull
+  private PrintElementManagerImpl myPrintElementManager;
   private PrintElementGenerator myPrintElementGenerator;
   private boolean myShowLongEdges = false;
 
-  public VisibleGraphImpl(@NotNull LinearGraphController graphController,
-                          @NotNull PermanentGraphInfo<CommitId> permanentGraph) {
+  public VisibleGraphImpl(@NotNull LinearGraphController graphController, @NotNull PermanentGraphInfo<CommitId> permanentGraph) {
     myGraphController = graphController;
     myPermanentGraph = permanentGraph;
-    myPrintElementGenerator = new PrintElementGeneratorImpl(graphController.getCompiledGraph(),
-                                                            graphController.getPrintElementManager(),
-                                                            myShowLongEdges);
+    updatePrintElementGenerator();
   }
 
   @Override
@@ -102,10 +97,9 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     return new ActionControllerImpl();
   }
 
-  private void graphWasChanged() {
-    myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(),
-                                                            myGraphController.getPrintElementManager(),
-                                                            myShowLongEdges);
+  private void updatePrintElementGenerator() {
+    myPrintElementManager = new PrintElementManagerImpl(myGraphController.getCompiledGraph(), myPermanentGraph);
+    myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(), myPrintElementManager, myShowLongEdges);
   }
 
   private class ActionControllerImpl implements ActionController<CommitId> {
@@ -114,8 +108,9 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Override
     public GraphAnswer<CommitId> performAction(@NotNull GraphAction graphAction) {
       LinearGraphController.LinearGraphAnswer answer = myGraphController.performLinearGraphAction(convert(graphAction));
-      if (answer.getGraphChanges() != null)
-        graphWasChanged();
+      if (answer.getSelectedNodeIds() != null) myPrintElementManager.setSelectedElements(answer.getSelectedNodeIds());
+
+      if (answer.getGraphChanges() != null) updatePrintElementGenerator();
       return convert(answer);
     }
 
@@ -127,41 +122,40 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Override
     public void setLongEdgesHidden(boolean longEdgesHidden) {
       myShowLongEdges = !longEdgesHidden;
-      graphWasChanged();
+      updatePrintElementGenerator();
     }
 
     @Override
     public void setLinearBranchesExpansion(boolean collapse) {
       LinearGraphController.LinearGraphAnswer answer;
-      if (collapse)
+      if (collapse) {
         answer = myGraphController.performLinearGraphAction(LinearGraphActionImpl.COLLAPSE);
-      else
+      }
+      else {
         answer = myGraphController.performLinearGraphAction(LinearGraphActionImpl.EXPAND);
-      if (answer.getGraphChanges() != null)
-        graphWasChanged();
+      }
+      if (answer.getGraphChanges() != null) updatePrintElementGenerator();
     }
 
     private LinearGraphController.LinearGraphAction convert(@NotNull GraphAction graphAction) {
       PrintElementWithGraphElement printElement = null;
-      if (graphAction.getAffectedElement() != null)
+      if (graphAction.getAffectedElement() != null) {
         printElement = myPrintElementGenerator.toPrintElementWithGraphElement(graphAction.getAffectedElement());
+      }
       return new LinearGraphActionImpl(printElement, graphAction.getType());
     }
 
     private GraphAnswer<CommitId> convert(@NotNull LinearGraphController.LinearGraphAnswer answer) {
       CommitId commitToJump = null;
       Integer nodeId = answer.getCommitToJump();
-      if (nodeId != null)
-        commitToJump = myPermanentGraph.getPermanentCommitsInfo().getCommitId(nodeId);
+      if (nodeId != null) commitToJump = myPermanentGraph.getPermanentCommitsInfo().getCommitId(nodeId);
       return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), commitToJump);
     }
   }
 
   private static class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {
-    @Nullable
-    private final Cursor myCursor;
-    @Nullable
-    private final CommitId myCommitToJump;
+    @Nullable private final Cursor myCursor;
+    @Nullable private final CommitId myCommitToJump;
 
     private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump) {
       myCursor = cursor;
@@ -185,10 +179,8 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     private final static LinearGraphController.LinearGraphAction COLLAPSE = new LinearGraphActionImpl(null, Type.BUTTON_COLLAPSE);
     private final static LinearGraphController.LinearGraphAction EXPAND = new LinearGraphActionImpl(null, Type.BUTTON_EXPAND);
 
-    @Nullable
-    private final PrintElementWithGraphElement myAffectedElement;
-    @NotNull
-    private final Type myType;
+    @Nullable private final PrintElementWithGraphElement myAffectedElement;
+    @NotNull private final Type myType;
 
     private LinearGraphActionImpl(@Nullable PrintElementWithGraphElement affectedElement, @NotNull Type type) {
       myAffectedElement = affectedElement;

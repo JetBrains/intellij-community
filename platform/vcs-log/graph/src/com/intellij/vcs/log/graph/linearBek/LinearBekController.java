@@ -27,7 +27,6 @@ import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
@@ -56,11 +55,6 @@ public class LinearBekController extends CascadeLinearGraphController {
     long end = System.currentTimeMillis();
     System.err.println(((double)end - start) / 1000);
     return result;
-  }
-
-  @Override
-  protected boolean elementIsSelected(@NotNull PrintElementWithGraphElement printElement) {
-    return false;
   }
 
   @NotNull
@@ -155,7 +149,7 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   private static class ExpandedEdgeAnswer extends LinearGraphAnswer {
     private ExpandedEdgeAnswer(@NotNull GraphEdge expanded, @NotNull Collection<GraphEdge> addedEdges) {
-      super(calculateChanges(expanded, addedEdges), null, null); // TODO
+      super(calculateChanges(expanded, addedEdges), null, null, null); // TODO
       calculateChanges(expanded, addedEdges);
     }
 

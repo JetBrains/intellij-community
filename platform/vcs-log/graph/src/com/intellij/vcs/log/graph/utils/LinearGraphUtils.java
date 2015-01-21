@@ -31,7 +31,8 @@ import java.awt.*;
 import java.util.List;
 
 public class LinearGraphUtils {
-  public static final LinearGraphController.LinearGraphAnswer DEFAULT_GRAPH_ANSWER = new LinearGraphController.LinearGraphAnswer(null, null, null);
+  public static final LinearGraphController.LinearGraphAnswer DEFAULT_GRAPH_ANSWER =
+    new LinearGraphController.LinearGraphAnswer(null, null, null, null);
 
   public static boolean intEqual(@Nullable Integer value, int number) {
     return value != null && value == number;
@@ -136,7 +137,16 @@ public class LinearGraphUtils {
     Cursor cursor = Cursor.getDefaultCursor();
     if (handCursor) cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 
-    return new LinearGraphController.LinearGraphAnswer(null, cursor, null);
+    return new LinearGraphController.LinearGraphAnswer(null, cursor, null, null);
+  }
+
+  @NotNull
+  public static Cursor getCursor(boolean hand) {
+    if (hand) {
+      return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+    } else {
+      return Cursor.getDefaultCursor();
+    }
   }
 
   @Nullable
