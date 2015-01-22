@@ -590,7 +590,7 @@ public class ClassWriter {
       if ((flags & CodeConstants.ACC_NATIVE) != 0) {
         flags &= ~CodeConstants.ACC_STRICT; // compiler bug: a strictfp class sets all methods to strictfp
       }
-      if ("<clinit>".equals(mt.getName())) {
+      if (CodeConstants.CLINIT_NAME.equals(mt.getName())) {
         flags &= CodeConstants.ACC_STATIC; // ignore all modifiers except 'static' in a static initializer
       }
 
@@ -624,7 +624,7 @@ public class ClassWriter {
       }
 
       String name = mt.getName();
-      if ("<init>".equals(name)) {
+      if (CodeConstants.INIT_NAME.equals(name)) {
         if (node.type == ClassNode.CLASS_ANONYMOUS) {
           name = "";
           dinit = true;
@@ -634,7 +634,7 @@ public class ClassWriter {
           init = true;
         }
       }
-      else if ("<clinit>".equals(name)) {
+      else if (CodeConstants.CLINIT_NAME.equals(name)) {
         name = "";
         clinit = true;
       }
@@ -903,7 +903,7 @@ public class ClassWriter {
 
     int count = 0;
     for (StructMethod mt : wrapper.getClassStruct().getMethods()) {
-      if ("<init>".equals(mt.getName())) {
+      if (CodeConstants.INIT_NAME.equals(mt.getName())) {
         if (++count > 1) {
           return false;
         }
