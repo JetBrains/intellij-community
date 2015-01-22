@@ -21,7 +21,9 @@ import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.utils.*;
+import com.intellij.vcs.log.graph.utils.IntToIntMap;
+import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
+import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,46 +42,12 @@ public class CollapsedGraph {
     }
 
     UnsignedBitSet visibleNodesId = initVisibility.clone(); // todo mm?
-    GraphNodesVisibility delegateNodesVisibility = new GraphNodesVisibility(delegateGraph, visibleNodesId);
-    UpdatableIntToIntMap nodesMap = ListIntToIntMap.newInstance(delegateNodesVisibility.asFlags());
-    GraphAdditionalEdges graphAdditionalEdges = GraphAdditionalEdges
-      .newInstance(createGetNodeIndexById(delegateGraph, visibleNodesId, nodesMap), createGetNodeIdByIndex(delegateGraph, nodesMap));
-    return new CollapsedGraph(delegateGraph, delegateNodesVisibility, nodesMap, graphAdditionalEdges);
+    return new CollapsedGraph(delegateGraph, visibleNodesId, new EdgeStorage());
   }
 
   public static CollapsedGraph updateInstance(@NotNull CollapsedGraph prevCollapsedGraph, @NotNull LinearGraph newDelegateGraph) {
     UnsignedBitSet visibleNodesId = prevCollapsedGraph.myDelegateNodesVisibility.getNodeVisibilityById();
-    GraphNodesVisibility delegateNodesVisibility = new GraphNodesVisibility(newDelegateGraph, visibleNodesId);
-    UpdatableIntToIntMap nodesMap = ListIntToIntMap.newInstance(delegateNodesVisibility.asFlags());
-    GraphAdditionalEdges graphAdditionalEdges =
-      GraphAdditionalEdges
-        .updateInstance(prevCollapsedGraph.myGraphAdditionalEdges, createGetNodeIndexById(newDelegateGraph, visibleNodesId, nodesMap),
-                        createGetNodeIdByIndex(newDelegateGraph, nodesMap));
-    return new CollapsedGraph(newDelegateGraph, delegateNodesVisibility, nodesMap, graphAdditionalEdges);
-  }
-
-  private static Function<Integer, Integer> createGetNodeIdByIndex(final LinearGraph delegateGraph, final IntToIntMap nodesMap) {
-    return new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer nodeIndex) {
-        int delegateIndex = nodesMap.getLongIndex(nodeIndex);
-        return delegateGraph.getNodeId(delegateIndex);
-      }
-    };
-  }
-
-  private static Function<Integer, Integer> createGetNodeIndexById(final LinearGraph delegateGraph,
-                                                            final UnsignedBitSet visibleNodesId,
-                                                            final IntToIntMap nodesMap) {
-    return new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer nodeId) {
-        assert visibleNodesId.get(nodeId);
-        Integer delegateIndex = delegateGraph.getNodeIndex(nodeId);
-        assert delegateIndex != null;
-        return nodesMap.getShortIndex(delegateIndex);
-      }
-    };
+    return new CollapsedGraph(newDelegateGraph, visibleNodesId, prevCollapsedGraph.myEdgeStorage);
   }
 
   @NotNull
@@ -89,20 +57,17 @@ public class CollapsedGraph {
   @NotNull
   private final UpdatableIntToIntMap myNodesMap;
   @NotNull
-  private final GraphAdditionalEdges myGraphAdditionalEdges;
+  private final EdgeStorage myEdgeStorage;
   @NotNull
   private final CompiledGraph myCompiledGraph;
   @Nullable private Modification myCurrentModification = null;
 
 
-  private CollapsedGraph(@NotNull LinearGraph delegatedGraph,
-                         @NotNull GraphNodesVisibility delegateNodesVisibility,
-                         @NotNull UpdatableIntToIntMap nodesMap,
-                         @NotNull GraphAdditionalEdges graphAdditionalEdges) {
+  private CollapsedGraph(@NotNull LinearGraph delegatedGraph, @NotNull UnsignedBitSet visibleNodesId, @NotNull EdgeStorage edgeStorage) {
     myDelegatedGraph = delegatedGraph;
-    myDelegateNodesVisibility = delegateNodesVisibility;
-    myNodesMap = nodesMap;
-    myGraphAdditionalEdges = graphAdditionalEdges;
+    myDelegateNodesVisibility = new GraphNodesVisibility(delegatedGraph, visibleNodesId);
+    myNodesMap = ListIntToIntMap.newInstance(myDelegateNodesVisibility.asFlags());
+    myEdgeStorage = edgeStorage;
     myCompiledGraph = new CompiledGraph();
   }
 
@@ -140,8 +105,8 @@ public class CollapsedGraph {
 
   @Deprecated
   @NotNull
-  public GraphAdditionalEdges getGraphAdditionalEdges() {
-    return myGraphAdditionalEdges;
+  public EdgeStorage getEdgeStorage() {
+    return myEdgeStorage;
   }
 
   public int convertToDelegateNodeIndex(int compiledNodeIndex) {
@@ -151,9 +116,16 @@ public class CollapsedGraph {
 
   // all nodeIndexes means node indexes in delegated graph
   public class Modification {
+    @NotNull
+    private final EdgeStorageAdapter myEdgeStorageAdapter;
+
     private boolean done = false;
     private int minAffectedNodeIndex = Integer.MAX_VALUE;
     private int maxAffectedNodeIndex = Integer.MIN_VALUE;
+
+    public Modification() {
+      myEdgeStorageAdapter = new EdgeStorageAdapter(myEdgeStorage, getDelegatedGraph());
+    }
 
     private void touchIndex(int nodeIndex) {
       assert !done;
@@ -179,12 +151,12 @@ public class CollapsedGraph {
 
     public void createEdge(@NotNull GraphEdge edge) {
       touchEdge(edge);
-      myGraphAdditionalEdges.createEdge(edge);
+      myEdgeStorageAdapter.createEdge(edge);
     }
 
     public void removeEdge(@NotNull GraphEdge edge) { // todo add support for removing edge from delegate graph
       touchEdge(edge);
-      myGraphAdditionalEdges.removeEdge(edge);
+      myEdgeStorageAdapter.removeEdge(edge);
     }
 
     public void apply() {
@@ -203,6 +175,12 @@ public class CollapsedGraph {
   }
 
   private class CompiledGraph implements LinearGraph {
+    @NotNull
+    private final EdgeStorageAdapter myEdgeStorageAdapter;
+
+    private CompiledGraph() {
+      myEdgeStorageAdapter = new EdgeStorageAdapter(myEdgeStorage, this);
+    }
 
     @Override
     public int nodesCount() {
@@ -248,7 +226,7 @@ public class CollapsedGraph {
           result.add(createEdge(delegateEdge, compiledUpIndex, compiledDownIndex));
       }
 
-      myGraphAdditionalEdges.appendAdditionalEdges(result, nodeIndex, filter);
+      myEdgeStorageAdapter.appendAdditionalEdges(result, nodeIndex, filter);
 
       return result;
     }

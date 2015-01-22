@@ -22,7 +22,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges;
+import com.intellij.vcs.log.graph.collapsing.EdgeStorageAdapter;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +31,10 @@ import java.util.*;
 
 public class LinearBekGraph implements LinearGraph {
   @NotNull protected final LinearGraph myGraph;
-  @NotNull protected final GraphAdditionalEdges myHiddenEdges;
-  @NotNull protected final GraphAdditionalEdges myDottedEdges;
+  @NotNull protected final EdgeStorageAdapter myHiddenEdges;
+  @NotNull protected final EdgeStorageAdapter myDottedEdges;
 
-  public LinearBekGraph(@NotNull LinearGraph graph, @NotNull GraphAdditionalEdges hiddenEdges, @NotNull GraphAdditionalEdges dottedEdges) {
+  public LinearBekGraph(@NotNull LinearGraph graph, @NotNull EdgeStorageAdapter hiddenEdges, @NotNull EdgeStorageAdapter dottedEdges) {
     myGraph = graph;
     myHiddenEdges = hiddenEdges;
     myDottedEdges = dottedEdges;
