@@ -105,23 +105,29 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @Override
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                                    @Nullable Set<CommitId> headsOfVisibleBranches,
-                                                   @Nullable Set<CommitId> filter) {
-    CascadeLinearGraphController controller;
-    if (sortType == SortType.Bek) {
-      controller = new CollapsedLinearGraphController(new BekBaseLinearGraphController(this, myBekIntMap), this);
-    } else if (sortType == SortType.LinearBek) {
-      controller = new LinearBekController(new BekBaseLinearGraphController(this, myBekIntMap), this, myPermanentCommitsInfo.getTimestampGetter());
+                                                   @Nullable Set<CommitId> matchedCommits) {
+    LinearGraphController controller;
+    if (sortType == SortType.LinearBek) {
+      controller =
+        new LinearBekController(new BekBaseLinearGraphController(this, myBekIntMap), this, myPermanentCommitsInfo.getTimestampGetter());
+      return new VisibleGraphImpl<CommitId>(controller, this);
+    }
+
+    CascadeLinearGraphController baseController;
+    if (sortType == SortType.Normal) {
+      baseController = new BaseLinearGraphController(this);
     }
     else {
-      controller = new CollapsedLinearGraphController(new BaseLinearGraphController(this), this);
+      baseController = new BekBaseLinearGraphController(this, myBekIntMap);
     }
+
+    if (matchedCommits != null) {
+      controller = new FilterLinearGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchedCommits));
+    } else {
+      controller = new CollapsedLinearGraphController(baseController, this);
+    }
+
     return new VisibleGraphImpl<CommitId>(controller, this);
-    //
-    //if (filter == null) {
-    //  return CollapsedVisibleGraph.newInstance(getBekPermanentGraphInfo(sortType), headsOfVisibleBranches);
-    //} else {
-    //  return FilterVisibleGraph.newInstance(getBekPermanentGraphInfo(sortType), headsOfVisibleBranches, filter);
-    //}
   }
 
   @NotNull
