@@ -566,6 +566,26 @@ public class ClassWriter {
     }
   }
 
+  public static String toValidJavaIdentifier(String name) {
+    if (name == null || name.isEmpty()) return name;
+
+    boolean changed = false;
+    StringBuilder res = new StringBuilder(name.length());
+    for (int i = 0; i < name.length(); i++) {
+      char c = name.charAt(i);
+      if ((i == 0 && !Character.isJavaIdentifierStart(c))
+          || (i > 0 && !Character.isJavaIdentifierPart(c))) {
+        changed = true;
+        res.append("_");
+      }
+      else res.append(c);
+    }
+    if (!changed) {
+      return name;
+    }
+    return res.append("/* $FF was: ").append(name).append("*/").toString();
+  }
+
   private boolean methodToJava(ClassNode node, StructMethod mt, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
     ClassWrapper wrapper = node.getWrapper();
     StructClass cl = wrapper.getClassStruct();
@@ -686,7 +706,7 @@ public class ClassWriter {
           buffer.append(' ');
         }
 
-        buffer.append(name);
+        buffer.append(toValidJavaIdentifier(name));
         buffer.append('(');
 
         // parameters
