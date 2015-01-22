@@ -32,11 +32,13 @@ class FileLoader extends Loader {
   private final String myRootDirAbsolutePath;
   private static int misses;
   private static int hits;
+  private final boolean myCanHavePersistentIndex;
 
-  FileLoader(URL url, int index) throws IOException {
+  FileLoader(URL url, int index, boolean canHavePersistentIndex) throws IOException {
     super(url, index);
     myRootDir = new File(FileUtil.unquote(url.getFile()));
     myRootDirAbsolutePath = myRootDir.getAbsolutePath();
+    myCanHavePersistentIndex = canHavePersistentIndex;
   }
 
   private void buildPackageCache(final File dir, ClasspathCache.LoaderData loaderData) {
@@ -121,11 +123,11 @@ class FileLoader extends Loader {
   private static final AtomicLong totalScanning = new AtomicLong();
   private static final AtomicLong totalSaving = new AtomicLong();
   private static final AtomicLong totalReading = new AtomicLong();
-  private static final boolean INDEX_PERSISTENCE_DISABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.disabled", "true"));
-  private static final Boolean doLogging = false;
+
+  private static final Boolean doFsActivityLogging = false;
 
   private ClasspathCache.LoaderData tryReadFromIndex() {
-    if (INDEX_PERSISTENCE_DISABLED) return null;
+    if (!myCanHavePersistentIndex) return null;
     long started = System.nanoTime();
     ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
     File index = getIndexFileFile();
@@ -159,7 +161,7 @@ class FileLoader extends Loader {
   }
 
   private void trySaveToIndex(ClasspathCache.LoaderData data) {
-    if (INDEX_PERSISTENCE_DISABLED) return;
+    if (!myCanHavePersistentIndex) return;
     long started = System.nanoTime();
     File index = getIndexFileFile();
     BufferedWriter writer = null;
@@ -251,7 +253,7 @@ class FileLoader extends Loader {
       /* } */
       final long doneNanos = System.nanoTime() - started;
       currentScanning = totalScanning.addAndGet(doneNanos);
-      if (doLogging) {
+      if (doFsActivityLogging) {
         System.out.println("Scanned: " + myRootDirAbsolutePath + " for " + (doneNanos / nsMsFactor) + "ms");
       }
       trySaveToIndex(loaderData);
@@ -262,7 +264,7 @@ class FileLoader extends Loader {
     loaderData.addResourceEntry("foo.class");
     loaderData.addResourceEntry("bar.properties");
 
-    if (doLogging) {
+    if (doFsActivityLogging) {
       System.out.println("Scanning: " + (currentScanning / nsMsFactor) + "ms, saving: " + (totalSaving.get() / nsMsFactor) +
                          "ms, loading:" + (totalReading.get() / nsMsFactor) + "ms for " + currentLoaders + " loaders");
     }

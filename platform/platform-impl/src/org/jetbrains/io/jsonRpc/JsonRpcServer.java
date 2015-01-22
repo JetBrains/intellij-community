@@ -135,7 +135,7 @@ public class JsonRpcServer implements MessageServer {
     if (reader.hasNext()) {
       List<Object> list = new SmartList<Object>();
       JsonUtil.readListBody(reader, list);
-      parameters = list.toArray(new Object[list.size()]);
+      parameters = ArrayUtil.toObjectArray(list);
     }
     else {
       parameters = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
@@ -360,7 +360,7 @@ public class JsonRpcServer implements MessageServer {
     }
 
     @Override
-    public T read(@SuppressWarnings("UnnecessaryFullyQualifiedName") com.google.gson.stream.JsonReader in) throws IOException {
+    public T read(com.google.gson.stream.JsonReader in) throws IOException {
       throw new UnsupportedOperationException();
     }
   }

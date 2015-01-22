@@ -195,6 +195,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   @Override
   public boolean isInside(@NotNull RelativePoint target) {
+    if (myComp == null) return false;
     Component cmp = target.getOriginalComponent();
 
     if (!cmp.isShowing()) return true;

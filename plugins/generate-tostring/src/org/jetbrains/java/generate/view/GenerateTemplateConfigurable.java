@@ -37,8 +37,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.java.generate.element.ClassElement;
+import org.jetbrains.java.generate.element.FieldElement;
+import org.jetbrains.java.generate.element.GenerationHelper;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
@@ -52,11 +55,11 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     private final Editor myEditor;
     private final List<String> availableImplicits = new ArrayList<String>();
 
-  public GenerateTemplateConfigurable(TemplateResource template, Project project) {
-      this(template, Collections.<String, PsiType>emptyMap(), project);
+  public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project) {
+    this(template, contextMap, project, true);
   }
 
-  public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project) {
+  public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project, boolean multipleFields) {
       this.template = template;
       final EditorFactory factory = EditorFactory.getInstance();
       Document doc = factory.createDocument(template.getTemplate());
@@ -68,7 +71,14 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
           final HashMap<String, PsiType> map = new LinkedHashMap<String, PsiType>();
           map.put("java_version", PsiType.INT);
           map.put("class", TemplatesManager.createElementType(project, ClassElement.class));
-          map.put("fields", TemplatesManager.createFieldListElementType(project));
+          if (multipleFields) {
+            map.put("fields", TemplatesManager.createFieldListElementType(project));
+          } 
+          else {
+            map.put("field", TemplatesManager.createElementType(project, FieldElement.class));
+          }
+          map.put("helper", TemplatesManager.createElementType(project, GenerationHelper.class));
+          map.put("settings", PsiType.NULL);
           map.putAll(contextMap);
           availableImplicits.addAll(map.keySet());
           file.getViewProvider().putUserData(TemplatesManager.TEMPLATE_IMPLICITS, map);
