@@ -1,5 +1,6 @@
 package org.jetbrains.io;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,7 @@ public class JsonUtil {
 
   public static Object[] nextArray(JsonReaderEx reader) {
     List<Object> list = nextList(reader);
-    return list.toArray(new Object[list.size()]);
+    return ArrayUtil.toObjectArray(list);
   }
 
   public static Map<String, Object> nextObject(JsonReaderEx reader) {

@@ -110,6 +110,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
     return Promise.all(promises);
   }
 
+  @NotNull
   protected abstract Promise<Void> doClearBreakpoint(@NotNull T breakpoint);
 
   @Override
