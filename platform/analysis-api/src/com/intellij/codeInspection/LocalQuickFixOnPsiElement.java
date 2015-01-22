@@ -22,14 +22,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.LocalQuickFixAndIntentionAction");
   protected final SmartPsiElementPointer<PsiElement> myStartElement;
   protected final SmartPsiElementPointer<PsiElement> myEndElement;
 
-  protected LocalQuickFixOnPsiElement(@Nullable PsiElement element) {
+  protected LocalQuickFixOnPsiElement(@NotNull PsiElement element) {
     this(element, element);
   }
 

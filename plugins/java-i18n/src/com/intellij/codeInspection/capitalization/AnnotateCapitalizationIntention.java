@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.inspections;
+package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -34,10 +35,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class AnnotateCapitalizationIntention extends AddAnnotationFix {
+public class AnnotateCapitalizationIntention implements IntentionAction {
 
   public AnnotateCapitalizationIntention() {
-    super(Nls.class.getName(), null);
   }
 
   @Override
@@ -46,8 +46,14 @@ public class AnnotateCapitalizationIntention extends AddAnnotationFix {
     if (element == null ||
         (!ApplicationManager.getApplication().isUnitTestMode() && element.getManager().isInProject(element)) ||
         AnnotationUtil.findAnnotation(element, Nls.class.getName()) != null) return false;
-    myText = "Annotate capitalization type";
     return true;
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getText() {
+    return getFamilyName();
   }
 
   @NotNull
@@ -57,7 +63,7 @@ public class AnnotateCapitalizationIntention extends AddAnnotationFix {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner modifierListOwner = getElement(editor, file);
     if (modifierListOwner == null) throw new IncorrectOperationException();
 
@@ -72,7 +78,7 @@ public class AnnotateCapitalizationIntention extends AddAnnotationFix {
               PsiAnnotation annotation = JavaPsiFacade.getInstance(project).getElementFactory()
                 .createAnnotationFromText("@" + nls + "(capitalization = " +
                                           nls + ".Capitalization." + selectedValue.toString() + ")", modifierListOwner);
-              invoke(project, file, modifierListOwner, annotation.getParameterList().getAttributes());
+              new AddAnnotationFix(Nls.class.getName(), modifierListOwner, annotation.getParameterList().getAttributes()).applyFix();
             }
           }.execute();
           return FINAL_CHOICE;
