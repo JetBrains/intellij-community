@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 class GraphNodesVisibility {
   @NotNull private final LinearGraph myLinearGraph;
-  @NotNull private final UnsignedBitSet myNodeVisibilityById;
+  @NotNull private UnsignedBitSet myNodeVisibilityById;
 
   GraphNodesVisibility(@NotNull LinearGraph linearGraph, @NotNull UnsignedBitSet nodeVisibilityById) {
     myLinearGraph = linearGraph;
@@ -32,6 +32,10 @@ class GraphNodesVisibility {
   @NotNull
   UnsignedBitSet getNodeVisibilityById() {
     return myNodeVisibilityById;
+  }
+
+  void setNodeVisibilityById(@NotNull UnsignedBitSet nodeVisibilityById) {
+    myNodeVisibilityById = nodeVisibilityById;
   }
 
   boolean isVisible(int nodeIndex) {

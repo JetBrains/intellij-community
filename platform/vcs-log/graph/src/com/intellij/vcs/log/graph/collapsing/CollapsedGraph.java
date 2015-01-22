@@ -30,32 +30,30 @@ import java.util.List;
 
 public class CollapsedGraph {
 
-  // initVisibility == null means, what all nodes is Visible
-  public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph, @NotNull UnsignedBitSet initVisibility) {
-    UnsignedBitSet visibleNodesId = initVisibility.clone(); // todo mm?
-    return new CollapsedGraph(delegateGraph, visibleNodesId, new EdgeStorage());
+  public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph, @NotNull UnsignedBitSet matchedNodeId) {
+    return new CollapsedGraph(delegateGraph, matchedNodeId, matchedNodeId.clone(), new EdgeStorage());
   }
 
   public static CollapsedGraph updateInstance(@NotNull CollapsedGraph prevCollapsedGraph, @NotNull LinearGraph newDelegateGraph) {
     UnsignedBitSet visibleNodesId = prevCollapsedGraph.myDelegateNodesVisibility.getNodeVisibilityById();
-    return new CollapsedGraph(newDelegateGraph, visibleNodesId, prevCollapsedGraph.myEdgeStorage);
+    return new CollapsedGraph(newDelegateGraph, prevCollapsedGraph.myMatchedNodeId, visibleNodesId, prevCollapsedGraph.myEdgeStorage);
   }
 
-  @NotNull
-  private final LinearGraph myDelegatedGraph;
-  @NotNull
-  private final GraphNodesVisibility myDelegateNodesVisibility;
-  @NotNull
-  private final UpdatableIntToIntMap myNodesMap;
-  @NotNull
-  private final EdgeStorage myEdgeStorage;
-  @NotNull
-  private final CompiledGraph myCompiledGraph;
+  @NotNull private final LinearGraph myDelegatedGraph;
+  @NotNull private final UnsignedBitSet myMatchedNodeId;
+  @NotNull private final GraphNodesVisibility myDelegateNodesVisibility;
+  @NotNull private final UpdatableIntToIntMap myNodesMap;
+  @NotNull private final EdgeStorage myEdgeStorage;
+  @NotNull private final CompiledGraph myCompiledGraph;
   @Nullable private Modification myCurrentModification = null;
 
 
-  private CollapsedGraph(@NotNull LinearGraph delegatedGraph, @NotNull UnsignedBitSet visibleNodesId, @NotNull EdgeStorage edgeStorage) {
+  private CollapsedGraph(@NotNull LinearGraph delegatedGraph,
+                         @NotNull UnsignedBitSet matchedNodeId,
+                         @NotNull UnsignedBitSet visibleNodesId,
+                         @NotNull EdgeStorage edgeStorage) {
     myDelegatedGraph = delegatedGraph;
+    myMatchedNodeId = matchedNodeId;
     myDelegateNodesVisibility = new GraphNodesVisibility(delegatedGraph, visibleNodesId);
     myNodesMap = ListIntToIntMap.newInstance(myDelegateNodesVisibility.asFlags());
     myEdgeStorage = edgeStorage;
@@ -89,10 +87,14 @@ public class CollapsedGraph {
     return myNodesMap.getLongIndex(compiledNodeIndex);
   }
 
+  @NotNull
+  public UnsignedBitSet getMatchedNodeId() {
+    return myMatchedNodeId;
+  }
+
   // all nodeIndexes means node indexes in delegated graph
   public class Modification {
-    @NotNull
-    private final EdgeStorageAdapter myEdgeStorageAdapter;
+    @NotNull private final EdgeStorageAdapter myEdgeStorageAdapter;
 
     private boolean done = false;
     private int minAffectedNodeIndex = Integer.MAX_VALUE;
@@ -111,6 +113,11 @@ public class CollapsedGraph {
       assert !done;
       minAffectedNodeIndex = Math.min(minAffectedNodeIndex, nodeIndex);
       maxAffectedNodeIndex = Math.max(maxAffectedNodeIndex, nodeIndex);
+    }
+
+    private void touchAll() {
+      minAffectedNodeIndex = 0;
+      maxAffectedNodeIndex = getDelegatedGraph().nodesCount() - 1;
     }
 
     private void touchEdge(@NotNull GraphEdge edge) {
@@ -150,9 +157,13 @@ public class CollapsedGraph {
     }
 
     public void removeAdditionalEdges() {
-      minAffectedNodeIndex = 0;
-      maxAffectedNodeIndex = getDelegatedGraph().nodesCount() - 1;
       myEdgeStorage.removeAll();
+      touchAll();
+    }
+
+    public void resetNodesVisibility() {
+      myDelegateNodesVisibility.setNodeVisibilityById(myMatchedNodeId.clone());
+      touchAll();
     }
   }
 
@@ -161,8 +172,7 @@ public class CollapsedGraph {
   }
 
   private class CompiledGraph implements LinearGraph {
-    @NotNull
-    private final EdgeStorageAdapter myEdgeStorageAdapter;
+    @NotNull private final EdgeStorageAdapter myEdgeStorageAdapter;
 
     private CompiledGraph() {
       myEdgeStorageAdapter = new EdgeStorageAdapter(myEdgeStorage, this);
@@ -181,19 +191,18 @@ public class CollapsedGraph {
 
     @Nullable
     private Integer compiledNodeIndex(@Nullable Integer delegateNodeIndex) {
-      if (delegateNodeIndex == null)
-        return null;
+      if (delegateNodeIndex == null) return null;
       if (myDelegateNodesVisibility.isVisible(delegateNodeIndex)) {
         return myNodesMap.getShortIndex(delegateNodeIndex);
-      } else
+      }
+      else {
         return -1;
+      }
     }
 
     private boolean isVisibleEdge(@Nullable Integer compiledUpNode, @Nullable Integer compiledDownNode) {
-      if (compiledUpNode != null && compiledUpNode == -1)
-        return false;
-      if (compiledDownNode != null && compiledDownNode == -1)
-        return false;
+      if (compiledUpNode != null && compiledUpNode == -1) return false;
+      if (compiledDownNode != null && compiledDownNode == -1) return false;
       return true;
     }
 
@@ -208,8 +217,7 @@ public class CollapsedGraph {
       for (GraphEdge delegateEdge : myDelegatedGraph.getAdjacentEdges(delegateIndex, filter)) {
         Integer compiledUpIndex = compiledNodeIndex(delegateEdge.getUpNodeIndex());
         Integer compiledDownIndex = compiledNodeIndex(delegateEdge.getDownNodeIndex());
-        if (isVisibleEdge(compiledUpIndex, compiledDownIndex))
-          result.add(createEdge(delegateEdge, compiledUpIndex, compiledDownIndex));
+        if (isVisibleEdge(compiledUpIndex, compiledDownIndex)) result.add(createEdge(delegateEdge, compiledUpIndex, compiledDownIndex));
       }
 
       result.addAll(myEdgeStorageAdapter.getAdditionalEdges(nodeIndex, filter));
@@ -238,12 +246,13 @@ public class CollapsedGraph {
     public Integer getNodeIndex(int nodeId) {
       assertNotUnderModification();
       Integer delegateIndex = myDelegatedGraph.getNodeIndex(nodeId);
-      if (delegateIndex == null)
-        return null;
-      if (myDelegateNodesVisibility.isVisible(delegateIndex))
+      if (delegateIndex == null) return null;
+      if (myDelegateNodesVisibility.isVisible(delegateIndex)) {
         return myNodesMap.getShortIndex(delegateIndex);
-      else
+      }
+      else {
         return null;
+      }
     }
   }
 }
