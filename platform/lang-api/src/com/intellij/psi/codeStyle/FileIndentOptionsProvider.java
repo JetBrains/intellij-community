@@ -22,6 +22,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Rustam Vishnyakov
  */
@@ -51,6 +53,14 @@ public abstract class FileIndentOptionsProvider {
    */
   @Nullable
   public String getDisplayName() {
+    return null;
+  }
+
+  /**
+   * @return The icon to be displayed in a notification message, can be <coe>null</coe> (no icon).
+   */
+  @Nullable
+  public Icon getIcon() {
     return null;
   }
 
