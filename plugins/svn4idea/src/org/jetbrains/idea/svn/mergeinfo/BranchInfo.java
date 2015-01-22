@@ -327,38 +327,31 @@ public class BranchInfo {
                                                                       final String trunkRelativeUrl,
                                                                       final boolean self) throws SvnBindException {
     SvnMergeInfoCache.MergeCheckResult result;
+    Map<String, SVNMergeRangeList> mergedPathsMap = parseMergeInfo(value);
+    String mergedPathAffectingTrunkUrl = ContainerUtil.find(mergedPathsMap.keySet(), new Condition<String>() {
+      @Override
+      public boolean value(String path) {
+        return trunkRelativeUrl.startsWith(path);
+      }
+    });
 
-    if (value.toString().trim().length() == 0) {
-      myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
-      result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-    }
-    else {
-      Map<String, SVNMergeRangeList> mergedPathsMap = parseMergeInfo(value);
-      String mergedPathAffectingTrunkUrl = ContainerUtil.find(mergedPathsMap.keySet(), new Condition<String>() {
+    if (mergedPathAffectingTrunkUrl != null) {
+      SVNMergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingTrunkUrl);
+
+      fillMergedRevisions(pathWithRevisionNumber, mergeRangeList);
+
+      boolean isAskedRevisionMerged = ContainerUtil.or(mergeRangeList.getRanges(), new Condition<SVNMergeRange>() {
         @Override
-        public boolean value(String path) {
-          return trunkRelativeUrl.startsWith(path);
+        public boolean value(@NotNull SVNMergeRange range) {
+          return isInRange(range, revisionAsked) && (range.isInheritable() || self);
         }
       });
 
-      if (mergedPathAffectingTrunkUrl != null) {
-        SVNMergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingTrunkUrl);
-
-        fillMergedRevisions(pathWithRevisionNumber, mergeRangeList);
-
-        boolean isAskedRevisionMerged = ContainerUtil.or(mergeRangeList.getRanges(), new Condition<SVNMergeRange>() {
-          @Override
-          public boolean value(@NotNull SVNMergeRange range) {
-            return isInRange(range, revisionAsked) && (range.isInheritable() || self);
-          }
-        });
-
-        result = SvnMergeInfoCache.MergeCheckResult.getInstance(isAskedRevisionMerged);
-      }
-      else {
-        myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
-        result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-      }
+      result = SvnMergeInfoCache.MergeCheckResult.getInstance(isAskedRevisionMerged);
+    }
+    else {
+      myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
+      result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
 
     return result;
