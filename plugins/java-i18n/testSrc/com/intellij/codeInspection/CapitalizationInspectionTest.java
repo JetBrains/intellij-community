@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.inspections;
+package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention;
+import com.intellij.codeInspection.capitalization.TitleCapitalizationInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
