@@ -13,7 +13,7 @@ import org.jetbrains.debugger.sourcemap.SourceMap;
 import java.util.Map;
 
 public final class NameMapper {
-  private static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(",()[]{}="));
+  private static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(".,()[]{}="));
 
   private final Document document;
   private final Document generatedDocument;
