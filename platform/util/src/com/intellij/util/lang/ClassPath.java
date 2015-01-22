@@ -49,6 +49,7 @@ public class ClassPath {
   private final boolean myCanUseCache;
   private final boolean myAcceptUnescapedUrls;
   private final boolean myPreloadJarContents;
+  private final boolean myCanHavePersistentIndex;
   @Nullable private final CachePoolImpl myCachePool;
   @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
 
@@ -57,6 +58,7 @@ public class ClassPath {
                    boolean canUseCache,
                    boolean acceptUnescapedUrls,
                    boolean preloadJarContents,
+                   boolean canHavePersistentIndex,
                    @Nullable CachePoolImpl cachePool,
                    @Nullable UrlClassLoader.CachingCondition cachingCondition) {
     myCanLockJars = canLockJars;
@@ -65,6 +67,7 @@ public class ClassPath {
     myPreloadJarContents = preloadJarContents;
     myCachePool = cachePool;
     myCachingCondition = cachingCondition;
+    myCanHavePersistentIndex = canHavePersistentIndex;
     push(urls);
   }
 
@@ -183,7 +186,7 @@ public class ClassPath {
     if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
       File file = new File(path);
       if (file.isDirectory()) {
-        loader = new FileLoader(url, index);
+        loader = new FileLoader(url, index, myCanHavePersistentIndex);
       }
       else if (file.isFile()) {
         loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents);

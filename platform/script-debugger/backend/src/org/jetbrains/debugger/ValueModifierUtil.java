@@ -41,7 +41,8 @@ public final class ValueModifierUtil {
       });
   }
 
-  public static String propertyNamesToString(List<String> list, boolean quotedAware) {
+  @NotNull
+  public static String propertyNamesToString(@NotNull List<String> list, boolean quotedAware) {
     StringBuilder builder = new StringBuilder();
     for (int i = list.size() - 1; i >= 0; i--) {
       String name = list.get(i);

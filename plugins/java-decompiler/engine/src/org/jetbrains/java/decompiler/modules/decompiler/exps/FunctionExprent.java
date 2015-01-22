@@ -221,7 +221,8 @@ public class FunctionExprent extends Exprent {
   }
 
   public FunctionExprent(int funcType, Exprent operand, Set<Integer> bytecodeOffsets) {
-    this(funcType, Collections.singletonList(operand), bytecodeOffsets);
+    this(funcType, new ArrayList<Exprent>(1), bytecodeOffsets);
+    lstOperands.add(operand);
   }
 
   @Override

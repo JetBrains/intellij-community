@@ -37,10 +37,10 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   protected final String myAnnotation;
   protected final String[] myAnnotationsToRemove;
   protected final PsiNameValuePair[] myPairs; // not used when registering local quick fix
-  protected String myText;
+  protected final String myText;
 
   public AddAnnotationPsiFix(@NotNull String fqn,
-                            @Nullable PsiModifierListOwner modifierListOwner,
+                            @NotNull PsiModifierListOwner modifierListOwner,
                             @NotNull PsiNameValuePair[] values,
                             @NotNull String... annotationsToRemove) {
     super(modifierListOwner);
@@ -117,29 +117,26 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
                      @NotNull PsiFile file,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
+    final PsiModifierListOwner myModifierListOwner = (PsiModifierListOwner)startElement;
 
-    invoke(project, file, (PsiModifierListOwner)startElement, myPairs);
-  }
-
-  protected void invoke(@NotNull Project project, @NotNull PsiFile file, PsiModifierListOwner myModifierListOwner, PsiNameValuePair[] pairs) {
+    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final PsiModifierList modifierList = myModifierListOwner.getModifierList();
     LOG.assertTrue(modifierList != null);
     if (modifierList.findAnnotation(myAnnotation) != null) return;
-    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace = annotationsManager.chooseAnnotationsPlace(myModifierListOwner);
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.NOWHERE) return;
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.EXTERNAL) {
       for (String fqn : myAnnotationsToRemove) {
         annotationsManager.deannotate(myModifierListOwner, fqn);
       }
-      annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file, pairs);
+      annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file, myPairs);
     }
     else {
       final PsiFile containingFile = myModifierListOwner.getContainingFile();
       if (!FileModificationService.getInstance().preparePsiElementForWrite(containingFile)) return;
       removePhysicalAnnotations(myModifierListOwner, myAnnotationsToRemove);
 
-      PsiAnnotation inserted = addPhysicalAnnotation(myAnnotation, pairs, modifierList);
+      PsiAnnotation inserted = addPhysicalAnnotation(myAnnotation, myPairs, modifierList);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
       if (containingFile != file) {
         UndoUtil.markPsiFileForUndo(file);

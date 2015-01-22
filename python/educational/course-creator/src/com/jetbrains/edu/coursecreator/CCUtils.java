@@ -1,6 +1,8 @@
 package com.jetbrains.edu.coursecreator;
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -35,5 +37,23 @@ public class CCUtils {
         module.getProject().save();
       }
     });
+  }
+
+  public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
+    final Presentation presentation = event.getPresentation();
+    presentation.setVisible(isEnable);
+    presentation.setEnabled(isEnable);
+  }
+
+  public static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
+    if (!fullName.startsWith(logicalName)) {
+      throw new IllegalArgumentException();
+    }
+    try {
+      return Integer.parseInt(fullName.substring(logicalName.length()));
+    }
+    catch (NumberFormatException e) {
+      return -1;
+    }
   }
 }
