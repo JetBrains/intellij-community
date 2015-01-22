@@ -17,6 +17,10 @@ package com.intellij.ide.startup.impl;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -30,6 +34,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -46,6 +51,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -220,6 +226,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
         Application app = ApplicationManager.getApplication();
         if (!app.isHeadlessEnvironment()) {
+          checkFsSanity();
           checkProjectRoots();
           final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
           final MessageBusConnection connection = app.getMessageBus().connect();
@@ -236,6 +243,25 @@ public class StartupManagerImpl extends StartupManagerEx {
         }
       }
     });
+  }
+
+  private void checkFsSanity() {
+    try {
+      String path = myProject.getProjectFilePath();
+      boolean actual = FileUtil.isFileSystemCaseSensitive(path);
+      LOG.info(path + " case-sensitivity: " + actual);
+      if (actual != SystemInfo.isFileSystemCaseSensitive) {
+        int prefix = SystemInfo.isFileSystemCaseSensitive ? 1 : 0;  // IDE=true -> FS=false -> prefix='in'
+        String title = ApplicationBundle.message("fs.case.sensitivity.mismatch.title");
+        String text = ApplicationBundle.message("fs.case.sensitivity.mismatch.message", prefix);
+        Notifications.Bus.notify(
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, text, NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER),
+          myProject);
+      }
+    }
+    catch (FileNotFoundException e) {
+      LOG.warn(e);
+    }
   }
 
   private void checkProjectRoots() {
