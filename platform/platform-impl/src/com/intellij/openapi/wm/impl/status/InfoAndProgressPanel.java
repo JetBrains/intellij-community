@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -329,7 +328,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       }
     });
 
-    if (SystemInfo.isMac) label.setFont(UIUtil.getLabelFont().deriveFont(11.0f));
+    if (SystemInfo.isMac) label.setFont(JBUI.Fonts.label(11));
 
     label.setOpaque(false);
 
@@ -342,7 +341,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
-    progressCountPanel.setBorder(new EmptyBorder(0, 0, 0, 4));
+    progressCountPanel.setBorder(JBUI.Borders.empty(0, 0, 0, 4));
     add(progressCountPanel, BorderLayout.EAST);
 
     revalidate();
@@ -356,7 +355,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     final JPanel inlinePanel = new JPanel(new BorderLayout());
 
-    inline.getComponent().setBorder(new EmptyBorder(1, 0, 0, 2));
+    inline.getComponent().setBorder(JBUI.Borders.empty(1, 0, 0, 2));
     final JComponent inlineComponent = inline.getComponent();
     inlineComponent.setOpaque(false);
     inlinePanel.add(inlineComponent, BorderLayout.CENTER);
@@ -394,7 +393,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         .setFillColor(Gray.TRANSPARENT)
         .setShowCallout(false)
         .setBorderColor(Gray.TRANSPARENT)
-        .setBorderInsets(new Insets(0, 0, 0, 0))
+        .setBorderInsets(JBUI.emptyInsets())
         .setAnimationCycle(0)
         .setCloseButtonEnabled(false)
         .setHideOnClickOutside(false)
@@ -479,7 +478,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
           if (rootPane != null && rootPane.isShowing()) {
             final Container contentPane = rootPane.getContentPane();
             final Rectangle bounds = contentPane.getBounds();
-            final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
+            final Point target = UIUtil.getCenterPoint(bounds, JBUI.size(1, 1));
             target.y = bounds.height - 3;
             balloon.show(new RelativePoint(contentPane, target), Balloon.Position.above);
           }
