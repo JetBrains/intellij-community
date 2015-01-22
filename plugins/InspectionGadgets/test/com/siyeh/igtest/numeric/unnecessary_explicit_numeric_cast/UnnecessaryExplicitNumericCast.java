@@ -67,4 +67,19 @@ public class UnnecessaryExplicitNumericCast {
     boolean redundantTypeCast(long l) {
       return 0L == (long)l;
     }
+
+  void necessary() {
+    char[] keyChar = {'\t', '\n', '\r', '\f', 'a', '0'};
+    for (char cc : keyChar) {
+      String result;
+      if (cc < 28) {
+        result = "Ascii " + (int)cc;
+      }
+      else {
+        result = "k " + cc + " (" + (int)cc + ')';
+      }
+      System.out.println(result);
+    }
+  }
+
 }
