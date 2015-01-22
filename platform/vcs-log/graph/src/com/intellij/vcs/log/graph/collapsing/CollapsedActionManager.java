@@ -32,6 +32,7 @@ import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphA
 import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
 import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator.GraphFragment;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,8 +80,9 @@ class CollapsedActionManager {
     ) {
       myCollapsedGraph = collapsedGraph;
       myGraphAction = graphAction;
-      myDelegatedFragmentGenerators = new FragmentGenerators(collapsedGraph.getDelegatedGraph(), permanentGraphInfo);
-      myCompiledFragmentGenerators = new FragmentGenerators(collapsedGraph.getCompiledGraph(), permanentGraphInfo);
+      myDelegatedFragmentGenerators =
+        new FragmentGenerators(collapsedGraph.getDelegatedGraph(), permanentGraphInfo, collapsedGraph.getMatchedNodeId());
+      myCompiledFragmentGenerators = new FragmentGenerators(collapsedGraph.getCompiledGraph(), permanentGraphInfo, collapsedGraph.getMatchedNodeId());
     }
 
     @NotNull
@@ -132,8 +134,15 @@ class CollapsedActionManager {
     @NotNull private final FragmentGenerator fragmentGenerator;
     @NotNull private final LinearFragmentGenerator linearFragmentGenerator;
 
-    private FragmentGenerators(@NotNull LinearGraph linearGraph, @NotNull PermanentGraphInfo<?> permanentGraphInfo) {
-      fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(linearGraph), Condition.FALSE);
+    private FragmentGenerators(@NotNull final LinearGraph linearGraph,
+                               @NotNull PermanentGraphInfo<?> permanentGraphInfo,
+                               @NotNull final UnsignedBitSet matchedNodeId) {
+      fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(linearGraph), new Condition<Integer>() {
+        @Override
+        public boolean value(Integer nodeIndex) {
+          return matchedNodeId.get(linearGraph.getNodeId(nodeIndex));
+        }
+      });
 
       Set<Integer> branchNodeIndexes = LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, permanentGraphInfo.getBranchNodeIds());
       linearFragmentGenerator = new LinearFragmentGenerator(LinearGraphUtils.asLiteLinearGraph(linearGraph), branchNodeIndexes);
@@ -243,6 +252,7 @@ class CollapsedActionManager {
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) modification.showNode(nodeIndex);
 
       modification.removeAdditionalEdges();
+      modification.resetNodesVisibility();
       modification.apply();
       return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
     }
@@ -262,7 +272,6 @@ class CollapsedActionManager {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
 
       LinearGraph delegateGraph = context.getDelegatedGraph();
-
 
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
         if (!context.myCollapsedGraph.isNodeVisible(nodeIndex)) continue;
