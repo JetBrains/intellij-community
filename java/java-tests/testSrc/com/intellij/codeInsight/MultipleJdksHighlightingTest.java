@@ -128,6 +128,11 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTestWithoutLibrary();
   }
 
+  @Bombed(month = Calendar.FEBRUARY, day = 20)
+  public void testSuperMethodNotExist() throws Exception {
+    doTestWithoutLibrary();
+  }
+
   private void doTestWithoutLibrary() {
     final String name = getTestName(false);
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
