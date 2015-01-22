@@ -2,19 +2,17 @@ from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import socket
 import time
+import sys
+import traceback
+import StringIO
 
 import yappi
 
 from prof_io import ProfWriter, ProfReader
 from pydevd_utils import save_main_module
 import pydev_imports
-from profiler_protocol_pb2 import ProfilerResponse
-
-
-__author__ = 'traff'
-
-import sys
-import traceback
+from prof_data import copy_fields
+from profiler_protocol_pb2 import ProfilerResponse, Stats
 
 
 def StartClient(host, port):
@@ -24,11 +22,11 @@ def StartClient(host, port):
 
     MAX_TRIES = 100
     i = 0
-    while i<MAX_TRIES:
+    while i < MAX_TRIES:
         try:
             s.connect((host, port))
         except:
-            i+=1
+            i += 1
             time.sleep(0.2)
             continue
         return s
@@ -36,7 +34,8 @@ def StartClient(host, port):
     sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
     sys.stderr.flush()
     traceback.print_exc()
-    sys.exit(1) #TODO: is it safe?
+    sys.exit(1)  # TODO: is it safe?
+
 
 class Profiler(object):
     def __init__(self):
@@ -62,6 +61,10 @@ class Profiler(object):
     def process(self, message):
         if message.HasField('ystats_string'):
             self.stats_string(message.id)
+        elif message.HasField('ystats'):
+            self.func_stats(message.id)
+        else:
+            raise AssertionError("malformed request")
 
     def run(self, file):
         m = save_main_module(file, 'run_profiler')
@@ -83,13 +86,23 @@ class Profiler(object):
         yappi.start()
 
     def stats_string(self, id):
-        import StringIO
-
         output = StringIO.StringIO()
         yappi.get_func_stats().print_all(out=output)
         m = ProfilerResponse()
         m.id = id
         m.ystats_string = output.getvalue()
+        self.writer.addCommand(m)
+
+    def func_stats(self, id):
+        yfunc_stats = yappi.get_func_stats()
+        m = ProfilerResponse()
+        m.id = id
+        ystats = Stats()
+
+        for fstat in yfunc_stats:
+            func_stat = ystats.func_stats.add()
+            copy_fields(func_stat, fstat)
+        m.ystats.CopyFrom(ystats)
         self.writer.addCommand(m)
 
 

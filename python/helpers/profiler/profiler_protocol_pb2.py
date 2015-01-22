@@ -13,35 +13,196 @@ from google.protobuf import reflection as _reflection
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='profiler_protocol.proto',
   package='com.jetbrains.python.profiler',
-  serialized_pb='\n\x17profiler_protocol.proto\x12\x1d\x63om.jetbrains.python.profiler\"\xad\x02\n\x06YStats\x12\x43\n\nfunc_stats\x18\x01 \x03(\x0b\x32/.com.jetbrains.python.profiler.YStats.FuncStats\x12G\n\x0cthread_stats\x18\x02 \x03(\x0b\x32\x31.com.jetbrains.python.profiler.YStats.ThreadStats\x1a\x36\n\tFuncStats\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\r\n\x05ncall\x18\x02 \x02(\x05\x12\x0c\n\x04ttot\x18\x03 \x02(\x05\x1a]\n\x0bThreadStats\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\t\x12\x11\n\tlast_func\x18\x03 \x02(\t\x12\x0c\n\x04ttot\x18\x04 \x02(\x05\x12\x13\n\x0bsched_count\x18\x05 \x02(\x05\"\x0c\n\nYStats_Req\"\x12\n\x10YStatsString_Req\"\xa0\x01\n\x0fProfilerRequest\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x39\n\x06ystats\x18\x02 \x01(\x0b\x32).com.jetbrains.python.profiler.YStats_Req\x12\x46\n\rystats_string\x18\x03 \x01(\x0b\x32/.com.jetbrains.python.profiler.YStatsString_Req\"l\n\x10ProfilerResponse\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x35\n\x06ystats\x18\x02 \x01(\x0b\x32%.com.jetbrains.python.profiler.YStats\x12\x15\n\rystats_string\x18\x03 \x01(\t')
+  serialized_pb='\n\x17profiler_protocol.proto\x12\x1d\x63om.jetbrains.python.profiler\"\xf9\x01\n\x08\x46uncStat\x12\r\n\x05index\x18\x01 \x02(\x05\x12\x0e\n\x06module\x18\x02 \x02(\t\x12\x0e\n\x06lineno\x18\x03 \x02(\x05\x12\x0c\n\x04name\x18\x04 \x02(\t\x12\x11\n\tfull_name\x18\x05 \x02(\t\x12\r\n\x05ncall\x18\x06 \x02(\x05\x12\x13\n\x0bnactualcall\x18\x07 \x02(\x05\x12\x0f\n\x07\x62uiltin\x18\x08 \x02(\x08\x12\x0c\n\x04ttot\x18\t \x02(\x01\x12\x0c\n\x04tsub\x18\n \x02(\x01\x12\x0c\n\x04tavg\x18\x0b \x02(\x01\x12>\n\x08\x63hildren\x18\x0c \x03(\x0b\x32,.com.jetbrains.python.profiler.ChildFuncStat\"\xbe\x01\n\rChildFuncStat\x12\r\n\x05index\x18\x01 \x02(\x05\x12\x0e\n\x06module\x18\x02 \x02(\t\x12\x0e\n\x06lineno\x18\x03 \x02(\x05\x12\x0c\n\x04name\x18\x04 \x02(\t\x12\x11\n\tfull_name\x18\x05 \x02(\t\x12\r\n\x05ncall\x18\x06 \x02(\x05\x12\x13\n\x0bnactualcall\x18\x07 \x02(\x05\x12\x0f\n\x07\x62uiltin\x18\x08 \x02(\x08\x12\x0c\n\x04ttot\x18\t \x02(\x01\x12\x0c\n\x04tsub\x18\n \x02(\x01\x12\x0c\n\x04tavg\x18\x0b \x02(\x01\"\\\n\nThreadStat\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\t\x12\x11\n\tlast_func\x18\x03 \x02(\t\x12\x0c\n\x04ttot\x18\x04 \x02(\x05\x12\x13\n\x0bsched_count\x18\x05 \x02(\x05\"D\n\x05Stats\x12;\n\nfunc_stats\x18\x01 \x03(\x0b\x32\'.com.jetbrains.python.profiler.FuncStat\"\x0b\n\tStats_Req\"\x11\n\x0fStatsString_Req\"\x9e\x01\n\x0fProfilerRequest\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x38\n\x06ystats\x18\x02 \x01(\x0b\x32(.com.jetbrains.python.profiler.Stats_Req\x12\x45\n\rystats_string\x18\x03 \x01(\x0b\x32..com.jetbrains.python.profiler.StatsString_Req\"k\n\x10ProfilerResponse\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x34\n\x06ystats\x18\x02 \x01(\x0b\x32$.com.jetbrains.python.profiler.Stats\x12\x15\n\rystats_string\x18\x03 \x01(\t')
 
 
 
 
-_YSTATS_FUNCSTATS = _descriptor.Descriptor(
-  name='FuncStats',
-  full_name='com.jetbrains.python.profiler.YStats.FuncStats',
+_FUNCSTAT = _descriptor.Descriptor(
+  name='FuncStat',
+  full_name='com.jetbrains.python.profiler.FuncStat',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='com.jetbrains.python.profiler.YStats.FuncStats.name', index=0,
-      number=1, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=unicode("", "utf-8"),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='ncall', full_name='com.jetbrains.python.profiler.YStats.FuncStats.ncall', index=1,
-      number=2, type=5, cpp_type=1, label=2,
+      name='index', full_name='com.jetbrains.python.profiler.FuncStat.index', index=0,
+      number=1, type=5, cpp_type=1, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='ttot', full_name='com.jetbrains.python.profiler.YStats.FuncStats.ttot', index=2,
+      name='module', full_name='com.jetbrains.python.profiler.FuncStat.module', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='lineno', full_name='com.jetbrains.python.profiler.FuncStat.lineno', index=2,
       number=3, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='name', full_name='com.jetbrains.python.profiler.FuncStat.name', index=3,
+      number=4, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='full_name', full_name='com.jetbrains.python.profiler.FuncStat.full_name', index=4,
+      number=5, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='ncall', full_name='com.jetbrains.python.profiler.FuncStat.ncall', index=5,
+      number=6, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='nactualcall', full_name='com.jetbrains.python.profiler.FuncStat.nactualcall', index=6,
+      number=7, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='builtin', full_name='com.jetbrains.python.profiler.FuncStat.builtin', index=7,
+      number=8, type=8, cpp_type=7, label=2,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='ttot', full_name='com.jetbrains.python.profiler.FuncStat.ttot', index=8,
+      number=9, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='tsub', full_name='com.jetbrains.python.profiler.FuncStat.tsub', index=9,
+      number=10, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='tavg', full_name='com.jetbrains.python.profiler.FuncStat.tavg', index=10,
+      number=11, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='children', full_name='com.jetbrains.python.profiler.FuncStat.children', index=11,
+      number=12, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  serialized_start=59,
+  serialized_end=308,
+)
+
+
+_CHILDFUNCSTAT = _descriptor.Descriptor(
+  name='ChildFuncStat',
+  full_name='com.jetbrains.python.profiler.ChildFuncStat',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='index', full_name='com.jetbrains.python.profiler.ChildFuncStat.index', index=0,
+      number=1, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='module', full_name='com.jetbrains.python.profiler.ChildFuncStat.module', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='lineno', full_name='com.jetbrains.python.profiler.ChildFuncStat.lineno', index=2,
+      number=3, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='name', full_name='com.jetbrains.python.profiler.ChildFuncStat.name', index=3,
+      number=4, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='full_name', full_name='com.jetbrains.python.profiler.ChildFuncStat.full_name', index=4,
+      number=5, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='ncall', full_name='com.jetbrains.python.profiler.ChildFuncStat.ncall', index=5,
+      number=6, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='nactualcall', full_name='com.jetbrains.python.profiler.ChildFuncStat.nactualcall', index=6,
+      number=7, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='builtin', full_name='com.jetbrains.python.profiler.ChildFuncStat.builtin', index=7,
+      number=8, type=8, cpp_type=7, label=2,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='ttot', full_name='com.jetbrains.python.profiler.ChildFuncStat.ttot', index=8,
+      number=9, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='tsub', full_name='com.jetbrains.python.profiler.ChildFuncStat.tsub', index=9,
+      number=10, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='tavg', full_name='com.jetbrains.python.profiler.ChildFuncStat.tavg', index=10,
+      number=11, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -55,47 +216,48 @@ _YSTATS_FUNCSTATS = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=211,
-  serialized_end=265,
+  serialized_start=311,
+  serialized_end=501,
 )
 
-_YSTATS_THREADSTATS = _descriptor.Descriptor(
-  name='ThreadStats',
-  full_name='com.jetbrains.python.profiler.YStats.ThreadStats',
+
+_THREADSTAT = _descriptor.Descriptor(
+  name='ThreadStat',
+  full_name='com.jetbrains.python.profiler.ThreadStat',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='com.jetbrains.python.profiler.YStats.ThreadStats.name', index=0,
+      name='name', full_name='com.jetbrains.python.profiler.ThreadStat.name', index=0,
       number=1, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='id', full_name='com.jetbrains.python.profiler.YStats.ThreadStats.id', index=1,
+      name='id', full_name='com.jetbrains.python.profiler.ThreadStat.id', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='last_func', full_name='com.jetbrains.python.profiler.YStats.ThreadStats.last_func', index=2,
+      name='last_func', full_name='com.jetbrains.python.profiler.ThreadStat.last_func', index=2,
       number=3, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='ttot', full_name='com.jetbrains.python.profiler.YStats.ThreadStats.ttot', index=3,
+      name='ttot', full_name='com.jetbrains.python.profiler.ThreadStat.ttot', index=3,
       number=4, type=5, cpp_type=1, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='sched_count', full_name='com.jetbrains.python.profiler.YStats.ThreadStats.sched_count', index=4,
+      name='sched_count', full_name='com.jetbrains.python.profiler.ThreadStat.sched_count', index=4,
       number=5, type=5, cpp_type=1, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -110,48 +272,42 @@ _YSTATS_THREADSTATS = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=267,
-  serialized_end=360,
+  serialized_start=503,
+  serialized_end=595,
 )
 
-_YSTATS = _descriptor.Descriptor(
-  name='YStats',
-  full_name='com.jetbrains.python.profiler.YStats',
+
+_STATS = _descriptor.Descriptor(
+  name='Stats',
+  full_name='com.jetbrains.python.profiler.Stats',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='func_stats', full_name='com.jetbrains.python.profiler.YStats.func_stats', index=0,
+      name='func_stats', full_name='com.jetbrains.python.profiler.Stats.func_stats', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-    _descriptor.FieldDescriptor(
-      name='thread_stats', full_name='com.jetbrains.python.profiler.YStats.thread_stats', index=1,
-      number=2, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
   ],
   extensions=[
   ],
-  nested_types=[_YSTATS_FUNCSTATS, _YSTATS_THREADSTATS, ],
+  nested_types=[],
   enum_types=[
   ],
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=59,
-  serialized_end=360,
+  serialized_start=597,
+  serialized_end=665,
 )
 
 
-_YSTATS_REQ = _descriptor.Descriptor(
-  name='YStats_Req',
-  full_name='com.jetbrains.python.profiler.YStats_Req',
+_STATS_REQ = _descriptor.Descriptor(
+  name='Stats_Req',
+  full_name='com.jetbrains.python.profiler.Stats_Req',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
@@ -165,14 +321,14 @@ _YSTATS_REQ = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=362,
-  serialized_end=374,
+  serialized_start=667,
+  serialized_end=678,
 )
 
 
-_YSTATSSTRING_REQ = _descriptor.Descriptor(
-  name='YStatsString_Req',
-  full_name='com.jetbrains.python.profiler.YStatsString_Req',
+_STATSSTRING_REQ = _descriptor.Descriptor(
+  name='StatsString_Req',
+  full_name='com.jetbrains.python.profiler.StatsString_Req',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
@@ -186,8 +342,8 @@ _YSTATSSTRING_REQ = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=376,
-  serialized_end=394,
+  serialized_start=680,
+  serialized_end=697,
 )
 
 
@@ -228,8 +384,8 @@ _PROFILERREQUEST = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=397,
-  serialized_end=557,
+  serialized_start=700,
+  serialized_end=858,
 )
 
 
@@ -270,52 +426,59 @@ _PROFILERRESPONSE = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=559,
-  serialized_end=667,
+  serialized_start=860,
+  serialized_end=967,
 )
 
-_YSTATS_FUNCSTATS.containing_type = _YSTATS;
-_YSTATS_THREADSTATS.containing_type = _YSTATS;
-_YSTATS.fields_by_name['func_stats'].message_type = _YSTATS_FUNCSTATS
-_YSTATS.fields_by_name['thread_stats'].message_type = _YSTATS_THREADSTATS
-_PROFILERREQUEST.fields_by_name['ystats'].message_type = _YSTATS_REQ
-_PROFILERREQUEST.fields_by_name['ystats_string'].message_type = _YSTATSSTRING_REQ
-_PROFILERRESPONSE.fields_by_name['ystats'].message_type = _YSTATS
-DESCRIPTOR.message_types_by_name['YStats'] = _YSTATS
-DESCRIPTOR.message_types_by_name['YStats_Req'] = _YSTATS_REQ
-DESCRIPTOR.message_types_by_name['YStatsString_Req'] = _YSTATSSTRING_REQ
+_FUNCSTAT.fields_by_name['children'].message_type = _CHILDFUNCSTAT
+_STATS.fields_by_name['func_stats'].message_type = _FUNCSTAT
+_PROFILERREQUEST.fields_by_name['ystats'].message_type = _STATS_REQ
+_PROFILERREQUEST.fields_by_name['ystats_string'].message_type = _STATSSTRING_REQ
+_PROFILERRESPONSE.fields_by_name['ystats'].message_type = _STATS
+DESCRIPTOR.message_types_by_name['FuncStat'] = _FUNCSTAT
+DESCRIPTOR.message_types_by_name['ChildFuncStat'] = _CHILDFUNCSTAT
+DESCRIPTOR.message_types_by_name['ThreadStat'] = _THREADSTAT
+DESCRIPTOR.message_types_by_name['Stats'] = _STATS
+DESCRIPTOR.message_types_by_name['Stats_Req'] = _STATS_REQ
+DESCRIPTOR.message_types_by_name['StatsString_Req'] = _STATSSTRING_REQ
 DESCRIPTOR.message_types_by_name['ProfilerRequest'] = _PROFILERREQUEST
 DESCRIPTOR.message_types_by_name['ProfilerResponse'] = _PROFILERRESPONSE
 
-class YStats(_message.Message):
+class FuncStat(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _FUNCSTAT
 
-  class FuncStats(_message.Message):
-    __metaclass__ = _reflection.GeneratedProtocolMessageType
-    DESCRIPTOR = _YSTATS_FUNCSTATS
+  # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.FuncStat)
 
-    # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.YStats.FuncStats)
-
-  class ThreadStats(_message.Message):
-    __metaclass__ = _reflection.GeneratedProtocolMessageType
-    DESCRIPTOR = _YSTATS_THREADSTATS
-
-    # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.YStats.ThreadStats)
-  DESCRIPTOR = _YSTATS
-
-  # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.YStats)
-
-class YStats_Req(_message.Message):
+class ChildFuncStat(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
-  DESCRIPTOR = _YSTATS_REQ
+  DESCRIPTOR = _CHILDFUNCSTAT
 
-  # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.YStats_Req)
+  # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.ChildFuncStat)
 
-class YStatsString_Req(_message.Message):
+class ThreadStat(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
-  DESCRIPTOR = _YSTATSSTRING_REQ
+  DESCRIPTOR = _THREADSTAT
 
-  # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.YStatsString_Req)
+  # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.ThreadStat)
+
+class Stats(_message.Message):
+  __metaclass__ = _reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _STATS
+
+  # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.Stats)
+
+class Stats_Req(_message.Message):
+  __metaclass__ = _reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _STATS_REQ
+
+  # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.Stats_Req)
+
+class StatsString_Req(_message.Message):
+  __metaclass__ = _reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _STATSSTRING_REQ
+
+  # @@protoc_insertion_point(class_scope:com.jetbrains.python.profiler.StatsString_Req)
 
 class ProfilerRequest(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
