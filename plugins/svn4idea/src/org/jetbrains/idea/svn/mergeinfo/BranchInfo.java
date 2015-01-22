@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,6 +100,7 @@ public class BranchInfo {
     }
   }
 
+  // branch path - is local working copy path
   @NotNull
   public SvnMergeInfoCache.MergeCheckResult checkList(@NotNull final SvnChangeList list, final String branchPath) {
     synchronized (myCalculatedLock) {
@@ -137,10 +139,11 @@ public class BranchInfo {
       return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
     }
     checkPaths(list.getNumber(), list.getChangedPaths(), branchPath, subPathUnderBranch, result);
-
     if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
-    } else if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)) {
+    }
+
+    if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)) {
       myPartlyMerged.put(list.getNumber(), result.get(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED));
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
@@ -179,189 +182,229 @@ public class BranchInfo {
     }
   }
 
+  @NotNull
   private SvnMergeInfoCache.MergeCheckResult goUp(final long revisionAsked,
                                                   final long targetRevision,
                                                   final String branchRootPath,
                                                   final String path,
                                                   @NotNull String trunkUrl) throws SVNException, VcsException {
-    final String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
-    if (newTrunkUrl.length() == 0 || "/".equals(newTrunkUrl)) {
-      return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-    }
-    final String newPath = new File(path).getParent();
-    if (newPath.length() < branchRootPath.length()) {
-      // we are higher than WC root -> go into repo only
-      if (targetRevision == -1) {
-        // no paths in local copy
-        return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
-      }
-      final Info svnInfo = myVcs.getInfo(new File(branchRootPath));
-      if (svnInfo == null || svnInfo.getURL() == null) {
-        return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-      }
+    SvnMergeInfoCache.MergeCheckResult result;
+    String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
 
-      return goUpInRepo(revisionAsked, targetRevision, svnInfo.getURL().removePathTail(), newTrunkUrl);
+    if (newTrunkUrl.length() == 0 || "/".equals(newTrunkUrl)) {
+      result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
-    
-    return checkPathGoingUp(revisionAsked, targetRevision, branchRootPath, newPath, newTrunkUrl, false);
+    else {
+      String newPath = new File(path).getParent();
+      if (newPath.length() < branchRootPath.length()) {
+        // we are higher than WC root -> go into repo only
+        if (targetRevision == -1) {
+          // no paths in local copy
+          result = SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
+        }
+        else {
+          Info svnInfo = myVcs.getInfo(new File(branchRootPath));
+          result = svnInfo == null || svnInfo.getURL() == null
+                   ? SvnMergeInfoCache.MergeCheckResult.NOT_MERGED
+                   : goUpInRepo(revisionAsked, targetRevision, svnInfo.getURL().removePathTail(), newTrunkUrl);
+        }
+      }
+      else {
+        result = checkPathGoingUp(revisionAsked, targetRevision, branchRootPath, newPath, newTrunkUrl, false);
+      }
+    }
+
+    return result;
   }
 
+  @NotNull
   private SvnMergeInfoCache.MergeCheckResult goUpInRepo(final long revisionAsked,
                                                         final long targetRevision,
                                                         final SVNURL branchUrl,
                                                         final String trunkUrl) throws VcsException, SVNException {
-    final String branchAsString = branchUrl.toString();
-    final String keyString = branchAsString + "@" + targetRevision;
-    final Set<Long> mergeInfo = myPathMergedMap.get(keyString);
+    SvnMergeInfoCache.MergeCheckResult result;
+    Set<Long> mergeInfo = myPathMergedMap.get(branchUrl.toString() + "@" + targetRevision);
+
     if (mergeInfo != null) {
       // take from self or first parent with info; do not go further
-      return SvnMergeInfoCache.MergeCheckResult.getInstance(mergeInfo.contains(revisionAsked));
+      result = SvnMergeInfoCache.MergeCheckResult.getInstance(mergeInfo.contains(revisionAsked));
     }
+    else {
+      SvnTarget target = SvnTarget.fromURL(branchUrl);
+      PropertyValue mergeinfoProperty = myVcs.getFactory(target).createPropertyClient()
+        .getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.create(targetRevision));
 
-    SvnTarget target = SvnTarget.fromURL(branchUrl);
-    PropertyValue mergeinfoProperty = myVcs.getFactory(target).createPropertyClient()
-      .getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.create(targetRevision));
+      if (mergeinfoProperty == null) {
+        final String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
+        final SVNURL newBranchUrl = branchUrl.removePathTail();
+        final String absoluteTrunk = SVNPathUtil.append(myInfo.getRepoUrl(), newTrunkUrl);
 
-    if (mergeinfoProperty == null) {
-      final String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
-      final SVNURL newBranchUrl = branchUrl.removePathTail();
-      final String absoluteTrunk = SVNPathUtil.append(myInfo.getRepoUrl(), newTrunkUrl);
-      if ((1 >= newTrunkUrl.length()) || (myInfo.getRepoUrl().length() >= newBranchUrl.toString().length()) ||
-        (newBranchUrl.toString().equals(absoluteTrunk))) {
-        return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
+        result = newTrunkUrl.length() <= 1 ||
+                 newBranchUrl.toString().length() <= myInfo.getRepoUrl().length() ||
+                 newBranchUrl.toString().equals(absoluteTrunk)
+                 ? SvnMergeInfoCache.MergeCheckResult.NOT_MERGED
+                 : goUpInRepo(revisionAsked, targetRevision, newBranchUrl, newTrunkUrl);
       }
-      // go up
-      return goUpInRepo(revisionAsked, targetRevision, newBranchUrl, newTrunkUrl);
+      else {
+        result = processMergeinfoProperty(branchUrl.toString() + "@" + targetRevision, revisionAsked, mergeinfoProperty, trunkUrl, false);
+      }
     }
-    // process
-    return processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty, trunkUrl, false);
+
+    return result;
   }
 
+  @NotNull
   private SvnMergeInfoCache.MergeCheckResult checkPathGoingUp(final long revisionAsked,
                                                               final long targetRevision,
                                                               @NotNull String branchRootPath,
                                                               @NotNull String path,
                                                               final String trunkUrl,
                                                               final boolean self) throws VcsException, SVNException {
+    SvnMergeInfoCache.MergeCheckResult result;
     final File pathFile = new File(path);
 
     // we didn't find existing item on the path jet
     // check whether we locally have path
     if (targetRevision == -1 && !pathFile.exists()) {
-      // go into parent
-      return goUp(revisionAsked, targetRevision, branchRootPath, path, trunkUrl);
-    }
-
-    final Info svnInfo = myVcs.getInfo(pathFile);
-    if (svnInfo == null || svnInfo.getURL() == null) {
-      LOG.info("Svninfo for " + pathFile + " is null or not full.");
-      return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-    }
-
-    final long actualRevision = svnInfo.getRevision().getNumber();
-    final long targetRevisionCorrected = (targetRevision == -1) ? actualRevision : targetRevision;
-    
-    // here we know local URL and revision
-
-    // check existing info
-    final String keyString = path + "@" + targetRevisionCorrected;
-    final Set<Long> selfInfo = self ? myNonInheritablePathMergedMap.get(keyString) : null;
-    final Set<Long> mergeInfo = myPathMergedMap.get(keyString);
-    if (mergeInfo != null || selfInfo != null) {
-      final boolean merged = mergeInfo != null && mergeInfo.contains(revisionAsked) || selfInfo != null && selfInfo.contains(revisionAsked);
-      // take from self or first parent with info; do not go further 
-      return SvnMergeInfoCache.MergeCheckResult.getInstance(merged);
-    }
-
-    if (actualRevision != targetRevisionCorrected) {
-      myMixedRevisionsFound = true;
-    }
-
-    SvnTarget target;
-    SVNRevision revision;
-    if (actualRevision == targetRevisionCorrected) {
-      // look in WC
-      target = SvnTarget.fromFile(pathFile, SVNRevision.WORKING);
-      revision = SVNRevision.WORKING;
+      result = goUp(revisionAsked, targetRevision, branchRootPath, path, trunkUrl);
     }
     else {
-      // in repo
-      target = SvnTarget.fromURL(svnInfo.getURL());
-      revision = SVNRevision.create(targetRevisionCorrected);
+      final Info svnInfo = myVcs.getInfo(pathFile);
+      if (svnInfo == null || svnInfo.getURL() == null) {
+        LOG.info("Svninfo for " + pathFile + " is null or not full.");
+        result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
+      }
+      else {
+        final long actualRevision = svnInfo.getRevision().getNumber();
+        final long targetRevisionCorrected = (targetRevision == -1) ? actualRevision : targetRevision;
+
+        // here we know local URL and revision
+
+        // check existing info
+        final String keyString = path + "@" + targetRevisionCorrected;
+        final Set<Long> selfInfo = self ? myNonInheritablePathMergedMap.get(keyString) : null;
+        final Set<Long> mergeInfo = myPathMergedMap.get(keyString);
+        if (mergeInfo != null || selfInfo != null) {
+          boolean merged = mergeInfo != null && mergeInfo.contains(revisionAsked) || selfInfo != null && selfInfo.contains(revisionAsked);
+          // take from self or first parent with info; do not go further
+          result = SvnMergeInfoCache.MergeCheckResult.getInstance(merged);
+        }
+        else {
+          if (actualRevision != targetRevisionCorrected) {
+            myMixedRevisionsFound = true;
+          }
+
+          SvnTarget target;
+          SVNRevision revision;
+          if (actualRevision == targetRevisionCorrected) {
+            // look in WC
+            target = SvnTarget.fromFile(pathFile, SVNRevision.WORKING);
+            revision = SVNRevision.WORKING;
+          }
+          else {
+            // in repo
+            target = SvnTarget.fromURL(svnInfo.getURL());
+            revision = SVNRevision.create(targetRevisionCorrected);
+          }
+
+          PropertyValue mergeinfoProperty =
+            myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, revision);
+
+          result = mergeinfoProperty == null
+                   ? goUp(revisionAsked, targetRevisionCorrected, branchRootPath, path, trunkUrl)
+                   : processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty, trunkUrl, self);
+        }
+      }
     }
 
-    PropertyValue mergeinfoProperty =
-      myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, revision);
-
-    return mergeinfoProperty == null
-           ? goUp(revisionAsked, targetRevisionCorrected, branchRootPath, path, trunkUrl)
-           : processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty, trunkUrl, self);
+    return result;
   }
 
+  @NotNull
   private SvnMergeInfoCache.MergeCheckResult processMergeinfoProperty(final String pathWithRevisionNumber,
                                                                       final long revisionAsked,
                                                                       @NotNull PropertyValue value,
                                                                       final String trunkRelativeUrl,
                                                                       final boolean self) throws SvnBindException {
+    SvnMergeInfoCache.MergeCheckResult result;
+
     if (value.toString().trim().length() == 0) {
       myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
-      return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
+      result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
-
-    Map<String, SVNMergeRangeList> map = parseMergeInfo(value);
-
-    for (String key : map.keySet()) {
-      if ((key != null) && (trunkRelativeUrl.startsWith(key))) {
-        final Set<Long> revisions = new HashSet<Long>();
-        final Set<Long> nonInheritableRevisions = new HashSet<Long>();
-
-        final SVNMergeRangeList rangesList = map.get(key);
-
-        boolean result = false;
-        for (SVNMergeRange range : rangesList.getRanges()) {
-          // SVN does not include start revision in range
-          final long startRevision = range.getStartRevision() + 1;
-          final long endRevision = range.getEndRevision();
-          final boolean isInheritable = range.isInheritable();
-          final boolean inInterval = (revisionAsked >= startRevision) && (revisionAsked <= endRevision);
-
-          if ((isInheritable || self) && inInterval) {
-            result = true;
-          }
-
-          for (long i = startRevision; i <= endRevision; i++) {
-            if (isInheritable) {
-              revisions.add(i);
-            } else {
-              nonInheritableRevisions.add(i);
-            }
-          }
+    else {
+      Map<String, SVNMergeRangeList> mergedPathsMap = parseMergeInfo(value);
+      String mergedPathAffectingTrunkUrl = ContainerUtil.find(mergedPathsMap.keySet(), new Condition<String>() {
+        @Override
+        public boolean value(String path) {
+          return trunkRelativeUrl.startsWith(path);
         }
-        myPathMergedMap.put(pathWithRevisionNumber, revisions);
-        if (! nonInheritableRevisions.isEmpty()) {
-          myNonInheritablePathMergedMap.put(pathWithRevisionNumber, nonInheritableRevisions);
-        }
+      });
 
-        return SvnMergeInfoCache.MergeCheckResult.getInstance(result);
+      if (mergedPathAffectingTrunkUrl != null) {
+        SVNMergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingTrunkUrl);
+
+        fillMergedRevisions(pathWithRevisionNumber, mergeRangeList);
+
+        boolean isAskedRevisionMerged = ContainerUtil.or(mergeRangeList.getRanges(), new Condition<SVNMergeRange>() {
+          @Override
+          public boolean value(@NotNull SVNMergeRange range) {
+            return isInRange(range, revisionAsked) && (range.isInheritable() || self);
+          }
+        });
+
+        result = SvnMergeInfoCache.MergeCheckResult.getInstance(isAskedRevisionMerged);
+      }
+      else {
+        myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
+        result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
       }
     }
-    myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
-    return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
+
+    return result;
   }
 
   @NotNull
   private static Map<String, SVNMergeRangeList> parseMergeInfo(@NotNull PropertyValue value) throws SvnBindException {
     try {
-      return SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(value.toString())), null);
+      return SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.toString().replace('\r', '\n').replace("\n\n", "\n")), null);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
     }
   }
 
+  private void fillMergedRevisions(String pathWithRevisionNumber, @NotNull SVNMergeRangeList mergeRangeList) {
+    Set<Long> revisions = ContainerUtil.newHashSet();
+    Set<Long> nonInheritableRevisions = ContainerUtil.newHashSet();
+
+    for (SVNMergeRange range : mergeRangeList.getRanges()) {
+      // TODO: Seems there is no much sense in converting merge range to list of revisions - we need just implement smart search
+      // TODO: of revision in sorted list of ranges
+      (range.isInheritable() ? revisions : nonInheritableRevisions).addAll(toRevisionsList(range));
+    }
+
+    myPathMergedMap.put(pathWithRevisionNumber, revisions);
+    if (!nonInheritableRevisions.isEmpty()) {
+      myNonInheritablePathMergedMap.put(pathWithRevisionNumber, nonInheritableRevisions);
+    }
+  }
+
   @NotNull
-  private static String replaceSeparators(@NotNull String s) {
-    return s.replace('\r', '\n').replace("\n\n", "\n");
+  private static Collection<Long> toRevisionsList(@NotNull SVNMergeRange range) {
+    List<Long> result = ContainerUtil.newArrayList();
+
+    // SVN does not include start revision in range
+    for (long i = range.getStartRevision() + 1; i <= range.getEndRevision(); i++) {
+      result.add(i);
+    }
+
+    return result;
+  }
+
+  private static boolean isInRange(@NotNull SVNMergeRange range, long revision) {
+    // SVN does not include start revision in range
+    return (revision > range.getStartRevision()) && (revision <= range.getEndRevision());
   }
 
   public boolean isMixedRevisionsFound() {
