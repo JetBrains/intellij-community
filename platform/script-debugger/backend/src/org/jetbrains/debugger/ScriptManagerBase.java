@@ -1,6 +1,5 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.Url;
@@ -44,7 +43,7 @@ public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements Sc
 
   @Nullable
   @Override
-  public ActionCallback getScriptSourceMapLoadCallback(@NotNull Script script) {
+  public Promise<Void> getScriptSourceMapPromise(@NotNull Script script) {
     return null;
   }
 

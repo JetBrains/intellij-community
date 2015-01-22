@@ -80,6 +80,9 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
             final EditorNotificationPanel panel =
               new EditorNotificationPanel()
                 .text(ApplicationBundle.message("code.style.indents.detector.message", provider.getDisplayName()));
+            if (provider.getIcon() != null) {
+              panel.icon(provider.getIcon());
+            }
             panel.createActionLabel(
               ApplicationBundle.message("code.style.indents.detector.accept"),
               new Runnable() {
