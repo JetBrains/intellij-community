@@ -904,6 +904,7 @@
     <search.optionContributor implementation="com.intellij.codeInspection.ex.InspectionSearchableOptionContributor"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
+    <editorNotificationProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider"/>
   </extensions>
 </idea-plugin>
 

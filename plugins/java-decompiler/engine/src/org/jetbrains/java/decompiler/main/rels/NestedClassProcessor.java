@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,8 +220,10 @@ public class NestedClassProcessor {
 
         if (!hasEnclosing) {
           if (child.type == ClassNode.CLASS_ANONYMOUS) {
-            String message = "Unreferenced anonymous class " + child.classStruct.qualifiedName + "!";
-            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+            if (!child.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
+              String message = "Unreferenced anonymous class " + child.classStruct.qualifiedName + "!";
+              DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+            }
           }
           else if (child.type == ClassNode.CLASS_LOCAL) {
             String message = "Unreferenced local class " + child.classStruct.qualifiedName + "!";
@@ -274,8 +276,10 @@ public class NestedClassProcessor {
 
           HashMap<String, List<VarFieldPair>> mask = getMaskLocalVars(nd.getWrapper());
           if (mask.isEmpty()) {
-            String message = "Nested class " + nd.classStruct.qualifiedName + " has no constructor!";
-            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+            if (!nd.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
+              String message = "Nested class " + nd.classStruct.qualifiedName + " has no constructor!";
+              DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+            }
           }
           else {
             mapVarMasks.put(nd.classStruct.qualifiedName, mask);
