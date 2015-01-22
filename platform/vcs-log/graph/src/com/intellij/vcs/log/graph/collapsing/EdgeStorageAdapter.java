@@ -83,20 +83,6 @@ public class EdgeStorageAdapter {
     return result;
   }
 
-  public void appendAdditionalEdges(@NotNull List<GraphEdge> result, int nodeIndex, @NotNull EdgeFilter filter) {
-    for (Pair<Integer, GraphEdgeType> retrievedEdge : myEdgeStorage.getEdges(myGetNodeIdByIndex.fun(nodeIndex))) {
-      GraphEdge edge = decompressEdge(nodeIndex, retrievedEdge.first, retrievedEdge.second);
-      if (matchedEdge(nodeIndex, edge, filter)) result.add(edge);
-    }
-  }
-
-  public void removeAdditionalEdges(@NotNull List<GraphEdge> result, int nodeIndex, @NotNull EdgeFilter filter) {
-    for (Pair<Integer, GraphEdgeType> retrievedEdge : myEdgeStorage.getEdges(myGetNodeIdByIndex.fun(nodeIndex))) {
-      GraphEdge edge = decompressEdge(nodeIndex, retrievedEdge.first, retrievedEdge.second);
-      if (matchedEdge(nodeIndex, edge, filter)) result.remove(edge);
-    }
-  }
-
   @NotNull
   private Pair<Integer, Integer> getNodeIds(@NotNull GraphEdge graphEdge) {
     if (graphEdge.getUpNodeIndex() != null) {

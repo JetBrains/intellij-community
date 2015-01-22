@@ -221,7 +221,7 @@ public class CollapsedGraph {
           result.add(createEdge(delegateEdge, compiledUpIndex, compiledDownIndex));
       }
 
-      myEdgeStorageAdapter.appendAdditionalEdges(result, nodeIndex, filter);
+      result.addAll(myEdgeStorageAdapter.getAdditionalEdges(nodeIndex, filter));
 
       return result;
     }

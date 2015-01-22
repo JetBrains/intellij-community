@@ -52,9 +52,7 @@ public class EdgeStorageTest : BaseTestGraphBuilder {
   fun EdgeStorage.assert(s: String) = assertEquals(s, asString())
 
   fun EdgeStorage.asString(): String = getKnownIds().sortR().map {
-      val edges = ArrayList<GraphEdge>()
-      adapter.appendAdditionalEdges(edges, nodeIndexById(it), EdgeFilter.ALL)
-      edges.map { it.asString() }.joinToString(",")
+      adapter.getAdditionalEdges(nodeIndexById(it), EdgeFilter.ALL).map { it.asString() }.joinToString(",")
   }.joinToString("|-")
 
   val EdgeStorage.adapter: EdgeStorageAdapter  get() = EdgeStorageAdapter(this, nodeIndexById, nodeIdByIndex)
