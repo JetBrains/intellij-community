@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.execution.filters.LineNumbersMapping;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -70,31 +71,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTestStubCompatibility(VirtualFile root) {
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (file.isDirectory()) {
-          System.out.println(file.getPath());
-        }
-        else if (file.getFileType() == StdFileTypes.CLASS && !file.getName().contains("$")) {
-          PsiFile clsFile = getPsiManager().findFile(file);
-          assertNotNull(file.getPath(), clsFile);
-          PsiElement mirror = ((ClsFileImpl)clsFile).getMirror();
-          String decompiled = mirror.getText();
-          assertTrue(file.getPath(), decompiled.contains(file.getNameWithoutExtension()));
-
-          // check that no mapped line number is on an empty line
-          String prefix = "// ";
-          for (String s : decompiled.split("\n")) {
-            int pos = s.indexOf(prefix);
-            if (pos == 0 && prefix.length() < s.length() && Character.isDigit(s.charAt(prefix.length()))) {
-              fail("Incorrect line mapping in file " + file.getPath() + " line: " + s);
-            }
-          }
-        }
-        return true;
-      }
-    });
+    VfsUtilCore.visitChildrenRecursively(root, new MyFileVisitor());
   }
 
   public void testNavigation() {
@@ -202,5 +179,37 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
       fail("should have been cancelled");
     }
     catch (ProcessCanceledException ignored) { }
+  }
+
+  private class MyFileVisitor extends VirtualFileVisitor {
+    @Override
+    public boolean visitFile(@NotNull VirtualFile file) {
+      if (file.isDirectory()) {
+        System.out.println(file.getPath());
+      }
+      else if (file.getFileType() == StdFileTypes.CLASS && !file.getName().contains("$")) {
+        PsiFile clsFile = getPsiManager().findFile(file);
+        assertNotNull(file.getPath(), clsFile);
+        PsiElement mirror = ((ClsFileImpl)clsFile).getMirror();
+        String decompiled = mirror.getText();
+        assertTrue(file.getPath(), decompiled.contains(file.getNameWithoutExtension()));
+
+        // check that no mapped line number is on an empty line
+        String prefix = "// ";
+        for (String s : decompiled.split("\n")) {
+          int pos = s.indexOf(prefix);
+          if (pos == 0 && prefix.length() < s.length() && Character.isDigit(s.charAt(prefix.length()))) {
+            fail("Incorrect line mapping in file " + file.getPath() + " line: " + s);
+          }
+        }
+      }
+      else if (ArchiveFileType.INSTANCE.equals(file.getFileType())) {
+        VirtualFile jarFile = StandardFileSystems.getJarRootForLocalFile(file);
+        if (jarFile != null) {
+          VfsUtilCore.visitChildrenRecursively(jarFile, new MyFileVisitor());
+        }
+      }
+      return true;
+    }
   }
 }

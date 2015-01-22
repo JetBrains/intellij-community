@@ -555,13 +555,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       assert commented;
 
       int charsToDelete = matchesTrimmed ? prefix.trim().length() : prefix.length();
-      int theEnd = endOffset > 0 ? endOffset : chars.length();
-      // if there's exactly one space after line comment prefix and before the text that follows in the same line, delete the space too
-      if (startOffset + charsToDelete < theEnd - 1 && chars.charAt(startOffset + charsToDelete) == ' ') {
-        if (startOffset + charsToDelete == theEnd - 2 || chars.charAt(startOffset + charsToDelete + 1) != ' ') {
-          charsToDelete++;
-        }
-      }
       document.deleteString(startOffset, startOffset + charsToDelete);
       return true;
     }

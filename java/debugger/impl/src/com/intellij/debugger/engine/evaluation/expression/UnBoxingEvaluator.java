@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -52,23 +53,26 @@ public class UnBoxingEvaluator implements Evaluator{
     return TYPES_TO_CONVERSION_METHOD_MAP.containsKey(typeName);
   }
 
-  public UnBoxingEvaluator(Evaluator operand) {
+  public UnBoxingEvaluator(@NotNull Evaluator operand) {
     myOperand = new DisableGC(operand);
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    final Value result = (Value)myOperand.evaluate(context);
-    if (result == null) {
+    return unbox(myOperand.evaluate(context), context);
+  }
+
+  public static Object unbox(@Nullable Object value, EvaluationContextImpl context) throws EvaluateException {
+    if (value == null) {
       throw new EvaluateException("java.lang.NullPointerException: cannot unbox null value");
     }
-    if (result instanceof ObjectReference) {
-      final String valueTypeName = result.type().name();
+    if (value instanceof ObjectReference) {
+      final String valueTypeName = ((ObjectReference)value).type().name();
       final Couple<String> pair = TYPES_TO_CONVERSION_METHOD_MAP.get(valueTypeName);
       if (pair != null) {
-        return convertToPrimitive(context, (ObjectReference)result, pair.getFirst(), pair.getSecond());
+        return convertToPrimitive(context, (ObjectReference)value, pair.getFirst(), pair.getSecond());
       }
     }
-    return result;
+    return value;
   }
                                           
   @Nullable
@@ -86,8 +90,6 @@ public class UnBoxingEvaluator implements Evaluator{
                                   conversionMethodName + conversionMethodSignature);
     }
 
-    final Method method = methods.get(0);
-
-    return process.invokeMethod(context, value, method, new ArrayList());
+    return process.invokeMethod(context, value, methods.get(0), Collections.emptyList());
   }
 }

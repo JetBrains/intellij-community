@@ -252,6 +252,7 @@ public class ExistingTemplatesComponent {
                                       boolean hasFocus) {
       final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       final Object userObject = treeNode.getUserObject();
+      if (userObject == null) return;
 
       final Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeTextBackground();
       final Color foreground = selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();

@@ -16,11 +16,13 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.lang.LanguageQuoteHandling;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 
 /**
  * @see QuoteHandlerEP
+ * @see LanguageQuoteHandling
  */
 public interface QuoteHandler {
   boolean isClosingQuote(HighlighterIterator iterator, int offset);

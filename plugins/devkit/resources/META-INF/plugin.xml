@@ -136,6 +136,11 @@
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection" />
 
+    <intentionAction>
+      <className>org.jetbrains.idea.devkit.inspections.AnnotateCapitalizationIntention</className>
+      <category>I18N</category>
+    </intentionAction>
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>

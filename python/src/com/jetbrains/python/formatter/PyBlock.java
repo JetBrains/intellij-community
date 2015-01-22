@@ -487,8 +487,12 @@ public class PyBlock implements ASTBlock {
     do {
       node = node.getTreePrev();
     }
-    while (node != null && (node.getElementType() == TokenType.WHITE_SPACE || PyTokenTypes.WHITESPACE.contains(node.getElementType())));
+    while (isWhitespace(node));
     return node;
+  }
+
+  private static boolean isWhitespace(@Nullable ASTNode node) {
+    return node != null && (node.getElementType() == TokenType.WHITE_SPACE || PyTokenTypes.WHITESPACE.contains(node.getElementType()));
   }
 
   private static boolean hasLineBreaksBefore(@NotNull ASTNode child, int minCount) {
@@ -503,17 +507,23 @@ public class PyBlock implements ASTBlock {
            isWhitespaceWithLineBreaks(child.getLastChildNode(), minCount);
   }
 
-  private static boolean isWhitespaceWithLineBreaks(ASTNode node, int minCount) {
-    if (node != null && node.getElementType() == TokenType.WHITE_SPACE) {
-      String prevNodeText = node.getText();
-      int count = 0;
-      for (int i = 0; i < prevNodeText.length(); i++) {
-        if (prevNodeText.charAt(i) == '\n') {
-          count++;
-          if (count == minCount) {
-            return true;
+  private static boolean isWhitespaceWithLineBreaks(@Nullable ASTNode node, int minCount) {
+    if (isWhitespace(node)) {
+      for (ASTNode prevNode = node.getTreePrev(); isWhitespace(prevNode); prevNode = prevNode.getTreePrev()) {
+        node = prevNode;
+      }
+      while (isWhitespace(node)) {
+        final String nodeText = node.getText();
+        int count = 0;
+        for (int i = 0; i < nodeText.length(); i++) {
+          if (nodeText.charAt(i) == '\n') {
+            count++;
+            if (count == minCount) {
+              return true;
+            }
           }
         }
+        node = node.getTreeNext();
       }
     }
     return false;

@@ -68,4 +68,45 @@ public abstract class TestAnonymousClass {
       }
     };
   }
+
+  private final InnerRecursive y = new InnerRecursive(new InnerRecursive(null) {
+    @Override
+    void foo() {
+      int a =5;
+      int b =5;
+      int g =5;
+    }
+  }) {
+    int v =5;
+    int t =5;
+    int j =5;
+    int o =5;
+  };
+
+
+  private final InnerRecursive x = new InnerRecursive(new InnerRecursive(null) {
+    @Override
+    void foo() {
+      int a =5;
+      int b =5;
+      int g =5;
+    }
+  }) {
+    int v =5;
+    int t =5;
+    int j =5;
+    int o =5;
+  };
+
+  static class InnerRecursive {
+    InnerRecursive r;
+
+    public InnerRecursive(InnerRecursive r) {
+      this.r = r;
+    }
+
+    void foo() {
+
+    }
+  }
 }

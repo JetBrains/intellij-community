@@ -18,8 +18,8 @@ public class TestClassLambda {
       List var1 = Arrays.asList(new Integer[]{Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3), Integer.valueOf(4), Integer.valueOf(5), Integer.valueOf(6), Integer.valueOf(7)});// 29
       int var2 = (int)Math.random();// 30
       var1.forEach((var2x) -> {// 32
-         int var3 = 2 * var2x.intValue();
-         System.out.println(var3 + var2 + this.field);
+         int var3 = 2 * var2x.intValue();// 33
+         System.out.println(var3 + var2 + this.field);// 34
       });
    }
 
@@ -82,13 +82,25 @@ public class TestClassLambda {
       Runnable var2 = () -> {
          Runnable var1x = () -> {
             System.out.println("hello2" + var1);
-         };
-         System.out.println("hello1" + var1);
+         };// 87
+         System.out.println("hello1" + var1);// 88
       };// 86
    }
 }
 
 class 'pkg/TestClassLambda' {
+   method 'lambda$testLambda$0 (ILjava/lang/Integer;)V' {
+      0      20
+      2      20
+      5      20
+      6      20
+      7      21
+      c      21
+      e      21
+      11      21
+      12      21
+   }
+
    method 'testLambda ()V' {
       7      17
       8      17
@@ -112,12 +124,31 @@ class 'pkg/TestClassLambda' {
       4a      19
    }
 
+   method 'lambda$testLambda1$1 (I)V' {
+      0      28
+      a      28
+      13      28
+      16      28
+   }
+
+   method 'lambda$testLambda1$2 (I)V' {
+      0      31
+      a      31
+      13      31
+      16      31
+   }
+
    method 'testLambda1 ()V' {
       0      26
       3      26
       4      26
       b      29
       12      32
+   }
+
+   method 'lambda$testLambda2$3 (II)I' {
+      2      37
+      5      37
    }
 
    method 'testLambda2 ()V' {
@@ -136,6 +167,12 @@ class 'pkg/TestClassLambda' {
       0      50
       2      50
       e      51
+   }
+
+   method 'lambda$testLambda6$4 (IILjava/lang/String;)Z' {
+      2      59
+      9      59
+      15      59
    }
 
    method 'testLambda6 ()V' {
@@ -172,6 +209,21 @@ class 'pkg/TestClassLambda' {
       1      76
    }
 
+   method 'lambda$null$5 (I)V' {
+      0      83
+      a      83
+      13      83
+      16      83
+   }
+
+   method 'lambda$nestedLambdas$6 (I)V' {
+      6      84
+      7      85
+      11      85
+      1a      85
+      1d      85
+   }
+
    method 'nestedLambdas ()V' {
       0      80
       1      80
@@ -183,6 +235,8 @@ Lines mapping:
 29 <-> 18
 30 <-> 19
 32 <-> 20
+33 <-> 21
+34 <-> 22
 39 <-> 27
 40 <-> 30
 41 <-> 33
@@ -201,3 +255,5 @@ Lines mapping:
 81 <-> 77
 85 <-> 81
 86 <-> 87
+87 <-> 85
+88 <-> 86

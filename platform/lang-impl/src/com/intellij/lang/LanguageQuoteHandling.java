@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.engine;
+package com.intellij.lang;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
+import com.intellij.codeInsight.editorActions.QuoteHandler;
 
 /**
- * @deprecated Use {@link com.intellij.debugger.engine.JavaDebugAware}
- * to remove in IDEA 15
+ * @author gregsh
  */
-@Deprecated
-public interface JVMDebugProvider {
-  ExtensionPointName<JVMDebugProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmDebugProvider");
+public class LanguageQuoteHandling extends LanguageExtension<QuoteHandler> {
+  public static final LanguageQuoteHandling INSTANCE = new LanguageQuoteHandling();
 
-  boolean supportsJVMDebugging(PsiFile file);
+  private LanguageQuoteHandling() {
+    super("com.intellij.lang.quoteHandler");
+  }
 }

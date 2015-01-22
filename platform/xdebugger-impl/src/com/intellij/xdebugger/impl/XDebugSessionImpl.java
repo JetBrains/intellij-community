@@ -43,6 +43,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -853,6 +854,9 @@ public class XDebugSessionImpl implements XDebugSession {
     if (mySessionTab != null) {
       ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
       mySessionTab.detachFromSession();
+    }
+    else if (myConsoleView != null) {
+      Disposer.dispose(myConsoleView);
     }
 
     myTopFramePosition = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -612,7 +612,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   protected int getThickness() {
-    return isMacOverlayScrollbar() ? 15 : 13;
+    return isMacOverlayScrollbar() ? JBUI.scale(15) : JBUI.scale(13);
   }
 
   @Override
@@ -815,7 +815,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     final Stroke stroke = g.getStroke();
     g.setStroke(BORDER_STROKE);
     g.setColor(getGradientThumbBorderColor());
-    g.drawRoundRect(hGap, vGap, w, h, 3, 3);
+    final int R = JBUI.scale(3);
+    g.drawRoundRect(hGap, vGap, w, h, R, R);
     g.setStroke(stroke);
   }
 
@@ -871,7 +872,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     @Override
     public Dimension getMaximumSize() {
-      return new Dimension(0, 0);
+      return JBUI.emptySize();
     }
 
     @Override

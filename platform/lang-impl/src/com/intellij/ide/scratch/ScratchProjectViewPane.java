@@ -36,6 +36,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,20 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   @Override
   public SelectInTarget createSelectInTarget() {
     return new ProjectViewSelectInTarget(myProject) {
+
+      @Override
+      protected boolean canSelect(PsiFileSystemItem file) {
+        if (!super.canSelect(file)) return false;
+        final VirtualFile vFile = file.getVirtualFile();
+        if (vFile == null || !vFile.isValid()) return false;
+        return ScratchFileService.getInstance(myProject).getRootType(file.getVirtualFile()) != null;
+      }
+
+      @Override
+      protected boolean canWorkWithCustomObjects() {
+        return false;
+      }
+
       @Override
       public String toString() {
         return getTitle();
@@ -106,11 +121,12 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   @Nullable
   @Override
   protected PsiElement getPSIElement(@Nullable Object element) {
-    return element instanceof ScratchFileService.RootId ? getDirectory(myProject, (ScratchFileService.RootId)element) : super.getPSIElement(element);
+    return element instanceof RootType ? getDirectory(myProject, (RootType)element) : super.getPSIElement(element);
   }
 
   @Nullable
-  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull ScratchFileService.RootId rootId) {
+  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
+    // todo project roots not supported
     String path = ScratchFileService.getInstance().getRootPath(rootId);
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
@@ -144,7 +160,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode> list = ContainerUtil.newArrayList();
-      for (ScratchFileService.RootId rootId : ScratchFileService.RootId.getAllRootIds()) {
+      for (RootType rootId : RootType.getAllRootIds()) {
         if (rootId.isHidden()) continue;
         list.add(new MyRootNode(getProject(), rootId));
       }
@@ -156,19 +172,19 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
   }
 
-  private static class MyRootNode extends AbstractTreeNode<ScratchFileService.RootId> {
+  private static class MyRootNode extends AbstractTreeNode<RootType> {
 
-    MyRootNode(Project project, ScratchFileService.RootId type) {
+    MyRootNode(Project project, RootType type) {
       super(project, type);
     }
 
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      ScratchFileService.RootId rootId = getValue();
-      PsiDirectory directory = getDirectory(getProject(), rootId);
+      RootType rootType = getValue();
+      PsiDirectory directory = getDirectory(getProject(), rootType);
       if (directory == null) return Collections.emptyList();
-      return new MyPsiNode(getProject(), directory).getChildren();
+      return new MyPsiNode(getProject(), rootType, directory).getChildren();
     }
 
     @Override
@@ -180,8 +196,11 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   private static class MyPsiNode extends BasePsiNode<PsiFileSystemItem> implements NavigatableWithText {
 
-    MyPsiNode(@NotNull Project project, @NotNull PsiFileSystemItem value) {
+    private final RootType myRootType;
+
+    MyPsiNode(@NotNull Project project, RootType rootId, @NotNull PsiFileSystemItem value) {
       super(project, value, ViewSettings.DEFAULT);
+      myRootType = rootId;
     }
 
     @Override
@@ -200,7 +219,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
         value.processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
           @Override
           public boolean execute(@NotNull PsiFileSystemItem element) {
-            list.add(new MyPsiNode(getProject(), element));
+            list.add(new MyPsiNode(getProject(), myRootType, element));
             return true;
           }
         });
@@ -211,9 +230,10 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     protected void updateImpl(PresentationData data) {
       PsiFileSystemItem value = getValue();
-      if (value != null) {
+      VirtualFile virtualFile = value == null ? null : value.getVirtualFile();
+      if (virtualFile != null && virtualFile.isValid()) {
         data.setIcon(value.getIcon(0));
-        data.setPresentableText(value.getName());
+        data.setPresentableText(ObjectUtils.chooseNotNull(myRootType.substituteName(getProject(), virtualFile), virtualFile.getName()));
       }
     }
 

@@ -3369,4 +3369,32 @@ public class UIUtil {
     component.paint(graphics);
     return image;
   }
+
+  /**
+   * Indicates whether the specified component is scrollable or it contains a scrollable content.
+   */
+  public static boolean hasScrollPane(@NotNull Component component) {
+    return hasComponentOfType(component, JScrollPane.class);
+  }
+
+  /**
+   * Indicates whether the specified component is instance of one of the specified types
+   * or it contains an instance of one of the specified types.
+   */
+  public static boolean hasComponentOfType(Component component, Class<?>... types) {
+    for (Class<?> type : types) {
+      if (type.isAssignableFrom(component.getClass())) {
+        return true;
+      }
+    }
+    if (component instanceof Container) {
+      Container container = (Container)component;
+      for (int i = 0; i < container.getComponentCount(); i++) {
+        if (hasComponentOfType(container.getComponent(i), types)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
