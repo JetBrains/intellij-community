@@ -17,6 +17,7 @@ package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -71,6 +72,15 @@ public class EdgeStorageAdapter {
       if (edge.second.isNormalEdge() && intEqual(edge.first, toId)) return true;
     }
     return false;
+  }
+
+  public List<GraphEdge> getAdditionalEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+    List<GraphEdge> result = ContainerUtil.newSmartList();
+    for (Pair<Integer, GraphEdgeType> retrievedEdge : myEdgeStorage.getEdges(myGetNodeIdByIndex.fun(nodeIndex))) {
+      GraphEdge edge = decompressEdge(nodeIndex, retrievedEdge.first, retrievedEdge.second);
+      if (matchedEdge(nodeIndex, edge, filter)) result.add(edge);
+    }
+    return result;
   }
 
   public void appendAdditionalEdges(@NotNull List<GraphEdge> result, int nodeIndex, @NotNull EdgeFilter filter) {

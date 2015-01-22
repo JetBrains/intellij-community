@@ -15,23 +15,24 @@
  */
 package com.intellij.vcs.log.graph.collapsing;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.*;
-import static com.intellij.vcs.log.graph.collapsing.EdgeStorage.NULL_ID;
 
 public class DottedFilterEdgesGenerator {
   public static void update(@NotNull CollapsedGraph collapsedGraph, int upDelegateNodeIndex, int downDelegateNodeIndex) {
-    new DottedFilterEdgesGenerator(collapsedGraph, upDelegateNodeIndex, downDelegateNodeIndex).update();
+    CollapsedGraph.Modification modification = collapsedGraph.startModification();
+    new DottedFilterEdgesGenerator(collapsedGraph, modification, upDelegateNodeIndex, downDelegateNodeIndex).update();
+    modification.apply();
   }
 
   @NotNull private final CollapsedGraph myCollapsedGraph;
+  @NotNull private final CollapsedGraph.Modification myModification;
 
   @NotNull private final LiteLinearGraph myLiteDelegateGraph;
 
@@ -39,8 +40,9 @@ public class DottedFilterEdgesGenerator {
   private final int myDownIndex;
   @NotNull private final ShiftNumber myNumbers;
 
-  private DottedFilterEdgesGenerator(@NotNull CollapsedGraph collapsedGraph, int upIndex, int downIndex) {
+  private DottedFilterEdgesGenerator(@NotNull CollapsedGraph collapsedGraph, @NotNull CollapsedGraph.Modification modification, int upIndex, int downIndex) {
     myCollapsedGraph = collapsedGraph;
+    myModification = modification;
     myLiteDelegateGraph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.getDelegatedGraph());
     myUpIndex = upIndex;
     myDownIndex = downIndex;
@@ -51,23 +53,12 @@ public class DottedFilterEdgesGenerator {
     return myCollapsedGraph.isNodeVisible(nodeIndex);
   }
 
-  private int getNodeId(int nodeIndex) {
-    return myCollapsedGraph.getDelegatedGraph().getNodeId(nodeIndex);
-  }
-
-  @Nullable
-  private Integer getNodeIndex(@Nullable Integer nodeId) {
-    if (nodeId == null) return null;
-
-    return myCollapsedGraph.getDelegatedGraph().getNodeIndex(nodeId);
-  }
-
   private void addDottedEdge(int nodeIndex1, int nodeIndex2) {
-    myCollapsedGraph.getEdgeStorage().createEdge(getNodeId(nodeIndex1), getNodeId(nodeIndex2), DOTTED);
+    myModification.createEdge(new GraphEdge(nodeIndex1, nodeIndex2, null, DOTTED));
   }
 
   private void addDottedArrow(int nodeIndex, boolean toUp) {
-    myCollapsedGraph.getEdgeStorage().createEdge(getNodeId(nodeIndex), NULL_ID, toUp ? DOTTED_ARROW_UP : DOTTED_ARROW_DOWN);
+    myModification.createEdge(new GraphEdge(nodeIndex, null, null, toUp ? DOTTED_ARROW_UP : DOTTED_ARROW_DOWN));
   }
 
   // update specified range
@@ -77,11 +68,10 @@ public class DottedFilterEdgesGenerator {
   }
 
   private boolean hasDottedEdges(int nodeIndex, boolean toUp) {
-    for (Pair<Integer, GraphEdgeType> edge : myCollapsedGraph.getEdgeStorage().getEdges(getNodeId(nodeIndex))) {
-      Integer anotherNodeIndex = getNodeIndex(edge.first);
-      if (edge.second.isNormalEdge() && anotherNodeIndex != null) {
-        if (toUp && nodeIndex > anotherNodeIndex) return true;
-        if (!toUp && nodeIndex < anotherNodeIndex) return true;
+    for (GraphEdge edge : myModification.getEdgeStorageAdapter().getAdditionalEdges(nodeIndex, EdgeFilter.NORMAL_ALL)) {
+      if (edge.getType() == DOTTED) {
+        if (toUp && LinearGraphUtils.isEdgeToUp(edge, nodeIndex)) return true;
+        if (!toUp && LinearGraphUtils.isEdgeToDown(edge, nodeIndex)) return false;
       }
     }
     return false;
