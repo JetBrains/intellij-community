@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph;
 
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ public interface PermanentGraph<CommitId> {
   @NotNull
   VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                             @Nullable Set<CommitId> headsOfVisibleBranches,
-                                            @Nullable Condition<CommitId> filter);
+                                            @Nullable Set<CommitId> matchedCommits);
 
   @NotNull
   List<GraphCommit<CommitId>> getAllCommits();
