@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.template.TemplateResource;
+import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 
 import java.util.ArrayList;
@@ -77,13 +78,19 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
         }
     };
   private final Project myProject;
+  private final TemplatesManager myTemplatesManager;
 
   public TemplatesPanel(Project project) {
+    this(project, ToStringTemplatesManager.getInstance());
+  }
+
+  public TemplatesPanel(Project project, TemplatesManager templatesManager) {
         super(NAMER, FACTORY, CLONER, COMPARER,
-                new ArrayList<TemplateResource>(ToStringTemplatesManager.getInstance().getAllTemplates()));
+                new ArrayList<TemplateResource>(templatesManager.getAllTemplates()));
 
         //ServiceManager.getService(project, MasterDetailsStateService.class).register("ToStringTemplates.UI", this);
     myProject = project;
+    myTemplatesManager = templatesManager;
   }
 
     @Nls
@@ -104,7 +111,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
 
     @Override
     public boolean isModified() {
-        return super.isModified() || !Comparing.equal(ToStringTemplatesManager.getInstance().getDefaultTemplate(), getSelectedItem());
+        return super.isModified() || !Comparing.equal(myTemplatesManager.getDefaultTemplate(), getSelectedItem());
     }
 
     @Override
@@ -119,10 +126,10 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     @Override
     public void apply() throws ConfigurationException {
         super.apply();
-        ToStringTemplatesManager.getInstance().setTemplates(getItems());
+        myTemplatesManager.setTemplates(getItems());
         final TemplateResource selection = getSelectedItem();
         if (selection != null) {
-            ToStringTemplatesManager.getInstance().setDefaultTemplate(selection);
+            myTemplatesManager.setDefaultTemplate(selection);
         }
     }
 }
