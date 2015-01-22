@@ -23,7 +23,8 @@ import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges;
+import com.intellij.vcs.log.graph.collapsing.EdgeStorage;
+import com.intellij.vcs.log.graph.collapsing.EdgeStorageAdapter;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
@@ -213,7 +214,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     private final List<GraphEdge> myDottedToRemove = new ArrayList<GraphEdge>();
 
     private WorkingGraph(LinearGraph graph) {
-      super(graph, createSimpleAdditionalEdges(), createSimpleAdditionalEdges());
+      super(graph, createSimpleEdgeStorage(), createSimpleEdgeStorage());
     }
 
     public void addEdge(int from, int to) {
@@ -257,7 +258,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     }
   }
 
-  private static GraphAdditionalEdges createSimpleAdditionalEdges() {
-    return GraphAdditionalEdges.newInstance(new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
+  private static EdgeStorageAdapter createSimpleEdgeStorage() {
+    return new EdgeStorageAdapter(new EdgeStorage(), new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
   }
 }

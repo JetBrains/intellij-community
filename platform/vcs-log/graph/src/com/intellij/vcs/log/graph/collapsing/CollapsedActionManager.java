@@ -244,7 +244,7 @@ class CollapsedActionManager {
         int nodeId = delegateGraph.getNodeId(nodeIndex);
         collapsedGraph.setNodeVisibility(nodeId, true);
       }
-      collapsedGraph.getGraphAdditionalEdges().removeAll();
+      collapsedGraph.getEdgeStorage().removeAll();
       collapsedGraph.updateNodeMapping(0, delegateGraph.nodesCount() - 1);
 
       return new LinearGraphAnswer(SOME_CHANGES, null, null, null); // todo fix
@@ -273,7 +273,7 @@ class CollapsedActionManager {
           Set<Integer> middleNodes = fragmentGenerator.getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex, true);
           int upNodeId = delegateGraph.getNodeId(fragment.upNodeIndex);
           int downNodeId = delegateGraph.getNodeId(fragment.downNodeIndex);
-          collapsedGraph.getGraphAdditionalEdges().createEdge(upNodeId, downNodeId, GraphEdgeType.DOTTED);
+          collapsedGraph.getEdgeStorage().createEdge(upNodeId, downNodeId, GraphEdgeType.DOTTED);
 
           for (Integer nodeIndexForHide : middleNodes) {
             int nodeId = delegateGraph.getNodeId(nodeIndexForHide);

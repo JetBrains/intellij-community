@@ -17,7 +17,7 @@ package com.intellij.vcs.log.graph.impl
 
 import org.junit.Assert.*
 import org.junit.Test
-import com.intellij.vcs.log.graph.collapsing.GraphAdditionalEdges
+import com.intellij.vcs.log.graph.collapsing.EdgeStorage
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
@@ -27,35 +27,37 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.EdgeFilter
+import com.intellij.vcs.log.graph.collapsing.EdgeStorageAdapter
 
-public class GraphAdditionalEdgesTest : BaseTestGraphBuilder {
+public class EdgeStorageTest : BaseTestGraphBuilder {
   val nodeIdByIndex: (Int) -> Int = { it - 10 }
   val nodeIndexById: (Int) -> Int = { it + 10 }
 
-  fun create() = GraphAdditionalEdges.newInstance(nodeIndexById, nodeIdByIndex)
+  fun create() = EdgeStorage()
 
   fun Int.to(edge: SimpleEdge) = FullEdge(this, edge.toNode, edge.type)
   fun Int.to(node: Int) = to(node.u)
 
   class FullEdge(val mainId: Int, val additionId: Int?, val edgeType: GraphEdgeType)
 
-  fun GraphAdditionalEdges.plus(edge: FullEdge): GraphAdditionalEdges {
-    createEdge(edge.mainId, edge.additionId ?: GraphAdditionalEdges.NULL_ID, edge.edgeType)
+  fun EdgeStorage.plus(edge: FullEdge): EdgeStorage {
+    createEdge(edge.mainId, edge.additionId ?: EdgeStorage.NULL_ID, edge.edgeType)
     return this
   }
-  fun GraphAdditionalEdges.remove(edge: FullEdge): GraphAdditionalEdges {
-    removeEdge(edge.mainId, edge.additionId ?: GraphAdditionalEdges.NULL_ID, edge.edgeType)
+  fun EdgeStorage.remove(edge: FullEdge): EdgeStorage {
+    removeEdge(edge.mainId, edge.additionId ?: EdgeStorage.NULL_ID, edge.edgeType)
     return this
   }
 
-  fun GraphAdditionalEdges.assert(s: String) = assertEquals(s, asString())
+  fun EdgeStorage.assert(s: String) = assertEquals(s, asString())
 
-  fun GraphAdditionalEdges.asString(): String = getKnownIds().sortR().map {
+  fun EdgeStorage.asString(): String = getKnownIds().sortR().map {
       val edges = ArrayList<GraphEdge>()
-      appendAdditionalEdges(edges, nodeIndexById(it), EdgeFilter.ALL)
+      adapter.appendAdditionalEdges(edges, nodeIndexById(it), EdgeFilter.ALL)
       edges.map { it.asString() }.joinToString(",")
   }.joinToString("|-")
 
+  val EdgeStorage.adapter: EdgeStorageAdapter  get() = EdgeStorageAdapter(this, nodeIndexById, nodeIdByIndex)
 
   Test fun simple() = create() + (1 to 2) assert "11:12:n_U|-11:12:n_U"
   Test fun dotted() = create() + (1 to 3.dot) assert "11:13:n_D|-11:13:n_D"
