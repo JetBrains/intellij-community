@@ -243,12 +243,13 @@ public class PyBlock implements ASTBlock {
       }
     }
     //Align elements vertically if there is an argument in the first line of parenthesized expression
-    else if (((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION && myContext.getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION)
-              || (parentType == PyElementTypes.ARGUMENT_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS)
-              || (parentType == PyElementTypes.PARAMETER_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS)) &&
+    else if (!hasHangingIndent(_node.getPsi()) &&
+             ((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION && myContext.getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION) ||
+              (parentType == PyElementTypes.ARGUMENT_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS) ||
+              (parentType == PyElementTypes.PARAMETER_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS)) &&
              !isIndentNext(child) &&
-             !hasLineBreaksBefore(_node.getFirstChildNode(), 1)
-             && !ourListElementTypes.contains(childType)) {
+             !hasLineBreaksBefore(_node.getFirstChildNode(), 1) &&
+             !ourListElementTypes.contains(childType)) {
 
       if (!ourBrackets.contains(childType)) {
         childAlignment = getAlignmentForChildren();
@@ -323,6 +324,49 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  // Check https://www.python.org/dev/peps/pep-0008/#indentation
+  private boolean hasHangingIndent(@NotNull PsiElement elem) {
+    final PsiElement[] items;
+    if (elem instanceof PyCallExpression) {
+      final PyArgumentList argumentList = ((PyCallExpression)elem).getArgumentList();
+      return argumentList != null && hasHangingIndent(argumentList);
+    }
+    else if (elem instanceof PyFunction) {
+      return hasHangingIndent(((PyFunction)elem).getParameterList());
+    }
+
+    final PsiElement firstChild = elem.getFirstChild();
+    if (firstChild == null) {
+      return false;
+    }
+    if (PyTokenTypes.OPEN_BRACES.contains(firstChild.getNode().getElementType()) && hasLineBreaksAfter(firstChild.getNode(), 1)) {
+      return true;
+    }
+
+    if (elem instanceof PySequenceExpression) {
+      items = ((PySequenceExpression)elem).getElements();
+    }
+    else if (elem instanceof PyParameterList) {
+      items = ((PyParameterList)elem).getParameters();
+    }
+    else if (elem instanceof PyArgumentList) {
+      items = ((PyArgumentList)elem).getArguments();
+    }
+    else if (elem instanceof PyParenthesizedExpression) {
+      final PyParenthesizedExpression parenthesizedExpr = (PyParenthesizedExpression)elem;
+      if (parenthesizedExpr.getContainedExpression() instanceof PyTupleExpression) {
+        items = (((PyTupleExpression)parenthesizedExpr.getContainedExpression()).getElements());
+      }
+      else {
+        items = new PsiElement[]{parenthesizedExpr.getContainedExpression()};
+      }
+    }
+    else {
+      return false;
+    }
+    return items.length == 0 || hasHangingIndent(items[0]);
   }
 
   private static boolean breaksAlignment(IElementType type) {
@@ -409,10 +453,10 @@ public class PyBlock implements ASTBlock {
           myContext.getMode() == FormattingMode.ADJUST_INDENT) {
         return true;
       }
-      return false;
+      return !hasHangingIndent(_node.getPsi());
     }
     if (_node.getElementType() == PyElementTypes.ARGUMENT_LIST) {
-      if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
+      if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS || hasHangingIndent(_node.getPsi())) {
         return false;
       }
       if (child.getElementType() == PyTokenTypes.COMMA) {
@@ -427,7 +471,7 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     if (_node.getElementType() == PyElementTypes.PARAMETER_LIST) {
-      return myContext.getSettings().ALIGN_MULTILINE_PARAMETERS;
+      return !hasHangingIndent(_node.getPsi()) && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS;
     }
     if (_node.getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
       return false;
@@ -443,27 +487,43 @@ public class PyBlock implements ASTBlock {
     do {
       node = node.getTreePrev();
     }
-    while (node != null && (node.getElementType() == TokenType.WHITE_SPACE || PyTokenTypes.WHITESPACE.contains(node.getElementType())));
+    while (isWhitespace(node));
     return node;
   }
 
-  private static boolean hasLineBreaksBefore(ASTNode child, int minCount) {
+  private static boolean isWhitespace(@Nullable ASTNode node) {
+    return node != null && (node.getElementType() == TokenType.WHITE_SPACE || PyTokenTypes.WHITESPACE.contains(node.getElementType()));
+  }
+
+  private static boolean hasLineBreaksBefore(@NotNull ASTNode child, int minCount) {
     final ASTNode treePrev = child.getTreePrev();
     return (treePrev != null && isWhitespaceWithLineBreaks(TreeUtil.findLastLeaf(treePrev), minCount)) ||
            isWhitespaceWithLineBreaks(child.getFirstChildNode(), minCount);
   }
 
-  private static boolean isWhitespaceWithLineBreaks(ASTNode node, int minCount) {
-    if (node != null && node.getElementType() == TokenType.WHITE_SPACE) {
-      String prevNodeText = node.getText();
-      int count = 0;
-      for (int i = 0; i < prevNodeText.length(); i++) {
-        if (prevNodeText.charAt(i) == '\n') {
-          count++;
-          if (count == minCount) {
-            return true;
+  private static boolean hasLineBreaksAfter(@NotNull ASTNode child, int minCount) {
+    final ASTNode treeNext = child.getTreeNext();
+    return (treeNext != null && isWhitespaceWithLineBreaks(TreeUtil.findLastLeaf(treeNext), minCount)) ||
+           isWhitespaceWithLineBreaks(child.getLastChildNode(), minCount);
+  }
+
+  private static boolean isWhitespaceWithLineBreaks(@Nullable ASTNode node, int minCount) {
+    if (isWhitespace(node)) {
+      for (ASTNode prevNode = node.getTreePrev(); isWhitespace(prevNode); prevNode = prevNode.getTreePrev()) {
+        node = prevNode;
+      }
+      while (isWhitespace(node)) {
+        final String nodeText = node.getText();
+        int count = 0;
+        for (int i = 0; i < nodeText.length(); i++) {
+          if (nodeText.charAt(i) == '\n') {
+            count++;
+            if (count == minCount) {
+              return true;
+            }
           }
         }
+        node = node.getTreeNext();
       }
     }
     return false;

@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -479,6 +480,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
+    PsiCompiledElement originalCompiledElement = element.getUserData(ClsElementImpl.COMPILED_ELEMENT);
+    if (originalCompiledElement != null) {
+      // take compiled element instead decompiled one for finding proper documentation (IDEA-96013)
+      // it will not be needed iff TargetElementUtilBase stops preferring decompiled source
+      // via ((PsiCompiledFile) file).getDecompiledPsiFile()
+      element = originalCompiledElement;
+    }
     if (element instanceof PsiExpressionList) {
       element = element.getParent(); // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
       originalElement = null;

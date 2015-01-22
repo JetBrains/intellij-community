@@ -457,7 +457,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected void installPreviewPanel(final JPanel previewPanel) {
     previewPanel.setLayout(new BorderLayout());
-    previewPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+    previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
     previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
   }
 

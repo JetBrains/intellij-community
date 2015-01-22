@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,42 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a JavaDoc comment.
+ */
 public interface PsiDocComment extends PsiComment, PsiDocCommentBase {
+  /**
+   * Returns the class, method or field described by the comment.
+   */
   @Override
   @Nullable
   PsiDocCommentOwner getOwner();
 
+  /**
+   * Returns the PSI elements containing the description of the element being documented
+   * (all significant tokens up to the first doc comment tag).
+   */
   @NotNull
   PsiElement[] getDescriptionElements();
 
+  /**
+   * Returns the list of JavaDoc tags in the comment.
+   */
   @NotNull
   PsiDocTag[] getTags();
 
+  /**
+   * Finds the first JavaDoc tag with the specified name.
+   * @param name The name of the tags to find (not including the leading @ character).
+   * @return the tag with the specified name, or null if not found.
+   */
   @Nullable
   PsiDocTag findTagByName(@NonNls String name);
 
+  /**
+   * Finds all JavaDoc tags with the specified name.
+   * @param name The name of the tags to find (not including the leading @ character).
+   */
   @NotNull
   PsiDocTag[] findTagsByName(@NonNls String name);
 }

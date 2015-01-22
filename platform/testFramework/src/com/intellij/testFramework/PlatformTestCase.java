@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -707,8 +707,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  protected boolean isRunInEdt() {
+    return true;
+  }
+
   protected void runBareRunnable(Runnable runnable) throws Throwable {
-    SwingUtilities.invokeAndWait(runnable);
+    if (isRunInEdt()) {
+      SwingUtilities.invokeAndWait(runnable);
+    }
+    else {
+      runnable.run();
+    }
   }
 
   protected boolean isRunInWriteAction() {
@@ -918,6 +927,4 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException();
   }
-
-
 }

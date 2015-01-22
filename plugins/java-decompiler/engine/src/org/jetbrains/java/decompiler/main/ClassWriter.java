@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class ClassWriter {
     }
   }
 
-  public void classLambdaToJava(ClassNode node, TextBuffer buffer, Exprent method_object, int indent) {
+  public void classLambdaToJava(ClassNode node, TextBuffer buffer, Exprent method_object, int indent, BytecodeMappingTracer origTracer) {
     ClassWrapper wrapper = node.getWrapper();
     if (wrapper == null) {
       return;
@@ -85,7 +85,7 @@ public class ClassWriter {
     ClassNode outerNode = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
 
-    BytecodeMappingTracer tracer = new BytecodeMappingTracer();
+    BytecodeMappingTracer tracer = new BytecodeMappingTracer(origTracer.getCurrentSourceLine());
 
     try {
       StructClass cl = wrapper.getClassStruct();
@@ -138,10 +138,13 @@ public class ClassWriter {
         }
 
         buffer.append(" {").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
 
         methodLambdaToJava(node, wrapper, mt, buffer, indent + 1, !lambdaToAnonymous, tracer);
 
         buffer.appendIndent(indent).append("}");
+
+        addTracer(cl, mt, tracer);
       }
     }
     finally {
@@ -149,6 +152,15 @@ public class ClassWriter {
     }
 
     DecompilerContext.getLogger().endWriteClass();
+  }
+
+  private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
+    StructLineNumberTableAttribute lineNumberTable =
+      (StructLineNumberTableAttribute)method.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
+    tracer.setLineNumberTable(lineNumberTable);
+    DecompilerContext.getBytecodeSourceMapper().addTracer(cls.qualifiedName,
+                                                          InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor()),
+                                                          tracer);
   }
 
   public void classToJava(ClassNode node, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
@@ -232,8 +244,7 @@ public class ClassWriter {
         boolean methodSkipped = !methodToJava(node, mt, buffer, indent + 1, method_tracer);
         if (!methodSkipped) {
           hasContent = true;
-          DecompilerContext.getBytecodeSourceMapper().addTracer(cl.qualifiedName,
-                                  InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()), method_tracer);
+          addTracer(cl, mt, method_tracer);
           startLine = method_tracer.getCurrentSourceLine();
         }
         else {
@@ -573,10 +584,6 @@ public class ClassWriter {
       boolean isDeprecated = mt.getAttributes().containsKey("Deprecated");
       boolean clinit = false, init = false, dinit = false;
 
-      StructLineNumberTableAttribute lineNumberTable =
-        (StructLineNumberTableAttribute)mt.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
-      tracer.setLineNumberTable(lineNumberTable);
-
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
       int flags = mt.getAccessFlags();
@@ -639,7 +646,16 @@ public class ClassWriter {
           descriptor = GenericMain.parseMethodSignature(attr.getSignature());
           if (descriptor != null) {
             int actualParams = md.params.length;
-            if (isEnum && init) actualParams -= 2;
+            List<VarVersionPair> sigFields = methodWrapper.signatureFields;
+            if (sigFields != null) {
+               actualParams = 0;
+              for (VarVersionPair field : methodWrapper.signatureFields) {
+                if (field == null) {
+                  actualParams++;
+                }
+              }
+            }
+            else if (isEnum && init) actualParams -= 2;
             if (actualParams != descriptor.params.size()) {
               String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor();
               DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
@@ -685,10 +701,11 @@ public class ClassWriter {
 
         boolean firstParameter = true;
         int index = isEnum && init ? 3 : thisVar ? 1 : 0;
-        int start = isEnum && init && descriptor == null ? 2 : 0;
-        int params = descriptor == null ? md.params.length : descriptor.params.size();
+        boolean hasDescriptor = descriptor != null;
+        int start = isEnum && init && !hasDescriptor ? 2 : 0;
+        int params = hasDescriptor ? descriptor.params.size() : md.params.length;
         for (int i = start; i < params; i++) {
-          if (signFields == null || signFields.get(i) == null) {
+          if (hasDescriptor || (signFields == null || signFields.get(i) == null)) {
             if (!firstParameter) {
               buffer.append(", ");
             }
@@ -795,6 +812,8 @@ public class ClassWriter {
         }
 
         // We do not have line information for method start, lets have it here for now
+        StructLineNumberTableAttribute lineNumberTable =
+          (StructLineNumberTableAttribute)mt.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
         if (lineNumberTable != null && DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS)) {
           buffer.setCurrentLine(lineNumberTable.getFirstLine() - 1);
         }

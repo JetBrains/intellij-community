@@ -20,8 +20,6 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   private String category = null;
   private boolean predefined;
 
-  private static ConfigurationCreator configurationCreator;
-
   public String getName() {
     return name;
   }
@@ -71,16 +69,9 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     return name.equals(other.name);
   }
 
+  @Override
   public int hashCode() {
-    return getMatchOptions().hashCode();
-  }
-
-  public static void setActiveCreator(ConfigurationCreator creator) {
-    configurationCreator = creator;
-  }
-
-  public static ConfigurationCreator getConfigurationCreator() {
-    return configurationCreator;
+    return 31 * name.hashCode() + (category != null ? category.hashCode() : 0);
   }
 
   @NonNls public static final String CONTEXT_VAR_NAME = "__context__";

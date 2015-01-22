@@ -1,10 +1,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.openapi.actionSystem.AnAction;
 import org.jdom.Element;
-import org.jdom.Attribute;
-import org.jdom.DataConversionException;
 
 /**
  * Configuration of the search
@@ -36,4 +33,16 @@ public class SearchConfiguration extends Configuration {
     matchOptions.writeExternal(element);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof SearchConfiguration)) return false;
+    if (!super.equals(o)) return false;
+    return matchOptions.equals(((SearchConfiguration)o).matchOptions);
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * super.hashCode() + matchOptions.hashCode();
+  }
 }

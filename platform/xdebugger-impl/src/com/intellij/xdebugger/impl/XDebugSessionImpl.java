@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -564,7 +565,7 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public void updateExecutionPosition() {
     boolean isTopFrame = isTopFrameSelected();
-    myDebuggerManager.updateExecutionPoint(myCurrentStackFrame.getSourcePosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
+    myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
   }
 
   public boolean isTopFrameSelected() {
@@ -853,6 +854,9 @@ public class XDebugSessionImpl implements XDebugSession {
     if (mySessionTab != null) {
       ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
       mySessionTab.detachFromSession();
+    }
+    else if (myConsoleView != null) {
+      Disposer.dispose(myConsoleView);
     }
 
     myTopFramePosition = null;

@@ -67,9 +67,10 @@ public abstract class MappingList {
           }
         }
         else {
-          MappingEntry nextMapping = getNextOnTheSameLine(middle, false);
           // https://code.google.com/p/google-web-toolkit/issues/detail?id=9103
-          if (nextMapping == null || column > getColumn(nextMapping)) {
+          // We skipIfColumnEquals because GWT has two entries — source position equals, but generated no. We must use first entry (at least, in case of GWT it is correct)
+          MappingEntry nextMapping = getNextOnTheSameLine(middle);
+          if (nextMapping == null) {
             return middle;
           }
           else {

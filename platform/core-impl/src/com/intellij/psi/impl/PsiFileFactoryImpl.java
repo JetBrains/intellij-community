@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -61,18 +62,23 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   @Override
-  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text, boolean eventSystemEnabled, boolean markAsCopy) {
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
+                                    boolean eventSystemEnabled, boolean markAsCopy) {
     return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, false);
   }
 
   @Override
-  public PsiFile createFileFromText(@NotNull String name,
-                                    @NotNull Language language,
-                                    @NotNull CharSequence text,
-                                    boolean eventSystemEnabled,
-                                    boolean markAsCopy,
-                                    boolean noSizeLimit) {
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
+                                    boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit) {
+    return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, noSizeLimit, null);
+  }
+
+  @Override
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
+                                    boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit,
+                                    @Nullable VirtualFile original) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
+    if (original != null) virtualFile.setOriginalFile(original);
     if (noSizeLimit) {
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
     }

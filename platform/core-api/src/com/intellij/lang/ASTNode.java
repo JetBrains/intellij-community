@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the element type.
    */
+  @NotNull
   IElementType getElementType();
 
   /**
@@ -48,6 +49,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the node text.
    */
+  @NotNull
   String getText();
 
   /**
@@ -55,6 +57,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the node text.
    */
+  @NotNull
   CharSequence getChars();
 
   /**
@@ -129,6 +132,7 @@ public interface ASTNode extends UserDataHolder {
    *               all children should be returned.
    * @return the children array.
    */
+  @NotNull
   ASTNode[] getChildren(@Nullable TokenSet filter);
 
   /**
@@ -201,6 +205,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the top node of the copied tree (as an ASTNode object)
    */
+  @NotNull
   Object clone();
 
   /**
@@ -228,7 +233,7 @@ public interface ASTNode extends UserDataHolder {
    * @see #putCopyableUserData(com.intellij.openapi.util.Key, Object)
    */
   @Nullable
-    <T> T getCopyableUserData(Key<T> key);
+  <T> T getCopyableUserData(@NotNull Key<T> key);
 
   /**
    * Attaches a copyable user data object to this node. Copyable user data objects are copied
@@ -238,7 +243,7 @@ public interface ASTNode extends UserDataHolder {
    * @param value the user data object to attach.
    * @see #getCopyableUserData(com.intellij.openapi.util.Key)
    */
-  <T> void putCopyableUserData(Key<T> key, T value);
+  <T> void putCopyableUserData(@NotNull Key<T> key, T value);
 
   /**
    * Returns the first child of the specified node which has the specified type.

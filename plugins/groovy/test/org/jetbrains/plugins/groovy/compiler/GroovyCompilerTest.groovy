@@ -43,6 +43,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
@@ -856,6 +857,13 @@ class AppTest {
     process.waitFor();
 
     assertTrue(exceptionFound.get());
+  }
+
+  public void "test extend GroovyTestCase"() {
+    PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar");
+
+    myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
+    assertEmpty(make())
   }
 
   static class GroovycTest extends GroovyCompilerTest {

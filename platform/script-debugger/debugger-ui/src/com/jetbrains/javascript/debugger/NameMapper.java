@@ -13,7 +13,7 @@ import org.jetbrains.debugger.sourcemap.SourceMap;
 import java.util.Map;
 
 public final class NameMapper {
-  public static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(",()[]{}="));
+  private static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(",()[]{}="));
 
   private final Document document;
   private final Document generatedDocument;
@@ -41,7 +41,7 @@ public final class NameMapper {
     MappingEntry sourceEntry = sourceMappings.get(line, offset - document.getLineStartOffset(line));
     String sourceEntryName = sourceEntry == null ? null : sourceEntry.getName();
     if (sourceEntry != null) {
-      String generatedName = NAME_TRIMMER.trimFrom(getGeneratedName(generatedDocument, sourceMap, sourceEntry));
+      String generatedName = trimName(getGeneratedName(generatedDocument, sourceMap, sourceEntry));
       if (!generatedName.isEmpty()) {
         String sourceName = sourceEntryName;
         if (sourceName == null) {
@@ -51,19 +51,21 @@ public final class NameMapper {
           }
         }
 
-        // GWT - button_0_g$ = new Button_5_g$('Click me');
-        // so, we should remove all after "="
-        int i = generatedName.indexOf('=');
-        if (i > 0) {
-          generatedName = NAME_TRIMMER.trimFrom(generatedName.substring(0, i));
-        }
-
         if (nameMappings == null) {
           nameMappings = new THashMap<String, String>();
         }
         nameMappings.put(generatedName, sourceName);
       }
     }
+  }
+
+  @NotNull
+  public static String trimName(@NotNull CharSequence rawGeneratedName) {
+    String generatedName = NAME_TRIMMER.trimFrom(rawGeneratedName);
+    // GWT - button_0_g$ = new Button_5_g$('Click me');
+    // so, we should remove all after "="
+    int i = generatedName.indexOf('=');
+    return i > 0 ? NAME_TRIMMER.trimFrom(generatedName.substring(0, i)) : generatedName;
   }
 
   @NotNull

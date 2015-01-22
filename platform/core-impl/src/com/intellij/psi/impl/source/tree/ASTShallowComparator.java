@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,9 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     myIndicator = indicator;
   }
 
+  @NotNull
   @Override
-  public ThreeState deepEqual(final ASTNode oldNode, final ASTNode newNode) {
+  public ThreeState deepEqual(@NotNull final ASTNode oldNode, @NotNull final ASTNode newNode) {
     return textMatches(oldNode, newNode);
   }
 
@@ -105,12 +106,12 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   }
 
   @Override
-  public boolean typesEqual(final ASTNode n1, final ASTNode n2) {
+  public boolean typesEqual(@NotNull final ASTNode n1, @NotNull final ASTNode n2) {
     return n1.getElementType() == n2.getElementType();
   }
 
   @Override
-  public boolean hashCodesEqual(final ASTNode n1, final ASTNode n2) {
+  public boolean hashCodesEqual(@NotNull final ASTNode n1, @NotNull final ASTNode n2) {
     if (n1 instanceof LeafElement && n2 instanceof LeafElement) {
       return textMatches(n1, n2) == ThreeState.YES;
     }

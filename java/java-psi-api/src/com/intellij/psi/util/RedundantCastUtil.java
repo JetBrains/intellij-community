@@ -204,7 +204,14 @@ public class RedundantCastUtil {
       if (rExpr instanceof PsiTypeCastExpression) {
         PsiExpression castOperand = ((PsiTypeCastExpression)rExpr).getOperand();
         if (castOperand != null) {
-          PsiType operandType = castOperand.getType();
+          PsiType operandType;
+          if (castOperand instanceof PsiTypeCastExpression) {
+            final PsiExpression nestedCastOperand = ((PsiTypeCastExpression)castOperand).getOperand();
+            operandType = nestedCastOperand != null ? nestedCastOperand.getType() : null;
+          }
+          else {
+            operandType = castOperand.getType();
+          }
           if (operandType != null) {
             if (lType != null && TypeConversionUtil.isAssignable(lType, operandType, false)) {
               addToResults((PsiTypeCastExpression)rExpr);

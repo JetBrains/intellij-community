@@ -25,7 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.*;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +34,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -125,10 +126,27 @@ class InProcessGroovyc {
       return pair.second;
     }
 
-    ClassLoader result =
+    UrlClassLoader groovyAllLoader = 
       UrlClassLoader.build().urls(toUrls(Arrays.asList(GroovyBuilder.getGroovyRtRoot().getPath(), groovyAll))).useCache().get();
-    ourParentLoaderCache = new SoftReference<Pair<String, ClassLoader>>(Pair.create(groovyAll, result));
-    return result;
+    ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
+      @Override
+      protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        try {
+          return super.loadClass(name, resolve);
+        }
+        catch (NoClassDefFoundError e) {
+          // We might attempt to load some class in groovy-all.jar that depends on a class from another library
+          // (e.g. GroovyTestCase extends TestCase).
+          // We don't want groovyc's resolve to stop at this point.
+          // Let's try in the child class loader which contains full compilation class with all libraries, including groovy-all.
+          // For this to happen we should throw ClassNotFoundException
+          throw new ClassNotFoundException(name, e);
+        }
+      }
+    };
+      ;
+    ourParentLoaderCache = new SoftReference<Pair<String, ClassLoader>>(Pair.create(groovyAll, wrapper));
+    return wrapper;
   }
 
   @NotNull

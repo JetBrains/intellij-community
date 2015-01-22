@@ -106,7 +106,7 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     VirtualFile file = getSelectedFile();
     if (file == null) return;
     ScratchFileService fileService = ScratchFileService.getInstance();
-    if (fileService.isFileInRoot(file, ScratchFileService.SCRATCHES)) {
+    if (fileService.getRootType(file) instanceof ScratchRootType) {
       Language lang = fileService.getScratchesMapping().getMapping(file);
       if (lang == null) {
         lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
