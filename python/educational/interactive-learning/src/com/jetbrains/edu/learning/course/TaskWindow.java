@@ -34,17 +34,17 @@ import java.io.IOException;
 public class TaskWindow implements Comparable, Stateful {
   private static final String WINDOW_POSTFIX = "_window.py";
   private static final Logger LOG = Logger.getInstance(TaskWindow.class);
-  public int line = 0;
-  public int start = 0;
-  public String hint = "";
-  public String possibleAnswer = "";
-  public int length = 0;
+  private int line = 0;
+  private int start = 0;
+  private String hint = "";
+  private String possibleAnswer = "";
+  private int length = 0;
   private TaskFile myTaskFile;
-  public int myIndex = -1;
-  public int myInitialLine = -1;
-  public int myInitialStart = -1;
-  public int myInitialLength = -1;
-  public StudyStatus myStatus = StudyStatus.Unchecked;
+  private int myIndex = -1;
+  private int myInitialLine = -1;
+  private int myInitialStart = -1;
+  private int myInitialLength = -1;
+  private StudyStatus myStatus = StudyStatus.Unchecked;
 
   public StudyStatus getStatus() {
     return myStatus;
@@ -177,6 +177,10 @@ public class TaskWindow implements Comparable, Stateful {
 
   public String getHint() {
     return hint;
+  }
+
+  public void setHint(@NotNull final String hint) {
+    this.hint = hint;
   }
 
   public String getPossibleAnswer() {

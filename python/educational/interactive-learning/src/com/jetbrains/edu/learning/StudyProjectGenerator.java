@@ -146,7 +146,7 @@ public class StudyProjectGenerator {
         final File testsFile = new File(taskDirectory, "tests.py");
         FileUtil.createIfDoesntExist(testsFile);
         try {
-          FileUtil.writeToFile(testsFile, task.testsText);
+          FileUtil.writeToFile(testsFile, task.getTestsText());
         }
         catch (IOException e) {
           LOG.error("ERROR copying tests file");
@@ -154,7 +154,7 @@ public class StudyProjectGenerator {
         final File taskText = new File(taskDirectory, "task.html");
         FileUtil.createIfDoesntExist(taskText);
         try {
-          FileUtil.writeToFile(taskText, task.text);
+          FileUtil.writeToFile(taskText, task.getText());
         }
         catch (IOException e) {
           LOG.error("ERROR copying tests file");

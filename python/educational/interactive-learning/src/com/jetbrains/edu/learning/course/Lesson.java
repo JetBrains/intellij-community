@@ -21,7 +21,7 @@ public class Lesson implements Stateful {
   @Transient
   Boolean is_public;
   @SerializedName("title")
-  public String name;
+  private String name;
 
   public List<Task> taskList = new ArrayList<Task>();
   private Course myCourse = null;

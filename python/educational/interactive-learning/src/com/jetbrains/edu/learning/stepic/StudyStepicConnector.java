@@ -103,9 +103,9 @@ public class StudyStepicConnector {
       for (Integer s : lesson.steps) {
         final Step step = getStep(s);
         final Task task = new Task();
-        task.name = step.name;
-        task.text = step.text;
-        task.testsText = step.options.test;
+        task.setName(step.name);
+        task.setText(step.text);
+        task.setTestsText(step.options.test);
 
         task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
         if (step.options.files != null) {

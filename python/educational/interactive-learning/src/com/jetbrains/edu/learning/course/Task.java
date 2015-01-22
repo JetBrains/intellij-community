@@ -21,9 +21,9 @@ import java.util.Map;
 public class Task implements Stateful {
   public static final String TASK_DIR = "task";
   private static final String ourTestFile = "tests.py";
-  public String name;
-  public String text;
-  public String testsText;
+  private String name;
+  private String text;
+  private String testsText;
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
   private Lesson myLesson;
   public int myIndex;
@@ -170,6 +170,17 @@ public class Task implements Stateful {
     return myLesson;
   }
 
+  public String getTestsText() {
+    return testsText;
+  }
+
+  public void setTestsText(@NotNull final String testsText) {
+    this.testsText = testsText;
+  }
+
+  public void setText(@NotNull final String text) {
+    this.text = text;
+  }
 
   @Nullable
   public VirtualFile getTaskDir(Project project) {
