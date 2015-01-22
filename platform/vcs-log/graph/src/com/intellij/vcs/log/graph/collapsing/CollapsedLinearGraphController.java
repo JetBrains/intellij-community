@@ -30,27 +30,11 @@ import java.util.Set;
 public class CollapsedLinearGraphController extends CascadeLinearGraphController {
   @NotNull
   private CollapsedGraph myCollapsedGraph;
-  @NotNull
-  private LinearFragmentGenerator myLinearFragmentGenerator;
-  @NotNull
-  private FragmentGenerator myFragmentGenerator;
 
   public CollapsedLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
                                            @NotNull final PermanentGraphInfo<?> permanentGraphInfo) {
     super(delegateLinearGraphController, permanentGraphInfo);
     myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), null);
-
-    Set<Integer> branchNodeIndexes =
-      LinearGraphUtils.convertIdsToNodeIndexes(myCollapsedGraph.getCompiledGraph(), permanentGraphInfo.getBranchNodeIds());
-    myLinearFragmentGenerator =
-      new LinearFragmentGenerator(LinearGraphUtils.asLiteLinearGraph(myCollapsedGraph.getCompiledGraph()), branchNodeIndexes);
-    myFragmentGenerator =
-      new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(myCollapsedGraph.getCompiledGraph()), new Condition<Integer>() {
-        @Override
-        public boolean value(Integer integer) {
-          return false;
-        }
-      });
   }
 
   @NotNull
@@ -85,13 +69,4 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
     return myCollapsedGraph;
   }
 
-  @NotNull
-  protected LinearFragmentGenerator getLinearFragmentGenerator() {
-    return myLinearFragmentGenerator;
-  }
-
-  @NotNull
-  public FragmentGenerator getFragmentGenerator() {
-    return myFragmentGenerator;
-  }
 }

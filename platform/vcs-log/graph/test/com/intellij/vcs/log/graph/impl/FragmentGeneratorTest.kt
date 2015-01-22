@@ -26,7 +26,7 @@ import com.intellij.vcs.log.graph.api.LiteLinearGraph
 
 private val LinearGraph.lite: LiteLinearGraph get() = LinearGraphUtils.asLiteLinearGraph(this)
 
-private fun LinearGraph.getMiddleNodes(upNode: Int, downNode: Int) = FragmentGenerator(lite) {false}.getMiddleNodes(upNode, downNode)
+private fun LinearGraph.getMiddleNodes(upNode: Int, downNode: Int) = FragmentGenerator(lite) {false}.getMiddleNodes(upNode, downNode, false)
 
 private fun Collection<Int>.assert(s: String) = assertEquals(s, sort().joinToString(","))
 private fun Int?.assert(i: Int?) = assertEquals(i, this)

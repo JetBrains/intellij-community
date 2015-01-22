@@ -144,6 +144,11 @@ public class CollapsedGraph {
     return myGraphAdditionalEdges;
   }
 
+  public int convertToDelegateNodeIndex(int compiledNodeIndex) {
+    assertNotUnderModification();
+    return myNodesMap.getLongIndex(compiledNodeIndex);
+  }
+
   // all nodeIndexes means node indexes in delegated graph
   public class Modification {
     private boolean done = false;

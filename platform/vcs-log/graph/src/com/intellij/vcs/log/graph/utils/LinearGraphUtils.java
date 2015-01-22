@@ -174,14 +174,13 @@ public class LinearGraphUtils {
 
   @NotNull
   public static Set<Integer> convertIdsToNodeIndexes(@NotNull final LinearGraph graph, @NotNull Collection<Integer> ids) {
-    return ContainerUtil.map2Set(ids, new Function<Integer, Integer>() {
+    List<Integer> result = ContainerUtil.mapNotNull(ids, new Function<Integer, Integer>() {
       @Override
       public Integer fun(Integer id) {
-        Integer nodeIndex = graph.getNodeIndex(id);
-        assert nodeIndex != null;
-        return nodeIndex;
+        return graph.getNodeIndex(id);
       }
     });
+    return ContainerUtil.newHashSet(result);
   }
 
 }

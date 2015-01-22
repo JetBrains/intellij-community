@@ -63,7 +63,7 @@ public class FragmentGenerator {
   }
 
   @NotNull
-  public Set<Integer> getMiddleNodes(final int upNode, final int downNode) {
+  public Set<Integer> getMiddleNodes(final int upNode, final int downNode, boolean strict) {
     Set<Integer> downWalk = getWalkNodes(upNode, false, new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
@@ -78,6 +78,10 @@ public class FragmentGenerator {
     });
 
     downWalk.retainAll(upWalk);
+    if (strict) {
+      downWalk.remove(upNode);
+      downWalk.remove(downNode);
+    }
     return downWalk;
   }
 
@@ -107,11 +111,11 @@ public class FragmentGenerator {
     Integer downRedNode = getNearRedNode(startNode, maxWalkSize, false);
 
     Set<Integer> upPart = upRedNode != null ?
-                          getMiddleNodes(upRedNode, startNode) :
+                          getMiddleNodes(upRedNode, startNode, false) :
                           getWalkNodes(startNode, true, createStopFunction(maxWalkSize));
 
     Set<Integer> downPart = downRedNode != null ?
-                            getMiddleNodes(startNode, downRedNode) :
+                            getMiddleNodes(startNode, downRedNode, false) :
                             getWalkNodes(startNode, false, createStopFunction(maxWalkSize));
 
     Set<Integer> middleNodes = ContainerUtil.union(upPart, downPart);

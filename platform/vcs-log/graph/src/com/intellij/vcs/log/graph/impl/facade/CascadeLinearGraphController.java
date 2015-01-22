@@ -52,6 +52,11 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   }
 
   @NotNull
+  public PermanentGraphInfo getPermanentGraphInfo() {
+    return myPermanentGraphInfo;
+  }
+
+  @NotNull
   protected abstract LinearGraphAnswer performDelegateUpdate(@NotNull LinearGraphAnswer delegateAnswer);
 
   // null mean that this action must be performed by delegateGraphController
