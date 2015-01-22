@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -48,6 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
@@ -59,12 +61,15 @@ public class StartupManagerImpl extends StartupManagerEx {
   private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
   private boolean myPostStartupActivitiesPassed = false; // guarded by this
 
-  private final List<CacheUpdater> myCacheUpdaters = new LinkedList<CacheUpdater>();
+  @SuppressWarnings("deprecation") private final List<CacheUpdater> myCacheUpdaters = ContainerUtil.newLinkedList();
+
   private volatile boolean myPreStartupActivitiesPassed = false;
   private volatile boolean myStartupActivitiesRunning = false;
   private volatile boolean myStartupActivitiesPassed = false;
 
   private final Project myProject;
+
+  private final AtomicBoolean myInitialRefreshStarted = new AtomicBoolean(false);
 
   public StartupManagerImpl(Project project) {
     myProject = project;
@@ -88,6 +93,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     (DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities).add(runnable);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void registerCacheUpdater(@NotNull CacheUpdater updater) {
     LOG.assertTrue(!myStartupActivitiesPassed, CacheUpdater.class.getSimpleName() + " must be registered before startup activity finished");
@@ -121,7 +127,6 @@ public class StartupManagerImpl extends StartupManagerEx {
           // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
           synchronized (StartupManagerImpl.this) {
             myPreStartupActivitiesPassed = true;
-
             myStartupActivitiesRunning = true;
           }
 
@@ -129,7 +134,6 @@ public class StartupManagerImpl extends StartupManagerEx {
 
           synchronized (StartupManagerImpl.this) {
             myStartupActivitiesRunning = false;
-
             myStartupActivitiesPassed = true;
           }
         }
@@ -205,6 +209,10 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void scheduleInitialVfsRefresh() {
+    if (myInitialRefreshStarted.getAndSet(true)) {
+      return;
+    }
+
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -268,15 +276,8 @@ public class StartupManagerImpl extends StartupManagerEx {
         // only after these tasks pass does VFS refresh make sense
         dumbService.queueTask(new DumbModeTask() {
           @Override
-          public void performInDumbMode(@NotNull final ProgressIndicator indicator) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                if (!myProject.isDisposed()) {
-                  scheduleInitialVfsRefresh();
-                }
-              }
-            });
+          public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+            scheduleInitialVfsRefresh();
           }
 
           @Override
