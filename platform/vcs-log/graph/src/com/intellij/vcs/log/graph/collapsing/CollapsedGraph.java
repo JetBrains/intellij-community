@@ -168,6 +168,12 @@ public class CollapsedGraph {
 
       myNodesMap.update(minAffectedNodeIndex, maxAffectedNodeIndex);
     }
+
+    public void removeAdditionalEdges() {
+      minAffectedNodeIndex = 0;
+      maxAffectedNodeIndex = getDelegatedGraph().nodesCount() - 1;
+      myEdgeStorage.removeAll();
+    }
   }
 
   private void assertNotUnderModification() {
