@@ -50,8 +50,8 @@ public class LinearBekGraph implements LinearGraph {
   public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
     List<GraphEdge> result = new ArrayList<GraphEdge>();
     result.addAll(myGraph.getAdjacentEdges(nodeIndex, filter));
-    myHiddenEdges.removeAdditionalEdges(result, nodeIndex, filter);
-    myDottedEdges.appendAdditionalEdges(result, nodeIndex, filter);
+    result.removeAll(myHiddenEdges.getAdditionalEdges(nodeIndex, filter));
+    result.addAll(myDottedEdges.getAdditionalEdges(nodeIndex, filter));
 
     Collections.sort(result, new Comparator<GraphEdge>() {
       @Override
@@ -98,8 +98,7 @@ public class LinearBekGraph implements LinearGraph {
       myHiddenEdges.removeEdge(edge);
     }
 
-    ArrayList<GraphEdge> hiddenDotted = ContainerUtil.newArrayList();
-    myHiddenEdges.appendAdditionalEdges(hiddenDotted, tail, EdgeFilter.ALL);
+    List<GraphEdge> hiddenDotted = myHiddenEdges.getAdditionalEdges(tail, EdgeFilter.ALL);
 
     List<GraphEdge> downDottedEdges = ContainerUtil.filter(hiddenDotted, new Condition<GraphEdge>() {
       @Override
