@@ -163,7 +163,7 @@ class CollapsedActionManager {
     }
   };
 
-  private final static GraphChanges<Integer> SOME_CHANGES = new GraphChanges<Integer>() {
+  private final static GraphChanges<Integer> SOME_CHANGES = new GraphChanges<Integer>() { //todo drop this
     @NotNull
     @Override
     public Collection<Node<Integer>> getChangedNodes() {
@@ -223,7 +223,7 @@ class CollapsedActionManager {
       modification.createEdge(new GraphEdge(upNodeIndex, downNodeIndex, null, GraphEdgeType.DOTTED));
 
       modification.apply();
-      return new LinearGraphAnswer(SOME_CHANGES, null, null, null); // todo fix
+      return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
     }
 
     @NotNull
@@ -237,17 +237,14 @@ class CollapsedActionManager {
     @Nullable
     @Override
     public LinearGraphAnswer performAction(@NotNull ActionContext context) {
-      CollapsedGraph collapsedGraph = context.myCollapsedGraph;
-      LinearGraph delegateGraph = collapsedGraph.getDelegatedGraph();
+      CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
+      LinearGraph delegateGraph = context.getDelegatedGraph();
 
-      for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
-        int nodeId = delegateGraph.getNodeId(nodeIndex);
-        collapsedGraph.setNodeVisibility(nodeId, true);
-      }
-      collapsedGraph.getEdgeStorage().removeAll();
-      collapsedGraph.updateNodeMapping(0, delegateGraph.nodesCount() - 1);
+      for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) modification.showNode(nodeIndex);
 
-      return new LinearGraphAnswer(SOME_CHANGES, null, null, null); // todo fix
+      modification.removeAdditionalEdges();
+      modification.apply();
+      return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
     }
 
     @NotNull
@@ -257,32 +254,30 @@ class CollapsedActionManager {
     }
   };
 
-  private final static ActionCase COLLAPSE_ALL = new ActionCase() { // todo
+  private final static ActionCase COLLAPSE_ALL = new ActionCase() {
     @Nullable
     @Override
     public LinearGraphAnswer performAction(@NotNull ActionContext context) {
-      CollapsedGraph collapsedGraph = context.myCollapsedGraph;
-      LinearGraph delegateGraph = collapsedGraph.getDelegatedGraph();
-      LinearFragmentGenerator generator = new LinearFragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph), Collections.<Integer>emptySet());
-      FragmentGenerator fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(delegateGraph), Condition.FALSE);
+      EXPAND_ALL.performAction(context);
+      CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
+
+      LinearGraph delegateGraph = context.getDelegatedGraph();
+
+
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
-        if (!collapsedGraph.isNodeVisible(nodeIndex)) continue;
+        if (!context.myCollapsedGraph.isNodeVisible(nodeIndex)) continue;
 
-        GraphFragment fragment = generator.getLongDownFragment(nodeIndex);
+        GraphFragment fragment = context.myDelegatedFragmentGenerators.linearFragmentGenerator.getLongDownFragment(nodeIndex);
         if (fragment != null) {
-          Set<Integer> middleNodes = fragmentGenerator.getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex, true);
-          int upNodeId = delegateGraph.getNodeId(fragment.upNodeIndex);
-          int downNodeId = delegateGraph.getNodeId(fragment.downNodeIndex);
-          collapsedGraph.getEdgeStorage().createEdge(upNodeId, downNodeId, GraphEdgeType.DOTTED);
+          Set<Integer> middleNodes = context.myDelegatedFragmentGenerators.fragmentGenerator
+            .getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex, true);
 
-          for (Integer nodeIndexForHide : middleNodes) {
-            int nodeId = delegateGraph.getNodeId(nodeIndexForHide);
-            collapsedGraph.setNodeVisibility(nodeId, false);
-          }
+          for (Integer nodeIndexForHide : middleNodes) modification.hideNode(nodeIndexForHide);
+          modification.createEdge(new GraphEdge(fragment.upNodeIndex, fragment.downNodeIndex, null, GraphEdgeType.DOTTED));
         }
       }
-      collapsedGraph.updateNodeMapping(0, delegateGraph.nodesCount() - 1);
 
+      modification.apply();
       return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
     }
 
@@ -316,7 +311,7 @@ class CollapsedActionManager {
         modification.removeEdge(new GraphEdge(upNodeIndex, downNodeIndex, null, GraphEdgeType.DOTTED));
 
         modification.apply();
-        return new LinearGraphAnswer(SOME_CHANGES, null, null, null); // todo
+        return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
       }
 
       return null;
