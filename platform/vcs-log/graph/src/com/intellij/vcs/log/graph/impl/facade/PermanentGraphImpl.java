@@ -17,7 +17,6 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
@@ -106,7 +105,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @Override
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                                    @Nullable Set<CommitId> headsOfVisibleBranches,
-                                                   @Nullable Condition<CommitId> filter) {
+                                                   @Nullable Set<CommitId> filter) {
     CascadeLinearGraphController controller;
     if (sortType == SortType.Bek) {
       controller = new CollapsedLinearGraphController(new BekBaseLinearGraphController(this, myBekIntMap), this);
