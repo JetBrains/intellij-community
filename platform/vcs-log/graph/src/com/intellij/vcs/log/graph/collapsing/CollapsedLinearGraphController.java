@@ -18,17 +18,22 @@ package com.intellij.vcs.log.graph.collapsing;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
+import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class CollapsedLinearGraphController extends CascadeLinearGraphController {
   @NotNull
   private CollapsedGraph myCollapsedGraph;
 
   public CollapsedLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
-                                           @NotNull final PermanentGraphInfo<?> permanentGraphInfo) {
+                                        @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
+                                        @Nullable Set<Integer> IdsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
-    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), null);
+    UnsignedBitSet initVisibility = BranchMatchedNodesGenerator.generateVisibleNodes(permanentGraphInfo.getPermanentLinearGraph(), IdsOfVisibleBranches);
+    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), initVisibility);
   }
 
   @NotNull

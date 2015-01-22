@@ -124,7 +124,11 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     if (matchedCommits != null) {
       controller = new FilterLinearGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchedCommits));
     } else {
-      controller = new CollapsedLinearGraphController(baseController, this);
+      Set<Integer> idOfVisibleBranches = null;
+      if (headsOfVisibleBranches != null) {
+        idOfVisibleBranches = myPermanentCommitsInfo.convertToNodeIds(headsOfVisibleBranches);
+      }
+      controller = new CollapsedLinearGraphController(baseController, this, idOfVisibleBranches);
     }
 
     return new VisibleGraphImpl<CommitId>(controller, this);
@@ -165,7 +169,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  public LinearGraph getPermanentLinearGraph() {
+  public PermanentLinearGraphImpl getPermanentLinearGraph() {
     return myPermanentLinearGraph;
   }
 

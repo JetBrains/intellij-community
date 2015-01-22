@@ -36,6 +36,9 @@ import kotlin.test.assertTrue
 import kotlin.test.assertNull
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.api.EdgeFilter
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.graph.utils.impl.FullIntList
 
 trait BaseTestGraphBuilder {
   val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
@@ -267,7 +270,7 @@ class TestPermanentGraphInfo(
   }
 
   override fun getPermanentCommitsInfo() = commitInfo
-  override fun getPermanentLinearGraph() = graph
+  override fun getPermanentLinearGraph() = object : PermanentLinearGraphImpl(), LinearGraph by graph {}
   override fun getPermanentGraphLayout() = graphLayout
   override fun getBranchNodeIds() = branchNodes
 
