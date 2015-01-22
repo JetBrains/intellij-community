@@ -93,22 +93,6 @@ public class CollapsedGraph {
     return myCompiledGraph;
   }
 
-  @Deprecated
-  public void setNodeVisibility(int nodeId, boolean visible) {
-    myDelegateNodesVisibility.getNodeVisibilityById().set(nodeId, visible);
-  }
-
-  @Deprecated
-  public void updateNodeMapping(int fromDelegateNodeIndex, int toDelegateNodeIndex) {
-    myNodesMap.update(fromDelegateNodeIndex, toDelegateNodeIndex);
-  }
-
-  @Deprecated
-  @NotNull
-  public EdgeStorage getEdgeStorage() {
-    return myEdgeStorage;
-  }
-
   public int convertToDelegateNodeIndex(int compiledNodeIndex) {
     assertNotUnderModification();
     return myNodesMap.getLongIndex(compiledNodeIndex);
@@ -125,6 +109,11 @@ public class CollapsedGraph {
 
     public Modification() {
       myEdgeStorageAdapter = new EdgeStorageAdapter(myEdgeStorage, getDelegatedGraph());
+    }
+
+    @NotNull
+    public EdgeStorageAdapter getEdgeStorageAdapter() {
+      return myEdgeStorageAdapter;
     }
 
     private void touchIndex(int nodeIndex) {

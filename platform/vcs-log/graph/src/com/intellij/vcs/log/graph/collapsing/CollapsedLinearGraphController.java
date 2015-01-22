@@ -15,17 +15,11 @@
  */
 package com.intellij.vcs.log.graph.collapsing;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
-import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
-import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
 
 public class CollapsedLinearGraphController extends CascadeLinearGraphController {
   @NotNull
@@ -42,12 +36,7 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
   protected LinearGraphAnswer performDelegateUpdate(@NotNull LinearGraphAnswer delegateAnswer) {
     if (delegateAnswer.getGraphChanges() != null) {
       myCollapsedGraph = CollapsedGraph.updateInstance(myCollapsedGraph, getDelegateLinearGraphController().getCompiledGraph());
-      for (GraphChanges.Node<Integer> changedNode : delegateAnswer.getGraphChanges().getChangedNodes()) {
-        if (!changedNode.removed()) {
-          int nodeId = changedNode.getNodeId();
-          myCollapsedGraph.setNodeVisibility(nodeId, true);
-        }
-      }
+      // todo make some addition actions
     }
     return delegateAnswer;
   }
