@@ -15,13 +15,11 @@
  */
 package com.intellij.vcs.log.graph.collapsing;
 
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.utils.IntToIntMap;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
@@ -33,14 +31,7 @@ import java.util.List;
 public class CollapsedGraph {
 
   // initVisibility == null means, what all nodes is Visible
-  public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph, @Nullable UnsignedBitSet initVisibility) {
-    if (initVisibility == null) { // todo fix performance
-      initVisibility = new UnsignedBitSet();
-      for (int i = 0; i < delegateGraph.nodesCount(); i++) {
-        initVisibility.set(delegateGraph.getNodeId(i), true);
-      }
-    }
-
+  public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph, @NotNull UnsignedBitSet initVisibility) {
     UnsignedBitSet visibleNodesId = initVisibility.clone(); // todo mm?
     return new CollapsedGraph(delegateGraph, visibleNodesId, new EdgeStorage());
   }
