@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.info.Info;
@@ -161,15 +162,28 @@ public class BranchInfo {
         String relativeToTrunkPath = absoluteInTrunkPath.substring(myTrunkPathCorrespondingToLocalBranchPath.length());
         String localPathInBranch = new File(branchPath, relativeToTrunkPath).getAbsolutePath();
 
-        mergeCheckResult = checkPathGoingUp(number, -1, branchPath, localPathInBranch, path, true);
+        try {
+          mergeCheckResult = checkPathGoingUp(number, -1, branchPath, localPathInBranch, path, true);
+        }
+        catch (VcsException e) {
+          LOG.info(e);
+          mergeCheckResult = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
+        }
+        catch (SVNException e) {
+          LOG.info(e);
+          mergeCheckResult = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
+        }
       }
 
       result.putValue(mergeCheckResult, path);
     }
   }
 
-  private SvnMergeInfoCache.MergeCheckResult goUp(final long revisionAsked, final long targetRevision, final String branchRootPath,
-                                                  final String path, @NotNull String trunkUrl) {
+  private SvnMergeInfoCache.MergeCheckResult goUp(final long revisionAsked,
+                                                  final long targetRevision,
+                                                  final String branchRootPath,
+                                                  final String path,
+                                                  @NotNull String trunkUrl) throws SVNException, VcsException {
     final String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
     if (newTrunkUrl.length() == 0 || "/".equals(newTrunkUrl)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
@@ -185,20 +199,17 @@ public class BranchInfo {
       if (svnInfo == null || svnInfo.getURL() == null) {
         return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
       }
-      try {
-        return goUpInRepo(revisionAsked, targetRevision, svnInfo.getURL().removePathTail(), newTrunkUrl);
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-        return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-      }
+
+      return goUpInRepo(revisionAsked, targetRevision, svnInfo.getURL().removePathTail(), newTrunkUrl);
     }
     
     return checkPathGoingUp(revisionAsked, targetRevision, branchRootPath, newPath, newTrunkUrl, false);
   }
 
-  private SvnMergeInfoCache.MergeCheckResult goUpInRepo(final long revisionAsked, final long targetRevision, final SVNURL branchUrl,
-                                                        final String trunkUrl) {
+  private SvnMergeInfoCache.MergeCheckResult goUpInRepo(final long revisionAsked,
+                                                        final long targetRevision,
+                                                        final SVNURL branchUrl,
+                                                        final String trunkUrl) throws VcsException, SVNException {
     final String branchAsString = branchUrl.toString();
     final String keyString = branchAsString + "@" + targetRevision;
     final Set<Long> mergeInfo = myPathMergedMap.get(keyString);
@@ -207,28 +218,13 @@ public class BranchInfo {
       return SvnMergeInfoCache.MergeCheckResult.getInstance(mergeInfo.contains(revisionAsked));
     }
 
-    final PropertyValue mergeinfoProperty;
     SvnTarget target = SvnTarget.fromURL(branchUrl);
-
-    try {
-      mergeinfoProperty = myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false,
-                                                                                      SVNRevision.create(targetRevision));
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-    }
+    PropertyValue mergeinfoProperty = myVcs.getFactory(target).createPropertyClient()
+      .getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.create(targetRevision));
 
     if (mergeinfoProperty == null) {
       final String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
-      final SVNURL newBranchUrl;
-      try {
-        newBranchUrl = branchUrl.removePathTail();
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-        return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-      }
+      final SVNURL newBranchUrl = branchUrl.removePathTail();
       final String absoluteTrunk = SVNPathUtil.append(myInfo.getRepoUrl(), newTrunkUrl);
       if ((1 >= newTrunkUrl.length()) || (myInfo.getRepoUrl().length() >= newBranchUrl.toString().length()) ||
         (newBranchUrl.toString().equals(absoluteTrunk))) {
@@ -246,7 +242,7 @@ public class BranchInfo {
                                                               @NotNull String branchRootPath,
                                                               @NotNull String path,
                                                               final String trunkUrl,
-                                                              final boolean self) {
+                                                              final boolean self) throws VcsException, SVNException {
     final File pathFile = new File(path);
 
     // we didn't find existing item on the path jet
@@ -294,36 +290,25 @@ public class BranchInfo {
       revision = SVNRevision.create(targetRevisionCorrected);
     }
 
-    PropertyValue mergeinfoProperty;
-    try {
-      mergeinfoProperty = myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, revision);
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-    }
+    PropertyValue mergeinfoProperty =
+      myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, revision);
 
     return mergeinfoProperty == null
            ? goUp(revisionAsked, targetRevisionCorrected, branchRootPath, path, trunkUrl)
            : processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty, trunkUrl, self);
   }
 
-  private SvnMergeInfoCache.MergeCheckResult processMergeinfoProperty(final String pathWithRevisionNumber, final long revisionAsked,
-                                                                      @NotNull PropertyValue value, final String trunkRelativeUrl,
-                                                                      final boolean self) {
+  private SvnMergeInfoCache.MergeCheckResult processMergeinfoProperty(final String pathWithRevisionNumber,
+                                                                      final long revisionAsked,
+                                                                      @NotNull PropertyValue value,
+                                                                      final String trunkRelativeUrl,
+                                                                      final boolean self) throws SvnBindException {
     if (value.toString().trim().length() == 0) {
       myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
 
-    final Map<String, SVNMergeRangeList> map;
-    try {
-      map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(value.toString())), null);
-    }
-    catch (SVNException e) {
-      LOG.info(e);
-      return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-    }
+    Map<String, SVNMergeRangeList> map = parseMergeInfo(value);
 
     for (String key : map.keySet()) {
       if ((key != null) && (trunkRelativeUrl.startsWith(key))) {
@@ -362,6 +347,16 @@ public class BranchInfo {
     }
     myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
     return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
+  }
+
+  @NotNull
+  private static Map<String, SVNMergeRangeList> parseMergeInfo(@NotNull PropertyValue value) throws SvnBindException {
+    try {
+      return SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(value.toString())), null);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @NotNull
