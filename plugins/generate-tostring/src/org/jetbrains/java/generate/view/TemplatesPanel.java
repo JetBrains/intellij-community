@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.psi.PsiType;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +37,8 @@ import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 
 public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     private static final Namer<TemplateResource> NAMER = new Namer<TemplateResource>() {
@@ -120,7 +123,11 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     }
 
     protected UnnamedConfigurable createConfigurable(TemplateResource item) {
-        return new GenerateTemplateConfigurable(item, myProject);
+        return new GenerateTemplateConfigurable(item, Collections.<String, PsiType>emptyMap(), myProject, onMultipleFields());
+    }
+
+    protected boolean onMultipleFields() {
+      return true;
     }
 
     @Override

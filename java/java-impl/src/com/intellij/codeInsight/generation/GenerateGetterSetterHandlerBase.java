@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
@@ -31,6 +32,8 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.template.TemplateResource;
@@ -84,7 +87,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     return chooseMembers(allMembers, false, false, project, editor);
   }
 
-  protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, String templatesTitle) {
+  protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, final String templatesTitle) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JLabel templateChooserLabel = new JLabel(templatesTitle);
     panel.add(templateChooserLabel, BorderLayout.WEST);
@@ -100,7 +103,18 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
       new ComponentWithBrowseButton<ComboBox>(comboBox, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-            final TemplatesPanel ui = new TemplatesPanel(project, templatesManager);
+            final TemplatesPanel ui = new TemplatesPanel(project, templatesManager) {
+              @Override
+              protected boolean onMultipleFields() {
+                return false;
+              }
+
+              @Nls
+              @Override
+              public String getDisplayName() {
+                return StringUtil.capitalizeWords(UIUtil.removeMnemonic(StringUtil.trimEnd(templatesTitle, ":")), true);
+              }
+            };
             ui.selectNodeInTree(templatesManager.getDefaultTemplate());
             if (ShowSettingsUtil.getInstance().editConfigurable(panel, ui)) {
               setComboboxModel(templatesManager, comboBox);
