@@ -482,7 +482,7 @@ public abstract class DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
     final JPanel lrButtonsPanel = new JPanel(new GridBagLayout());
-    final Insets insets = SystemInfo.isMacOSLeopard ? JBUI.emptyInsets() : JBUI.insetsTop(8);
+    final Insets insets = SystemInfo.isMacOSLeopard ? JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
 
     if (actions.length > 0 || leftSideActions.length > 0) {
       int gridX = 0;
