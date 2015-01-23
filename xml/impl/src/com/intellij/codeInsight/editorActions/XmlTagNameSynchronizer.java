@@ -218,6 +218,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       }
       if (!fitsInMarker) {
         clearMarkers();
+        beforeDocumentChange(event);
       }
     }
 

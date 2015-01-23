@@ -34,6 +34,13 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("<div></div<caret>>", "v", "<divv></divv>");
   }
 
+  public void testStartToEndAndEndToStart() {
+    doTest("<div<caret>></div>", "v", "<divv></divv>");
+    myFixture.getEditor().getCaretModel().moveToOffset(12);
+    type("\b");
+    myFixture.checkResult("<div></div>");
+  }
+
   public void testLastCharDeleted() {
     doTest("<div<caret>></div>", "\b\b\b", "<></>");
   }
@@ -94,6 +101,11 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private void doTest(final String text, final String toType, final String result) {
     myFixture.configureByText(XmlFileType.INSTANCE, text);
+    type(toType);
+    myFixture.checkResult(result);
+  }
+
+  private void type(String toType) {
     for (int i = 0; i < toType.length(); i++) {
       final char c = toType.charAt(i);
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
@@ -108,7 +120,6 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
         }
       }, "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
     }
-    myFixture.checkResult(result);
   }
 
   private void doTestCompletion(final String text, final String toType, final String result) {
