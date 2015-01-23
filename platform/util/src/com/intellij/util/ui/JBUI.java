@@ -15,7 +15,10 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ui.border.CustomLineBorder;
+
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 /**
@@ -101,6 +104,10 @@ public class JBUI {
 
     public static JBEmptyBorder empty() {
       return new JBEmptyBorder(0);
+    }
+
+    public static Border customLine(Color color, int top, int left, int bottom, int right) {
+      return new CustomLineBorder(color, insets(top, left, bottom, right));
     }
   }
 }
