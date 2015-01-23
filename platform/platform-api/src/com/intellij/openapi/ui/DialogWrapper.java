@@ -38,10 +38,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
@@ -49,6 +47,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -148,7 +147,7 @@ public abstract class DialogWrapper {
    */
   private int myButtonAlignment = SwingConstants.RIGHT;
   private boolean myCrossClosesWindow = true;
-  private Insets myButtonMargins = new Insets(2, 16, 2, 16);
+  private Insets myButtonMargins = JBUI.insets(2, 16);
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -442,7 +441,7 @@ public abstract class DialogWrapper {
   @Nullable
   protected Border createContentPaneBorder() {
     if (getStyle() == DialogStyle.COMPACT) {
-      return new EmptyBorder(0,0,0,0);
+      return JBUI.Borders.empty();
     }
     return ourDefaultBorder;
   }
@@ -483,7 +482,7 @@ public abstract class DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
     final JPanel lrButtonsPanel = new JPanel(new GridBagLayout());
-    final Insets insets = SystemInfo.isMacOSLeopard ? new Insets(0, 0, 0, 0) : new Insets(8, 0, 0, 0);
+    final Insets insets = SystemInfo.isMacOSLeopard ? JBUI.emptyInsets() : JBUI.insetsTop(8);
 
     if (actions.length > 0 || leftSideActions.length > 0) {
       int gridX = 0;
@@ -563,10 +562,10 @@ public abstract class DialogWrapper {
     }
 
     if (getStyle() == DialogStyle.COMPACT) {
-      CustomLineBorder line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
-      panel.setBorder(new CompoundBorder(line, BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+      Border line = JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
+      panel.setBorder(new CompoundBorder(line, JBUI.Borders.empty(8, 12)));
     } else {
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
+      panel.setBorder(JBUI.Borders.emptyTop(8));
     }
 
     return panel;
@@ -606,7 +605,7 @@ public abstract class DialogWrapper {
 
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
-    checkBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+    checkBox.setBorder(JBUI.Borders.emptyRight(20));
 
     return panel;
   }
@@ -1954,7 +1953,7 @@ public abstract class DialogWrapper {
       setLayout(new BorderLayout());
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      pane.setBorder(IdeBorderFactory.createEmptyBorder());
+      pane.setBorder(JBUI.Borders.empty());
       pane.setBackground(null);
       pane.getViewport().setBackground(null);
       pane.setOpaque(false);
@@ -1975,7 +1974,7 @@ public abstract class DialogWrapper {
         myLabel
           .setText(XmlStringUtil.wrapInHtml("<font color='#" + ColorUtil.toHex(JBColor.RED) + "'><left>" + text + "</left></b></font>"));
         myLabel.setIcon(AllIcons.Actions.Lightning);
-        myLabel.setBorder(new EmptyBorder(4, 10, 0, 2));
+        myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
         setVisible(true);
       }
 
