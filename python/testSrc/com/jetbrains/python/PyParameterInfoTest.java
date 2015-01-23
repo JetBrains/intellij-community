@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
@@ -453,6 +454,10 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       myTexts = texts;
       myFlags = flags;
       return StringUtil.join(texts, "");
+    }
+
+    @Override
+    public void setEscapeFunction(Function<String, String> escapeFunction) {
     }
 
     @Override
