@@ -33,7 +33,7 @@ class NoCommandStrategy extends Strategy {
   @NotNull
   @Override
   String getSubText() {
-    return "vse ploho";
+    return "Enter command here"; // TODO: Use u18n
   }
 
   @NotNull
