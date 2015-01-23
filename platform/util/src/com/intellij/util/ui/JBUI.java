@@ -55,6 +55,22 @@ public class JBUI {
     return new JBInsets(0, 0, 0, 0);
   }
 
+  public static JBInsets insetsTop(int t) {
+    return insets(t, 0, 0, 0);
+  }
+
+  public static JBInsets insetsLeft(int l) {
+    return insets(0, l, 0, 0);
+  }
+
+  public static JBInsets insetsBottom(int b) {
+    return insets(0, 0, b, 0);
+  }
+
+  public static JBInsets insetsRight(int r) {
+    return insets(0, 0, 0, r);
+  }
+
   public static EmptyIcon emptyIcon(int i) {
     return (EmptyIcon)EmptyIcon.create(scale(i));
   }
