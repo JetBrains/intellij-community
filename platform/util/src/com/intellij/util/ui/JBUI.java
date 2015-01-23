@@ -102,6 +102,26 @@ public class JBUI {
       return new JBEmptyBorder(top, left, bottom, right);
     }
 
+    public static JBEmptyBorder empty(int topAndBottom, int leftAndRight) {
+      return new JBEmptyBorder(topAndBottom, leftAndRight, topAndBottom, leftAndRight);
+    }
+
+    public static JBEmptyBorder emptyTop(int offset) {
+      return new JBEmptyBorder(offset, 0, 0, 0);
+    }
+
+    public static JBEmptyBorder emptyLeft(int offset) {
+      return new JBEmptyBorder(0, offset,  0, 0);
+    }
+
+    public static JBEmptyBorder emptyBottom(int offset) {
+      return new JBEmptyBorder(0, 0, offset, 0);
+    }
+
+    public static JBEmptyBorder emptyRight(int offset) {
+      return new JBEmptyBorder(0, 0, 0, offset);
+    }
+
     public static JBEmptyBorder empty() {
       return new JBEmptyBorder(0);
     }
