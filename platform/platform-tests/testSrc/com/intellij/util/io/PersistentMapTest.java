@@ -124,6 +124,12 @@ public class PersistentMapTest extends TestCase {
     assertTrue(myMap.isDirty());
   }
 
+  public void testPutCompactGet() throws IOException {
+    myMap.put("a", "b");
+    myMap.compact();
+    assertEquals("b", myMap.get("a"));
+  }
+
   public void testOpeningWithCompact() throws IOException {
     final int stringsCount = 5/*1000000*/;
     Set<String> strings = new HashSet<String>(stringsCount);
