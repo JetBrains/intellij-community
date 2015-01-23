@@ -18,6 +18,7 @@ package git4idea.repo;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
@@ -27,6 +28,7 @@ import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
 import git4idea.test.GitPlatformTest;
+import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +36,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
+
+import static git4idea.test.GitExecutor.git;
 
 public class GitConfigTest extends GitPlatformTest {
 
@@ -49,6 +53,27 @@ public class GitConfigTest extends GitPlatformTest {
     for (TestSpec spec : objects) {
       doTestBranches(spec.name, spec.config, spec.result);
     }
+  }
+
+  //inspired by IDEA-135557
+  public void test_branch_with_hash_symbol() throws IOException {
+    GitTestUtil.createRepository(myProject, myProjectPath, true);
+    git("remote add origin http://example.git"); // define a remote to be able to set up tracking
+    git("update-ref refs/remotes/origin/a#branch HEAD");
+    git("branch --track a#branch origin/a#branch");
+
+    File gitDir = new File(myProjectPath, ".git");
+    GitConfig config = GitConfig.read(myPlatformFacade, new File(gitDir, "config"));
+    GitBranchState state = new GitRepositoryReader(gitDir).readState(config.parseRemotes());
+    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches(), state.getRemoteBranches());
+    assertTrue("Couldn't find correct a#branch tracking information among: [" + trackInfos + "]",
+               ContainerUtil.exists(trackInfos, new Condition<GitBranchTrackInfo>() {
+                 @Override
+                 public boolean value(GitBranchTrackInfo info) {
+                   return info.getLocalBranch().getName().equals("a#branch") &&
+                          info.getRemoteBranch().getNameForLocalOperations().equals("origin/a#branch");
+                 }
+               }));
   }
 
   private void doTestRemotes(String testName, File configFile, File resultFile) throws IOException {
