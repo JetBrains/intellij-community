@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Bas Leijdekkers
+ * Copyright 2011-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,6 +163,9 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
           return true;
         }
         if (PsiType.INT.equals(castType)) {
+          if (PsiType.CHAR.equals(operandType) && TypeUtils.getStringType(polyadicExpression).equals(polyadicExpression.getType())) {
+            return true;
+          }
           return PsiType.LONG.equals(operandType) || PsiType.FLOAT.equals(operandType) || PsiType.DOUBLE.equals(operandType);
         }
         if (PsiType.LONG.equals(castType) || PsiType.FLOAT.equals(castType) || PsiType.DOUBLE.equals(castType)) {

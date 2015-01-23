@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,30 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   @Override
   public List<E> subList(int fromIndex, int toIndex) {
     return new SubList<E>(this, fromIndex, toIndex);
+  }
+
+  public boolean equals(Object o) {
+    if (o == this)
+      return true;
+    if (!(o instanceof List))
+      return false;
+
+    ListIterator<E> e1 = listIterator();
+    ListIterator e2 = ((List) o).listIterator();
+    while (e1.hasNext() && e2.hasNext()) {
+      E o1 = e1.next();
+      Object o2 = e2.next();
+      if (!(o1==null ? o2==null : o1.equals(o2)))
+        return false;
+    }
+    return !(e1.hasNext() || e2.hasNext());
+  }
+
+  public int hashCode() {
+    int hashCode = 1;
+    for (E e : this)
+      hashCode = 31*hashCode + (e==null ? 0 : e.hashCode());
+    return hashCode;
   }
 
   private class Itr implements Iterator<E> {

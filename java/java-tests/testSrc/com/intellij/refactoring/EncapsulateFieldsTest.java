@@ -21,6 +21,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -123,10 +124,10 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
         public FieldDescriptor[] getSelectedFields() {
           return new FieldDescriptor[]{new FieldDescriptorImpl(
             field,
-            PropertyUtil.suggestGetterName(field),
-            PropertyUtil.suggestSetterName(field),
-            isToEncapsulateGet() ? PropertyUtil.generateGetterPrototype(field) : null,
-            isToEncapsulateSet() ? PropertyUtil.generateSetterPrototype(field) : null
+            GenerateMembersUtil.suggestGetterName(field),
+            GenerateMembersUtil.suggestSetterName(field),
+            isToEncapsulateGet() ? GenerateMembersUtil.generateGetterPrototype(field) : null,
+            isToEncapsulateSet() ? GenerateMembersUtil.generateSetterPrototype(field) : null
           )};
         }
 

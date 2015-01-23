@@ -105,17 +105,40 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   
   @Bombed(month = Calendar.FEBRUARY, day = 20)
   public void testWrongComparator() throws Exception {
+   doTestWithoutLibrary();
+  }
+
+  @Bombed(month = Calendar.FEBRUARY, day = 20)
+  public void testGenericComparator() throws Exception {
+    doTestWithoutLibrary();
+  }
+
+  @Bombed(month = Calendar.FEBRUARY, day = 20)
+  public void testGenericCallableWithDifferentTypeArgs() throws Exception {
+    doTestWithoutLibrary();
+  }
+
+  @Bombed(month = Calendar.FEBRUARY, day = 20)
+  public void testSuperclassImplementsUnknownType() throws Exception {
+    doTestWithoutLibrary();
+  }
+  
+  @Bombed(month = Calendar.FEBRUARY, day = 20)
+  public void testSuperclassImplementsGenericsOfUnknownType() throws Exception {
+    doTestWithoutLibrary();
+  }
+
+  @Bombed(month = Calendar.FEBRUARY, day = 20)
+  public void testSuperMethodNotExist() throws Exception {
+    doTestWithoutLibrary();
+  }
+
+  private void doTestWithoutLibrary() {
     final String name = getTestName(false);
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
     myFixture.checkHighlighting();
   }
 
-  @Bombed(month = Calendar.FEBRUARY, day = 20)
-  public void testGenericComparator() throws Exception {
-    final String name = getTestName(false);
-    myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
-    myFixture.checkHighlighting();
-  }
 
   private void doTest() {
     final String name = getTestName(false);

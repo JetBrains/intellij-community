@@ -26,10 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -88,7 +85,7 @@ public class VcsHistoryUtil {
    * @throws com.intellij.openapi.vcs.VcsException
    * @throws java.io.IOException
    */
-  public static void showDiff(@NotNull final Project project, @NotNull FilePath filePath,
+  public static void showDiff(@NotNull final Project project, @NotNull final FilePath filePath,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
                               @NotNull String title1, @NotNull String title2) throws VcsException, IOException {
     final byte[] content1 = loadRevisionContent(revision1);
@@ -96,7 +93,12 @@ public class VcsHistoryUtil {
 
     final SimpleDiffRequest diffData = new SimpleDiffRequest(project, filePath.getPresentableUrl());
     diffData.addHint(DiffTool.HINT_SHOW_FRAME);
-    final Document doc = filePath.getDocument();
+    final Document doc = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+      @Override
+      public Document compute() {
+        return filePath.getDocument();
+      }
+    });
     final Charset charset = filePath.getCharset();
     final FileType fileType = filePath.getFileType();
     diffData.setContentTitles(title1, title2);

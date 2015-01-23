@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceparameterobject;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -211,12 +212,12 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
       @NonNls String getter = parameterChunk != null ? parameterChunk.getter : null;
       if (getter == null) {
-        getter = PropertyUtil.suggestGetterName(replacedParameter.getName(), replacedParameter.getType());
+        getter = GenerateMembersUtil.suggestGetterName(replacedParameter.getName(), replacedParameter.getType(), myProject);
         paramsNeedingGetters.add(replacedParameter);
       }
       @NonNls String setter = parameterChunk != null ? parameterChunk.setter : null;
       if (setter == null) {
-        setter = PropertyUtil.suggestSetterName(replacedParameter.getName());
+        setter = GenerateMembersUtil.suggestSetterName(replacedParameter.getName(), replacedParameter.getType(), myProject);
       }
       if (RefactoringUtil.isPlusPlusOrMinusMinus(paramUsage.getParent())) {
         usages.add(new ReplaceParameterIncrementDecrement(paramUsage, fixedParamName, setter, getter));

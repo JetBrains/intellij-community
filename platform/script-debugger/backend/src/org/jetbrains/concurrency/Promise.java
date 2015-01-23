@@ -14,7 +14,7 @@ public abstract class Promise<T> {
   public static final Promise<Void> REJECTED = new RejectedPromise<Void>(createError("rejected"));
 
   @NotNull
-  public static Throwable createError(@NotNull String error) {
+  public static RuntimeException createError(@NotNull String error) {
     return new MessageError(error);
   }
 
@@ -173,7 +173,8 @@ public abstract class Promise<T> {
     });
   }
 
-  public static class MessageError extends Throwable {
+  @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
+  public static class MessageError extends RuntimeException {
     public MessageError(@NotNull String error) {
       super(error);
     }

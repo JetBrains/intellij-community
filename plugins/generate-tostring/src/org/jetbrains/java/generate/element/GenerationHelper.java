@@ -15,7 +15,12 @@
  */
 package org.jetbrains.java.generate.element;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PropertyUtil;
 
 import java.util.List;
 
@@ -44,5 +49,26 @@ public class GenerationHelper {
 
 
     return id;
+  }
+
+  public static String getParamName(FieldElement fieldElement, Project project) {
+    String name = fieldElement.getName();
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    String propertyName = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
+    return codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
+  }
+
+  public static String suggestGetterName(FieldElement fieldElement, Project project) {
+    String text = fieldElement.isModifierStatic() ? "static " : "";
+    text += fieldElement.getType() + " " + fieldElement.getName();
+    final PsiField field = JavaPsiFacade.getElementFactory(project).createFieldFromText(text, null);
+    return PropertyUtil.suggestGetterName(field);
+  }
+
+  public static String suggestSetterName(FieldElement fieldElement, Project project) {
+    String text = fieldElement.isModifierStatic() ? "static " : "";
+    text += fieldElement.getType() + " " + fieldElement.getName();
+    final PsiField field = JavaPsiFacade.getElementFactory(project).createFieldFromText(text, null);
+    return PropertyUtil.suggestSetterName(field);
   }
 }

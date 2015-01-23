@@ -839,7 +839,7 @@ def layout_core(String home, String target) {
       include(name: "asm.jar")
       include(name: "asm-commons.jar")
       include(name: "cli-parser-1.1.jar")
-      include(name: "snappy-in-java-0.3.jar")
+      include(name: "snappy-in-java-0.3.1.jar")
       include(name: "jayatana-1.2.4.jar")
     }
   }

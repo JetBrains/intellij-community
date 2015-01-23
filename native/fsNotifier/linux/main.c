@@ -51,11 +51,11 @@
 
 #define INSTANCE_LIMIT_TEXT \
     "The <b>inotify</b>(7) instances limit reached. " \
-    "<a href=\"http://confluence.jetbrains.net/display/IDEADEV/Inotify+Instances+Limit\">More details.</a>\n"
+    "<a href=\"https://confluence.jetbrains.com/display/IDEADEV/Inotify+Instances+Limit\">More details.</a>\n"
 
 #define WATCH_LIMIT_TEXT \
     "The current <b>inotify</b>(7) watch limit is too low. " \
-    "<a href=\"http://confluence.jetbrains.net/display/IDEADEV/Inotify+Watches+Limit\">More details.</a>\n"
+    "<a href=\"https://confluence.jetbrains.com/display/IDEADEV/Inotify+Watches+Limit\">More details.</a>\n"
 
 #define MISSING_ROOT_TIMEOUT 1
 
