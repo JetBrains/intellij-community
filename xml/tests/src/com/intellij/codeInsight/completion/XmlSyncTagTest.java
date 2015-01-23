@@ -17,10 +17,22 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.MultiHostInjector;
+import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dennis.Ushakov
@@ -87,10 +99,36 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
                      "<html><body></body><bertran></bertran><bertran></bertran><html>");
   }
 
+  public void testInjection() {
+    final MultiHostInjector injector = new MultiHostInjector() {
+      @Override
+      public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
+        if (context instanceof XmlAttributeValue) {
+          registrar.startInjecting(XMLLanguage.INSTANCE)
+            .addPlace(null, null, (PsiLanguageInjectionHost)context, new TextRange(1, context.getTextLength() - 1))
+            .doneInjecting();
+        }
+      }
+
+      @NotNull
+      @Override
+      public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+        return Collections.singletonList(XmlAttributeValue.class);
+      }
+    };
+    InjectedLanguageManager.getInstance(getProject()).registerMultiHostInjector(injector);
+    try {
+      doTest("<div injected='<div<caret>></div>'></div>", "v", "<div injected='<divv></divv>'></div>");
+    } finally {
+      InjectedLanguageManager.getInstance(getProject()).unregisterMultiHostInjector(injector);
+    }
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     WebEditorOptions.getInstance().setSyncTagEditing(true);
+    myFixture.setCaresAboutInjection(false);
   }
 
   @Override
