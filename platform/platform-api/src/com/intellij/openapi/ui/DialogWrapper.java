@@ -465,6 +465,8 @@ public abstract class DialogWrapper {
         && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
+    } else if (Registry.is("ide.remove.help.button.from.dialogs")) {
+      actions = ArrayUtil.remove(actions, getHelpAction());
     }
 
     if (SystemInfo.isMac) {
