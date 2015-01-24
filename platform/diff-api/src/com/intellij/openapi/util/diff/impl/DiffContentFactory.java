@@ -1,5 +1,6 @@
 package com.intellij.openapi.util.diff.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -8,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.contents.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -53,15 +55,21 @@ public class DiffContentFactory {
   @NotNull
   public static DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return new DirectoryContentImpl(project, file);
-    Document document = FileDocumentManager.getInstance().getDocument(file); // TODO: add notification, that file is decompiled ?
-    if (document != null) return new FileDocumentContentImpl(project, document, file);
+    DocumentContent content = createDocument(project, file);
+    if (content != null) return content;
     return new BinaryFileContentImpl(project, file);
   }
 
   @Nullable
-  public static DocumentContent createDocument(@Nullable Project project, @NotNull VirtualFile file) {
+  public static DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
+    // TODO: add notification, that file is decompiled ?
     if (file.isDirectory()) return null;
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+      @Override
+      public Document compute() {
+        return FileDocumentManager.getInstance().getDocument(file);
+      }
+    });
     if (document == null) return null;
     return new FileDocumentContentImpl(project, document, file);
   }
