@@ -16,6 +16,8 @@
 
 package com.intellij.lang.parameterInfo;
 
+import com.intellij.util.Function;
+
 import java.awt.*;
 import java.util.EnumSet;
 
@@ -37,4 +39,6 @@ public interface ParameterInfoUIContextEx extends ParameterInfoUIContext {
   enum Flag {
     HIGHLIGHT, DISABLE, STRIKEOUT // more to come
   }
+
+  void setEscapeFunction(Function<String, String> escapeFunction);
 }
