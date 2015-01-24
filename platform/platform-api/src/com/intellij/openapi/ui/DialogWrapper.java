@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
@@ -562,7 +563,7 @@ public abstract class DialogWrapper {
     }
 
     if (getStyle() == DialogStyle.COMPACT) {
-      Border line = JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
+      Border line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
       panel.setBorder(new CompoundBorder(line, JBUI.Borders.empty(8, 12)));
     } else {
       panel.setBorder(JBUI.Borders.emptyTop(8));
