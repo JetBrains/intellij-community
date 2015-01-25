@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.linearBek;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
@@ -27,12 +26,11 @@ import com.intellij.vcs.log.graph.collapsing.EdgeStorage;
 import com.intellij.vcs.log.graph.collapsing.EdgeStorageAdapter;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
-import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
+class LinearBekGraphBuilder {
   private static final int MAX_BLOCK_SIZE = 20;
   private static final long MAX_DELTA_TIME = 60 * 60 * 24 * 3 * 1000l;
   @NotNull private final WorkingGraph myWorkingGraph;
@@ -48,64 +46,37 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
   }
 
   public LinearBekGraph build() {
-    new GraphVisitorAlgorithm(true).visitGraph(myWorkingGraph.myGraph, myGraphLayout, this);
+    for (int i = myWorkingGraph.myGraph.nodesCount() - 1; i >= 0; i--) {
+      if (LinearGraphUtils.getDownNodes(myWorkingGraph, i).size() != 2) continue;
+      collapse(i, myGraphLayout.getOneOfHeadNodeIndex(i));
+    }
     return myWorkingGraph.createLinearBekGraph();
   }
 
-  @Override
-  public void enterSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
-  }
-
-  @Override
-  public void leaveSubtree(int currentNodeIndex, int currentHead, BitSetFlags visited) {
-    Integer parent = ContainerUtil
-      .find(ContainerUtil.reverse(ContainerUtil.sorted(LinearGraphUtils.getUpNodes(myWorkingGraph, currentNodeIndex))),
-            new Condition<Integer>() {
-              @Override
-              public boolean value(Integer it) {
-                return LinearGraphUtils.getDownNodes(myWorkingGraph, it).size() == 2;
-              }
-            });
-    if (parent == null) return;
-    List<Integer> downNodes = LinearGraphUtils.getDownNodes(myWorkingGraph, parent);
-
-    int headNumber = myHeads.indexOf(currentHead);
+  public void collapse(int mergeCommit, int head) {
+    int headNumber = myHeads.indexOf(head);
     int nextHeadIndex = headNumber == myHeads.size() - 1
                         ? Integer.MAX_VALUE
                         : myGraphLayout
                           .getLayoutIndex(myHeads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
-    int headIndex = myGraphLayout.getLayoutIndex(currentHead);
+    int headIndex = myGraphLayout.getLayoutIndex(head);
 
-    int firstChildIndex = downNodes.get(0);
-    if (firstChildIndex == currentNodeIndex) {
-      int secondChildIndex = downNodes.get(1);
-      if (secondChildIndex > firstChildIndex) {
-        // geometrically first child is higher than the second, so switching them
-        if (collapse(secondChildIndex, firstChildIndex, parent, headIndex, nextHeadIndex, visited)) {
-          myWorkingGraph.apply();
-        }
-        else {
-          myWorkingGraph.clear();
-        }
-      }
+    List<Integer> downNodes = ContainerUtil.sorted(LinearGraphUtils.getDownNodes(myWorkingGraph, mergeCommit));
+    if (collapse(downNodes.get(1), downNodes.get(0), mergeCommit, headIndex, nextHeadIndex)) {
+      myWorkingGraph.apply();
     }
     else {
-      if (collapse(firstChildIndex, currentNodeIndex, parent, headIndex, nextHeadIndex, visited)) {
-        myWorkingGraph.apply();
-      }
-      else {
-        myWorkingGraph.clear();
-      }
+      myWorkingGraph.clear();
     }
   }
 
-  private boolean collapse(int firstChildIndex, int currentNodeIndex, int parent, int headIndex, int nextHeadIndex, BitSetFlags visited) {
-    int x = myGraphLayout.getLayoutIndex(firstChildIndex);
-    int y = myGraphLayout.getLayoutIndex(currentNodeIndex);
+  private boolean collapse(int firstChild, int secondChild, int parent, int headIndex, int nextHeadIndex) {
+    int x = myGraphLayout.getLayoutIndex(firstChild);
+    int y = myGraphLayout.getLayoutIndex(secondChild);
     int k = 1;
 
     PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE/*todo?*/, new GraphEdgeComparator());
-    queue.addAll(myWorkingGraph.getAdjacentEdges(currentNodeIndex, EdgeFilter.NORMAL_DOWN));
+    queue.addAll(myWorkingGraph.getAdjacentEdges(secondChild, EdgeFilter.NORMAL_DOWN));
 
     Set<Integer> definitelyNotTails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
     Set<Integer> tails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
@@ -118,40 +89,27 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
 
       Integer upNodeIndex = nextEdge.getUpNodeIndex();
 
-      if (next == firstChildIndex) {
+      if (next == firstChild) {
         // found first child
         tails.add(upNodeIndex);
         mergeWithOldCommit = true;
       }
-      else if (next < currentNodeIndex + k) {
+      else if (next < secondChild + k) {
         // or we were here before
         // so doing nothing?
       }
-      else if (next == currentNodeIndex + k) {
+      else if (next == secondChild + k) {
         // all is fine, continuing
         k++;
         queue.addAll(myWorkingGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
         definitelyNotTails.add(upNodeIndex);
       }
-      else if (next > currentNodeIndex + k && next < firstChildIndex) {
-        int li = myGraphLayout.getLayoutIndex(next);
-        if (li > y) {
-          return false;
-        }
-        if (li <= x) {
-          if (!(li >= headIndex && li < nextHeadIndex)) {
-            return false;
-          }
-        }
-        k++;
+      else if (next > secondChild + k && next < firstChild) {
+        k = next - secondChild + 1;
         queue.addAll(myWorkingGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
-
-        // here we have to decide whether next is a part of the block or not
-        if (visited.get(next)) { // TODO should get rid of visited here (same problem as with merge with old commit detection)?
-          definitelyNotTails.add(upNodeIndex);
-        }
+        definitelyNotTails.add(upNodeIndex);
       }
-      else if (next > firstChildIndex) {
+      else if (next > firstChild) {
         int li = myGraphLayout.getLayoutIndex(next);
         if (li > y) {
           return false;
@@ -174,7 +132,7 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
       if (k >= MAX_BLOCK_SIZE) {
         return false;
       }
-      if (Math.abs(myTimestampGetter.getTimestamp(currentNodeIndex) - myTimestampGetter.getTimestamp(currentNodeIndex + k - 1)) >
+      if (Math.abs(myTimestampGetter.getTimestamp(secondChild) - myTimestampGetter.getTimestamp(secondChild + k - 1)) >
           MAX_DELTA_TIME) {
         // there is a big question what we should really check here
         // maybe we should also ensure that we do not remove edges to very old commits too
@@ -183,17 +141,17 @@ class LinearBekGraphBuilder implements GraphVisitorAlgorithm.GraphVisitor {
     }
 
     for (Integer tail : tails) {
-      if (!LinearGraphUtils.getDownNodes(myWorkingGraph, tail).contains(firstChildIndex)) {
-        myWorkingGraph.addEdge(tail, firstChildIndex);
+      if (!LinearGraphUtils.getDownNodes(myWorkingGraph, tail).contains(firstChild)) {
+        myWorkingGraph.addEdge(tail, firstChild);
       }
       else if (mergeWithOldCommit) {
-        myWorkingGraph.removeEdge(tail, firstChildIndex);
-        myWorkingGraph.addEdge(tail, firstChildIndex);
+        myWorkingGraph.removeEdge(tail, firstChild);
+        myWorkingGraph.addEdge(tail, firstChild);
       }
     }
 
     if (!tails.isEmpty() || mergeWithOldCommit) {
-      myWorkingGraph.removeEdge(parent, firstChildIndex);
+      myWorkingGraph.removeEdge(parent, firstChild);
     }
 
     return true;
