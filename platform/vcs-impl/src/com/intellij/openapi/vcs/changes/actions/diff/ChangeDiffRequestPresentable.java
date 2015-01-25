@@ -39,6 +39,7 @@ import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.*;
@@ -279,7 +280,14 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
           createTextContent(mergeData.LAST, file)
         };
 
-        return new SimpleDiffRequest(title, contents, titles);
+        SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
+
+        boolean bRevCurrent = bRev instanceof CurrentContentRevision;
+        boolean aRevCurrent = aRev instanceof CurrentContentRevision;
+        if (bRevCurrent && !aRevCurrent) request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.LEFT);
+        if (!bRevCurrent && aRevCurrent) request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.RIGHT);
+
+        return request;
       }
       catch (VcsException e) {
         LOG.info(e);

@@ -123,7 +123,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   private void processContextHints() {
-    Side side = myContext.getUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE);
+    Side side = DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.MASTER_SIDE);
     if (side != null) myMasterSide = side;
 
     myScrollToLineHelper.processContext();
