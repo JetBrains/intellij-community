@@ -29,10 +29,10 @@ public class CCAddTaskWindow extends DumbAwareAction {
 
 
   private static boolean areTaskWindowsIntersect(@NotNull final TaskFile taskFile, @NotNull final Document document, int start, int end) {
-    List<TaskWindow> taskWindows = taskFile.getTaskWindows();
-    for (TaskWindow existingTaskWindow : taskWindows) {
-      int twStart = existingTaskWindow.getRealStartOffset(document);
-      int twEnd = existingTaskWindow.getReplacementLength() + twStart;
+    List<AnswerPlaceholder> answerPlaceholders = taskFile.getTaskWindows();
+    for (AnswerPlaceholder existingAnswerPlaceholder : answerPlaceholders) {
+      int twStart = existingAnswerPlaceholder.getRealStartOffset(document);
+      int twEnd = existingAnswerPlaceholder.getReplacementLength() + twStart;
       if ((start >= twStart && start < twEnd) || (end > twStart && end <= twEnd) ||
           (twStart >= start && twStart < end) || (twEnd > start && twEnd <= end)) {
         return true;
@@ -75,8 +75,8 @@ public class CCAddTaskWindow extends DumbAwareAction {
     if (areTaskWindowsIntersect(taskFile, document, start, end)) {
       return;
     }
-    final TaskWindow taskWindow = new TaskWindow(lineNumber, realStart, length, model.getSelectedText());
-    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, taskWindow, lesson.getIndex(),
+    final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder(lineNumber, realStart, length, model.getSelectedText());
+    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, answerPlaceholder, lesson.getIndex(),
                                                             task.getIndex(), file.getVirtualFile().getNameWithoutExtension(),
                                                             taskFile.getTaskWindows().size() + 1);
     dlg.show();
@@ -84,10 +84,10 @@ public class CCAddTaskWindow extends DumbAwareAction {
       return;
     }
     int index = taskFile.getTaskWindows().size() + 1;
-    taskFile.addTaskWindow(taskWindow, index);
+    taskFile.addTaskWindow(answerPlaceholder, index);
     taskFile.sortTaskWindows();
-    taskWindow.drawHighlighter(editor, false);
-    taskWindow.createGuardedBlocks(editor);
+    answerPlaceholder.drawHighlighter(editor, false);
+    answerPlaceholder.createGuardedBlocks(editor);
   }
 
   @Override

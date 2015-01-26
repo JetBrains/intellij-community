@@ -125,9 +125,9 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     if (taskFile == null) {
       return;
     }
-    List<TaskWindow> taskWindows = taskFile.getTaskWindows();
-    for (TaskWindow taskWindow : taskWindows) {
-      taskWindow.drawHighlighter(editor, false);
+    List<AnswerPlaceholder> answerPlaceholders = taskFile.getTaskWindows();
+    for (AnswerPlaceholder answerPlaceholder : answerPlaceholders) {
+      answerPlaceholder.drawHighlighter(editor, false);
     }
   }
 

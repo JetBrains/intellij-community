@@ -17,7 +17,7 @@ import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.course.Course;
-import com.jetbrains.edu.learning.course.TaskWindow;
+import com.jetbrains.edu.learning.course.AnswerPlaceholder;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -52,13 +52,13 @@ public class StudyShowHintAction extends DumbAwareAction {
     PsiFile file = PsiManager.getInstance(project).findFile(studyState.getVirtualFile());
     final Editor editor = studyState.getEditor();
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-    TaskWindow taskWindow = studyState.getTaskFile().getTaskWindow(editor.getDocument(), pos);
+    AnswerPlaceholder answerPlaceholder = studyState.getTaskFile().getTaskWindow(editor.getDocument(), pos);
     if (file == null) {
       return;
     }
     String hintText = OUTSIDE_TASK_WINDOW_MESSAGE;
-    if (taskWindow != null) {
-      hintText = taskWindow.getHint();
+    if (answerPlaceholder != null) {
+      hintText = answerPlaceholder.getHint();
     }
     int offset = editor.getDocument().getLineStartOffset(pos.line) + pos.column;
     PsiElement element = file.findElementAt(offset);

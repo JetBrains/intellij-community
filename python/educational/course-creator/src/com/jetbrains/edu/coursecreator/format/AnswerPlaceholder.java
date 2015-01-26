@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 
-public class TaskWindow implements Comparable<TaskWindow> {
+public class AnswerPlaceholder implements Comparable<AnswerPlaceholder> {
 
   @Expose public int line;
   @Expose public int start;
@@ -31,9 +31,9 @@ public class TaskWindow implements Comparable<TaskWindow> {
   public int myReplacementLength;
   public int myIndex;
 
-  public TaskWindow() {}
+  public AnswerPlaceholder() {}
 
-  public TaskWindow(int line, int start, int length, String selectedText) {
+  public AnswerPlaceholder(int line, int start, int length, String selectedText) {
     this.line = line;
     this.start = start;
     myReplacementLength = length;
@@ -120,10 +120,10 @@ public class TaskWindow implements Comparable<TaskWindow> {
   }
 
   @Override
-  public int compareTo(@NotNull TaskWindow taskWindow) {
-    int lineDiff = line - taskWindow.line;
+  public int compareTo(@NotNull AnswerPlaceholder answerPlaceholder) {
+    int lineDiff = line - answerPlaceholder.line;
     if (lineDiff == 0) {
-      return start - taskWindow.start;
+      return start - answerPlaceholder.start;
     }
     return lineDiff;
   }

@@ -152,13 +152,13 @@ public class StudyUtils {
       try {
         fileWindows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
-        for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
-          if (!taskWindow.isValid(document)) {
+        for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+          if (!answerPlaceholder.isValid(document)) {
             printWriter.println("#educational_plugin_window = ");
             continue;
           }
-          int start = taskWindow.getRealStartOffset(document);
-          final String windowDescription = document.getText(new TextRange(start, start + taskWindow.getLength()));
+          int start = answerPlaceholder.getRealStartOffset(document);
+          final String windowDescription = document.getText(new TextRange(start, start + answerPlaceholder.getLength()));
           printWriter.println("#educational_plugin_window = " + windowDescription);
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {

@@ -37,7 +37,7 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.course.StudyStatus;
 import com.jetbrains.edu.learning.course.Task;
 import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.TaskWindow;
+import com.jetbrains.edu.learning.course.AnswerPlaceholder;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,7 +170,7 @@ public class StudyCheckAction extends DumbAwareAction {
           TaskFile taskFile = entry.getValue();
           VirtualFile virtualFile = taskDir.findChild(name);
           if (virtualFile != null) {
-            if (!taskFile.getTaskWindows().isEmpty()) {
+            if (!taskFile.getAnswerPlaceholders().isEmpty()) {
               taskVirtualFile = virtualFile;
             }
           }
@@ -240,7 +240,7 @@ public class StudyCheckAction extends DumbAwareAction {
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
                 final String name = entry.getKey();
                 final TaskFile taskFile = entry.getValue();
-                if (taskFile.getTaskWindows().size() < 2) {
+                if (taskFile.getAnswerPlaceholders().size() < 2) {
                   taskFile.setStatus(StudyStatus.Failed, StudyStatus.Unchecked);
                   continue;
                 }
@@ -317,15 +317,15 @@ public class StudyCheckAction extends DumbAwareAction {
       return;
     }
     final VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
-    for (final TaskWindow taskWindow : answerTaskFile.getTaskWindows()) {
+    for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getAnswerPlaceholders()) {
       final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) {
         continue;
       }
-      if (!taskWindow.isValid(document)) {
+      if (!answerPlaceholder.isValid(document)) {
         continue;
       }
-      taskWindow.smartCheck(project, answerFile, answerTaskFile, taskFile, testRunner, virtualFile, document);
+      answerPlaceholder.smartCheck(project, answerFile, answerTaskFile, taskFile, testRunner, virtualFile, document);
     }
     StudyUtils.deleteFile(answerFile);
   }
@@ -344,13 +344,13 @@ public class StudyCheckAction extends DumbAwareAction {
         TaskFile.copy(source, target);
         StudyDocumentListener listener = new StudyDocumentListener(target);
         document.addDocumentListener(listener);
-        for (TaskWindow taskWindow : target.getTaskWindows()) {
-          if (!taskWindow.isValid(document)) {
+        for (AnswerPlaceholder answerPlaceholder : target.getAnswerPlaceholders()) {
+          if (!answerPlaceholder.isValid(document)) {
             continue;
           }
-          final int start = taskWindow.getRealStartOffset(document);
-          final int end = start + taskWindow.getLength();
-          final String text = taskWindow.getPossibleAnswer();
+          final int start = answerPlaceholder.getRealStartOffset(document);
+          final int end = start + answerPlaceholder.getLength();
+          final String text = answerPlaceholder.getPossibleAnswer();
           document.replaceString(start, end, text);
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {

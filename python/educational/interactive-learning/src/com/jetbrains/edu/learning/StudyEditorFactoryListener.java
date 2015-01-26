@@ -13,7 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.TaskWindow;
+import com.jetbrains.edu.learning.course.AnswerPlaceholder;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,10 +37,10 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
       final Editor editor = e.getEditor();
       final Point point = e.getMouseEvent().getPoint();
       final LogicalPosition pos = editor.xyToLogicalPosition(point);
-      final TaskWindow taskWindow = myTaskFile.getTaskWindow(editor.getDocument(), pos);
-      if (taskWindow != null) {
-        myTaskFile.setSelectedTaskWindow(taskWindow);
-        taskWindow.draw(editor, false, false);
+      final AnswerPlaceholder answerPlaceholder = myTaskFile.getTaskWindow(editor.getDocument(), pos);
+      if (answerPlaceholder != null) {
+        myTaskFile.setSelectedAnswerPlaceholder(answerPlaceholder);
+        answerPlaceholder.draw(editor, false, false);
       }
       else {
         myTaskFile.drawAllWindows(editor);

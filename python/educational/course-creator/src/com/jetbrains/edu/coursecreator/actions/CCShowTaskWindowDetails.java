@@ -26,8 +26,8 @@ public class CCShowTaskWindowDetails extends CCTaskWindowAction {
     final Lesson lesson = course.getLesson(lessonDir.getName());
     final Task task = lesson.getTask(taskDir.getName());
     final TaskFile taskFile = state.getTaskFile();
-    TaskWindow taskWindow = state.getTaskWindow();
-    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, taskWindow, lesson.getIndex(), task.getIndex(),
+    AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
+    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, answerPlaceholder, lesson.getIndex(), task.getIndex(),
                                                             file.getVirtualFile().getNameWithoutExtension(),
                                                             taskFile.getTaskWindows().size() + 1);
     dlg.setTitle("Edit Answer Placeholder");

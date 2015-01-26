@@ -123,8 +123,8 @@ public class CCShowPreview extends DumbAwareAction {
         factory.releaseEditor(createdEditor);
       }
     });
-    for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
-      taskWindow.drawHighlighter(createdEditor, true);
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getTaskWindows()) {
+      answerPlaceholder.drawHighlighter(createdEditor, true);
     }
     JPanel header = new JPanel();
     header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));

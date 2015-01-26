@@ -72,7 +72,7 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
       VirtualFile vf = taskDir.findChild(name);
       if (vf != null) {
         FileEditorManager.getInstance(project).openFile(vf, true);
-        if (!taskFile.getTaskWindows().isEmpty()) {
+        if (!taskFile.getAnswerPlaceholders().isEmpty()) {
           shouldBeActive = vf;
         }
       }

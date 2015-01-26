@@ -31,9 +31,9 @@ import java.io.IOException;
  */
 
 
-public class TaskWindow implements Comparable, Stateful {
+public class AnswerPlaceholder implements Comparable, Stateful {
   private static final String WINDOW_POSTFIX = "_window.py";
-  private static final Logger LOG = Logger.getInstance(TaskWindow.class);
+  private static final Logger LOG = Logger.getInstance(AnswerPlaceholder.class);
   private int line = 0;
   private int start = 0;
   private String hint = "";
@@ -154,13 +154,13 @@ public class TaskWindow implements Comparable, Stateful {
 
   @Override
   public int compareTo(@NotNull Object o) {
-    TaskWindow taskWindow = (TaskWindow)o;
-    if (taskWindow.getTaskFile() != myTaskFile) {
+    AnswerPlaceholder answerPlaceholder = (AnswerPlaceholder)o;
+    if (answerPlaceholder.getTaskFile() != myTaskFile) {
       throw new ClassCastException();
     }
-    int lineDiff = line - taskWindow.line;
+    int lineDiff = line - answerPlaceholder.line;
     if (lineDiff == 0) {
-      return start - taskWindow.start;
+      return start - answerPlaceholder.start;
     }
     return lineDiff;
   }
@@ -216,9 +216,9 @@ public class TaskWindow implements Comparable, Stateful {
         windowDocument.addDocumentListener(listener);
         int start = getRealStartOffset(windowDocument);
         int end = start + getLength();
-        final TaskWindow userTaskWindow = usersTaskFile.getTaskWindows().get(getIndex());
-        int userStart = userTaskWindow.getRealStartOffset(usersDocument);
-        int userEnd = userStart + userTaskWindow.getLength();
+        final AnswerPlaceholder userAnswerPlaceholder = usersTaskFile.getAnswerPlaceholders().get(getIndex());
+        int userStart = userAnswerPlaceholder.getRealStartOffset(usersDocument);
+        int userEnd = userStart + userAnswerPlaceholder.getLength();
         String text = usersDocument.getText(new TextRange(userStart, userEnd));
         windowDocument.replaceString(start, end, text);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -232,7 +232,7 @@ public class TaskWindow implements Comparable, Stateful {
         final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess);
         final ProcessOutput output = handler.runProcess();
         boolean res = testRunner.getTestsOutput(output).equals(StudyTestRunner.TEST_OK);
-        userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed, StudyStatus.Unchecked);
+        userAnswerPlaceholder.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed, StudyStatus.Unchecked);
         StudyUtils.deleteFile(windowCopy);
         StudyUtils.deleteFile(fileWindows);
         if (!resourceFile.delete()) {

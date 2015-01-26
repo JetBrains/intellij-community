@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.format.TaskWindow;
+import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +20,7 @@ public class CreateTaskWindowDialog extends DialogWrapper {
 
   public static final String TITLE = "Add Answer Placeholder";
   private static final Logger LOG = Logger.getInstance(CreateTaskWindowDialog.class.getName());
-  private final TaskWindow myTaskWindow;
+  private final AnswerPlaceholder myAnswerPlaceholder;
   private final CreateTaskWindowPanel myPanel;
   private final Project myProject;
 
@@ -28,31 +28,31 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     return myProject;
   }
 
-  public CreateTaskWindowDialog(@NotNull final Project project, @NotNull final TaskWindow taskWindow, int lessonIndex,
+  public CreateTaskWindowDialog(@NotNull final Project project, @NotNull final AnswerPlaceholder answerPlaceholder, int lessonIndex,
                                 int taskIndex, String taskFileName, int taskWindowIndex) {
     super(project, true);
     setTitle(TITLE);
-    myTaskWindow = taskWindow;
+    myAnswerPlaceholder = answerPlaceholder;
     myPanel = new CreateTaskWindowPanel(this);
     String generatedHintName = "lesson" + lessonIndex + "task" + taskIndex + taskFileName + "_" + taskWindowIndex;
     myPanel.setGeneratedHintName(generatedHintName);
-    if (taskWindow.getHintName() != null) {
-      setHintText(project, taskWindow);
+    if (answerPlaceholder.getHintName() != null) {
+      setHintText(project, answerPlaceholder);
     }
     myProject = project;
-    String taskWindowTaskText = taskWindow.getTaskText();
+    String taskWindowTaskText = answerPlaceholder.getTaskText();
     myPanel.setTaskWindowText(taskWindowTaskText != null ? taskWindowTaskText : "");
-    String hintName = taskWindow.getHintName();
+    String hintName = answerPlaceholder.getHintName();
     myPanel.setHintName(hintName != null ? hintName : "");
     init();
     initValidation();
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private void setHintText(Project project, TaskWindow taskWindow) {
+  private void setHintText(Project project, AnswerPlaceholder answerPlaceholder) {
     VirtualFile hints = project.getBaseDir().findChild("hints");
     if (hints != null) {
-      File file = new File(hints.getPath(), taskWindow.getHintName());
+      File file = new File(hints.getPath(), answerPlaceholder.getHintName());
       StringBuilder hintText = new StringBuilder();
       if (file.exists()) {
         BufferedReader bufferedReader =  null;
@@ -89,14 +89,14 @@ public class CreateTaskWindowDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     String taskWindowText = myPanel.getTaskWindowText();
-    myTaskWindow.setTaskText(StringUtil.notNullize(taskWindowText));
+    myAnswerPlaceholder.setTaskText(StringUtil.notNullize(taskWindowText));
     if (myPanel.createHint()) {
       String hintName = myPanel.getHintName();
-      myTaskWindow.setHint(hintName);
+      myAnswerPlaceholder.setHint(hintName);
       String hintText = myPanel.getHintText();
       createHint(hintName, hintText);
     } else {
-      if (myTaskWindow.getHintName() != null) {
+      if (myAnswerPlaceholder.getHintName() != null) {
         deleteHint();
       }
     }
@@ -141,14 +141,14 @@ public class CreateTaskWindowDialog extends DialogWrapper {
   public void deleteHint() {
     VirtualFile hintsDir = myProject.getBaseDir().findChild("hints");
     if (hintsDir != null) {
-      String hintName = myTaskWindow.getHintName();
+      String hintName = myAnswerPlaceholder.getHintName();
       if (hintName == null) {
         return;
       }
       File hintFile = new File(hintsDir.getPath(), hintName);
       if (hintFile.exists()) {
         CCProjectService.deleteProjectFile(hintFile, myProject);
-        myTaskWindow.setHint(null);
+        myAnswerPlaceholder.setHint(null);
         myPanel.resetHint();
       }
     }
@@ -172,7 +172,7 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     if (child == null) {
       return null;
     }
-    return myTaskWindow.getHintName() != null ? null : new ValidationInfo("Hint file with such filename already exists");
+    return myAnswerPlaceholder.getHintName() != null ? null : new ValidationInfo("Hint file with such filename already exists");
   }
 
   public void validateInput() {

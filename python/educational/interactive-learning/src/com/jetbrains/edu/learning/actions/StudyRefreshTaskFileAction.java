@@ -96,8 +96,8 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
   }
 
   private static void resetTaskWindows(TaskFile selectedTaskFile) {
-    for (TaskWindow taskWindow : selectedTaskFile.getTaskWindows()) {
-      taskWindow.reset();
+    for (AnswerPlaceholder answerPlaceholder : selectedTaskFile.getAnswerPlaceholders()) {
+      answerPlaceholder.reset();
     }
   }
 
