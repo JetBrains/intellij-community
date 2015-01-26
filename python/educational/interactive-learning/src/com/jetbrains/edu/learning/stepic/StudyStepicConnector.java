@@ -3,7 +3,6 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.HttpRequests;
 import com.jetbrains.edu.learning.course.*;
@@ -49,7 +48,7 @@ public class StudyStepicConnector {
     course.setDescription(info.getDescription());
     course.setName(info.getName());
     course.lessons = new ArrayList<Lesson>();
-    course.setLanguage(Language.findLanguageByID("Python"));  // TODO: get from stepic
+    course.setLanguage("Python");  // TODO: get from stepic
 
     if (info.equals(ourTestCourseInfo)) {   // TODO: to be removed
       try {

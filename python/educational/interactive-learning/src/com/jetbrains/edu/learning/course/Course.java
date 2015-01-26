@@ -24,7 +24,7 @@ public class Course {
   private String myCourseDirectory = "";
   private String author="";
   private boolean myUpToDate;
-  private Language myLanguage;
+  private String myLanguage;
 
 
   public List<Lesson> getLessons() {
@@ -114,10 +114,10 @@ public class Course {
   }
 
   public Language getLanguage() {
-    return myLanguage;
+    return Language.findLanguageByID(myLanguage);
   }
 
-  public void setLanguage(Language language) {
+  public void setLanguage(@NotNull final String language) {
     myLanguage = language;
   }
 
