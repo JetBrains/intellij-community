@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.course.TaskWindow;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private List<TaskWindowWrapper> myTaskWindows = new ArrayList<TaskWindowWrapper>();
 
-  public StudyDocumentListener(TaskFile taskFile) {
+  public StudyDocumentListener(@NotNull final TaskFile taskFile) {
     myTaskFile = taskFile;
   }
 
@@ -31,7 +32,7 @@ public class StudyDocumentListener extends DocumentAdapter {
     if (!myTaskFile.isTrackChanges()) {
       return;
     }
-    Document document = e.getDocument();
+    final Document document = e.getDocument();
     myTaskWindows.clear();
     for (TaskWindow taskWindow : myTaskFile.getTaskWindows()) {
       int twStart = taskWindow.getRealStartOffset(document);
@@ -46,8 +47,8 @@ public class StudyDocumentListener extends DocumentAdapter {
       return;
     }
     if (e instanceof DocumentEventImpl) {
-      DocumentEventImpl event = (DocumentEventImpl)e;
-      Document document = e.getDocument();
+      final DocumentEventImpl event = (DocumentEventImpl)e;
+      final Document document = e.getDocument();
       int offset = e.getOffset();
       int change = event.getNewLength() - event.getOldLength();
       for (TaskWindowWrapper taskWindowWrapper : myTaskWindows) {
@@ -59,7 +60,7 @@ public class StudyDocumentListener extends DocumentAdapter {
         if (twEnd >= offset) {
           twEnd += change;
         }
-        TaskWindow taskWindow = taskWindowWrapper.getTaskWindow();
+        final TaskWindow taskWindow = taskWindowWrapper.getTaskWindow();
         int line = document.getLineNumber(twStart);
         int start = twStart - document.getLineStartOffset(line);
         int length = twEnd - twStart;

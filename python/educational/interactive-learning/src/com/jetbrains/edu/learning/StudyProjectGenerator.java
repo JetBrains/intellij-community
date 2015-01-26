@@ -39,14 +39,14 @@ public class StudyProjectGenerator {
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   private final File myCoursesDir = new File(PathManager.getConfigPath(), "courses");
   private static final String CACHE_NAME = "courseNames.txt";
-  private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();   // TODO: replace with list
+  private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();
   private CourseInfo mySelectedCourseInfo;
 
   public void setCourses(List<CourseInfo> courses) {
     myCourses = courses;
   }
 
-  public void setSelectedCourse(@NotNull CourseInfo courseName) {
+  public void setSelectedCourse(@NotNull final CourseInfo courseName) {
     mySelectedCourseInfo = courseName;
   }
 
@@ -60,61 +60,70 @@ public class StudyProjectGenerator {
     course.setCourseDirectory(new File(myCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     StudyTaskManager.getInstance(project).setCourse(course);
-    final boolean[] initialized = {false};
-    ToolWindowManagerEx.getInstanceEx(project).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
-      @Override
-      public void stateChanged() {
-        final AbstractProjectViewPane projectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
-        if (projectViewPane == null || initialized[0]) return;
-        JTree tree = projectViewPane.getTree();
-        if (tree == null) {
-          return;
-        }
-        tree.updateUI();
+    ToolWindowManagerEx.getInstanceEx(project).addToolWindowManagerListener(new OpenFirstTaskListener(project, course));
+  }
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            LocalFileSystem.getInstance().refresh(false);
-            final Lesson firstLesson = StudyUtils.getFirst(course.getLessons());
-            final Task firstTask = StudyUtils.getFirst(firstLesson.getTaskList());
-            final VirtualFile taskDir = firstTask.getTaskDir(project);
-            if (taskDir == null) return;
-            final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
-            VirtualFile activeVirtualFile = null;
-            for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
-              final String name = entry.getKey();
-              final TaskFile taskFile = entry.getValue();
-              final VirtualFile virtualFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(name);
-              if (virtualFile != null) {
-                FileEditorManager.getInstance(project).openFile(virtualFile, true);
-                if (!taskFile.getTaskWindows().isEmpty()) {
-                  activeVirtualFile = virtualFile;
-                }
-              }
-            }
-            if (activeVirtualFile != null) {
-              final PsiFile file = PsiManager.getInstance(project).findFile(activeVirtualFile);
-              ProjectView.getInstance(project).select(file, activeVirtualFile, true);
-            } else {
-              String first = StudyUtils.getFirst(taskFiles.keySet());
-              if (first != null) {
-                NewVirtualFile firstFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(first);
-                if (firstFile != null) {
-                  FileEditorManager.getInstance(project).openFile(firstFile, true);
-                }
-              }
-            }
-            initialized[0] = true;
-          }
-        }, ModalityState.current(), new Condition() {
-          @Override
-          public boolean value(Object o) {
-            return project.isDisposed();
-          }
-        });
+  private static class OpenFirstTaskListener extends ToolWindowManagerAdapter {
+    private final Project myProject;
+    private final Course myCourse;
+    private boolean myInitialized = false;
+
+    OpenFirstTaskListener(@NotNull final Project project, @NotNull final Course course) {
+      myProject = project;
+      myCourse = course;
+    }
+
+    public void stateChanged() {
+      final AbstractProjectViewPane projectViewPane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
+      if (projectViewPane == null || myInitialized) return;
+      JTree tree = projectViewPane.getTree();
+      if (tree == null) {
+        return;
       }
-    });
+      tree.updateUI();
+
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          LocalFileSystem.getInstance().refresh(false);
+          final Lesson firstLesson = StudyUtils.getFirst(myCourse.getLessons());
+          final Task firstTask = StudyUtils.getFirst(firstLesson.getTaskList());
+          final VirtualFile taskDir = firstTask.getTaskDir(myProject);
+          if (taskDir == null) return;
+          final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
+          VirtualFile activeVirtualFile = null;
+          for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
+            final String name = entry.getKey();
+            final TaskFile taskFile = entry.getValue();
+            final VirtualFile virtualFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(name);
+            if (virtualFile != null) {
+              FileEditorManager.getInstance(myProject).openFile(virtualFile, true);
+              if (!taskFile.getTaskWindows().isEmpty()) {
+                activeVirtualFile = virtualFile;
+              }
+            }
+          }
+          if (activeVirtualFile != null) {
+            final PsiFile file = PsiManager.getInstance(myProject).findFile(activeVirtualFile);
+            ProjectView.getInstance(myProject).select(file, activeVirtualFile, true);
+          } else {
+            String first = StudyUtils.getFirst(taskFiles.keySet());
+            if (first != null) {
+              NewVirtualFile firstFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(first);
+              if (firstFile != null) {
+                FileEditorManager.getInstance(myProject).openFile(firstFile, true);
+              }
+            }
+          }
+          myInitialized = true;
+        }
+      }, ModalityState.current(), new Condition() {
+        @Override
+        public boolean value(Object o) {
+          return myProject.isDisposed();
+        }
+      });
+    }
   }
 
   private void flushCourse(@NotNull final Course course) {
@@ -198,7 +207,7 @@ public class StudyProjectGenerator {
   }
 
   /**
-   * Writes courses to cash file {@link com.jetbrains.python.edu.StudyDirectoryProjectGenerator#CACHE_NAME}
+   * Writes courses to cash file {@link StudyProjectGenerator#CACHE_NAME}
    */
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public void flushCache() {

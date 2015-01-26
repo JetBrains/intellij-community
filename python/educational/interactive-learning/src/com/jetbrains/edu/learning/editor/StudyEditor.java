@@ -83,15 +83,15 @@ public class StudyEditor implements TextEditor {
     return myTaskFile;
   }
 
-  private static JButton addButton(@NotNull final JComponent parentComponent, String actionID, Icon icon,
-                                   @Nullable String defaultShortcutString) {
-    AnAction action = ActionManager.getInstance().getAction(actionID);
+  private static JButton addButton(@NotNull final JComponent parentComponent, @NotNull final String actionID,
+                                   @NotNull final Icon icon, @Nullable String defaultShortcutString) {
+    final AnAction action = ActionManager.getInstance().getAction(actionID);
     String toolTipText = KeymapUtil.createTooltipText(action.getTemplatePresentation().getText(), action);
     if (!toolTipText.contains("(") && defaultShortcutString != null) {
       KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(defaultShortcutString), null);
       toolTipText += " (" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
-    JButton newButton = new JButton();
+    final JButton newButton = new JButton();
     newButton.setToolTipText(toolTipText);
     newButton.setIcon(icon);
     newButton.setSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
@@ -100,27 +100,23 @@ public class StudyEditor implements TextEditor {
   }
 
   public static void addDocumentListener(@NotNull final Document document, @NotNull final StudyDocumentListener listener) {
+    document.addDocumentListener(listener);
     myDocumentListeners.put(document, listener);
-  }
-
-  @Nullable
-  public static StudyDocumentListener getListener(@NotNull final Document document) {
-    return myDocumentListeners.get(document);
   }
 
   public StudyEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
     myProject = project;
     myDefaultEditor = TextEditorProvider.getInstance().createEditor(myProject, file);
     myComponent = myDefaultEditor.getComponent();
-    JPanel studyPanel = new JPanel();
+    final JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
     myTaskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
     if (myTaskFile != null) {
-      Task currentTask = myTaskFile.getTask();
-      String taskText = currentTask.getText();
+      final Task currentTask = myTaskFile.getTask();
+      final String taskText = currentTask.getText();
       initializeTaskText(studyPanel, taskText);
-      JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
-      JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      final JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
+      final JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       studyButtonPanel.add(taskActionsPanel);
       studyButtonPanel.add(new JPanel());
       initializeButtons(taskActionsPanel, myTaskFile);
@@ -132,7 +128,7 @@ public class StudyEditor implements TextEditor {
   class CopyListener extends MouseAdapter {
     final JTextPane myTextPane;
 
-    public CopyListener(JTextPane textPane) {
+    public CopyListener(@NotNull final JTextPane textPane) {
       myTextPane = textPane;
     }
 
@@ -141,7 +137,7 @@ public class StudyEditor implements TextEditor {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          ToolWindow projectView = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+          final ToolWindow projectView = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
           if (projectView == null) {
             return;
           }
@@ -156,7 +152,7 @@ public class StudyEditor implements TextEditor {
             public void keyPressed(KeyEvent ev) {
               if (ev.getKeyCode() == KeyEvent.VK_C
                   && ev.getModifiers() == InputEvent.CTRL_MASK) {
-                StringSelection selection = new StringSelection(text);
+                final StringSelection selection = new StringSelection(text);
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, EmptyClipboardOwner.INSTANCE);
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   @Override
@@ -173,32 +169,32 @@ public class StudyEditor implements TextEditor {
     }
   }
 
-  private void initializeTaskText(JPanel studyPanel, @Nullable String taskText) {
-    JTextPane taskTextPane = new JTextPane();
+  private void initializeTaskText(@NotNull final JPanel studyPanel, @Nullable final String taskText) {
+    final JTextPane taskTextPane = new JTextPane();
     taskTextPane.addMouseListener(new CopyListener(taskTextPane));
     taskTextPane.setContentType("text/html");
     taskTextPane.setEditable(false);
     taskTextPane.setText(taskText);
     taskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     int fontSize = editorColorsScheme.getEditorFontSize();
-    String fontName = editorColorsScheme.getEditorFontName();
+    final String fontName = editorColorsScheme.getEditorFontName();
     setJTextPaneFont(taskTextPane, new Font(fontName, Font.PLAIN, fontSize), JBColor.BLACK);
     taskTextPane.setBackground(UIUtil.getPanelBackground());
     taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
-    HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextPane, true);
+    final HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextPane, true);
     taskTextPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
     studyPanel.add(taskTextPanel);
   }
 
-  private static void setJTextPaneFont(JTextPane jtp, Font font, Color c) {
-    MutableAttributeSet attrs = jtp.getInputAttributes();
+  private static void setJTextPaneFont(@NotNull final JTextPane textPane, @NotNull final Font font, @NotNull final Color color) {
+    final MutableAttributeSet attrs = textPane.getInputAttributes();
     StyleConstants.setFontFamily(attrs, font.getFamily());
     StyleConstants.setFontSize(attrs, font.getSize());
     StyleConstants.setItalic(attrs, (font.getStyle() & Font.ITALIC) != 0);
     StyleConstants.setBold(attrs, (font.getStyle() & Font.BOLD) != 0);
-    StyleConstants.setForeground(attrs, c);
-    StyledDocument doc = jtp.getStyledDocument();
+    StyleConstants.setForeground(attrs, color);
+    StyledDocument doc = textPane.getStyledDocument();
     doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
   }
 
@@ -207,9 +203,9 @@ public class StudyEditor implements TextEditor {
     myPrevTaskButton = addButton(taskActionsPanel, StudyPreviousStudyTaskAction.ACTION_ID, InteractiveLearningIcons.Prev, StudyPreviousStudyTaskAction.SHORTCUT);
     myNextTaskButton = addButton(taskActionsPanel, StudyNextStudyTaskAction.ACTION_ID, AllIcons.Actions.Forward, StudyNextStudyTaskAction.SHORTCUT);
     myRefreshButton = addButton(taskActionsPanel, StudyRefreshTaskFileAction.ACTION_ID, AllIcons.Actions.Refresh, StudyRefreshTaskFileAction.SHORTCUT);
-    JButton myShowHintButton = addButton(taskActionsPanel, StudyShowHintAction.ACTION_ID, InteractiveLearningIcons.ShowHint, StudyShowHintAction.SHORTCUT);
+    final JButton myShowHintButton = addButton(taskActionsPanel, StudyShowHintAction.ACTION_ID, InteractiveLearningIcons.ShowHint, StudyShowHintAction.SHORTCUT);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
-      JButton runButton = addButton(taskActionsPanel, StudyRunAction.ACTION_ID, AllIcons.General.Run, null);
+      final JButton runButton = addButton(taskActionsPanel, StudyRunAction.ACTION_ID, AllIcons.General.Run, null);
       runButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -217,7 +213,7 @@ public class StudyEditor implements TextEditor {
           studyRunAction.run(myProject);
         }
       });
-      JButton watchInputButton = addButton(taskActionsPanel, "WatchInputAction", InteractiveLearningIcons.WatchInput, null);
+      final JButton watchInputButton = addButton(taskActionsPanel, "WatchInputAction", InteractiveLearningIcons.WatchInput, null);
       watchInputButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -375,7 +371,7 @@ public class StudyEditor implements TextEditor {
   @Nullable
   public static StudyEditor getSelectedStudyEditor(@NotNull final Project project) {
     try {
-      FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSplitters().getCurrentWindow().
+      final FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSplitters().getCurrentWindow().
         getSelectedEditor().getSelectedEditorWithProvider().getFirst();
       if (fileEditor instanceof StudyEditor) {
         return (StudyEditor)fileEditor;
@@ -389,7 +385,7 @@ public class StudyEditor implements TextEditor {
 
   @Nullable
   public static Editor getSelectedEditor(@NotNull final Project project) {
-    StudyEditor studyEditor = getSelectedStudyEditor(project);
+    final StudyEditor studyEditor = getSelectedStudyEditor(project);
     if (studyEditor != null) {
       FileEditor defaultEditor = studyEditor.getDefaultEditor();
       if (defaultEditor instanceof PsiAwareTextEditorImpl) {
@@ -400,6 +396,10 @@ public class StudyEditor implements TextEditor {
   }
 
   public static void removeListener(Document document) {
+    final StudyDocumentListener listener = myDocumentListeners.get(document);
+    if (listener != null) {
+      document.removeDocumentListener(listener);
+    }
     myDocumentListeners.remove(document);
   }
 
@@ -429,7 +429,7 @@ public class StudyEditor implements TextEditor {
 
   public static void deleteGuardedBlocks(@NotNull final Document document) {
     if (document instanceof DocumentImpl) {
-      DocumentImpl documentImpl = (DocumentImpl)document;
+      final DocumentImpl documentImpl = (DocumentImpl)document;
       List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
       for (final RangeMarker block : blocks) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
