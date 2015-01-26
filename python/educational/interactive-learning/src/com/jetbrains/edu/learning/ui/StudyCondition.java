@@ -17,6 +17,7 @@ public class StudyCondition implements Condition, DumbAware {
       Project project = (Project) o;
       StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
       if (taskManager.getCourse() != null) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         VALUE = true;
       }
     }

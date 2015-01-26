@@ -111,6 +111,7 @@ public class StudyEditInputAction extends DumbAwareAction {
   private static void flushBuffer(@NotNull final StringBuilder buffer, @NotNull final File file) {
     PrintWriter printWriter = null;
     try {
+      //noinspection IOResourceOpenedButNotSafelyClosed
       printWriter = new PrintWriter(new FileOutputStream(file));
       printWriter.print(buffer.toString());
     }

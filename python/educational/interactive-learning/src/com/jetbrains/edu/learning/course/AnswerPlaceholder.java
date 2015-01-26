@@ -30,7 +30,6 @@ import java.io.IOException;
  * Implementation of windows which user should type in
  */
 
-
 public class AnswerPlaceholder implements Comparable, Stateful {
   private static final String WINDOW_POSTFIX = "_window.py";
   private static final Logger LOG = Logger.getInstance(AnswerPlaceholder.class);
@@ -95,8 +94,7 @@ public class AnswerPlaceholder implements Comparable, Stateful {
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
     JBColor color = getColor();
     int startOffset = document.getLineStartOffset(line) + start;
-    RangeHighlighter
-      rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + length, HighlighterLayer.LAST + 1,
+    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + length, HighlighterLayer.LAST + 1,
                                                        new TextAttributes(defaultTestAttributes.getForegroundColor(),
                                                                           defaultTestAttributes.getBackgroundColor(), color,
                                                                           defaultTestAttributes.getEffectType(),
@@ -108,8 +106,8 @@ public class AnswerPlaceholder implements Comparable, Stateful {
     if (moveCaret) {
       editor.getCaretModel().moveToOffset(startOffset);
     }
-    rh.setGreedyToLeft(true);
-    rh.setGreedyToRight(true);
+    highlighter.setGreedyToLeft(true);
+    highlighter.setGreedyToRight(true);
   }
 
   public boolean isValid(@NotNull final Document document) {
@@ -234,7 +232,9 @@ public class AnswerPlaceholder implements Comparable, Stateful {
         boolean res = testRunner.getTestsOutput(output).equals(StudyTestRunner.TEST_OK);
         userAnswerPlaceholder.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed, StudyStatus.Unchecked);
         StudyUtils.deleteFile(windowCopy);
-        StudyUtils.deleteFile(fileWindows);
+        if (fileWindows != null) {
+          StudyUtils.deleteFile(fileWindows);
+        }
         if (!resourceFile.delete()) {
           LOG.error("failed to delete", resourceFile.getPath());
         }

@@ -138,6 +138,7 @@ public class StudyUtils {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
   public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file) {
     final VirtualFile taskDir = file.getParent();
     VirtualFile fileWindows = null;
