@@ -186,18 +186,6 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       updatePrintElementGenerator();
     }
 
-    @Override
-    public void setLinearBranchesExpansion(boolean collapse) {
-      LinearGraphController.LinearGraphAnswer answer;
-      if (collapse) {
-        answer = myGraphController.performLinearGraphAction(LinearGraphActionImpl.COLLAPSE);
-      }
-      else {
-        answer = myGraphController.performLinearGraphAction(LinearGraphActionImpl.EXPAND);
-      }
-      if (answer.getGraphChanges() != null) updatePrintElementGenerator();
-    }
-
     private LinearGraphAction convert(@NotNull GraphAction graphAction) {
       PrintElementWithGraphElement printElement = null;
       if (graphAction.getAffectedElement() != null) {
@@ -237,9 +225,6 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   }
 
   private static class LinearGraphActionImpl implements LinearGraphAction {
-    private final static LinearGraphAction COLLAPSE = new LinearGraphActionImpl(null, Type.BUTTON_COLLAPSE);
-    private final static LinearGraphAction EXPAND = new LinearGraphActionImpl(null, Type.BUTTON_EXPAND);
-
     @Nullable private final PrintElementWithGraphElement myAffectedElement;
     @NotNull private final Type myType;
 

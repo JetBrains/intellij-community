@@ -28,8 +28,4 @@ public interface ActionController<CommitId> {
   boolean areLongEdgesHidden();
 
   void setLongEdgesHidden(boolean longEdgesHidden);
-
-  @Deprecated
-  void setLinearBranchesExpansion(boolean collapse);
-
 }
