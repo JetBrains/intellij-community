@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 public abstract class VmBase implements Vm, Vm.AttachStateManager {
@@ -11,7 +12,7 @@ public abstract class VmBase implements Vm, Vm.AttachStateManager {
     this.debugListener = debugListener;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public final synchronized EvaluateContext getEvaluateContext() {
     if (evaluateContext == null) {
@@ -20,8 +21,10 @@ public abstract class VmBase implements Vm, Vm.AttachStateManager {
     return evaluateContext;
   }
 
-  @NotNull
-  protected abstract EvaluateContext computeEvaluateContext();
+  @Nullable
+  protected EvaluateContext computeEvaluateContext() {
+    return null;
+  }
 
   @NotNull
   @Override

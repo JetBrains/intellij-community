@@ -43,6 +43,15 @@ public interface BreakpointManager {
   @NotNull
   Promise<Void> flush(@NotNull Breakpoint breakpoint);
 
+  /**
+   * Asynchronously enables or disables all breakpoints on remote. 'Enabled' means that
+   * breakpoints behave as normal, 'disabled' means that VM doesn't stop on breakpoints.
+   * It doesn't update individual properties of {@link Breakpoint}s. Method call
+   * with a null value and not null callback simply returns current value.
+   */
+  @NotNull
+  Promise<?> enableBreakpoints(boolean enabled);
+
   interface BreakpointListener extends EventListener {
     void resolved(@NotNull Breakpoint breakpoint);
 

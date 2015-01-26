@@ -152,4 +152,10 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
   public Promise<Void> flush(@NotNull Breakpoint breakpoint) {
     return ((T)breakpoint).flush(this);
   }
+
+  @NotNull
+  @Override
+  public Promise<?> enableBreakpoints(boolean enabled) {
+    return Promise.reject("Unsupported");
+  }
 }
