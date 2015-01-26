@@ -38,6 +38,10 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
   public void testMultipleReturns() throws Exception {
     doTest(true);
   }
+  
+  public void testEmptySentence() {
+    doTest(false);
+  }
 
   public void testArgument() throws Exception {
     doTest(false);
