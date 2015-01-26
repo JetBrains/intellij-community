@@ -22,7 +22,7 @@ public class Course {
   private String name;
   private String myCourseDirectory = "";
   private String author="";
-  private boolean myUpToDate = false;
+  private boolean myUpToDate;
   private Language myLanguage;
 
 
