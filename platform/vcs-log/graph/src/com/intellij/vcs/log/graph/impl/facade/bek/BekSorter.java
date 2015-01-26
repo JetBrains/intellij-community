@@ -37,6 +37,10 @@ public class BekSorter {
     return isBekEnabled || isInternal;
   }
 
+  public static boolean isLinearBekEnabled() {
+    return isBekEnabled() && Registry.is("vcs.log.linear.bek.sort");
+  }
+
   @NotNull
   public static BekIntMap createBekMap(@NotNull LinearGraph permanentGraph,
                                        @NotNull GraphLayoutImpl graphLayout,
@@ -86,14 +90,11 @@ public class BekSorter {
     };
   }
 
-  @NotNull
-  private final LinearGraph myPermanentGraph;
+  @NotNull private final LinearGraph myPermanentGraph;
 
-  @NotNull
-  private final GraphLayoutImpl myGraphLayout;
+  @NotNull private final GraphLayoutImpl myGraphLayout;
 
-  @NotNull
-  private final TimestampGetter myTimestampGetter;
+  @NotNull private final TimestampGetter myTimestampGetter;
 
   private BekSorter(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout, @NotNull TimestampGetter timestampGetter) {
     myPermanentGraph = permanentGraph;
