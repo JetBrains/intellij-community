@@ -50,11 +50,7 @@ public class LinearBekController extends CascadeLinearGraphController {
   static LinearBekGraph compileGraph(@NotNull LinearGraph graph,
                                      @NotNull GraphLayout graphLayout,
                                      @NotNull TimestampGetter timestampGetter) {
-    long start = System.currentTimeMillis();
-    LinearBekGraph result = new LinearBekGraphBuilder(graph, graphLayout, timestampGetter).build();
-    long end = System.currentTimeMillis();
-    System.err.println(((double)end - start) / 1000);
-    return result;
+    return new LinearBekGraphBuilder(graph, graphLayout, timestampGetter).build();
   }
 
   @NotNull
