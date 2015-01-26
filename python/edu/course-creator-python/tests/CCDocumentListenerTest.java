@@ -15,7 +15,6 @@ import java.util.List;
 
 public class CCDocumentListenerTest extends CCTestCase {
 
-
   //EDU-221
   public void testLongTaskWindows() throws Exception {
     PsiFile psiFile = myFixture.configureByFile("helloworld.py");
@@ -50,8 +49,8 @@ public class CCDocumentListenerTest extends CCTestCase {
                                         @NotNull final Document document,
                                         @NotNull final AnswerPlaceholder answerPlaceholder) {
     final String taskText = answerPlaceholder.getTaskText();
-    final int lineStartOffset = document.getLineStartOffset(answerPlaceholder.line);
-    final int offset = lineStartOffset + answerPlaceholder.start;
+    final int lineStartOffset = document.getLineStartOffset(answerPlaceholder.getLine());
+    final int offset = lineStartOffset + answerPlaceholder.getStart();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
