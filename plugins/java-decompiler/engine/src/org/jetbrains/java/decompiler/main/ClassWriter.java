@@ -677,7 +677,7 @@ public class ClassWriter {
             }
             else if (isEnum && init) actualParams -= 2;
             if (actualParams != descriptor.params.size()) {
-              String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor();
+              String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor() + " in " + cl.qualifiedName;
               DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
               descriptor = null;
             }
