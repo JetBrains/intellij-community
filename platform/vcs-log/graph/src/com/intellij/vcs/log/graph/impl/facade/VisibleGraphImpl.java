@@ -22,6 +22,7 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
@@ -79,7 +80,15 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       @NotNull
       @Override
       public RowType getRowType() {
-        throw new UnsupportedOperationException(); // todo fix
+        GraphNodeType nodeType = myGraphController.getCompiledGraph().getGraphNode(visibleRow).getType();
+        switch (nodeType) {
+          case USUAL:
+            return RowType.NORMAL;
+          case UNMATCHED:
+            return RowType.UNMATCHED;
+          default:
+            throw new UnsupportedOperationException("Unsupported node type: " + nodeType);
+        }
       }
     };
   }
