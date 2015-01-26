@@ -45,7 +45,7 @@ public class StudyUtils {
 
   private static final Logger LOG = Logger.getInstance(StudyUtils.class.getName());
 
-  public static void closeSilently(Closeable stream) {
+  public static void closeSilently(@Nullable final Closeable stream) {
     if (stream != null) {
       try {
         stream.close();
@@ -56,26 +56,22 @@ public class StudyUtils {
     }
   }
 
-  public static boolean isZip(String fileName) {
-    return fileName.contains(".zip");
-  }
-
-  public static <T> T getFirst(Iterable<T> container) {
+  public static <T> T getFirst(@NotNull final Iterable<T> container) {
     return container.iterator().next();
   }
 
-  public static boolean indexIsValid(int index, Collection collection) {
+  public static boolean indexIsValid(int index, @NotNull final Collection collection) {
     int size = collection.size();
     return index >= 0 && index < size;
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
-  public static String getFileText(String parentDir, String fileName, boolean wrapHTML, String encoding) {
-
-    File inputFile = parentDir != null ? new File(parentDir, fileName) : new File(fileName);
+  public static String getFileText(@Nullable final String parentDir, @NotNull final String fileName, boolean wrapHTML,
+                                   @NotNull final String encoding) {
+    final File inputFile = parentDir != null ? new File(parentDir, fileName) : new File(fileName);
     if (!inputFile.exists()) return null;
-    StringBuilder taskText = new StringBuilder();
+    final StringBuilder taskText = new StringBuilder();
     BufferedReader reader = null;
     try {
       reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile), encoding));
@@ -97,13 +93,13 @@ public class StudyUtils {
     return null;
   }
 
-  public static void updateAction(AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
+  public static void updateAction(@NotNull final AnActionEvent e) {
+    final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     presentation.setVisible(false);
-    Project project = e.getProject();
+    final Project project = e.getProject();
     if (project != null) {
-      FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
+      final FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
       for (FileEditor editor : editors) {
         if (editor instanceof StudyEditor) {
           presentation.setEnabled(true);
@@ -113,12 +109,12 @@ public class StudyUtils {
     }
   }
 
-  public static void updateStudyToolWindow(Project project) {
-    ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager()
-      .removeAllContents(false);
+  public static void updateStudyToolWindow(@NotNull final Project project) {
+    ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).
+      getContentManager().removeAllContents(false);
     StudyToolWindowFactory factory = new StudyToolWindowFactory();
-    factory
-      .createToolWindowContent(project, ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
+    factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).
+      getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
   }
 
   public static void synchronize() {
@@ -142,8 +138,8 @@ public class StudyUtils {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static VirtualFile flushWindows(TaskFile taskFile, VirtualFile file) {
-    VirtualFile taskDir = file.getParent();
+  public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file) {
+    final VirtualFile taskDir = file.getParent();
     VirtualFile fileWindows = null;
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) {
@@ -151,7 +147,7 @@ public class StudyUtils {
       return null;
     }
     if (taskDir != null) {
-      String name = file.getNameWithoutExtension() + "_windows";
+      final String name = file.getNameWithoutExtension() + "_windows";
       PrintWriter printWriter = null;
       try {
         fileWindows = taskDir.createChildData(taskFile, name);
@@ -162,7 +158,7 @@ public class StudyUtils {
             continue;
           }
           int start = taskWindow.getRealStartOffset(document);
-          String windowDescription = document.getText(new TextRange(start, start + taskWindow.getLength()));
+          final String windowDescription = document.getText(new TextRange(start, start + taskWindow.getLength()));
           printWriter.println("#educational_plugin_window = " + windowDescription);
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -183,7 +179,7 @@ public class StudyUtils {
     return fileWindows;
   }
 
-  public static void deleteFile(VirtualFile file) {
+  public static void deleteFile(@NotNull final VirtualFile file) {
     try {
       file.delete(StudyUtils.class);
     }
@@ -192,22 +188,22 @@ public class StudyUtils {
     }
   }
 
-  public static File copyResourceFile(String sourceName, String copyName, Project project, Task task)
+  public static File copyResourceFile(@NotNull final String sourceName, @NotNull final String copyName, @NotNull final Project project,
+                                      @NotNull final Task task)
     throws IOException {
-    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    Course course = taskManager.getCourse();
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    final Course course = taskManager.getCourse();
     int taskNum = task.getIndex() + 1;
     int lessonNum = task.getLesson().getIndex() + 1;
     assert course != null;
-    String pathToResource =
-      FileUtil.join(course.getCourseDirectory(), Lesson.LESSON_DIR + lessonNum, Task.TASK_DIR + taskNum);
-    File resourceFile = new File(pathToResource, copyName);
+    final String pathToResource = FileUtil.join(course.getCourseDirectory(), Lesson.LESSON_DIR + lessonNum, Task.TASK_DIR + taskNum);
+    final File resourceFile = new File(pathToResource, copyName);
     FileUtil.copy(new File(pathToResource, sourceName), resourceFile);
     return resourceFile;
   }
 
   @Nullable
-  public static Sdk findSdk(Task task, @NotNull final Project project) {
+  public static Sdk findSdk(@NotNull final Task task, @NotNull final Project project) {
     final Language language = task.getLesson().getCourse().getLanguage();
     return StudyExecutor.INSTANCE.forLanguage(language).findSdk(project);
   }
@@ -219,7 +215,7 @@ public class StudyUtils {
       return;
     }
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    ContentEntry entry = MarkRootActionBase.findContentEntry(model, dir);
+    final ContentEntry entry = MarkRootActionBase.findContentEntry(model, dir);
     if (entry == null) {
       LOG.info("Content entry for " + dir.getPath() + " was not found");
       return;
@@ -240,7 +236,8 @@ public class StudyUtils {
     return StudyExecutor.INSTANCE.forLanguage(language).getTestRunner(task, taskDir);
   }
 
-  public static RunContentExecutor getExecutor(@NotNull final Project project, Task currentTask, @NotNull final ProcessHandler handler) {
+  public static RunContentExecutor getExecutor(@NotNull final Project project, @NotNull final Task currentTask,
+                                               @NotNull final ProcessHandler handler) {
     final Language language = currentTask.getLesson().getCourse().getLanguage();
     return StudyExecutor.INSTANCE.forLanguage(language).getExecutor(project, handler);
   }
@@ -270,9 +267,9 @@ public class StudyUtils {
    * shows pop up in the center of "check task" button in study editor
    */
   public static void showCheckPopUp(@NotNull final Project project, @NotNull final Balloon balloon) {
-    StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
+    final StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
     assert studyEditor != null;
-    JButton checkButton = studyEditor.getCheckButton();
+    final JButton checkButton = studyEditor.getCheckButton();
     balloon.showInCenterOf(checkButton);
     Disposer.register(project, balloon);
   }
