@@ -61,10 +61,11 @@ public class StudyRunAction extends DumbAwareAction {
         return;
       }
       myHandler = new OSProcessHandler(process);
-      RunContentExecutor executor = StudyUtils.getExecutor(project, myHandler);
-      Disposer.register(project, executor);
-      executor.run();
-
+      final RunContentExecutor executor = StudyUtils.getExecutor(project, myHandler);
+      if (executor != null) {
+        Disposer.register(project, executor);
+        executor.run();
+      }
     }
   }
 

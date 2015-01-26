@@ -26,7 +26,6 @@ import com.jetbrains.edu.learning.course.Task;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -35,15 +34,6 @@ public class PyStudyUtils implements StudyUtilsExtensionPoint {
   @Override
   public Sdk findSdk(@NotNull final Project project) {
     return PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
-  }
-
-  @Nullable
-  @Override
-  public String getLinkToTutorial() {
-    return "<html>If you'd like to learn" +
-           " more about PyCharm " +
-           "Educational Edition, " +
-           "click <a href=\"https://www.jetbrains.com/pycharm-educational/quickstart/\">here</a> to watch a tutorial</html>";
   }
 
   @Override
@@ -60,11 +50,11 @@ public class PyStudyUtils implements StudyUtilsExtensionPoint {
   public void setCommandLineParameters(@NotNull final GeneralCommandLine cmd,
                                                @NotNull final Project project,
                                                @NotNull final String filePath,
-                                               @NotNull final String pythonPath,
+                                               @NotNull final String sdkPath,
                                                @NotNull final Task currentTask) {
     if (!currentTask.getUserTests().isEmpty()) {
       cmd.addParameter(new File(project.getBaseDir().getPath(), StudyNames.USER_TESTER).getPath());
-      cmd.addParameter(pythonPath);
+      cmd.addParameter(sdkPath);
       cmd.addParameter(filePath);
     }
     else {

@@ -40,4 +40,11 @@
       <add-to-group group-id="HelpMenu" anchor="first"/>
     </action>
   </actions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.edu.learning.PyStudyShowTutorial</implementation-class>
+      <interface-class>com.jetbrains.edu.learning.PyStudyShowTutorial</interface-class>
+    </component>
+  </project-components>
 </idea-plugin>

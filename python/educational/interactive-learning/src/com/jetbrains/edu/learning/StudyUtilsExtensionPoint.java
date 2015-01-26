@@ -30,17 +30,15 @@ public interface StudyUtilsExtensionPoint {
   ExtensionPointName<StudyUtilsExtensionPoint> EP_NAME = ExtensionPointName.create("Edu.StudyUtils");
 
   @Nullable
-  abstract Sdk findSdk(@NotNull final Project project);
+  Sdk findSdk(@NotNull final Project project);
 
-  abstract String getLinkToTutorial();
+  StudyTestRunner getTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir);
 
-  abstract StudyTestRunner getTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir);
+  RunContentExecutor getExecutor(@NotNull final Project project, @NotNull final ProcessHandler handler);
 
-  public RunContentExecutor getExecutor(@NotNull final Project project, @NotNull final ProcessHandler handler);
-
-  public void setCommandLineParameters(@NotNull final GeneralCommandLine cmd,
-                                       @NotNull final Project project,
-                                       @NotNull final String filePath,
-                                       @NotNull final String pythonPath,
-                                       @NotNull final Task currentTask);
+  void setCommandLineParameters(@NotNull final GeneralCommandLine cmd,
+                                @NotNull final Project project,
+                                @NotNull final String filePath,
+                                @NotNull final String sdkPath,
+                                @NotNull final Task currentTask);
 }

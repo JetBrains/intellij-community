@@ -243,15 +243,6 @@ public class StudyUtils {
     return null;
   }
 
-  public static String getLinkToTutorial() {
-    final StudyUtilsExtensionPoint[] extensions =
-      ApplicationManager.getApplication().getExtensions(StudyUtilsExtensionPoint.EP_NAME);
-    if (extensions.length > 0) {
-      return extensions[0].getLinkToTutorial();
-    }
-    return null;
-  }
-
   public static RunContentExecutor getExecutor(@NotNull final Project project, @NotNull final ProcessHandler handler) {
     final StudyUtilsExtensionPoint[] extensions =
       ApplicationManager.getApplication().getExtensions(StudyUtilsExtensionPoint.EP_NAME);
@@ -264,12 +255,12 @@ public class StudyUtils {
   public static void setCommandLineParameters(@NotNull final GeneralCommandLine cmd,
                                                @NotNull final Project project,
                                                @NotNull final String filePath,
-                                               @NotNull final String pythonPath,
+                                               @NotNull final String sdkPath,
                                                @NotNull final Task currentTask) {
   final StudyUtilsExtensionPoint[] extensions =
       ApplicationManager.getApplication().getExtensions(StudyUtilsExtensionPoint.EP_NAME);
     if (extensions.length > 0) {
-      extensions[0].setCommandLineParameters(cmd, project, filePath, pythonPath, currentTask);
+      extensions[0].setCommandLineParameters(cmd, project, filePath, sdkPath, currentTask);
     }
   }
 
