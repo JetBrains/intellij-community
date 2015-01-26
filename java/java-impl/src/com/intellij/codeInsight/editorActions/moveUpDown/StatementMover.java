@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,14 +98,14 @@ class StatementMover extends LineMover {
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length-1];
 
-    if (!checkMovingInsideOutside(file, editor, range, info, down)) {
+    if (!checkMovingInsideOutside(file, editor, info, down)) {
       info.toMove2 = null;
       return true;
     }
     return true;
   }
 
-  private int getDestLineForAnon(PsiFile file, Editor editor, LineRange range, MoveInfo info, boolean down) {
+  private static int getDestLineForAnon(Editor editor, LineRange range, boolean down) {
     int destLine = down ? range.endLine+1 : range.startLine - 1;
     if (!(range.firstElement instanceof PsiStatement)) {
       return destLine;
@@ -135,8 +135,9 @@ class StatementMover extends LineMover {
 
     return destLine;
   }
+
   private boolean calcInsertOffset(@NotNull PsiFile file, @NotNull Editor editor, @NotNull LineRange range, @NotNull final MoveInfo info, final boolean down) {
-    int destLine = getDestLineForAnon(file, editor, range, info, down);
+    int destLine = getDestLineForAnon(editor, range, down);
 
     int startLine = down ? range.endLine : range.startLine - 1;
     if (destLine < 0 || startLine < 0) return false;
@@ -209,7 +210,7 @@ class StatementMover extends LineMover {
     return false;
   }
 
-  private boolean checkMovingInsideOutside(PsiFile file, final Editor editor, LineRange range, @NotNull final MoveInfo info, final boolean down) {
+  private boolean checkMovingInsideOutside(PsiFile file, final Editor editor, @NotNull final MoveInfo info, final boolean down) {
     final int offset = editor.getCaretModel().getOffset();
 
     PsiElement elementAtOffset = file.getViewProvider().findElementAt(offset, StdLanguages.JAVA);
