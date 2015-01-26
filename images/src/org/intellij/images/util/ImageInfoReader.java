@@ -20,7 +20,10 @@ import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 /**
  * @author spleaner
@@ -242,6 +245,28 @@ public class ImageInfoReader {
       this.width = width;
       this.height = height;
       this.bpp = bpp;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Info)) return false;
+
+      Info info = (Info)o;
+
+      if (width != info.width) return false;
+      if (height != info.height) return false;
+      if (bpp != info.bpp) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = width;
+      result = 31 * result + height;
+      result = 31 * result + bpp;
+      return result;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remoteServer.agent.util;
+package org.jetbrains.idea.maven.dom.model.presentation;
 
-import com.intellij.remoteServer.agent.util.log.LogListener;
-
-import java.io.OutputStream;
+import com.intellij.ide.presentation.PresentationProvider;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 
 /**
- * @author michael.golubev
+ *
  */
-public interface CloudAgentLoggingHandler {
-
-  void println(String message);
-
-  LogListener getOrCreateLogListener(String pipeName);
-
-  LogListener getOrCreateEmptyLogListener(String pipeName);
-
-  LogListener createConsole(String pipeName, OutputStream consoleInput);
+public class MavenProfilePresentationProvider extends PresentationProvider<MavenDomProfile> {
+  @Nullable
+  @Override
+  public String getName(MavenDomProfile mavenDomProfile) {
+    return mavenDomProfile.getId().getStringValue();
+  }
 }

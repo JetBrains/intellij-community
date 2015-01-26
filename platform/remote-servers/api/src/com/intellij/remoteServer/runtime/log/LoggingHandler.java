@@ -14,4 +14,6 @@ public interface LoggingHandler {
   void printHyperlink(@NotNull String text, HyperlinkInfo info);
 
   void attachToProcess(@NotNull ProcessHandler handler);
+
+  void clear();
 }

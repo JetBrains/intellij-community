@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.CallArgumentsMapping;
 import com.jetbrains.python.psi.PyArgumentList;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.EnumSet;
@@ -457,7 +458,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
-    public void setEscapeFunction(Function<String, String> escapeFunction) {
+    public void setEscapeFunction(@Nullable Function<String, String> escapeFunction) {
     }
 
     @Override

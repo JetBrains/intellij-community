@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -262,7 +263,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    */
   void setDebugMode(boolean dbgMode);
 
-  void enforceCommentTokens(TokenSet tokens);
+  void enforceCommentTokens(@NotNull TokenSet tokens);
 
   /**
    * @return latest left done node for context dependent parsing.
