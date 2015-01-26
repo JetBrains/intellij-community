@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,22 +174,42 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   public static GlobalSearchScope notScope(@NotNull final GlobalSearchScope scope) {
-    return new DelegatingGlobalSearchScope(scope) {
-      @Override
-      public boolean contains(@NotNull final VirtualFile file) {
-        return !myBaseScope.contains(file);
-      }
+    return new NotScope(scope);
+  }
+  private static class NotScope extends DelegatingGlobalSearchScope {
+    private NotScope(@NotNull GlobalSearchScope scope) {
+      super(scope);
+    }
 
-      @Override
-      public boolean isSearchOutsideRootModel() {
-        return true;
-      }
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      return !myBaseScope.contains(file);
+    }
 
-      @Override
-      public String toString() {
-        return "NOT: "+myBaseScope;
-      }
-    };
+    @Override
+    public boolean isSearchInLibraries() {
+      return !myBaseScope.isSearchInLibraries();
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
+      return !myBaseScope.isSearchInModuleContent(aModule, testSources);
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return !myBaseScope.isSearchInModuleContent(aModule);
+    }
+
+    @Override
+    public boolean isSearchOutsideRootModel() {
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return "NOT: "+myBaseScope;
+    }
   }
 
   /**
