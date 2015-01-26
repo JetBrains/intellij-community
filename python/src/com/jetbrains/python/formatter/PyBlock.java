@@ -509,21 +509,15 @@ public class PyBlock implements ASTBlock {
 
   private static boolean isWhitespaceWithLineBreaks(@Nullable ASTNode node, int minCount) {
     if (isWhitespace(node)) {
-      for (ASTNode prevNode = node.getTreePrev(); isWhitespace(prevNode); prevNode = prevNode.getTreePrev()) {
-        node = prevNode;
-      }
-      while (isWhitespace(node)) {
-        final String nodeText = node.getText();
-        int count = 0;
-        for (int i = 0; i < nodeText.length(); i++) {
-          if (nodeText.charAt(i) == '\n') {
-            count++;
-            if (count == minCount) {
-              return true;
-            }
+      final String prevNodeText = node.getText();
+      int count = 0;
+      for (int i = 0; i < prevNodeText.length(); i++) {
+        if (prevNodeText.charAt(i) == '\n') {
+          count++;
+          if (count == minCount) {
+            return true;
           }
         }
-        node = node.getTreeNext();
       }
     }
     return false;
