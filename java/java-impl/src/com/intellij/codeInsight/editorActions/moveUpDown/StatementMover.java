@@ -111,7 +111,7 @@ class StatementMover extends LineMover {
       return destLine;
     }
     PsiElement sibling =
-      StatementUpDownMover.firstNonWhiteElement(down ? range.firstElement.getNextSibling() : range.firstElement.getPrevSibling(), down);
+      StatementUpDownMover.firstNonWhiteElement(down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling(), down);
     PsiElement toMove = sibling;
     if (!(sibling instanceof PsiStatement)) {
       return destLine;
