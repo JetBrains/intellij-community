@@ -21,12 +21,15 @@ import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -44,15 +47,29 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   public boolean canSelect(PsiFileSystemItem fileSystemItem) {
     if (!super.canSelect(fileSystemItem)) return false;
     if (!(fileSystemItem instanceof PsiFile)) return false;
-    PsiFile file = (PsiFile) fileSystemItem;
+    return getContainingScope((PsiFile)fileSystemItem) != null;
+  }
+
+  @Nullable
+  private NamedScope getContainingScope(PsiFile file) {
     NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);
-    NamedScope[] allScopes = scopesHolder.getScopes();
-    allScopes = ArrayUtil.mergeArrays(allScopes, NamedScopeManager.getInstance(myProject).getScopes());
-    for (NamedScope scope : allScopes) {
+    for (NamedScope scope : ScopeViewPane.getShownScopes(myProject)) {
       PackageSet packageSet = scope.getValue();
-      if (packageSet != null && packageSet.contains(file, scopesHolder)) return true;
+      if (packageSet != null && packageSet.contains(file, scopesHolder)) {
+        return scope;
+      }
     }
-    return false;
+    return null;
+  }
+
+  @Override
+  public void select(PsiElement element, boolean requestFocus) {
+    if (getSubId() == null) {
+      NamedScope scope = getContainingScope(element.getContainingFile());
+      if (scope == null) return;
+      setSubId(scope.getName());
+    }
+    super.select(element, requestFocus);
   }
 
   @Override
@@ -71,18 +88,13 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   @Override
-  public boolean isSubIdSelectable(String subId, SelectInContext context) {
-    if (context == null) return false;
+  public boolean isSubIdSelectable(@NotNull String subId, @NotNull SelectInContext context) {
+    PsiFileSystemItem file = getContextPsiFile(context);
+    if (!(file instanceof PsiFile)) return false;
     final NamedScope scope = NamedScopesHolder.getScope(myProject, subId);
-    if (scope == null) return false;
-    PackageSet packageSet = scope.getValue();
-    final VirtualFile virtualFile = context.getVirtualFile();
-    if (packageSet != null) {
-      final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, subId, DependencyValidationManager.getInstance(myProject));
-      if (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(virtualFile, myProject, holder) : packageSet.contains(PackageSetBase.getPsiFile(virtualFile, myProject), holder)) {
-        return true;
-      }
-    }
-    return false;
+    PackageSet packageSet = scope != null ? scope.getValue() : null;
+    if (packageSet == null) return false;
+    NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, subId, DependencyValidationManager.getInstance(myProject));
+    return packageSet.contains((PsiFile)file, holder);
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
@@ -38,12 +39,27 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   protected abstract boolean canSelect(PsiFileSystemItem file);
 
   @Override
-  public final boolean canSelect(SelectInContext context) {
+  public final boolean canSelect(@NotNull SelectInContext context) {
+    if (!isContextValid(context)) return false;
+
+    return canWorkWithCustomObjects() || canSelectInner(context);
+  }
+
+  protected boolean canSelectInner(@NotNull SelectInContext context) {
+    PsiFileSystemItem psiFile = getContextPsiFile(context);
+    return psiFile != null && canSelect(psiFile);
+  }
+
+  private boolean isContextValid(SelectInContext context) {
     if (myProject.isDisposed()) return false;
 
     VirtualFile virtualFile = context.getVirtualFile();
-    if (!virtualFile.isValid()) return false;
+    return virtualFile.isValid();
+  }
 
+  @Nullable
+  protected PsiFileSystemItem getContextPsiFile(@NotNull SelectInContext context) {
+    VirtualFile virtualFile = context.getVirtualFile();
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     final PsiFileSystemItem psiFile;
     if (document != null) {
@@ -58,11 +74,11 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     else {
       psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
     }
-    return psiFile != null && canSelect(psiFile) || canWorkWithCustomObjects();
+    return psiFile;
   }
 
   @Override
-  public final void selectIn(SelectInContext context, final boolean requestFocus) {
+  public final void selectIn(@NotNull SelectInContext context, boolean requestFocus) {
     VirtualFile file = context.getVirtualFile();
     Object selector = context.getSelectorInFile();
     if (selector == null) {
@@ -72,12 +88,13 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
 
     if (selector instanceof PsiElement) {
       select(((PsiElement)selector).getOriginalElement(), requestFocus);
-    } else {
+    }
+    else {
       select(selector, file, requestFocus);
     }
   }
 
-  protected abstract void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus);
+  protected abstract void select(Object selector, VirtualFile virtualFile, boolean requestFocus);
 
   protected abstract boolean canWorkWithCustomObjects();
 
