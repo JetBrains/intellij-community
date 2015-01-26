@@ -21,6 +21,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
@@ -97,6 +98,12 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testCompletionWithLookup() {
     doTestCompletion("<html><body></body><bertran></bertran><b<caret>></b><html>", "e\n",
                      "<html><body></body><bertran></bertran><bertran></bertran><html>");
+  }
+
+  public void testUndo() {
+    doTest("<div<caret>></div>", "v", "<divv></divv>");
+    myFixture.performEditorAction(IdeActions.ACTION_UNDO);
+    myFixture.checkResult("<div></div>");
   }
 
   public void testInjection() {

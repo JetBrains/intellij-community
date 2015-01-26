@@ -152,6 +152,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       if (myState == State.APPLYING) return;
 
       final Document document = event.getDocument();
+      final int offset = event.getOffset();
+      final int oldLength = event.getOldLength();
       if (myState == State.INITIAL) {
         final PsiFile file = myDocumentManager.getPsiFile(document);
         if (file == null) return;
@@ -186,14 +188,17 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
           myMarkers.add(Couple.of(leader, support));
         }
 
+        if (!fitsInMarker(offset, oldLength)) {
+          clearMarkers();
+          return;
+        }
+
         myState = State.TRACKING;
       }
       if (myMarkers.isEmpty()) return;
 
       final CharSequence fragment = event.getNewFragment();
-      final int offset = event.getOffset();
       final int newLength = event.getNewLength();
-      final int oldLength = event.getOldLength();
 
       if (document.getUserData(XmlTagInsertHandler.ENFORCING_TAG) == Boolean.TRUE) {
         // xml completion inserts extra space after tag name to ensure correct parsing
@@ -208,6 +213,14 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
         }
       }
 
+      boolean fitsInMarker = fitsInMarker(offset, oldLength);
+      if (!fitsInMarker) {
+        clearMarkers();
+        beforeDocumentChange(event);
+      }
+    }
+
+    public boolean fitsInMarker(int offset, int oldLength) {
       boolean fitsInMarker = false;
       for (Couple<RangeMarker> leaderAndSupport : myMarkers) {
         final RangeMarker leader = leaderAndSupport.first;
@@ -217,10 +230,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
         }
         fitsInMarker |= offset >= leader.getStartOffset() && offset + oldLength <= leader.getEndOffset();
       }
-      if (!fitsInMarker) {
-        clearMarkers();
-        beforeDocumentChange(event);
-      }
+      return fitsInMarker;
     }
 
     public void clearMarkers() {
