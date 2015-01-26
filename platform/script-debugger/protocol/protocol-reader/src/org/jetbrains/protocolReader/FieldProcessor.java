@@ -98,7 +98,7 @@ final class FieldProcessor<T> {
         writeMethodDeclarationJava(out, method);
         out.openBlock();
         if (effectiveFieldName != null) {
-          out.append("return ").append(TypeHandler.FIELD_PREFIX).append(effectiveFieldName).semi();
+          out.append("return ").append(TypeWriter.FIELD_PREFIX).append(effectiveFieldName).semi();
         }
         out.closeBlock();
       }

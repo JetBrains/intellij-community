@@ -55,7 +55,7 @@ class InterfaceReader {
     }
   };
 
-  private final LinkedHashMap<Class<?>, TypeHandler<?>> typeToTypeHandler;
+  private final LinkedHashMap<Class<?>, TypeWriter<?>> typeToTypeHandler;
 
   final List<TypeRef<?>> refs = new ArrayList<>();
   final List<SubtypeCaster> subtypeCasters = new ArrayList<>();
@@ -67,22 +67,22 @@ class InterfaceReader {
     }
   }
 
-  private InterfaceReader(LinkedHashMap<Class<?>, TypeHandler<?>> typeToTypeHandler) {
+  private InterfaceReader(LinkedHashMap<Class<?>, TypeWriter<?>> typeToTypeHandler) {
     this.typeToTypeHandler = typeToTypeHandler;
   }
 
-  public static TypeHandler<?> createHandler(LinkedHashMap<Class<?>, TypeHandler<?>> typeToTypeHandler, Class<?> aClass) {
+  public static TypeWriter<?> createHandler(LinkedHashMap<Class<?>, TypeWriter<?>> typeToTypeHandler, Class<?> aClass) {
     InterfaceReader reader = new InterfaceReader(typeToTypeHandler);
     reader.processed.addAll(typeToTypeHandler.keySet());
     reader.go(new Class[]{aClass});
     return typeToTypeHandler.get(aClass);
   }
 
-  LinkedHashMap<Class<?>, TypeHandler<?>> go() {
+  LinkedHashMap<Class<?>, TypeWriter<?>> go() {
     return go(typeToTypeHandler.keySet().toArray(new Class[typeToTypeHandler.size()]));
   }
 
-  private LinkedHashMap<Class<?>, TypeHandler<?>> go(Class<?>[] classes) {
+  private LinkedHashMap<Class<?>, TypeWriter<?>> go(Class<?>[] classes) {
     for (Class<?> typeClass : classes) {
       createIfNotExists(typeClass);
     }
@@ -146,18 +146,18 @@ class InterfaceReader {
       }
     }
 
-    TypeHandler<?> typeHandler = new TypeHandler<>(typeClass, getSuperclassRef(typeClass),
+    TypeWriter<?> typeWriter = new TypeWriter<>(typeClass, getSuperclassRef(typeClass),
                                                    fields.volatileFields, fields.methodHandlerMap,
                                                    fields.fieldLoaders,
                                                    fields.lazyRead);
     for (TypeRef ref : refs) {
       if (ref.typeClass == typeClass) {
         assert ref.type == null;
-        ref.type = typeHandler;
+        ref.type = typeWriter;
         break;
       }
     }
-    typeToTypeHandler.put(typeClass, typeHandler);
+    typeToTypeHandler.put(typeClass, typeWriter);
   }
 
   ValueReader getFieldTypeParser(Type type, boolean isSubtyping, @Nullable Method method) {
