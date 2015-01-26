@@ -6,8 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -17,10 +16,13 @@ import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.requests.*;
 import com.intellij.openapi.util.diff.tools.util.SoftHardCacheMap;
+import com.intellij.openapi.util.diff.util.CalledInBackground;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.diff.util.WaitingBackgroundableTaskExecutor;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +36,8 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
 
   @NotNull private final SoftHardCacheMap<DiffRequestPresentable, DiffRequest> myRequestCache =
     new SoftHardCacheMap<DiffRequestPresentable, DiffRequest>(5, 5);
+
+  @NotNull private final WaitingBackgroundableTaskExecutor myTaskExecutor = new WaitingBackgroundableTaskExecutor();
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
     super(project);
@@ -56,54 +60,68 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   // Update
   //
 
-  public void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
-    applyRequest(loadRequest(), force, scrollToChangePolicy);
-  }
-
-  @NotNull
-  private DiffRequest loadRequest() {
+  public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
     List<? extends DiffRequestPresentable> requests = myRequestChain.getRequests();
     int index = myRequestChain.getIndex();
-
-    if (index < 0 || index >= requests.size()) return new NoDiffRequest();
+    if (index < 0 || index >= requests.size()) {
+      applyRequest(new NoDiffRequest(), force, scrollToChangePolicy);
+      return;
+    }
 
     final DiffRequestPresentable presentable = requests.get(index);
 
-    DiffRequest request = myRequestCache.get(presentable);
-    if (request != null) return request;
+    DiffRequest request = loadRequestFast(presentable);
+    if (request != null) {
+      applyRequest(request, force, scrollToChangePolicy);
+      return;
+    }
 
-    final Error[] errorRef = new Error[1];
-    final DiffRequest[] requestRef = new DiffRequest[1];
-    // FIXME: on initial loading, progress indicator is shown behind window
-    ProgressManager.getInstance().run(new Task.Modal(getProject(), "Collecting data", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          requestRef[0] = presentable.process(getContext(), indicator);
+    myTaskExecutor.execute(
+      new Convertor<ProgressIndicator, Runnable>() {
+        @Override
+        public Runnable convert(ProgressIndicator indicator) {
+          final DiffRequest request = loadRequest(presentable, indicator);
+          return new Runnable() {
+            @Override
+            public void run() {
+              myRequestCache.put(presentable, request);
+              applyRequest(request, force, scrollToChangePolicy);
+            }
+          };
         }
-        catch (ProcessCanceledException e) {
-          requestRef[0] = new OperationCanceledDiffRequest(presentable.getName());
-          requestRef[0].putUserData(DiffUserDataKeys.CONTEXT_ACTIONS,
-                                    Collections.<AnAction>singletonList(new ReloadRequestAction(presentable)));
+      },
+      new Runnable() {
+        @Override
+        public void run() {
+          applyRequest(new LoadingDiffRequest(presentable.getName()), force, scrollToChangePolicy);
         }
-        catch (DiffRequestPresentableException e) {
-          requestRef[0] = new ErrorDiffRequest(presentable, e);
-        }
-        catch (Exception e) {
-          requestRef[0] = new ErrorDiffRequest(presentable, e);
-        }
-        catch (Error e) {
-          errorRef[0] = e;
-        }
-      }
-    });
-    if (errorRef[0] != null) throw errorRef[0];
+      },
+      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+    );
+  }
 
-    request = requestRef[0];
-    assert request != null;
+  @Nullable
+  protected DiffRequest loadRequestFast(@NotNull DiffRequestPresentable presentable) {
+    return myRequestCache.get(presentable);
+  }
 
-    myRequestCache.put(presentable, request);
-
-    return request;
+  @NotNull
+  @CalledInBackground
+  private DiffRequest loadRequest(@NotNull DiffRequestPresentable presentable, @NotNull ProgressIndicator indicator) {
+    try {
+      return presentable.process(getContext(), indicator);
+    }
+    catch (ProcessCanceledException e) {
+      OperationCanceledDiffRequest request = new OperationCanceledDiffRequest(presentable.getName());
+      request.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new ReloadRequestAction(presentable)));
+      return request;
+    }
+    catch (DiffRequestPresentableException e) {
+      return new ErrorDiffRequest(presentable, e);
+    }
+    catch (Exception e) {
+      return new ErrorDiffRequest(presentable, e);
+    }
   }
 
   //
@@ -123,6 +141,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   @Override
   protected void onDispose() {
     super.onDispose();
+    myTaskExecutor.abort();
     myRequestCache.clear();
   }
 
