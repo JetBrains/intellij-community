@@ -39,11 +39,11 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>@@bundle_name@@ EAP, build EAP. Copyright @@company_name@@, (c) @@min_year@@-@@max_year@@</string>
+    <string>@@bundle_name@@ @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
     <key>CFBundleShortVersionString</key>
-    <string>EAP</string>
+    <string>@@version@@</string>
     <key>CFBundleVersion</key>
-    <string>EAP</string>
+    <string>@@build@@</string>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
     <key>CFBundleHelpBookName</key>
