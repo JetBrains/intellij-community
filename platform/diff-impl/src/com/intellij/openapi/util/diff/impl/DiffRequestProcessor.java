@@ -215,7 +215,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       myState.init();
     }
 
-    if (hadFocus) requestFocus();
+    if (hadFocus) requestFocusInternal();
   }
 
   protected void setWindowTitle(@NotNull String title) {
@@ -257,6 +257,11 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   public void requestFocus() {
     DiffUtil.requestFocus(myProject, getPreferredFocusedComponent());
+  }
+
+  protected void requestFocusInternal() {
+    JComponent component = getPreferredFocusedComponent();
+    if (component != null) component.requestFocus();
   }
 
   @Override
@@ -689,7 +694,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void requestFocus() {
-      DiffRequestProcessor.this.requestFocus();
+      DiffRequestProcessor.this.requestFocusInternal();
     }
   }
 
