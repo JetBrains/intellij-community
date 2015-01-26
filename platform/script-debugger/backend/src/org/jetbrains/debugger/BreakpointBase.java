@@ -4,6 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.List;
 
@@ -113,4 +114,7 @@ public abstract class BreakpointBase<L> extends Breakpoint {
     result = 31 * result + target.hashCode();
     return result;
   }
+
+  @NotNull
+  public abstract Promise<Void> flush(@NotNull BreakpointManager breakpointManager);
 }

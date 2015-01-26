@@ -140,4 +140,16 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
   public ScriptRegExpSupport getScriptRegExpSupport() {
     return null;
   }
+
+  @NotNull
+  @Override
+  public MUTE_MODE getMuteMode() {
+    return MUTE_MODE.ONE;
+  }
+
+  @NotNull
+  @Override
+  public Promise<Void> flush(@NotNull Breakpoint breakpoint) {
+    return ((T)breakpoint).flush(this);
+  }
 }
