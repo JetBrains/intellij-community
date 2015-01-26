@@ -90,10 +90,12 @@ public class BuildMain {
     final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
     Utils.setSystemRoot(systemDir);
 
+    final long eventLoopStart = System.currentTimeMillis();
     // IDEA-123132, let's try again
     for (int attempt = 0; attempt < 3; attempt++) {
       try {
         ourEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
+        System.out.println("Created event loop in " + attempt + " attempts for " + (System.currentTimeMillis() - eventLoopStart) + " ms");
         break;
       }
       catch (IllegalStateException e) {
@@ -113,6 +115,7 @@ public class BuildMain {
       }
     }
 
+    final long nettyBootstrapStart = System.currentTimeMillis();
     final Bootstrap bootstrap = new Bootstrap().group(ourEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
       @Override
       protected void initChannel(Channel channel) throws Exception {
@@ -124,7 +127,13 @@ public class BuildMain {
       }
     }).option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
 
+    final long nettyBootstrapEnd = System.currentTimeMillis();
+    System.out.println("Netty bootstrap created in " + (nettyBootstrapEnd - nettyBootstrapStart) + " ms");
+    
     final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port)).awaitUninterruptibly();
+
+    System.out.println("Connection to IDE established in " + (System.currentTimeMillis() - nettyBootstrapEnd) + " ms");
+    
     final boolean success = future.isSuccess();
     if (success) {
       final String projectPathToPreload = System.getProperty(PRELOAD_PROJECT_PATH, null);
@@ -324,6 +333,7 @@ public class BuildMain {
   }
 
   private static void initLoggers() {
+    final long start = System.currentTimeMillis();
     try {
       final String logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
       final File configFile = logDir != null? new File(logDir, LOG_CONFIG_FILE_NAME) : new File(LOG_CONFIG_FILE_NAME);
@@ -332,6 +342,7 @@ public class BuildMain {
       final String logFile = logDir != null? new File(logDir, LOG_FILE_NAME).getAbsolutePath() : LOG_FILE_NAME;
       text = StringUtil.replace(text, LOG_FILE_MACRO, StringUtil.replace(logFile, "\\", "\\\\"));
       new DOMConfigurator().doConfigure(new StringReader(text), LogManager.getLoggerRepository());
+      System.out.println("BuildMain.initLoggers loggers configured in " + (System.currentTimeMillis() - start) + " ms");
     }
     catch (IOException e) {
       System.err.println("Failed to configure logging: ");
@@ -341,6 +352,7 @@ public class BuildMain {
 
     Logger.setFactory(MyLoggerFactory.class);
     InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory());
+    System.out.println("BuildMain.initLoggers finished in " + (System.currentTimeMillis() - start) + " ms");
   }
 
   private static void ensureLogConfigExists(final File logConfig) throws IOException {
