@@ -126,4 +126,8 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
   public void testBatchUpdateCausedByFormatter() throws Exception {
     doTest();
   }
+
+  public void testFormattingInside() throws Exception {
+    doTest();
+  }
 }

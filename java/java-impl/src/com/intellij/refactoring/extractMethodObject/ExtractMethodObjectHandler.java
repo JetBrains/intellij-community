@@ -114,26 +114,26 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
             catch (IncorrectOperationException e) {
               LOG.error(e);
             }
-          }
-        });
 
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        if (processor.isCreateInnerClass()) {
-          processor.moveUsedMethodsToInner();
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          if (editor != null) {
-            DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
-          }
-        }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
             if (processor.isCreateInnerClass()) {
-              processor.changeInstanceAccess(project);
+              processor.moveUsedMethodsToInner();
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              if (editor != null) {
+                DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
+              }
             }
-            final PsiElement method = processor.getMethod();
-            LOG.assertTrue(method != null);
-            method.delete();
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                if (processor.isCreateInnerClass()) {
+                  processor.changeInstanceAccess(project);
+                }
+                final PsiElement method = processor.getMethod();
+                LOG.assertTrue(method != null);
+                method.delete();
+              }
+            });
           }
         });
       }
