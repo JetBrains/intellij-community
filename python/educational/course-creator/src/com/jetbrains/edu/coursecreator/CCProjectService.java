@@ -48,7 +48,7 @@ import java.util.Map;
 public class CCProjectService implements PersistentStateComponent<Element> {
 
   private static final Logger LOG = Logger.getInstance(CCProjectService.class.getName());
-  public Course myCourse;
+  private Course myCourse;
   public static final String COURSE_ELEMENT = "course";
   private static final Map<Document, CCDocumentListener> myDocumentListeners = new HashMap<Document, CCDocumentListener>();
 
@@ -120,7 +120,7 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     return task.getTaskFile(virtualFile.getName());
   }
 
-  public void drawTaskWindows(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor, @NotNull final Course course) {
+  public void drawTaskWindows(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor) {
     TaskFile taskFile = getTaskFile(virtualFile);
     if (taskFile == null) {
       return;

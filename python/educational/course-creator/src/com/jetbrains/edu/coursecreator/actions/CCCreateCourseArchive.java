@@ -61,7 +61,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     createCourseArchive(project);
   }
 
-  public void createCourseArchive(final Project project) {
+  private void createCourseArchive(final Project project) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     if (course == null) return;
@@ -163,8 +163,8 @@ public class CCCreateCourseArchive extends DumbAwareAction {
                                         @NotNull final Document document,
                                         @NotNull final AnswerPlaceholder answerPlaceholder) {
     final String taskText = answerPlaceholder.getTaskText();
-    final int lineStartOffset = document.getLineStartOffset(answerPlaceholder.line);
-    final int offset = lineStartOffset + answerPlaceholder.start;
+    final int lineStartOffset = document.getLineStartOffset(answerPlaceholder.getLine());
+    final int offset = lineStartOffset + answerPlaceholder.getStart();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {

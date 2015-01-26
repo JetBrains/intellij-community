@@ -18,7 +18,7 @@ import javax.swing.*;
 
 abstract public class CCTaskWindowAction extends DumbAwareAction {
 
-  public CCTaskWindowAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+  protected CCTaskWindowAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 

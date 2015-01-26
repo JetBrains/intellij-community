@@ -107,7 +107,7 @@ public abstract class CCRunTestsAction extends AnAction {
     run(context);
   }
 
-  public void run(final @NotNull ConfigurationContext context) {
+  private void run(final @NotNull ConfigurationContext context) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -256,20 +256,19 @@ public abstract class CCRunTestsAction extends AnAction {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static VirtualFile flushWindows(TaskFile taskFile, VirtualFile file) {
+  private static void flushWindows(TaskFile taskFile, VirtualFile file) {
     VirtualFile taskDir = file.getParent();
-    VirtualFile fileWindows = null;
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) {
       LOG.debug("Couldn't flush windows");
-      return null;
+      return;
     }
     if (taskDir != null) {
       String name = file.getNameWithoutExtension() + "_windows";
       PrintWriter printWriter = null;
       try {
-        fileWindows = taskDir.createChildData(taskFile, name);
-        printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
+        final VirtualFile windowsFile = taskDir.createChildData(taskFile, name);
+        printWriter = new PrintWriter(new FileOutputStream(windowsFile.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getTaskWindows()) {
           int start = answerPlaceholder.getRealStartOffset(document);
           String windowDescription = document.getText(new TextRange(start, start + answerPlaceholder.getReplacementLength()));
@@ -291,6 +290,5 @@ public abstract class CCRunTestsAction extends AnAction {
         }
       }
     }
-    return fileWindows;
   }
 }

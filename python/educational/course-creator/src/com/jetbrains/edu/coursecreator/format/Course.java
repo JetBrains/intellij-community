@@ -7,22 +7,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class Course {
-  @Expose public List<Lesson> lessons = new ArrayList<Lesson>();
-  @Expose public String description;
+  @Expose private List<Lesson> lessons = new ArrayList<Lesson>();
+  @Expose private String description;
 
-  @Expose public String name;
-  @Expose public String author;
+  @Expose private String name;
+  @Expose private String author;
 
-  public Map<String, Lesson> myLessonsMap = new HashMap<String, Lesson>();
+  private Map<String, Lesson> myLessonsMap = new HashMap<String, Lesson>();
 
   public Map<String, Lesson> getLessonsMap() {
     return myLessonsMap;
   }
 
-  public Lesson getLesson(@NotNull final  String name) {
+  public Lesson getLesson(@NotNull final String name) {
     return myLessonsMap.get(name);
   }
-
 
   public Course() {
   }
@@ -73,5 +72,13 @@ public class Course {
 
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  public void setLessons(List<Lesson> lessons) {
+    this.lessons = lessons;
+  }
+
+  public void setLessonsMap(Map<String, Lesson> lessonsMap) {
+    myLessonsMap = lessonsMap;
   }
 }

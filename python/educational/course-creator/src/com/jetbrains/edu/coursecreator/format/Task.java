@@ -10,7 +10,7 @@ import java.util.Map;
 public class Task implements Comparable{
   @Expose public String name;
   @Expose public Map<String, TaskFile> task_files = new HashMap<String, TaskFile>();
-  public int myIndex;
+  private int myIndex;
 
   public Task() {}
 
@@ -53,5 +53,17 @@ public class Task implements Comparable{
   public int compareTo(@NotNull Object o) {
     Task task = (Task) o;
     return myIndex - task.getIndex();
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public Map<String, TaskFile> getTask_files() {
+    return task_files;
+  }
+
+  public void setTask_files(Map<String, TaskFile> task_files) {
+    this.task_files = task_files;
   }
 }

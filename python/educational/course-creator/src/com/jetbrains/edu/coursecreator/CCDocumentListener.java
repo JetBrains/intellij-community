@@ -16,7 +16,7 @@ import java.util.List;
  */
 public abstract class CCDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
-  private List<TaskWindowWrapper> myTaskWindows = new ArrayList<TaskWindowWrapper>();
+  private final List<TaskWindowWrapper> myTaskWindows = new ArrayList<TaskWindowWrapper>();
 
 
   public CCDocumentListener(TaskFile taskFile) {

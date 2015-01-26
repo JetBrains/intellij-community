@@ -51,7 +51,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     editor.getDocument().addDocumentListener(listener);
     EditorActionManager.getInstance()
       .setReadonlyFragmentModificationHandler(editor.getDocument(), new TaskWindowDeleteHandler(editor));
-    CCProjectService.getInstance(project).drawTaskWindows(virtualFile, editor, course);
+    CCProjectService.getInstance(project).drawTaskWindows(virtualFile, editor);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
     taskFile.createGuardedBlocks(editor);
   }

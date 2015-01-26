@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class TaskFile {
-  @Expose public List<AnswerPlaceholder> task_windows = new ArrayList<AnswerPlaceholder>();
-  public int myIndex;
+  @Expose private List<AnswerPlaceholder> task_windows = new ArrayList<AnswerPlaceholder>();
+  private int myIndex;
 
   public TaskFile() {
   }
@@ -82,7 +82,7 @@ public class TaskFile {
   }
 
  @Nullable
- public AnswerPlaceholder getTaskWindow(int index) {
+ private AnswerPlaceholder getTaskWindow(int index) {
     for (AnswerPlaceholder answerPlaceholder : task_windows) {
       if (answerPlaceholder.getIndex() == index) {
         return answerPlaceholder;
@@ -105,5 +105,17 @@ public class TaskFile {
     for (int i = 0; i < task_windows.size(); i++) {
       task_windows.get(i).setIndex(i + 1);
     }
+  }
+
+  public List<AnswerPlaceholder> getTask_windows() {
+    return task_windows;
+  }
+
+  public void setTask_windows(List<AnswerPlaceholder> task_windows) {
+    this.task_windows = task_windows;
+  }
+
+  public int getIndex() {
+    return myIndex;
   }
 }

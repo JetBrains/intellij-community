@@ -18,7 +18,7 @@ import java.io.*;
 
 public class CreateTaskWindowDialog extends DialogWrapper {
 
-  public static final String TITLE = "Add Answer Placeholder";
+  private static final String ourTitle = "Add Answer Placeholder";
   private static final Logger LOG = Logger.getInstance(CreateTaskWindowDialog.class.getName());
   private final AnswerPlaceholder myAnswerPlaceholder;
   private final CreateTaskWindowPanel myPanel;
@@ -31,7 +31,7 @@ public class CreateTaskWindowDialog extends DialogWrapper {
   public CreateTaskWindowDialog(@NotNull final Project project, @NotNull final AnswerPlaceholder answerPlaceholder, int lessonIndex,
                                 int taskIndex, String taskFileName, int taskWindowIndex) {
     super(project, true);
-    setTitle(TITLE);
+    setTitle(ourTitle);
     myAnswerPlaceholder = answerPlaceholder;
     myPanel = new CreateTaskWindowPanel(this);
     String generatedHintName = "lesson" + lessonIndex + "task" + taskIndex + taskFileName + "_" + taskWindowIndex;
@@ -138,7 +138,7 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     ProjectView.getInstance(myProject).refresh();
   }
 
-  public void deleteHint() {
+  private void deleteHint() {
     VirtualFile hintsDir = myProject.getBaseDir().findChild("hints");
     if (hintsDir != null) {
       String hintName = myAnswerPlaceholder.getHintName();

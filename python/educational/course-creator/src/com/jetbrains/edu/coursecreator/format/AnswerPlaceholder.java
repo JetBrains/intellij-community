@@ -22,14 +22,26 @@ import java.util.List;
 
 public class AnswerPlaceholder implements Comparable<AnswerPlaceholder> {
 
-  @Expose public int line;
-  @Expose public int start;
-  @Expose public String hint;
-  @Expose public String possible_answer;
-  @Expose public int length;
-  public String myTaskText;
-  public int myReplacementLength;
-  public int myIndex;
+  @Expose private int line;
+  @Expose private int start;
+  @Expose private String hint;
+  @Expose private String possible_answer;
+  @Expose private int length;
+  private String myTaskText;
+  private int myReplacementLength;
+  private int myIndex;
+
+  public String getHint() {
+    return hint;
+  }
+
+  public String getPossible_answer() {
+    return possible_answer;
+  }
+
+  public void setPossible_answer(String possible_answer) {
+    this.possible_answer = possible_answer;
+  }
 
   public AnswerPlaceholder() {}
 

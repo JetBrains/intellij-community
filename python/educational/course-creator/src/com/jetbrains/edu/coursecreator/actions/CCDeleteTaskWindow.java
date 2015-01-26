@@ -37,7 +37,7 @@ public class CCDeleteTaskWindow extends CCTaskWindowAction {
       answerPlaceholders.remove(answerPlaceholder);
       final Editor editor = state.getEditor();
       editor.getMarkupModel().removeAllHighlighters();
-      CCProjectService.getInstance(project).drawTaskWindows(psiFile.getVirtualFile(), editor, course);
+      CCProjectService.getInstance(project).drawTaskWindows(psiFile.getVirtualFile(), editor);
       taskFile.createGuardedBlocks(editor);
     }
   }
