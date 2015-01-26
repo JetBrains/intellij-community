@@ -1,5 +1,6 @@
 package org.jetbrains.protocolReader;
 
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jsonProtocol.JsonField;
 import org.jetbrains.jsonProtocol.JsonOptionalField;
@@ -8,10 +9,7 @@ import org.jetbrains.jsonProtocol.JsonSubtypeCasting;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 final class FieldProcessor<T> {
   final List<FieldLoader> fieldLoaders = new ArrayList<>();
@@ -26,6 +24,15 @@ final class FieldProcessor<T> {
     Method[] methods = typeClass.getMethods();
     // todo sort by source location
     Arrays.sort(methods, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+
+    Set<String> skippedNames = new THashSet<>();
+    for (Method method : methods) {
+      JsonField annotation = method.getAnnotation(JsonField.class);
+      if (annotation != null && !annotation.primitiveValue().isEmpty()) {
+        skippedNames.add(annotation.primitiveValue());
+        skippedNames.add(annotation.primitiveValue() + "Type");
+      }
+    }
 
     Package classPackage = typeClass.getPackage();
     for (Method method : methods) {
@@ -48,7 +55,7 @@ final class FieldProcessor<T> {
         MethodHandler methodHandler;
         JsonSubtypeCasting jsonSubtypeCaseAnnotation = method.getAnnotation(JsonSubtypeCasting.class);
         if (jsonSubtypeCaseAnnotation == null) {
-          methodHandler = processFieldGetterMethod(method);
+          methodHandler = createMethodHandler(method, skippedNames.contains(method.getName()));
         }
         else {
           methodHandler = processManualSubtypeMethod(method, jsonSubtypeCaseAnnotation);
@@ -63,7 +70,7 @@ final class FieldProcessor<T> {
   }
 
   @NotNull
-  private MethodHandler processFieldGetterMethod(@NotNull Method method) {
+  private MethodHandler createMethodHandler(@NotNull Method method, boolean skipRead) {
     String jsonName = method.getName();
     JsonField fieldAnnotation = method.getAnnotation(JsonField.class);
     if (fieldAnnotation != null && !fieldAnnotation.name().isEmpty()) {
@@ -85,7 +92,7 @@ final class FieldProcessor<T> {
 
     ValueReader fieldTypeParser = reader.getFieldTypeParser(genericReturnType, false, method);
     if (fieldTypeParser != InterfaceReader.VOID_PARSER) {
-      fieldLoaders.add(new FieldLoader(method.getName(), jsonName, fieldTypeParser));
+      fieldLoaders.add(new FieldLoader(method.getName(), jsonName, fieldTypeParser, skipRead));
     }
 
     final String effectiveFieldName = fieldTypeParser == InterfaceReader.VOID_PARSER ? null : method.getName();
