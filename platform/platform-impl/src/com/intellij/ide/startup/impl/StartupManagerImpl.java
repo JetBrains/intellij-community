@@ -55,7 +55,6 @@ import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
@@ -74,8 +73,6 @@ public class StartupManagerImpl extends StartupManagerEx {
   private volatile boolean myStartupActivitiesPassed = false;
 
   private final Project myProject;
-
-  private final AtomicBoolean myInitialRefreshStarted = new AtomicBoolean(false);
 
   public StartupManagerImpl(Project project) {
     myProject = project;
@@ -180,20 +177,27 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void runPostStartupActivities() {
+    if (postStartupActivityPassed()) {
+      return;
+    }
+
     final Application app = ApplicationManager.getApplication();
 
-    if (postStartupActivityPassed()) return;
-    
+    if (!app.isHeadlessEnvironment()) {
+      checkFsSanity();
+      checkProjectRoots();
+    }
+
     runActivities(myDumbAwarePostStartupActivities);
-    
+
     DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
       @Override
       public void run() {
         app.assertIsDispatchThread();
-        
+
         // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
         runActivities(myDumbAwarePostStartupActivities);
-        
+
         //noinspection SynchronizeOnThis
         synchronized (StartupManagerImpl.this) {
           if (!myNotDumbAwarePostStartupActivities.isEmpty()) {
@@ -215,10 +219,6 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void scheduleInitialVfsRefresh() {
-    if (myInitialRefreshStarted.getAndSet(true)) {
-      return;
-    }
-
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -226,8 +226,6 @@ public class StartupManagerImpl extends StartupManagerEx {
 
         Application app = ApplicationManager.getApplication();
         if (!app.isHeadlessEnvironment()) {
-          checkFsSanity();
-          checkProjectRoots();
           final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
           final MessageBusConnection connection = app.getMessageBus().connect();
           connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
