@@ -87,7 +87,7 @@ class LinearBekGraphBuilder {
     while (!queue.isEmpty()) {
       GraphEdge nextEdge = queue.poll();
       Integer next = nextEdge.getDownNodeIndex();
-      if (next == null) return false; // well, what do you do
+      if (next == null) continue; // allow very long edges down
 
       Integer upNodeIndex = nextEdge.getUpNodeIndex();
       assert upNodeIndex != null; // can not happen
@@ -159,9 +159,16 @@ class LinearBekGraphBuilder {
   private static class GraphEdgeComparator implements Comparator<GraphEdge> {
     @Override
     public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
-      if (o1.getDownNodeIndex() == null) return -1;
-      if (o2.getDownNodeIndex() == null) return 1;
-      return o1.getDownNodeIndex().compareTo(o2.getDownNodeIndex());
+      Integer d1 = o1.getDownNodeIndex();
+      Integer d2 = o2.getDownNodeIndex();
+
+      if (d1 == null) {
+        if (d2 == null) return 0;
+        return 1;
+      }
+      if (d2 == null) return -1;
+
+      return d1.compareTo(d2);
     }
   }
 
