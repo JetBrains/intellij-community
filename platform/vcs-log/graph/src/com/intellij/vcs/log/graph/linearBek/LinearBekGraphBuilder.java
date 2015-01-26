@@ -145,8 +145,7 @@ class LinearBekGraphBuilder {
         myWorkingGraph.addEdge(tail, firstChild);
       }
       else if (mergeWithOldCommit) {
-        myWorkingGraph.removeEdge(tail, firstChild);
-        myWorkingGraph.addEdge(tail, firstChild);
+        myWorkingGraph.replaceEdge(tail, firstChild);
       }
     }
 
@@ -168,38 +167,47 @@ class LinearBekGraphBuilder {
 
   private static class WorkingGraph extends LinearBekGraph {
     private final List<GraphEdge> myToAdd = new ArrayList<GraphEdge>();
-    private final List<GraphEdge> myToRemove = new ArrayList<GraphEdge>();
-    private final List<GraphEdge> myDottedToRemove = new ArrayList<GraphEdge>();
+    private final List<GraphEdge> myToReplace = new ArrayList<GraphEdge>();
+    private final List<GraphEdge> myNormalToHide = new ArrayList<GraphEdge>();
+    private final List<GraphEdge> myDottedToHide = new ArrayList<GraphEdge>();
 
     private WorkingGraph(LinearGraph graph) {
       super(graph, createSimpleEdgeStorage(), createSimpleEdgeStorage());
     }
 
-    public void addEdge(int from, int to) {
-      myToAdd.add(new GraphEdge(from, to, null, GraphEdgeType.DOTTED));
+    public void addEdge(int up, int down) {
+      myToAdd.add(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
     }
 
-    public void removeEdge(int from, int to) {
-      if (myDottedEdges.hasEdge(from, to)) {
-        myDottedToRemove.add(new GraphEdge(from, to, null, GraphEdgeType.DOTTED));
+    public void removeEdge(int up, int down) {
+      if (myDottedEdges.hasEdge(up, down)) {
+        myDottedToHide.add(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
       }
       else {
-        myToRemove.add(LinearGraphUtils.getEdge(myGraph, from, to));
+        myNormalToHide.add(LinearGraphUtils.getEdge(myGraph, up, down));
+      }
+    }
+
+    public void replaceEdge(int up, int down) {
+      if (!myDottedEdges.hasEdge(up, down)) {
+        myToReplace.add(LinearGraphUtils.getEdge(myGraph, up, down));
       }
     }
 
     public void apply() {
-      for (GraphEdge e : myToRemove) {
+      for (GraphEdge e : myNormalToHide) {
         myHiddenEdges.createEdge(e);
       }
-      for (GraphEdge e : myDottedToRemove) {
+      for (GraphEdge e : myDottedToHide) {
         myDottedEdges.removeEdge(e);
         myHiddenEdges.createEdge(e);
       }
-      // TODO if we start with adding edges instead of removing we will break merge with old commit test
-      // that's really bad
       for (GraphEdge e : myToAdd) {
         myDottedEdges.createEdge(e);
+      }
+      for (GraphEdge e: myToReplace) {
+        myHiddenEdges.createEdge(e);
+        myDottedEdges.createEdge(new GraphEdge(e.getUpNodeIndex(), e.getDownNodeIndex(), null, GraphEdgeType.DOTTED));
       }
 
       clear();
@@ -207,8 +215,9 @@ class LinearBekGraphBuilder {
 
     public void clear() {
       myToAdd.clear();
-      myToRemove.clear();
-      myDottedToRemove.clear();
+      myToReplace.clear();
+      myNormalToHide.clear();
+      myDottedToHide.clear();
     }
 
     public LinearBekGraph createLinearBekGraph() {
