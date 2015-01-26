@@ -24,6 +24,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
@@ -146,15 +147,9 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     if (lineNumber > -1) {
-      VirtualFile file = psiFile.getVirtualFile();
-      if (file != null) {
-        LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
-        if (mapping != null) {
-          int line = mapping.bytecodeToSource(lineNumber + 1);
-          if (line > -1) {
-            return SourcePosition.createFromLine(psiFile, line - 1);
-          }
-        }
+      SourcePosition position = calcLineMappedSourcePosition(psiFile, lineNumber);
+      if (position != null) {
+        return position;
       }
     }
 
@@ -178,7 +173,11 @@ public class PositionManagerImpl implements PositionManager {
       if (compiledMethod == null) {
         return SourcePosition.createFromLine(psiFile, -1);
       }
-      return SourcePosition.createFromElement(compiledMethod);
+      SourcePosition sourcePosition = SourcePosition.createFromElement(compiledMethod);
+      if (lineNumber >= 0) {
+        sourcePosition = new ClsSourcePosition(sourcePosition, lineNumber);
+      }
+      return sourcePosition;
     }
 
     return SourcePosition.createFromLine(psiFile, lineNumber);
@@ -446,5 +445,93 @@ public class PositionManagerImpl implements PositionManager {
     public PsiMethod getCompiledMethod() {
       return myCompiledMethod;
     }
+  }
+
+  private static class ClsSourcePosition extends SourcePosition {
+    private SourcePosition myDelegate;
+    private int myOriginalLine;
+
+    public ClsSourcePosition(SourcePosition delegate, int originalLine) {
+      myDelegate = delegate;
+      myOriginalLine = originalLine;
+    }
+
+    @Override
+    @NotNull
+    public PsiFile getFile() {
+      return myDelegate.getFile();
+    }
+
+    @Override
+    public PsiElement getElementAt() {
+      return myDelegate.getElementAt();
+    }
+
+    @Override
+    public int getLine() {
+      int line = myDelegate.getLine();
+      if (myOriginalLine >= 0) {
+        return mapDelegate().getLine();
+      }
+      return line;
+    }
+
+    @Override
+    public int getOffset() {
+      int offset = myDelegate.getOffset(); //document loaded here
+      if (myOriginalLine >= 0) {
+        return mapDelegate().getOffset();
+      }
+      return offset;
+    }
+
+    private SourcePosition mapDelegate() {
+      SourcePosition position = calcLineMappedSourcePosition(myDelegate.getFile(), myOriginalLine);
+      if (position != null) {
+        myDelegate = position;
+      }
+      myOriginalLine = -1;
+      return myDelegate;
+    }
+
+    @Override
+    public Editor openEditor(boolean requestFocus) {
+      return myDelegate.openEditor(requestFocus);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return myDelegate.equals(o);
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      myDelegate.navigate(requestFocus);
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return myDelegate.canNavigate();
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return myDelegate.canNavigateToSource();
+    }
+  }
+
+  @Nullable
+  private static SourcePosition calcLineMappedSourcePosition(PsiFile psiFile, int originalLine) {
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file != null) {
+      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+      if (mapping != null) {
+        int line = mapping.bytecodeToSource(originalLine + 1);
+        if (line > -1) {
+          return SourcePosition.createFromLine(psiFile, line - 1);
+        }
+      }
+    }
+    return null;
   }
 }
