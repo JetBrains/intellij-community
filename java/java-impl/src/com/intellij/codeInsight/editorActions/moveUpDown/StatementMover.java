@@ -131,7 +131,7 @@ class StatementMover extends LineMover {
       sibling = ((PsiNewExpression)sibling).getAnonymousClass();
     }
     if (!(sibling instanceof PsiClass)) return destLine;
-    destLine = editor.getDocument().getLineNumber(down ? toMove.getTextRange().getEndOffset() : toMove.getTextRange().getStartOffset());
+    destLine = editor.getDocument().getLineNumber(down ? toMove.getTextRange().getEndOffset() + 1 : toMove.getTextRange().getStartOffset());
 
     return destLine;
   }
