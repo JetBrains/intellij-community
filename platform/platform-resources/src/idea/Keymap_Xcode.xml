@@ -565,5 +565,11 @@
     <action id="GotoBookmark9">
       <keyboard-shortcut first-keystroke="control alt 9"/>
     </action>
+    
+    <!-- No dire need for emmet action in Xcode keymap. Removed to avoid conflicts with SwitchLeft and SwitchRight -->
+    <action id="EmmetPreviousEditPoint">
+    </action>
+    <action id="EmmetNextEditPoint">
+    </action>
   </keymap>
 </component>
