@@ -80,10 +80,6 @@ class EmptyVisibleGraph implements VisibleGraph<Integer> {
     public void setLongEdgesHidden(boolean longEdgesHidden) {
     }
 
-    @Override
-    public void setLinearBranchesExpansion(boolean collapse) {
-    }
-
     private static class EmptyGraphAnswer implements GraphAnswer<Integer> {
       private static EmptyGraphAnswer INSTANCE = new EmptyGraphAnswer();
 

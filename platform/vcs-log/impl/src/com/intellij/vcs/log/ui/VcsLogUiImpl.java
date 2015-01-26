@@ -17,7 +17,9 @@ import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
@@ -147,7 +149,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     runUnderModalProgress("Expanding linear branches...", new Runnable() {
       @Override
       public void run() {
-        myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(false);
+        myVisiblePack.getVisibleGraph().getActionController().performAction(new ExpandGraphAction(true));
       }
     });
     handleAnswer(null, true);
@@ -157,7 +159,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     runUnderModalProgress("Collapsing linear branches...", new Runnable() {
       @Override
       public void run() {
-        myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(true);
+        myVisiblePack.getVisibleGraph().getActionController().performAction(new ExpandGraphAction(false));
       }
     });
     handleAnswer(null, true);
@@ -440,4 +442,23 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     getTable().removeAllHighlighters();
   }
 
+  private static class ExpandGraphAction implements GraphAction {
+    private final boolean myExpand;
+
+    private ExpandGraphAction(boolean expand) {
+      myExpand = expand;
+    }
+
+    @Nullable
+    @Override
+    public PrintElement getAffectedElement() {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public Type getType() {
+      return myExpand ? Type.BUTTON_EXPAND : Type.BUTTON_COLLAPSE;
+    }
+  }
 }
