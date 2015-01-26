@@ -140,6 +140,10 @@ class LinearBekGraphBuilder {
       }
     }
 
+    if (tails.isEmpty()) {
+      return false; // this can happen if we ran into initial import
+    }
+
     for (Integer tail : tails) {
       if (!LinearGraphUtils.getDownNodes(myWorkingGraph, tail).contains(firstChild)) {
         myWorkingGraph.addEdge(tail, firstChild);
@@ -148,10 +152,7 @@ class LinearBekGraphBuilder {
         myWorkingGraph.replaceEdge(tail, firstChild);
       }
     }
-
-    if (!tails.isEmpty() || mergeWithOldCommit) {
-      myWorkingGraph.removeEdge(parent, firstChild);
-    }
+    myWorkingGraph.removeEdge(parent, firstChild);
 
     return true;
   }
@@ -212,7 +213,7 @@ class LinearBekGraphBuilder {
       for (GraphEdge e : myToAdd) {
         myDottedEdges.createEdge(e);
       }
-      for (GraphEdge e: myToReplace) {
+      for (GraphEdge e : myToReplace) {
         myHiddenEdges.createEdge(e);
         myDottedEdges.createEdge(new GraphEdge(e.getUpNodeIndex(), e.getDownNodeIndex(), null, GraphEdgeType.DOTTED));
       }
