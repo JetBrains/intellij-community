@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 class TypeHandler<T> {
+  public static final char FIELD_PREFIX = '_';
+
   final Class<T> typeClass;
 
   private final List<VolatileFieldBinding> volatileFields;
@@ -50,7 +52,7 @@ class TypeHandler<T> {
     }
   }
 
-  public void writeStaticClassJava(@NotNull FileScope fileScope) {
+  public void write(@NotNull FileScope fileScope) {
     TextOutput out = fileScope.getOutput();
     String valueImplClassName = fileScope.getTypeImplShortName(this);
     out.append("private static final class ").append(valueImplClassName);
@@ -68,7 +70,16 @@ class TypeHandler<T> {
     }
 
     for (FieldLoader loader : fieldLoaders) {
-      loader.writeFieldDeclaration(out);
+      out.append("private").space();
+      loader.valueReader.appendFinishedValueTypeName(out);
+      out.space().append(FIELD_PREFIX).append(loader.name);
+      if (loader.valueReader instanceof PrimitiveValueReader) {
+        String defaultValue = ((PrimitiveValueReader)loader.valueReader).defaultValue;
+        if (defaultValue != null) {
+          out.append(" = ").append(defaultValue);
+        }
+      }
+      out.semi();
       out.newLine();
     }
 
@@ -235,6 +246,6 @@ class TypeHandler<T> {
 
   @NotNull
   private static TextOutput assignField(TextOutput out, String fieldName) {
-    return out.append(FieldLoader.FIELD_PREFIX).append(fieldName).append(" = ");
+    return out.append(FIELD_PREFIX).append(fieldName).append(" = ");
   }
 }

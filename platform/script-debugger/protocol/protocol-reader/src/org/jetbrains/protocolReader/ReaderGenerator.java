@@ -131,7 +131,7 @@ public final class ReaderGenerator {
 
     for (TypeHandler<?> typeHandler : configuration.typeToTypeHandler.values()) {
       out.newLine();
-      typeHandler.writeStaticClassJava(rootClassScope);
+      typeHandler.write(rootClassScope);
       out.newLine();
     }
 

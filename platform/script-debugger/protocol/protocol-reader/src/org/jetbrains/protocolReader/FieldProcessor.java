@@ -8,12 +8,15 @@ import org.jetbrains.jsonProtocol.JsonSubtypeCasting;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 final class FieldProcessor<T> {
-  private final List<FieldLoader> fieldLoaders = new ArrayList<>();
-  private final LinkedHashMap<Method, MethodHandler> methodHandlerMap = new LinkedHashMap<>();
-  private final List<VolatileFieldBinding> volatileFields = new ArrayList<>();
+  final List<FieldLoader> fieldLoaders = new ArrayList<>();
+  final LinkedHashMap<Method, MethodHandler> methodHandlerMap = new LinkedHashMap<>();
+  final List<VolatileFieldBinding> volatileFields = new ArrayList<>();
   boolean lazyRead;
   private final InterfaceReader reader;
 
@@ -22,12 +25,7 @@ final class FieldProcessor<T> {
 
     Method[] methods = typeClass.getMethods();
     // todo sort by source location
-    Arrays.sort(methods, new Comparator<Method>() {
-      @Override
-      public int compare(@NotNull Method o1, @NotNull Method o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Arrays.sort(methods, (o1, o2) -> o1.getName().compareTo(o2.getName()));
 
     Package classPackage = typeClass.getPackage();
     for (Method method : methods) {
@@ -100,7 +98,7 @@ final class FieldProcessor<T> {
         writeMethodDeclarationJava(out, method);
         out.openBlock();
         if (effectiveFieldName != null) {
-          out.append("return ").append(FieldLoader.FIELD_PREFIX).append(effectiveFieldName).semi();
+          out.append("return ").append(TypeHandler.FIELD_PREFIX).append(effectiveFieldName).semi();
         }
         out.closeBlock();
       }
@@ -122,18 +120,6 @@ final class FieldProcessor<T> {
       reader.subtypeCasters.add(subtypeCaster);
     }
     return handler;
-  }
-
-  List<VolatileFieldBinding> getVolatileFields() {
-    return volatileFields;
-  }
-
-  List<FieldLoader> getFieldLoaders() {
-    return fieldLoaders;
-  }
-
-  LinkedHashMap<Method, MethodHandler> getMethodHandlerMap() {
-    return methodHandlerMap;
   }
 
   @NotNull

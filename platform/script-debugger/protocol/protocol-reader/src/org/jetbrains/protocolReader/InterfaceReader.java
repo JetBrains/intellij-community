@@ -134,7 +134,22 @@ class InterfaceReader {
       createIfNotExists(aClass);
     }
 
-    TypeHandler<?> typeHandler = createTypeHandler(typeClass);
+    if (!typeClass.isInterface()) {
+      throw new JsonProtocolModelParseException("Json model type should be interface: " + typeClass.getName());
+    }
+
+    FieldProcessor<?> fields = new FieldProcessor<>(this, typeClass);
+    for (Method method : fields.methodHandlerMap.keySet()) {
+      Class<?> returnType = method.getReturnType();
+      if (returnType != typeClass) {
+        createIfNotExists(returnType);
+      }
+    }
+
+    TypeHandler<?> typeHandler = new TypeHandler<>(typeClass, getSuperclassRef(typeClass),
+                                                   fields.volatileFields, fields.methodHandlerMap,
+                                                   fields.fieldLoaders,
+                                                   fields.lazyRead);
     for (TypeRef ref : refs) {
       if (ref.typeClass == typeClass) {
         assert ref.type == null;
@@ -143,26 +158,6 @@ class InterfaceReader {
       }
     }
     typeToTypeHandler.put(typeClass, typeHandler);
-  }
-
-  private <T> TypeHandler<T> createTypeHandler(Class<T> typeClass) {
-    if (!typeClass.isInterface()) {
-      throw new JsonProtocolModelParseException("Json model type should be interface: " + typeClass.getName());
-    }
-
-    FieldProcessor<T> fields = new FieldProcessor<>(this, typeClass);
-    LinkedHashMap<Method, MethodHandler> methodHandlerMap = fields.getMethodHandlerMap();
-    for (Method method : methodHandlerMap.keySet()) {
-      Class<?> returnType = method.getReturnType();
-      if (returnType != typeClass) {
-        createIfNotExists(returnType);
-      }
-    }
-
-    return new TypeHandler<>(typeClass, getSuperclassRef(typeClass),
-                              fields.getVolatileFields(), methodHandlerMap,
-                              fields.getFieldLoaders(),
-                              fields.lazyRead);
   }
 
   ValueReader getFieldTypeParser(Type type, boolean isSubtyping, @Nullable Method method) {
