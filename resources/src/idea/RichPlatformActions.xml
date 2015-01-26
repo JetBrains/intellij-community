@@ -47,9 +47,11 @@
 
     <!-- File -->
     <group id="OpenProjectGroup">
-      <group id="NewElement" class="com.intellij.ide.actions.NewActionGroup" text="New" popup="true"/>
+      <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" text="New" popup="true"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
+
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
 
     <group id="NewProjectOrModuleGroup">
       <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction" text="Project..."/>
