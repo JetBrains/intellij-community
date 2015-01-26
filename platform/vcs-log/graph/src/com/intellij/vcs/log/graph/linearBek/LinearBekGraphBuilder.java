@@ -17,6 +17,7 @@ package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -46,28 +47,29 @@ class LinearBekGraphBuilder {
   }
 
   public LinearBekGraph build() {
+    Map<Integer, Integer> nextHeadLayoutIndexes = ContainerUtilRt.newHashMap(myHeads.size());
+    for (int i = 0; i < myHeads.size(); i++) {
+      if (i == myHeads.size() - 1) {
+        nextHeadLayoutIndexes.put(myHeads.get(i), Integer.MAX_VALUE);
+      }
+      else {
+        nextHeadLayoutIndexes.put(myHeads.get(i), myGraphLayout.getLayoutIndex(myHeads.get(i + 1)));
+      }
+    }
+
     for (int i = myWorkingGraph.myGraph.nodesCount() - 1; i >= 0; i--) {
-      if (LinearGraphUtils.getDownNodes(myWorkingGraph, i).size() != 2) continue;
-      collapse(i, myGraphLayout.getOneOfHeadNodeIndex(i));
+      List<Integer> downNodes = ContainerUtil.sorted(LinearGraphUtils.getDownNodes(myWorkingGraph, i));
+      if (downNodes.size() != 2) continue;
+
+      int head = myGraphLayout.getOneOfHeadNodeIndex(i);
+      if (collapse(downNodes.get(1), downNodes.get(0), i, myGraphLayout.getLayoutIndex(head), nextHeadLayoutIndexes.get(head))) {
+        myWorkingGraph.apply();
+      }
+      else {
+        myWorkingGraph.clear();
+      }
     }
     return myWorkingGraph.createLinearBekGraph();
-  }
-
-  public void collapse(int mergeCommit, int head) {
-    int headNumber = myHeads.indexOf(head);
-    int nextHeadIndex = headNumber == myHeads.size() - 1
-                        ? Integer.MAX_VALUE
-                        : myGraphLayout
-                          .getLayoutIndex(myHeads.get(headNumber + 1)); // TODO dont make it bad, take a bad code and make it better
-    int headIndex = myGraphLayout.getLayoutIndex(head);
-
-    List<Integer> downNodes = ContainerUtil.sorted(LinearGraphUtils.getDownNodes(myWorkingGraph, mergeCommit));
-    if (collapse(downNodes.get(1), downNodes.get(0), mergeCommit, headIndex, nextHeadIndex)) {
-      myWorkingGraph.apply();
-    }
-    else {
-      myWorkingGraph.clear();
-    }
   }
 
   private boolean collapse(int firstChild, int secondChild, int parent, int headIndex, int nextHeadIndex) {
@@ -75,11 +77,11 @@ class LinearBekGraphBuilder {
     int y = myGraphLayout.getLayoutIndex(secondChild);
     int k = 1;
 
-    PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE/*todo?*/, new GraphEdgeComparator());
+    PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE, new GraphEdgeComparator());
     queue.addAll(myWorkingGraph.getAdjacentEdges(secondChild, EdgeFilter.NORMAL_DOWN));
 
-    Set<Integer> definitelyNotTails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
-    Set<Integer> tails = ContainerUtil.newHashSet(MAX_BLOCK_SIZE/*todo?*/);
+    Set<Integer> definitelyNotTails = ContainerUtil.newHashSet();
+    Set<Integer> tails = ContainerUtil.newHashSet();
     boolean mergeWithOldCommit = false;
 
     while (!queue.isEmpty()) {
@@ -88,15 +90,12 @@ class LinearBekGraphBuilder {
       if (next == null) return false; // well, what do you do
 
       Integer upNodeIndex = nextEdge.getUpNodeIndex();
+      assert upNodeIndex != null; // can not happen
 
       if (next == firstChild) {
         // found first child
         tails.add(upNodeIndex);
         mergeWithOldCommit = true;
-      }
-      else if (next < secondChild + k) {
-        // or we were here before
-        // so doing nothing?
       }
       else if (next == secondChild + k) {
         // all is fine, continuing
@@ -124,6 +123,8 @@ class LinearBekGraphBuilder {
               myWorkingGraph.removeEdge(upNodeIndex, next); // questionable -- we remove edges to the very old commits only for tails
               // done in sake of expanding dotted edges
               // also, should check (I guess?) that the edge is not too long
+              // another thing is that if li < x next can still be reachable from the firstChild
+              // but we do not know that unless we walk down from the firstChild and check that
             }
           }
         }
@@ -132,8 +133,7 @@ class LinearBekGraphBuilder {
       if (k >= MAX_BLOCK_SIZE) {
         return false;
       }
-      if (Math.abs(myTimestampGetter.getTimestamp(secondChild) - myTimestampGetter.getTimestamp(secondChild + k - 1)) >
-          MAX_DELTA_TIME) {
+      if (Math.abs(myTimestampGetter.getTimestamp(secondChild) - myTimestampGetter.getTimestamp(secondChild + k - 1)) > MAX_DELTA_TIME) {
         // there is a big question what we should really check here
         // maybe we should also ensure that we do not remove edges to very old commits too
         return false;
