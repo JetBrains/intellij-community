@@ -354,7 +354,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setVisible(BekSorter.isBekEnabled());
+      e.getPresentation().setVisible(BekSorter.isLinearBekEnabled());
       e.getPresentation().setEnabled(areGraphActionsEnabled() && myUI.isBek());
     }
   }
