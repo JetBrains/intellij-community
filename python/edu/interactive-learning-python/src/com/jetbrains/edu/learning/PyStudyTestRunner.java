@@ -18,13 +18,14 @@ import java.util.Map;
 public class PyStudyTestRunner extends StudyTestRunner {
   private static final String PYTHONPATH = "PYTHONPATH";
 
-  PyStudyTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskfile) {
-    super(task, taskfile);
+  PyStudyTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
+    super(task, taskDir);
   }
-  public Process createCheckProcess(Project project, String executablePath) throws ExecutionException {
-    Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
-    File testRunner = new File(myTaskDir.getPath(), myTask.getTestFile());
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+
+  public Process createCheckProcess(@NotNull final Project project, @NotNull final String executablePath) throws ExecutionException {
+    final Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
+    final File testRunner = new File(myTaskDir.getPath(), myTask.getTestFile());
+    final GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.withWorkDirectory(myTaskDir.getPath());
     final Map<String, String> env = commandLine.getEnvironment();
 

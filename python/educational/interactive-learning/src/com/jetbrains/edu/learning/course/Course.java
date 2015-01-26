@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning.course;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,11 +18,12 @@ public class Course {
   private static final Logger LOG = Logger.getInstance(Course.class.getName());
   public static final String SANDBOX_DIR = "Sandbox";
   public List<Lesson> lessons = new ArrayList<Lesson>();
-  public String description;
-  public String name;
-  public String myCourseDirectory = "";
-  public String author="";
-  public boolean myUpToDate = false;
+  private String description;
+  private String name;
+  private String myCourseDirectory = "";
+  private String author="";
+  private boolean myUpToDate = false;
+  private Language myLanguage;
 
 
   public List<Lesson> getLessons() {
@@ -108,5 +110,21 @@ public class Course {
 
   public void setUpToDate(boolean upToDate) {
     myUpToDate = upToDate;
+  }
+
+  public Language getLanguage() {
+    return myLanguage;
+  }
+
+  public void setLanguage(Language language) {
+    myLanguage = language;
+  }
+
+  public void setAuthor(String author) {
+    this.author = author;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
   }
 }

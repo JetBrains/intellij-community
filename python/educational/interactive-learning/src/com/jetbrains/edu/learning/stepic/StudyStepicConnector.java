@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.HttpRequests;
 import com.jetbrains.edu.learning.course.*;
@@ -44,10 +45,11 @@ public class StudyStepicConnector {
 
   public static Course getCourse(@NotNull final CourseInfo info) {
     final Course course = new Course();
-    course.author = info.getAuthor();
-    course.description = info.getDescription();
-    course.name = info.getName();
+    course.setAuthor(info.getAuthor());
+    course.setDescription(info.getDescription());
+    course.setName(info.getName());
     course.lessons = new ArrayList<Lesson>();
+    course.setLanguage(Language.findLanguageByID("Python"));  // TODO: get from stepic
 
     if (info.equals(ourTestCourseInfo)) {   // TODO: to be removed
       try {

@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +21,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +35,7 @@ import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.Collection;
 
@@ -203,13 +207,9 @@ public class StudyUtils {
   }
 
   @Nullable
-  public static Sdk findSdk(@NotNull final Project project) {
-    final StudyUtilsExtensionPoint[] extensions =
-      ApplicationManager.getApplication().getExtensions(StudyUtilsExtensionPoint.EP_NAME);
-    if (extensions.length > 0) {
-      return extensions[0].findSdk(project);
-    }
-    return null;
+  public static Sdk findSdk(Task task, @NotNull final Project project) {
+    final Language language = task.getLesson().getCourse().getLanguage();
+    return StudyExecutor.INSTANCE.forLanguage(language).findSdk(project);
   }
 
   public static void markDirAsSourceRoot(@NotNull final VirtualFile dir, @NotNull final Project project) {
@@ -234,39 +234,46 @@ public class StudyUtils {
     });
   }
 
+  @NotNull
   public static StudyTestRunner getTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    final StudyUtilsExtensionPoint[] extensions =
-      ApplicationManager.getApplication().getExtensions(StudyUtilsExtensionPoint.EP_NAME);
-    if (extensions.length > 0) {
-      return extensions[0].getTestRunner(task, taskDir);
-    }
-    return null;
+    final Language language = task.getLesson().getCourse().getLanguage();
+    return StudyExecutor.INSTANCE.forLanguage(language).getTestRunner(task, taskDir);
   }
 
-  public static RunContentExecutor getExecutor(@NotNull final Project project, @NotNull final ProcessHandler handler) {
-    final StudyUtilsExtensionPoint[] extensions =
-      ApplicationManager.getApplication().getExtensions(StudyUtilsExtensionPoint.EP_NAME);
-    if (extensions.length > 0) {
-      return extensions[0].getExecutor(project, handler);
-    }
-    return null;
+  public static RunContentExecutor getExecutor(@NotNull final Project project, Task currentTask, @NotNull final ProcessHandler handler) {
+    final Language language = currentTask.getLesson().getCourse().getLanguage();
+    return StudyExecutor.INSTANCE.forLanguage(language).getExecutor(project, handler);
   }
 
   public static void setCommandLineParameters(@NotNull final GeneralCommandLine cmd,
-                                               @NotNull final Project project,
-                                               @NotNull final String filePath,
-                                               @NotNull final String sdkPath,
-                                               @NotNull final Task currentTask) {
-  final StudyUtilsExtensionPoint[] extensions =
-      ApplicationManager.getApplication().getExtensions(StudyUtilsExtensionPoint.EP_NAME);
-    if (extensions.length > 0) {
-      extensions[0].setCommandLineParameters(cmd, project, filePath, sdkPath, currentTask);
-    }
+                                              @NotNull final Project project,
+                                              @NotNull final String filePath,
+                                              @NotNull final String sdkPath,
+                                              @NotNull final Task currentTask) {
+    final Language language = currentTask.getLesson().getCourse().getLanguage();
+    StudyExecutor.INSTANCE.forLanguage(language).setCommandLineParameters(cmd, project, filePath, sdkPath, currentTask);
   }
 
   public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
     final Presentation presentation = event.getPresentation();
     presentation.setVisible(isEnable);
     presentation.setEnabled(isEnable);
+  }
+
+  public static void showNoSdkNotification(@NotNull final Task currentTask, @NotNull final Project project) {
+    final Language language = currentTask.getLesson().getCourse().getLanguage();
+    StudyExecutor.INSTANCE.forLanguage(language).showNoSdkNotification(project);
+  }
+
+
+  /**
+   * shows pop up in the center of "check task" button in study editor
+   */
+  public static void showCheckPopUp(@NotNull final Project project, @NotNull final Balloon balloon) {
+    StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
+    assert studyEditor != null;
+    JButton checkButton = studyEditor.getCheckButton();
+    balloon.showInCenterOf(checkButton);
+    Disposer.register(project, balloon);
   }
 }

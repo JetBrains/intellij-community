@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,7 +35,6 @@ import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyDocumentListener;
 import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.course.Task;
 import com.jetbrains.edu.learning.course.TaskFile;
@@ -59,7 +57,7 @@ import java.util.Map;
 
 /**
  * Implementation of StudyEditor which has panel with special buttons and task text
- * also @see {@link com.jetbrains.edu.learning.editor.StudyFileEditorProvider}
+ * also @see {@link StudyFileEditorProvider}
  */
 public class StudyEditor implements TextEditor {
   private static final String TASK_TEXT_HEADER = "Task Text";
@@ -211,26 +209,23 @@ public class StudyEditor implements TextEditor {
     myRefreshButton = addButton(taskActionsPanel, StudyRefreshTaskFileAction.ACTION_ID, AllIcons.Actions.Refresh, StudyRefreshTaskFileAction.SHORTCUT);
     JButton myShowHintButton = addButton(taskActionsPanel, StudyShowHintAction.ACTION_ID, InteractiveLearningIcons.ShowHint, StudyShowHintAction.SHORTCUT);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
-      final Sdk sdk = StudyUtils.findSdk(myProject);
-      if (sdk != null) {
-        JButton runButton = addButton(taskActionsPanel, StudyRunAction.ACTION_ID, AllIcons.General.Run, null);
-        runButton.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            StudyRunAction studyRunAction = (StudyRunAction)ActionManager.getInstance().getAction("StudyRunAction");
-            studyRunAction.run(myProject, sdk);
-          }
-        });
-        JButton watchInputButton = addButton(taskActionsPanel, "WatchInputAction", InteractiveLearningIcons.WatchInput, null);
-        watchInputButton.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            StudyEditInputAction studyEditInputAction =
-              (StudyEditInputAction)ActionManager.getInstance().getAction("WatchInputAction");
-            studyEditInputAction.showInput(myProject);
-          }
-        });
+      JButton runButton = addButton(taskActionsPanel, StudyRunAction.ACTION_ID, AllIcons.General.Run, null);
+      runButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          StudyRunAction studyRunAction = (StudyRunAction)ActionManager.getInstance().getAction("StudyRunAction");
+          studyRunAction.run(myProject);
+        }
+      });
+      JButton watchInputButton = addButton(taskActionsPanel, "WatchInputAction", InteractiveLearningIcons.WatchInput, null);
+      watchInputButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          StudyEditInputAction studyEditInputAction =
+            (StudyEditInputAction)ActionManager.getInstance().getAction("WatchInputAction");
+          studyEditInputAction.showInput(myProject);
       }
+        });
     }
     myCheckButton.addActionListener(new ActionListener() {
       @Override

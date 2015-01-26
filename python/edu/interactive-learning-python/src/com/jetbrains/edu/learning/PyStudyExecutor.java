@@ -18,18 +18,26 @@ package com.jetbrains.edu.learning;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.course.Task;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.io.File;
 
-public class PyStudyUtils implements StudyUtilsExtensionPoint {
+public class PyStudyExecutor implements StudyExecutor {
 
   @Override
   public Sdk findSdk(@NotNull final Project project) {
@@ -62,5 +70,28 @@ public class PyStudyUtils implements StudyUtilsExtensionPoint {
     }
   }
 
+  public void showNoSdkNotification(@NotNull final Project project) {
+    final String text = "<html>No Python interpreter configured for the project<br><a href=\"\">Configure interpreter</a></html>";
+    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().
+      createHtmlTextBalloonBuilder(text, null,
+                                   MessageType.WARNING.getPopupBackground(),
+                                   new HyperlinkListener() {
+                                     @Override
+                                     public void hyperlinkUpdate(HyperlinkEvent event) {
+                                       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                         ApplicationManager.getApplication()
+                                           .invokeLater(new Runnable() {
+                                             @Override
+                                             public void run() {
+                                               ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
+                                             }
+                                           });
+                                       }
+                                     }
+                                   });
+    balloonBuilder.setHideOnLinkClick(true);
+    final Balloon balloon = balloonBuilder.createBalloon();
+    StudyUtils.showCheckPopUp(project, balloon);
+  }
 
 }

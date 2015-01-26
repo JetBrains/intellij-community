@@ -14,18 +14,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -43,10 +40,8 @@ import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.course.TaskWindow;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
 import java.util.List;
@@ -133,16 +128,11 @@ public class StudyCheckAction extends DumbAwareAction {
             final Task task = studyState.getTask();
             final VirtualFile taskDir = studyState.getTaskDir();
             flushWindows(task, taskDir);
-            final Sdk sdk = StudyUtils.findSdk(project);
-            if (sdk == null) {
-              createNoPythonInterpreterPopUp(project);
-              return;
-            }
             final StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
             if (runAction == null) {
               return;
             }
-            runAction.run(project, sdk);
+            runAction.run(project);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
@@ -154,8 +144,9 @@ public class StudyCheckAction extends DumbAwareAction {
             Process testProcess = null;
             try {
               final VirtualFile executablePath = getTaskVirtualFile(studyState, task, taskDir);
-
-              testProcess = testRunner.createCheckProcess(project, executablePath.getPath());
+              if (executablePath != null) {
+                testProcess = testRunner.createCheckProcess(project, executablePath.getPath());
+              }
             }
             catch (ExecutionException e) {
               LOG.error(e);
@@ -169,6 +160,7 @@ public class StudyCheckAction extends DumbAwareAction {
         });
       }
 
+      @Nullable
       private VirtualFile getTaskVirtualFile(@NotNull final StudyState studyState,
                                              @NotNull final Task task,
                                              @NotNull final VirtualFile taskDir) {
@@ -273,29 +265,6 @@ public class StudyCheckAction extends DumbAwareAction {
     };
   }
 
-  private static void createNoPythonInterpreterPopUp(@NotNull final Project project) {
-    String text = "<html>No Python interpreter configured for the project<br><a href=\"\">Configure interpreter</a></html>";
-    BalloonBuilder balloonBuilder =
-      JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(text, null, MessageType.WARNING.getPopupBackground(), new HyperlinkListener() {
-          @Override
-          public void hyperlinkUpdate(HyperlinkEvent event) {
-            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  ShowSettingsUtil.getInstance()
-                    .showSettingsDialog(project, "Project Interpreter");
-                }
-              });
-            }
-          }
-        });
-    balloonBuilder.setHideOnLinkClick(true);
-    final Balloon balloon = balloonBuilder.createBalloon();
-    showCheckPopUp(project, balloon);
-  }
-
   private static void navigateToFailedTaskWindow(@NotNull final StudyState studyState,
                                                  @NotNull final Task task,
                                                  @NotNull final VirtualFile taskDir,
@@ -324,7 +293,9 @@ public class StudyCheckAction extends DumbAwareAction {
         }
       }
     }
-    FileEditorManager.getInstance(project).openFile(fileToNavigate, true);
+    if (fileToNavigate != null) {
+      FileEditorManager.getInstance(project).openFile(fileToNavigate, true);
+    }
     final Editor editorToNavigate = editor;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -400,19 +371,9 @@ public class StudyCheckAction extends DumbAwareAction {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, color, null);
     final Balloon balloon = balloonBuilder.createBalloon();
-    showCheckPopUp(project, balloon);
+    StudyUtils.showCheckPopUp(project, balloon);
   }
 
-  /**
-   * shows pop up in the center of "check task" button in study editor
-   */
-  private static void showCheckPopUp(@NotNull final Project project, @NotNull final Balloon balloon) {
-    StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
-    assert studyEditor != null;
-    JButton checkButton = studyEditor.getCheckButton();
-    balloon.showInCenterOf(checkButton);
-    Disposer.register(project, balloon);
-  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

@@ -18,7 +18,7 @@ package com.jetbrains.edu.learning;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,8 +26,8 @@ import com.jetbrains.edu.learning.course.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface StudyUtilsExtensionPoint {
-  ExtensionPointName<StudyUtilsExtensionPoint> EP_NAME = ExtensionPointName.create("Edu.StudyUtils");
+public interface StudyExecutor {
+  LanguageExtension<StudyExecutor> INSTANCE = new LanguageExtension<StudyExecutor>("Edu.StudyUtils");
 
   @Nullable
   Sdk findSdk(@NotNull final Project project);
@@ -41,4 +41,6 @@ public interface StudyUtilsExtensionPoint {
                                 @NotNull final String filePath,
                                 @NotNull final String sdkPath,
                                 @NotNull final Task currentTask);
+
+  void showNoSdkNotification(@NotNull final Project project);
 }

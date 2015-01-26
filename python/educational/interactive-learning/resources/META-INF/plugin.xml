@@ -35,7 +35,7 @@
   </application-components>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="Edu.StudyUtils" interface="com.jetbrains.edu.learning.StudyUtilsExtensionPoint"/>
+    <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   </extensionPoints>
 
   <actions>
