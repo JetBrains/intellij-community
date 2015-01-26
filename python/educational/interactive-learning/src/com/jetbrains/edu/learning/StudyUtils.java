@@ -197,7 +197,7 @@ public class StudyUtils {
     int taskNum = task.getIndex() + 1;
     int lessonNum = task.getLesson().getIndex() + 1;
     assert course != null;
-    final String pathToResource = FileUtil.join(course.getCourseDirectory(), Lesson.LESSON_DIR + lessonNum, Task.TASK_DIR + taskNum);
+    final String pathToResource = FileUtil.join(course.getCourseDirectory(), StudyNames.LESSON_DIR + lessonNum, Task.TASK_DIR + taskNum);
     final File resourceFile = new File(pathToResource, copyName);
     FileUtil.copy(new File(pathToResource, sourceName), resourceFile);
     return resourceFile;

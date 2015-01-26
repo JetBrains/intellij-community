@@ -18,24 +18,24 @@ import javax.swing.*;
 
 abstract public class StudyWindowNavigationAction extends DumbAwareAction {
 
-  public StudyWindowNavigationAction(String actionId, String description, Icon icon) {
+  protected StudyWindowNavigationAction(String actionId, String description, Icon icon) {
     super(actionId, description, icon);
   }
 
-  public void navigateWindow(@NotNull final Project project) {
-      Editor selectedEditor = StudyEditor.getSelectedEditor(project);
+  private void navigateToPlaceholder(@NotNull final Project project) {
+      final Editor selectedEditor = StudyEditor.getSelectedEditor(project);
       if (selectedEditor != null) {
-        FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-        VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
+        final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+        final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
         if (openedFile != null) {
-          StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-          TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+          final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+          final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
           if (selectedTaskFile != null) {
-            AnswerPlaceholder selectedAnswerPlaceholder = selectedTaskFile.getSelectedAnswerPlaceholder();
+            final AnswerPlaceholder selectedAnswerPlaceholder = selectedTaskFile.getSelectedAnswerPlaceholder();
             if (selectedAnswerPlaceholder == null) {
               return;
             }
-            AnswerPlaceholder nextAnswerPlaceholder = getNextTaskWindow(selectedAnswerPlaceholder);
+            final AnswerPlaceholder nextAnswerPlaceholder = getNextTaskWindow(selectedAnswerPlaceholder);
             if (nextAnswerPlaceholder == null) {
               return;
             }
@@ -51,11 +51,11 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
+    final Project project = e.getProject();
     if (project == null) {
       return;
     }
-    navigateWindow(project);
+    navigateToPlaceholder(project);
   }
 
   @Override

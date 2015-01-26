@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.jetbrains.edu.learning.StudyProjectGenerator;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.course.CourseInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -59,7 +60,7 @@ public class StudyNewProjectPanel{
     myCoursesComboBox.addActionListener(new CourseSelectedListener());
   }
 
-  private void setError(String errorMessage) {
+  private void setError(@NotNull final String errorMessage) {
     myGenerator.fireStateChanged(new ValidationResult(errorMessage));
     if (myValidationManager != null) {
       myValidationManager.validate();

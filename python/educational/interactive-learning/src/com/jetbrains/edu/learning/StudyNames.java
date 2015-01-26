@@ -24,6 +24,10 @@ public class StudyNames {
   public static final String LESSON = "lesson";
   public static final String TEST_HELPER = "test_helper.py";
   public static final String USER_TESTER = "user_tester.py";
+  public static final String LESSON_DIR = "lesson";
+  public static final String TEST_TAB_NAME = "test";
+  public static final String USER_TEST_INPUT = "input";
+  public static final String USER_TEST_OUTPUT = "output";
 
   private StudyNames() {
   }

@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.StudyNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -25,9 +26,8 @@ public class Lesson implements Stateful {
 
   public List<Task> taskList = new ArrayList<Task>();
   private Course myCourse = null;
-  public int myIndex = -1;
-  public static final String LESSON_DIR = "lesson";
-  public LessonInfo myLessonInfo = new LessonInfo();
+  private int myIndex = -1;
+  private LessonInfo myLessonInfo = new LessonInfo();
 
   public LessonInfo getLessonInfo() {
     return myLessonInfo;
@@ -73,7 +73,7 @@ public class Lesson implements Stateful {
    */
   public void create(@NotNull final VirtualFile courseDir, @NotNull final File resourceRoot,
                      @NotNull final Project project) throws IOException {
-    String lessonDirName = LESSON_DIR + Integer.toString(myIndex + 1);
+    String lessonDirName = StudyNames.LESSON_DIR + Integer.toString(myIndex + 1);
     VirtualFile lessonDir = courseDir.createChildDirectory(this, lessonDirName);
     for (int i = 0; i < taskList.size(); i++) {
       Task task = taskList.get(i);

@@ -85,7 +85,7 @@ public class AnswerPlaceholder implements Comparable, Stateful {
   /**
    * Draw task window with color according to its status
    */
-  public void draw(@NotNull final Editor editor, boolean drawSelection, boolean moveCaret) {
+  public void draw(@NotNull final Editor editor) {
     Document document = editor.getDocument();
     if (!isValid(document)) {
       return;
@@ -100,12 +100,7 @@ public class AnswerPlaceholder implements Comparable, Stateful {
                                                                           defaultTestAttributes.getEffectType(),
                                                                           defaultTestAttributes.getFontType()),
                                                        HighlighterTargetArea.EXACT_RANGE);
-    if (drawSelection) {
-      editor.getSelectionModel().setSelection(startOffset, startOffset + length);
-    }
-    if (moveCaret) {
-      editor.getCaretModel().moveToOffset(startOffset);
-    }
+    editor.getCaretModel().moveToOffset(startOffset);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
   }

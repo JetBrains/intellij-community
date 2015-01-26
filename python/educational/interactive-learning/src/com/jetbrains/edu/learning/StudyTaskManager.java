@@ -65,7 +65,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   public static final String COURSE_ELEMENT = "courseElement";
   private static Map<String, String> myDeletedShortcuts = new HashMap<String, String>();
   private final Project myProject;
-  public Course myCourse;
+  private Course myCourse;
   private FileCreatedByUserListener myListener;
 
 
@@ -321,7 +321,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     if (taskDirName.contains(Task.TASK_DIR)) {
       final VirtualFile lessonDir = taskDir.getParent();
       if (lessonDir != null) {
-        int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), Lesson.LESSON_DIR);
+        int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);
         List<Lesson> lessons = myCourse.getLessons();
         if (!StudyUtils.indexIsValid(lessonIndex, lessons)) {
           return null;
@@ -339,7 +339,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     return null;
   }
 
-  class FileCreatedByUserListener extends VirtualFileAdapter {
+  private class FileCreatedByUserListener extends VirtualFileAdapter {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
       final VirtualFile createdFile = event.getFile();
@@ -347,8 +347,8 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
       if (taskDir != null && taskDir.getName().contains(Task.TASK_DIR)) {
         int taskIndex = StudyUtils.getIndex(taskDir.getName(), Task.TASK_DIR);
         final VirtualFile lessonDir = taskDir.getParent();
-        if (lessonDir != null && lessonDir.getName().contains(Lesson.LESSON_DIR)) {
-          int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), Lesson.LESSON_DIR);
+        if (lessonDir != null && lessonDir.getName().contains(StudyNames.LESSON_DIR)) {
+          int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);
           if (myCourse != null) {
             List<Lesson> lessons = myCourse.getLessons();
             if (StudyUtils.indexIsValid(lessonIndex, lessons)) {

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.jetbrains.edu.learning.StudyNames;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.course.*;
@@ -116,7 +117,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     taskFile.setTrackChanges(false);
     clearDocument(document);
     Task task = taskFile.getTask();
-    String lessonDir = Lesson.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
+    String lessonDir = StudyNames.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
     String taskDir = Task.TASK_DIR + String.valueOf(task.getIndex() + 1);
     Course course = task.getLesson().getCourse();
     File resourceFile = new File(course.getCourseDirectory());

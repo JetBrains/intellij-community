@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.StudyNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -68,7 +69,7 @@ public class Course {
                 File[] files = resourceRoot.listFiles(new FilenameFilter() {
                   @Override
                   public boolean accept(File dir, String name) {
-                    return !name.contains(Lesson.LESSON_DIR) && !name.equals("course.json") && !name.equals("hints");
+                    return !name.contains(StudyNames.LESSON_DIR) && !name.equals("course.json") && !name.equals("hints");
                   }
                 });
                 for (File file : files) {

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class StudyShowHintAction extends DumbAwareAction {
   public static final String ACTION_ID = "ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
-  public static final String OUTSIDE_TASK_WINDOW_MESSAGE = "Put the caret in the answer placeholder to get hint";
+  private static final String ourWarningMessage = "Put the caret in the answer placeholder to get hint";
   public static final String HINT_NOT_AVAILABLE = "There is no hint for this answer placeholder";
 
   public StudyShowHintAction() {
@@ -56,7 +56,7 @@ public class StudyShowHintAction extends DumbAwareAction {
     if (file == null) {
       return;
     }
-    String hintText = OUTSIDE_TASK_WINDOW_MESSAGE;
+    String hintText = ourWarningMessage;
     if (answerPlaceholder != null) {
       hintText = answerPlaceholder.getHint();
     }
@@ -64,7 +64,7 @@ public class StudyShowHintAction extends DumbAwareAction {
     PsiElement element = file.findElementAt(offset);
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     DocumentationComponent component = new DocumentationComponent(documentationManager);
-    component.setData(element != null ? element : file, element != null ? hintText : OUTSIDE_TASK_WINDOW_MESSAGE, true, null);
+    component.setData(element != null ? element : file, element != null ? hintText : ourWarningMessage, true, null);
     showHintPopUp(project, editor, component);
   }
 

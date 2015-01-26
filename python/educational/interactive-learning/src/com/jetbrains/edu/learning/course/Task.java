@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.StudyNames;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +27,8 @@ public class Task implements Stateful {
   private String testsText;
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
   private Lesson myLesson;
-  public int myIndex;
-  public List<UserTest> userTests = new ArrayList<UserTest>();
+  private int myIndex;
+  private List<UserTest> userTests = new ArrayList<UserTest>();
   public static final String USER_TESTS = "userTests";
 
   public Map<String, TaskFile> getTaskFiles() {
@@ -65,6 +66,10 @@ public class Task implements Stateful {
     for (TaskFile taskFile : taskFiles.values()) {
       taskFile.setStatus(status, oldStatus);
     }
+  }
+
+  public void setUserTests(@NotNull final List<UserTest> userTests) {
+    this.userTests = userTests;
   }
 
   public List<UserTest> getUserTests() {
@@ -184,7 +189,7 @@ public class Task implements Stateful {
 
   @Nullable
   public VirtualFile getTaskDir(Project project) {
-    String lessonDirName = Lesson.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
+    String lessonDirName = StudyNames.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
     String taskDirName = TASK_DIR + String.valueOf(myIndex + 1);
     VirtualFile courseDir = project.getBaseDir();
     if (courseDir != null) {

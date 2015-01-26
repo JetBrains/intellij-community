@@ -40,7 +40,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
       final AnswerPlaceholder answerPlaceholder = myTaskFile.getTaskWindow(editor.getDocument(), pos);
       if (answerPlaceholder != null) {
         myTaskFile.setSelectedAnswerPlaceholder(answerPlaceholder);
-        answerPlaceholder.draw(editor, false, false);
+        answerPlaceholder.draw(editor);
       }
       else {
         myTaskFile.drawAllWindows(editor);

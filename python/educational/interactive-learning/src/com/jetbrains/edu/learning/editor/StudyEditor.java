@@ -179,7 +179,7 @@ public class StudyEditor implements TextEditor {
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     int fontSize = editorColorsScheme.getEditorFontSize();
     final String fontName = editorColorsScheme.getEditorFontName();
-    setJTextPaneFont(taskTextPane, new Font(fontName, Font.PLAIN, fontSize), JBColor.BLACK);
+    setJTextPaneFont(taskTextPane, new Font(fontName, Font.PLAIN, fontSize));
     taskTextPane.setBackground(UIUtil.getPanelBackground());
     taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
     final HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextPane, true);
@@ -187,13 +187,13 @@ public class StudyEditor implements TextEditor {
     studyPanel.add(taskTextPanel);
   }
 
-  private static void setJTextPaneFont(@NotNull final JTextPane textPane, @NotNull final Font font, @NotNull final Color color) {
+  private static void setJTextPaneFont(@NotNull final JTextPane textPane, @NotNull final Font font) {
     final MutableAttributeSet attrs = textPane.getInputAttributes();
     StyleConstants.setFontFamily(attrs, font.getFamily());
     StyleConstants.setFontSize(attrs, font.getSize());
     StyleConstants.setItalic(attrs, (font.getStyle() & Font.ITALIC) != 0);
     StyleConstants.setBold(attrs, (font.getStyle() & Font.BOLD) != 0);
-    StyleConstants.setForeground(attrs, color);
+    StyleConstants.setForeground(attrs, JBColor.BLACK);
     StyledDocument doc = textPane.getStyledDocument();
     doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
   }
@@ -270,7 +270,7 @@ public class StudyEditor implements TextEditor {
     return myRefreshButton;
   }
 
-  FileEditor getDefaultEditor() {
+  private FileEditor getDefaultEditor() {
     return myDefaultEditor;
   }
 

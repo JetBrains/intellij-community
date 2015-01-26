@@ -8,7 +8,7 @@ import com.jetbrains.edu.learning.course.Task;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class StudyTestRunner {
-  public static final String STUDY_PREFIX = "#educational_plugin";
+  private static final String ourStudyPrefix = "#educational_plugin";
   public static final String TEST_OK = "test OK";
   private static final String TEST_FAILED = "FAILED + ";
   protected final Task myTask;
@@ -24,7 +24,7 @@ public abstract class StudyTestRunner {
   @NotNull
   public String getTestsOutput(@NotNull final ProcessOutput processOutput) {
     for (String line : processOutput.getStdoutLines()) {
-      if (line.contains(STUDY_PREFIX)) {
+      if (line.contains(ourStudyPrefix)) {
         if (line.contains(TEST_OK)) {
           continue;
         }

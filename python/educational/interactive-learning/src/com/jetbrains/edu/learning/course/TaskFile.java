@@ -34,12 +34,12 @@ public class TaskFile implements Stateful {
   public String name;
   public String text;
   @SerializedName("placeholders")
-  public List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
+  private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
 
   private Task myTask;
   @Transient
   private AnswerPlaceholder mySelectedAnswerPlaceholder = null;
-  public int myIndex = -1;
+  private int myIndex = -1;
   private boolean myUserCreated = false;
   private boolean myTrackChanges = true;
 
@@ -108,7 +108,7 @@ public class TaskFile implements Stateful {
   public void drawAllWindows(Editor editor) {
     editor.getMarkupModel().removeAllHighlighters();
     for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
-      answerPlaceholder.draw(editor, false, false);
+      answerPlaceholder.draw(editor);
     }
     final Document document = editor.getDocument();
     EditorActionManager.getInstance()
