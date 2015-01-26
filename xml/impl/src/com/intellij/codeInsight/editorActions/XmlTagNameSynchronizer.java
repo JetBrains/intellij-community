@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -218,6 +219,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       }
       if (!fitsInMarker) {
         clearMarkers();
+        beforeDocumentChange(event);
       }
     }
 
@@ -278,11 +280,12 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     }
 
     private static RangeMarker findSupport(RangeMarker leader, PsiFile file, Document document) {
-      final PsiElement element = file.findElementAt(leader.getStartOffset());
+      final PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, leader.getStartOffset());
       PsiElement support = RenameTagBeginOrEndIntentionAction.findOtherSide(element, false);
       support = support == null || element == support ? RenameTagBeginOrEndIntentionAction.findOtherSide(element, true) : support;
+      int diff = leader.getStartOffset() - element.getTextRange().getStartOffset();
       final TextRange range = support != null ? support.getTextRange() : null;
-      return range != null ? document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true) : null;
+      return range != null ? document.createRangeMarker(range.getStartOffset() + diff, range.getEndOffset() + diff, true) : null;
     }
   }
 }

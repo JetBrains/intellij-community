@@ -731,6 +731,7 @@ public class AllIcons {
     public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); // 9x9
     public static final Icon DeleteContentRootRollover = IconLoader.getIcon("/modules/deleteContentRootRollover.png"); // 9x9
     public static final Icon Edit = IconLoader.getIcon("/modules/edit.png"); // 14x14
+    public static final Icon EditFolder = IconLoader.getIcon("/modules/editFolder.png"); // 16x16
     public static final Icon ExcludedGeneratedRoot = IconLoader.getIcon("/modules/excludedGeneratedRoot.png"); // 16x16
     public static final Icon ExcludeRoot = IconLoader.getIcon("/modules/excludeRoot.png"); // 16x16
     public static final Icon GeneratedFolder = IconLoader.getIcon("/modules/generatedFolder.png"); // 16x16

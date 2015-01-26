@@ -49,7 +49,7 @@ class InCommandStrategy extends Strategy {
   @NotNull
   @Override
   public String getSubText() {
-    return "D";
+    return "Tab will display list of arguments in next commit";
   }
 
   @NotNull

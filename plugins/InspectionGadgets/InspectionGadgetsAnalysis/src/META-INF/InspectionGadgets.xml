@@ -1242,6 +1242,10 @@
                      implementationClass="com.siyeh.ig.javabeans.SuspiciousGetterSetterInspection"/>
 
     <!--group.names.javadoc.issues-->
+    <localInspection language="JAVA" shortName="DanglingJavadoc" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="dangling.javadoc.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.javadoc.DanglingJavadocInspection"/>
     <localInspection language="JAVA" shortName="HtmlTagCanBeJavadocTag" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="html.tag.can.be.javadoc.tag.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
