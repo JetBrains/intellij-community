@@ -15,6 +15,6 @@ public class MavenDomPluginPresentationProvider extends PresentationProvider<Mav
     String artifactId = plugin.getArtifactId().getStringValue();
     String version = plugin.getVersion().getStringValue();
 
-    return artifactId + ':' + version;
+    return version == null ? artifactId : artifactId + ':' + version;
   }
 }

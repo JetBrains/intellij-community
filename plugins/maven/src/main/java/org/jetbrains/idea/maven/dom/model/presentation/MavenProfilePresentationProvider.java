@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.idea.maven.dom.model.presentation;
 
-// Generated on Mon Mar 17 18:02:09 MSK 2008
-// DTD/Schema  :    http://maven.apache.org/POM/4.0.0
+import com.intellij.ide.presentation.PresentationProvider;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 
-package org.jetbrains.idea.maven.dom.model;
-
-import com.intellij.ide.presentation.Presentation;
-import org.jetbrains.idea.maven.dom.MavenDomElement;
-import org.jetbrains.idea.maven.dom.model.presentation.MavenExclusionPresentationProvider;
-
-@Presentation(provider = MavenExclusionPresentationProvider.class)
-public interface MavenDomExclusion extends MavenDomElement, MavenDomShortArtifactCoordinates {
+/**
+ *
+ */
+public class MavenProfilePresentationProvider extends PresentationProvider<MavenDomProfile> {
+  @Nullable
+  @Override
+  public String getName(MavenDomProfile mavenDomProfile) {
+    return mavenDomProfile.getId().getStringValue();
+  }
 }

@@ -19,12 +19,14 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.MavenPhaseConverter;
+import org.jetbrains.idea.maven.dom.model.presentation.MavenExecutionPresentationProvider;
 
 /**
  * http://maven.apache.org/POM/4.0.0:PluginExecution interface.
@@ -33,6 +35,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenPhaseConverter;
  * 4.0.0
  * </pre>
  */
+@Presentation(provider = MavenExecutionPresentationProvider.class)
 public interface MavenDomPluginExecution extends MavenDomElement {
 
   /**
