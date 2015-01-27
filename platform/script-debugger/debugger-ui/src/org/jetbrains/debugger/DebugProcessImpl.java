@@ -1,5 +1,6 @@
 package org.jetbrains.debugger;
 
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Url;
@@ -10,6 +11,8 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.connection.VmConnection;
 import org.jetbrains.debugger.frame.SuspendContextImpl;
 
+import javax.swing.event.HyperlinkListener;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,12 +35,22 @@ public abstract class DebugProcessImpl<C extends VmConnection> extends XDebugPro
   protected final C connection;
 
   private boolean processBreakpointConditionsAtIdeSide;
-  private final XSmartStepIntoHandler<?> smartStepIntoHandler;
 
-  protected DebugProcessImpl(@NotNull XDebugSession session, @NotNull C connection, @Nullable XSmartStepIntoHandler<?> smartStepIntoHandler) {
+  private final XDebuggerEditorsProvider editorsProvider;
+  private final XSmartStepIntoHandler<?> smartStepIntoHandler;
+  protected XBreakpointHandler<?>[] breakpointHandlers;
+
+  protected final ExecutionResult executionResult;
+
+  protected DebugProcessImpl(@NotNull XDebugSession session, @NotNull C connection,
+                             @NotNull XDebuggerEditorsProvider editorsProvider,
+                             @Nullable XSmartStepIntoHandler<?> smartStepIntoHandler,
+                             @Nullable ExecutionResult executionResult) {
     super(session);
 
+    this.executionResult = executionResult;
     this.connection = connection;
+    this.editorsProvider = editorsProvider;
     this.smartStepIntoHandler = smartStepIntoHandler;
 
     connection.addListener(new SocketConnectionListener() {
@@ -58,10 +72,27 @@ public abstract class DebugProcessImpl<C extends VmConnection> extends XDebugPro
     });
   }
 
+  @NotNull
+  public final C getConnection() {
+    return connection;
+  }
+
   @Override
   @Nullable
   public final XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return smartStepIntoHandler;
+  }
+
+  @NotNull
+  @Override
+  public final XBreakpointHandler<?>[] getBreakpointHandlers() {
+    return breakpointHandlers;
+  }
+
+  @Override
+  @NotNull
+  public final XDebuggerEditorsProvider getEditorsProvider() {
+    return editorsProvider;
   }
 
   public void setProcessBreakpointConditionsAtIdeSide(final boolean processBreakpointConditionsAtIdeSide) {
@@ -212,5 +243,26 @@ public abstract class DebugProcessImpl<C extends VmConnection> extends XDebugPro
     else {
       resume();
     }
+  }
+
+  @Override
+  public final void startPausing() {
+    connection.getVm().getSuspendContextManager().suspend().rejected(new RejectErrorReporter(getSession(), "Cannot pause"));
+  }
+
+  @Override
+  public final String getCurrentStateMessage() {
+    return connection.getState().getMessage();
+  }
+
+  @Nullable
+  @Override
+  public final HyperlinkListener getCurrentStateHyperlinkListener() {
+    return getConnection().getState().getMessageLinkListener();
+  }
+
+  @Override
+  protected final ProcessHandler doGetProcessHandler() {
+    return executionResult != null ? executionResult.getProcessHandler() : null;
   }
 }
