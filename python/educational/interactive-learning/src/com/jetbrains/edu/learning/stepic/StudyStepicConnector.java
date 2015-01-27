@@ -18,14 +18,27 @@ import java.util.List;
 public class StudyStepicConnector {
   private static final String stepicApiUrl = "https://stepic.org/api/";
   private static final Logger LOG = Logger.getInstance(StudyStepicConnector.class.getName());
-  public static CourseInfo ourTestCourseInfo;   // TODO: to be removed
 
   private StudyStepicConnector() {}
 
+  @NotNull
   public static List<CourseInfo> getCourses() {
-    ourTestCourseInfo = new CourseInfo("name", "author", "description");
-    return Collections.singletonList(ourTestCourseInfo);   // TODO: uncomment proper implementation
-    /*try {
+    try {
+      return HttpRequests.request(stepicApiUrl + "courses/93").connect(new HttpRequests.RequestProcessor<List<CourseInfo>>() {
+
+        @Override
+        public List<CourseInfo> process(@NotNull HttpRequests.Request request) throws IOException {
+          final BufferedReader reader = request.getReader();
+          Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+          return gson.fromJson(reader, CoursesContainer.class).courses;
+        }
+      });
+    }
+    catch (IOException e) {
+      LOG.error("IOException " + e.getMessage());
+    }
+    return Collections.emptyList();
+    /*try {                             // TODO: uncomment
       return HttpRequests.request(stepicApiUrl + "courses").connect(new HttpRequests.RequestProcessor<List<CourseInfo>>() {
 
         @Override
@@ -50,16 +63,6 @@ public class StudyStepicConnector {
     course.lessons = new ArrayList<Lesson>();
     course.setLanguage("Python");  // TODO: get from stepic
 
-    if (info.equals(ourTestCourseInfo)) {   // TODO: to be removed
-      try {
-        course.lessons.addAll(getLessons(0));
-      }
-      catch (IOException e) {
-        LOG.error("IOException " + e.getMessage());
-      }
-      return course;
-    }
-
     try {
       for (Integer section : info.sections) {
         course.lessons.addAll(getLessons(section));
@@ -73,21 +76,7 @@ public class StudyStepicConnector {
   }
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
-    final List<Lesson> lessons;
-    if (sectionId == 0) {         // TODO: to be removed
-       lessons =
-        HttpRequests.request(stepicApiUrl + "lessons/9205").connect(new HttpRequests.RequestProcessor<List<Lesson>>() {
-
-          @Override
-          public List<Lesson> process(@NotNull HttpRequests.Request request) throws IOException {
-            final BufferedReader reader = request.getReader();
-            Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-            return gson.fromJson(reader, Section.class).lessons;
-          }
-        });
-    }
-    else {
-      lessons =
+    final List<Lesson> lessons =
         HttpRequests.request(stepicApiUrl + "sections/" + String.valueOf(sectionId))
           .connect(new HttpRequests.RequestProcessor<List<Lesson>>() {
 
@@ -98,7 +87,6 @@ public class StudyStepicConnector {
               return gson.fromJson(reader, Section.class).lessons;
             }
           });
-    }
     for (Lesson lesson : lessons) {
       lesson.taskList = new ArrayList<Task>();
       for (Integer s : lesson.steps) {
