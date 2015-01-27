@@ -15,18 +15,24 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.contents.DiffContent;
+import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.impl.DiffContentFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
@@ -102,31 +108,39 @@ public abstract class DiffActionExecutor {
 
           String title = mySelectedFile.getPresentableUrl();
 
+          boolean inverted = false;
           String title1;
           String title2;
           final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(mySelectedFile);
           if (status == null || FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) ||
               FileStatus.IGNORED.equals(status)) {
-
             final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(mySelectedFile);
-            if (revisionNumber.compareTo(currentRevision) > 0) {
-              DiffContent tmp = content2;
-              content2 = content1;
-              content1 = tmp;
-              title1 = VcsBundle.message("diff.title.local.with.number", currentRevision.asString());
-              title2 = revisionNumber.asString();
-            }
-            else {
-              title1 = revisionNumber.asString();
-              title2 = VcsBundle.message("diff.title.local.with.number", currentRevision.asString());
-            }
+
+            inverted = revisionNumber.compareTo(currentRevision) > 0;
+            title1 = revisionNumber.asString();
+            title2 = VcsBundle.message("diff.title.local.with.number", currentRevision.asString());
           }
           else {
             title1 = revisionNumber.asString();
             title2 = VcsBundle.message("diff.title.local");
           }
 
-          requestRef.set(new SimpleDiffRequest(title, content1, content2, title1, title2));
+          Integer line = null;
+          if (content2 instanceof DocumentContent) {
+            Editor[] editors = EditorFactory.getInstance().getEditors(((DocumentContent)content2).getDocument(), myProject);
+            if (editors.length != 0) line = editors[0].getCaretModel().getLogicalPosition().line;
+          }
+
+          if (inverted) {
+            SimpleDiffRequest request = new SimpleDiffRequest(title, content2, content1, title2, title1);
+            if (line != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.LEFT, line));
+            requestRef.set(request);
+          }
+          else {
+            SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+            if (line != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, line));
+            requestRef.set(request);
+          }
         }
         catch (ProcessCanceledException e) {
           //ignore
