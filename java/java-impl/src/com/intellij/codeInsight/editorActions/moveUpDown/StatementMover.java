@@ -112,27 +112,11 @@ class StatementMover extends LineMover {
     }
     PsiElement sibling =
       StatementUpDownMover.firstNonWhiteElement(down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling(), down);
-    PsiElement toMove = sibling;
-    if (!(sibling instanceof PsiStatement)) {
-      return destLine;
+    final PsiClass aClass = PsiTreeUtil.findChildOfType(sibling, PsiClass.class, false);
+    if (aClass != null) {
+      destLine =
+        editor.getDocument().getLineNumber(down ? sibling.getTextRange().getEndOffset() + 1 : sibling.getTextRange().getStartOffset());
     }
-    if (sibling instanceof PsiDeclarationStatement) {
-      PsiElement[] elements = ((PsiDeclarationStatement)sibling).getDeclaredElements();
-      if (elements.length == 0) return destLine;
-      sibling = down ? elements[elements.length - 1] : elements[0];
-    }
-    if (sibling instanceof PsiVariable) {
-      sibling = ((PsiVariable)sibling).getInitializer();
-    }
-    if (sibling instanceof PsiExpressionStatement) {
-      sibling = ((PsiExpressionStatement)sibling).getExpression();
-    }
-    if (sibling instanceof PsiNewExpression) {
-      sibling = ((PsiNewExpression)sibling).getAnonymousClass();
-    }
-    if (!(sibling instanceof PsiClass)) return destLine;
-    destLine = editor.getDocument().getLineNumber(down ? toMove.getTextRange().getEndOffset() + 1 : toMove.getTextRange().getStartOffset());
-
     return destLine;
   }
 
