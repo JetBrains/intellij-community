@@ -142,7 +142,7 @@ public class CheckRegExpForm {
     PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(myRegexpFile);
     int flags = 0;
     if (host != null) {
-      for (RegExpModifierProvider provider : RegExpModifierProvider.EP.getExtensions()) {
+      for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
         flags = provider.getFlags(host, myRegexpFile);
         if (flags > 0) break;
       }
