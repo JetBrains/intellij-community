@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -34,33 +35,29 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class LineMarkersUtil {
+class LineMarkersUtil {
   static void setLineMarkersToEditor(@NotNull Project project,
                                      @NotNull Document document,
-                                     int startOffset,
-                                     int endOffset,
+                                     @NotNull Segment bounds,
                                      @NotNull Collection<LineMarkerInfo> markers,
                                      int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     List<LineMarkerInfo> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
-    List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>(oldMarkers == null ? markers.size() : oldMarkers.size());
+    List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>(Math.max(markers.size(), oldMarkers.size()));
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
-    if (oldMarkers != null) {
-      for (LineMarkerInfo info : oldMarkers) {
-        RangeHighlighter highlighter = info.highlighter;
-        boolean toRemove = !highlighter.isValid() ||
-                           info.updatePass == group &&
-                           startOffset <= highlighter.getStartOffset() &&
-                           (highlighter.getEndOffset() < endOffset || highlighter.getEndOffset() == document.getTextLength());
+    for (LineMarkerInfo info : oldMarkers) {
+      RangeHighlighter highlighter = info.highlighter;
+      boolean toRemove = !highlighter.isValid() ||
+                         info.updatePass == group &&
+                         TextRange.containsRange(bounds, highlighter);
 
-        if (toRemove) {
-          toReuse.recycleHighlighter(highlighter);
-        }
-        else {
-          array.add(info);
-        }
+      if (toRemove) {
+        toReuse.recycleHighlighter(highlighter);
+      }
+      else {
+        array.add(info);
       }
     }
 
@@ -73,12 +70,12 @@ public class LineMarkersUtil {
       TextRange textRange = element.getTextRange();
       if (textRange == null) continue;
       TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
-      if (startOffset > elementRange.getStartOffset() || elementRange.getEndOffset() > endOffset) {
+      if (!TextRange.containsRange(bounds, elementRange)) {
         continue;
       }
       RangeHighlighter marker = toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
       if (marker == null) {
-        marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE);
+        marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.LINES_IN_RANGE);
       }
       LineMarkerInfo.LineMarkerGutterIconRenderer renderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
       LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = marker.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)marker.getGutterIconRenderer() : null;

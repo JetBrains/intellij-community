@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,11 @@ public class TextRange implements Segment, Serializable {
   }
 
   public boolean containsRange(int startOffset, int endOffset) {
-    return myStartOffset <= startOffset && myEndOffset >= endOffset;
+    return getStartOffset() <= startOffset && getEndOffset() >= endOffset;
+  }
+
+  public static boolean containsRange(@NotNull Segment outer, @NotNull Segment inner) {
+    return outer.getStartOffset() <= inner.getStartOffset() && inner.getEndOffset() <= outer.getEndOffset();
   }
 
   public boolean containsOffset(int offset) {

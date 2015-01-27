@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,29 +68,23 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
 
   @NotNull private final PsiFile myFile;
   @Nullable private final Editor myEditor;
-  private final int myStartOffset;
-  private final int myEndOffset;
-  private final boolean myUpdateAll;
+  @NotNull private final TextRange myBounds;
 
   public LineMarkersPass(@NotNull Project project,
                          @NotNull PsiFile file,
                          @Nullable Editor editor,
                          @NotNull Document document,
-                         int startOffset,
-                         int endOffset,
-                         boolean updateAll) {
+                         @NotNull TextRange bounds) {
     super(project, document, false);
     myFile = file;
     myEditor = editor;
-    myStartOffset = startOffset;
-    myEndOffset = endOffset;
-    myUpdateAll = updateAll;
+    myBounds = bounds;
   }
 
   @Override
   public void doApplyInformationToEditor() {
     try {
-      LineMarkersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
+      LineMarkersUtil.setLineMarkersToEditor(myProject, myDocument, myBounds, myMarkers, Pass.UPDATE_ALL);
     }
     catch (IndexNotReadyException ignored) {
     }
@@ -104,18 +98,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
       if (!HighlightingLevelManager.getInstance(myProject).shouldHighlight(psiRoot)) continue;
-      //long time = System.currentTimeMillis();
-      int start = myStartOffset;
-      int end = myEndOffset;
-      //if (myEditor != null) {
-      //  final int startLine = myEditor.offsetToLogicalPosition(start).line;
-      //  final int endLine = myEditor.offsetToLogicalPosition(end).line;
-      //  if (startLine != endLine) {
-      //    start = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(startLine, 0)));
-      //    end = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(endLine + 1, 0))) - 1;
-      //  }
-      //}
-      List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, start, end);
+      List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myBounds.getStartOffset(), myBounds.getEndOffset());
       if (elements.isEmpty()) {
         elements = Collections.singletonList(psiRoot);
       }
@@ -200,11 +183,11 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     }
   }
 
-  public static void collectLineMarkersForInjected(@NotNull final List<LineMarkerInfo> result,
-                                                   @NotNull List<PsiElement> elements,
-                                                   @NotNull final LineMarkersProcessor processor,
-                                                   @NotNull final PsiFile file,
-                                                   @NotNull final ProgressIndicator progress) {
+  static void collectLineMarkersForInjected(@NotNull final List<LineMarkerInfo> result,
+                                            @NotNull List<PsiElement> elements,
+                                            @NotNull final LineMarkersProcessor processor,
+                                            @NotNull final PsiFile file,
+                                            @NotNull final ProgressIndicator progress) {
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
     final List<LineMarkerInfo> injectedMarkers = new ArrayList<LineMarkerInfo>();
 
