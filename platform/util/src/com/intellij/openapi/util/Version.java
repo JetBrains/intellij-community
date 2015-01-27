@@ -84,6 +84,19 @@ public class Version {
     return major + "." + minor + "." + bugfix;
   }
 
+  /**
+   * @return compact string representation in the following form: "n.n", "n.n.n", e.g 1.0, 1.1.0
+   */
+  public String toCompactString() {
+    return toCompactString(major, minor, bugfix);
+  }
+
+  public static String toCompactString(int major, int minor, int bugfix) {
+    String res = major + "." + minor;
+    if (bugfix > 0) res += "." + bugfix;
+    return res;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
