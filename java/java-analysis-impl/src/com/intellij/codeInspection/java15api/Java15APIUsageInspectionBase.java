@@ -17,6 +17,7 @@ package com.intellij.codeInspection.java15api;
 
 import com.intellij.ToolExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
@@ -291,6 +292,32 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
         if (constructor instanceof PsiCompiledElement) {
           if (isForbiddenApiUsage(constructor, languageLevel)) {
             registerError(expression.getClassReference(), languageLevel);
+          }
+        }
+      }
+    }
+
+    @Override
+    public void visitMethod(PsiMethod method) {
+      super.visitMethod(method);
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE);
+      if (annotation != null) {
+        final Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
+        if (module != null) {
+          final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
+          final PsiMethod[] methods = method.findSuperMethods();
+          for (PsiMethod superMethod : methods) {
+            if (superMethod instanceof PsiCompiledElement) {
+              if (!isForbiddenApiUsage(superMethod, languageLevel)) {
+                return;
+              }
+            }
+            else {
+              return;
+            }
+          }
+          if (methods.length > 0) {
+            registerError(annotation.getNameReferenceElement(), languageLevel);
           }
         }
       }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usages of API documented as @since 1.5 (1.6|1.7)</problem_class>
+    <description>Usage of API documented as @since 1.7+</description>
+  </problem>
+
+</problems>
