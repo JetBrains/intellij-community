@@ -17,7 +17,6 @@ import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
@@ -145,24 +144,30 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myMainFrame.getGraphTable().repaint();
   }
 
-  public void showAll() {
-    runUnderModalProgress("Expanding linear branches...", new Runnable() {
+  private void performLongAction(@NotNull final GraphAction graphAction, @NotNull String title) {
+    runUnderModalProgress(title, new Runnable() {
       @Override
       public void run() {
-        myVisiblePack.getVisibleGraph().getActionController().performAction(new ExpandGraphAction(true));
+        final GraphAnswer<Integer> answer = myVisiblePack.getVisibleGraph().getActionController().performAction(graphAction);
+        final Runnable updater = answer.getGraphUpdater();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            assert updater != null;
+            updater.run();
+            handleAnswer(answer, true);
+          }
+        });
       }
     });
-    handleAnswer(null, true);
+  }
+
+  public void showAll() {
+    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND), "Expanding linear branches...");
   }
 
   public void hideAll() {
-    runUnderModalProgress("Collapsing linear branches...", new Runnable() {
-      @Override
-      public void run() {
-        myVisiblePack.getVisibleGraph().getActionController().performAction(new ExpandGraphAction(false));
-      }
-    });
-    handleAnswer(null, true);
+    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE), "Collapsing linear branches...");
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
@@ -440,25 +445,5 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @Override
   public void dispose() {
     getTable().removeAllHighlighters();
-  }
-
-  private static class ExpandGraphAction implements GraphAction {
-    private final boolean myExpand;
-
-    private ExpandGraphAction(boolean expand) {
-      myExpand = expand;
-    }
-
-    @Nullable
-    @Override
-    public PrintElement getAffectedElement() {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public Type getType() {
-      return myExpand ? Type.BUTTON_EXPAND : Type.BUTTON_COLLAPSE;
-    }
   }
 }

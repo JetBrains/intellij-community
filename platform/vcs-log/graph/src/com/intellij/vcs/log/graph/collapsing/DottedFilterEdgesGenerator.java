@@ -68,7 +68,7 @@ public class DottedFilterEdgesGenerator {
   }
 
   private boolean hasDottedEdges(int nodeIndex, boolean toUp) {
-    for (GraphEdge edge : myModification.getEdgeStorageAdapter().getAdditionalEdges(nodeIndex, EdgeFilter.NORMAL_ALL)) {
+    for (GraphEdge edge : myModification.getEdgesToAdd().getAdditionalEdges(nodeIndex, EdgeFilter.NORMAL_ALL)) {
       if (edge.getType() == DOTTED) {
         if (toUp && LinearGraphUtils.isEdgeToUp(edge, nodeIndex)) return true;
         if (!toUp && LinearGraphUtils.isEdgeToDown(edge, nodeIndex)) return false;

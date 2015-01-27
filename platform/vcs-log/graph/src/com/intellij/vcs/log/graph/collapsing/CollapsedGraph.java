@@ -23,10 +23,13 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CollapsedGraph {
 
@@ -45,7 +48,7 @@ public class CollapsedGraph {
   @NotNull private final UpdatableIntToIntMap myNodesMap;
   @NotNull private final EdgeStorage myEdgeStorage;
   @NotNull private final CompiledGraph myCompiledGraph;
-  @Nullable private Modification myCurrentModification = null;
+  @NotNull private final AtomicReference<Modification> myCurrentModification = new AtomicReference<Modification>(null);
 
 
   private CollapsedGraph(@NotNull LinearGraph delegatedGraph,
@@ -71,9 +74,11 @@ public class CollapsedGraph {
 
   @NotNull
   public Modification startModification() {
-    assert myCurrentModification == null;
-    myCurrentModification = new Modification();
-    return myCurrentModification;
+    Modification modification = new Modification();
+    if (myCurrentModification.compareAndSet(null, modification)) {
+      return modification;
+    }
+    throw new RuntimeException("Can not start a new modification while the other one is still running.");
   }
 
   @NotNull
@@ -92,83 +97,132 @@ public class CollapsedGraph {
     return myMatchedNodeId;
   }
 
-  // all nodeIndexes means node indexes in delegated graph
+  // everywhere in this class "nodeIndexes" means "node indexes in delegated graph"
   public class Modification {
-    @NotNull private final EdgeStorageAdapter myEdgeStorageAdapter;
+    private static final int COLLECTING = 0;
+    private static final int APPLYING = 1;
+    private static final int DONE = 2;
 
-    private boolean done = false;
+    @NotNull private final EdgeStorageAdapter myEdgesToAdd = EdgeStorageAdapter.createSimpleEdgeStorage();
+    @NotNull private final EdgeStorageAdapter myEdgesToRemove = EdgeStorageAdapter.createSimpleEdgeStorage();
+    @NotNull private final TIntHashSet myNodesToHide = new TIntHashSet();
+    @NotNull private final TIntHashSet myNodesToShow = new TIntHashSet();
+    private boolean myClearEdges = false;
+    private boolean myClearVisibility = false;
+
+    private volatile int myProgress = COLLECTING;
     private int minAffectedNodeIndex = Integer.MAX_VALUE;
     private int maxAffectedNodeIndex = Integer.MIN_VALUE;
 
-    public Modification() {
-      myEdgeStorageAdapter = new EdgeStorageAdapter(myEdgeStorage, getDelegatedGraph());
-    }
-
-    @NotNull
-    public EdgeStorageAdapter getEdgeStorageAdapter() {
-      return myEdgeStorageAdapter;
-    }
-
     private void touchIndex(int nodeIndex) {
-      assert !done;
+      assert myProgress == COLLECTING;
       minAffectedNodeIndex = Math.min(minAffectedNodeIndex, nodeIndex);
       maxAffectedNodeIndex = Math.max(maxAffectedNodeIndex, nodeIndex);
     }
 
     private void touchAll() {
+      assert myProgress == COLLECTING;
       minAffectedNodeIndex = 0;
       maxAffectedNodeIndex = getDelegatedGraph().nodesCount() - 1;
     }
 
     private void touchEdge(@NotNull GraphEdge edge) {
-      assert !done;
+      assert myProgress == COLLECTING;
       if (edge.getUpNodeIndex() != null) touchIndex(edge.getUpNodeIndex());
       if (edge.getDownNodeIndex() != null) touchIndex(edge.getDownNodeIndex());
     }
 
     public void showNode(int nodeIndex) {
+      assert myProgress == COLLECTING;
+      myNodesToShow.add(nodeIndex);
       touchIndex(nodeIndex);
-      myDelegateNodesVisibility.show(nodeIndex);
     }
 
     public void hideNode(int nodeIndex) {
+      assert myProgress == COLLECTING;
+      myNodesToHide.add(nodeIndex);
       touchIndex(nodeIndex);
-      myDelegateNodesVisibility.hide(nodeIndex);
     }
 
     public void createEdge(@NotNull GraphEdge edge) {
+      assert myProgress == COLLECTING;
+      myEdgesToAdd.createEdge(edge);
       touchEdge(edge);
-      myEdgeStorageAdapter.createEdge(edge);
     }
 
     public void removeEdge(@NotNull GraphEdge edge) { // todo add support for removing edge from delegate graph
+      assert myProgress == COLLECTING;
+      myEdgesToRemove.createEdge(edge);
       touchEdge(edge);
-      myEdgeStorageAdapter.removeEdge(edge);
-    }
-
-    public void apply() {
-      assert myCurrentModification == this;
-      done = true;
-      myCurrentModification = null;
-
-      if (minAffectedNodeIndex == Integer.MAX_VALUE || maxAffectedNodeIndex == Integer.MIN_VALUE) return;
-
-      myNodesMap.update(minAffectedNodeIndex, maxAffectedNodeIndex);
     }
 
     public void removeAdditionalEdges() {
-      myEdgeStorage.removeAll();
+      assert myProgress == COLLECTING;
+      myClearEdges = true;
       touchAll();
     }
 
     public void resetNodesVisibility() {
-      myDelegateNodesVisibility.setNodeVisibilityById(myMatchedNodeId.clone());
+      assert myProgress == COLLECTING;
+      myClearVisibility = true;
       touchAll();
+    }
+
+    // "package private" means "I'm not entirely happy about this method"
+    @NotNull
+    /*package private*/ EdgeStorageAdapter getEdgesToAdd() {
+      assert myProgress == COLLECTING;
+      return myEdgesToAdd;
+    }
+
+    /*package private*/
+    boolean isNodeHidden(int nodeIndex) {
+      assert myProgress == COLLECTING;
+      return myNodesToHide.contains(nodeIndex);
+    }
+
+    public void apply() {
+      assert myCurrentModification.get() == this;
+      myProgress = APPLYING;
+
+      if (myClearVisibility) {
+        myDelegateNodesVisibility.setNodeVisibilityById(myMatchedNodeId.clone());
+      }
+      if (myClearEdges) {
+        myEdgeStorage.removeAll();
+      }
+
+      TIntIterator toShow = myNodesToShow.iterator();
+      while (toShow.hasNext()) {
+        myDelegateNodesVisibility.show(toShow.next());
+      }
+      TIntIterator toHide = myNodesToHide.iterator();
+      while (toHide.hasNext()) {
+        myDelegateNodesVisibility.hide(toHide.next());
+      }
+
+      EdgeStorageAdapter edgeStorageAdapter = new EdgeStorageAdapter(myEdgeStorage, getDelegatedGraph());
+      for (GraphEdge edge : myEdgesToAdd.getEdges()) {
+        edgeStorageAdapter.createEdge(edge);
+      }
+      for (GraphEdge edge : myEdgesToRemove.getEdges()) {
+        edgeStorageAdapter.removeEdge(edge);
+      }
+
+      if (minAffectedNodeIndex != Integer.MAX_VALUE && maxAffectedNodeIndex != Integer.MIN_VALUE) {
+        myNodesMap.update(minAffectedNodeIndex, maxAffectedNodeIndex);
+      }
+
+      myProgress = DONE;
+      myCurrentModification.set(null);
     }
   }
 
   private void assertNotUnderModification() {
-    if (myCurrentModification != null) throw new IllegalStateException("CompiledGraph is under modification");
+    Modification modification = myCurrentModification.get();
+    if (modification != null && modification.myProgress == Modification.APPLYING) {
+      throw new IllegalStateException("CompiledGraph is under modification");
+    }
   }
 
   private class CompiledGraph implements LinearGraph {

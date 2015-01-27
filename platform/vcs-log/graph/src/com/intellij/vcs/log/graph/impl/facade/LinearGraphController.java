@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.impl.facade;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.collapsing.CollapsedGraph;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +72,12 @@ public interface LinearGraphController {
     @Override
     public Integer getCommitToJump() {
       return myCommitToJump;
+    }
+
+    @Nullable
+    @Override
+    public Runnable getGraphUpdater() {
+      return null;
     }
 
     @Nullable

@@ -72,7 +72,6 @@ public class EdgeStorage {
     });
   }
 
-  @TestOnly
   public int[] getKnownIds() {
     return myAdditionEdges.keys();
   }

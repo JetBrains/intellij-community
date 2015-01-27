@@ -36,4 +36,25 @@ public interface GraphAction {
     BUTTON_EXPAND
   }
 
+  class GraphActionImpl implements GraphAction {
+    @Nullable private final PrintElement myPrintElement;
+    @NotNull private final Type myActionType;
+
+    public GraphActionImpl(@Nullable PrintElement printElement, @NotNull Type actionType) {
+      myPrintElement = printElement;
+      myActionType = actionType;
+    }
+
+    @Nullable
+    @Override
+    public PrintElement getAffectedElement() {
+      return myPrintElement;
+    }
+
+    @NotNull
+    @Override
+    public Type getType() {
+      return myActionType;
+    }
+  }
 }

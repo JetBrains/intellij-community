@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph.collapsing;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,10 +23,13 @@ import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.intEqual;
 
@@ -74,11 +78,21 @@ public class EdgeStorageAdapter {
     return false;
   }
 
+  @NotNull
   public List<GraphEdge> getAdditionalEdges(int nodeIndex, @NotNull EdgeFilter filter) {
     List<GraphEdge> result = ContainerUtil.newSmartList();
     for (Pair<Integer, GraphEdgeType> retrievedEdge : myEdgeStorage.getEdges(myGetNodeIdByIndex.fun(nodeIndex))) {
       GraphEdge edge = decompressEdge(nodeIndex, retrievedEdge.first, retrievedEdge.second);
       if (matchedEdge(nodeIndex, edge, filter)) result.add(edge);
+    }
+    return result;
+  }
+
+  @NotNull
+  public Set<GraphEdge> getEdges() {
+    Set<GraphEdge> result = ContainerUtil.newHashSet();
+    for (int id : myEdgeStorage.getKnownIds()) {
+      result.addAll(getAdditionalEdges(myGetNodeIndexById.fun(id), EdgeFilter.ALL));
     }
     return result;
   }
@@ -127,4 +141,7 @@ public class EdgeStorageAdapter {
     return value == null ? EdgeStorage.NULL_ID : value;
   }
 
+  public static EdgeStorageAdapter createSimpleEdgeStorage() {
+    return new EdgeStorageAdapter(new EdgeStorage(), new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
+  }
 }
