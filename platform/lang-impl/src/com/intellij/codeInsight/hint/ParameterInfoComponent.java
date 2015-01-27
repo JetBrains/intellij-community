@@ -27,6 +27,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -138,6 +139,7 @@ public class ParameterInfoComponent extends JPanel {
 
   class MyParameterContext implements ParameterInfoUIContextEx {
     private int i;
+    private Function<String, String> myEscapeFunction;
 
     @Override
     public String setupUIComponentPresentation(String text,
@@ -148,16 +150,21 @@ public class ParameterInfoComponent extends JPanel {
                                                boolean isDisabledBeforeHighlight,
                                                Color background) {
       final String resultedText =
-        myPanels[i].setup(text, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
+        myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
       myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
       return resultedText;
     }
 
     @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
-      final String resultedText = myPanels[i].setup(texts, flags, background);
+      final String resultedText = myPanels[i].setup(texts, myEscapeFunction, flags, background);
       myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
       return resultedText;
+    }
+
+    @Override
+    public void setEscapeFunction(@Nullable Function<String, String> escapeFunction) {
+      myEscapeFunction = escapeFunction;
     }
 
     @Override
@@ -246,7 +253,14 @@ public class ParameterInfoComponent extends JPanel {
       myOneLineComponents = new OneLineComponent[0]; //TODO ???
     }
 
-    private String setup(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout, boolean isDisabledBeforeHighlight, Color background) {
+    private String setup(String text,
+                         Function<String, String> escapeFunction,
+                         int highlightStartOffset,
+                         int highlightEndOffset,
+                         boolean isDisabled,
+                         boolean strikeout,
+                         boolean isDisabledBeforeHighlight,
+                         Color background) {
       StringBuilder buf = new StringBuilder();
       removeAll();
 
@@ -268,9 +282,9 @@ public class ParameterInfoComponent extends JPanel {
         TextRange hr = highlightingRange == null ? null : lRange.intersection(highlightingRange);
         hr = hr == null ? null : hr.shiftRight(-lineOffset);
 
-        String before = escapeString(hr == null ? line : line.substring(0, hr.getStartOffset()));
-        String in = hr == null ? "" : escapeString(hr.substring(line));
-        String after = hr == null ? "" : escapeString(line.substring(hr.getEndOffset(), line.length()));
+        String before = escapeString(hr == null ? line : line.substring(0, hr.getStartOffset()), escapeFunction);
+        String in = hr == null ? "" : escapeString(hr.substring(line), escapeFunction);
+        String after = hr == null ? "" : escapeString(line.substring(hr.getEndOffset(), line.length()), escapeFunction);
 
         TextRange escapedHighlightingRange = in.isEmpty() ? null : TextRange.create(before.length(), before.length() + in.length());
         buf.append(myOneLineComponents[i].setup(before + in + after, isDisabled, strikeout, background, escapedHighlightingRange));
@@ -288,11 +302,15 @@ public class ParameterInfoComponent extends JPanel {
       return buf.toString();
     }
 
-    private String escapeString(String line) {
-      return XmlStringUtil.escapeString(line);
+    private String escapeString(String line, Function<String, String> escapeFunction) {
+      line = XmlStringUtil.escapeString(line);
+      return escapeFunction == null ? line : escapeFunction.fun(line);
     }
 
-    public String setup(final String[] texts, final EnumSet<ParameterInfoUIContextEx.Flag>[] flags, final Color background) {
+    public String setup(final String[] texts,
+                        Function<String, String> escapeFunction,
+                        final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
+                        final Color background) {
       StringBuilder buf = new StringBuilder();
       removeAll();
       setBackground(background);
@@ -304,7 +322,7 @@ public class ParameterInfoComponent extends JPanel {
 
       String line = "";
       for (int i = 0; i < texts.length; i++) {
-        String paramText = escapeString(texts[i]);
+        String paramText = escapeString(texts[i], escapeFunction);
         if (paramText == null) break;
         line += texts[i];
         final EnumSet<ParameterInfoUIContextEx.Flag> flag = flags[i];
@@ -323,7 +341,7 @@ public class ParameterInfoComponent extends JPanel {
         curOffset += paramText.length();
         if (line.length() >= 50) {
           final OneLineComponent component = new OneLineComponent();
-          buf.append(component.setup(escapeString(line), flagsMap, background));
+          buf.append(component.setup(escapeString(line, escapeFunction), flagsMap, background));
           add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                                                  GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
           index += 1;
@@ -334,7 +352,7 @@ public class ParameterInfoComponent extends JPanel {
         }
       }
       final OneLineComponent component = new OneLineComponent();
-      buf.append(component.setup(escapeString(line), flagsMap, background));
+      buf.append(component.setup(escapeString(line, escapeFunction), flagsMap, background));
       add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       components.add(component);

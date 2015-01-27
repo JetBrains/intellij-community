@@ -227,14 +227,14 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     PsiElement typeReference;
     PsiCodeBlock body;
     if (callText.startsWith(GET_PREFIX) || callText.startsWith(IS_PREFIX)) {
-      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateGetterPrototype(field));
+      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateSimpleGetterPrototype(field));
       body = accessor.getBody();
       LOG.assertTrue(body != null, accessor.getText());
       fieldReference = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
       typeReference = accessor.getReturnTypeElement();
     }
     else {
-      accessor = (PsiMethod)targetClass.add(PropertyUtil.generateSetterPrototype(field, targetClass));
+      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateSimpleSetterPrototype(field, targetClass));
       body = accessor.getBody();
       LOG.assertTrue(body != null, accessor.getText());
       PsiAssignmentExpression expr = (PsiAssignmentExpression)((PsiExpressionStatement)body.getStatements()[0]).getExpression();

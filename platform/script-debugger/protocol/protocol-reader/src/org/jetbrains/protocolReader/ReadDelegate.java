@@ -11,13 +11,13 @@ class ReadDelegate {
   private static final List<String> STATIC_METHOD_PARAM_NAME_LIST = Collections.singletonList(Util.READER_NAME);
   private static final List<String> STATIC_METHOD_PARAM_NAME_LIST2 = Arrays.asList(Util.READER_NAME, "nextName");
 
-  private final TypeHandler<?> typeHandler;
+  private final TypeWriter<?> typeHandler;
   private final boolean isList;
 
   private final List<String> paramNames;
 
-  ReadDelegate(@NotNull TypeHandler<?> typeHandler, boolean isList, boolean hasNextNameParam) {
-    this.typeHandler = typeHandler;
+  ReadDelegate(@NotNull TypeWriter<?> typeWriter, boolean isList, boolean hasNextNameParam) {
+    this.typeHandler = typeWriter;
     this.isList = isList;
 
     paramNames = hasNextNameParam ? STATIC_METHOD_PARAM_NAME_LIST2 : STATIC_METHOD_PARAM_NAME_LIST;

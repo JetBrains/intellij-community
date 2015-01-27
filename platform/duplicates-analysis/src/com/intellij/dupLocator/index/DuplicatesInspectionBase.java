@@ -6,6 +6,7 @@ import com.intellij.dupLocator.DuplocatorState;
 import com.intellij.dupLocator.LightDuplicateProfile;
 import com.intellij.dupLocator.treeHash.FragmentsCollector;
 import com.intellij.dupLocator.util.PsiFragment;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.TreeBackedLighterAST;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.TIntArrayList;
@@ -45,8 +47,10 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
     final Ref<DuplicatedCodeProcessor> myProcessorRef = new Ref<DuplicatedCodeProcessor>();
 
-    if (profile instanceof LightDuplicateProfile && DuplicatesIndex.ourEnabledLightProfiles) {
-      LighterAST ast = psiFile.getNode().getLighterAST();
+    final FileASTNode node = psiFile.getNode();
+    if (profile instanceof LightDuplicateProfile && node.getElementType() instanceof ILightStubFileElementType &&
+        DuplicatesIndex.ourEnabledLightProfiles) {
+      LighterAST ast = node.getLighterAST();
       assert ast != null;
       ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
         DuplicatedCodeProcessor<LighterASTNode> myProcessor;

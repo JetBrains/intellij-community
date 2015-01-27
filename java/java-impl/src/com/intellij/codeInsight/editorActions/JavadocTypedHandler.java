@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +46,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
   
   @Override
   public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (project == null || editor == null || file == null) {
+    if (project == null) {
       return Result.CONTINUE;
     }
     insertClosingTagIfNecessary(c, project, editor, file);
@@ -169,7 +171,12 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
         if (value == null || value.getTextRange().getEndOffset() == offset) {
           return false;
         } 
-      } 
+      }
+    }
+
+    // The contents of inline tags is not HTML, so the paired tag completion isn't appropriate there.
+    if (PsiTreeUtil.getParentOfType(element, PsiInlineDocTag.class, false) != null) {
+      return false;
     }
     
     ASTNode node = element.getNode();

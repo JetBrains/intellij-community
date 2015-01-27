@@ -42,6 +42,7 @@ public class TaskFile implements Stateful {
   private int myIndex = -1;
   private boolean myUserCreated = false;
   private boolean myTrackChanges = true;
+  private boolean myHighlightErrors = false;
 
   /**
    * @return if all the windows in task file are marked as resolved
@@ -266,5 +267,13 @@ public class TaskFile implements Stateful {
 
   public void setTrackChanges(boolean trackChanges) {
     myTrackChanges = trackChanges;
+  }
+
+  public boolean isHighlightErrors() {
+    return myHighlightErrors;
+  }
+
+  public void setHighlightErrors(boolean highlightErrors) {
+    myHighlightErrors = highlightErrors;
   }
 }

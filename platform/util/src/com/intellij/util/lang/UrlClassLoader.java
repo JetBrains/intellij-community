@@ -43,6 +43,7 @@ import java.util.List;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader {
+  private static final boolean INDEX_PERSISTENCE_DISABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.disabled", "false"));
   @NonNls static final String CLASS_EXTENSION = ".class";
 
   static {
@@ -67,6 +68,7 @@ public class UrlClassLoader extends ClassLoader {
     private ClassLoader myParent = null;
     private boolean myLockJars = false;
     private boolean myUseCache = false;
+    private boolean myUsePersistentClasspathIndex = false;
     private boolean myAcceptUnescaped = false;
     private boolean myPreload = true;
     private boolean myAllowBootstrapResources = false;
@@ -82,6 +84,8 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
     public Builder useCache() { myUseCache = true; return this; }
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
+
+    private Builder usePersistentClasspathIndex(boolean usePersistentClasspathIndex) { myUsePersistentClasspathIndex = usePersistentClasspathIndex; return this; }
 
     /**
      * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
@@ -117,7 +121,7 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
   public UrlClassLoader(@NotNull ClassLoader parent) {
-    this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache());
+    this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache().usePersistentClasspathIndex(!INDEX_PERSISTENCE_DISABLED));
   }
 
   /** @deprecated use {@link #build()} (to remove in IDEA 15) */
@@ -144,7 +148,7 @@ public class UrlClassLoader extends ClassLoader {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload, null, null);
+    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload, false, null, null);
     myAllowBootstrapResources = false;
   }
 
@@ -156,7 +160,8 @@ public class UrlClassLoader extends ClassLoader {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload, builder.myCachePool, builder.myCachingCondition);
+    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
+                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
   }
 

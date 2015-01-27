@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,4 +367,8 @@ public interface CodeConstants {
   int opc_ifnonnull = 199;
   int opc_goto_w = 200;
   int opc_jsr_w = 201;
+
+  @SuppressWarnings("SpellCheckingInspection")
+  String CLINIT_NAME = "<clinit>";
+  String INIT_NAME = "<init>";
 }

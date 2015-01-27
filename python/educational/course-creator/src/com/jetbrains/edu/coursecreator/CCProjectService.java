@@ -17,7 +17,6 @@ package com.jetbrains.edu.coursecreator;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -193,18 +192,15 @@ public class CCProjectService implements PersistentStateComponent<Element> {
   }
 
   public static boolean setCCActionAvailable(@NotNull AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
     final Project project = e.getProject();
     if (project == null) {
       return false;
     }
     if (getInstance(project).getCourse() == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      CCUtils.enableAction(e, false);
       return false;
     }
-    presentation.setEnabled(true);
-    presentation.setVisible(true);
+    CCUtils.enableAction(e, true);
     return true;
   }
 }

@@ -16,12 +16,11 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
@@ -45,7 +44,8 @@ public class GroovyConsoleAction extends GroovyShellActionBase implements DumbAw
     return new LanguageConsoleImpl(project, title, GroovyLanguage.INSTANCE) {
       @NotNull
       @Override
-      protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
+      protected PsiFile createFile(@NotNull Project project,
+                                   @NotNull VirtualFile virtualFile) {
         return new GroovyCodeFragment(getProject(), virtualFile);
       }
     };

@@ -13,7 +13,10 @@ import org.jetbrains.debugger.sourcemap.SourceMap;
 import java.util.Map;
 
 public final class NameMapper {
-  public static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(",()[]{}="));
+  public static final String S1 = ",()[]{}=";
+  private static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&"));
+  // don't trim trailing .& - could be part of expression
+  private static final CharMatcher OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1));
 
   private final Document document;
   private final Document generatedDocument;
@@ -41,7 +44,7 @@ public final class NameMapper {
     MappingEntry sourceEntry = sourceMappings.get(line, offset - document.getLineStartOffset(line));
     String sourceEntryName = sourceEntry == null ? null : sourceEntry.getName();
     if (sourceEntry != null) {
-      String generatedName = NAME_TRIMMER.trimFrom(getGeneratedName(generatedDocument, sourceMap, sourceEntry));
+      String generatedName = trimName(getGeneratedName(generatedDocument, sourceMap, sourceEntry), true);
       if (!generatedName.isEmpty()) {
         String sourceName = sourceEntryName;
         if (sourceName == null) {
@@ -51,19 +54,21 @@ public final class NameMapper {
           }
         }
 
-        // GWT - button_0_g$ = new Button_5_g$('Click me');
-        // so, we should remove all after "="
-        int i = generatedName.indexOf('=');
-        if (i > 0) {
-          generatedName = NAME_TRIMMER.trimFrom(generatedName.substring(0, i));
-        }
-
         if (nameMappings == null) {
           nameMappings = new THashMap<String, String>();
         }
         nameMappings.put(generatedName, sourceName);
       }
     }
+  }
+
+  @NotNull
+  public static String trimName(@NotNull CharSequence rawGeneratedName, boolean isLastToken) {
+    String generatedName = (isLastToken ? NAME_TRIMMER : OPERATOR_TRIMMER).trimFrom(rawGeneratedName);
+    // GWT - button_0_g$ = new Button_5_g$('Click me');
+    // so, we should remove all after "="
+    int i = generatedName.indexOf('=');
+    return i > 0 ? NAME_TRIMMER.trimFrom(generatedName.substring(0, i)) : generatedName;
   }
 
   @NotNull

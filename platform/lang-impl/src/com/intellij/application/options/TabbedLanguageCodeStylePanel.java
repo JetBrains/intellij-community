@@ -31,12 +31,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -408,13 +406,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected void installPreviewPanel(JPanel previewPanel) {
-      previewPanel.setLayout(new BorderLayout());
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
-    }
-
-    @Override
     protected boolean shouldHideOptions() {
       return true;
     }
@@ -432,13 +423,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected void installPreviewPanel(JPanel previewPanel) {
-      previewPanel.setLayout(new BorderLayout());
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
-    }
-
-    @Override
     public Language getDefaultLanguage() {
       return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
@@ -448,13 +432,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     public MyWrappingAndBracesPanel(CodeStyleSettings settings) {
       super(settings);
-    }
-
-    @Override
-    protected void installPreviewPanel(JPanel previewPanel) {
-      previewPanel.setLayout(new BorderLayout());
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
     }
 
     @Override

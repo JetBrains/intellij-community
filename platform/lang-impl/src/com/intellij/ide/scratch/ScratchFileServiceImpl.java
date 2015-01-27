@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.scratch;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
 import com.intellij.lang.Language;
@@ -31,29 +30,27 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.psi.LanguageSubstitutor;
-import com.intellij.psi.LanguageSubstitutors;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -64,11 +61,10 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 
 public abstract class ScratchFileServiceImpl extends ScratchFileService {
-
-  public static final LanguageFileType SCRATCH_FILE_TYPE = new MyFileType();
 
   @State(
     name = "ScratchFileService",
@@ -78,12 +74,6 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
   public static class App extends ScratchFileServiceImpl implements PersistentStateComponent<Element> {
 
     private final MyLanguages myScratchMapping = new MyLanguages();
-
-    @NotNull
-    @Override
-    public String getRootPath(@NotNull RootId rootId) {
-      return FileUtil.toSystemIndependentName(PathManager.getConfigPath()) + "/" + rootId.getId();
-    }
 
     public App(WindowManager windowManager) {
       WindowManagerListener listener = new WindowManagerListener() {
@@ -105,6 +95,12 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
         listener.frameCreated(frame);
       }
       windowManager.addListener(listener);
+    }
+
+    @NotNull
+    @Override
+    protected String getRootPath() {
+      return FileUtil.toSystemIndependentName(PathManager.getConfigPath());
     }
 
     @NotNull
@@ -147,7 +143,7 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     @Override
     public Language getMapping(@Nullable VirtualFile file) {
       Language language = super.getMapping(file);
-      if (language == null && file != null && file.getFileType() == SCRATCH_FILE_TYPE) {
+      if (language == null && file != null && file.getFileType() == ScratchRootType.SCRATCH_FILE_TYPE) {
         String extension = file.getExtension();
         FileType fileType = extension == null ? null : FileTypeManager.getInstance().getFileTypeByExtension(extension);
         language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
@@ -159,10 +155,12 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
   public static class Prj extends ScratchFileServiceImpl {
 
+    private final ScratchFileServiceImpl myParentService;
     private final Project myProject;
 
-    public Prj(@NotNull Project project) {
+    public Prj(@NotNull Project project, App parentService) {
       myProject = project;
+      myParentService = parentService;
     }
 
     @NotNull
@@ -172,15 +170,30 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
     @NotNull
     @Override
-    public String getRootPath(@NotNull RootId rootId) {
-      if (rootId == SCRATCHES) return ScratchFileService.getInstance().getRootPath(rootId);
-      return FileUtil.toSystemIndependentName(StringUtil.notNullize(PathUtil.getParentPath(myProject.getProjectFilePath()))) + "/" + rootId.getId();
+    protected String getRootPath() {
+      return FileUtil.toSystemIndependentName(StringUtil.notNullize(PathUtil.getParentPath(myProject.getProjectFilePath())));
+    }
+
+    @NotNull
+    @Override
+    public String getRootPath(@NotNull RootType rootType) {
+      if (!rootType.canBeProject()) {
+        return myParentService.getRootPath(rootType);
+      }
+      return super.getRootPath(rootType);
+    }
+
+    @Override
+    public RootType getRootType(@NotNull VirtualFile file) {
+      RootType rootType = super.getRootType(file);
+      if (rootType != null) return rootType;
+      return myParentService.getRootType(file);
     }
 
     @Nullable
     @Override
     public VirtualFile createScratchFile(@NotNull Project project, @NotNull Language language, @NotNull String initialContent) {
-      return ScratchFileService.getInstance().createScratchFile(project, language, initialContent);
+      return myParentService.createScratchFile(project, language, initialContent);
     }
 
     @NotNull
@@ -190,24 +203,13 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     }
   }
 
-  public static class TypeFactory extends FileTypeFactory {
-
-    @Override
-    public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-      consumer.consume(SCRATCH_FILE_TYPE);
-    }
-  }
-
-
   public static class Substitutor extends LanguageSubstitutor {
     @Nullable
     @Override
     public Language getLanguage(@NotNull VirtualFile file, @NotNull Project project) {
-      if (file.getFileType() != SCRATCH_FILE_TYPE) return null;
-      PerFileMappings<Language> mapping = ScratchFileService.getInstance().getScratchesMapping();
-      Language language = mapping.getMapping(file);
-      return language != null && language != SCRATCH_FILE_TYPE.getLanguage() ?
-             LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project) : language;
+      RootType rootType = ScratchFileService.getInstance(project).getRootType(file);
+      if (rootType == null) return null;
+      return rootType.substituteLanguage(project, file);
     }
   }
 
@@ -215,25 +217,31 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     @Override
     @Nullable
     public SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
-      if (fileType == SCRATCH_FILE_TYPE && project != null && file != null) {
-        PerFileMappings<Language> mapping = ScratchFileService.getInstance().getScratchesMapping();
-        Language language = mapping.getMapping(file);
-        return language != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file) : null;
-      }
-      return null;
+      if (project == null || file == null) return null;
+      RootType rootType = ScratchFileService.getInstance(project).getRootType(file);
+      if (rootType == null) return null;
+      Language language = rootType.substituteLanguage(project, file);
+      return language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
     }
   }
 
-  public static class IconProvider implements FileIconProvider {
+  public static class FilePresentation implements FileIconProvider, EditorTabTitleProvider {
 
     @Nullable
     @Override
     public Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
-      if (project == null || file.getFileType() != SCRATCH_FILE_TYPE) return null;
-      PerFileMappings<Language> mapping = ScratchFileService.getInstance().getScratchesMapping();
-      Language language = ObjectUtils.notNull(mapping.getMapping(file), SCRATCH_FILE_TYPE.getLanguage());
-      LanguageFileType fileType = language.getAssociatedFileType();
-      return fileType == null ? null : LayeredIcon.create(fileType.getIcon(), AllIcons.Actions.Scratch);
+      if (project == null) return null;
+      RootType rootType = ScratchFileService.getInstance(project).getRootType(file);
+      if (rootType == null) return null;
+      return rootType.substituteIcon(project, file);
+    }
+
+    @Nullable
+    @Override
+    public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
+      RootType rootType = ScratchFileService.getInstance(project).getRootType(file);
+      if (rootType == null) return null;
+      return rootType.substituteName(project, file);
     }
   }
 
@@ -241,7 +249,7 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
     @Override
     public boolean isWritable(@NotNull VirtualFile file) {
-      return file.getFileType() == SCRATCH_FILE_TYPE;
+      return ScratchFileService.getInstance().getRootType(file) != null;
     }
   }
 
@@ -250,17 +258,38 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     @Nullable
     @Override
     public String getPresentableText(Object object) {
-      return null;
+      PsiFile psiFile = object instanceof PsiFile ? (PsiFile)object : null;
+      VirtualFile virtualFile = psiFile != null ? psiFile.getVirtualFile() : null;
+      RootType rootType = virtualFile != null && virtualFile.isValid() ? ScratchFileService.getInstance(psiFile.getProject()).getRootType(virtualFile) : null;
+      return rootType != null ? rootType.substituteName(psiFile.getProject(), virtualFile) : null;
     }
 
     @NotNull
     @Override
     public Collection<VirtualFile> additionalRoots(Project project) {
-      String path = ScratchFileService.getInstance().getRootPath(SCRATCHES);
-      VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
-      return ContainerUtil.createMaybeSingletonList(root);
+      Set<VirtualFile> result = ContainerUtil.newLinkedHashSet();
+      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+      ScratchFileService app = ScratchFileService.getInstance();
+      ScratchFileService prj = ScratchFileService.getInstance(project);
+      for (RootType r : RootType.getAllRootIds()) {
+        if (r.canBeProject()) {
+          ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(prj.getRootPath(r)));
+        }
+        ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(app.getRootPath(r)));
+      }
+      return result;
     }
   }
+
+  @NotNull
+  protected abstract String getRootPath();
+
+  @NotNull
+  @Override
+  public String getRootPath(@NotNull RootType rootId) {
+    return getRootPath() + "/" + rootId.getId();
+  }
+
 
   @Nullable
   @Override
@@ -270,7 +299,7 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
       new WriteCommandAction<VirtualFile>(project, UIBundle.message("file.chooser.create.new.file.command.name")) {
         @Override
         protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-          VirtualFile dir = VfsUtil.createDirectories(getRootPath(SCRATCHES));
+          VirtualFile dir = VfsUtil.createDirectories(getRootPath(Extensions.findExtension(RootType.ROOT_EP, ScratchRootType.class)));
           VirtualFile file = VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, "");
           getScratchesMapping().setMapping(file, language);
           VfsUtil.saveText(file, initialContent);
@@ -286,13 +315,22 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
   }
 
   @Override
-  public boolean isFileInRoot(@NotNull VirtualFile file, @NotNull RootId rootId) {
-    return rootId == SCRATCHES ? file.getFileType() == SCRATCH_FILE_TYPE : isFileInRootImpl(file, rootId);
+  public RootType getRootType(@NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) return null;
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFile rootRoot = fileSystem.findFileByPath(getRootPath());
+    if (rootRoot == null || !VfsUtilCore.isAncestor(rootRoot, file, true)) return null;
+    for (RootType r : RootType.getAllRootIds()) {
+      String root = getRootPath(r);
+      VirtualFile rootFile = fileSystem.findFileByPath(root);
+      if (rootFile != null && VfsUtilCore.isAncestor(rootFile, file, true)) return r;
+    }
+    return null;
   }
 
   @Nullable
   @Override
-  public VirtualFile getOrCreateFile(@NotNull final RootId rootId, @NotNull final String pathName) throws IOException {
+  public VirtualFile getOrCreateFile(@NotNull final RootType rootId, @NotNull final String pathName) throws IOException {
     return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
       @Override
       public VirtualFile compute() throws IOException {
@@ -306,60 +344,4 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     });
   }
 
-  private static boolean isFileInRootImpl(@NotNull VirtualFile file, RootId scratches) {
-    // files are created under scratches.getId() directory, quickly check parent name to avoid calling getPath()
-    VirtualFile parent = file.getParent();
-    if (parent == null) return false;
-    if (!Comparing.equal(parent.getNameSequence(), scratches.getId(), SystemInfo.isFileSystemCaseSensitive)) return false;
-
-    String rootPath = ScratchFileService.getInstance().getRootPath(scratches);
-    return FileUtil.startsWith(file.getPath(), rootPath);
-  }
-
-  private static class MyFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, InternalFileType {
-
-    MyFileType() {
-      super(PlainTextLanguage.INSTANCE);
-    }
-
-    @Override
-    public boolean isMyFileType(@NotNull VirtualFile file) {
-      return isFileInRootImpl(file, SCRATCHES);
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "Scratch";
-    }
-
-    @NotNull
-    @Override
-    public String getDescription() {
-      return "Scratch";
-    }
-
-    @NotNull
-    @Override
-    public String getDefaultExtension() {
-      return "";
-    }
-
-    @Nullable
-    @Override
-    public Icon getIcon() {
-      return PlainTextFileType.INSTANCE.getIcon();
-    }
-
-    @Override
-    public boolean isReadOnly() {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
-      return null;
-    }
-  }
 }

@@ -174,5 +174,10 @@ public interface Element {
      */
     String getTypeQualifiedName();
 
+  /**
+   * 
+   * @return type canonical text
+   */
+    String getType();
 
 }

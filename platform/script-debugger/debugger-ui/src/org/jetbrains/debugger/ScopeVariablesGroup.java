@@ -8,7 +8,6 @@ import com.intellij.xdebugger.frame.XValueGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.ConsumerRunnable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.List;
@@ -19,20 +18,24 @@ public class ScopeVariablesGroup extends XValueGroup {
 
   private final CallFrame callFrame;
 
-  public ScopeVariablesGroup(@NotNull final Scope scope, @NotNull final VariableContext context, @Nullable CallFrame callFrame) {
+  public ScopeVariablesGroup(@NotNull Scope scope, @NotNull VariableContext parentContext, @Nullable CallFrame callFrame) {
     super(createScopeNodeName(scope));
 
     this.scope = scope;
+    context = createVariableContext(scope, parentContext, callFrame);
+    this.callFrame = scope.getType() == Scope.Type.LOCAL ? callFrame : null;
+  }
 
+  // public only for tests
+  @NotNull
+  public static VariableContext createVariableContext(@NotNull Scope scope, @NotNull VariableContext parentContext, @Nullable CallFrame callFrame) {
     if (callFrame == null || scope.getType() == Scope.Type.LIBRARY) {
       // functions scopes - we can watch variables only from global scope
-      this.context = new ParentlessVariableContext(context, scope, scope.getType() == Scope.Type.GLOBAL);
+      return new ParentlessVariableContext(parentContext, scope, scope.getType() == Scope.Type.GLOBAL);
     }
     else {
-      this.context = new VariableContextWrapper(context, scope);
+      return new VariableContextWrapper(parentContext, scope);
     }
-
-    this.callFrame = scope.getType() == Scope.Type.LOCAL ? callFrame : null;
   }
 
   @TestOnly
@@ -90,18 +93,14 @@ public class ScopeVariablesGroup extends XValueGroup {
   public void computeChildren(final @NotNull XCompositeNode node) {
     Promise<Void> promise = Variables.processScopeVariables(scope, node, context, callFrame == null);
     if (callFrame != null) {
-      promise.done(new ConsumerRunnable() {
+      promise.done(new ValueNodeConsumer<Void>(node) {
         @Override
-        public void run() {
-          if (node.isObsolete()) {
-            return;
-          }
-
+        public void consume(Void ignored) {
           callFrame.getReceiverVariable().done(new Consumer<Variable>() {
             @Override
             public void consume(Variable variable) {
               if (!node.isObsolete()) {
-                node.addChildren(variable == null ? XValueChildrenList.EMPTY : XValueChildrenList.singleton(CallFrameBase.RECEIVER_NAME, new VariableView(variable, context)), true);
+                node.addChildren(variable == null ? XValueChildrenList.EMPTY : XValueChildrenList.singleton(new VariableView(variable, context)), true);
               }
             }
           }).rejected(new Consumer<Throwable>() {

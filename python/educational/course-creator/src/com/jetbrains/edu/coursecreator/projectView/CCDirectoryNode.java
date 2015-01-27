@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.format.Course;
 import com.jetbrains.edu.coursecreator.format.Lesson;
 import com.jetbrains.edu.coursecreator.format.Task;
@@ -62,18 +63,6 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     data.setPresentableText(valueName);
   }
 
-  private static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
-    if (!fullName.startsWith(logicalName)) {
-      throw new IllegalArgumentException();
-    }
-    try {
-      return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
-    }
-    catch (NumberFormatException e) {
-      return -1;
-    }
-  }
-
   @Override
   public int getTypeSortWeight(boolean sortByType) {
     String name = myValue.getName();
@@ -81,7 +70,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     String taskDirName = "task";
     if (name.startsWith(lessonDirName) || name.startsWith(taskDirName)) {
       String logicalName = name.contains(lessonDirName) ? lessonDirName : taskDirName;
-      int index = getIndex(name, logicalName) + 1;
+      int index = CCUtils.getIndex(name, logicalName) + 1;
       return index != -1 ? index : 0;
     }
     return 0;

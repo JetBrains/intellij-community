@@ -55,7 +55,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +64,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -78,7 +78,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private Project myProject;
   private final Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
-  private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new THashSet<ModuleFixtureBuilder>();
+  private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new LinkedHashSet<ModuleFixtureBuilder>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;

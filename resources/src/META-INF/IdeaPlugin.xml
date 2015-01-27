@@ -120,8 +120,6 @@
     <extensionPoint name="debugger.nodeRenderer"
                     interface="com.intellij.debugger.ui.tree.render.NodeRenderer"/>
 
-    <extensionPoint name="debugger.jvmDebugProvider"
-                    interface="com.intellij.debugger.engine.JVMDebugProvider"/>
     <extensionPoint name="debugger.javaDebugAware"
                     interface="com.intellij.debugger.engine.JavaDebugAware"/>
 
@@ -1568,6 +1566,10 @@
                         serviceImplementation="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>
     <applicationService serviceInterface="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"
                         serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.generation.GetterTemplatesManager"
+                        serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.generation.SetterTemplatesManager"
+                        serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringActionHandler"
                         serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
     <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringContext"

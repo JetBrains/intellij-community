@@ -43,6 +43,7 @@ public abstract class PropertiesComponent {
    */
   public abstract void setValue(@NotNull String name, @NotNull String value, @NotNull String defaultValue);
 
+  @Nullable
   public abstract String[] getValues(@NonNls String name);
 
   public abstract void setValues(@NonNls String name, String[] values);

@@ -42,7 +42,7 @@ public abstract class RefEntityImpl implements RefEntity {
   protected List<RefEntity> myChildren;
   private final String myName;
   private Map<Key, Object> myUserMap;
-  protected int myFlags;
+  protected long myFlags;
   protected final RefManagerImpl myManager;
 
   protected RefEntityImpl(String name, @NotNull RefManager manager) {
@@ -138,11 +138,11 @@ public abstract class RefEntityImpl implements RefEntity {
     }
   }
 
-  public boolean checkFlag(int mask) {
+  public boolean checkFlag(long mask) {
     return BitUtil.isSet(myFlags, mask);
   }
 
-  public void setFlag(final boolean value, final int mask) {
+  public void setFlag(final boolean value, final long mask) {
     myFlags = BitUtil.set(myFlags, mask, value);
   }
 

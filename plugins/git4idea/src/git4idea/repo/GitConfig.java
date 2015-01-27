@@ -185,7 +185,7 @@ public class GitConfig {
     }
 
     boolean merge = mergeName != null;
-    final String remoteBranchName = (merge ? mergeName : rebaseName);
+    final String remoteBranchName = StringUtil.unquoteString(merge ? mergeName : rebaseName);
 
     GitLocalBranch localBranch = findLocalBranch(branchName, localBranches);
     GitRemoteBranch remoteBranch = findRemoteBranch(remoteBranchName, remoteName, remoteBranches);

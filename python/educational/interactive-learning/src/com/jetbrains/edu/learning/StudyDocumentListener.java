@@ -32,6 +32,7 @@ public class StudyDocumentListener extends DocumentAdapter {
     if (!myTaskFile.isTrackChanges()) {
       return;
     }
+    myTaskFile.setHighlightErrors(true);
     final Document document = e.getDocument();
     myTaskWindows.clear();
     for (AnswerPlaceholder answerPlaceholder : myTaskFile.getAnswerPlaceholders()) {

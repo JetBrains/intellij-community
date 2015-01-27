@@ -16,6 +16,7 @@
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.ide.highlighter.custom.tokens.KeywordParser;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class SyntaxTable implements Cloneable {
   private Set<String> myKeywords3;
   private Set<String> myKeywords4;
 
-  private String myLineComment;
+  private String myLineComment = "";
   public boolean lineCommentOnlyAtStart;
   private String myStartComment;
   private String myEndComment;
@@ -121,11 +122,12 @@ public class SyntaxTable implements Cloneable {
     return myKeywords4;
   }
 
+  @NotNull
   public String getLineComment() {
     return myLineComment;
   }
 
-  public void setLineComment(String lineComment) {
+  public void setLineComment(@NotNull String lineComment) {
     myLineComment = lineComment;
   }
 

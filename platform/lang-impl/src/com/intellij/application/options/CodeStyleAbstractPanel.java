@@ -44,7 +44,6 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -54,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
@@ -457,8 +457,27 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected void installPreviewPanel(final JPanel previewPanel) {
     previewPanel.setLayout(new BorderLayout());
-    previewPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
-    previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
+    previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
+    previewPanel.setBorder(new AbstractBorder() {
+      private static final int LEFT_WHITE_SPACE = 2;
+
+      @Override
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        Editor editor = getEditor();
+        if (editor instanceof EditorEx) {
+          g.setColor(((EditorEx)editor).getBackgroundColor());
+          g.fillRect(x + 1, y, LEFT_WHITE_SPACE, height);
+        }
+        g.setColor(OnePixelDivider.BACKGROUND);
+        g.fillRect(x, y, 1, height);
+      }
+
+      @Override
+      public Insets getBorderInsets(Component c, Insets insets) {
+        insets.set(0, 1 + LEFT_WHITE_SPACE, 0, 0);
+        return insets;
+      }
+    });
   }
 
   @NonNls

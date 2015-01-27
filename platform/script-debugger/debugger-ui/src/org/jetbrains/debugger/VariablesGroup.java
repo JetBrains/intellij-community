@@ -40,6 +40,6 @@ public class VariablesGroup extends XValueGroup {
   @Override
   public void computeChildren(@NotNull XCompositeNode node) {
     node.setAlreadySorted(true);
-    node.addChildren(Variables.createVariablesList(variables, start, end, context), true);
+    node.addChildren(Variables.createVariablesList(variables, start, end, context, null), true);
   }
 }

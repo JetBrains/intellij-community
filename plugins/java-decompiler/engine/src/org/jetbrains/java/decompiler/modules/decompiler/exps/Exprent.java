@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class Exprent {
 
   public final int type;
   public final int id;
-  public final Set<Integer> bytecode = new HashSet<Integer>();  // offsets of bytecode instructions decompiled to this exprent
+  public Set<Integer> bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
 
   public Exprent(int type) {
     this.type = type;
@@ -122,8 +122,13 @@ public class Exprent {
   public void replaceExprent(Exprent oldExpr, Exprent newExpr) { }
 
   public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
-    if (bytecodeOffsets != null) {
-      bytecode.addAll(bytecodeOffsets);
+    if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
+      if (bytecode == null) {
+        bytecode = new HashSet<Integer>(bytecodeOffsets);
+      }
+      else {
+        bytecode.addAll(bytecodeOffsets);
+      }
     }
   }
 }

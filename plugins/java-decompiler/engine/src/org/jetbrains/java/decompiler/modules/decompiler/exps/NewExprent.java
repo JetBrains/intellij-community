@@ -177,7 +177,7 @@ public class NewExprent extends Exprent {
         List<VarVersionPair> sigFields = null;
         if (newnode != null) { // own class
           if (newnode.getWrapper() != null) {
-            sigFields = newnode.getWrapper().getMethodWrapper("<init>", invsuper.getStringDescriptor()).signatureFields;
+            sigFields = newnode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, invsuper.getStringDescriptor()).signatureFields;
           }
           else {
             if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&
@@ -252,12 +252,16 @@ public class NewExprent extends Exprent {
           buf.setLength(0);  // remove the usual 'new <class>()', it will be replaced with lambda style '() ->'
         }
         Exprent methodObject = constructor == null ? null : constructor.getInstance();
-        new ClassWriter().classLambdaToJava(child, buf, methodObject, indent);
-        tracer.incrementCurrentSourceLine(buf.countLines());
+        TextBuffer clsBuf = new TextBuffer();
+        new ClassWriter().classLambdaToJava(child, clsBuf, methodObject, indent, tracer);
+        buf.append(clsBuf);
+        tracer.incrementCurrentSourceLine(clsBuf.countLines());
       }
       else {
-        new ClassWriter().classToJava(child, buf, indent, tracer);
-        tracer.incrementCurrentSourceLine(buf.countLines());
+        TextBuffer clsBuf = new TextBuffer();
+        new ClassWriter().classToJava(child, clsBuf, indent, tracer);
+        buf.append(clsBuf);
+        tracer.incrementCurrentSourceLine(clsBuf.countLines());
       }
     }
     else if (directArrayInit) {
@@ -283,7 +287,7 @@ public class NewExprent extends Exprent {
           List<VarVersionPair> sigFields = null;
           if (newnode != null) { // own class
             if (newnode.getWrapper() != null) {
-              sigFields = newnode.getWrapper().getMethodWrapper("<init>", constructor.getStringDescriptor()).signatureFields;
+              sigFields = newnode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).signatureFields;
             }
             else {
               if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&

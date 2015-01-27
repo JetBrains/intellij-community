@@ -12,29 +12,29 @@ import org.jetbrains.debugger.*;
 import java.util.List;
 
 public final class CallFrameView extends StackFrameImplBase implements VariableContext {
-  private final DebuggerViewSupport debugProcess;
+  private final DebuggerViewSupport viewSupport;
   private final CallFrame callFrame;
 
   private final Script script;
 
   private final boolean inLibraryContent;
 
-  public CallFrameView(@NotNull CallFrame callFrame, @NotNull DebuggerViewSupport debugProcess, @Nullable Script script) {
-    this(callFrame, debugProcess.getSourceInfo(script, callFrame), debugProcess, script);
+  public CallFrameView(@NotNull CallFrame callFrame, @NotNull DebuggerViewSupport viewSupport, @Nullable Script script) {
+    this(callFrame, viewSupport.getSourceInfo(script, callFrame), viewSupport, script);
   }
 
   public CallFrameView(@NotNull CallFrame callFrame,
                        @Nullable SourceInfo sourceInfo,
-                       @NotNull DebuggerViewSupport debugProcess,
+                       @NotNull DebuggerViewSupport viewSupport,
                        @Nullable Script script) {
     super(sourceInfo);
 
-    this.debugProcess = debugProcess;
+    this.viewSupport = viewSupport;
     this.callFrame = callFrame;
     this.script = script;
 
     // isInLibraryContent call could be costly, so we compute it only once (our customizePresentation called on each repaint)
-    inLibraryContent = sourceInfo != null && debugProcess.isInLibraryContent(sourceInfo, script);
+    inLibraryContent = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script);
   }
 
   @Nullable
@@ -50,7 +50,7 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
 
   @Override
   protected XDebuggerEvaluator createEvaluator() {
-    return debugProcess.createFrameEvaluator(this);
+    return viewSupport.createFrameEvaluator(this);
   }
 
   @Override
@@ -109,13 +109,18 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
   @NotNull
   @Override
   public DebuggerViewSupport getViewSupport() {
-    return debugProcess;
+    return viewSupport;
   }
 
   @NotNull
   @Override
-  public Promise<MemberFilter> createMemberFilter() {
-    return debugProcess.createMemberFilter(this);
+  public Promise<MemberFilter> getMemberFilter() {
+    return viewSupport.getMemberFilter(this);
+  }
+
+  @NotNull
+  public Promise<MemberFilter> getMemberFilter(@NotNull Scope scope) {
+    return ScopeVariablesGroup.createVariableContext(scope, this, callFrame).getMemberFilter();
   }
 
   @Nullable

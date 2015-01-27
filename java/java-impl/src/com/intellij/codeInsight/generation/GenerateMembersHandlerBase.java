@@ -45,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
+import org.jetbrains.java.generate.template.TemplatesManager;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -257,10 +258,15 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
                                                             boolean allowEmptySelection,
                                                             boolean copyJavadocCheckbox,
                                                             Project project) {
-    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project);
+    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project, false, getHeaderPanel(project));
     chooser.setTitle(myChooserTitle);
     chooser.setCopyJavadocVisible(copyJavadocCheckbox);
     return chooser;
+  }
+
+  @Nullable
+  protected JComponent getHeaderPanel(Project project) {
+    return null;
   }
 
   @NotNull
