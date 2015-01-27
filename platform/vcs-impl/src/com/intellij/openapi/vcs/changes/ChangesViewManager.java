@@ -592,7 +592,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
       DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, change);
       if (node != null) {
-        TreeUtil.selectNode(myView, node);
+        TreePath path = TreeUtil.getPathFromRoot(node);
+        TreeUtil.selectPath(myView, path, false);
       }
     }
   }
