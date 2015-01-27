@@ -101,7 +101,6 @@ class DeclarationMover extends LineMover {
     Document document = editor.getDocument();
 
     PsiElement sibling = down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
-    if (sibling == null) return false;
     sibling = firstNonWhiteElement(sibling, down);
     final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
     info.toMove = range;
@@ -179,7 +178,7 @@ class DeclarationMover extends LineMover {
   // throws IllegalMoveException when corresponding movement has no sense
   @Nullable
   private LineRange moveInsideOutsideClassPosition(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) throws IllegalMoveException{
-    if (sibling == null) throw new IllegalMoveException();
+    if (sibling == null || sibling instanceof PsiImportList) throw new IllegalMoveException();
     if (sibling instanceof PsiJavaToken &&
         ((PsiJavaToken)sibling).getTokenType() == (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE) &&
         sibling.getParent() instanceof PsiClass) {
