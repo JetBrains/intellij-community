@@ -343,26 +343,22 @@ public class DiffUtil {
                                        boolean readOnly) {
     if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
 
-    if (charset != null || separator != null) {
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.add(createTitlePanel(title), BorderLayout.WEST);
-      if (charset != null && separator != null) {
-        JPanel panel2 = new JPanel();
-        panel2.add(createCharsetPanel(charset));
-        panel2.add(createSeparatorPanel(separator));
-        panel.add(panel2, BorderLayout.EAST);
-      }
-      else if (charset != null) {
-        panel.add(createCharsetPanel(charset), BorderLayout.EAST);
-      }
-      else {
-        panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
-      }
-      return panel;
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+    panel.add(createTitlePanel(title), BorderLayout.WEST);
+    if (charset != null && separator != null) {
+      JPanel panel2 = new JPanel();
+      panel2.add(createCharsetPanel(charset));
+      panel2.add(createSeparatorPanel(separator));
+      panel.add(panel2, BorderLayout.EAST);
     }
-    else {
-      return createTitlePanel(title);
+    else if (charset != null) {
+      panel.add(createCharsetPanel(charset), BorderLayout.EAST);
     }
+    else if (separator != null) {
+      panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
+    }
+    return panel;
   }
 
   @NotNull
