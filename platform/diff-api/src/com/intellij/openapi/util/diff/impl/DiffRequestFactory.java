@@ -18,7 +18,7 @@ package com.intellij.openapi.util.diff.impl;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.diff.contents.DiffContent;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class DiffRequestFactory {
   @NotNull
-  public static DiffRequest createFromFile(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+  public static ContentDiffRequest createFromFile(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     DiffContent content1 = DiffContentFactory.create(project, file1);
     DiffContent content2 = DiffContentFactory.create(project, file2);
 
@@ -51,7 +51,7 @@ public class DiffRequestFactory {
   }
 
   @NotNull
-  public static DiffRequest createClipboardVsValue(@NotNull String value) {
+  public static ContentDiffRequest createClipboardVsValue(@NotNull String value) {
     DiffContent content1 = DiffContentFactory.createClipboardContent();
     DiffContent content2 = DiffContentFactory.create(value, null);
 

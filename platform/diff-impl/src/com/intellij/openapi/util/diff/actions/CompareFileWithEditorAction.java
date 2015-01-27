@@ -17,10 +17,18 @@ package com.intellij.openapi.util.diff.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.diff.contents.DiffContent;
+import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.impl.DiffRequestFactory;
+import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
+import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +88,16 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
 
     assert selectedFile != null && currentFile != null;
 
-    return DiffRequestFactory.createFromFile(project, selectedFile, currentFile);
+    ContentDiffRequest request = DiffRequestFactory.createFromFile(project, selectedFile, currentFile);
+
+    DiffContent editorContent = request.getContents()[1];
+    if (editorContent instanceof DocumentContent) {
+      Editor[] editors = EditorFactory.getInstance().getEditors(((DocumentContent)editorContent).getDocument());
+      if (editors.length != 0) {
+        request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, editors[0].getCaretModel().getLogicalPosition().line));
+      }
+    }
+
+    return request;
   }
 }
