@@ -140,16 +140,6 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   }
 
   //
-  // Abstract
-  //
-
-  protected void setWindowTitle(@NotNull String title) {
-  }
-
-  protected void onAfterNavigate() {
-  }
-
-  //
   // Misc
   //
 
