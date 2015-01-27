@@ -16,24 +16,15 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.injection.MultiHostInjector;
-import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Dennis.Ushakov
@@ -106,29 +97,23 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
     myFixture.checkResult("<div></div>");
   }
 
-  public void testInjection() {
-    final MultiHostInjector injector = new MultiHostInjector() {
-      @Override
-      public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
-        if (context instanceof XmlAttributeValue) {
-          registrar.startInjecting(XMLLanguage.INSTANCE)
-            .addPlace(null, null, (PsiLanguageInjectionHost)context, new TextRange(1, context.getTextLength() - 1))
-            .doneInjecting();
-        }
-      }
+  public void testHtmlInJsp() {
+    final FileType jsp = FileTypeManager.getInstance().getFileTypeByExtension("jsp");
+    doTest(jsp, "<div<caret>></div>", "v", "<divv></divv>");
+  }
 
-      @NotNull
-      @Override
-      public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-        return Collections.singletonList(XmlAttributeValue.class);
-      }
-    };
-    InjectedLanguageManager.getInstance(getProject()).registerMultiHostInjector(injector);
-    try {
-      doTest("<div injected='<div<caret>></div>'></div>", "v", "<div injected='<divv></divv>'></div>");
-    } finally {
-      InjectedLanguageManager.getInstance(getProject()).unregisterMultiHostInjector(injector);
-    }
+  public void testJspInJsp() {
+    final FileType jsp = FileTypeManager.getInstance().getFileTypeByExtension("jsp");
+    doTest(jsp, "<p:div<caret>></p:div>", "v", "<p:divv></p:divv>");
+  }
+
+  public void testInjectionInHtml() {
+    doTest(HtmlFileType.INSTANCE, "<script>var a ='<div<caret>></div>'</script>", "v", "<script>var a ='<divv></divv>'</script>");
+  }
+
+  public void testInjectionInJS() {
+    final FileType js = FileTypeManager.getInstance().getFileTypeByExtension("js");
+    doTest(js, "var a ='<div<caret>></div>'", "v", "var a ='<divv></divv>'");
   }
 
   @Override
@@ -145,7 +130,11 @@ public class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   private void doTest(final String text, final String toType, final String result) {
-    myFixture.configureByText(XmlFileType.INSTANCE, text);
+    doTest(XmlFileType.INSTANCE, text, toType, result);
+  }
+
+  private void doTest(final FileType fileType, final String text, final String toType, final String result) {
+    myFixture.configureByText(fileType, text);
     type(toType);
     myFixture.checkResult(result);
   }
