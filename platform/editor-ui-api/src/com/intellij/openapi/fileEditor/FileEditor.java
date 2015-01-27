@@ -30,7 +30,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  *
- * @see com.intellij.openapi.fileEditor.TextEditor
+ * @see TextEditor
  */
 public interface FileEditor extends UserDataHolder, Disposable {
   /**
