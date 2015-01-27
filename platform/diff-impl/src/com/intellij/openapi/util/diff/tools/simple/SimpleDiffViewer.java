@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -59,8 +58,6 @@ import com.intellij.openapi.util.diff.util.DiffUtil.DocumentData;
 import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.ui.AnimatedIcon;
-import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +72,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
-  @NotNull private final MyStatusPanel myStatusPanel;
+  @NotNull private final StatusPanel myStatusPanel;
 
   @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<SimpleDiffChange>();
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<SimpleDiffChange>();
@@ -787,37 +784,10 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private class MyStatusPanel {
-    private final JPanel myPanel;
-    private final JLabel myTextLabel;
-    private final AnimatedIcon myBusySpinner;
-
-    public MyStatusPanel() {
-      myTextLabel = new JLabel("");
-      myBusySpinner = new AsyncProcessIcon("SimpleDiffViewer");
-
-      myPanel = new JPanel(new BorderLayout());
-      myPanel.add(myTextLabel, BorderLayout.CENTER);
-      myPanel.add(myBusySpinner, BorderLayout.WEST);
-    }
-
-    @NotNull
-    public JComponent getComponent() {
-      return myPanel;
-    }
-
-    public void update() {
-      int changes = myDiffChanges.size() + myInvalidDiffChanges.size();
-      myTextLabel.setText(DiffBundle.message("diff.count.differences.status.text", changes));
-    }
-
-    public void setBusy(boolean busy) {
-      if (busy) {
-        myBusySpinner.resume();
-      }
-      else {
-        myBusySpinner.suspend();
-      }
+  private class MyStatusPanel extends StatusPanel {
+    @Override
+    protected int getChangesCount() {
+      return myDiffChanges.size() + myInvalidDiffChanges.size();
     }
   }
 

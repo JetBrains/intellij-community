@@ -43,13 +43,12 @@ import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.contents.EmptyContent;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.diff.tools.util.StatusPanel;
 import com.intellij.openapi.util.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.AnimatedIcon;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -429,25 +428,15 @@ class BinaryDiffViewer extends ListenerDiffViewerBase {
   // Helpers
   //
 
-  private static class MyStatusPanel {
-    private final AnimatedIcon myBusySpinner;
-
-    public MyStatusPanel() {
-      myBusySpinner = new AsyncProcessIcon("SimpleDiffViewer");
+  private static class MyStatusPanel extends StatusPanel {
+    @Override
+    protected int getChangesCount() {
+      return -1;
     }
 
-    @NotNull
-    public JComponent getComponent() {
-      return myBusySpinner;
-    }
-
-    public void setBusy(boolean busy) {
-      if (busy) {
-        myBusySpinner.resume();
-      }
-      else {
-        myBusySpinner.suspend();
-      }
+    @Override
+    protected boolean showText() {
+      return false;
     }
   }
 

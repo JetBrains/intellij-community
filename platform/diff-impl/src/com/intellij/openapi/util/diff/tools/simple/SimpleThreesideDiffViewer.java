@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -50,8 +49,6 @@ import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AnimatedIcon;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -624,37 +621,10 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
   }
 
-  private class MyStatusPanel {
-    private final JPanel myPanel;
-    private final JLabel myTextLabel;
-    private final AnimatedIcon myBusySpinner;
-
-    public MyStatusPanel() {
-      myTextLabel = new JLabel("");
-      myBusySpinner = new AsyncProcessIcon("SimpleThreesideDiffViewer");
-
-      myPanel = new JPanel(new BorderLayout());
-      myPanel.add(myTextLabel, BorderLayout.CENTER);
-      myPanel.add(myBusySpinner, BorderLayout.WEST);
-    }
-
-    @NotNull
-    public JComponent getComponent() {
-      return myPanel;
-    }
-
-    public void update() {
-      int changes = myDiffChanges.size() + myInvalidDiffChanges.size();
-      myTextLabel.setText(DiffBundle.message("diff.count.differences.status.text", changes));
-    }
-
-    public void setBusy(boolean busy) {
-      if (busy) {
-        myBusySpinner.resume();
-      }
-      else {
-        myBusySpinner.suspend();
-      }
+  private class MyStatusPanel extends StatusPanel {
+    @Override
+    protected int getChangesCount() {
+      return myDiffChanges.size() + myInvalidDiffChanges.size();
     }
   }
 

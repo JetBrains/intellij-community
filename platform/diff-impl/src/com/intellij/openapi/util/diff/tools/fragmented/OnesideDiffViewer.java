@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -50,6 +49,7 @@ import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.OnesideFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.PrevNextDifferenceIterable;
+import com.intellij.openapi.util.diff.tools.util.StatusPanel;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.IgnorePolicy;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
@@ -802,19 +802,18 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     }
   }
 
-  private class MyStatusPanel {
-    private final JLabel myTextLabel = new JLabel("");
-
-    @NotNull
-    public JComponent getComponent() {
-      return myTextLabel;
+  private class MyStatusPanel extends StatusPanel {
+    @Override
+    protected int getChangesCount() {
+      return myChangedBlockData == null ? 0 : myChangedBlockData.getDiffChanges().size();
     }
 
-    public void update() {
-      int changes = myChangedBlockData == null ? 0 : myChangedBlockData.getDiffChanges().size();
-      myTextLabel.setText(DiffBundle.message("diff.count.differences.status.text", changes));
+    @Override
+    protected boolean showSpinner() {
+      return false;
     }
   }
+
   private static class OnesideDocumentData {
     @NotNull private final CharSequence myText;
     private final int myLines;
