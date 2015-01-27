@@ -39,7 +39,18 @@ public abstract class MappingList {
       int mappingLine = getLine(mapping);
       if (line == mappingLine) {
         if (column == getColumn(mapping)) {
-          return middle;
+          // find first
+          int firstIndex = middle;
+          while (firstIndex > 0) {
+            MappingEntry prevMapping = mappings.get(firstIndex - 1);
+            if (getLine(prevMapping) == line && getColumn(prevMapping) == column) {
+              firstIndex--;
+            }
+            else {
+              break;
+            }
+          }
+          return firstIndex;
         }
         else if (column < getColumn(mapping)) {
           if (column == 0 || column == -1) {
