@@ -72,9 +72,6 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
       @Override
       public void visitLiteral(@NotNull JsonLiteral literal) {
-        if (literal.getParent() instanceof JsonFile) {
-          holder.registerProblem(literal, JsonBundle.message("msg.compliance.problem.illegal.top.level.value"));
-        }
         if (JsonPsiUtil.isPropertyKey(literal) && !JsonPsiUtil.getElementTextWithoutHostEscaping(literal).startsWith("\"")) {
           holder.registerProblem(literal, JsonBundle.message("msg.compliance.problem.illegal.property.key"), new AddDoubleQuotesFix());
         }
