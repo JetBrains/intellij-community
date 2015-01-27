@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@ package com.intellij.openapi.util.diff.contents;
 
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents some data that probably can be compared with some other.
  *
- * @see com.intellij.openapi.util.diff.requests.DiffRequest
+ * @see DiffRequest
  */
 public interface DiffContent {
   @Nullable

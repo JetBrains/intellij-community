@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -194,16 +194,16 @@ public class DirDiffElementImpl implements DirDiffElement {
   public void updateSourceFromTarget(DiffElement target) {
     myTarget = target;
     myTargetLength = mySourceLength;
-    myDefaultOperation = DirDiffOperation.EQUAL;
-    myOperation = DirDiffOperation.EQUAL;
+    myDefaultOperation = EQUAL;
+    myOperation = EQUAL;
     myType = DiffType.EQUAL;
   }
 
   public void updateTargetFromSource(DiffElement source) {
     mySource = source;
     mySourceLength = myTargetLength;
-    myDefaultOperation = DirDiffOperation.EQUAL;
-    myOperation = DirDiffOperation.EQUAL;
+    myDefaultOperation = EQUAL;
+    myOperation = EQUAL;
     myType = DiffType.EQUAL;
   }
 
