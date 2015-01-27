@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
@@ -417,11 +418,13 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     @Nullable private ScrollToPolicy myScrollToChange;
     @Nullable private EditorsPosition myEditorsPosition;
     @Nullable private LogicalPosition[] myCaretPosition;
+    @Nullable private Pair<ThreeSide, Integer> myScrollToLine;
 
     public void processContext() {
       myScrollToChange = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_CHANGE);
       myEditorsPosition = myRequest.getUserData(EditorsPosition.KEY);
       myCaretPosition = myRequest.getUserData(DiffUserDataKeys.EDITORS_CARET_POSITION);
+      myScrollToLine = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_LINE_THREESIDE);
     }
 
     public void updateContext() {
@@ -440,11 +443,14 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
       myRequest.putUserData(EditorsPosition.KEY, editorsPosition);
       myRequest.putUserData(DiffUserDataKeys.EDITORS_CARET_POSITION, carets);
+      myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_LINE_THREESIDE, null);
     }
 
     public void onSlowRediff() {
       if (myScrollToChange != null) return;
-
+      if (myShouldScroll && myScrollToLine != null) {
+        myShouldScroll = !doScrollToLine();
+      }
       if (myShouldScroll && myCaretPosition != null) {
         myShouldScroll = !doScrollToPosition();
       }
@@ -453,6 +459,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     public void onRediff() {
       if (myShouldScroll && myScrollToChange != null) {
         myShouldScroll = !doScrollToChange(myScrollToChange);
+      }
+      if (myShouldScroll && myScrollToLine != null) {
+        myShouldScroll = !doScrollToLine();
       }
       if (myShouldScroll && myCaretPosition != null) {
         myShouldScroll = !doScrollToPosition();
@@ -485,6 +494,17 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       else {
         getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
       }
+      return true;
+    }
+
+    private boolean doScrollToLine() {
+      if (myScrollToLine == null) return false;
+      ThreeSide side = myScrollToLine.first;
+      Integer line = myScrollToLine.second;
+      if (side.select(getEditors()) == null) return false;
+
+      myCurrentSide = side;
+      DiffUtil.scrollEditor(getCurrentEditor(), line);
       return true;
     }
 

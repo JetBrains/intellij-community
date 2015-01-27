@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 
 import java.util.List;
 
@@ -29,6 +30,8 @@ public interface DiffUserDataKeys {
 
   enum ScrollToPolicy {FIRST_CHANGE, LAST_CHANGE}
   Key<ScrollToPolicy> SCROLL_TO_CHANGE = Key.create("Diff.ScrollToChange");
+  Key<Pair<Side, Integer>> SCROLL_TO_LINE = Key.create("Diff.ScrollToLine");
+  Key<Pair<ThreeSide, Integer>> SCROLL_TO_LINE_THREESIDE = Key.create("Diff.ScrollToLineThreeside");
   Key<LogicalPosition[]> EDITORS_CARET_POSITION = Key.create("Diff.EditorsCaretPosition");
   Key<String> HELP_ID = Key.create("Diff.HelpId");
   Key<boolean[]> FORCE_READ_ONLY_CONTENTS = Key.create("Diff.ForceReadOnlyContents");
