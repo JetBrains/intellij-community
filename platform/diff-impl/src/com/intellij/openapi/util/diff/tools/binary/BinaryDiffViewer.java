@@ -246,6 +246,28 @@ class BinaryDiffViewer extends ListenerDiffViewerBase {
       indicator.checkCanceled();
 
       DiffContent[] contents = myRequest.getContents();
+
+      if (contents[0] instanceof EmptyContent) {
+        return new Runnable() {
+          @Override
+          public void run() {
+            clearDiffPresentation();
+            myPanel.addInsertedContentNotification();
+          }
+        };
+      }
+
+      if (contents[1] instanceof EmptyContent) {
+        return new Runnable() {
+          @Override
+          public void run() {
+            clearDiffPresentation();
+            myPanel.addRemovedContentNotification();
+          }
+        };
+      }
+
+      // TODO: compare text with image by-byte?
       if (!(contents[0] instanceof BinaryFileContent) || !(contents[1] instanceof BinaryFileContent)) {
         return new Runnable() {
           @Override

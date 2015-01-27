@@ -19,12 +19,18 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.tools.util.EditorsDiffPanelBase;
+import com.intellij.openapi.util.diff.util.TextDiffType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 class BinaryDiffPanel extends EditorsDiffPanelBase {
+  @NotNull protected final JPanel INSERTED_CONTENT_NOTIFICATION =
+    createNotification("Content added", TextDiffType.INSERTED.getColor(null));
+  @NotNull protected final JPanel REMOVED_CONTENT_NOTIFICATION =
+    createNotification("Content removed", TextDiffType.DELETED.getColor(null));
+
   @NotNull private final BinaryDiffViewer myViewer;
 
   public BinaryDiffPanel(@NotNull BinaryDiffViewer viewer,
@@ -40,5 +46,15 @@ class BinaryDiffPanel extends EditorsDiffPanelBase {
   protected JComponent getCurrentEditor() {
     FileEditor editor = myViewer.getCurrentEditor();
     return editor != null ? editor.getComponent() : null;
+  }
+
+  public void addInsertedContentNotification() {
+    myNotificationsPanel.add(INSERTED_CONTENT_NOTIFICATION);
+    myNotificationsPanel.revalidate();
+  }
+
+  public void addRemovedContentNotification() {
+    myNotificationsPanel.add(REMOVED_CONTENT_NOTIFICATION);
+    myNotificationsPanel.revalidate();
   }
 }

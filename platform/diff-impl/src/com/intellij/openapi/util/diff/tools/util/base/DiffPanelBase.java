@@ -20,7 +20,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -150,5 +149,15 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   @NotNull
   public static JPanel createNotification(@NotNull String text) {
     return new EditorNotificationPanel().text(text);
+  }
+
+  @NotNull
+  public static JPanel createNotification(@NotNull String text, @NotNull final Color background) {
+    return new EditorNotificationPanel() {
+      @Override
+      public Color getBackground() {
+        return background;
+      }
+    }.text(text);
   }
 }
