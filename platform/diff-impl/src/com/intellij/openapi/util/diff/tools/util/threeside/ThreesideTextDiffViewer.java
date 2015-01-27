@@ -206,6 +206,12 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     }
   }
 
+  protected void disableSyncScrollSupport(boolean disable) {
+    if (mySyncScrollListener != null) {
+      mySyncScrollListener.myDuringSyncScroll = disable;
+    }
+  }
+
   //
   // Diff
   //
@@ -465,9 +471,16 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       myEditors.get(2).getCaretModel().moveToLogicalPosition(myCaretPosition[2]);
 
       if (myEditorsPosition != null && myEditorsPosition.isSame(myCaretPosition)) {
-        DiffUtil.scrollToPoint(myEditors.get(0), myEditorsPosition.myPoints[0]);
-        DiffUtil.scrollToPoint(myEditors.get(1), myEditorsPosition.myPoints[1]);
-        DiffUtil.scrollToPoint(myEditors.get(2), myEditorsPosition.myPoints[2]);
+        try {
+          disableSyncScrollSupport(true);
+
+          DiffUtil.scrollToPoint(myEditors.get(0), myEditorsPosition.myPoints[0]);
+          DiffUtil.scrollToPoint(myEditors.get(1), myEditorsPosition.myPoints[1]);
+          DiffUtil.scrollToPoint(myEditors.get(2), myEditorsPosition.myPoints[2]);
+        }
+        finally {
+          disableSyncScrollSupport(false);
+        }
       }
       else {
         getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);

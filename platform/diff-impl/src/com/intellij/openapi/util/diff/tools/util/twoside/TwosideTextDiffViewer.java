@@ -240,6 +240,12 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     }
   }
 
+  protected void disableSyncScrollSupport(boolean disable) {
+    if (mySyncScrollListener != null) {
+      mySyncScrollListener.myDuringSyncScroll = disable;
+    }
+  }
+
   //
   // Getters
   //
@@ -492,8 +498,15 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       if (myEditor2 != null) myEditor2.getCaretModel().moveToLogicalPosition(myCaretPosition[1]);
 
       if (myEditorsPosition != null && myEditorsPosition.isSame(myCaretPosition)) {
-        DiffUtil.scrollToPoint(myEditor1, myEditorsPosition.myPoint1);
-        DiffUtil.scrollToPoint(myEditor2, myEditorsPosition.myPoint2);
+        try {
+          disableSyncScrollSupport(true);
+
+          DiffUtil.scrollToPoint(myEditor1, myEditorsPosition.myPoint1);
+          DiffUtil.scrollToPoint(myEditor2, myEditorsPosition.myPoint2);
+        }
+        finally {
+          disableSyncScrollSupport(false);
+        }
       }
       else {
         getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
