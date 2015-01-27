@@ -28,7 +28,7 @@ public final class Variables {
                                                     @NotNull final XCompositeNode node,
                                                     @NotNull final VariableContext context,
                                                     final boolean isLast) {
-    return context.createMemberFilter()
+    return context.getMemberFilter()
       .then(new ValueNodeAsyncFunction<MemberFilter, Void>(node) {
         @NotNull
         @Override
@@ -56,13 +56,15 @@ public final class Variables {
                   }
                 }
 
-                Collections.sort(properties, memberFilter.hasNameMappings() ? new Comparator<Variable>() {
+                Comparator<Variable> comparator = memberFilter.hasNameMappings() ? new Comparator<Variable>() {
                   @Override
                   public int compare(@NotNull Variable o1, @NotNull Variable o2) {
                     return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
                   }
-                } : NATURAL_NAME_COMPARATOR);
-                sort(functions);
+                } : NATURAL_NAME_COMPARATOR;
+
+                Collections.sort(properties, comparator);
+                Collections.sort(functions, comparator);
 
                 addAditionalVariables(variables, additionalVariables, properties, memberFilter);
 
@@ -85,12 +87,12 @@ public final class Variables {
   }
 
   @Nullable
-  public static List<Variable> sortFilterAndAddValueList(@NotNull List<Variable> variables,
-                                                         @NotNull XCompositeNode node,
-                                                         @NotNull VariableContext context,
-                                                         @NotNull MemberFilter memberFilter,
-                                                         int maxChildrenToAdd,
-                                                         boolean defaultIsLast) {
+  public static List<Variable> processNamedObjectProperties(@NotNull List<Variable> variables,
+                                                            @NotNull XCompositeNode node,
+                                                            @NotNull VariableContext context,
+                                                            @NotNull MemberFilter memberFilter,
+                                                            int maxChildrenToAdd,
+                                                            boolean defaultIsLast) {
     List<Variable> list = filterAndSort(variables, memberFilter, true);
     if (list.isEmpty()) {
       if (defaultIsLast) {
@@ -101,7 +103,7 @@ public final class Variables {
 
     int to = Math.min(maxChildrenToAdd, list.size());
     boolean isLast = to == list.size();
-    node.addChildren(createVariablesList(list, 0, to, context), defaultIsLast && isLast);
+    node.addChildren(createVariablesList(list, 0, to, context, memberFilter), defaultIsLast && isLast);
     if (isLast) {
       return null;
     }
@@ -124,7 +126,7 @@ public final class Variables {
         result.add(variable);
       }
     }
-    sort(result);
+    Collections.sort(result, NATURAL_NAME_COMPARATOR);
 
     addAditionalVariables(variables, additionalVariables, result, memberFilter);
     return result;
@@ -142,10 +144,6 @@ public final class Variables {
       }
       result.add(variable);
     }
-  }
-
-  private static void sort(@NotNull List<Variable> result) {
-    Collections.sort(result, NATURAL_NAME_COMPARATOR);
   }
 
   // prefixed '_' must be last, fixed case sensitive natural compare
@@ -243,37 +241,33 @@ public final class Variables {
   }
 
   @NotNull
-  public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext) {
-    return createVariablesList(variables, from, to, variableContext, null);
-  }
-
-  @NotNull
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext, @Nullable MemberFilter memberFilter) {
     XValueChildrenList list = new XValueChildrenList(to - from);
     VariableContext getterOrSetterContext = null;
     for (int i = from; i < to; i++) {
       Variable variable = variables.get(i);
-      list.add(memberFilter == null ? new VariableView(variable, variableContext) : new VariableView(memberFilter.getName(variable), variable, variableContext));
+      String normalizedName = memberFilter == null ? variable.getName() : memberFilter.getName(variable);
+      list.add(new VariableView(normalizedName, variable, variableContext));
       if (variable instanceof ObjectProperty) {
         ObjectProperty property = (ObjectProperty)variable;
         if (property.getGetter() != null) {
           if (getterOrSetterContext == null) {
             getterOrSetterContext = new NonWatchableVariableContext(variableContext);
           }
-          list.add(new VariableView(new VariableImpl("get " + property.getName(), property.getGetter()), getterOrSetterContext));
+          list.add(new VariableView(new VariableImpl("get " + normalizedName, property.getGetter()), getterOrSetterContext));
         }
         if (property.getSetter() != null) {
           if (getterOrSetterContext == null) {
             getterOrSetterContext = new NonWatchableVariableContext(variableContext);
           }
-          list.add(new VariableView(new VariableImpl("set " + property.getName(), property.getSetter()), getterOrSetterContext));
+          list.add(new VariableView(new VariableImpl("set " + normalizedName, property.getSetter()), getterOrSetterContext));
         }
       }
     }
     return list;
   }
 
-  private static class NonWatchableVariableContext extends VariableContextWrapper {
+  private static final class NonWatchableVariableContext extends VariableContextWrapper {
     public NonWatchableVariableContext(VariableContext variableContext) {
       super(variableContext, null);
     }

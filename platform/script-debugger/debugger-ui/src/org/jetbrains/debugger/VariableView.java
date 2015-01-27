@@ -50,14 +50,15 @@ public final class VariableView extends XNamedValue implements VariableContext {
   private final VariableContext context;
 
   private final Variable variable;
-
   private volatile Value value;
+  // lazy computed
+  private MemberFilter memberFilter;
 
   private volatile List<Variable> remainingChildren;
   private volatile int remainingChildrenOffset;
 
   public VariableView(@NotNull Variable variable, @NotNull VariableContext context) {
-    this(context.getViewSupport().normalizeMemberName(variable), variable, context);
+    this(variable.getName(), variable, context);
   }
 
   public VariableView(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context) {
@@ -148,8 +149,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @NotNull
   @Override
-  public Promise<MemberFilter> createMemberFilter() {
-    return context.getViewSupport().createMemberFilter(this);
+  public Promise<MemberFilter> getMemberFilter() {
+    return context.getViewSupport().getMemberFilter(this);
   }
 
   @Override
@@ -296,7 +297,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     if (list != null) {
       int to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size());
       boolean isLast = to == list.size();
-      node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, this), isLast);
+      node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, this, memberFilter), isLast);
       if (!isLast) {
         node.tooManyChildren(list.size() - to);
         remainingChildrenOffset += XCompositeNode.MAX_CHILDREN_TO_SHOW;
@@ -386,17 +387,18 @@ public final class VariableView extends XNamedValue implements VariableContext {
   private Promise<Void> computeNamedProperties(@NotNull final ObjectValue value, @NotNull final XCompositeNode node, final boolean isLastChildren) {
     // start properties loading to achieve, possibly, parallel execution (properties loading & member filter computation)
     final Promise<List<Variable>> properties = value.getProperties();
-    return createMemberFilter()
+    return getMemberFilter()
       .then(new ValueNodeAsyncFunction<MemberFilter, Void>(node) {
         @NotNull
         @Override
-        public Promise<Void> fun(final MemberFilter memberFilter) {
+        public Promise<Void> fun(MemberFilter memberFilter) {
+          VariableView.this.memberFilter = memberFilter;
           return properties.then(new ValueNodeAsyncFunction<List<Variable>, Void>(node) {
             @NotNull
             @Override
             public Promise<Void> fun(List<Variable> variables) {
               if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
-                computeArrayRanges(variables, node, memberFilter);
+                computeArrayRanges(variables, node);
                 return Promise.DONE;
               }
 
@@ -405,8 +407,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
                 functionValue = null;
               }
 
-              remainingChildren =
-                Variables.sortFilterAndAddValueList(variables, node, VariableView.this, memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null);
+              remainingChildren = Variables.processNamedObjectProperties(variables, node, VariableView.this, VariableView.this.memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW,
+                                                                         isLastChildren && functionValue == null);
               if (remainingChildren != null) {
                 remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
               }
@@ -422,7 +424,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
       });
   }
 
-  private void computeArrayRanges(@NotNull List<Variable> properties, @NotNull XCompositeNode node, @NotNull MemberFilter memberFilter) {
+  private void computeArrayRanges(@NotNull List<Variable> properties, @NotNull XCompositeNode node) {
     final List<Variable> variables = Variables.filterAndSort(properties, memberFilter, false);
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
@@ -459,7 +461,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
 
     for (int i = notGroupedVariablesOffset; i < variables.size(); i++) {
-      groupList.add(new VariableView(variables.get(i), this));
+      Variable variable = variables.get(i);
+      groupList.add(new VariableView(memberFilter.getName(variable), variable, this));
     }
 
     node.addChildren(groupList, true);
