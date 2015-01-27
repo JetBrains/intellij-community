@@ -33,17 +33,17 @@ import javax.swing.*;
 /**
  * @author gregsh
  */
-public class ScratchRootType extends RootType {
+public final class ScratchRootType extends RootType {
 
   public static final LanguageFileType SCRATCH_FILE_TYPE = new MyFileType();
 
-  protected ScratchRootType() {
-    super("scratches", "Scratches");
+  @NotNull
+  public static ScratchRootType getInstance() {
+    return findByClass(ScratchRootType.class);
   }
 
-  @Override
-  public boolean canBeProject() {
-    return false;
+  ScratchRootType() {
+    super("scratches", "Scratches");
   }
 
   @Override
