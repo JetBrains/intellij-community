@@ -36,6 +36,7 @@ import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -247,14 +248,9 @@ class CollapsedActionManager {
     @Override
     public LinearGraphAnswer performAction(@NotNull ActionContext context) {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
-      LinearGraph delegateGraph = context.getDelegatedGraph();
-
-      for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) modification.showNode(nodeIndex);
-
       modification.removeAdditionalEdges();
       modification.resetNodesVisibility();
-      modification.apply();
-      return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
+      return new DeferredGraphAnswer(SOME_CHANGES, null, null, null, modification);
     }
 
     @NotNull
@@ -268,26 +264,25 @@ class CollapsedActionManager {
     @Nullable
     @Override
     public LinearGraphAnswer performAction(@NotNull ActionContext context) {
-      EXPAND_ALL.performAction(context);
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
+      modification.removeAdditionalEdges();
+      modification.resetNodesVisibility();
 
       LinearGraph delegateGraph = context.getDelegatedGraph();
-
       for (int nodeIndex = 0; nodeIndex < delegateGraph.nodesCount(); nodeIndex++) {
-        if (!context.myCollapsedGraph.isNodeVisible(nodeIndex)) continue;
+        if (modification.isNodeHidden(nodeIndex)) continue;
 
         GraphFragment fragment = context.myDelegatedFragmentGenerators.linearFragmentGenerator.getLongDownFragment(nodeIndex);
         if (fragment != null) {
-          Set<Integer> middleNodes = context.myDelegatedFragmentGenerators.fragmentGenerator
-            .getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex, true);
+          Set<Integer> middleNodes =
+            context.myDelegatedFragmentGenerators.fragmentGenerator.getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex, true);
 
           for (Integer nodeIndexForHide : middleNodes) modification.hideNode(nodeIndexForHide);
           modification.createEdge(new GraphEdge(fragment.upNodeIndex, fragment.downNodeIndex, null, GraphEdgeType.DOTTED));
         }
       }
 
-      modification.apply();
-      return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
+      return new DeferredGraphAnswer(SOME_CHANGES, null, null, null, modification);
     }
 
     @NotNull
@@ -356,5 +351,29 @@ class CollapsedActionManager {
     }
 
     return null;
+  }
+
+  private static class DeferredGraphAnswer extends LinearGraphAnswer {
+    @NotNull private final CollapsedGraph.Modification myModification;
+
+    public DeferredGraphAnswer(@Nullable GraphChanges<Integer> graphChanges,
+                               @Nullable Cursor cursorToSet,
+                               @Nullable Integer commitToJump,
+                               @Nullable Set<Integer> selectedNodeIds,
+                               @NotNull CollapsedGraph.Modification modification) {
+      super(graphChanges, cursorToSet, commitToJump, selectedNodeIds);
+      myModification = modification;
+    }
+
+    @Nullable
+    @Override
+    public Runnable getGraphUpdater() {
+      return new Runnable() {
+        @Override
+        public void run() {
+          myModification.apply();
+        }
+      };
+    }
   }
 }

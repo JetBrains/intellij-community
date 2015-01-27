@@ -21,8 +21,8 @@ import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
@@ -149,11 +149,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
       if (action.getType() == GraphAction.Type.MOUSE_OVER) {
         myPrintElementManager.setSelectedElement(affectedElement);
-        return new GraphAnswerImpl<CommitId>(getCursor(true), null);
+        return new GraphAnswerImpl<CommitId>(getCursor(true), null, null);
       }
 
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
-          return new GraphAnswerImpl<CommitId>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId));
+        return new GraphAnswerImpl<CommitId>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null);
       }
 
       return null;
@@ -194,21 +194,23 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       return new LinearGraphActionImpl(printElement, graphAction.getType());
     }
 
-    private GraphAnswer<CommitId> convert(@NotNull LinearGraphController.LinearGraphAnswer answer) {
+    private GraphAnswer<CommitId> convert(@NotNull final LinearGraphController.LinearGraphAnswer answer) {
       CommitId commitToJump = null;
       Integer nodeId = answer.getCommitToJump();
       if (nodeId != null) commitToJump = myPermanentGraph.getPermanentCommitsInfo().getCommitId(nodeId);
-      return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), commitToJump);
+      return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), commitToJump, answer.getGraphUpdater());
     }
   }
 
   private static class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {
     @Nullable private final Cursor myCursor;
     @Nullable private final CommitId myCommitToJump;
+    @Nullable private final Runnable myUpdater;
 
-    private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump) {
+    private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump, @Nullable Runnable updater) {
       myCursor = cursor;
       myCommitToJump = commitToJump;
+      myUpdater = updater;
     }
 
     @Nullable
@@ -221,6 +223,12 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Override
     public CommitId getCommitToJump() {
       return myCommitToJump;
+    }
+
+    @Nullable
+    @Override
+    public Runnable getGraphUpdater() {
+      return myUpdater;
     }
   }
 

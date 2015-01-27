@@ -94,6 +94,12 @@ class EmptyVisibleGraph implements VisibleGraph<Integer> {
       public Integer getCommitToJump() {
         return null;
       }
+
+      @Nullable
+      @Override
+      public Runnable getGraphUpdater() {
+        return null;
+      }
     }
   }
 
