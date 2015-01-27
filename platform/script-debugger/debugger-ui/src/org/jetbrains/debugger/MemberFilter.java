@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -12,6 +13,9 @@ public interface MemberFilter {
 
   @NotNull
   String getName(@NotNull Variable variable);
+
+  @Nullable
+  String sourceNameToRaw(@NotNull String name);
 
   boolean hasNameMappings();
 }
