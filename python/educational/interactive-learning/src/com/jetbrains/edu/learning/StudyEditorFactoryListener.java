@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.course.TaskWindow;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -74,6 +75,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                   StudyDocumentListener listener = new StudyDocumentListener(taskFile);
                   StudyEditor.addDocumentListener(document, listener);
                   document.addDocumentListener(listener);
+                  WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
                   taskFile.drawAllWindows(editor);
                 }
               }

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.course.*;
@@ -59,6 +60,8 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     if (!resetTaskFile(editor.getDocument(), project, taskFile, studyState.getVirtualFile().getName())) {
       return;
     }
+    WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
+    taskFile.setHighlightErrors(false);
     taskFile.drawAllWindows(editor);
     taskFile.createGuardedBlocks(editor);
     ApplicationManager.getApplication().invokeLater(new Runnable() {

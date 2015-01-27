@@ -7,12 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -23,6 +20,7 @@ import com.jetbrains.edu.learning.StudyTestRunner;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -91,17 +89,24 @@ public class TaskWindow implements Comparable, Stateful {
     if (!isValid(document)) {
       return;
     }
-    TextAttributes defaultTestAttributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
-    JBColor color = getColor();
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final TextAttributes defaultTestAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), null,
+                                                                    EffectType.BOXED, Font.PLAIN);
+    final JBColor color = getColor();
     int startOffset = document.getLineStartOffset(line) + start;
     RangeHighlighter
       rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + length, HighlighterLayer.LAST + 1,
-                                                       new TextAttributes(defaultTestAttributes.getForegroundColor(),
-                                                                          defaultTestAttributes.getBackgroundColor(), color,
-                                                                          defaultTestAttributes.getEffectType(),
-                                                                          defaultTestAttributes.getFontType()),
+                                                       defaultTestAttributes,
                                                        HighlighterTargetArea.EXACT_RANGE);
+    rh.setCustomRenderer(new CustomHighlighterRenderer() {
+      @Override
+      public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
+        g.setColor(color);
+        Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getStartOffset()));
+        Point pointEnd = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getEndOffset()));
+        g.drawRect(point.x, point.y - 2, (pointEnd.x - point.x), editor.getLineHeight() + 1);
+      }
+    });
     if (drawSelection) {
       editor.getSelectionModel().setSelection(startOffset, startOffset + length);
     }
