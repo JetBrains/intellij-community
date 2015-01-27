@@ -127,22 +127,13 @@ public class BranchInfo {
     if (info == null || info.getURL() == null || !SVNPathUtil.isAncestor(myBranch.getUrl(), info.getURL().toString())) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
+
     final String subPathUnderBranch = SVNPathUtil.getRelativePath(myBranch.getUrl(), info.getURL().toString());
+    MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = checkPaths(list, branchPath, subPathUnderBranch);
 
-    MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = MultiMap.create();
-    checkPaths(list.getNumber(), list.getAddedPaths(), branchPath, subPathUnderBranch, result);
     if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
     }
-    checkPaths(list.getNumber(), list.getDeletedPaths(), branchPath, subPathUnderBranch, result);
-    if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
-      return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
-    }
-    checkPaths(list.getNumber(), list.getChangedPaths(), branchPath, subPathUnderBranch, result);
-    if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
-      return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
-    }
-
     if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)) {
       myPartlyMerged.put(list.getNumber(), result.get(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED));
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
@@ -150,11 +141,14 @@ public class BranchInfo {
     return SvnMergeInfoCache.MergeCheckResult.MERGED;
   }
 
-  private void checkPaths(final long number, @NotNull Collection<String> paths, @NotNull String branchPath, final String subPathUnderBranch,
-                          @NotNull MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result) {
+  @NotNull
+  private MultiMap<SvnMergeInfoCache.MergeCheckResult, String> checkPaths(@NotNull SvnChangeList list,
+                                                                          @NotNull String branchPath,
+                                                                          final String subPathUnderBranch) {
+    MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = MultiMap.create();
     String myTrunkPathCorrespondingToLocalBranchPath = SVNPathUtil.append(myInfo.getCurrentBranch().getUrl(), subPathUnderBranch);
 
-    for (String path : paths) {
+    for (String path : ContainerUtil.concat(list.getAddedPaths(), list.getDeletedPaths(), list.getChangedPaths())) {
       String absoluteInTrunkPath = SVNPathUtil.append(myInfo.getRepoUrl(), path);
       SvnMergeInfoCache.MergeCheckResult mergeCheckResult;
 
@@ -166,7 +160,7 @@ public class BranchInfo {
         String localPathInBranch = new File(branchPath, relativeToTrunkPath).getAbsolutePath();
 
         try {
-          mergeCheckResult = checkPathGoingUp(number, -1, branchPath, localPathInBranch, path, true);
+          mergeCheckResult = checkPathGoingUp(list.getNumber(), -1, branchPath, localPathInBranch, path, true);
         }
         catch (VcsException e) {
           LOG.info(e);
@@ -179,7 +173,15 @@ public class BranchInfo {
       }
 
       result.putValue(mergeCheckResult, path);
+
+      // Do not check other paths if NOT_EXISTS result detected as in this case resulting status for whole change list will also be
+      // NOT_EXISTS. And currently we're only interested in not merged paths for change lists with NOT_MERGED status.
+      if (SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS.equals(mergeCheckResult)) {
+        break;
+      }
     }
+
+    return result;
   }
 
   @NotNull
