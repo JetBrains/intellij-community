@@ -318,7 +318,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
     }
 
-    if (delegatingParams.size() == 1) {
+    if (!delegatingParams.isEmpty()) {
       final SafeDeleteParameterCallHierarchyUsageInfo parameterHierarchyUsageInfo = delegatingParams.get(0);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         result.addAll(delegatingParams);

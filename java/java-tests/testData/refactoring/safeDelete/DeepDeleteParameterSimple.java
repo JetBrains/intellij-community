@@ -4,5 +4,9 @@ class Test {
         bar(i);
     }
 
+    void baz(int i) {
+        bar(i);
+    }
+
     void bar(int <caret>i){}
 }
