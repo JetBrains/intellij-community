@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ven
@@ -102,16 +104,13 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
-
     final long modificationStampBefore = myDocument.getModificationStamp();
 
     Update update = new Update(myFile) {
       @Override
       public void setRejected() {
         super.setRejected();
-        doFinish(Collections.<HighlightInfo>emptyList());
+        doFinish(getHighlights(), modificationStampBefore);
       }
 
       @Override
@@ -127,17 +126,8 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
             if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
               return;
             }
-            collectHighlighters();
-
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-                  return;
-                }
-                doFinish(getHighlights());
-              }
-            }, ModalityState.stateForComponent(myEditor.getComponent()));
+            applyRelevant();
+            doFinish(getHighlights(), modificationStampBefore);
           }
         });
       }
@@ -159,7 +149,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     return infos;
   }
 
-  private void collectHighlighters() {
+  private void applyRelevant() {
     for (ExternalAnnotator annotator : myAnnotator2DataMap.keySet()) {
       final MyData data = myAnnotator2DataMap.get(annotator);
       if (data != null) {
@@ -168,15 +158,18 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     }
   }
 
-  private void doFinish(@NotNull final List<HighlightInfo> highlights) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+  private void doFinish(@NotNull final List<HighlightInfo> highlights, final long modificationStampBefore) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (!myProject.isDisposed()) {
-          UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, highlights, getColorsScheme(), getId());
+        if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+          return;
         }
+        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, highlights, getColorsScheme(), getId());
+        DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+        daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
       }
-    });
+    }, ModalityState.stateForComponent(myEditor.getComponent()));
   }
 
   private void doAnnotate() {
