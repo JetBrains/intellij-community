@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 class B {
   @Override
   public boolean equals(Object obj) {
@@ -42,12 +40,12 @@ class A extends B {
                 com.google.common.base.Objects.equal(a10, a.a10) &&
                 com.google.common.base.Objects.equal(a11, a.a11) &&
                 com.google.common.base.Objects.equal(a12, a.a12) &&
-                Arrays.equals(a1, a.a1) &&
-                Arrays.deepEquals(a2, a.a2) &&
-                Arrays.equals(a3, a.a3) &&
-                Arrays.deepEquals(a4, a.a4) &&
-                Arrays.equals(a5, a.a5) &&
-                Arrays.deepEquals(a6, a.a6) &&
+                com.google.common.base.Objects.equal(a1, a.a1) &&
+                com.google.common.base.Objects.equal(a2, a.a2) &&
+                com.google.common.base.Objects.equal(a3, a.a3) &&
+                com.google.common.base.Objects.equal(a4, a.a4) &&
+                com.google.common.base.Objects.equal(a5, a.a5) &&
+                com.google.common.base.Objects.equal(a6, a.a6) &&
                 com.google.common.base.Objects.equal(a13, a.a13) &&
                 com.google.common.base.Objects.equal(a14, a.a14);
     }

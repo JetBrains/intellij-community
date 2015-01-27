@@ -6,13 +6,11 @@ public int hashCode() {
      #set($i = 1)
     #end
     #foreach($field in $fields)
-      #if (!$field.static)
-        #if ($i > 0)
-        , ##
-        #end
-        $field.accessor ##
-        #set($i = $i + 1)
+      #if ($i > 0)
+      , ##
       #end
+      $field.accessor ##
+      #set($i = $i + 1)
     #end
   );
 }
