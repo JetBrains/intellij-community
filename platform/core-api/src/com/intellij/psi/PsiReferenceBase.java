@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,27 +30,27 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiReferenceBase");
 
   protected final T myElement;
-  private TextRange myRange;
+  private TextRange myRangeInElement;
   protected boolean mySoft;
 
   /**
    * @param element PSI element
-   * @param range range relatively to the element's start offset
+   * @param rangeInElement range relatively to the element's start offset
    * @param soft soft
    */
-  public PsiReferenceBase(T element, TextRange range, boolean soft) {
+  public PsiReferenceBase(T element, TextRange rangeInElement, boolean soft) {
     myElement = element;
-    myRange = range;
+    myRangeInElement = rangeInElement;
     mySoft = soft;
   }
 
   /**
    * @param element PSI element
-   * @param range range relatively to the element's start offset
+   * @param rangeInElement range relatively to the element's start offset
    */
-  public PsiReferenceBase(T element, TextRange range) {
+  public PsiReferenceBase(T element, TextRange rangeInElement) {
     this(element);
-    myRange = range;
+    myRangeInElement = rangeInElement;
   }
 
   /**
@@ -73,7 +73,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public void setRangeInElement(TextRange range) {
-    myRange = range;
+    myRangeInElement = range;
   }
 
   @NotNull
@@ -97,10 +97,10 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   @Override
   public TextRange getRangeInElement() {
-    if (myRange == null) {
-      myRange = calculateDefaultRangeInElement();
+    if (myRangeInElement == null) {
+      myRangeInElement = calculateDefaultRangeInElement();
     }
-    return myRange;
+    return myRangeInElement;
   }
 
   protected TextRange calculateDefaultRangeInElement() {
