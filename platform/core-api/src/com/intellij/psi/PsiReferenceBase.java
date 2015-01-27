@@ -72,8 +72,8 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     mySoft = false;
   }
 
-  public void setRangeInElement(TextRange range) {
-    myRangeInElement = range;
+  public void setRangeInElement(TextRange rangeInElement) {
+    myRangeInElement = rangeInElement;
   }
 
   @NotNull
@@ -132,8 +132,8 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return new Immediate<T>(element, true, resolveTo);
   }
 
-  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, TextRange range, final PsiElement resolveTo) {
-    return new Immediate<T>(element, range, resolveTo);
+  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, TextRange rangeInElement, final PsiElement resolveTo) {
+    return new Immediate<T>(element, rangeInElement, resolveTo);
   }
 
   ElementManipulator<T> getManipulator() {
@@ -159,8 +159,8 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
       super(element, soft);
     }
 
-    public Poly(final T element, final TextRange range, final boolean soft) {
-      super(element, range, soft);
+    public Poly(final T element, final TextRange rangeInElement, final boolean soft) {
+      super(element, rangeInElement, soft);
     }
 
     @Override
@@ -185,13 +185,13 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   public static class Immediate<T extends PsiElement> extends PsiReferenceBase<T> {
     private final PsiElement myResolveTo;
 
-    public Immediate(T element, TextRange range, boolean soft, PsiElement resolveTo) {
-      super(element, range, soft);
+    public Immediate(T element, TextRange rangeInElement, boolean soft, PsiElement resolveTo) {
+      super(element, rangeInElement, soft);
       myResolveTo = resolveTo;
     }
 
-    public Immediate(T element, TextRange range, PsiElement resolveTo) {
-      super(element, range);
+    public Immediate(T element, TextRange rangeInElement, PsiElement resolveTo) {
+      super(element, rangeInElement);
       myResolveTo = resolveTo;
     }
 
