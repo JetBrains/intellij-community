@@ -47,7 +47,7 @@ public class SuspendContextImpl extends XSuspendContext {
       @NotNull
       @Override
       public Promise<String> fun(EvaluateResult result) {
-        final Value value = result.value;
+        Value value = result.value;
         if (value == null) {
           return Promise.resolve("Log expression result doesn't have value");
         }
