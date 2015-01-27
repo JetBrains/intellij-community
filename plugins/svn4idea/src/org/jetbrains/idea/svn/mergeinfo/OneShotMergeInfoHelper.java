@@ -17,8 +17,8 @@ package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.integrate.MergeContext;
 
 import java.util.*;
 
@@ -43,13 +43,9 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   public SvnMergeInfoCache.MergeCheckResult checkList(final SvnChangeList list) {
     final Set<String> notMerged = new HashSet<String>();
     boolean somethingMerged = false;
-
     final long number = list.getNumber();
-    final Set<String> paths = new HashSet<String>(list.getAddedPaths());
-    paths.addAll(list.getDeletedPaths());
-    paths.addAll(list.getChangedPaths());
 
-    for (String path : paths) {
+    for (String path : list.getAffectedPaths()) {
       final SvnMergeInfoCache.MergeCheckResult pathResult = myWorker.isMerged(path, number);
       if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(pathResult)) {
         somethingMerged = true;

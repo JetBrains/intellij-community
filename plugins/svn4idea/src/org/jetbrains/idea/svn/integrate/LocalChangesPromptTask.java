@@ -131,7 +131,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
     for (CommittedChangeList list : lists) {
       SvnChangeList svnList = (SvnChangeList)list;
 
-      for (String path : ContainerUtil.concat(svnList.getAddedPaths(), svnList.getChangedPaths(), svnList.getDeletedPaths())) {
+      for (String path : svnList.getAffectedPaths()) {
         File localPath = getLocalPath(path);
 
         if (localPath != null) {

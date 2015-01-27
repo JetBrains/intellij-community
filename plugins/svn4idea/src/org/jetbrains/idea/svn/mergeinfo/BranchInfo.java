@@ -148,7 +148,7 @@ public class BranchInfo {
     MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = MultiMap.create();
     String myTrunkPathCorrespondingToLocalBranchPath = SVNPathUtil.append(myInfo.getCurrentBranch().getUrl(), subPathUnderBranch);
 
-    for (String path : ContainerUtil.concat(list.getAddedPaths(), list.getDeletedPaths(), list.getChangedPaths())) {
+    for (String path : list.getAffectedPaths()) {
       String absoluteInTrunkPath = SVNPathUtil.append(myInfo.getRepoUrl(), path);
       SvnMergeInfoCache.MergeCheckResult mergeCheckResult;
 

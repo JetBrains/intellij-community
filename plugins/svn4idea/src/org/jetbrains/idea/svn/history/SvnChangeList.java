@@ -794,16 +794,9 @@ public class SvnChangeList implements CommittedChangeList {
     }
   }
 
-  public Set<String> getChangedPaths() {
-    return myChangedPaths;
-  }
-
-  public Set<String> getAddedPaths() {
-    return myAddedPaths;
-  }
-
-  public Set<String> getDeletedPaths() {
-    return myDeletedPaths;
+  @NotNull
+  public Set<String> getAffectedPaths() {
+    return ContainerUtil.newHashSet(ContainerUtil.concat(myAddedPaths, myDeletedPaths, myChangedPaths));
   }
 
   @Nullable
