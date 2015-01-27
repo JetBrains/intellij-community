@@ -111,8 +111,7 @@ public class SvnMergeInfoCache {
     COMMON,
     MERGED,
     NOT_MERGED,
-    NOT_EXISTS,
-    NOT_EXISTS_PARTLY_MERGED;
+    NOT_EXISTS;
 
     @NotNull
     public static MergeCheckResult getInstance(boolean merged) {

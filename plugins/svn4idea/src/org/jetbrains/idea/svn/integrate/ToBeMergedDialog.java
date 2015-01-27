@@ -197,9 +197,6 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
       case NOT_EXISTS:
         result = ListMergeStatus.ALIEN;
         break;
-      case NOT_EXISTS_PARTLY_MERGED:
-        result = ListMergeStatus.NOT_MERGED;
-        break;
       default:
         result = ListMergeStatus.REFRESHING;
         break;
