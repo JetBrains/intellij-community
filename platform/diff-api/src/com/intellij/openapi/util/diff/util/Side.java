@@ -69,15 +69,27 @@ public enum Side {
     return isLeft() ? left : right;
   }
 
+  public int select(@NotNull int[] array) {
+    assert array.length == 2;
+    return array[myIndex];
+  }
+
+  @Nullable
+  public <T> T select(@NotNull T[] array) {
+    assert array.length == 2;
+    return array[myIndex];
+  }
+
   @NotNull
   public <T> T selectN(@NotNull T[] array) {
     assert array.length == 2;
     return array[myIndex];
   }
 
-  public int select(@NotNull int[] array) {
-    assert array.length == 2;
-    return array[myIndex];
+  @Nullable
+  public <T> T select(@NotNull List<T> list) {
+    assert list.size() == 2;
+    return list.get(myIndex);
   }
 
   @NotNull
