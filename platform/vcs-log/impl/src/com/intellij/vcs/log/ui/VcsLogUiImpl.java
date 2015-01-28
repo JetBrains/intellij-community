@@ -145,7 +145,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   private void performLongAction(@NotNull final GraphAction graphAction, @NotNull String title) {
-    runUnderModalProgress(title, new Runnable() {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         final GraphAnswer<Integer> answer = myVisiblePack.getVisibleGraph().getActionController().performAction(graphAction);
@@ -159,7 +159,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
           }
         });
       }
-    });
+    }, title, false, null, getMainFrame().getMainComponent());
   }
 
   public void showAll() {
@@ -362,14 +362,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  public void runUnderModalProgress(@NotNull final String task, @NotNull final Runnable runnable) {
-    getTable().executeWithoutRepaint(new Runnable() {
-      public void run() {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, task, false, null, getMainFrame().getMainComponent());
-      }
-    });
   }
 
   @Override
