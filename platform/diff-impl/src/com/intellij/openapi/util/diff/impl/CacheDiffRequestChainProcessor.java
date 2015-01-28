@@ -55,20 +55,8 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   @NotNull private final WaitingBackgroundableTaskExecutor myTaskExecutor = new WaitingBackgroundableTaskExecutor();
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
-    super(project);
+    super(project, requestChain);
     myRequestChain = requestChain;
-  }
-
-  @Override
-  public void init() {
-    super.init();
-
-    if (myRequestChain.getRequests().isEmpty()) {
-      applyRequest(new NoDiffRequest(), true, null);
-    }
-    else {
-      applyRequest(new LoadingDiffRequest(), true, null);
-    }
   }
 
   //
@@ -148,17 +136,6 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
     super.onDispose();
     myTaskExecutor.abort();
     myRequestCache.clear();
-  }
-
-  @Nullable
-  @Override
-  public <T> T getContextUserData(@NotNull Key<T> key) {
-    return myRequestChain.getUserData(key);
-  }
-
-  @Override
-  public <T> void putContextUserData(@NotNull Key<T> key, @Nullable T value) {
-    myRequestChain.putUserData(key, value);
   }
 
   @NotNull

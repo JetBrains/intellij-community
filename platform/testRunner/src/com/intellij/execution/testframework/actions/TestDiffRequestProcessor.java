@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class TestDiffRequestProcessor extends DiffRequestProcessor {
-  @NotNull private final UserDataHolder myContextDataHolder = new UserDataHolderBase();
-
   @NotNull private final List<DiffHyperlink> myRequests;
   private int myIndex;
 
@@ -32,11 +30,7 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
     super(project);
     myRequests = requests;
     myIndex = index;
-  }
 
-  @Override
-  public void init() {
-    super.init();
     putContextUserData(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, new Object());
   }
 
@@ -77,17 +71,6 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
     catch (Exception e) {
       return new ErrorDiffRequest(e);
     }
-  }
-
-  @Nullable
-  @Override
-  public <T> T getContextUserData(@NotNull Key<T> key) {
-    return myContextDataHolder.getUserData(key);
-  }
-
-  @Override
-  public <T> void putContextUserData(@NotNull Key<T> key, @Nullable T value) {
-    myContextDataHolder.putUserData(key, value);
   }
 
   //

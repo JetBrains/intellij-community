@@ -1377,11 +1377,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private class MyChangeProcessor extends CacheChangeProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project);
-    }
 
-    @Override
-    public void init() {
-      super.init();
       putContextUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
       putContextUserData(DiffUserDataKeys.PLACE, "CommitDialog");
     }

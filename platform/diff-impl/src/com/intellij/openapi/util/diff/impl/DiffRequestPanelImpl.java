@@ -78,18 +78,12 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
 
   private static class MyCacheDiffRequestChainProcessor extends DiffRequestProcessor {
     @Nullable private final Window myWindow;
-    @NotNull private final UserDataHolder myContext = new UserDataHolderBase();
 
     @NotNull private DiffRequest myRequest = new NoDiffRequest();
 
     public MyCacheDiffRequestChainProcessor(@Nullable Project project, @Nullable Window window) {
       super(project);
       myWindow = window;
-    }
-
-    @Override
-    public void init() {
-      applyRequest(new NoDiffRequest(), true, null);
     }
 
     public void setRequest(@Nullable DiffRequest request) {
@@ -106,17 +100,6 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
       if (myWindow == null) return;
       if (myWindow instanceof JDialog) ((JDialog)myWindow).setTitle(title);
       if (myWindow instanceof JFrame) ((JFrame)myWindow).setTitle(title);
-    }
-
-    @Nullable
-    @Override
-    public <T> T getContextUserData(@NotNull Key<T> key) {
-      return myContext.getUserData(key);
-    }
-
-    @Override
-    public <T> void putContextUserData(@NotNull Key<T> key, @Nullable T value) {
-      myContext.putUserData(key, value);
     }
   }
 }

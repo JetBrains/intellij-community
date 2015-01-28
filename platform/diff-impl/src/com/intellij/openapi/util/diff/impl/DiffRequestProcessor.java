@@ -28,6 +28,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.DiffManagerEx;
 import com.intellij.openapi.util.diff.actions.impl.*;
 import com.intellij.openapi.util.diff.api.DiffTool;
@@ -35,6 +37,8 @@ import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffViewer;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
+import com.intellij.openapi.util.diff.requests.MessageDiffRequest;
 import com.intellij.openapi.util.diff.requests.NoDiffRequest;
 import com.intellij.openapi.util.diff.tools.ErrorDiffTool;
 import com.intellij.openapi.util.diff.tools.external.ExternalDiffTool;
@@ -81,15 +85,19 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private DiffRequest myActiveRequest;
 
-  @NotNull private ViewerState myState = new EmptyState();
+  @NotNull private ViewerState myState;
 
   public DiffRequestProcessor(@Nullable Project project) {
+    this(project, new UserDataHolderBase());
+  }
+
+  public DiffRequestProcessor(@Nullable Project project, @NotNull UserDataHolder context) {
     myProject = project;
 
     myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
     myToolOrder = new LinkedList<DiffTool>(myAvailableTools);
 
-    myContext = new MyDiffContext();
+    myContext = new MyDiffContext(context);
     myActiveRequest = new NoDiffRequest();
 
     // UI
@@ -112,6 +120,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     myPanel.setFocusTraversalPolicyProvider(true);
     myPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
+    JComponent bottomPanel = myContext.getUserData(DiffUserDataKeysEx.BOTTOM_PANEL);
+    if (bottomPanel != null) myPanel.add(bottomPanel, BorderLayout.SOUTH);
+    if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
+
+
     myOpenInEditorAction = new OpenInEditorAction(new Runnable() {
       @Override
       public void run() {
@@ -123,9 +136,9 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   public void init() {
-    JComponent bottomPanel = myContext.getUserData(DiffUserDataKeysEx.BOTTOM_PANEL);
-    if (bottomPanel != null) myPanel.add(bottomPanel, BorderLayout.SOUTH);
-    if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
+    myActiveRequest.onAssigned(true);
+    myState = new ErrorState((MessageDiffRequest)myActiveRequest);
+    myState.init();
   }
 
   //
@@ -226,7 +239,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
     catch (Exception e) {
       LOG.error(e);
-      myState = new ErrorState(getFittedTool());
+      myState = new ErrorState(new ErrorDiffRequest("Error: can't show diff"), getFittedTool());
       myState.init();
     }
 
@@ -243,9 +256,13 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   @Nullable
-  public abstract <T> T getContextUserData(@NotNull Key<T> key);
+  public <T> T getContextUserData(@NotNull Key<T> key) {
+    return myContext.getUserData(key);
+  }
 
-  public abstract <T> void putContextUserData(@NotNull Key<T> key, @Nullable T value);
+  public <T> void putContextUserData(@NotNull Key<T> key, @Nullable T value) {
+    myContext.putUserData(key, value);
+  }
 
   @NotNull
   protected List<AnAction> getNavigationActions() {
@@ -714,6 +731,12 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private class MyDiffContext implements DiffContext {
+    @NotNull private final UserDataHolder myContext;
+
+    public MyDiffContext(@NotNull UserDataHolder context) {
+      myContext = context;
+    }
+
     @Nullable
     @Override
     public Project getProject() {
@@ -729,12 +752,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Nullable
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      return DiffRequestProcessor.this.getContextUserData(key);
+      return myContext.getUserData(key);
     }
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      DiffRequestProcessor.this.putContextUserData(key, value);
+      myContext.putUserData(key, value);
     }
   }
 
@@ -757,52 +780,36 @@ public abstract class DiffRequestProcessor implements Disposable {
     DiffTool getActiveTool();
   }
 
-  private class EmptyState implements ViewerState {
-    @Override
-    public void init() {
-    }
-
-    @Override
-    public void destroy() {
-    }
-
-    @Nullable
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public Object getData(@NonNls String dataId) {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public DiffTool getActiveTool() {
-      return ErrorDiffTool.INSTANCE;
-    }
-  }
-
   private class ErrorState implements ViewerState {
     @Nullable private final DiffTool myDiffTool;
+    @NotNull private final MessageDiffRequest myRequest;
 
-    public ErrorState(@Nullable DiffTool diffTool) {
+    @NotNull private final DiffViewer myViewer;
+
+    public ErrorState(@NotNull MessageDiffRequest request) {
+      this(request, null);
+    }
+
+    public ErrorState(@NotNull MessageDiffRequest request, @Nullable DiffTool diffTool) {
       myDiffTool = diffTool;
+      myRequest = request;
+
+      myViewer = ErrorDiffTool.INSTANCE.createComponent(myContext, myRequest);
     }
 
     @Override
     public void init() {
-      myContentPanel.setContent(DiffUtil.createMessagePanel("Error: can't show diff"));
+      myContentPanel.setContent(myViewer.getComponent());
 
-      buildToolbar(null);
+      FrameDiffTool.ToolbarComponents init = myViewer.init();
+      buildToolbar(init.toolbarActions);
 
       myPanel.validate();
     }
 
     @Override
     public void destroy() {
+      Disposer.dispose(myViewer);
     }
 
     @Nullable

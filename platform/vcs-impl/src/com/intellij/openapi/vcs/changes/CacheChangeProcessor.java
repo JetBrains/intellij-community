@@ -50,7 +50,6 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
 
   @NotNull private final Project myProject;
 
-  @NotNull private final UserDataHolder myContextDataHolder = new UserDataHolderBase();
   @NotNull private final SoftHardCacheMap<Change, Pair<Change, DiffRequest>> myRequestCache =
     new SoftHardCacheMap<Change, Pair<Change, DiffRequest>>(5, 5);
 
@@ -61,12 +60,6 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   public CacheChangeProcessor(@NotNull Project project) {
     super(project);
     myProject = project;
-  }
-
-  @Override
-  public void init() {
-    super.init();
-    applyRequest(new NoDiffRequest(), true, null);
   }
 
   //
@@ -167,17 +160,6 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     super.onDispose();
     myTaskExecutor.abort();
     myRequestCache.clear();
-  }
-
-  @Nullable
-  @Override
-  public <T> T getContextUserData(@NotNull Key<T> key) {
-    return myContextDataHolder.getUserData(key);
-  }
-
-  @Override
-  public <T> void putContextUserData(@NotNull Key<T> key, @Nullable T value) {
-    myContextDataHolder.putUserData(key, value);
   }
 
   //
