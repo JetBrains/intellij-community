@@ -131,8 +131,6 @@ public abstract class DiffRequestProcessor implements Disposable {
         onAfterNavigate();
       }
     });
-
-    new ShowActionGroupPopupAction();
   }
 
   public void init() {
@@ -228,6 +226,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myToolbarStatusPanel.setContent(null);
     myToolbarPanel.setContent(null);
     myContentPanel.setContent(null);
+    myPanel.putClientProperty(AnAction.ourClientProperty, null);
 
     myActiveRequest.onAssigned(false);
     myActiveRequest = request;
@@ -360,7 +359,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     return group;
   }
 
-  private void buildToolbar(@Nullable List<AnAction> viewerActions) {
+  protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
     ActionGroup group = collectToolbarActions(viewerActions);
 
     myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
@@ -369,7 +368,10 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private void buildActionPopup(@Nullable List<AnAction> viewerActions) {
+  protected void buildActionPopup(@Nullable List<AnAction> viewerActions) {
+    ShowActionGroupPopupAction action = new ShowActionGroupPopupAction();
+    action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
+
     myPopupActionGroup = collectPopupActions(viewerActions);
   }
 
@@ -494,7 +496,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   private class ShowActionGroupPopupAction extends DumbAwareAction {
 
     public ShowActionGroupPopupAction() {
-      registerCustomShortcutSet(CommonShortcuts.getDiff(), myPanel); // TODO: configurable shortcut
+      setShortcutSet(CommonShortcuts.getDiff()); // TODO: configurable shortcut
     }
 
     @Override
