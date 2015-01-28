@@ -25,7 +25,8 @@ public class JsonHighlightingTest extends JsonTestCase {
     doTest();
   }
 
-  public void testComplianceProblemsTopLevelValue() {
+  // IDEA-134372
+  public void testComplianceProblemsLiteralTopLevelValueIsAllowed() {
     enableStandardComplianceInspection(true);
     doTest();
   }
