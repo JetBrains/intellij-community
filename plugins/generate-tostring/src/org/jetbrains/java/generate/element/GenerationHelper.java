@@ -57,18 +57,4 @@ public class GenerationHelper {
     String propertyName = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
     return codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
   }
-
-  public static String suggestGetterName(FieldElement fieldElement, Project project) {
-    String text = fieldElement.isModifierStatic() ? "static " : "";
-    text += fieldElement.getType() + " " + fieldElement.getName();
-    final PsiField field = JavaPsiFacade.getElementFactory(project).createFieldFromText(text, null);
-    return PropertyUtil.suggestGetterName(field);
-  }
-
-  public static String suggestSetterName(FieldElement fieldElement, Project project) {
-    String text = fieldElement.isModifierStatic() ? "static " : "";
-    text += fieldElement.getType() + " " + fieldElement.getName();
-    final PsiField field = JavaPsiFacade.getElementFactory(project).createFieldFromText(text, null);
-    return PropertyUtil.suggestSetterName(field);
-  }
 }
