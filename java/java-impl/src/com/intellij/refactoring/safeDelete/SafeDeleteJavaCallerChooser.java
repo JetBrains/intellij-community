@@ -96,7 +96,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                                                                             public void run() {
                                                                               ApplicationManager.getApplication().runReadAction(runnable);
                                                                             }
-                                                                          }, "Search for caller method usages...", true, myProject)) {
+                                                                          }, "Search for Caller Method Usages...", true, myProject)) {
       myResult.addAll(foreignMethodUsages);
     }
     super.doOKAction();
