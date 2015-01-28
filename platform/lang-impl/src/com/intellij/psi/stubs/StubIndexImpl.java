@@ -433,16 +433,37 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     index.flush();
   }
 
-  public <K> void updateIndex(@NotNull StubIndexKey key, int fileId, @NotNull final Map<K, StubIdList> oldValues, @NotNull Map<K, StubIdList> newValues) {
+  public <K> void updateIndex(@NotNull StubIndexKey key, int fileId, @NotNull final Map<K, StubIdList> oldValues, @NotNull final Map<K, StubIdList> newValues) {
     try {
       final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
-      index.updateWithMap(fileId, fileId, newValues, new NotNullComputable<Collection<K>>() {
-        @NotNull
-        @Override
-        public Collection<K> compute() {
-          return oldValues.keySet();
-        }
-      });
+      UpdateData<K, StubIdList> updateData;
+
+      if (MapDiffUpdateData.ourDiffUpdateEnabled) {
+        updateData = new MapDiffUpdateData<K, StubIdList>(key) {
+          @Override
+          public void save(int inputId) throws IOException {
+          }
+
+          @Override
+          protected Map<K, StubIdList> getNewValue() {
+            return newValues;
+          }
+
+          @Override
+          protected Map<K, StubIdList> getCurrentValue() throws IOException {
+            return oldValues;
+          }
+        };
+      } else {
+        updateData = index.new SimpleUpdateData(key, fileId, newValues, new NotNullComputable<Collection<K>>() {
+          @NotNull
+          @Override
+          public Collection<K> compute() {
+            return oldValues.keySet();
+          }
+        });
+      }
+      index.updateWithMap(fileId, updateData);
     }
     catch (StorageException e) {
       LOG.info(e);
@@ -457,9 +478,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     @Override
     public void updateWithMap(final int inputId,
-                              int savedInputId, @NotNull final Map<K, StubIdList> newData,
-                              @NotNull NotNullComputable<Collection<K>> oldKeysGetter) throws StorageException {
-      super.updateWithMap(inputId, savedInputId, newData, oldKeysGetter);
+                              @NotNull UpdateData<K, StubIdList> updateData) throws StorageException {
+      super.updateWithMap(inputId, updateData);
     }
   }
 
