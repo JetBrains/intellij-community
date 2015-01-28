@@ -72,6 +72,17 @@ public class PyBlock implements ASTBlock {
                                                               PyTokenTypes.LBRACE, PyTokenTypes.RBRACE,
                                                               PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET);
 
+  private static final TokenSet ourHangingIndentOwners = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
+                                                                         PyElementTypes.DICT_LITERAL_EXPRESSION,
+                                                                         PyElementTypes.SET_LITERAL_EXPRESSION,
+                                                                         PyElementTypes.ARGUMENT_LIST,
+                                                                         PyElementTypes.PARAMETER_LIST,
+                                                                         PyElementTypes.TUPLE_EXPRESSION,
+                                                                         PyElementTypes.PARENTHESIZED_EXPRESSION,
+                                                                         PyElementTypes.GENERATOR_EXPRESSION,
+                                                                         PyElementTypes.FUNCTION_DECLARATION,
+                                                                         PyElementTypes.CALL_EXPRESSION);
+
   public PyBlock(final PyBlock parent,
                  final ASTNode node,
                  final Alignment alignment,
@@ -274,9 +285,12 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = parentType == PyElementTypes.PARAMETER_LIST || isInControlStatement()
-                      ? Indent.getContinuationIndent()
-                      : Indent.getNormalIndent(/*true*/);
+        if (parentType == PyElementTypes.PARAMETER_LIST || argumentMayHaveSameIndentAsFollowingStatementList()) {
+          childIndent = Indent.getContinuationIndent();
+        }
+        else {
+          childIndent = Indent.getNormalIndent();
+        }
       }
     }
     else if (parentType == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
@@ -315,7 +329,8 @@ public class PyBlock implements ASTBlock {
 
     ASTNode prev = child.getTreePrev();
     while (prev != null && prev.getElementType() == TokenType.WHITE_SPACE) {
-      if (prev.getText().contains("\\") && !childIndent.equals(Indent.getContinuationIndent()) &&
+      if (prev.textContains('\\') &&
+          !childIndent.equals(Indent.getContinuationIndent(false)) &&
           !childIndent.equals(Indent.getContinuationIndent(true))) {
         childIndent = isIndentNext(child) ? Indent.getContinuationIndent() : Indent.getNormalIndent();
         break;
@@ -326,9 +341,21 @@ public class PyBlock implements ASTBlock {
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
   }
 
+  private boolean argumentMayHaveSameIndentAsFollowingStatementList() {
+    // This check is supposed to prevent PEP8's error: Continuation line with the same indent as next logical line
+    final PsiElement header = getControlStatementHeader(_node);
+    if (header instanceof PyStatementListContainer) {
+      final PyStatementList statementList = ((PyStatementListContainer)header).getStatementList();
+      final int headerStartLine = getLineInDocument(header);
+      final int statementListStartLine = getLineInDocument(statementList);
+      final int argumentListStartLine = getLineInDocument(_node.getPsi());
+      return headerStartLine == argumentListStartLine && headerStartLine != statementListStartLine;
+    }
+    return false;
+  }
+
   // Check https://www.python.org/dev/peps/pep-0008/#indentation
   private boolean hasHangingIndent(@NotNull PsiElement elem) {
-    final PsiElement[] items;
     if (elem instanceof PyCallExpression) {
       final PyArgumentList argumentList = ((PyCallExpression)elem).getArgumentList();
       return argumentList != null && hasHangingIndent(argumentList);
@@ -345,28 +372,36 @@ public class PyBlock implements ASTBlock {
       return true;
     }
 
-    if (elem instanceof PySequenceExpression) {
-      items = ((PySequenceExpression)elem).getElements();
-    }
-    else if (elem instanceof PyParameterList) {
-      items = ((PyParameterList)elem).getParameters();
-    }
-    else if (elem instanceof PyArgumentList) {
-      items = ((PyArgumentList)elem).getArguments();
-    }
-    else if (elem instanceof PyParenthesizedExpression) {
-      final PyParenthesizedExpression parenthesizedExpr = (PyParenthesizedExpression)elem;
-      if (parenthesizedExpr.getContainedExpression() instanceof PyTupleExpression) {
-        items = (((PyTupleExpression)parenthesizedExpr.getContainedExpression()).getElements());
-      }
-      else {
-        items = new PsiElement[]{parenthesizedExpr.getContainedExpression()};
-      }
+    if (ourHangingIndentOwners.contains(elem.getNode().getElementType())) {
+      final PsiElement[] items = getItems(elem);
+      return items.length == 0 || hasHangingIndent(items[0]);
     }
     else {
       return false;
     }
-    return items.length == 0 || hasHangingIndent(items[0]);
+  }
+
+  @NotNull
+  private PsiElement[] getItems(@NotNull PsiElement elem) {
+    if (elem instanceof PySequenceExpression) {
+      return ((PySequenceExpression)elem).getElements();
+    }
+    else if (elem instanceof PyParameterList) {
+      return ((PyParameterList)elem).getParameters();
+    }
+    else if (elem instanceof PyArgumentList) {
+      return ((PyArgumentList)elem).getArguments();
+    }
+    else if (elem instanceof PyParenthesizedExpression) {
+      final PyParenthesizedExpression parenthesizedExpr = (PyParenthesizedExpression)elem;
+      if (parenthesizedExpr.getContainedExpression() instanceof PyTupleExpression) {
+        return (((PyTupleExpression)parenthesizedExpr.getContainedExpression()).getElements());
+      }
+      else {
+        return new PsiElement[]{parenthesizedExpr.getContainedExpression()};
+      }
+    }
+    return PsiElement.EMPTY_ARRAY;
   }
 
   private static boolean breaksAlignment(IElementType type) {
@@ -401,8 +436,25 @@ public class PyBlock implements ASTBlock {
   }
 
   private boolean isInControlStatement() {
-    return PsiTreeUtil.getParentOfType(_node.getPsi(), PyStatementPart.class, false, PyStatementList.class) != null ||
-           PsiTreeUtil.getParentOfType(_node.getPsi(), PyWithItem.class) != null;
+    return getControlStatementHeader(_node) != null;
+  }
+
+  @Nullable
+  private static PsiElement getControlStatementHeader(@NotNull ASTNode node) {
+    final PyStatementPart statementPart = PsiTreeUtil.getParentOfType(node.getPsi(), PyStatementPart.class, false, PyStatementList.class);
+    if (statementPart != null) {
+      return statementPart;
+    }
+    final PyWithItem withItem = PsiTreeUtil.getParentOfType(node.getPsi(), PyWithItem.class);
+    if (withItem != null) {
+      return withItem.getParent();
+    }
+    return null;
+  }
+
+  private static int getLineInDocument(@NotNull PsiElement element) {
+    final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
+    return document != null ? document.getLineNumber(element.getTextOffset()) : -1;
   }
 
   private boolean isSliceOperand(ASTNode child) {
