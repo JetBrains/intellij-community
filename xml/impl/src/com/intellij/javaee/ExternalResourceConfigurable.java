@@ -95,6 +95,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
         return editExtLocation(o);
       }
     };
+    myExtPanel.getTable().setShowColumns(true);
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
