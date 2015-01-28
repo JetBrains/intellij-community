@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -649,6 +650,8 @@ public class SvnUtil {
     return  FileUtilRt.getRelativePath(FileUtil.toSystemIndependentName(parentPath), FileUtil.toSystemIndependentName(childPath), '/');
   }
 
+  @NotNull
+  @Contract(pure = true)
   public static String ensureStartSlash(@NotNull String path) {
     return StringUtil.startsWithChar(path, '/') ? path : '/' + path;
   }

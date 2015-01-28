@@ -360,7 +360,7 @@ public class BranchInfo {
   }
 
   @NotNull
-  private static Map<String, SVNMergeRangeList> parseMergeInfo(@NotNull PropertyValue value) throws SvnBindException {
+  public static Map<String, SVNMergeRangeList> parseMergeInfo(@NotNull PropertyValue value) throws SvnBindException {
     try {
       return SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.toString().replace('\r', '\n').replace("\n\n", "\n")), null);
     }
@@ -397,9 +397,9 @@ public class BranchInfo {
     return result;
   }
 
-  private static boolean isInRange(@NotNull SVNMergeRange range, long revision) {
+  public static boolean isInRange(@NotNull SVNMergeRange range, long revision) {
     // SVN does not include start revision in range
-    return (revision > range.getStartRevision()) && (revision <= range.getEndRevision());
+    return revision > range.getStartRevision() && revision <= range.getEndRevision();
   }
 
   public boolean isMixedRevisionsFound() {
