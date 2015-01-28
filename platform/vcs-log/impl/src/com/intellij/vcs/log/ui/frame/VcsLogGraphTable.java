@@ -87,7 +87,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private final GraphCommitCellRender myGraphCommitCellRender;
 
   private boolean myColumnsSizeInitialized = false;
-  private final AtomicInteger myRepaintFreezedCounter = new AtomicInteger();
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
@@ -231,27 +230,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
       setRowSelectionInterval(rowIndex, rowIndex);
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
-    }
-  }
-
-  @Override
-  protected void paintComponent(@NotNull Graphics g) {
-    if (myRepaintFreezedCounter.get() > 0) {
-      return;
-    }
-    super.paintComponent(g);
-  }
-
-  /**
-   * Freeze repaint to avoid repainting during changing the Graph.
-   */
-  public void executeWithoutRepaint(@NotNull Runnable action) {
-    myRepaintFreezedCounter.incrementAndGet();
-    try {
-      action.run();
-    }
-    finally {
-      myRepaintFreezedCounter.decrementAndGet();
     }
   }
 
