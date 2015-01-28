@@ -16,48 +16,58 @@
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class OneShotMergeInfoHelper implements MergeChecker {
 
-  private OneRecursiveShotMergeInfoWorker myWorker;
-  private final Map<Long, Collection<String>> myPartiallyMerged;
+  @NotNull private final OneRecursiveShotMergeInfoWorker myWorker;
+  @NotNull private final Map<Long, Collection<String>> myPartiallyMerged;
 
   public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
     myWorker = new OneRecursiveShotMergeInfoWorker(mergeContext);
-    myPartiallyMerged = new HashMap<Long, Collection<String>>();
+    myPartiallyMerged = ContainerUtil.newHashMap();
   }
 
   public void prepare() throws VcsException {
     myWorker.prepare();
   }
 
+  @Nullable
   public Collection<String> getNotMergedPaths(long number) {
     return myPartiallyMerged.get(number);
   }
 
-  public SvnMergeInfoCache.MergeCheckResult checkList(final SvnChangeList list) {
-    final Set<String> notMerged = new HashSet<String>();
-    boolean somethingMerged = false;
-    final long number = list.getNumber();
+  @NotNull
+  public SvnMergeInfoCache.MergeCheckResult checkList(@NotNull SvnChangeList changeList) {
+    Set<String> notMergedPaths = ContainerUtil.newHashSet();
+    boolean hasMergedPaths = false;
 
-    for (String path : list.getAffectedPaths()) {
-      final SvnMergeInfoCache.MergeCheckResult pathResult = myWorker.isMerged(path, number);
-      if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(pathResult)) {
-        somethingMerged = true;
-      } else if (SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(pathResult)) {
-        notMerged.add(path);
+    for (String path : changeList.getAffectedPaths()) {
+      //noinspection EnumSwitchStatementWhichMissesCases
+      switch (myWorker.isMerged(path, changeList.getNumber())) {
+        case MERGED:
+          hasMergedPaths = true;
+          break;
+        case NOT_MERGED:
+          notMergedPaths.add(path);
+          break;
       }
     }
 
-    if (somethingMerged && (! notMerged.isEmpty())) {
-      myPartiallyMerged.put(number, notMerged);
+    if (hasMergedPaths && !notMergedPaths.isEmpty()) {
+      myPartiallyMerged.put(changeList.getNumber(), notMergedPaths);
     }
-    if ((! somethingMerged) && notMerged.isEmpty()) return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
-    return SvnMergeInfoCache.MergeCheckResult.getInstance(somethingMerged && notMerged.isEmpty());
+
+    return notMergedPaths.isEmpty()
+           ? hasMergedPaths ? SvnMergeInfoCache.MergeCheckResult.MERGED : SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS
+           : SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
   }
 }
