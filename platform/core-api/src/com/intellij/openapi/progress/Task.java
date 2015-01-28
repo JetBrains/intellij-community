@@ -50,7 +50,7 @@ public abstract class Task implements TaskInfo, Progressive {
   private String myCancelText = CommonBundle.getCancelButtonText();
   private String myCancelTooltipText = CommonBundle.getCancelButtonText();
 
-  public Task(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
+  public Task(@Nullable final Project project,@Nls(capitalization = Nls.Capitalization.Title) @NotNull final String title, final boolean canBeCancelled) {
     myProject = project;
     myTitle = title;
     myCanBeCancelled = canBeCancelled;
@@ -86,7 +86,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setTitle( @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
+  public final Task setTitle(@Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
     myTitle = title;
     return this;
   }
