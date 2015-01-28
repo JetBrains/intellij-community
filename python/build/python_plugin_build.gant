@@ -180,7 +180,7 @@ target(name: "compile", description: "Compile module python") {
   minor = ("${appInfo}" =~ /minor\s*=\s*\"([^"])\"/)[0][1]
 
 
-  ant.replaceregexp(file: path,
+  ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
                     match: "@@PYCHARM_VERSION@@",
                     replace: "${major}.${minor}")
 
