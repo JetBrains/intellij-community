@@ -486,6 +486,10 @@ public class PyFormatterTest extends PyTestCase {
       doTest();
   }
 
+  public void testClosingParenthesisInFromImportStatementWithNoHangingIndent() {
+    doTest();
+  }
+
   /**
    * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
    * is possible for Python sources.

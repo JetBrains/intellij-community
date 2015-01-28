@@ -80,7 +80,8 @@ public class PyBlock implements ASTBlock {
                                                                          PyElementTypes.PARENTHESIZED_EXPRESSION,
                                                                          PyElementTypes.GENERATOR_EXPRESSION,
                                                                          PyElementTypes.FUNCTION_DECLARATION,
-                                                                         PyElementTypes.CALL_EXPRESSION);
+                                                                         PyElementTypes.CALL_EXPRESSION,
+                                                                         PyElementTypes.FROM_IMPORT_STATEMENT);
 
   public PyBlock(final PyBlock parent,
                  final ASTNode node,
@@ -246,6 +247,9 @@ public class PyBlock implements ASTBlock {
         }
         if (childType == PyTokenTypes.RPAR) {
           childIndent = Indent.getNoneIndent();
+          if (!hasHangingIndent(_node.getPsi())) {
+            childAlignment = getAlignmentForChildren();
+          }
         }
       }
     }
@@ -366,7 +370,13 @@ public class PyBlock implements ASTBlock {
       return hasHangingIndent(((PyFunction)elem).getParameterList());
     }
 
-    final PsiElement firstChild = elem.getFirstChild();
+    final PsiElement firstChild;
+    if (elem instanceof PyFromImportStatement) {
+      firstChild = ((PyFromImportStatement)elem).getLeftParen();
+    }
+    else {
+      firstChild = elem.getFirstChild();
+    }
     if (firstChild == null) {
       return false;
     }
@@ -393,6 +403,9 @@ public class PyBlock implements ASTBlock {
     }
     else if (elem instanceof PyArgumentList) {
       return ((PyArgumentList)elem).getArguments();
+    }
+    else if (elem instanceof PyFromImportStatement) {
+      return ((PyFromImportStatement)elem).getImportElements();
     }
     else if (elem instanceof PyParenthesizedExpression) {
       final PyParenthesizedExpression parenthesizedExpr = (PyParenthesizedExpression)elem;
