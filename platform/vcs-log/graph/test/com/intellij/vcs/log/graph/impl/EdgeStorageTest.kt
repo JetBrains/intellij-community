@@ -27,7 +27,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.EdgeFilter
-import com.intellij.vcs.log.graph.collapsing.EdgeStorageAdapter
+import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper
 
 public class EdgeStorageTest : BaseTestGraphBuilder {
   val nodeIdByIndex: (Int) -> Int = { it - 10 }
@@ -52,10 +52,10 @@ public class EdgeStorageTest : BaseTestGraphBuilder {
   fun EdgeStorage.assert(s: String) = assertEquals(s, asString())
 
   fun EdgeStorage.asString(): String = getKnownIds().sortR().map {
-      adapter.getAdditionalEdges(nodeIndexById(it), EdgeFilter.ALL).map { it.asString() }.joinToString(",")
+      adapter.getAdjacentEdges(nodeIndexById(it), EdgeFilter.ALL).map { it.asString() }.joinToString(",")
   }.joinToString("|-")
 
-  val EdgeStorage.adapter: EdgeStorageAdapter  get() = EdgeStorageAdapter(this, nodeIndexById, nodeIdByIndex)
+  val EdgeStorage.adapter: EdgeStorageWrapper  get() = EdgeStorageWrapper(this, nodeIndexById, nodeIdByIndex)
 
   Test fun simple() = create() + (1 to 2) assert "11:12:n_U|-11:12:n_U"
   Test fun dotted() = create() + (1 to 3.dot) assert "11:13:n_D|-11:13:n_D"

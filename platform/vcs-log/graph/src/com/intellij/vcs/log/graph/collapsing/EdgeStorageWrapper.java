@@ -27,18 +27,17 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.intEqual;
 
-public class EdgeStorageAdapter {
+public class EdgeStorageWrapper {
   @NotNull private final EdgeStorage myEdgeStorage;
   @NotNull private final Function<Integer, Integer> myGetNodeIndexById;
   @NotNull private final Function<Integer, Integer> myGetNodeIdByIndex;
 
-  public EdgeStorageAdapter(@NotNull EdgeStorage edgeStorage, @NotNull final LinearGraph graph) {
+  public EdgeStorageWrapper(@NotNull EdgeStorage edgeStorage, @NotNull final LinearGraph graph) {
     this(edgeStorage, new Function<Integer, Integer>() {
       @Override
       public Integer fun(Integer nodeId) {
@@ -52,7 +51,7 @@ public class EdgeStorageAdapter {
     });
   }
 
-  public EdgeStorageAdapter(@NotNull EdgeStorage edgeStorage,
+  public EdgeStorageWrapper(@NotNull EdgeStorage edgeStorage,
                             @NotNull Function<Integer, Integer> getNodeIndexById,
                             @NotNull Function<Integer, Integer> getNodeIdByIndex) {
     myEdgeStorage = edgeStorage;
@@ -79,7 +78,7 @@ public class EdgeStorageAdapter {
   }
 
   @NotNull
-  public List<GraphEdge> getAdditionalEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+  public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
     List<GraphEdge> result = ContainerUtil.newSmartList();
     for (Pair<Integer, GraphEdgeType> retrievedEdge : myEdgeStorage.getEdges(myGetNodeIdByIndex.fun(nodeIndex))) {
       GraphEdge edge = decompressEdge(nodeIndex, retrievedEdge.first, retrievedEdge.second);
@@ -92,7 +91,7 @@ public class EdgeStorageAdapter {
   public Set<GraphEdge> getEdges() {
     Set<GraphEdge> result = ContainerUtil.newHashSet();
     for (int id : myEdgeStorage.getKnownIds()) {
-      result.addAll(getAdditionalEdges(myGetNodeIndexById.fun(id), EdgeFilter.ALL));
+      result.addAll(getAdjacentEdges(myGetNodeIndexById.fun(id), EdgeFilter.ALL));
     }
     return result;
   }
@@ -141,7 +140,7 @@ public class EdgeStorageAdapter {
     return value == null ? EdgeStorage.NULL_ID : value;
   }
 
-  public static EdgeStorageAdapter createSimpleEdgeStorage() {
-    return new EdgeStorageAdapter(new EdgeStorage(), new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
+  public static EdgeStorageWrapper createSimpleEdgeStorage() {
+    return new EdgeStorageWrapper(new EdgeStorage(), new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
   }
 }
