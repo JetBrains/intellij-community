@@ -63,18 +63,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   @Override
   public PsiElement[] getPsiElements() {
-    final String key = myProperty.getKey();
-    if (key == null) {
-      return new PsiElement[] {getValue()};
-    }
-    final List<PropertiesFile> bundleFiles = myResourceBundle.getPropertiesFiles();
-    final List<PsiElement> psiElementList = new ArrayList<PsiElement>(bundleFiles.size());
-    for (PropertiesFile file : bundleFiles) {
-      for (IProperty property : file.findPropertiesByKey(key)) {
-        psiElementList.add(property.getPsiElement());
-      }
-    }
-    return psiElementList.toArray(new PsiElement[psiElementList.size()]);
+    return new PsiElement[] {getValue()};
   }
 
   public void setPresentableName(final String presentableName) {

@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PropertiesSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
+public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
   public boolean handlesElement(final PsiElement element) {
     return element instanceof PropertiesFile;
   }
