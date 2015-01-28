@@ -22,7 +22,7 @@ import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.collapsing.EdgeStorageAdapter;
+import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
@@ -178,7 +178,7 @@ class LinearBekGraphBuilder {
     private final List<GraphEdge> myDottedToHide = new ArrayList<GraphEdge>();
 
     private WorkingGraph(LinearGraph graph) {
-      super(graph, EdgeStorageAdapter.createSimpleEdgeStorage(), EdgeStorageAdapter.createSimpleEdgeStorage());
+      super(graph, EdgeStorageWrapper.createSimpleEdgeStorage(), EdgeStorageWrapper.createSimpleEdgeStorage());
     }
 
     public void addEdge(int up, int down) {

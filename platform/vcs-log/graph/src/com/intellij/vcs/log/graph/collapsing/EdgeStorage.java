@@ -22,7 +22,6 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -37,7 +36,7 @@ public class EdgeStorage {
 
   public static final int NULL_ID = MIN_NODE_ID;
 
-  @NotNull private final IntIntMultiMap myAdditionEdges = new IntIntMultiMap();
+  @NotNull private final IntIntMultiMap myEdges = new IntIntMultiMap();
 
   public EdgeStorage() {
     assert GraphEdgeType.values().length <= MAX_EDGE_TYPE_COUNT;
@@ -45,26 +44,26 @@ public class EdgeStorage {
 
   public void createEdge(int mainNodeId, int additionId, GraphEdgeType edgeType) {
     if (edgeType.isNormalEdge()) {
-      myAdditionEdges.putValue(mainNodeId, compressEdge(additionId, edgeType));
-      myAdditionEdges.putValue(additionId, compressEdge(mainNodeId, edgeType));
+      myEdges.putValue(mainNodeId, compressEdge(additionId, edgeType));
+      myEdges.putValue(additionId, compressEdge(mainNodeId, edgeType));
     }
     else {
-      myAdditionEdges.putValue(mainNodeId, compressEdge(additionId, edgeType));
+      myEdges.putValue(mainNodeId, compressEdge(additionId, edgeType));
     }
   }
 
   public void removeEdge(int mainNodeId, int additionId, GraphEdgeType edgeType) {
     if (edgeType.isNormalEdge()) {
-      myAdditionEdges.remove(mainNodeId, compressEdge(additionId, edgeType));
-      myAdditionEdges.remove(additionId, compressEdge(mainNodeId, edgeType));
+      myEdges.remove(mainNodeId, compressEdge(additionId, edgeType));
+      myEdges.remove(additionId, compressEdge(mainNodeId, edgeType));
     }
     else {
-      myAdditionEdges.remove(mainNodeId, compressEdge(additionId, edgeType));
+      myEdges.remove(mainNodeId, compressEdge(additionId, edgeType));
     }
   }
 
   public List<Pair<Integer, GraphEdgeType>> getEdges(int nodeId) {
-    return ContainerUtil.map(myAdditionEdges.get(nodeId), new Function<Integer, Pair<Integer, GraphEdgeType>>() {
+    return ContainerUtil.map(myEdges.get(nodeId), new Function<Integer, Pair<Integer, GraphEdgeType>>() {
       @Override
       public Pair<Integer, GraphEdgeType> fun(Integer compressEdge) {
         return Pair.create(convertToInteger(retrievedNodeId(compressEdge)), retrievedType(compressEdge));
@@ -73,7 +72,7 @@ public class EdgeStorage {
   }
 
   public int[] getKnownIds() {
-    return myAdditionEdges.keys();
+    return myEdges.keys();
   }
 
   @Nullable
@@ -98,7 +97,7 @@ public class EdgeStorage {
   }
 
   public void removeAll() {
-    myAdditionEdges.clear();
+    myEdges.clear();
   }
 
 }

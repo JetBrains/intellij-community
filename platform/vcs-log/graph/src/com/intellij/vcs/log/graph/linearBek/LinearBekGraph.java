@@ -22,7 +22,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.collapsing.EdgeStorageAdapter;
+import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +31,10 @@ import java.util.*;
 
 public class LinearBekGraph implements LinearGraph {
   @NotNull protected final LinearGraph myGraph;
-  @NotNull protected final EdgeStorageAdapter myHiddenEdges;
-  @NotNull protected final EdgeStorageAdapter myDottedEdges;
+  @NotNull protected final EdgeStorageWrapper myHiddenEdges;
+  @NotNull protected final EdgeStorageWrapper myDottedEdges;
 
-  public LinearBekGraph(@NotNull LinearGraph graph, @NotNull EdgeStorageAdapter hiddenEdges, @NotNull EdgeStorageAdapter dottedEdges) {
+  public LinearBekGraph(@NotNull LinearGraph graph, @NotNull EdgeStorageWrapper hiddenEdges, @NotNull EdgeStorageWrapper dottedEdges) {
     myGraph = graph;
     myHiddenEdges = hiddenEdges;
     myDottedEdges = dottedEdges;
@@ -50,8 +50,8 @@ public class LinearBekGraph implements LinearGraph {
   public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
     List<GraphEdge> result = new ArrayList<GraphEdge>();
     result.addAll(myGraph.getAdjacentEdges(nodeIndex, filter));
-    result.removeAll(myHiddenEdges.getAdditionalEdges(nodeIndex, filter));
-    result.addAll(myDottedEdges.getAdditionalEdges(nodeIndex, filter));
+    result.removeAll(myHiddenEdges.getAdjacentEdges(nodeIndex, filter));
+    result.addAll(myDottedEdges.getAdjacentEdges(nodeIndex, filter));
 
     Collections.sort(result, new Comparator<GraphEdge>() {
       @Override
@@ -98,7 +98,7 @@ public class LinearBekGraph implements LinearGraph {
       myHiddenEdges.removeEdge(edge);
     }
 
-    List<GraphEdge> hiddenDotted = myHiddenEdges.getAdditionalEdges(tail, EdgeFilter.ALL);
+    List<GraphEdge> hiddenDotted = myHiddenEdges.getAdjacentEdges(tail, EdgeFilter.ALL);
 
     List<GraphEdge> downDottedEdges = ContainerUtil.filter(hiddenDotted, new Condition<GraphEdge>() {
       @Override

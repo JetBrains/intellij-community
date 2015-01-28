@@ -103,8 +103,8 @@ public class CollapsedGraph {
     private static final int APPLYING = 1;
     private static final int DONE = 2;
 
-    @NotNull private final EdgeStorageAdapter myEdgesToAdd = EdgeStorageAdapter.createSimpleEdgeStorage();
-    @NotNull private final EdgeStorageAdapter myEdgesToRemove = EdgeStorageAdapter.createSimpleEdgeStorage();
+    @NotNull private final EdgeStorageWrapper myEdgesToAdd = EdgeStorageWrapper.createSimpleEdgeStorage();
+    @NotNull private final EdgeStorageWrapper myEdgesToRemove = EdgeStorageWrapper.createSimpleEdgeStorage();
     @NotNull private final TIntHashSet myNodesToHide = new TIntHashSet();
     @NotNull private final TIntHashSet myNodesToShow = new TIntHashSet();
     private boolean myClearEdges = false;
@@ -170,7 +170,7 @@ public class CollapsedGraph {
 
     // "package private" means "I'm not entirely happy about this method"
     @NotNull
-    /*package private*/ EdgeStorageAdapter getEdgesToAdd() {
+    /*package private*/ EdgeStorageWrapper getEdgesToAdd() {
       assert myProgress == COLLECTING;
       return myEdgesToAdd;
     }
@@ -201,12 +201,12 @@ public class CollapsedGraph {
         myDelegateNodesVisibility.hide(toHide.next());
       }
 
-      EdgeStorageAdapter edgeStorageAdapter = new EdgeStorageAdapter(myEdgeStorage, getDelegatedGraph());
+      EdgeStorageWrapper edgeStorageWrapper = new EdgeStorageWrapper(myEdgeStorage, getDelegatedGraph());
       for (GraphEdge edge : myEdgesToAdd.getEdges()) {
-        edgeStorageAdapter.createEdge(edge);
+        edgeStorageWrapper.createEdge(edge);
       }
       for (GraphEdge edge : myEdgesToRemove.getEdges()) {
-        edgeStorageAdapter.removeEdge(edge);
+        edgeStorageWrapper.removeEdge(edge);
       }
 
       if (minAffectedNodeIndex != Integer.MAX_VALUE && maxAffectedNodeIndex != Integer.MIN_VALUE) {
@@ -226,10 +226,10 @@ public class CollapsedGraph {
   }
 
   private class CompiledGraph implements LinearGraph {
-    @NotNull private final EdgeStorageAdapter myEdgeStorageAdapter;
+    @NotNull private final EdgeStorageWrapper myEdgeStorageWrapper;
 
     private CompiledGraph() {
-      myEdgeStorageAdapter = new EdgeStorageAdapter(myEdgeStorage, this);
+      myEdgeStorageWrapper = new EdgeStorageWrapper(myEdgeStorage, this);
     }
 
     @Override
@@ -274,7 +274,7 @@ public class CollapsedGraph {
         if (isVisibleEdge(compiledUpIndex, compiledDownIndex)) result.add(createEdge(delegateEdge, compiledUpIndex, compiledDownIndex));
       }
 
-      result.addAll(myEdgeStorageAdapter.getAdditionalEdges(nodeIndex, filter));
+      result.addAll(myEdgeStorageWrapper.getAdjacentEdges(nodeIndex, filter));
 
       return result;
     }
