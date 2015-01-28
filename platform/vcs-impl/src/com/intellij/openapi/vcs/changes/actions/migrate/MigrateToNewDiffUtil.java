@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.actions.migrate;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffNavigationContext;
@@ -268,6 +269,15 @@ public class MigrateToNewDiffUtil {
       setEnabledInModalContext(true);
       myRequest = request;
       request.addHint(DO_NOT_TRY_MIGRATE);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (ApplicationManager.getApplication().isInternal()) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+      e.getPresentation().setVisible(true);
     }
 
     @Override

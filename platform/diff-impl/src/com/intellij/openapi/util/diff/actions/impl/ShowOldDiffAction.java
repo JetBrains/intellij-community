@@ -17,6 +17,7 @@ package com.intellij.openapi.util.diff.actions.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
@@ -41,6 +42,12 @@ public class ShowOldDiffAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
+    if (ApplicationManager.getApplication().isInternal()) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    e.getPresentation().setVisible(true);
+
     DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
     if (request == null || !(request instanceof ContentDiffRequest)) {
       e.getPresentation().setEnabled(false);
