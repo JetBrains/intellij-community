@@ -64,7 +64,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @NotNull
   public final FrameDiffTool.ToolbarComponents init() {
     onInit();
-    rediff();
+    rediff(true);
 
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
     components.toolbarActions = createToolbarActions();
@@ -113,6 +113,11 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @CalledInAwt
   public final void rediff() {
+    rediff(false);
+  }
+
+  @CalledInAwt
+  public final void rediff(boolean trySync) {
     if (myDisposed) return;
 
     onBeforeRediff();
@@ -121,7 +126,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     // and diff will not be calculated. This could happen for diff from FileDocumentManager.
     boolean forceEDT = ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    int waitMillis = tryRediffSynchronously() ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
+    int waitMillis = trySync || tryRediffSynchronously() ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
 
     myTaskExecutor.execute(
       new Convertor<ProgressIndicator, Runnable>() {
