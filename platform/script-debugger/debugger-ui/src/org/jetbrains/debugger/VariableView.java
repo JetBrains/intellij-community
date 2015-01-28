@@ -101,15 +101,13 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
     else {
       context.getEvaluateContext().evaluate("a.length", Collections.<String, Object>singletonMap("a", value), false)
-        .done(new Consumer<EvaluateResult>() {
+        .done(new ObsolescentConsumer<EvaluateResult>(node) {
           @Override
           public void consume(EvaluateResult result) {
-            if (!node.isObsolete()) {
-              node.setPresentation(icon, null, "Array[" + result.value.getValueString() + ']', true);
-            }
+            node.setPresentation(icon, null, "Array[" + result.value.getValueString() + ']', true);
           }
         })
-        .rejected(new Consumer<Throwable>() {
+        .rejected(new ObsolescentConsumer<Throwable>(node) {
           @Override
           public void consume(Throwable error) {
             node.setPresentation(icon, null, "Internal error: " + error, false);
@@ -177,12 +175,10 @@ public final class VariableView extends XNamedValue implements VariableContext {
             }
           }
         })
-        .rejected(new Consumer<Throwable>() {
+        .rejected(new ObsolescentConsumer<Throwable>(node) {
           @Override
           public void consume(Throwable error) {
-            if (!node.isObsolete()) {
-              setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error.getMessage()), error.getMessage(), node);
-            }
+            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error.getMessage()), error.getMessage(), node);
           }
         });
       return;
