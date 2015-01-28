@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.FileEditorManagerTestCase;
@@ -156,6 +158,19 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     }
     finally {
       UISettings.getInstance().EDITOR_TAB_PLACEMENT = savedValue;
+    }
+  }
+
+  public void testOpenInDumbMode() throws Exception {
+    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), getTestRootDisposable());
+    try {
+      DumbServiceImpl.getInstance(getProject()).setDumb(true);
+      FileEditor[] editors = myManager.openFile(getFile("/src/foo.bar"), false);
+      assertEquals(1, editors.length);
+      assertFalse(FileEditorManagerImpl.isDumbAware(editors[0]));
+    }
+    finally {
+      DumbServiceImpl.getInstance(getProject()).setDumb(false);
     }
   }
 
