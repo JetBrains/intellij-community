@@ -130,8 +130,8 @@ class TestGraphBuilder: BaseTestGraphBuilder {
     override fun getAdjacentEdges(nodeIndex: Int, filter: EdgeFilter)
         = edges[nodeIndex].filter {
       if (it.getType().isNormalEdge()) {
-        (LinearGraphUtils.isEdgeToUp(it, nodeIndex) && filter.upNormal)
-        || (LinearGraphUtils.isEdgeToDown(it, nodeIndex) && filter.downNormal)
+        (LinearGraphUtils.isEdgeUp(it, nodeIndex) && filter.upNormal)
+        || (LinearGraphUtils.isEdgeDown(it, nodeIndex) && filter.downNormal)
       } else {
         filter.special
       }

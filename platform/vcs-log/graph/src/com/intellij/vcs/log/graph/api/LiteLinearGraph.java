@@ -45,8 +45,8 @@ public interface LiteLinearGraph {
       this.edgeFilter = edgeFilter;
     }
 
-    public static NodeFilter filter(boolean toUp) {
-      return toUp ? UP : DOWN;
+    public static NodeFilter filter(boolean isUp) {
+      return isUp ? UP : DOWN;
     }
   }
 }

@@ -104,7 +104,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
       if (element instanceof GraphNode) {
         int nodeIndex = ((GraphNode)element).getNodeIndex();
         for (GraphEdge edge : myLinearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL)) {
-          if (isEdgeToDown(edge, nodeIndex)) {
+          if (isEdgeDown(edge, nodeIndex)) {
             Integer endPos = endPosition.fun(edge);
             if (endPos != null) result.add(new ShortEdge(edge, startPosition, endPos));
           }
@@ -224,13 +224,13 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     if (rowIndex > 0) {
       for (GraphEdge edge : myLinearGraph.getAdjacentEdges(rowIndex - 1, EdgeFilter.SPECIAL)) {
         assert !edge.getType().isNormalEdge();
-        if (isEdgeToDown(edge, rowIndex - 1)) result.add(edge);
+        if (isEdgeDown(edge, rowIndex - 1)) result.add(edge);
       }
     }
     if (rowIndex < myLinearGraph.nodesCount() - 1) {
       for (GraphEdge edge : myLinearGraph.getAdjacentEdges(rowIndex + 1, EdgeFilter.SPECIAL)) {
         assert !edge.getType().isNormalEdge();
-        if (isEdgeToUp(edge, rowIndex + 1)) result.add(edge);
+        if (isEdgeUp(edge, rowIndex + 1)) result.add(edge);
       }
     }
   }

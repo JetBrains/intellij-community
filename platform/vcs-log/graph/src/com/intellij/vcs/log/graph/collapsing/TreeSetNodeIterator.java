@@ -25,11 +25,11 @@ import java.util.TreeSet;
 class TreeSetNodeIterator {
   private final SortedSet<Integer> myWalkNodes;
 
-  TreeSetNodeIterator(int startNode, final boolean toUp) {
+  TreeSetNodeIterator(int startNode, final boolean isUp) {
     myWalkNodes = new TreeSet<Integer>(new Comparator<Integer>() {
       @Override
       public int compare(@NotNull Integer o1, @NotNull Integer o2) {
-        if (toUp)
+        if (isUp)
           return o2 - o1;
         return o1 - o2;
       }

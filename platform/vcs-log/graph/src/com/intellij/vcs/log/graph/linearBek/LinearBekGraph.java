@@ -103,7 +103,7 @@ public class LinearBekGraph implements LinearGraph {
     List<GraphEdge> downDottedEdges = ContainerUtil.filter(hiddenDotted, new Condition<GraphEdge>() {
       @Override
       public boolean value(GraphEdge graphEdge) {
-        return LinearGraphUtils.isEdgeToDown(graphEdge, tail);
+        return LinearGraphUtils.isEdgeDown(graphEdge, tail);
       }
     });
 

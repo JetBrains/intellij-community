@@ -57,8 +57,8 @@ public class DottedFilterEdgesGenerator {
     myModification.createEdge(new GraphEdge(nodeIndex1, nodeIndex2, null, DOTTED));
   }
 
-  private void addDottedArrow(int nodeIndex, boolean toUp) {
-    myModification.createEdge(new GraphEdge(nodeIndex, null, null, toUp ? DOTTED_ARROW_UP : DOTTED_ARROW_DOWN));
+  private void addDottedArrow(int nodeIndex, boolean isUp) {
+    myModification.createEdge(new GraphEdge(nodeIndex, null, null, isUp ? DOTTED_ARROW_UP : DOTTED_ARROW_DOWN));
   }
 
   // update specified range
@@ -67,23 +67,23 @@ public class DottedFilterEdgesGenerator {
     upWalk();
   }
 
-  private boolean hasDottedEdges(int nodeIndex, boolean toUp) {
+  private boolean hasDottedEdges(int nodeIndex, boolean isUp) {
     for (GraphEdge edge : myModification.getEdgesToAdd().getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_ALL)) {
       if (edge.getType() == DOTTED) {
-        if (toUp && LinearGraphUtils.isEdgeToUp(edge, nodeIndex)) return true;
-        if (!toUp && LinearGraphUtils.isEdgeToDown(edge, nodeIndex)) return false;
+        if (isUp && LinearGraphUtils.isEdgeUp(edge, nodeIndex)) return true;
+        if (!isUp && LinearGraphUtils.isEdgeDown(edge, nodeIndex)) return false;
       }
     }
     return false;
   }
 
-  private void addEdgeOrArrow(int currentNodeIndex, int anotherNodeIndex, boolean toUp) {
-    if (hasDottedEdges(currentNodeIndex, toUp)) {
+  private void addEdgeOrArrow(int currentNodeIndex, int anotherNodeIndex, boolean isUp) {
+    if (hasDottedEdges(currentNodeIndex, isUp)) {
       if (nodeIsVisible(anotherNodeIndex)) {
         addDottedEdge(currentNodeIndex, anotherNodeIndex);
       }
       else {
-        addDottedArrow(currentNodeIndex, toUp);
+        addDottedArrow(currentNodeIndex, isUp);
       }
     }
   }
