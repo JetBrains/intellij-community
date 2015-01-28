@@ -337,9 +337,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   @Nullable
-  private static PsiExpression getDefToInline(final PsiLocalVariable local,
-                                              final PsiElement refExpr,
-                                              final PsiCodeBlock block) {
+  static PsiExpression getDefToInline(final PsiVariable local,
+                                      final PsiElement refExpr,
+                                      final PsiCodeBlock block) {
     if (refExpr != null) {
       PsiElement def;
       if (refExpr instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression) refExpr)) {
