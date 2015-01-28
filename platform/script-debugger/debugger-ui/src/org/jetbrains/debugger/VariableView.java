@@ -8,6 +8,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XSourcePositionWrapper;
@@ -385,43 +386,31 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @NotNull
   private Promise<Void> computeNamedProperties(@NotNull final ObjectValue value, @NotNull final XCompositeNode node, final boolean isLastChildren) {
-    // start properties loading to achieve, possibly, parallel execution (properties loading & member filter computation)
-    final Promise<List<Variable>> properties = value.getProperties();
-    return getMemberFilter()
-      .then(new ValueNodeAsyncFunction<MemberFilter, Void>(node) {
-        @NotNull
-        @Override
-        public Promise<Void> fun(MemberFilter memberFilter) {
-          VariableView.this.memberFilter = memberFilter;
-          return properties.then(new ValueNodeAsyncFunction<List<Variable>, Void>(node) {
-            @NotNull
-            @Override
-            public Promise<Void> fun(List<Variable> variables) {
-              if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
-                computeArrayRanges(variables, node);
-                return Promise.DONE;
-              }
-
-              FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
-              if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
-                functionValue = null;
-              }
-
-              remainingChildren = Variables.processNamedObjectProperties(variables, node, VariableView.this, VariableView.this.memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW,
-                                                                         isLastChildren && functionValue == null);
-              if (remainingChildren != null) {
-                remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
-              }
-
-              if (functionValue != null) {
-                // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-                node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), isLastChildren);
-              }
-              return Promise.DONE;
-            }
-          });
+    return Variables.processVariables(this, value.getProperties(), node, new PairConsumer<MemberFilter, List<Variable>>() {
+      @Override
+      public void consume(MemberFilter memberFilter, List<Variable> variables) {
+        if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
+          computeArrayRanges(variables, node);
+          return;
         }
-      });
+
+        FunctionValue functionValue = value instanceof FunctionValue ? (FunctionValue)value : null;
+        if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
+          functionValue = null;
+        }
+
+        remainingChildren = Variables.processNamedObjectProperties(variables, node, VariableView.this, VariableView.this.memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW,
+                                                                   isLastChildren && functionValue == null);
+        if (remainingChildren != null) {
+          remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
+        }
+
+        if (functionValue != null) {
+          // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
+          node.addChildren(XValueChildrenList.bottomGroup(new FunctionScopesValueGroup(functionValue, context)), isLastChildren);
+        }
+      }
+    });
   }
 
   private void computeArrayRanges(@NotNull List<Variable> properties, @NotNull XCompositeNode node) {

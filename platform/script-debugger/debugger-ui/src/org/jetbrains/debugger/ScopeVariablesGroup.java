@@ -96,21 +96,21 @@ public class ScopeVariablesGroup extends XValueGroup {
       promise.done(new ValueNodeConsumer<Void>(node) {
         @Override
         public void consume(Void ignored) {
-          callFrame.getReceiverVariable().done(new Consumer<Variable>() {
-            @Override
-            public void consume(Variable variable) {
-              if (!node.isObsolete()) {
+          callFrame.getReceiverVariable()
+            .done(new Consumer<Variable>() {
+              @Override
+              public void consume(Variable variable) {
                 node.addChildren(variable == null ? XValueChildrenList.EMPTY : XValueChildrenList.singleton(new VariableView(variable, context)), true);
               }
-            }
-          }).rejected(new Consumer<Throwable>() {
-            @Override
-            public void consume(@Nullable Throwable error) {
-              if (!node.isObsolete()) {
-                node.addChildren(XValueChildrenList.EMPTY, true);
+            })
+            .rejected(new Consumer<Throwable>() {
+              @Override
+              public void consume(@Nullable Throwable error) {
+                if (!node.isObsolete()) {
+                  node.addChildren(XValueChildrenList.EMPTY, true);
+                }
               }
-            }
-          });
+            });
         }
       });
     }
