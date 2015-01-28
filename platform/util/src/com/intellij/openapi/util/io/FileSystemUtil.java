@@ -299,8 +299,7 @@ public class FileSystemUtil {
       }
       catch (InvocationTargetException e) {
         final Throwable cause = e.getCause();
-        if (cause != null && ("java.nio.file.NoSuchFileException".equals(cause.getClass().getName()) ||
-                              "java.nio.file.InvalidPathException".equals(cause.getClass().getName()))) {
+        if (cause instanceof IOException || cause != null && "java.nio.file.InvalidPathException".equals(cause.getClass().getName())) {
           LOG.debug(cause);
           return null;
         }
