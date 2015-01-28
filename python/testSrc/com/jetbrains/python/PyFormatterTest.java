@@ -481,6 +481,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-12748
+  public void testIndentCommentariesInsideFromImportStatement() {
+      doTest();
+  }
+
   /**
    * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
    * is possible for Python sources.

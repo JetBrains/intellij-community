@@ -184,6 +184,9 @@ public class PyBlock implements ASTBlock {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
       childIndent = Indent.getNormalIndent();
     }
+    if (childType == PyTokenTypes.END_OF_LINE_COMMENT && parentType == PyElementTypes.FROM_IMPORT_STATEMENT) {
+      childIndent = Indent.getNormalIndent();
+    }
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
       if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
