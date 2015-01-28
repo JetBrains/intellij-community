@@ -317,7 +317,7 @@ public class PyFormatterTest extends PyTestCase {
   public void testIfConditionContinuation() {  // PY-8195
     doTest();
   }
-  
+
   public void _testIndentInNestedCall() {  // PY-11919 TODO: required changes in formatter to be able to make indent relative to block or alignment
     doTest();
   }
@@ -439,31 +439,37 @@ public class PyFormatterTest extends PyTestCase {
   // PY-14838
   public void testNoAlignmentAfterDictHangingIndentInFunctionCall() {
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    try {
-      doTest();
-    }
-    finally {
-      settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
-    }
+    doTest();
   }
 
   // PY-13955
   public void testNoAlignmentAfterDictHangingIndentInFunctionCallOnTyping() {
-    settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    try {
-      final String testName = "formatter/" + getTestName(true);
-      myFixture.configureByFile(testName + ".py");
-      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-        @Override
-        public void run() {
-          myFixture.type("\n(");
-        }
-      });
-      myFixture.checkResultByFile(testName + "_after.py");
-    }
-    finally {
-      settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
-    }
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    final String testName = "formatter/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        myFixture.type("\n(");
+      }
+    });
+    myFixture.checkResultByFile(testName + "_after.py");
+  }
+
+  // PY-12145
+  public void testAlignmentOfClosingBraceInDictLiteralWhenNoHangingIndent() {
+    doTest();
+  }
+
+  // PY-13004
+  public void testAlignmentOfClosingParenthesisOfArgumentListWhenNoHangingIndent() {
+    doTest();
+  }
+
+  // PY-14408
+  public void testIndentsWithTabsInsideDictLiteral() {
+    getCommonSettings().getIndentOptions().USE_TAB_CHARACTER = true;
+    doTest();
   }
 
   /**
