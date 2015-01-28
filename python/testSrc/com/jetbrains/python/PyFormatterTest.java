@@ -461,6 +461,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-13004
+  public void testAlignmentOfClosingParenthesisOfArgumentListWhenNoHangingIndent() {
+    doTest();
+  }
+
   // PY-14408
   public void testIndentsWithTabsInsideDictLiteral() {
     getCommonSettings().getIndentOptions().USE_TAB_CHARACTER = true;
