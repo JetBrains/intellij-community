@@ -86,10 +86,10 @@ public class FragmentGenerator {
   }
 
   @Nullable
-  public Integer getNearRedNode(int startNode, int maxWalkSize, boolean toUp) {
+  public Integer getNearRedNode(int startNode, int maxWalkSize, boolean isUp) {
     if (myRedNodes.value(startNode)) return startNode;
 
-    TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, toUp);
+    TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, isUp);
     while (walker.notEmpty()) {
       Integer next = walker.pop();
 
@@ -98,7 +98,7 @@ public class FragmentGenerator {
       if (maxWalkSize < 0) return null;
       maxWalkSize--;
 
-      walker.addAll(getNodes(next, toUp));
+      walker.addAll(getNodes(next, isUp));
     }
 
     return null;
@@ -126,15 +126,15 @@ public class FragmentGenerator {
   }
 
   @NotNull
-  private Set<Integer> getWalkNodes(int startNode, boolean toUp, Condition<Integer> stopFunction) {
+  private Set<Integer> getWalkNodes(int startNode, boolean isUp, Condition<Integer> stopFunction) {
     Set<Integer> walkNodes = new HashSet<Integer>();
 
-    TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, toUp);
+    TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, isUp);
     while (walker.notEmpty()) {
       Integer next = walker.pop();
       if (!stopFunction.value(next)) {
         walkNodes.add(next);
-        walker.addAll(getNodes(next, toUp));
+        walker.addAll(getNodes(next, isUp));
       }
     }
 
@@ -142,8 +142,8 @@ public class FragmentGenerator {
   }
 
   @NotNull
-  private List<Integer> getNodes(int nodeIndex, boolean toUp) {
-    return myGraph.getNodes(nodeIndex, LiteLinearGraph.NodeFilter.filter(toUp));
+  private List<Integer> getNodes(int nodeIndex, boolean isUp) {
+    return myGraph.getNodes(nodeIndex, LiteLinearGraph.NodeFilter.filter(isUp));
   }
 
   @NotNull

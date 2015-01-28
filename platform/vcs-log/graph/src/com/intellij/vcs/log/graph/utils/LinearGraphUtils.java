@@ -40,11 +40,11 @@ public class LinearGraphUtils {
     return value != null && value == number;
   }
 
-  public static boolean isEdgeToUp(@NotNull GraphEdge edge, int nodeIndex) {
+  public static boolean isEdgeUp(@NotNull GraphEdge edge, int nodeIndex) {
     return intEqual(edge.getDownNodeIndex(), nodeIndex);
   }
 
-  public static boolean isEdgeToDown(@NotNull GraphEdge edge, int nodeIndex) {
+  public static boolean isEdgeDown(@NotNull GraphEdge edge, int nodeIndex) {
     return intEqual(edge.getUpNodeIndex(), nodeIndex);
   }
 
@@ -100,7 +100,7 @@ public class LinearGraphUtils {
       @Nullable
       @Override
       public Integer fun(GraphEdge graphEdge) {
-        if (isEdgeToDown(graphEdge, nodeIndex)) {
+        if (isEdgeDown(graphEdge, nodeIndex)) {
           if (graphEdge.getType() == GraphEdgeType.NOT_LOAD_COMMIT)
             return graphEdge.getTargetId();
           return graphEdge.getDownNodeIndex();
@@ -124,8 +124,8 @@ public class LinearGraphUtils {
         return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, filter.edgeFilter), new Function<GraphEdge, Integer>() {
           @Override
           public Integer fun(GraphEdge edge) {
-            if (isEdgeToUp(edge, nodeIndex)) return edge.getUpNodeIndex();
-            if (isEdgeToDown(edge, nodeIndex)) return edge.getDownNodeIndex();
+            if (isEdgeUp(edge, nodeIndex)) return edge.getUpNodeIndex();
+            if (isEdgeDown(edge, nodeIndex)) return edge.getDownNodeIndex();
 
             return null;
           }
