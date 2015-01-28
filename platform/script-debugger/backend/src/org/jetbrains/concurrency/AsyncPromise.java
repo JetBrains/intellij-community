@@ -51,6 +51,10 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   @NotNull
   @Override
   public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
+    if (isObsolete(rejected)) {
+      return this;
+    }
+
     switch (state) {
       case PENDING:
         break;
@@ -307,7 +311,9 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     Consumer<Throwable> rejected = this.rejected;
     clearHandlers();
     if (rejected != null) {
-      rejected.consume(error);
+      if (!isObsolete(rejected)) {
+        rejected.consume(error);
+      }
     }
     else if (!(error instanceof MessageError)) {
       LOG.error(error);

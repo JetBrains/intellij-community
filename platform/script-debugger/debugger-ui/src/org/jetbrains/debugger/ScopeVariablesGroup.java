@@ -1,6 +1,5 @@
 package org.jetbrains.debugger;
 
-import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -93,22 +92,20 @@ public class ScopeVariablesGroup extends XValueGroup {
   public void computeChildren(final @NotNull XCompositeNode node) {
     Promise<Void> promise = Variables.processScopeVariables(scope, node, context, callFrame == null);
     if (callFrame != null) {
-      promise.done(new ValueNodeConsumer<Void>(node) {
+      promise.done(new ObsolescentConsumer<Void>(node) {
         @Override
         public void consume(Void ignored) {
           callFrame.getReceiverVariable()
-            .done(new Consumer<Variable>() {
+            .done(new ObsolescentConsumer<Variable>(node) {
               @Override
               public void consume(Variable variable) {
                 node.addChildren(variable == null ? XValueChildrenList.EMPTY : XValueChildrenList.singleton(new VariableView(variable, context)), true);
               }
             })
-            .rejected(new Consumer<Throwable>() {
+            .rejected(new ObsolescentConsumer<Throwable>(node) {
               @Override
               public void consume(@Nullable Throwable error) {
-                if (!node.isObsolete()) {
-                  node.addChildren(XValueChildrenList.EMPTY, true);
-                }
+                node.addChildren(XValueChildrenList.EMPTY, true);
               }
             });
         }

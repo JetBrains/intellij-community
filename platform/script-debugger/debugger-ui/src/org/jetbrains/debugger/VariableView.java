@@ -165,7 +165,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     if (!(variable instanceof ObjectProperty) || ((ObjectProperty)variable).getGetter() == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
       getEvaluateContext().evaluate(variable.getName())
-        .done(new ValueNodeConsumer<EvaluateResult>(node) {
+        .done(new ObsolescentConsumer<EvaluateResult>(node) {
           @Override
           public void consume(EvaluateResult result) {
             if (result.wasThrown) {
@@ -199,15 +199,14 @@ public final class VariableView extends XNamedValue implements VariableContext {
       public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
         ValueModifier valueModifier = variable.getValueModifier();
         assert valueModifier != null;
-        valueModifier.evaluateGet(variable, getEvaluateContext()).done(new Consumer<Value>() {
-          @Override
-          public void consume(Value value) {
-            if (!node.isObsolete()) {
+        valueModifier.evaluateGet(variable, getEvaluateContext())
+          .done(new ObsolescentConsumer<Value>(node) {
+            @Override
+            public void consume(Value value) {
               callback.evaluated("");
               setEvaluatedValue(value, null, node);
             }
-          }
-        });
+          });
       }
     }.setShowValuePopup(false));
   }
