@@ -83,7 +83,7 @@ class Profiler(object):
         time.sleep(10)
 
     def start_profiling(self):
-        yappi.start()
+        yappi.start(profile_threads=False)
 
     def stats_string(self, id):
         output = StringIO.StringIO()
