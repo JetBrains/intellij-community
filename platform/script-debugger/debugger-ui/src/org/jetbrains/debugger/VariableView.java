@@ -163,10 +163,10 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     if (!(variable instanceof ObjectProperty) || ((ObjectProperty)variable).getGetter() == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
-      getEvaluateContext().evaluate(variable.getName()).done(new Consumer<EvaluateResult>() {
-        @Override
-        public void consume(EvaluateResult result) {
-          if (!node.isObsolete()) {
+      getEvaluateContext().evaluate(variable.getName())
+        .done(new ValueNodeConsumer<EvaluateResult>(node) {
+          @Override
+          public void consume(EvaluateResult result) {
             if (result.wasThrown) {
               setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(value, null), null, node);
             }
@@ -175,15 +175,15 @@ public final class VariableView extends XNamedValue implements VariableContext {
               computePresentation(result.value, node);
             }
           }
-        }
-      }).rejected(new Consumer<Throwable>() {
-        @Override
-        public void consume(Throwable error) {
-          if (!node.isObsolete()) {
-            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error.getMessage()), error.getMessage(), node);
+        })
+        .rejected(new Consumer<Throwable>() {
+          @Override
+          public void consume(Throwable error) {
+            if (!node.isObsolete()) {
+              setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error.getMessage()), error.getMessage(), node);
+            }
           }
-        }
-      });
+        });
       return;
     }
 
