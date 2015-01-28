@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,24 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface PathDescription {
+import java.nio.charset.Charset;
+
+public interface AirContentRevision {
+  boolean isBinary();
+  @Nullable
+  String getContentAsString() throws VcsException;
+  @Nullable
+  byte[] getContentAsBytes() throws VcsException;
+  
+  @Nullable
+  String getRevisionNumber();
+
   @NotNull
-  String getPath();
-  boolean isDirectory();
-  long lastModified();
+  PathDescription getPath();
+
+  Charset getCharset();
 }
