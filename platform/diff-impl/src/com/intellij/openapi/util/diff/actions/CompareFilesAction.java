@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.diff.actions;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -63,15 +64,25 @@ public class CompareFilesAction extends BaseShowDiffAction {
 
     VirtualFile[] data = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (data.length == 1) {
-      // TODO: filter depending on type of file: file, directory, archieve ?
-      FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, true, false);
+      FileChooserDescriptor descriptor = getDescriptor(data[0]);
+      // TODO: remember last used directory ?
       VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, data[0]);
-      if (result.length != 1 || result[0] == null) return null;
 
+      if (result.length != 1 || result[0] == null) return null;
       return DiffRequestFactory.createFromFile(project, data[0], result[0]);
     }
     else {
       return DiffRequestFactory.createFromFile(project, data[0], data[1]);
+    }
+  }
+
+  @NotNull
+  private static FileChooserDescriptor getDescriptor(@NotNull VirtualFile file) {
+    if (file.isDirectory() || file.getFileType() instanceof ArchiveFileType) {
+      return new FileChooserDescriptor(false, true, true, false, false, false);
+    }
+    else {
+      return new FileChooserDescriptor(true, false, false, true, true, false);
     }
   }
 }
