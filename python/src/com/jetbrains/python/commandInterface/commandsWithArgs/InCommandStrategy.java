@@ -49,7 +49,11 @@ class InCommandStrategy extends Strategy {
   @NotNull
   @Override
   public String getSubText() {
-    return "Tab will display list of arguments in next commit";
+    final String help = myCommand.getHelp();
+    if (help != null) {
+      return help;
+    }
+    return "Place to display help";
   }
 
   @NotNull
