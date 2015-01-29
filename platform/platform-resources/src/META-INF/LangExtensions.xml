@@ -627,6 +627,9 @@
       <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.formatting.contextConfiguration.ConfigureCodeStyleFromSelectedFragment</className>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
       <category>Language Injection</category>
     </intentionAction>

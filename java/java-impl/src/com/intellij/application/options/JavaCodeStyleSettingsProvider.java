@@ -15,16 +15,29 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.formatting.contextConfiguration.CodeFragmentSettingProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Rustam Vishnyakov
  */
-public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
+public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider implements CodeFragmentSettingProvider {
   @NotNull
   @Override
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
@@ -39,6 +52,73 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   }
 
   @Override
+  @NotNull
+  public JComponent createSettingsForSelectedFragment(final @NotNull Editor editor,
+                                                      CodeStyleSettings settings,
+                                                      CodeStyleSettings originalSettings) 
+  {
+    TabbedLanguageCodeStylePanel panel = new TabbedLanguageCodeStylePanel(getLanguage(), settings, settings) {
+      @Override
+      protected void initTabs(CodeStyleSettings settings) {
+        addSpacesTab(settings);
+        addWrappingAndBracesTab(settings);
+      }
+
+
+      @Override
+      protected void somethingChanged() {
+        super.somethingChanged();
+
+        final SelectionModel model = editor.getSelectionModel();
+        if (model.hasSelection()) {
+
+          //try {
+          //  apply(getSettings());
+          //}
+          //catch (ConfigurationException e) {
+          //  e.printStackTrace();
+          //}
+
+          CodeStyleSettings clone = getSettings().clone();
+
+          Project project = editor.getProject();
+          if (project == null) return;
+          
+          try {
+            CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
+            Document document = editor.getDocument();
+            PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+            if (file != null) {
+              reformatSelectedFragment(model, file);
+            }
+          }
+          finally {
+            CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+          }
+        }
+      }
+
+      private void reformatSelectedFragment(final SelectionModel model, final PsiFile file) {
+        final Project project = file.getProject();
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                CodeStyleManager.getInstance(project).reformatText(file, model.getSelectionStart(), model.getSelectionEnd());
+              }
+            });
+          }
+        }, "Reformat", null);
+      }
+    };
+
+
+    return panel.getPanel();
+  }
+
+  @Override
   public DisplayPriority getPriority() {
     return PlatformUtils.isIntelliJ() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
@@ -46,6 +126,12 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public String getConfigurableDisplayName() {
     return "Java";
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return JavaLanguage.INSTANCE;
   }
 
   @Nullable
