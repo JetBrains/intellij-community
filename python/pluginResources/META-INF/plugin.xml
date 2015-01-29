@@ -15,8 +15,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 <a href="http://youtrack.jetbrains.com/issues/PY">Issue tracker</a><br>
 ]]></description>
 
-  <!-- <PyCharm version> <Build number> (<Beta>|<EAP>|<RC>)? -->
-  <version>4.0.4 @@BUILD_NUMBER@@</version>
+  <version>4.0 build @@BUILD_NUMBER@@</version>
   <depends>com.intellij.modules.java</depends>
 
 
