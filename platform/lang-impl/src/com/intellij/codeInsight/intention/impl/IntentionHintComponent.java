@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         @Override
         public void run() {
           if (!editor.isDisposed() && editor.getComponent().isShowing()) {
-            component.showPopup();
+            component.showPopup(false);
           }
         }
       }, project.getDisposed());
@@ -223,7 +223,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     PriorityQuestionAction action = new PriorityQuestionAction() {
       @Override
       public boolean execute() {
-        showPopup();
+        showPopup(false);
         return true;
       }
 
@@ -343,7 +343,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       @Override
       public void mousePressed(MouseEvent e) {
         if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
-          showPopup();
+          showPopup(true);
         }
       }
 
@@ -407,11 +407,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myPopupShown = false;
   }
 
-  private void showPopup() {
+  private void showPopup(boolean mouseClick) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myPopup == null || myPopup.isDisposed()) return;
 
-    if (isShowing()) {
+    if (mouseClick && isShowing()) {
       final RelativePoint swCorner = RelativePoint.getSouthWestOf(this);
       final int yOffset = canPlaceBulbOnTheSameLine(myEditor) ? 0 : myEditor.getLineHeight() - (myEditor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE);
       myPopup.show(new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset)));
