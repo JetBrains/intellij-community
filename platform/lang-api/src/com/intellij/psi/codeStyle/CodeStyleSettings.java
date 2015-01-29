@@ -167,7 +167,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
 
-  public boolean AUTODETECT_INDENTS = false;
+  public boolean AUTODETECT_INDENTS = true;
 
   @Deprecated
   public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
