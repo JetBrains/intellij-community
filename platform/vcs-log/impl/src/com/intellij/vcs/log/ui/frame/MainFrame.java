@@ -26,6 +26,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -336,12 +337,12 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myUI.isBek();
+      return !myUI.getBekType().equals(PermanentGraph.SortType.Normal);
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myUI.setBek(state);
+      myUI.setBek(state ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
     }
 
     @Override
@@ -359,19 +360,19 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myUI.isLinearBek();
+      return myUI.getBekType().equals(PermanentGraph.SortType.LinearBek);
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myUI.setLinearBek(state);
+      myUI.setBek(state ? PermanentGraph.SortType.LinearBek : PermanentGraph.SortType.Bek);
     }
 
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(BekSorter.isLinearBekEnabled());
-      e.getPresentation().setEnabled(areGraphActionsEnabled() && myUI.isBek());
+      e.getPresentation().setEnabled(areGraphActionsEnabled() && myUI.getBekType() != PermanentGraph.SortType.Normal);
     }
   }
 
