@@ -153,7 +153,7 @@ class TypeWriter<T> {
     else {
       out.append("if (name == null)").openBlock();
       {
-        out.append("if (reader.beginObject().hasNext())").openBlock();
+        out.append("if (reader.hasNext() && reader.beginObject().hasNext())").openBlock();
         {
           out.append("name = reader.nextName()").semi();
         }

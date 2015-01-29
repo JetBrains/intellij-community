@@ -1,11 +1,11 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.style.redundant_implements;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class RedundantImplementsInspection2  implements List, Collection{
+class RedundantImplementsInspection2  implements List, <warning descr="Redundant interface declaration 'Collection'">Collection</warning>{
     public int size() {
         return 0;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl.patch;
+package org.jetbrains.concurrency;
 
-import org.jetbrains.annotations.NotNull;
-
-public interface PathDescription {
-  @NotNull
-  String getPath();
-  boolean isDirectory();
-  long lastModified();
+public interface Obsolescent {
+  /**
+   * @return <code>true</code> if result of computation won't be used so computation may be interrupted
+   */
+  boolean isObsolete();
 }

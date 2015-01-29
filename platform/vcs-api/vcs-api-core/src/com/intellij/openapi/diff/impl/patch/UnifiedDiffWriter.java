@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class UnifiedDiffWriter {
   @NonNls public static final String ADD_INFO_HEADER = "Subsystem: ";
   @NonNls public static final String ADD_INFO_LINE_START = "<+>";
   private static final String HEADER_SEPARATOR = "===================================================================";
+  @NonNls public static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
 
   private UnifiedDiffWriter() {
   }
@@ -83,7 +84,7 @@ public class UnifiedDiffWriter {
           }
           writeLine(writer, text, prefixChar);
           if (line.isSuppressNewLine()) {
-            writer.write(lineSeparator + PatchReader.NO_NEWLINE_SIGNATURE + lineSeparator);
+            writer.write(lineSeparator + NO_NEWLINE_SIGNATURE + lineSeparator);
           }
           else {
             writer.write(lineSeparator);
