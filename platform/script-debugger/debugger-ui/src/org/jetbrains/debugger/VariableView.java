@@ -384,6 +384,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
     return Variables.processVariables(this, value.getProperties(), node, new PairConsumer<MemberFilter, List<Variable>>() {
       @Override
       public void consume(MemberFilter memberFilter, List<Variable> variables) {
+        VariableView.this.memberFilter = memberFilter;
+
         if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
           computeArrayRanges(variables, node);
           return;
@@ -394,7 +396,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
           functionValue = null;
         }
 
-        remainingChildren = Variables.processNamedObjectProperties(variables, node, VariableView.this, VariableView.this.memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW,
+        remainingChildren = Variables.processNamedObjectProperties(variables, node, VariableView.this, memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW,
                                                                    isLastChildren && functionValue == null);
         if (remainingChildren != null) {
           remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
