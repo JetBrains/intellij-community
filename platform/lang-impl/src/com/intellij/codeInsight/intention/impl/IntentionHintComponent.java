@@ -56,6 +56,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -452,18 +453,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, myEditor.getContentComponent());
       if (ancestor != null) {
         final JComboBox comboBox = (JComboBox)ancestor;
-        myOuterComboboxPopupListener = new PopupMenuListener() {
+        myOuterComboboxPopupListener = new PopupMenuListenerAdapter() {
           @Override
           public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
             hide();
-          }
-
-          @Override
-          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-          }
-
-          @Override
-          public void popupMenuCanceled(PopupMenuEvent e) {
           }
         };
 
