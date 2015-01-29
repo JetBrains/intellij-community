@@ -3,6 +3,9 @@
 Exports data from optparse-based manage.py commands and reports it to pycharm.django_manage_obtainer._XmlDumper
 """
 from optparse import Option
+import django
+from django.apps import registry
+from django.conf import settings
 from django.core.management import ManagementUtility, get_commands, BaseCommand
 
 __author__ = 'Ilya.Kazakevich'
@@ -20,7 +23,7 @@ def report_data(dumper):
         command = utility.fetch_command(command_name)
         assert isinstance(command, BaseCommand)
         dumper.start_command(command_name=command_name,
-                             command_help_text=str(command.help),
+                             command_help_text=str(command.usage("").replace("%prog", command_name)), # TODO: support subcommands
                              command_args_text=str(command.args))
         for opt in command.option_list:
             opt_type = opt.type if opt.type in Option.TYPES else ""  # Empty for unknown

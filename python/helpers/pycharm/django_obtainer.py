@@ -14,7 +14,11 @@ from _django_obtainer_core import XmlDumper
 __author__ = 'Ilya.Kazakevich'
 
 # TODO: Support Django 1.8 as well, it uses argparse, not optparse
-assert LooseVersion(django.get_version()) < LooseVersion('1.8a'), "Only Django <1.8 is supported now"
+version = LooseVersion(django.get_version())
+assert version < LooseVersion('1.8a'), "Only Django <1.8 is supported now"
+# Some django versions require setup
+if django.setup:
+    django.setup()
 dumper = XmlDumper()
 _django_obtainer_optparse.report_data(dumper)
 print(dumper.xml)

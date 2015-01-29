@@ -40,7 +40,6 @@ class XmlDumper(object):
     __command_info_tag = "commandInfo"  # Name of main tag
 
     def __init__(self):
-        super().__init__()
         self.__document = minidom.Document()
         self.__root = self.__document.createElement("{0}-array".format(XmlDumper.__command_info_tag))
         self.__document.appendChild(self.__root)
