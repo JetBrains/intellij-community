@@ -520,8 +520,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     writeColors(colorElements);
     writeAttributes(attrElements);
 
-    parentNode.addContent(colorElements);
-    parentNode.addContent(attrElements);
+    if (colorElements.getChildren().size() > 0) {
+      parentNode.addContent(colorElements);
+    }
+    if (attrElements.getChildren().size() > 0) {
+      parentNode.addContent(attrElements);
+    }
   }
 
   private static void writeFontPreferences(@NotNull String key, @NotNull Element parent, @NotNull FontPreferences preferences) {
@@ -543,17 +547,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   
   private boolean haveToWrite(final TextAttributesKey key, final TextAttributes value, final TextAttributes defaultAttribute) {
     if (key.getFallbackAttributeKey() != null && value.isFallbackEnabled()) return false;
-    boolean hasDefaultValue = value.equals(defaultAttribute);
-    if (myParentScheme == null) return !hasDefaultValue;
-    return true;
+    return !value.equals(defaultAttribute);
   }
 
   private void writeAttributes(Element attrElements) throws WriteExternalException {
     List<TextAttributesKey> list = new ArrayList<TextAttributesKey>(myAttributesMap.keySet());
     Collections.sort(list);
 
-    TextAttributes defaultAttr = new TextAttributes();
     for (TextAttributesKey key: list) {
+      TextAttributes defaultAttr = myParentScheme != null ? myParentScheme.getAttributes(key) : new TextAttributes();
       TextAttributes value = myAttributesMap.get(key);
       if (!haveToWrite(key,value,defaultAttr)) continue;
       Element element = new Element(OPTION_ELEMENT);

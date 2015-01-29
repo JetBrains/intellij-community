@@ -43,6 +43,7 @@ public class ProjectProductionScope extends NamedScope {
       public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
         return file != null
+               && index.isInSource(file)
                && !index.isInTestSourceContent(file)
                && !index.isInLibraryClasses(file)
                && !index.isInLibrarySource(file);

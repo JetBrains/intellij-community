@@ -62,7 +62,8 @@ public class JsonUtil {
     sb.append('"');
   }
 
-  public static <T> List<T> nextList(JsonReaderEx reader) {
+  @NotNull
+  public static <T> List<T> nextList(@NotNull JsonReaderEx reader) {
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();
@@ -75,12 +76,14 @@ public class JsonUtil {
     return list;
   }
 
-  public static Object[] nextArray(JsonReaderEx reader) {
+  @NotNull
+  public static Object[] nextArray(@NotNull JsonReaderEx reader) {
     List<Object> list = nextList(reader);
     return ArrayUtil.toObjectArray(list);
   }
 
-  public static Map<String, Object> nextObject(JsonReaderEx reader) {
+  @NotNull
+  public static Map<String, Object> nextObject(@NotNull JsonReaderEx reader) {
     Map<String, Object> map = new THashMap<String, Object>();
     reader.beginObject();
     while (reader.hasNext()) {

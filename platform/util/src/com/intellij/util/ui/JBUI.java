@@ -55,6 +55,22 @@ public class JBUI {
     return new JBInsets(0, 0, 0, 0);
   }
 
+  public static JBInsets insetsTop(int t) {
+    return insets(t, 0, 0, 0);
+  }
+
+  public static JBInsets insetsLeft(int l) {
+    return insets(0, l, 0, 0);
+  }
+
+  public static JBInsets insetsBottom(int b) {
+    return insets(0, 0, b, 0);
+  }
+
+  public static JBInsets insetsRight(int r) {
+    return insets(0, 0, 0, r);
+  }
+
   public static EmptyIcon emptyIcon(int i) {
     return (EmptyIcon)EmptyIcon.create(scale(i));
   }
@@ -100,6 +116,26 @@ public class JBUI {
   public static class Borders {
     public static JBEmptyBorder empty(int top, int left, int bottom, int right) {
       return new JBEmptyBorder(top, left, bottom, right);
+    }
+
+    public static JBEmptyBorder empty(int topAndBottom, int leftAndRight) {
+      return new JBEmptyBorder(topAndBottom, leftAndRight, topAndBottom, leftAndRight);
+    }
+
+    public static JBEmptyBorder emptyTop(int offset) {
+      return new JBEmptyBorder(offset, 0, 0, 0);
+    }
+
+    public static JBEmptyBorder emptyLeft(int offset) {
+      return new JBEmptyBorder(0, offset,  0, 0);
+    }
+
+    public static JBEmptyBorder emptyBottom(int offset) {
+      return new JBEmptyBorder(0, 0, offset, 0);
+    }
+
+    public static JBEmptyBorder emptyRight(int offset) {
+      return new JBEmptyBorder(0, 0, 0, offset);
     }
 
     public static JBEmptyBorder empty() {

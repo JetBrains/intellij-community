@@ -19,13 +19,16 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.ide.presentation.Presentation;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
+import org.jetbrains.idea.maven.dom.model.presentation.MavenGoalsPresentationProvider;
 
 import java.util.List;
 
 /**
  * http://maven.apache.org/POM/4.0.0:goalsElemType interface.
  */
+@Presentation(provider = MavenGoalsPresentationProvider.class)
 public interface MavenDomGoals extends MavenDomElement {
   List<MavenDomGoal> getGoals();
 }

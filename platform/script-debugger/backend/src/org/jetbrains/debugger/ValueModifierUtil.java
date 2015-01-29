@@ -30,7 +30,7 @@ public final class ValueModifierUtil {
                                            @NotNull EvaluateContext evaluateContext,
                                            @NotNull String selfName) {
     StringBuilder builder = new StringBuilder(selfName);
-    appendName(builder, variable.getName(), false);
+    appendUnquotedName(builder, variable.getName());
     return evaluateContext.evaluate(builder.toString(), Collections.singletonMap(selfName, host), false)
       .then(new Function<EvaluateResult, Value>() {
         @Override
@@ -46,13 +46,16 @@ public final class ValueModifierUtil {
     StringBuilder builder = new StringBuilder();
     for (int i = list.size() - 1; i >= 0; i--) {
       String name = list.get(i);
-      boolean quoted = quotedAware && (name.charAt(0) == '"' || name.charAt(0) == '\'');
-      appendName(builder, name, quoted);
+      doAppendName(builder, name, quotedAware && (name.charAt(0) == '"' || name.charAt(0) == '\''));
     }
     return builder.toString();
   }
 
-  public static void appendName(@NotNull StringBuilder builder, @NotNull String name, boolean quoted) {
+  public static void appendUnquotedName(@NotNull StringBuilder builder, @NotNull String name) {
+    doAppendName(builder, name, false);
+  }
+
+  private static void doAppendName(@NotNull StringBuilder builder, @NotNull String name, boolean quoted) {
     boolean useKeyNotation = !quoted && KEY_NOTATION_PROPERTY_NAME_PATTERN.matcher(name).matches();
     if (builder.length() != 0) {
       builder.append(useKeyNotation ? '.' : '[');

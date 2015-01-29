@@ -205,6 +205,7 @@ public class GenerationUtil {
       vc.put("FQClassname", ce.getQualifiedName());
       vc.put("settings", CodeStyleSettingsManager.getSettings(clazz.getProject()));
       vc.put("helper", GenerationHelper.class);
+      vc.put("StringUtil", StringUtil.class);
       vc.put("project", clazz.getProject());
 
       for (String paramName : contextMap.keySet()) {

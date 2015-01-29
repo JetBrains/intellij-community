@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,6 +172,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       element.addContent(writeRenderer(myArrayRenderer));
       element.addContent(writeRenderer(myToStringRenderer));
       element.addContent(writeRenderer(myClassRenderer));
+      element.addContent(writeRenderer(myPrimitiveRenderer));
       if (myCustomRenderers.getRendererCount() > 0) {
         final Element custom = new Element(CUSTOM_RENDERERS_TAG_NAME);
         element.addContent(custom);
@@ -212,6 +213,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         }
         else if (ClassRenderer.UNIQUE_ID.equals(id)) {
           myClassRenderer.readExternal(elem);
+        }
+        else if (PrimitiveRenderer.UNIQUE_ID.equals(id)) {
+          myPrimitiveRenderer.readExternal(elem);
         }
       }
       catch (InvalidDataException e) {

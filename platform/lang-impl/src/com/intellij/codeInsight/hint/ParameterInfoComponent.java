@@ -163,7 +163,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
-    public void setEscapeFunction(Function<String, String> escapeFunction) {
+    public void setEscapeFunction(@Nullable Function<String, String> escapeFunction) {
       myEscapeFunction = escapeFunction;
     }
 

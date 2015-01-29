@@ -427,7 +427,7 @@ public class NestedClassProcessor {
       for (Entry<String, List<VarFieldPair>> entmt : entcl.getValue().entrySet()) {
         mergeListSignatures(entmt.getValue(), intrPairMask, false);
 
-        MethodWrapper meth = nestedNode.getWrapper().getMethodWrapper("<init>", entmt.getKey());
+        MethodWrapper meth = nestedNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, entmt.getKey());
         meth.signatureFields = new ArrayList<VarVersionPair>();
 
         for (VarFieldPair pair : entmt.getValue()) {
@@ -577,7 +577,7 @@ public class NestedClassProcessor {
               }
             }
 
-            if (child.type == ClassNode.CLASS_ANONYMOUS && "<init>".equals(meth.methodStruct.getName())
+            if (child.type == ClassNode.CLASS_ANONYMOUS && CodeConstants.INIT_NAME.equals(meth.methodStruct.getName())
                 && exprent.type == Exprent.EXPRENT_INVOCATION) {
               InvocationExprent invexpr = (InvocationExprent)exprent;
               if (invexpr.getFunctype() == InvocationExprent.TYP_INIT) {
@@ -646,11 +646,11 @@ public class NestedClassProcessor {
 
     // iterate over constructors
     for (StructMethod mt : cl.getMethods()) {
-      if ("<init>".equals(mt.getName())) {
+      if (CodeConstants.INIT_NAME.equals(mt.getName())) {
 
         MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
-        MethodWrapper meth = wrapper.getMethodWrapper("<init>", mt.getDescriptor());
+        MethodWrapper meth = wrapper.getMethodWrapper(CodeConstants.INIT_NAME, mt.getDescriptor());
         DirectGraph graph = meth.getOrBuildGraph();
 
         if (graph != null) { // something gone wrong, should not be null

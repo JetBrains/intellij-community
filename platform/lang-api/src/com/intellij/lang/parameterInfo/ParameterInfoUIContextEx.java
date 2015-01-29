@@ -17,6 +17,7 @@
 package com.intellij.lang.parameterInfo;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.EnumSet;
@@ -40,5 +41,8 @@ public interface ParameterInfoUIContextEx extends ParameterInfoUIContext {
     HIGHLIGHT, DISABLE, STRIKEOUT // more to come
   }
 
-  void setEscapeFunction(Function<String, String> escapeFunction);
+  /**
+   * Escape function for convert custom tags to html.
+   */
+  void setEscapeFunction(@Nullable Function<String, String> escapeFunction);
 }

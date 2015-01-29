@@ -1,10 +1,12 @@
 package com.jetbrains.edu.learning.course;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.StudyNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -14,17 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Course {
-
   private static final Logger LOG = Logger.getInstance(Course.class.getName());
   public static final String SANDBOX_DIR = "Sandbox";
   public List<Lesson> lessons = new ArrayList<Lesson>();
-  public String description;
-  public String name;
-  public String myResourcePath = "";
-  public String author;
-  public static final String COURSE_DIR = "course";
-  public static final String HINTS_DIR = "hints";
-  public boolean myUpToDate = false;
+  private String description;
+  private String name;
+  private String myCourseDirectory = "";
+  private String author="";
+  private boolean myUpToDate;
+  private String myLanguage;
 
 
   public List<Lesson> getLessons() {
@@ -69,7 +69,7 @@ public class Course {
                 File[] files = resourceRoot.listFiles(new FilenameFilter() {
                   @Override
                   public boolean accept(File dir, String name) {
-                    return !name.contains(Lesson.LESSON_DIR) && !name.equals("course.json") && !name.equals("hints");
+                    return !name.contains(StudyNames.LESSON_DIR) && !name.equals("course.json") && !name.equals("hints");
                   }
                 });
                 for (File file : files) {
@@ -93,12 +93,12 @@ public class Course {
     return name;
   }
 
-  public void setResourcePath(@NotNull final String resourcePath) {
-    myResourcePath = resourcePath;
+  public void setCourseDirectory(@NotNull final String courseDirectory) {
+    myCourseDirectory = courseDirectory;
   }
 
-  public String getResourcePath() {
-    return myResourcePath;
+  public String getCourseDirectory() {
+    return myCourseDirectory;
   }
 
   public String getDescription() {
@@ -111,5 +111,21 @@ public class Course {
 
   public void setUpToDate(boolean upToDate) {
     myUpToDate = upToDate;
+  }
+
+  public Language getLanguage() {
+    return Language.findLanguageByID(myLanguage);
+  }
+
+  public void setLanguage(@NotNull final String language) {
+    myLanguage = language;
+  }
+
+  public void setAuthor(String author) {
+    this.author = author;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
   }
 }

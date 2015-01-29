@@ -5,7 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.edu.learning.StudyDocumentListener;
 import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.TaskWindow;
+import com.jetbrains.edu.learning.course.AnswerPlaceholder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +17,9 @@ public class StudyDocumentListenerTest extends StudyTestCase {
     final Document document = myFixture.getDocument(psiFile);
 
     TaskFile taskFile = new TaskFile();
-    List<TaskWindow> taskWindows = new ArrayList<TaskWindow>();
-    addTaskWindow(taskWindows, 0, 32, 14);
-    taskFile.setTaskWindows(taskWindows);
+    List<AnswerPlaceholder> answerPlaceholders = new ArrayList<AnswerPlaceholder>();
+    addTaskWindow(answerPlaceholders, 0, 32, 14);
+    taskFile.setAnswerPlaceholders(answerPlaceholders);
     StudyDocumentListener listener = new StudyDocumentListener(taskFile);
     document.addDocumentListener(listener);
     CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
@@ -34,14 +34,14 @@ public class StudyDocumentListenerTest extends StudyTestCase {
         });
       }
     }, "x", "qwe");
-    assertEquals(taskWindows.get(0).getRealStartOffset(document), 36);
+    assertEquals(answerPlaceholders.get(0).getRealStartOffset(document), 36);
   }
 
-  private static void addTaskWindow(List<TaskWindow> taskWindows, int line, int start, int length) {
-    TaskWindow taskWindow = new TaskWindow();
-    taskWindow.setLine(line);
-    taskWindow.setStart(start);
-    taskWindow.setLength(length);
-    taskWindows.add(taskWindow);
+  private static void addTaskWindow(List<AnswerPlaceholder> answerPlaceholders, int line, int start, int length) {
+    AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
+    answerPlaceholder.setLine(line);
+    answerPlaceholder.setStart(start);
+    answerPlaceholder.setLength(length);
+    answerPlaceholders.add(answerPlaceholder);
   }
 }

@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 public class PyStudyIntroductionCourseAction extends AnAction {
 
@@ -49,15 +48,15 @@ public class PyStudyIntroductionCourseAction extends AnAction {
     else {
       final GenerateProjectCallback callback = new GenerateProjectCallback();
       final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator();
-      final Map<CourseInfo, File> courses = generator.getCourses();
+      final List<CourseInfo> courses = generator.getCourses();
       CourseInfo introCourse = null;
-      for (CourseInfo info : courses.keySet()) {
+      for (CourseInfo info : courses) {
         if ("Introduction to Python".equals(info.getName())) {
           introCourse = info;
         }
       }
       if (introCourse == null) {
-        introCourse = StudyUtils.getFirst(courses.keySet());
+        introCourse = StudyUtils.getFirst(courses);
       }
       generator.setSelectedCourse(introCourse);
       final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,20 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Sergey.Malenkov
@@ -221,7 +224,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(BorderLayout.WEST, mySearchPanel);
       panel.add(BorderLayout.CENTER, myBanner);
-      panel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 0, 1, 0));
+      panel.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 1, 0));
       add(BorderLayout.NORTH, panel);
     }
     mySplitter = new OnePixelSplitter(false, myProperties.getFloat(SPLITTER_PROPORTION, .2f));

@@ -108,6 +108,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
   @Override
+  public void goBack() {
+    myList.clearSelection();
+    super.goBack();
+  }
+
+  @Override
   protected void afterShow() {
     tryToAutoSelect(false);
   }

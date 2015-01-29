@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Interface provides method used in {@link com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithExpressionSelector}
+ * Interface provides method used in {@link PostfixTemplateWithExpressionSelector}
  */
 public interface PostfixTemplateExpressionSelector {
 
@@ -49,5 +49,5 @@ public interface PostfixTemplateExpressionSelector {
    * Renderer is used for showing popup chooser
    */
   @NotNull
-  public Function<PsiElement, String> getRenderer();
+  Function<PsiElement, String> getRenderer();
 }

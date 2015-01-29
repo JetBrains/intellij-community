@@ -33,6 +33,7 @@ public class ConfigurationManager {
 
     historyConfigurations.remove(configuration);
     historyConfigurations.add(0, configuration);
+    configuration.setCreated(System.currentTimeMillis());
   }
 
   public void removeHistoryConfiguration(Configuration configuration) {

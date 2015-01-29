@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class StatusText {
@@ -159,7 +159,7 @@ public abstract class StatusText {
     myComponent.clear();
     myClickListeners.clear();
     myHasActiveClickListeners = false;
-    if (myOwner != null) myOwner.repaint();
+    if (myOwner != null && isStatusVisible()) myOwner.repaint();
     return this;
   }
 
@@ -183,7 +183,7 @@ public abstract class StatusText {
     if (listener != null) {
       myHasActiveClickListeners = true;
     }
-    if (myOwner != null) myOwner.repaint();
+    if (myOwner != null && isStatusVisible()) myOwner.repaint();
     return this;
   }
 

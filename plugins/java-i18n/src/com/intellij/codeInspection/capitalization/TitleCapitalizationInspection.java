@@ -169,7 +169,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static boolean checkCapitalization(String value, Nls.Capitalization capitalization) {
-    if (value == null || capitalization == Nls.Capitalization.NotSpecified) {
+    if (StringUtil.isEmpty(value) || capitalization == Nls.Capitalization.NotSpecified) {
       return true;
     }
     value = value.replace("&", "");

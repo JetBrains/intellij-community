@@ -9,6 +9,7 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -28,7 +29,7 @@ public class MatchOptions implements JDOMExternalizable {
   private SearchScope scope;
   private SearchScope downUpMatchScope;
   private String searchCriteria = "";
-  private Map<String,MatchVariableConstraint> variableConstraints;
+  @Nullable private Map<String,MatchVariableConstraint> variableConstraints;
 
   private String myPatternContext;
 
@@ -40,8 +41,6 @@ public class MatchOptions implements JDOMExternalizable {
   @NonNls private static final String DIALECT_ATTR_NAME = "dialect";
   @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
   @NonNls public static final String MODIFIER_ANNOTATION_NAME = "Modifier";
-
-  //private static final String UNDEFINED_SCOPE = "undefined";
 
   public void addVariableConstraint(MatchVariableConstraint constraint) {
     if (variableConstraints==null) {
@@ -59,8 +58,11 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public void retainVariableConstraints(Collection<String> names) {
+    if (variableConstraints == null || variableConstraints.isEmpty()) {
+      return;
+    }
     final THashSet<String> nameSet = new THashSet<String>(names);
-    for (Iterator<String> iterator = variableConstraints.keySet().iterator(); iterator.hasNext(); ) {
+    for (final Iterator<String> iterator = variableConstraints.keySet().iterator(); iterator.hasNext(); ) {
       final String key = iterator.next();
       if (!nameSet.contains(key)) {
         iterator.remove();

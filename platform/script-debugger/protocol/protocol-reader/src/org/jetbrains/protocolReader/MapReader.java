@@ -40,4 +40,13 @@ public class MapReader extends ValueReader {
     }
     out.append(')');
   }
+
+  @Override
+  void writeArrayReadCode(@NotNull ClassScope scope, boolean subtyping, @NotNull TextOutput out) {
+    beginReadCall("ObjectArray", subtyping, out);
+    out.comma().append("new org.jetbrains.jsonProtocol.MapFactory(");
+    assert componentParser != null;
+    ((ObjectValueReader)componentParser).writeFactoryNewExpression(scope, out);
+    out.append("))");
+  }
 }

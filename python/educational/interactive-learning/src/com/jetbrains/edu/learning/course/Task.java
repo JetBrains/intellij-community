@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.StudyNames;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,12 +22,13 @@ import java.util.Map;
 public class Task implements Stateful {
   public static final String TASK_DIR = "task";
   private static final String ourTestFile = "tests.py";
-  public String name;
-  private static final String ourTextFile = "task.html";
+  private String name;
+  private String text;
+  private String testsText;
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
   private Lesson myLesson;
-  public int myIndex;
-  public List<UserTest> userTests = new ArrayList<UserTest>();
+  private int myIndex;
+  private List<UserTest> userTests = new ArrayList<UserTest>();
   public static final String USER_TESTS = "userTests";
 
   public Map<String, TaskFile> getTaskFiles() {
@@ -66,6 +68,10 @@ public class Task implements Stateful {
     }
   }
 
+  public void setUserTests(@NotNull final List<UserTest> userTests) {
+    this.userTests = userTests;
+  }
+
   public List<UserTest> getUserTests() {
     return userTests;
   }
@@ -75,7 +81,7 @@ public class Task implements Stateful {
   }
 
   public String getText() {
-    return ourTextFile;
+    return text;
   }
 
   /**
@@ -169,10 +175,21 @@ public class Task implements Stateful {
     return myLesson;
   }
 
+  public String getTestsText() {
+    return testsText;
+  }
+
+  public void setTestsText(@NotNull final String testsText) {
+    this.testsText = testsText;
+  }
+
+  public void setText(@NotNull final String text) {
+    this.text = text;
+  }
 
   @Nullable
   public VirtualFile getTaskDir(Project project) {
-    String lessonDirName = Lesson.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
+    String lessonDirName = StudyNames.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
     String taskDirName = TASK_DIR + String.valueOf(myIndex + 1);
     VirtualFile courseDir = project.getBaseDir();
     if (courseDir != null) {

@@ -11,6 +11,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -222,15 +223,21 @@ public class ExistingTemplatesComponent {
     }
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean focus) {
-      if (value instanceof Configuration) {
-        value = ((Configuration)value).getName();
+      if (!(value instanceof Configuration)) {
+        return;
       }
+      final Configuration configuration = (Configuration)value;
       final Color background = (selected && !focus) ?
                                UIUtil.getListUnfocusedSelectionBackground() : UIUtil.getListBackground(selected);
       final Color foreground = UIUtil.getListForeground(selected);
       setPaintFocusBorder(false);
-      SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), value.toString(), SimpleTextAttributes.STYLE_PLAIN,
+      SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), configuration.getName(), SimpleTextAttributes.STYLE_PLAIN,
                                  foreground, background, this);
+      final long created = configuration.getCreated();
+      if (created > 0) {
+        final String createdString = DateFormatUtil.formatPrettyDateTime(created);
+        append(" (" + createdString + ')', selected ? new SimpleTextAttributes(Font.PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
     }
   }
 

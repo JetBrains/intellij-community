@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.jetbrains.edu.learning.StudyNames;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.course.*;
@@ -62,8 +63,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         setStudyAttributes(task, data, task.getName());
       }
     }
-    if (valueName.contains(Lesson.LESSON_DIR)) {
-      int lessonIndex = Integer.parseInt(valueName.substring(Lesson.LESSON_DIR.length())) - 1;
+    if (valueName.contains(StudyNames.LESSON_DIR)) {
+      int lessonIndex = Integer.parseInt(valueName.substring(StudyNames.LESSON_DIR.length())) - 1;
       Lesson lesson = course.getLessons().get(lessonIndex);
       setStudyAttributes(lesson, data, lesson.getName());
     }
@@ -83,8 +84,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   public int getTypeSortWeight(boolean sortByType) {
     String name = myValue.getName();
-    if (name.contains(Lesson.LESSON_DIR) || name.contains(Task.TASK_DIR)) {
-      String logicalName = name.contains(Lesson.LESSON_DIR) ? Lesson.LESSON_DIR : Task.TASK_DIR;
+    if (name.contains(StudyNames.LESSON_DIR) || name.contains(Task.TASK_DIR)) {
+      String logicalName = name.contains(StudyNames.LESSON_DIR) ? StudyNames.LESSON_DIR : Task.TASK_DIR;
       return StudyUtils.getIndex(name, logicalName) + 1;
     }
     return name.contains(Course.SANDBOX_DIR) ? 0 : 3;
@@ -150,7 +151,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
           if (file != null) {
             FileEditorManager.getInstance(myProject).openFile(file, true);
           }
-          if (!entry.getValue().getTaskWindows().isEmpty()) {
+          if (!entry.getValue().getAnswerPlaceholders().isEmpty()) {
             child = file;
           }
         }

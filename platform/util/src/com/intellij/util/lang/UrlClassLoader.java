@@ -43,7 +43,7 @@ import java.util.List;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader {
-  private static final boolean INDEX_PERSISTENCE_DISABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.disabled", "true"));
+  private static final boolean INDEX_PERSISTENCE_DISABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.disabled", "false"));
   @NonNls static final String CLASS_EXTENSION = ".class";
 
   static {

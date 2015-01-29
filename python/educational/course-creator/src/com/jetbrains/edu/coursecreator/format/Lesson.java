@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class Lesson implements Comparable{
-  @Expose public String name;
-  @Expose public List<Task> task_list = new ArrayList<Task>();
+  @Expose private String name;
+  @Expose private List<Task> task_list = new ArrayList<Task>();
 
   public int myIndex;
   public Map<String, Task> myTasksMap = new HashMap<String, Task>();
@@ -60,5 +60,21 @@ public class Lesson implements Comparable{
   public int compareTo(@NotNull Object o) {
     Lesson lesson = (Lesson) o;
     return myIndex - lesson.getIndex();
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public List<Task> getTask_list() {
+    return task_list;
+  }
+
+  public void setTask_list(List<Task> task_list) {
+    this.task_list = task_list;
+  }
+
+  public void setTasksMap(Map<String, Task> tasksMap) {
+    myTasksMap = tasksMap;
   }
 }

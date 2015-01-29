@@ -42,6 +42,12 @@ public abstract class PromiseManager<HOST, VALUE> {
     return result != null && result.getState() == Promise.State.FULFILLED;
   }
 
+  @Nullable
+  public final Promise.State getState(HOST host) {
+    Promise<VALUE> result = fieldUpdater.get(host);
+    return result == null ? null : result.getState();
+  }
+
   @NotNull
   public final Promise<VALUE> get(HOST host) {
     return get(host, true);

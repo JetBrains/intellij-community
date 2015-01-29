@@ -92,10 +92,10 @@ public class InvocationExprent extends Exprent {
         invokeDynamicClassSuffix = "##Lambda_" + cn.index1 + "_" + cn.index2;
     }
 
-    if ("<init>".equals(name)) {
+    if (CodeConstants.INIT_NAME.equals(name)) {
       functype = TYP_INIT;
     }
-    else if ("<clinit>".equals(name)) {
+    else if (CodeConstants.CLINIT_NAME.equals(name)) {
       functype = TYP_CLINIT;
     }
 
@@ -307,7 +307,7 @@ public class InvocationExprent extends Exprent {
 
         break;
       case TYP_CLINIT:
-        throw new RuntimeException("Explicit invocation of <clinit>");
+        throw new RuntimeException("Explicit invocation of " + CodeConstants.CLINIT_NAME);
       case TYP_INIT:
         if (super_qualifier != null) {
           buf.append("super(");
@@ -316,7 +316,7 @@ public class InvocationExprent extends Exprent {
           buf.append("this(");
         }
         else {
-          throw new RuntimeException("Unrecognized invocation of <init>");
+          throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
         }
     }
 
@@ -327,7 +327,7 @@ public class InvocationExprent extends Exprent {
 
       if (newNode != null) {  // own class
         if (newNode.getWrapper() != null) {
-          sigFields = newNode.getWrapper().getMethodWrapper("<init>", stringDescriptor).signatureFields;
+          sigFields = newNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, stringDescriptor).signatureFields;
         }
         else {
           if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class

@@ -1,12 +1,8 @@
 package com.jetbrains.edu.learning;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,20 +13,19 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.course.Course;
@@ -44,11 +39,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,22 +63,19 @@ import java.util.Map;
 public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class.getName());
   public static final String COURSE_ELEMENT = "courseElement";
-  private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private static Map<String, String> myDeletedShortcuts = new HashMap<String, String>();
   private final Project myProject;
   private Course myCourse;
-  private FileCreatedListener myListener;
+  private FileCreatedByUserListener myListener;
 
 
-  public void setCourse(Course course) {
+  public void setCourse(@NotNull final Course course) {
     myCourse = course;
   }
 
   private StudyTaskManager(@NotNull final Project project) {
-    myTaskManagers.put(project.getBasePath(), this);
     myProject = project;
   }
-
 
   @Nullable
   public Course getCourse() {
@@ -125,113 +115,17 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
           @Override
           public void run() {
             if (myCourse != null) {
-              StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-                @Override
-                public void run() {
-                  ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).show(new Runnable() {
-                    @Override
-                    public void run() {
-                      FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-                      if (editors.length > 0) {
-                        final JComponent focusedComponent = editors[0].getPreferredFocusedComponent();
-                        if (focusedComponent != null) {
-                          ApplicationManager.getApplication().invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                              IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
-                            }
-                          });
-                        }
-                      }
-                    }
-                  });
-                }
-              });
+              moveFocusToEditor();
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
               UISettings.getInstance().fireUISettingsChanged();
-              ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-              String toolWindowId = StudyToolWindowFactory.STUDY_TOOL_WINDOW;
-              try {
-                Method method = toolWindowManager.getClass().getDeclaredMethod("registerToolWindow", String.class,
-                                                                               JComponent.class,
-                                                                               ToolWindowAnchor.class,
-                                                                               boolean.class, boolean.class, boolean.class);
-                method.setAccessible(true);
-                method.invoke(toolWindowManager, toolWindowId, null, ToolWindowAnchor.LEFT, true, true, true);
-              }
-              catch (Exception e) {
-                final ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
-                if (toolWindow == null) {
-                  toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.RIGHT, myProject, true);
-                }
-              }
-
-              final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(toolWindowId);
-              class UrlOpeningListener implements NotificationListener {
-                private final boolean myExpireNotification;
-
-                public UrlOpeningListener(boolean expireNotification) {
-                  myExpireNotification = expireNotification;
-                }
-
-                protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                  URL url = event.getURL();
-                  if (url == null) {
-                    BrowserUtil.browse(event.getDescription());
-                  }
-                  else {
-                    BrowserUtil.browse(url);
-                  }
-                  if (myExpireNotification) {
-                    notification.expire();
-                  }
-                }
-
-                @Override
-                public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                  if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    hyperlinkActivated(notification, event);
-                  }
-                }
-              }
+              final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+              registerToolWindow(toolWindowManager);
+              final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
               if (studyToolWindow != null) {
                 StudyUtils.updateStudyToolWindow(myProject);
                 studyToolWindow.show(null);
-                UiNotifyConnector.doWhenFirstShown(studyToolWindow.getComponent(), new Runnable() {
-                  @Override
-                  public void run() {
-                    if (PropertiesComponent.getInstance().getBoolean("StudyShowPopup", true)) {
-                      String content = StudyUtils.getLinkToTutorial();
-                      final Notification notification =
-                        new Notification("Watch Tutorials!", "", content, NotificationType.INFORMATION, new UrlOpeningListener(true));
-                      Notifications.Bus.notify(notification);
-                      Balloon balloon = notification.getBalloon();
-                      if (balloon != null) {
-                        balloon.addListener(new JBPopupAdapter() {
-                          @Override
-                          public void onClosed(LightweightWindowEvent event) {
-                            notification.expire();
-                          }
-                        });
-                      }
-                      notification.whenExpired(new Runnable() {
-                        @Override
-                        public void run() {
-                          PropertiesComponent.getInstance().setValue("StudyShowPopup", String.valueOf(false));
-                        }
-                      });
-                    }
-                  }
-                });
               }
-              addShortcut(StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.ACTION_ID, false);
-              addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID, false);
-              addShortcut(StudyShowHintAction.SHORTCUT, StudyShowHintAction.ACTION_ID, false);
-              addShortcut(StudyNextWindowAction.SHORTCUT2, StudyNextWindowAction.ACTION_ID, true);
-              addShortcut(StudyCheckAction.SHORTCUT, StudyCheckAction.ACTION_ID, false);
-              addShortcut(StudyNextStudyTaskAction.SHORTCUT, StudyNextStudyTaskAction.ACTION_ID, false);
-              addShortcut(StudyPreviousStudyTaskAction.SHORTCUT, StudyPreviousStudyTaskAction.ACTION_ID, false);
-              addShortcut(StudyRefreshTaskFileAction.SHORTCUT, StudyRefreshTaskFileAction.ACTION_ID, false);
+              registerShortcuts();
             }
           }
         });
@@ -239,19 +133,68 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     });
   }
 
+  private void moveFocusToEditor() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+      @Override
+      public void run() {
+        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).show(new Runnable() {
+          @Override
+          public void run() {
+            FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+            if (editors.length > 0) {
+              final JComponent focusedComponent = editors[0].getPreferredFocusedComponent();
+              if (focusedComponent != null) {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
+                  }
+                });
+              }
+            }
+          }
+        });
+      }
+    });
+  }
+
+  private static void registerShortcuts() {
+    addShortcut(StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.ACTION_ID, false);
+    addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID, false);
+    addShortcut(StudyShowHintAction.SHORTCUT, StudyShowHintAction.ACTION_ID, false);
+    addShortcut(StudyNextWindowAction.SHORTCUT2, StudyNextWindowAction.ACTION_ID, true);
+    addShortcut(StudyCheckAction.SHORTCUT, StudyCheckAction.ACTION_ID, false);
+    addShortcut(StudyNextStudyTaskAction.SHORTCUT, StudyNextStudyTaskAction.ACTION_ID, false);
+    addShortcut(StudyPreviousStudyTaskAction.SHORTCUT, StudyPreviousStudyTaskAction.ACTION_ID, false);
+    addShortcut(StudyRefreshTaskFileAction.SHORTCUT, StudyRefreshTaskFileAction.ACTION_ID, false);
+  }
+
+  private void registerToolWindow(@NotNull final ToolWindowManager toolWindowManager) {
+    try {
+      Method method = toolWindowManager.getClass().getDeclaredMethod("registerToolWindow", String.class,
+                                                                     JComponent.class,
+                                                                     ToolWindowAnchor.class,
+                                                                     boolean.class, boolean.class, boolean.class);
+      method.setAccessible(true);
+      method.invoke(toolWindowManager, StudyToolWindowFactory.STUDY_TOOL_WINDOW, null, ToolWindowAnchor.LEFT, true, true, true);
+    }
+    catch (Exception e) {
+      final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+      if (toolWindow == null) {
+        toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
+      }
+    }
+  }
+
   private void updateCourse() {
     if (myCourse == null) {
       return;
     }
-    File resourceFile = new File(myCourse.getResourcePath());
-    if (!resourceFile.exists()) {
+    final File resourceDirectory = new File(myCourse.getCourseDirectory());
+    if (!resourceDirectory.exists()) {
       return;
     }
-    final File courseDir = resourceFile.getParentFile();
-    if (!courseDir.exists()) {
-      return;
-    }
-    final File[] files = courseDir.listFiles();
+    final File[] files = resourceDirectory.listFiles();
     if (files == null) return;
     for (File file : files) {
       if (file.getName().equals(StudyNames.TEST_HELPER)) {
@@ -302,14 +245,15 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectClosed() {
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     StudyCondition.VALUE = false;
     if (myCourse != null) {
       ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager()
         .removeAllContents(false);
       if (!myDeletedShortcuts.isEmpty()) {
         for (Map.Entry<String, String> shortcut : myDeletedShortcuts.entrySet()) {
-          Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-          Shortcut actionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcut.getValue()), null);
+          final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+          final Shortcut actionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcut.getValue()), null);
           keymap.addShortcut(shortcut.getKey(), actionShortcut);
         }
       }
@@ -325,7 +269,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
         AnAction[] newGroupActions = ((ActionGroup)ActionManager.getInstance().getAction("NewGroup")).getChildren(null);
         for (AnAction newAction : newGroupActions) {
           if (newAction == action) {
-            myListener =  new FileCreatedListener();
+            myListener =  new FileCreatedByUserListener();
             VirtualFileManager.getInstance().addVirtualFileListener(myListener);
             break;
           }
@@ -360,62 +304,59 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   }
 
   public static StudyTaskManager getInstance(@NotNull final Project project) {
-    StudyTaskManager item = myTaskManagers.get(project.getBasePath());
-    return item != null ? item : new StudyTaskManager(project);
+    final Module module = ModuleManager.getInstance(project).getModules()[0];
+    return ModuleServiceManager.getService(module, StudyTaskManager.class);
   }
-
 
   @Nullable
   public TaskFile getTaskFile(@NotNull final VirtualFile file) {
     if (myCourse == null) {
       return null;
     }
-    VirtualFile taskDir = file.getParent();
-    if (taskDir != null) {
-      String taskDirName = taskDir.getName();
-      if (taskDirName.contains(Task.TASK_DIR)) {
-        VirtualFile lessonDir = taskDir.getParent();
-        if (lessonDir != null) {
-          String lessonDirName = lessonDir.getName();
-          int lessonIndex = StudyUtils.getIndex(lessonDirName, Lesson.LESSON_DIR);
-          List<Lesson> lessons = myCourse.getLessons();
-          if (!StudyUtils.indexIsValid(lessonIndex, lessons)) {
-            return null;
-          }
-          Lesson lesson = lessons.get(lessonIndex);
-          int taskIndex = StudyUtils.getIndex(taskDirName, Task.TASK_DIR);
-          List<Task> tasks = lesson.getTaskList();
-          if (!StudyUtils.indexIsValid(taskIndex, tasks)) {
-            return null;
-          }
-          Task task = tasks.get(taskIndex);
-          return task.getFile(file.getName());
+    final VirtualFile taskDir = file.getParent();
+    if (taskDir == null) {
+      return null;
+    }
+    final String taskDirName = taskDir.getName();
+    if (taskDirName.contains(Task.TASK_DIR)) {
+      final VirtualFile lessonDir = taskDir.getParent();
+      if (lessonDir != null) {
+        int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);
+        List<Lesson> lessons = myCourse.getLessons();
+        if (!StudyUtils.indexIsValid(lessonIndex, lessons)) {
+          return null;
         }
+        final Lesson lesson = lessons.get(lessonIndex);
+        int taskIndex = StudyUtils.getIndex(taskDirName, Task.TASK_DIR);
+        final List<Task> tasks = lesson.getTaskList();
+        if (!StudyUtils.indexIsValid(taskIndex, tasks)) {
+          return null;
+        }
+        final Task task = tasks.get(taskIndex);
+        return task.getFile(file.getName());
       }
     }
     return null;
   }
 
-  class FileCreatedListener extends VirtualFileAdapter {
+  private class FileCreatedByUserListener extends VirtualFileAdapter {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
-      VirtualFile createdFile = event.getFile();
-      VirtualFile taskDir = createdFile.getParent();
-      String taskLogicalName = Task.TASK_DIR;
-      if (taskDir != null && taskDir.getName().contains(taskLogicalName)) {
-        int taskIndex = StudyUtils.getIndex(taskDir.getName(), taskLogicalName);
-        VirtualFile lessonDir = taskDir.getParent();
-        String lessonLogicalName = Lesson.LESSON_DIR;
-        if (lessonDir != null && lessonDir.getName().contains(lessonLogicalName)) {
-          int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), lessonLogicalName);
+      final VirtualFile createdFile = event.getFile();
+      final VirtualFile taskDir = createdFile.getParent();
+      if (taskDir != null && taskDir.getName().contains(Task.TASK_DIR)) {
+        int taskIndex = StudyUtils.getIndex(taskDir.getName(), Task.TASK_DIR);
+        final VirtualFile lessonDir = taskDir.getParent();
+        if (lessonDir != null && lessonDir.getName().contains(StudyNames.LESSON_DIR)) {
+          int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);
           if (myCourse != null) {
             List<Lesson> lessons = myCourse.getLessons();
             if (StudyUtils.indexIsValid(lessonIndex, lessons)) {
-              Lesson lesson = lessons.get(lessonIndex);
-              List<Task> tasks = lesson.getTaskList();
+              final Lesson lesson = lessons.get(lessonIndex);
+              final List<Task> tasks = lesson.getTaskList();
               if (StudyUtils.indexIsValid(taskIndex, tasks)) {
-                Task task = tasks.get(taskIndex);
-                TaskFile taskFile = new TaskFile();
+                final Task task = tasks.get(taskIndex);
+                final TaskFile taskFile = new TaskFile();
                 taskFile.init(task, false);
                 taskFile.setUserCreated(true);
                 task.getTaskFiles().put(createdFile.getName(), taskFile);

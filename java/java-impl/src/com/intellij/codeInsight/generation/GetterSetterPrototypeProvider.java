@@ -52,7 +52,7 @@ public abstract class GetterSetterPrototypeProvider {
         return generateGetter ? provider.generateGetters(field) : provider.generateSetters(field);
       }
     }
-    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field) : GenerateMembersUtil.generateSetterPrototype(field)};
+    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, false) : GenerateMembersUtil.generateSetterPrototype(field, false)};
   }
 
   public static boolean isReadOnlyProperty(PsiField field) {

@@ -29,7 +29,7 @@ public interface PsiDocTag extends PsiElement, PsiNamedElement {
   PsiDocTag[] EMPTY_ARRAY = new PsiDocTag[0];
 
   /**
-   * Returns the doc comment in which the tag is conained.
+   * Returns the doc comment in which the tag is contained.
    */
   PsiDocComment getContainingComment();
 

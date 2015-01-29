@@ -2,7 +2,7 @@ package com.jetbrains.edu.learning.actions;
 
 import com.intellij.icons.AllIcons;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.TaskWindow;
+import com.jetbrains.edu.learning.course.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,9 +20,9 @@ public class StudyNextWindowAction extends StudyWindowNavigationAction {
   }
 
   @Override
-  protected TaskWindow getNextTaskWindow(@NotNull final TaskWindow window) {
+  protected AnswerPlaceholder getNextTaskWindow(@NotNull final AnswerPlaceholder window) {
     int index = window.getIndex();
-    List<TaskWindow> windows = window.getTaskFile().getTaskWindows();
+    List<AnswerPlaceholder> windows = window.getTaskFile().getAnswerPlaceholders();
     if (StudyUtils.indexIsValid(index, windows)) {
       int newIndex = index + 1;
         return newIndex == windows.size() ? windows.get(0) : windows.get(newIndex);

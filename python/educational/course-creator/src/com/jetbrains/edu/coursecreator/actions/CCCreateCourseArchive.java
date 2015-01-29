@@ -61,7 +61,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     createCourseArchive(project);
   }
 
-  public void createCourseArchive(final Project project) {
+  private void createCourseArchive(final Project project) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     if (course == null) return;
@@ -134,8 +134,8 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     final TaskFile taskFile = taskFiles.getValue();
     TaskFile taskFileSaved = new TaskFile();
     taskFile.copy(taskFileSaved);
-    for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
-      taskWindow.setLength(taskWindow.getReplacementLength());
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getTaskWindows()) {
+      answerPlaceholder.setLength(answerPlaceholder.getReplacementLength());
     }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
@@ -153,25 +153,25 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     taskFilesCopy.put(taskFile, taskFileSaved);
     Collections.sort(taskFile.getTaskWindows());
     for (int i = taskFile.getTaskWindows().size() - 1; i >= 0; i--) {
-      final TaskWindow taskWindow = taskFile.getTaskWindows().get(i);
-      replaceTaskWindow(project, document, taskWindow);
+      final AnswerPlaceholder answerPlaceholder = taskFile.getTaskWindows().get(i);
+      replaceTaskWindow(project, document, answerPlaceholder);
     }
     document.removeDocumentListener(listener);
   }
 
   private static void replaceTaskWindow(@NotNull final Project project,
                                         @NotNull final Document document,
-                                        @NotNull final TaskWindow taskWindow) {
-    final String taskText = taskWindow.getTaskText();
-    final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
-    final int offset = lineStartOffset + taskWindow.start;
+                                        @NotNull final AnswerPlaceholder answerPlaceholder) {
+    final String taskText = answerPlaceholder.getTaskText();
+    final int lineStartOffset = document.getLineStartOffset(answerPlaceholder.getLine());
+    final int offset = lineStartOffset + answerPlaceholder.getStart();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            document.replaceString(offset, offset + taskWindow.getLength(), taskText);
+            document.replaceString(offset, offset + answerPlaceholder.getLength(), taskText);
             FileDocumentManager.getInstance().saveDocument(document);
           }
         });
