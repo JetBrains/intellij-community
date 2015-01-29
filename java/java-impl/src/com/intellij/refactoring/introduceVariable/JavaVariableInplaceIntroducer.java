@@ -46,6 +46,7 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.NonFocusableCheckBox;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -128,7 +129,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void restoreState(PsiVariable psiField) {
+  protected void restoreState(@NotNull PsiVariable psiField) {
     if (myDeleteSelf) return;
     super.restoreState(psiField);
   }
@@ -142,7 +143,10 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   @Override
   protected void performCleanup() {
     super.performCleanup();
-    super.restoreState(getVariable());
+    PsiVariable variable = getVariable();
+    if (variable != null) {
+      super.restoreState(variable);
+    }
   }
 
   @Override

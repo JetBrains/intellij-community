@@ -464,7 +464,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
   }
 
-  protected void restoreState(final V psiField) {
+  protected void restoreState(@NotNull final V psiField) {
     if (!ReadonlyStatusHandler.ensureDocumentWritable(myProject, InjectedLanguageUtil.getTopLevelEditor(myEditor).getDocument())) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
