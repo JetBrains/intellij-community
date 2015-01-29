@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
-import org.jetbrains.idea.svn.dialogs.WCPaths;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -58,7 +57,7 @@ public class SvnMergeInfoCache {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, SvnMergeInfoCache.class);
   }
 
-  public void clear(@NotNull WCPaths info, String branchPath) {
+  public void clear(@NotNull WCInfoWithBranches info, String branchPath) {
     BranchInfo branchInfo = getBranchInfo(info, branchPath);
 
     if (branchInfo != null) {
@@ -67,7 +66,7 @@ public class SvnMergeInfoCache {
   }
 
   @Nullable
-  public MergeInfoCached getCachedState(@NotNull WCPaths info, String branchPath) {
+  public MergeInfoCached getCachedState(@NotNull WCInfoWithBranches info, String branchPath) {
     BranchInfo branchInfo = getBranchInfo(info, branchPath);
 
     return branchInfo != null ? branchInfo.getCached() : null;
@@ -101,7 +100,7 @@ public class SvnMergeInfoCache {
   }
 
   @Nullable
-  private BranchInfo getBranchInfo(@NotNull WCPaths info, String branchPath) {
+  private BranchInfo getBranchInfo(@NotNull WCInfoWithBranches info, String branchPath) {
     MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getRootUrl());
 
     return rootMapping != null ? rootMapping.getBranchInfo(branchPath) : null;

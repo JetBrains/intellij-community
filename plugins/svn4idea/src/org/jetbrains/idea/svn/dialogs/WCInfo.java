@@ -25,7 +25,7 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 
-public class WCInfo implements WCPaths {
+public class WCInfo {
 
   private final boolean myIsWcRoot;
   @NotNull private final Depth myStickyDepth;

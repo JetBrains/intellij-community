@@ -26,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
-import org.jetbrains.idea.svn.dialogs.WCPaths;
 import org.jetbrains.idea.svn.history.RootsAndBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnMergeInfoRootPanelManual;
@@ -70,7 +69,7 @@ public class MergeInfoHolder {
   }
 
   @NotNull
-  private static Couple<String> createKey(@NotNull WCPaths root, @NotNull WCInfoWithBranches.Branch branch) {
+  private static Couple<String> createKey(@NotNull WCInfoWithBranches root, @NotNull WCInfoWithBranches.Branch branch) {
     return Couple.of(root.getPath(), branch.getUrl());
   }
 
