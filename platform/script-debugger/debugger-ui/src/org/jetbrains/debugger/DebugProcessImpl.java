@@ -7,6 +7,7 @@ import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.socketConnection.ConnectionStatus;
 import com.intellij.util.io.socketConnection.SocketConnectionListener;
+import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
@@ -263,6 +264,13 @@ public abstract class DebugProcessImpl<C extends VmConnection> extends XDebugPro
 
   @Override
   protected final ProcessHandler doGetProcessHandler() {
-    return executionResult != null ? executionResult.getProcessHandler() : null;
+    return executionResult == null ? new SilentDestroyDebugProcessHandler() : executionResult.getProcessHandler();
+  }
+
+  private static final class SilentDestroyDebugProcessHandler extends DefaultDebugProcessHandler {
+    @Override
+    public boolean isSilentlyDestroyOnClose() {
+      return true;
+    }
   }
 }
