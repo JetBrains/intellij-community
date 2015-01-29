@@ -52,6 +52,10 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
     doTest("i", "There is already method <b><code>Super setI(int)</code></b> which differs from setter <b><code>setI</code></b> by return type only");
   }
 
+  public void testPostfixExpressionUsedInAssignment() throws Exception {
+    doTest("i", "Unable to proceed with postfix/prefix expression when it's result type is used");
+  }
+
   public void testHideOverriderMethod() throws Exception {
     doTest("i", "A", "There is already a method <b><code>B.getI()</code></b> which would hide generated getter for a.i");
   }
