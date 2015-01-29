@@ -32,6 +32,7 @@ import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -405,5 +406,42 @@ public class IconUtil {
       }
     };
 
+  }
+
+
+  @NotNull
+  public static Icon colorize(@NotNull final Icon source, @NotNull Color color, boolean keepGray) {
+    float[] base = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+
+    final BufferedImage image = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+    final Graphics2D g = image.createGraphics();
+    source.paintIcon(null, g, 0, 0);
+    g.dispose();
+
+    final BufferedImage img = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+    int[] rgba = new int[4];
+    float[] hsb = new float[3];
+    for (int y = 0; y < image.getHeight(); y++) {
+      for (int x = 0; x < image.getWidth(); x++) {
+        image.getRaster().getPixel(x, y, rgba);
+        if (rgba[3] != 0) {
+          Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
+          int rgb = Color.HSBtoRGB(base[0], base[1] * (keepGray ? hsb[1] : 1f), base[2] * hsb[2]);
+          img.getRaster().setPixel(x, y, new int[]{(rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff, rgba[3]});
+        }
+      }
+    }
+
+    return new JBImageIcon(img) {
+      @Override
+      public int getIconWidth() {
+        return getImage() instanceof JBHiDPIScaledImage ? super.getIconWidth() / 2 : super.getIconWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return getImage() instanceof JBHiDPIScaledImage ? super.getIconHeight() / 2: super.getIconHeight();
+      }
+    };
   }
 }
