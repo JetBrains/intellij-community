@@ -39,33 +39,35 @@ import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import com.intellij.vcs.log.graph.utils.impl.FullIntList
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
+import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 
-trait BaseTestGraphBuilder {
-  val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
-  val Int.UNM: SimpleNode get() = SimpleNode(this, GraphNodeType.UNMATCHED)
-  val Int.NOT_LOAD: SimpleNode get() = SimpleNode(this, GraphNodeType.NOT_LOAD_COMMIT)
+public trait BaseTestGraphBuilder {
+  public val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
+  public val Int.UNM: SimpleNode get() = SimpleNode(this, GraphNodeType.UNMATCHED)
+  public val Int.NOT_LOAD: SimpleNode get() = SimpleNode(this, GraphNodeType.NOT_LOAD_COMMIT)
 
-  val Int.u: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.USUAL)
-  val Int.dot: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.DOTTED)
-  val Int?.up_dot: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.DOTTED_ARROW_UP)
-  val Int?.down_dot: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.DOTTED_ARROW_DOWN)
-  val Int?.not_load: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.NOT_LOAD_COMMIT)
+  public val Int.u: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.USUAL)
+  public val Int.dot: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.DOTTED)
+  public val Int?.up_dot: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.DOTTED_ARROW_UP)
+  public val Int?.down_dot: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.DOTTED_ARROW_DOWN)
+  public val Int?.not_load: SimpleEdge get() = SimpleEdge(this, GraphEdgeType.NOT_LOAD_COMMIT)
 
   class SimpleEdge(val toNode: Int?, val type: GraphEdgeType = GraphEdgeType.USUAL)
   class SimpleNode(val nodeId: Int, val type: GraphNodeType = GraphNodeType.USUAL)
 }
 
-class TestGraphBuilder: BaseTestGraphBuilder {
+public class TestGraphBuilder: BaseTestGraphBuilder {
   private val nodes = ArrayList<NodeWithEdges>()
 
-  fun done(): LinearGraph = TestLinearGraph(nodes)
+  public fun done(): LinearGraph = TestLinearGraph(nodes)
 
-  fun Int.invoke() = newNode(asSimpleNode())
-  fun Int.invoke(vararg edge: Int) = newNode(asSimpleNode(), edge.asSimpleEdges())
-  fun Int.invoke(vararg edge: SimpleEdge) = newNode(asSimpleNode(), edge.toList())
-  fun SimpleNode.invoke() = newNode(this)
-  fun SimpleNode.invoke(vararg edge: Int) = newNode(this, edge.asSimpleEdges())
-  fun SimpleNode.invoke(vararg edge: SimpleEdge) = newNode(this, edge.toList())
+  public fun Int.invoke(): Unit = newNode(asSimpleNode())
+  public fun Int.invoke(vararg edge: Int): Unit = newNode(asSimpleNode(), edge.asSimpleEdges())
+  public fun Int.invoke(vararg edge: SimpleEdge): Unit = newNode(asSimpleNode(), edge.toList())
+  public fun SimpleNode.invoke(): Unit = newNode(this)
+  public fun SimpleNode.invoke(vararg edge: Int): Unit = newNode(this, edge.asSimpleEdges())
+  public fun SimpleNode.invoke(vararg edge: SimpleEdge): Unit = newNode(this, edge.toList())
 
   private class NodeWithEdges(val nodeId: Int, val edges: List<SimpleEdge>, val type: GraphNodeType = GraphNodeType.USUAL)
 
@@ -167,7 +169,7 @@ private fun LinearGraph.assertEdge(nodeIndex: Int, edge: GraphEdge) {
   }
 }
 
-fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuilder {
+public fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuilder {
   for(nodeIndex in 0..nodesCount() - 1) {
     val node = getGraphNode(nodeIndex)
     append(getNodeId(nodeIndex))
@@ -216,7 +218,7 @@ fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuild
   }
 }.toString()
 
-fun graph(f: TestGraphBuilder.() -> Unit): LinearGraph {
+public fun graph(f: TestGraphBuilder.() -> Unit): LinearGraph {
   val builder = TestGraphBuilder()
   builder.f()
   return builder.done()
@@ -276,3 +278,11 @@ class TestPermanentGraphInfo(
 
   override fun getGraphColorManager() = colorManager
 }
+
+class TestLinearController(val graph: LinearGraph) : LinearGraphController {
+  override fun getCompiledGraph() = graph
+
+  override fun performLinearGraphAction(action: LinearGraphController.LinearGraphAction) = throw UnsupportedOperationException()
+}
+
+public fun LinearGraph.asVisibleGraph(): VisibleGraph<Int> = VisibleGraphImpl(TestLinearController(this), TestPermanentGraphInfo(this))
