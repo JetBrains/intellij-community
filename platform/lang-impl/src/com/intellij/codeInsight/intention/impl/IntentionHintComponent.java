@@ -38,6 +38,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -90,10 +92,19 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private static final int SMALL_BORDER_SIZE = 4;
 
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
-  private static final Border ACTIVE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
-
   private static final Border INACTIVE_BORDER_SMALL = BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
-  private static final Border ACTIVE_BORDER_SMALL = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1));
+  
+  private static Border createActiveBorder() {
+    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
+  }
+  
+  private static  Border createActiveBorderSmall() {
+    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1));
+  }
+
+  private static Color getBorderColor() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
+  }
 
   private final Editor myEditor;
 
@@ -273,7 +284,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
       int yShift = -(NORMAL_BORDER_SIZE + AllIcons.Actions.RealIntentionBulb.getIconHeight());
       if (canPlaceBulbOnTheSameLine(editor)) {
-        yShift = -(borderHeight + ((AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight())/2) + 3);
+        yShift = -(borderHeight + (AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight()) /2 + 3);
       }
 
       final int xShift = AllIcons.Actions.RealIntentionBulb.getIconWidth();
@@ -295,7 +306,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     final int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
     if (firstNonSpaceColumnOnTheLine == -1) return false;
     final Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
-    return point.x > (AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2);
+    return point.x > AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2;
   }
 
   private IntentionHintComponent(@NotNull Project project,
@@ -387,7 +398,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   private void onMouseEnter(final boolean small) {
     myIconLabel.setIcon(myHighlightedIcon);
-    setBorder(small ? ACTIVE_BORDER_SMALL : ACTIVE_BORDER);
+    setBorder(small ? createActiveBorderSmall() : createActiveBorder());
 
     String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
@@ -477,7 +488,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     recreateMyPopup(intentionListStep);
   }
 
-  private class MyComponentHint extends LightweightHint {
+  private static class MyComponentHint extends LightweightHint {
     private boolean myVisible = false;
     private boolean myShouldDelay;
 
