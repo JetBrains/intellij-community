@@ -2,6 +2,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -118,6 +119,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testCollapseClass() throws Exception { doTest(); }
   public void testSCR10386() throws Exception { doTest(); }
   public void testDeclarationWithInitializer() throws Exception {doTest(); }
+
   public void testUnwrapCodeBlock1() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
@@ -126,14 +128,15 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     try {
       settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
-      settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
+      settings.getCommonSettings(JavaLanguage.INSTANCE).IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
       doTest();
     } finally {
       settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = use_tab_character;
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = smart_tabs;
-      settings.IF_BRACE_FORCE = old;
+      settings.getCommonSettings(JavaLanguage.INSTANCE).IF_BRACE_FORCE = old;
     }
   }
+
   public void testUnwrapCodeBlock2() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean use_tab_character = settings.useTabCharacter(null);
@@ -142,12 +145,12 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     try {
       settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
-      settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+      settings.getCommonSettings(JavaLanguage.INSTANCE).IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
       doTest();
     } finally {
       settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = use_tab_character;
       settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = smart_tabs;
-      settings.IF_BRACE_FORCE = old;
+      settings.getCommonSettings(JavaLanguage.INSTANCE).IF_BRACE_FORCE = old;
     }
   }
 
