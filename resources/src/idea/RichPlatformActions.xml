@@ -103,6 +103,7 @@
     </group>
 
     <group id="CompilerErrorViewPopupMenu">
+      <action id="ExcludeFromValidation" class="com.intellij.compiler.options.ExcludeFromValidationAction"/>
     </group>
 
     <!-- Tools -->

@@ -249,6 +249,8 @@
                     key="java.compiler.description" bundle="messages.CompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.AnnotationProcessorsConfigurable"
                     id="reference.projectsettings.compiler.annotationProcessors" displayName="Annotation Processors"/>
+      <configurable instance="com.intellij.compiler.options.ValidationConfigurable" id="project.validation" key="validation.display.name"
+                    bundle="messages.CompilerBundle" />
       <configurable instance="com.intellij.compiler.options.RmicConfigurable" id="reference.projectsettings.compiler.rmicompiler"
                     key="rmi.compiler.description" bundle="messages.CompilerBundle"/>
     </projectConfigurable>
