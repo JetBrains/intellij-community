@@ -144,7 +144,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myMainFrame.getGraphTable().repaint();
   }
 
-  private void performLongAction(@NotNull final GraphAction graphAction, @NotNull String title) {
+  private void performLongAction(@NotNull final GraphAction graphAction, @NotNull final String title) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -153,7 +153,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            assert updater != null;
+            assert updater != null : "Action:" + title + "\nController: " + myVisiblePack.getVisibleGraph().getActionController() + "\nAnswer:" + answer;
             updater.run();
             handleAnswer(answer, true);
           }
