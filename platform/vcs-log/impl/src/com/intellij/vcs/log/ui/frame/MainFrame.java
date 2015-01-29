@@ -186,17 +186,33 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     AnAction bekAction = new BekAction();
     AnAction linearBekAction = new LinearBekAction();
 
-    AnAction hideBranchesAction = new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
+    AnAction collapseBranchesAction = new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.hideAll();
       }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        if (!myFilterUi.getFilters().isEmpty()) {
+          e.getPresentation().setEnabled(false);
+        }
+      }
     };
 
-    AnAction showBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
+    AnAction expandBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.showAll();
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        if (!myFilterUi.getFilters().isEmpty()) {
+          e.getPresentation().setEnabled(false);
+        }
       }
     };
 
@@ -218,7 +234,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     refreshAction.registerShortcutOn(this);
 
     DefaultActionGroup toolbarGroup =
-      new DefaultActionGroup(bekAction, linearBekAction, hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction, showDetailsAction);
+      new DefaultActionGroup(bekAction, linearBekAction, collapseBranchesAction, expandBranchesAction, showFullPatchAction, refreshAction, showDetailsAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
