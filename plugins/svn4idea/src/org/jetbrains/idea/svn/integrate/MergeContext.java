@@ -30,7 +30,7 @@ public class MergeContext {
   @NotNull private final String myBranchName;
   @NotNull private final VirtualFile myRoot;
   @NotNull private final WCInfo myWcInfo;
-  @NotNull private String mySourceUrl;
+  @NotNull private final String mySourceUrl;
   @NotNull private final SvnVcs myVcs;
   @NotNull private final String myTitle;
 
@@ -81,9 +81,5 @@ public class MergeContext {
   @NotNull
   public String getTitle() {
     return myTitle;
-  }
-
-  public void setSourceUrl(@NotNull String sourceUrl) {
-    mySourceUrl = sourceUrl;
   }
 }
