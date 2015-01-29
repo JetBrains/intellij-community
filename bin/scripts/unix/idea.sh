@@ -133,15 +133,41 @@ if [ -z "$MAIN_CLASS_NAME" ]; then
   MAIN_CLASS_NAME="com.intellij.idea.Main"
 fi
 
-VM_OPTIONS_FILE="$@@product_uc@@_VM_OPTIONS"
-if [ -z "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS_FILE="$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"
+VM_OPTIONS_FILES_0=$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions
+VM_OPTIONS_FILES_1=$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions
+VM_OPTIONS_FILES_2=$@@product_uc@@_VM_OPTIONS
+
+VM_OPTIONS=""
+VM_OPTIONS_FILES_USED=""
+
+if [ -r "$VM_OPTIONS_FILES_0" ]; then
+  VM_OPTIONS_DATA=`"$CAT" "$VM_OPTIONS_FILES_0" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+  if [ -n "$VM_OPTIONS_FILES_USED" ]; then
+    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
+  fi
+  VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$VM_OPTIONS_FILES_0"
 fi
 
-if [ -r "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
-  VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILE\""
+if [ -r "$VM_OPTIONS_FILES_1" ]; then
+  VM_OPTIONS_DATA=`"$CAT" "$VM_OPTIONS_FILES_1" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+  if [ -n "$VM_OPTIONS_FILES_USED" ]; then
+    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
+  fi
+  VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$VM_OPTIONS_FILES_1"
 fi
+
+if [ -r "$VM_OPTIONS_FILES_2" ]; then
+  VM_OPTIONS_DATA=`"$CAT" "$VM_OPTIONS_FILES_2" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+  if [ -n "$VM_OPTIONS_FILES_USED" ]; then
+    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
+  fi
+  VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$VM_OPTIONS_FILES_2"
+fi
+
+VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILES_USED\""
 
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
