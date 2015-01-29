@@ -51,6 +51,7 @@ public class OneRecursiveShotMergeInfoWorker {
   public OneRecursiveShotMergeInfoWorker(@NotNull MergeContext mergeContext) {
     myMergeContext = mergeContext;
     myLock = new Object();
+    // TODO: Rewrite without AreaMap usage
     myDataMap = AreaMap.create(new PairProcessor<String, String>() {
       public boolean process(String parentUrl, String childUrl) {
         if (".".equals(parentUrl)) return true;
@@ -148,10 +149,7 @@ public class OneRecursiveShotMergeInfoWorker {
         String mergedPathAffectingSourcePath = ContainerUtil.find(map.keySet(), new Condition<String>() {
           @Override
           public boolean value(String path) {
-            // TODO: Seems that first 2 conditions are always false - as BranchInfo.parseMergeInfo() does not return such values.
-            return ".".equals(path) ||
-                   path.isEmpty() ||
-                   SVNPathUtil.isAncestor(myWcLevelRelativeSourceUrl, SvnUtil.ensureStartSlash(path));
+            return SVNPathUtil.isAncestor(myWcLevelRelativeSourceUrl, SvnUtil.ensureStartSlash(path));
           }
         });
 
