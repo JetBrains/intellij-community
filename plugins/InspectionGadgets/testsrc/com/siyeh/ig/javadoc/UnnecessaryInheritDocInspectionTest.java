@@ -20,16 +20,8 @@ import com.siyeh.ig.LightInspectionTestCase;
 
 public class UnnecessaryInheritDocInspectionTest extends LightInspectionTestCase {
 
-  public void testAdditionalTags() {
-    addEnvironmentClass("interface I { /***/ void f();}");
-    myFixture.configureByText("X.java", "class X implements I {" +
-                                        "    /**\n" +
-                                        "     * {@inheritDoc}\n" +
-                                        "     * @throws FooException comment\n" +
-                                        "     */" +
-                                        "    public void f() {}" +
-                                        "}");
-    myFixture.testHighlighting(true, false, false);
+  public void testUnnecessaryInheritDoc() {
+    doTest();
   }
 
   @Override
