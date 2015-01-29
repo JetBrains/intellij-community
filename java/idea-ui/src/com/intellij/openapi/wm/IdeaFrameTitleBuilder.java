@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,6 +31,13 @@ import org.jetbrains.annotations.NotNull;
 public class IdeaFrameTitleBuilder extends PlatformFrameTitleBuilder {
   @Override
   public String getFileTitle(@NotNull final Project project, @NotNull final VirtualFile file) {
-    return ProjectUtil.calcRelativeToProjectPath(file, project, !SystemInfo.isMac, true, false);
+    String fileTitle = EditorTabbedContainer.calcTabTitle(project, file);
+    if (SystemInfo.isMac) return fileTitle;
+
+    VirtualFile parent = file.getParent();
+    if (parent == null || !fileTitle.endsWith(file.getName())) return fileTitle;
+
+    String url = FileUtil.getLocationRelativeToUserHome(parent.getPresentableUrl() + "/" + PathUtil.getFileName(fileTitle));
+    return ProjectUtilCore.displayUrlRelativeToProject(file, url, project, !SystemInfo.isMac, false);
   }
 }
