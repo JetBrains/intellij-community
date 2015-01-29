@@ -55,7 +55,7 @@ public class SourceUrlCorrectionTask extends BaseMergeTask {
 
   @Nullable
   private SVNURL getWorkingBranch() {
-    return SvnBranchConfigurationManager.getInstance(myMergeContext.getProject()).getSvnBranchConfigManager().getWorkingBranchWithReload(
+    return SvnBranchConfigurationManager.getInstance(myMergeContext.getProject()).getSvnBranchConfigManager().getWorkingBranch(
       myMergeContext.getWcInfo().getUrl(), myMergeContext.getRoot());
   }
 

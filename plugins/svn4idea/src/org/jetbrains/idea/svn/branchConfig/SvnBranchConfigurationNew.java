@@ -163,19 +163,6 @@ public class SvnBranchConfigurationNew {
     return baseUrl == null ? null : SvnUtil.createUrl(baseUrl);
   }
 
-  // todo not checked
-  // todo +-
-  @Nullable
-  public String getGroupToLoadToReachUrl(final SVNURL url) throws SVNException {
-    final BranchSearcher branchSearcher = new BranchSearcher(url);
-    for (String group : myBranchMap.keySet()) {
-      if (branchSearcher.accept(group)) {
-        return group;
-      }
-    }
-    return null;
-  }
-
   private void iterateUrls(final UrlListener listener) throws SVNException {
     if (listener.accept(myTrunkUrl)) {
       return;
@@ -247,33 +234,5 @@ public class SvnBranchConfigurationNew {
 
   private interface UrlListener {
     boolean accept(final String url) throws SVNException;
-  }
-
-  // todo not checked
-  private static class BranchSearcher implements UrlListener {
-    private final SVNURL mySomeUrl;
-    private SVNURL myResult;
-
-    private BranchSearcher(final SVNURL someUrl) {
-      mySomeUrl = someUrl;
-    }
-
-    public boolean accept(final String url) throws SVNException {
-      myResult = urlIsParent(url, mySomeUrl);
-      return myResult != null;
-    }
-
-    public SVNURL getResult() {
-      return myResult;
-    }
-  }
-
-  @Nullable
-  private static SVNURL urlIsParent(final String parentCandidate, final SVNURL child) throws SVNException {
-    final SVNURL parentUrl = SVNURL.parseURIEncoded(parentCandidate);
-    if(parentUrl.equals(SVNURLUtil.getCommonURLAncestor(parentUrl, child))) {
-      return parentUrl;
-    }
-    return null;
   }
 }
