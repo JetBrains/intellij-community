@@ -26,6 +26,18 @@ public class InvalidPropertyKeyInspectionTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testImplicit() throws Exception {
+    doTest();
+  }
+
+  public void testImplicit2() throws Exception {
+    doTest();
+  }
+
+  public void testImplicit3() throws Exception {
+    doTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/inspections";
