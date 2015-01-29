@@ -35,6 +35,10 @@ public class JBUI {
     return new JBDimension(width, height);
   }
 
+  public static JBDimension size(int widthAndHeight) {
+    return new JBDimension(widthAndHeight, widthAndHeight);
+  }
+
   public static JBDimension size(Dimension size) {
     return size instanceof JBDimension ? ((JBDimension)size) : new JBDimension(size.width, size.height);
   }
