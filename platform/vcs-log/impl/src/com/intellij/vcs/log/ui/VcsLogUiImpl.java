@@ -175,22 +175,13 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myUiProperties.setLongEdgesVisibility(visibility);
   }
 
-  public void setBek(boolean bek) {
-    myUiProperties.setBek(bek);
-    myFilterer.onSortTypeChange(bek ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
+  public void setBek(PermanentGraph.SortType bekType) {
+    myUiProperties.setBek(bekType.ordinal());
+    myFilterer.onSortTypeChange(bekType);
   }
 
-  public boolean isBek() {
-    return myUiProperties.isBek();
-  }
-
-  public void setLinearBek(boolean bek) {
-    myUiProperties.setLinearBek(bek);
-    myFilterer.onSortTypeChange(bek ? PermanentGraph.SortType.LinearBek : PermanentGraph.SortType.Bek);
-  }
-
-  public boolean isLinearBek() {
-    return myUiProperties.isLinearBek();
+  public PermanentGraph.SortType getBekType() {
+    return PermanentGraph.SortType.values()[myUiProperties.getBekSortType()];
   }
 
   public void setShowRootNames(boolean isShowRootNames) {
