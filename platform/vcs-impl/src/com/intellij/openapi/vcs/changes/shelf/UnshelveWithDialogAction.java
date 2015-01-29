@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
@@ -38,7 +37,7 @@ import java.util.Collections;
  *         Date: 2/25/11
  *         Time: 5:50 PM
  */
-public class UnshelveWithDialogAction extends AnAction {
+public class UnshelveWithDialogAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
