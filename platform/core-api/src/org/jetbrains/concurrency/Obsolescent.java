@@ -20,8 +20,4 @@ public interface Obsolescent {
    * @return <code>true</code> if result of computation won't be used so computation may be interrupted
    */
   boolean isObsolete();
-
-  @SuppressWarnings("ClassNameSameAsAncestorName")
-  interface Consumer<T> extends com.intellij.util.Consumer<T>, Obsolescent {
-  }
 }

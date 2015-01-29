@@ -1,9 +1,11 @@
 package org.jetbrains.debugger;
 
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Obsolescent;
 
-public abstract class ObsolescentConsumer<T> implements Obsolescent.Consumer<T> {
+@SuppressWarnings("ClassNameSameAsAncestorName")
+public abstract class ObsolescentConsumer<T> implements Obsolescent, Consumer<T> {
   private final Obsolescent obsolescent;
 
   protected ObsolescentConsumer(@NotNull Obsolescent obsolescent) {
