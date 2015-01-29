@@ -17,9 +17,11 @@ package com.intellij.execution.console;
 
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.process.ConsoleHistoryModel;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -36,18 +38,23 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
@@ -60,19 +67,27 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 /**
  * @author gregsh
  */
 public class ConsoleHistoryController {
 
-  private static final int VERSION = 1;
-
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
+
+  private final static FactoryMap<String, ConsoleHistoryModel> ourModels = new FactoryMap<String, ConsoleHistoryModel>() {
+    @Override
+    protected Map<String, ConsoleHistoryModel> createMap() {
+      return ContainerUtil.createConcurrentWeakValueMap();
+    }
+
+    @Nullable
+    @Override
+    protected ConsoleHistoryModel create(String key) {
+      return new ConsoleHistoryModel();
+    }
+  };
 
   private final LanguageConsole myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
@@ -82,10 +97,24 @@ public class ConsoleHistoryController {
   private final ModelHelper myHelper;
   private long myLastSaveStamp;
 
+  @Deprecated
   public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId,
                                   @NotNull LanguageConsole console, @NotNull ConsoleHistoryModel model) {
-    myHelper = new ModelHelper(type, StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId, model);
+    this(new ConsoleRootType(type, null) { }, persistenceId, console, model);
+  }
+
+  public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId, @NotNull LanguageConsole console) {
+    this(rootType, persistenceId, console, ourModels.get(getHistoryName(rootType, fixNullPersistenceId(persistenceId, console))));
+  }
+
+  private ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId,
+                                  @NotNull LanguageConsole console, @NotNull ConsoleHistoryModel model) {
+    myHelper = new ModelHelper(rootType, fixNullPersistenceId(persistenceId, console), model);
     myConsole = console;
+  }
+
+  private static String fixNullPersistenceId(@Nullable String persistenceId, @NotNull LanguageConsole console) {
+    return StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId;
   }
 
   public boolean isMultiline() {
@@ -146,7 +175,7 @@ public class ConsoleHistoryController {
    */
   public boolean loadHistory(String id) {
     String prev = myHelper.getContent();
-    boolean result = myHelper.loadHistory(id);
+    boolean result = myHelper.loadHistory(id, myConsole.getVirtualFile());
     String userValue = myHelper.getContent();
     if (prev != userValue && userValue != null) {
       setConsoleText(userValue, false, false);
@@ -159,19 +188,6 @@ public class ConsoleHistoryController {
     myHelper.setContent(myConsole.getEditorDocument().getText());
     myHelper.saveHistory();
     myLastSaveStamp = getCurrentTimeStamp();
-  }
-
-  private static void cleanupOldFiles(final File dir) {
-    final long keep10weeks = 10 * 1000L * 60 * 60 * 24 * 7;
-    final long curTime = System.currentTimeMillis();
-    File[] files = dir.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        if (file.isFile() && file.getName().endsWith(".hist.xml") && curTime - file.lastModified() > keep10weeks) {
-          file.delete();
-        }
-      }
-    }
   }
 
   public AnAction getHistoryNext() {
@@ -360,13 +376,13 @@ public class ConsoleHistoryController {
   }
 
   public static class ModelHelper {
-    private final String myType;
+    private final ConsoleRootType myRootType;
     private final String myId;
     private final ConsoleHistoryModel myModel;
     private String myContent;
 
-    public ModelHelper(String type, String id, ConsoleHistoryModel model) {
-      myType = type;
+    public ModelHelper(ConsoleRootType rootType, String id, ConsoleHistoryModel model) {
+      myRootType = rootType;
       myId = id;
       myModel = model;
     }
@@ -387,14 +403,46 @@ public class ConsoleHistoryController {
       return myContent;
     }
 
-    private String getHistoryFilePath(final String id) {
-      return PathManager.getSystemPath() + File.separator +
-             "userHistory" + File.separator +
-             myType + Long.toHexString(StringHash.calc(id)) + ".hist.xml";
+    @NotNull
+    private String getOldHistoryFilePath(final String id) {
+      String pathName = myRootType.getId().substring(ConsoleRootType.PATH_PREFIX.length()) + Long.toHexString(StringHash.calc(id));
+      return PathManager.getSystemPath() + File.separator + "userHistory" + File.separator + pathName + ".hist.xml";
     }
 
-    public boolean loadHistory(String id) {
-      File file = new File(getHistoryFilePath(id));
+    public boolean loadHistory(String id, VirtualFile consoleFile) {
+      try {
+        VirtualFile file = myRootType.isHidden() ? null :
+                           HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, id), ScratchFileService.Option.existing_only);
+        if (file == null) {
+          if (loadHistoryOld(id)) {
+            if (!myRootType.isHidden()) {
+              // migrate content
+              AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+              try {
+                VfsUtil.saveText(consoleFile, myContent);
+              }
+              finally {
+                token.finish();
+              }
+            }
+            return true;
+          }
+          return false;
+        }
+        List<String> entries = Arrays.asList(VfsUtilCore.loadText(file).split(myRootType.getEntrySeparator()));
+        for (ListIterator<String> iterator = entries.listIterator(entries.size()); iterator.hasPrevious(); ) {
+          String entry = iterator.previous();
+          getModel().addToHistory(entry);
+        }
+        return true;
+      }
+      catch (Exception ignored) {
+        return false;
+      }
+    }
+
+    public boolean loadHistoryOld(String id) {
+      File file = new File(PathUtil.toSystemDependentName(getOldHistoryFilePath(id)));
       if (!file.exists()) return false;
       HierarchicalStreamReader xmlReader = null;
       try {
@@ -409,7 +457,7 @@ public class ConsoleHistoryController {
         //noinspection ThrowableResultOfMethodCallIgnored
         Throwable cause = ExceptionUtil.getRootCause(ex);
         if (cause instanceof EOFException) {
-          LOG.warn("Failed to load " + myType + " console history from: " + file.getPath(), ex);
+          LOG.warn("Failed to load " + myRootType.getId() + " history from: " + file.getPath(), ex);
           return false;
         }
         else {
@@ -424,8 +472,8 @@ public class ConsoleHistoryController {
       return false;
     }
 
-    private void saveHistory() {
-      final File file = new File(getHistoryFilePath(myId));
+    private void saveHistoryOld() {
+      File file = new File(PathUtil.toSystemDependentName(getOldHistoryFilePath(myId)));
       final File dir = file.getParentFile();
       if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
         LOG.error("failed to create folder: " + dir.getAbsolutePath());
@@ -456,13 +504,32 @@ public class ConsoleHistoryController {
           // nothing
         }
       }
-      cleanupOldFiles(dir);
+    }
+
+    private void saveHistory() {
+      try {
+        if (getModel().getHistory().isEmpty()) return;
+        if (myRootType.isHidden()) {
+          saveHistoryOld();
+          return;
+        }
+        AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+        try {
+          VirtualFile file = HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, myId), ScratchFileService.Option.create_if_missing);
+          VfsUtil.saveText(file, StringUtil.join(ContainerUtil.reverse(getModel().getHistory()), myRootType.getEntrySeparator()));
+        }
+        finally {
+          token.finish();
+        }
+      }
+      catch (Exception ex) {
+        LOG.error(ex);
+      }
     }
 
     @Nullable
     private String loadHistory(HierarchicalStreamReader in, String expectedId) {
       if (!in.getNodeName().equals("console-history")) return null;
-      int version = StringUtil.parseInt(in.getAttribute("version"), 0);
       String id = in.getAttribute("id");
       if (!expectedId.equals(id)) return null;
       List<String> entries = ContainerUtil.newArrayList();
@@ -487,7 +554,7 @@ public class ConsoleHistoryController {
     private void saveHistory(XmlSerializer out) throws IOException {
       out.startDocument(CharsetToolkit.UTF8, null);
       out.startTag(null, "console-history");
-      out.attribute(null, "version", String.valueOf(VERSION));
+      out.attribute(null, "version", "1");
       out.attribute(null, "id", myId);
       try {
         for (String s : getModel().getHistory()) {
@@ -512,6 +579,32 @@ public class ConsoleHistoryController {
     }
     finally {
       out.endTag(null, tag);
+    }
+  }
+
+
+  @NotNull
+  private static String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String id) {
+    return rootType.getId().substring(ConsoleRootType.PATH_PREFIX.length()) + "/" +
+           PathUtil.makeFileName(rootType.getDefaultPathName(id), rootType.getDefaultFileExtension());
+  }
+
+  @Nullable
+  public static VirtualFile getContentFile(@NotNull final ConsoleRootType rootType, @NotNull String id, ScratchFileService.Option option) {
+    final String pathName = PathUtil.makeFileName(rootType.getDefaultPathName(id), rootType.getDefaultFileExtension());
+    try {
+      return rootType.findFile(null, pathName, option);
+    }
+    catch (final IOException e) {
+      LOG.warn(e);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          String message = String.format("Unable to open '%s/%s'\nReason: %s", rootType.getId(), pathName, e.getLocalizedMessage());
+          Messages.showErrorDialog(message, "Unable to Open File");
+        }
+      });
+      return null;
     }
   }
 
