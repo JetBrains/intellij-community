@@ -312,11 +312,13 @@
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </group>
 
+    <!-- Android Studio: This does not apply to Gradle projects. issuetracker.google.com/37013723
     <group>
       <action class="com.intellij.platform.templates.SaveProjectAsTemplateAction" text="Save Project as Template..."/>
       <action class="com.intellij.platform.templates.ManageProjectTemplatesAction" text="Manage Project Templates..."/>
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
     </group>
+    -->
 
     <action id="ChangesView.GroupBy.Module" text="Module" class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction">
       <add-to-group group-id="ChangesView.GroupBy"/>
