@@ -18,6 +18,7 @@ package com.intellij.ide.scratch;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -99,5 +100,8 @@ public abstract class RootType {
   public VirtualFile findFile(@Nullable Project project, @NotNull String pathName, ScratchFileService.Option option) throws IOException {
     ScratchFileService fileService = project == null ? ScratchFileService.getInstance() : ScratchFileService.getInstance(project);
     return fileService.findFile(this, pathName, option);
+  }
+
+  public void fileOpened(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
   }
 }
