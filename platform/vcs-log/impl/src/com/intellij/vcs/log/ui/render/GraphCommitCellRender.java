@@ -98,7 +98,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
 
     setBorder(null);
     append("");
-    appendFixedTextFragmentWidth(textPadding);
+    appendTextPadding(textPadding);
     myGraphTable.applyHighlighters(this, row, isSelected);
     myIssueLinkRenderer.appendTextWithLinks(cell.getText());
   }
