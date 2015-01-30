@@ -361,8 +361,9 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
     ActionGroup group = collectToolbarActions(viewerActions);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
 
-    myToolbarPanel.setContent(DiffUtil.createToolbar(group).getComponent());
+    myToolbarPanel.setContent(toolbar.getComponent());
     for (AnAction action : group.getChildren(null)) {
       action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
     }
@@ -622,6 +623,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyNextChangeAction extends NextChangeAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
+      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(true);
+        return;
+      }
+
       if (!isNavigationEnabled()) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
@@ -633,6 +639,8 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      if (!isNavigationEnabled() || !hasNextChange()) return;
+
       goToNextChange(false);
     }
   }
@@ -640,6 +648,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyPrevChangeAction extends PrevChangeAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
+      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(true);
+        return;
+      }
+
       if (!isNavigationEnabled()) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
@@ -651,6 +664,8 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      if (!isNavigationEnabled() || !hasPrevChange()) return;
+
       goToPrevChange(false);
     }
   }

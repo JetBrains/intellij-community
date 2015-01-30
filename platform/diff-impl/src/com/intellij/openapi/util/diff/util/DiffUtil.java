@@ -236,11 +236,6 @@ public class DiffUtil {
     return Pair.create(wrapper, label);
   }
 
-  @NotNull
-  public static ActionToolbar createToolbar(@NotNull ActionGroup actions) {
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
-  }
-
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
     if (actions.length == 0) return;
     if (group.getChildrenCount() != 0) group.addSeparator();
