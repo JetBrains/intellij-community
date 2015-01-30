@@ -18,10 +18,10 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.ProblemsView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
+import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
+import java.util.EnumSet;
 import java.util.UUID;
 
 /**
@@ -48,7 +49,8 @@ import java.util.UUID;
  */
 public class ProblemsViewImpl extends ProblemsView{
   private static final String PROBLEMS_TOOLWINDOW_ID = "Problems";
-  
+  private static final EnumSet<ErrorTreeElementKind> ALL_MESSAGE_KINDS = EnumSet.allOf(ErrorTreeElementKind.class);
+
   private final ProblemsViewPanel myPanel;
   private final SequentialTaskExecutor myViewUpdater = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
   private final Icon myActiveIcon = AllIcons.Toolwindows.Problems;
@@ -70,7 +72,6 @@ public class ProblemsViewImpl extends ProblemsView{
           return;
         }
         final ToolWindow tw = wm.registerToolWindow(PROBLEMS_TOOLWINDOW_ID, false, ToolWindowAnchor.BOTTOM, project, true);
-        updateIcon(false);
         final Content content = ContentFactory.SERVICE.getInstance().createContent(myPanel, "", false);
         // todo: setup content?
         tw.getContentManager().addContent(content);
@@ -80,6 +81,7 @@ public class ProblemsViewImpl extends ProblemsView{
             tw.getContentManager().removeAllContents(true);
           }
         });
+        updateIcon();
       }
     });
   }
@@ -89,19 +91,16 @@ public class ProblemsViewImpl extends ProblemsView{
     myViewUpdater.execute(new Runnable() {
       @Override
       public void run() {
-        updateIcon(!cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId));
+        cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId);
+        updateIcon();
         myPanel.reload();
       }
     });
   }
 
-  private boolean cleanupChildrenRecursively(@NotNull final Object fromElement, final @Nullable CompileScope scope, @NotNull UUID currentSessionId) {
+  private void cleanupChildrenRecursively(@NotNull final Object fromElement, final @Nullable CompileScope scope, @NotNull UUID currentSessionId) {
     final ErrorViewStructure structure = myPanel.getErrorViewStructure();
-    ErrorTreeElement[] elements = structure.getChildElements(fromElement);
-    if (elements.length ==0) return true;
-
-    boolean result = false;
-    for (ErrorTreeElement element : elements) {
+    for (ErrorTreeElement element : structure.getChildElements(fromElement)) {
       if (element instanceof GroupingElement) {
         if (scope != null) {
           final VirtualFile file = ((GroupingElement)element).getFile();
@@ -111,20 +110,17 @@ public class ProblemsViewImpl extends ProblemsView{
         }
         if (!currentSessionId.equals(element.getData())) {
           structure.removeElement(element);
-          result = true;
         }
         else {
-          result |= cleanupChildrenRecursively(element, scope, currentSessionId);
+          cleanupChildrenRecursively(element, scope, currentSessionId);
         }
       }
       else {
         if (!currentSessionId.equals(element.getData())) {
           structure.removeElement(element);
-          result = true;
         }
       }
     }
-    return result;
   }
 
   @Override
@@ -139,7 +135,7 @@ public class ProblemsViewImpl extends ProblemsView{
       public void run() {
         final ErrorViewStructure structure = myPanel.getErrorViewStructure();
         final GroupingElement group = structure.lookupGroupingElement(groupName);
-        if (group != null && !sessionId.equals(group.getData())) {
+        if (group != null && sessionId != null && !sessionId.equals(group.getData())) {
           structure.removeElement(group);
         }
         if (navigatable != null) {
@@ -148,21 +144,24 @@ public class ProblemsViewImpl extends ProblemsView{
         else {
           myPanel.addMessage(type, text, null, -1, -1, sessionId);
         }
-        updateIcon(true);
+        updateIcon();
       }
     });
   }
 
-  private void updateIcon(final boolean active) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+  private void updateIcon() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(PROBLEMS_TOOLWINDOW_ID);
-        if (tw != null) {
-          tw.setIcon(active ? myActiveIcon : myPassiveIcon);
+        if (!myProject.isDisposed()) {
+          final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(PROBLEMS_TOOLWINDOW_ID);
+          if (tw != null) {
+            final boolean active = myPanel.getErrorViewStructure().hasMessages(ALL_MESSAGE_KINDS);
+            tw.setIcon(active ? myActiveIcon : myPassiveIcon);
+          }
         }
       }
-    }, myProject.getDisposed());
+    });
   }
 
   @Override
