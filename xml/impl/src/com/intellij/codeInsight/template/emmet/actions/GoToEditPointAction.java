@@ -15,45 +15,47 @@
  */
 package com.intellij.codeInsight.template.emmet.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
  */
-public abstract class GoToEditPointAction extends DumbAwareAction {
-  @Override
-  public void update(AnActionEvent e) {
-    final Editor editor = getEditor(e);
-    final PsiFile file = getFile(e);
-    final boolean isApplicable = editor != null && EmmetEditPointUtil.isApplicableFile(file);
-    e.getPresentation().setEnabledAndVisible(isApplicable);
+public abstract class GoToEditPointAction extends EditorAction implements DumbAware {
+  protected GoToEditPointAction(EditorActionHandler defaultHandler) {
+    super(defaultHandler);
   }
 
-  private static PsiFile getFile(AnActionEvent e) {
-    return CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-  }
-
-  private static Editor getEditor(AnActionEvent e) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    return editor != null ? InjectedLanguageUtil.getTopLevelEditor(editor) : null;
+  private static PsiFile getFile(DataContext context) {
+    return CommonDataKeys.PSI_FILE.getData(context);
   }
 
   public static class Forward extends GoToEditPointAction {
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      EmmetEditPointUtil.moveForward(getEditor(e), getFile(e));
+    public Forward() {
+      super(new EditorActionHandler(true) {
+        @Override
+        protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+          EmmetEditPointUtil.moveForward(editor, getFile(dataContext));
+        }
+      });
     }
   }
 
   public static class Backward extends GoToEditPointAction {
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      EmmetEditPointUtil.moveBackward(getEditor(e), getFile(e));
+    public Backward() {
+      super(new EditorActionHandler(true) {
+        @Override
+        protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+          EmmetEditPointUtil.moveBackward(editor, getFile(dataContext));
+        }
+      });
     }
   }
 }
