@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
@@ -278,6 +279,10 @@ public class DimensionService implements PersistentStateComponent<Element> {
       GraphicsConfiguration gc = env.getScreenDevices()[0].getDefaultConfiguration();
       screen = gc.getBounds();
     }
-    return key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;
+    String realKey = key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;
+    if (JBUI.isHiDPI()) {
+      realKey+="@" + JBUI.scale(1) + "x";
+    }
+    return realKey;
   }
 }
