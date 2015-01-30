@@ -16,7 +16,8 @@
 package com.intellij.openapi.util.diff.util;
 
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -37,6 +38,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -788,18 +790,19 @@ public class DiffUtil {
   public static <T extends DiffTool> List<T> filterSuppressedTools(@NotNull List<T> tools) {
     if (tools.size() < 2) return tools;
 
-    List<Class<? extends DiffTool>> suppressedTools = new ArrayList<Class<? extends DiffTool>>();
+    final List<Class<? extends DiffTool>> suppressedTools = new ArrayList<Class<? extends DiffTool>>();
     for (T tool : tools) {
       if (tool instanceof SuppressiveDiffTool) suppressedTools.addAll(((SuppressiveDiffTool)tool).getSuppressedTools());
     }
 
     if (suppressedTools.isEmpty()) return tools;
 
-    List<T> filteredTools = new ArrayList<T>();
-    for (T tool : tools) {
-      if (suppressedTools.contains(tool.getClass())) continue;
-      filteredTools.add(tool);
-    }
+    List<T> filteredTools = ContainerUtil.filter(tools, new Condition<T>() {
+      @Override
+      public boolean value(T tool) {
+        return !suppressedTools.contains(tool.getClass());
+      }
+    });
 
     return filteredTools.isEmpty() ? tools : filteredTools;
   }
