@@ -109,11 +109,39 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider imp
 
 
         MyWrappingAndBracesPanel bracesPanel = new MyWrappingAndBracesPanel(settings) {
-          
-          
-          
-          
-          
+
+          public JPanel myPanel;
+
+          @Override
+          protected void init() {
+            super.init();
+
+            customizeSettings();
+            initTables();
+
+            myTreeTable = createOptionsTree(getSettings());
+            JBScrollPane scrollPane = new JBScrollPane(myTreeTable) {
+              @Override
+              public Dimension getMinimumSize() {
+                return super.getPreferredSize();
+              }
+            };
+            
+            myPanel = new JPanel(new BorderLayout());
+            myPanel.add(scrollPane);
+            
+            //todo why this needed here?
+            customizeSettings();
+            
+            //todo needed?
+            //isFirstUpdate = false;
+          }
+
+          @Override
+          public JComponent getPanel() {
+            return myPanel;
+          }
+
           @Override
           protected void somethingChanged() {
             reformatWithNewSettings();
