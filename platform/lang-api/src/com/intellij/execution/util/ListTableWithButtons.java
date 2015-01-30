@@ -16,6 +16,7 @@
 package com.intellij.execution.util;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +31,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
@@ -110,31 +112,19 @@ public abstract class ListTableWithButtons<T> extends Observable {
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          myTableView.stopEditing();
-          setModified();
-          T selected = getSelection();
-          if (selected != null) {
-            int selectedIndex = myElements.indexOf(selected);
-            myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
-            myElements.remove(selected);
-            myTableView.getTableViewModel().setItems(myElements);
-
-            int prev = selectedIndex - 1;
-            if (prev >= 0) {
-              myTableView.getComponent().getSelectionModel().setSelectionInterval(prev, prev);
-            }
-            else if (selectedIndex < myElements.size()) {
-              myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
-            }
-          }
+          removeSelected();
         }
       }).disableUpDownActions().addExtraActions(createExtraActions()).createPanel();
 
     ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
       public boolean isEnabled(AnActionEvent e) {
-        T selection = getSelection();
-        return selection != null && myIsEnabled && canDeleteElement(selection);
+        List<T> selection = getSelection();
+        if (selection.isEmpty() || !myIsEnabled) return false;
+        for (T t : selection) {
+          if (!canDeleteElement(t)) return false;
+        }
+        return true;
       }
     });
     ToolbarDecorator.findAddButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
@@ -146,7 +136,33 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
     myActionsPanel = decorator.getActionsPanel();
 
-    myTableView.getComponent().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myTableView.getComponent().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+  }
+
+  protected void removeSelected() {
+    List<T> selected = getSelection();
+    if (!selected.isEmpty()) {
+      myTableView.stopEditing();
+      setModified();
+      int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
+      myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
+      selected = ContainerUtil.filter(selected, new Condition<T>() {
+        @Override
+        public boolean value(T t) {
+          return canDeleteElement(t);
+        }
+      });
+      myElements.removeAll(selected);
+      myTableView.getTableViewModel().setItems(myElements);
+
+      int prev = selectedIndex - 1;
+      if (prev >= 0) {
+        myTableView.getComponent().getSelectionModel().setSelectionInterval(prev, prev);
+      }
+      else if (selectedIndex < myElements.size()) {
+        myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
+      }
+    }
   }
 
   @NotNull
@@ -197,7 +213,9 @@ public abstract class ListTableWithButtons<T> extends Observable {
   }
 
   protected void editSelection(int column) {
-    int row = myElements.indexOf(getSelection());
+    List<T> selection = getSelection();
+    if (selection.size() != 1) return;
+    int row = myElements.indexOf(selection.get(0));
     if (row != -1) {
       TableUtil.editCellAt(myTableView, row, column);
     }
@@ -213,13 +231,18 @@ public abstract class ListTableWithButtons<T> extends Observable {
   }
 
 
-  protected T getSelection() {
-    int selIndex = myTableView.getComponent().getSelectionModel().getMinSelectionIndex();
-    if (selIndex < 0) {
-      return null;
+  @NotNull
+  protected List<T> getSelection() {
+    int[] selection = myTableView.getComponent().getSelectedRows();
+    if (selection.length == 0) {
+      return Collections.emptyList();
     }
     else {
-      return myElements.get(selIndex);
+      List<T> result = new ArrayList<T>(selection.length);
+      for (int row : selection) {
+        result.add(myElements.get(row));
+      }
+      return result;
     }
   }
 

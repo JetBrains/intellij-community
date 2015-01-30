@@ -69,7 +69,7 @@ public final class ScratchRootType extends RootType {
     }
   }
 
-  private static class MyFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, InternalFileType {
+  private static class MyFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
 
     MyFileType() {
       super(PlainTextLanguage.INSTANCE);

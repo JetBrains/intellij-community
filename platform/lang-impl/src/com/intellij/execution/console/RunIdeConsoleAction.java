@@ -30,9 +30,9 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -58,7 +58,7 @@ import java.util.Map;
 /**
  * @author gregsh
  */
-public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
+public class RunIdeConsoleAction extends DumbAwareAction {
 
   private static final String DEFAULT_FILE_NAME = "ide-scripting";
   private static final Key<WeakReference<ConsoleView>> CONSOLE_VIEW_KEY = Key.create("CONSOLE_VIEW_KEY");
@@ -84,26 +84,23 @@ public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
       runConsole(e, ourEngines.values().iterator().next());
     }
     else {
-      super.actionPerformed(e);
-    }
-  }
-
-  @NotNull
-  @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    if (e == null) return EMPTY_ARRAY;
-    return ContainerUtil.map2Array(ourEngines.values(), AnAction.class, new NotNullFunction<ScriptEngineFactory, AnAction>() {
-      @NotNull
-      @Override
-      public AnAction fun(final ScriptEngineFactory engine) {
-        return new AnAction(engine.getLanguageName()) {
+      DefaultActionGroup actions = new DefaultActionGroup(
+        ContainerUtil.map(ourEngines.values(), new NotNullFunction<ScriptEngineFactory, AnAction>() {
+          @NotNull
           @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            runConsole(e, engine);
+          public AnAction fun(final ScriptEngineFactory engine) {
+            return new AnAction(engine.getLanguageName()) {
+              @Override
+              public void actionPerformed(@NotNull AnActionEvent e) {
+                runConsole(e, engine);
+              }
+            };
           }
-        };
-      }
-    });
+        })
+      );
+      JBPopupFactory.getInstance().createActionGroupPopup("Script Engine", actions, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false).
+        showInBestPositionFor(e.getDataContext());
+    }
   }
 
   protected void runConsole(@NotNull AnActionEvent e, @NotNull ScriptEngineFactory engine) {

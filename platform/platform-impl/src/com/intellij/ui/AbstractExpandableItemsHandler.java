@@ -267,6 +267,13 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       return;
     }
     myUpdateAlarm.cancelAllRequests();
+    if (selected == null) {
+      hideHint();
+      return;
+    }
+    if (!selected.equals(myKey)) {
+      hideHint();
+    }
     myUpdateAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
@@ -275,12 +282,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }, 10);
   }
 
-  private void doHandleSelectionChange(KeyType selected, boolean processIfUnfocused) {
-    Window window = SwingUtilities.getWindowAncestor(myComponent);
-    if (selected == null
-        || window == null
-        || !window.isActive()
-        || !myEnabled
+  private void doHandleSelectionChange(@NotNull KeyType selected, boolean processIfUnfocused) {
+    if (!myEnabled
         || !myComponent.isEnabled()
         || !myComponent.isShowing()
         || !myComponent.getVisibleRect().intersects(getVisibleRect(selected))
@@ -300,6 +303,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     else {
       Dimension size = myTipComponent.getPreferredSize();
       myPopup.setBounds(location.x, location.y, size.width, size.height);
+      myPopup.setHeavyWeight(hasOwnedWindows());
       if (!myPopup.isVisible()) {
         myPopup.setVisible(true);
       }
@@ -322,6 +326,17 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       }
     }
     return false;
+  }
+
+  private boolean hasOwnedWindows() {
+    Window owner = SwingUtilities.getWindowAncestor(myComponent);
+    Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
+    for (Window other : owner.getOwnedWindows()) {
+      if (popup != other && other.isVisible()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void hideHint() {
