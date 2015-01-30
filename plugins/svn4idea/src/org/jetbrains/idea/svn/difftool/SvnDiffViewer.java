@@ -23,7 +23,6 @@ import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
 import com.intellij.openapi.util.diff.tools.ErrorDiffTool;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -302,33 +301,25 @@ public class SvnDiffViewer implements DiffViewer {
   //
 
   private class MyPropertyContext extends UserDataHolderBase implements DiffContext {
-    private final DiffWindow myWindow = new DiffWindow() {
-      @Override
-      public boolean isWindowFocused() {
-        return myContext.getDiffWindow().isWindowFocused();
-      }
-
-      @Override
-      public boolean isFocused() {
-        return DiffUtil.isFocusedComponent(getProject(), myPropertiesViewer.getComponent());
-      }
-
-      @Override
-      public void requestFocus() {
-        DiffUtil.requestFocus(getProject(), myPropertiesViewer.getPreferredFocusedComponent());
-      }
-    };
-
     @Nullable
     @Override
     public Project getProject() {
       return myContext.getProject();
     }
 
-    @NotNull
     @Override
-    public DiffWindow getDiffWindow() {
-      return myWindow;
+    public boolean isWindowFocused() {
+      return myContext.isWindowFocused();
+    }
+
+    @Override
+    public boolean isFocused() {
+      return DiffUtil.isFocusedComponent(getProject(), myPropertiesViewer.getComponent());
+    }
+
+    @Override
+    public void requestFocus() {
+      DiffUtil.requestFocus(getProject(), myPropertiesViewer.getPreferredFocusedComponent());
     }
   }
 

@@ -48,16 +48,11 @@ public interface FrameDiffTool extends DiffTool {
     @Nullable
     Project getProject();
 
-    @NotNull
-    DiffWindow getDiffWindow();
+    boolean isWindowFocused();
 
-    interface DiffWindow {
-      boolean isWindowFocused();
+    boolean isFocused();
 
-      boolean isFocused();
-
-      void requestFocus();
-    }
+    void requestFocus();
   }
 
   class ToolbarComponents {

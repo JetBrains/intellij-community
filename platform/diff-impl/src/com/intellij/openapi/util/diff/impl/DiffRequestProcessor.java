@@ -74,7 +74,6 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final List<DiffTool> myAvailableTools;
   @NotNull private final LinkedList<DiffTool> myToolOrder;
 
-  @NotNull private final MyDiffWindow myDiffWindow;
   @NotNull private final OpenInEditorAction myOpenInEditorAction;
   @Nullable private DefaultActionGroup myPopupActionGroup;
 
@@ -102,8 +101,6 @@ public abstract class DiffRequestProcessor implements Disposable {
     myActiveRequest = new NoDiffRequest();
 
     // UI
-
-    myDiffWindow = new MyDiffWindow();
 
     myPanel = new JPanel(new BorderLayout());
     myMainPanel = new MyPanel();
@@ -734,23 +731,6 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private class MyDiffWindow implements DiffContext.DiffWindow {
-    @Override
-    public boolean isFocused() {
-      return DiffRequestProcessor.this.isFocused();
-    }
-
-    @Override
-    public boolean isWindowFocused() {
-      return DiffRequestProcessor.this.isWindowFocused();
-    }
-
-    @Override
-    public void requestFocus() {
-      DiffRequestProcessor.this.requestFocusInternal();
-    }
-  }
-
   private class MyDiffContext implements DiffContext {
     @NotNull private final UserDataHolder myContext;
 
@@ -764,10 +744,19 @@ public abstract class DiffRequestProcessor implements Disposable {
       return DiffRequestProcessor.this.getProject();
     }
 
-    @NotNull
     @Override
-    public DiffWindow getDiffWindow() {
-      return myDiffWindow;
+    public boolean isFocused() {
+      return DiffRequestProcessor.this.isFocused();
+    }
+
+    @Override
+    public boolean isWindowFocused() {
+      return DiffRequestProcessor.this.isWindowFocused();
+    }
+
+    @Override
+    public void requestFocus() {
+      DiffRequestProcessor.this.requestFocusInternal();
     }
 
     @Nullable

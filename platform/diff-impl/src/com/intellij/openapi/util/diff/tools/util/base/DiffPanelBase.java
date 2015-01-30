@@ -40,7 +40,7 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
 
   @Nullable protected final Project myProject;
   @NotNull private final DataProvider myDataProvider;
-  @NotNull protected final FrameDiffTool.DiffContext.DiffWindow myContextWindow;
+  @NotNull protected final FrameDiffTool.DiffContext myContext;
 
   @NotNull protected final JPanel myContentPanel;
   @NotNull protected final JPanel myNotificationsPanel;
@@ -55,7 +55,7 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
     super(new BorderLayout());
     myProject = project;
     myDataProvider = provider;
-    myContextWindow = context.getDiffWindow();
+    myContext = context;
 
     myCardLayout = new CardLayout();
     myContentPanel = new JPanel(myCardLayout);
@@ -83,15 +83,15 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   }
 
   public boolean isWindowFocused() {
-    return myContextWindow.isWindowFocused();
+    return myContext.isWindowFocused();
   }
 
   public boolean isFocused() {
-    return myContextWindow.isFocused();
+    return myContext.isFocused();
   }
 
   public void requestFocus() {
-    myContextWindow.requestFocus();
+    myContext.requestFocus();
   }
 
   protected void setCurrentCard(@NotNull String card) {
