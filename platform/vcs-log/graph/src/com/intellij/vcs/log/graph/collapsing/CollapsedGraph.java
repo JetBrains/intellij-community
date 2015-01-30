@@ -15,10 +15,13 @@
  */
 package com.intellij.vcs.log.graph.collapsing;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
@@ -95,6 +98,11 @@ public class CollapsedGraph {
   @NotNull
   public UnsignedBitSet getMatchedNodeId() {
     return myMatchedNodeId;
+  }
+
+  // todo proper name
+  public boolean hasCollapsedEdge(int upNodeIndex, int downNodeIndex) {
+    return new EdgeStorageWrapper(myEdgeStorage, myDelegatedGraph).hasEdge(upNodeIndex, downNodeIndex);
   }
 
   // everywhere in this class "nodeIndexes" means "node indexes in delegated graph"
