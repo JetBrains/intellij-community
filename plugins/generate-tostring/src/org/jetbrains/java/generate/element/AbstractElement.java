@@ -46,6 +46,7 @@ public abstract class AbstractElement implements Element {
     protected boolean isByte;
     protected boolean isShort;
     protected String typeName;
+    protected String type;
     protected String typeQualifiedName;
     protected boolean isModifierStatic;
     protected boolean isModifierPublic;
@@ -133,6 +134,15 @@ public abstract class AbstractElement implements Element {
         return typeQualifiedName;
     }
 
+    @Override
+    public String getType() {
+      return type;
+    }
+  
+    public void setType(String type) {
+      this.type = type;
+    }
+  
     public boolean isBoolean() {
         return isBoolean;
     }

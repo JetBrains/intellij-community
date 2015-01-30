@@ -59,6 +59,11 @@ class ObjectValueReader<T> extends ValueReader {
   }
 
   void writeFactoryArgument(@NotNull ClassScope scope, @NotNull TextOutput out) {
-    out.comma().append("new ").append(scope.requireFactoryGenerationAndGetName(refToType.type)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append("()");
+    out.comma();
+    writeFactoryNewExpression(scope, out);
+  }
+
+  void writeFactoryNewExpression(@NotNull ClassScope scope, @NotNull TextOutput out) {
+    out.append("new ").append(scope.requireFactoryGenerationAndGetName(refToType.type)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append("()");
   }
 }

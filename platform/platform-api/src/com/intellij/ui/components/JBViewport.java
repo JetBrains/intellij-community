@@ -66,6 +66,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   };
 
   private StatusText myEmptyText;
+  private boolean myPaintingNow;
+
   private ZoomingDelegate myZoomer;
 
   private Dimension myTempViewSize;
@@ -112,6 +114,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   @Override
   public void paint(Graphics g) {
+    myPaintingNow = true;
     if (myZoomer != null && myZoomer.isActive()) {
       myZoomer.paint(g);
     }
@@ -122,6 +125,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
         myEmptyText.paint(this, g);
       }
     }
+    myPaintingNow = false;
   }
 
   @Nullable
@@ -146,5 +150,9 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Override
   public void magnify(double magnification) {
     myZoomer.magnify(magnification);
+  }
+
+  public boolean isPaintingNow() {
+    return myPaintingNow;
   }
 }

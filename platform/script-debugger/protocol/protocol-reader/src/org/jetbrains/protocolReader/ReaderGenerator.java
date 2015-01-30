@@ -23,7 +23,7 @@ public final class ReaderGenerator {
     private final String className;
     final Collection<Map<Class<?>, String>> basePackagesMap;
 
-    final LinkedHashMap<Class<?>, TypeHandler<?>> typeToTypeHandler;
+    final LinkedHashMap<Class<?>, TypeWriter<?>> typeToTypeHandler;
     final ReaderRoot<ROOT> root;
 
     public GenerateConfiguration(String packageName, String className, Class<ROOT> readerRootClass, Class<?>[] protocolInterfaces) {
@@ -107,8 +107,8 @@ public final class ReaderGenerator {
     FileScope fileScope = generate(configuration, new StringBuilder());
 
     Map<Class<?>, String> typeToImplClassName = new THashMap<>();
-    for (TypeHandler<?> typeHandler : configuration.typeToTypeHandler.values()) {
-      typeToImplClassName.put(typeHandler.typeClass, configuration.packageName + "." + configuration.className + "." + fileScope.getTypeImplShortName(typeHandler));
+    for (TypeWriter<?> typeWriter : configuration.typeToTypeHandler.values()) {
+      typeToImplClassName.put(typeWriter.typeClass, configuration.packageName + "." + configuration.className + "." + fileScope.getTypeImplShortName(typeWriter));
     }
     return typeToImplClassName;
   }
@@ -129,14 +129,14 @@ public final class ReaderGenerator {
     ClassScope rootClassScope = fileScope.newClassScope();
     configuration.root.writeStaticMethodJava(rootClassScope);
 
-    for (TypeHandler<?> typeHandler : configuration.typeToTypeHandler.values()) {
+    for (TypeWriter<?> typeWriter : configuration.typeToTypeHandler.values()) {
       out.newLine();
-      typeHandler.writeStaticClassJava(rootClassScope);
+      typeWriter.write(rootClassScope);
       out.newLine();
     }
 
     boolean isFirst = true;
-    for (TypeHandler<?> typeHandler : globalScope.getTypeFactories()) {
+    for (TypeWriter<?> typeWriter : globalScope.getTypeFactories()) {
       if (isFirst) {
         isFirst = false;
       }
@@ -144,13 +144,13 @@ public final class ReaderGenerator {
         out.newLine();
       }
 
-      String originName = typeHandler.typeClass.getCanonicalName();
-      out.newLine().append("private static final class ").append(globalScope.getTypeImplShortName(typeHandler)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append(" extends ObjectFactory<");
+      String originName = typeWriter.typeClass.getCanonicalName();
+      out.newLine().append("private static final class ").append(globalScope.getTypeImplShortName(typeWriter)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append(" extends ObjectFactory<");
       out.append(originName).append('>').openBlock();
       out.append("@Override").newLine().append("public ").append(originName).append(" read(").append(Util.JSON_READER_PARAMETER_DEF);
       out.append(')').openBlock();
       out.append("return ");
-      typeHandler.writeInstantiateCode(rootClassScope, out);
+      typeWriter.writeInstantiateCode(rootClassScope, out);
       out.append('(').append(Util.READER_NAME).append(", null);").closeBlock();
       out.closeBlock();
     }

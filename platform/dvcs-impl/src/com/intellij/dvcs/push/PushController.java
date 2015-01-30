@@ -36,6 +36,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,8 +89,12 @@ public class PushController implements Disposable {
     myPushLog.getTree().addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
+        // when user starts edit we need to force disable ok actions, because tree.isEditing() still false;
+        // after editing completed okActions will be enabled automatically by dialog validation
         Boolean isEditMode = (Boolean)evt.getNewValue();
-        myDialog.enableOkActions(!isEditMode && isPushAllowed());
+        if (isEditMode) {
+          myDialog.disableOkActions();
+        }
       }
     });
     startLoadingCommits();
@@ -234,7 +239,7 @@ public class PushController implements Disposable {
 
       @Override
       public void onSelectionChanged(boolean isSelected) {
-        myDialog.enableOkActions(isPushAllowed());
+        myDialog.updateOkActions();
         if (isSelected) {
           boolean forceLoad = myExcludedRepositoryRoots.remove(model.getRepository().getRoot().getPath());
           if (!model.hasCommitInfo() && (forceLoad || !model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories())) {
@@ -277,21 +282,21 @@ public class PushController implements Disposable {
     return names;
   }
 
-  public boolean isPushAllowed() {
+  public boolean isPushAllowed(final boolean force) {
     JTree tree = myPushLog.getTree();
     return !tree.isEditing() &&
            ContainerUtil.exists(myPushSupports, new Condition<PushSupport<?, ?, ?>>() {
              @Override
              public boolean value(PushSupport<?, ?, ?> support) {
-               return isPushAllowed(support);
+               return isPushAllowed(support, force);
              }
            });
   }
 
-  private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport) {
+  private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport, boolean force) {
     Collection<RepositoryNode> nodes = getNodesForSupport(pushSupport);
     if (hasSomethingToPush(nodes)) return true;
-    if (hasCheckedNodesWithContent(nodes, myDialog.getAdditionalOptionValue(pushSupport) != null)) {
+    if (hasCheckedNodesWithContent(nodes, force || myDialog.getAdditionalOptionValue(pushSupport) != null)) {
       return !pushSupport.getRepositoryManager().isSyncEnabled() || allNodesAreLoaded(nodes);
     }
     return false;
@@ -399,7 +404,7 @@ public class PushController implements Disposable {
             if (shouldBeSelected) { // never remove selection; initially all checkboxes are not selected
               node.setChecked(true);
             }
-            myDialog.enableOkActions(isPushAllowed());
+            myDialog.updateOkActions();
           }
         });
       }
@@ -544,46 +549,15 @@ public class PushController implements Disposable {
     final PushSupport activePushSupport = selectedModel.getSupport();
     final PushTarget commonTarget = getCommonTarget(selectedNodes);
     if (commonTarget != null && activePushSupport.isSilentForcePushAllowed(commonTarget)) return true;
-    return Messages.showOkCancelDialog(myProject, DvcsBundle.message("push.force.confirmation.text",
-                                                                     commonTarget != null
-                                                                     ? " to <b>" +
-                                                                       commonTarget.getPresentation() + "</b>"
-                                                                     : ""),
+    return Messages.showOkCancelDialog(myProject, XmlStringUtil.wrapInHtml(DvcsBundle.message("push.force.confirmation.text",
+                                                                                              commonTarget != null
+                                                                                              ? " to <b>" +
+                                                                                                commonTarget.getPresentation() + "</b>"
+                                                                                              : "")),
                                        "Force Push", "&Force Push",
                                        CommonBundle.getCancelButtonText(),
                                        Messages.getWarningIcon(),
-                                       commonTarget != null
-                                       ? new DialogWrapper.DoNotAskOption() {
-
-                                         @Override
-                                         public boolean isToBeShown() {
-                                           return true;
-                                         }
-
-                                         @Override
-                                         public void setToBeShown(boolean toBeShown, int exitCode) {
-                                           if (!toBeShown && exitCode == OK) {
-                                             activePushSupport.saveSilentForcePushTarget(commonTarget);
-                                           }
-                                         }
-
-                                         @Override
-                                         public boolean canBeHidden() {
-                                           return true;
-                                         }
-
-                                         @Override
-                                         public boolean shouldSaveOptionsOnCancel() {
-                                           return false;
-                                         }
-
-                                         @NotNull
-                                         @Override
-                                         public String getDoNotShowMessage() {
-                                           return "Don't warn about this target";
-                                         }
-                                       }
-                                       : null) == OK;
+                                       commonTarget != null ? new MyDoNotAskOptionForPush(activePushSupport, commonTarget) : null) == OK;
   }
 
   @Nullable
@@ -683,6 +657,46 @@ public class PushController implements Disposable {
     @NotNull
     public CheckBoxModel getCheckBoxModel() {
       return myCheckBoxModel;
+    }
+  }
+
+  private static class MyDoNotAskOptionForPush implements DialogWrapper.DoNotAskOption {
+
+    @NotNull private final PushSupport myActivePushSupport;
+    @NotNull private final PushTarget myCommonTarget;
+
+    public MyDoNotAskOptionForPush(@NotNull PushSupport support,
+                                   @NotNull PushTarget target) {
+      myActivePushSupport = support;
+      myCommonTarget = target;
+    }
+
+    @Override
+    public boolean isToBeShown() {
+      return true;
+    }
+
+    @Override
+    public void setToBeShown(boolean toBeShown, int exitCode) {
+      if (!toBeShown && exitCode == OK) {
+        myActivePushSupport.saveSilentForcePushTarget(myCommonTarget);
+      }
+    }
+
+    @Override
+    public boolean canBeHidden() {
+      return true;
+    }
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getDoNotShowMessage() {
+      return "Don't warn about this target";
     }
   }
 }

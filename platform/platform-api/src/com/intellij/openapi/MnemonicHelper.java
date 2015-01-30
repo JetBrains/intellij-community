@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -26,7 +25,6 @@ import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -80,7 +78,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   }
 
   private static void fixMacMnemonicKeyStroke(JComponent component, String type) {
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
       // hack to make component's mnemonic work for ALT+KEY_CODE on Macs.
       // Default implementation uses ALT+CTRL+KEY_CODE (see BasicLabelUI).
       InputMap inputMap = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);

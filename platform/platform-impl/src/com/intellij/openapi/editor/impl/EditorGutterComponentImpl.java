@@ -89,7 +89,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private int myIconsAreaWidth = START_ICON_AREA_WIDTH;
   private int myLineNumberAreaWidth = 0;
   private FoldRegion myActiveFoldRegion;
-  private boolean myPopupInvokedOnPressed;
   private int myTextAnnotationGuttersSize = 0;
   private int myTextAnnotationExtraSize = 0;
   private TIntArrayList myTextAnnotationGutterSizes = new TIntArrayList();
@@ -1273,7 +1272,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public void mousePressed(MouseEvent e) {
     if (e.isPopupTrigger()) {
       invokePopup(e);
-      myPopupInvokedOnPressed = true;
     } else if (UIUtil.isCloseClick(e)) {
       processClose(e);
     }
@@ -1283,11 +1281,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public void mouseReleased(final MouseEvent e) {
     if (e.isPopupTrigger()) {
       invokePopup(e);
-      return;
-    }
-
-    if (myPopupInvokedOnPressed) {
-      myPopupInvokedOnPressed = false;
       return;
     }
 

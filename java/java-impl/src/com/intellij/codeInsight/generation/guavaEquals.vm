@@ -8,20 +8,12 @@ Object $paramName){
   #addClassInstance()
   return ##
    #set($i = 0)
-   #foreach($field in $members)
+   #foreach($field in $fields)
      #if ($i > 0)
      &&
      #end
      #set($i = $i + 1)
-     #if ($field.array)
-       #if ($field.nestedArray)
-java.util.Arrays.deepEquals($field.name, ${classInstanceName}.$field.name)##
-       #else
-java.util.Arrays.equals($field.name, ${classInstanceName}.$field.name)##
-       #end
-     #else
-com.google.common.base.Objects.equal($field.name, ${classInstanceName}.$field.name)##
-     #end
+com.google.common.base.Objects.equal($field.accessor, ${classInstanceName}.$field.accessor)##
    #end
   ;
 }

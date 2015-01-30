@@ -55,7 +55,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.ExternalChangeAction;
@@ -190,7 +189,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           document.putUserData(FILE_KEY, file);
         }
 
-        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
+        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem)) {
           document.addDocumentListener(
             new DocumentAdapter() {
               @Override

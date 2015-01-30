@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,6 +285,26 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
+  private void clearRendererCache() {
+    // clear renderer cache of node preferred size
+    TreeUI ui = myTree.getUI();
+    if (ui instanceof BasicTreeUI) {
+      AbstractLayoutCache treeState = ReflectionUtil.getField(BasicTreeUI.class, ui, AbstractLayoutCache.class, "treeState");
+      Rectangle visibleRect = myTree.getVisibleRect();
+      int rowForLocation = myTree.getClosestRowForLocation(0, visibleRect.y);
+      int visibleRowCount = myTree.getVisibleRowCount();
+      for (int i = rowForLocation + visibleRowCount + 1; i >= rowForLocation; i--) {
+        final TreePath eachPath = myTree.getPathForRow(i);
+        if (eachPath == null) continue;
+
+        treeState.invalidatePathBounds(eachPath);
+      }
+      myTree.repaint(visibleRect);
+    }
+    else {
+      myTree.setCellRenderer(myUsageViewTreeCellRenderer);
+    }
+  }
   private void setupCentralPanel() {
     myCentralPanel.removeAll();
     disposeUsageContextPanels();
@@ -296,24 +316,18 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     treePane.getViewport().addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        // clear renderer cache of node preferred size
-        TreeUI ui = myTree.getUI();
-        if (ui instanceof BasicTreeUI) {
-          AbstractLayoutCache treeState = ReflectionUtil.getField(BasicTreeUI.class, ui, AbstractLayoutCache.class, "treeState");
-          Rectangle visibleRect = myTree.getVisibleRect();
-          int rowForLocation = myTree.getClosestRowForLocation(0, visibleRect.y);
-          int visibleRowCount = myTree.getVisibleRowCount();
-          for (int i = rowForLocation + visibleRowCount + 1; i >= rowForLocation; i--) {
-            final TreePath eachPath = myTree.getPathForRow(i);
-            if (eachPath == null) continue;
+        clearRendererCache();
+      }
+    });
+    myTree.addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        clearRendererCache();
+      }
 
-            treeState.invalidatePathBounds(eachPath);
-          }
-          myTree.repaint(visibleRect);
-        }
-        else {
-          myTree.setCellRenderer(myUsageViewTreeCellRenderer);
-        }
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+        clearRendererCache();
       }
     });
     myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);

@@ -39,7 +39,18 @@ public abstract class MappingList {
       int mappingLine = getLine(mapping);
       if (line == mappingLine) {
         if (column == getColumn(mapping)) {
-          return middle;
+          // find first
+          int firstIndex = middle;
+          while (firstIndex > 0) {
+            MappingEntry prevMapping = mappings.get(firstIndex - 1);
+            if (getLine(prevMapping) == line && getColumn(prevMapping) == column) {
+              firstIndex--;
+            }
+            else {
+              break;
+            }
+          }
+          return firstIndex;
         }
         else if (column < getColumn(mapping)) {
           if (column == 0 || column == -1) {
@@ -67,7 +78,9 @@ public abstract class MappingList {
           }
         }
         else {
-          MappingEntry nextMapping = getNextOnTheSameLine(middle, false);
+          // https://code.google.com/p/google-web-toolkit/issues/detail?id=9103
+          // We skipIfColumnEquals because GWT has two entries — source position equals, but generated no. We must use first entry (at least, in case of GWT it is correct)
+          MappingEntry nextMapping = getNextOnTheSameLine(middle);
           if (nextMapping == null) {
             return middle;
           }

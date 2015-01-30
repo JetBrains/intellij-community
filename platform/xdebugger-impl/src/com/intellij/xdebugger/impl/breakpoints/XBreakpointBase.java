@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ComponentSerializationUtil;
@@ -318,6 +317,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return Collections.emptyList();
   }
 
+  @NotNull
   public String getDescription() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {

@@ -17,7 +17,7 @@ package com.intellij.usages;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public class FindUsagesProcessPresentation {
   private boolean myShowPanelIfOnlyOneUsage;
   private boolean myShowNotFoundMessage;
   private Factory<ProgressIndicator> myProgressIndicatorFactory;
-  private Collection<PsiFile> myLargeFiles;
+  private Collection<VirtualFile> myLargeFiles;
   private boolean myShowFindOptionsPrompt = true;
   private Runnable mySearchWithProjectFiles;
   private boolean myCanceled;
@@ -92,13 +92,13 @@ public class FindUsagesProcessPresentation {
     mySearchWithProjectFiles = searchWithProjectFiles;
   }
 
-  public void setLargeFilesWereNotScanned(@NotNull Collection<PsiFile> largeFiles) {
+  public void setLargeFilesWereNotScanned(@NotNull Collection<VirtualFile> largeFiles) {
     myLargeFiles = largeFiles;
   }
 
   @NotNull
-  public Collection<PsiFile> getLargeFiles() {
-    return myLargeFiles == null ? Collections.<PsiFile>emptyList() : myLargeFiles;
+  public Collection<VirtualFile> getLargeFiles() {
+    return myLargeFiles == null ? Collections.<VirtualFile>emptyList() : myLargeFiles;
   }
 
   public boolean isShowFindOptionsPrompt() {

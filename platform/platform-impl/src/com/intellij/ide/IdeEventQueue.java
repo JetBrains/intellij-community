@@ -974,7 +974,7 @@ public class IdeEventQueue extends EventQueue {
               !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
               !(UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE)) {
-            return true;
+            return false;
           }
 
           if (ke.getID() == KeyEvent.KEY_PRESSED) {

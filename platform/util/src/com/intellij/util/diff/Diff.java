@@ -119,11 +119,13 @@ public class Diff {
    * @return          translated line if the processing is ok; negative value otherwise
    */
   public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line) throws FilesTooBigForDiffException {
+    return translateLine(before, after, line, false);
+  }
+
+  public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line, boolean approximate)
+    throws FilesTooBigForDiffException {
     Change change = buildChanges(before, after);
-    if (change == null) {
-      return -1;
-    }
-    return translateLine(change, line);
+    return translateLine(change, line, approximate);
   }
 
   /**
@@ -133,17 +135,20 @@ public class Diff {
    * @param line      target line before change
    * @return          translated line if the processing is ok; negative value otherwise
    */
-  public static int translateLine(@NotNull Change change, int line) {
+  public static int translateLine(@Nullable Change change, int line) {
+    return translateLine(change, line, false);
+  }
+
+  public static int translateLine(@Nullable Change change, int line, boolean approximate) {
     int result = line;
 
     Change currentChange = change;
-    
     while (currentChange != null) {
       if (line < currentChange.line0) break;
       if (line >= currentChange.line0 + currentChange.deleted) {
         result += currentChange.inserted - currentChange.deleted;
       } else {
-        return -1;
+        return approximate ? currentChange.line1 : -1;
       }
 
       currentChange = currentChange.link;

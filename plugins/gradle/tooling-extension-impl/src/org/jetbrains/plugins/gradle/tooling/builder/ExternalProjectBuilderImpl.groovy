@@ -133,13 +133,13 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
-      resourcesDirectorySet.outputDir = sourceSet.output.resourcesDir
+      resourcesDirectorySet.outputDir = chooseNotNull(sourceSet.output.resourcesDir, sourceSet.output.classesDir, project.buildDir)
       resourcesDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-      javaDirectorySet.outputDir = sourceSet.output.classesDir
+      javaDirectorySet.outputDir = chooseNotNull(sourceSet.output.classesDir, project.buildDir);
       javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
@@ -171,6 +171,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       result[sourceSet.name] = externalSourceSet
     }
     result
+  }
+
+  static <T> T chooseNotNull(T ... params) {
+    params.findResult("", { it })
   }
 
   static getFilters(Project project, String taskName) {

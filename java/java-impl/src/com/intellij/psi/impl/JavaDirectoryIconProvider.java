@@ -26,8 +26,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -43,7 +43,7 @@ import javax.swing.*;
 public class JavaDirectoryIconProvider extends IconProvider implements DumbAware {
   @Override
   @Nullable
-  public Icon getIcon(@NotNull final PsiElement element, final int flags) {
+  public Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)element;
       final VirtualFile vFile = psiDirectory.getVirtualFile();
@@ -51,7 +51,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
 
       SourceFolder sourceFolder;
       Icon symbolIcon;
-      if (vFile.getParent() == null && vFile.getFileSystem() instanceof JarFileSystem) {
+      if (vFile.getParent() == null && vFile.getFileSystem() instanceof ArchiveFileSystem) {
         symbolIcon = PlatformIcons.JAR_ICON;
       }
       else if (ProjectRootsUtil.isModuleContentRoot(vFile, project)) {

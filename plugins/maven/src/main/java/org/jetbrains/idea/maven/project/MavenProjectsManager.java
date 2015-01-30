@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
@@ -346,6 +347,16 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         if (haveChanges(toImport) || !deleted.isEmpty()) {
           scheduleForNextImport(toImport);
         }
+
+        if (!deleted.isEmpty() && !hasScheduledProjects()) {
+          MavenProject project = ObjectUtils.chooseNotNull(ContainerUtil.getFirstItem(toResolve),
+                                                           ContainerUtil.getFirstItem(getNonIgnoredProjects()));
+          if (project != null) {
+            scheduleForNextImport(Pair.create(project, MavenProjectChanges.ALL));
+            scheduleForNextResolve(ContainerUtil.list(project));
+          }
+        }
+
         scheduleForNextResolve(toResolve);
 
         fireProjectScheduled();

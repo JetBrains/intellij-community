@@ -104,7 +104,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -130,7 +131,7 @@ public class BuildManager implements ApplicationComponent{
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
-  private final boolean IS_UNIT_TEST_MODE;
+  private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   private static final String IWS_EXTENSION = ".iws";
   private static final String IPR_EXTENSION = ".ipr";
   private static final String IDEA_PROJECT_DIR_PATTERN = "/.idea/";
@@ -215,7 +216,6 @@ public class BuildManager implements ApplicationComponent{
 
   public BuildManager(final ProjectManager projectManager) {
     final Application application = ApplicationManager.getApplication();
-    IS_UNIT_TEST_MODE = application.isUnitTestMode();
     myProjectManager = projectManager;
     final String systemPath = PathManager.getSystemPath();
     File system = new File(systemPath);
@@ -764,8 +764,8 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private static boolean isProcessPreloadingEnabled() {
-    // automatically disable process preloading when debugging
-    return Registry.is("compiler.process.preload") && Registry.intValue("compiler.process.debug.port") <= 0 ;
+    // automatically disable process preloading when debugging or testing
+    return !IS_UNIT_TEST_MODE && Registry.is("compiler.process.preload") && Registry.intValue("compiler.process.debug.port") <= 0;
   }
 
   private void notifySessionTerminationIfNeeded(UUID sessionId, @Nullable Throwable execFailure) {
@@ -834,7 +834,7 @@ public class BuildManager implements ApplicationComponent{
     return projectTaskQueue.submit(new Callable<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>() {
       public Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> call() throws Exception {
         if (project.isDisposed()) {
-          throw new Exception("project " + project.getName()+ " already disposed");
+          return null;
         }
         final RequestFuture<PreloadedProcessMessageHandler> future = new RequestFuture<PreloadedProcessMessageHandler>(new PreloadedProcessMessageHandler(), UUID.randomUUID(), new CancelBuildSessionAction<PreloadedProcessMessageHandler>());
         try {

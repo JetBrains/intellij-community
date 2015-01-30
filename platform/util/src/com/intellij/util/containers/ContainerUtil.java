@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,6 +212,12 @@ public class ContainerUtil extends ContainerUtilRt {
         return size;
       }
     };
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> List<T> newSmartList() {
+    return new SmartList<T>();
   }
 
   @NotNull
@@ -890,13 +896,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V[] map2Array(@NotNull T[] array, @NotNull Class<? extends V> aClass, @NotNull Function<T, V> mapper) {
+  public static <T, V> V[] map2Array(@NotNull T[] array, @NotNull Class<? super V> aClass, @NotNull Function<T, V> mapper) {
     return map2Array(Arrays.asList(array), aClass, mapper);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<? extends V> aClass, @NotNull Function<T, V> mapper) {
+  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<? super V> aClass, @NotNull Function<T, V> mapper) {
     final List<V> list = map2List(collection, mapper);
     @SuppressWarnings("unchecked") V[] array = (V[])Array.newInstance(aClass, list.size());
     return list.toArray(array);

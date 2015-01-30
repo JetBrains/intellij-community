@@ -21,6 +21,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
@@ -669,7 +670,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, new Function<String, String>() {
         @Override
         public String fun(String propertyName) {
-          return PropertyUtil.suggestGetterName(propertyName, myReturnType);
+          return GenerateMembersUtil.suggestGetterName(propertyName, myReturnType, myProject);
         }
       }));
       ContainerUtil.addIfNotNull(nameByComment, getters);

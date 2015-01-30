@@ -310,9 +310,35 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         final PsiCodeBlock tryBlock = context.get(tryKey).getTryBlock();
         if (tryBlock == null) return;
 
+        final InheritorsHolder holder = new InheritorsHolder(parameters.getPosition(), result);
+
         for (final PsiClassType type : ExceptionUtil.getThrownExceptions(tryBlock.getStatements())) {
-          result.addElement(TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock).setInsertHandler(new DefaultInsertHandler()), TailType.HUMBLE_SPACE_BEFORE_WORD));
+          PsiClass typeClass = type.resolve();
+          if (typeClass != null) {
+            result.addElement(createCatchTypeVariant(tryBlock, type));
+            holder.registerClass(typeClass);
+          }
         }
+
+        final Collection<PsiClassType> expectedClassTypes = ContainerUtil.createMaybeSingletonList(JavaPsiFacade.getElementFactory(
+          tryBlock.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE));
+        JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
+          @Override
+          public void consume(PsiType type) {
+            final PsiClass psiClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
+            if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
+
+            if (!holder.alreadyProcessed(psiClass)) {
+              result.addElement(createCatchTypeVariant(tryBlock, (PsiClassType)type));
+            }
+          }
+        });
+      }
+
+      @NotNull
+      private TailTypeDecorator<LookupItem> createCatchTypeVariant(PsiCodeBlock tryBlock, PsiClassType type) {
+        return TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock).setInsertHandler(new DefaultInsertHandler()),
+                                          TailType.HUMBLE_SPACE_BEFORE_WORD);
       }
     });
 

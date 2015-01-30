@@ -25,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -180,12 +182,23 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
     if (module == null){
       final Project project = containingClass.getProject();
-      final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(classVMName, psiElement.getResolveScope());
+      final PsiClass topLevelClass = PsiUtil.getTopLevelClass(psiElement);
+      final String qualifiedName = topLevelClass != null ? topLevelClass.getQualifiedName() : null;
+      final PsiClass aClass = qualifiedName != null 
+                              ? JavaPsiFacade.getInstance(project).findClass(qualifiedName, psiElement.getResolveScope()) 
+                              : null;
       if (aClass != null) {
         final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
-        if (virtualFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(virtualFile)) {
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        if (virtualFile != null && fileIndex.isInLibraryClasses(virtualFile)) {
           try {
-            return processClassFile(virtualFile.contentsToByteArray());
+            final VirtualFile rootForFile = fileIndex.getClassRootForFile(virtualFile);
+            if (rootForFile != null) {
+              final VirtualFile classFile = rootForFile.findFileByRelativePath("/" + classVMName.replace('.', '/') + ".class");
+              if (classFile != null) {
+                return processClassFile(classFile.contentsToByteArray());
+              }
+            }
           }
           catch (IOException e) {
             LOG.error(e);

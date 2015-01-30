@@ -248,6 +248,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
       @Override
       public void run() {
+        int oldOffset = myOffset;
         final int leadSelectionOffset = getLeadSelectionOffset();
         final VisualPosition leadSelectionPosition = getLeadSelectionPosition();
         EditorSettings editorSettings = myEditor.getSettings();
@@ -370,7 +371,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
           else {
             int selectionStartToUse = leadSelectionOffset;
             VisualPosition selectionStartPositionToUse = leadSelectionPosition;
-            if (isUnknownDirection()) {
+            if (isUnknownDirection() || oldOffset > getSelectionStart() && oldOffset < getSelectionEnd()) {
               if (getOffset() > leadSelectionOffset ^ getSelectionStart() < getSelectionEnd()) {
                 selectionStartToUse = getSelectionEnd();
                 selectionStartPositionToUse = getSelectionEndPosition();

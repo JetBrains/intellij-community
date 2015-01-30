@@ -22,7 +22,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -73,7 +72,7 @@ public final class NettyUtil {
     try {
       int attemptCount = 0;
 
-      if (bootstrap.group() instanceof NioEventLoop) {
+      if (bootstrap.group() instanceof NioEventLoopGroup) {
         while (true) {
           ChannelFuture future = bootstrap.connect(remoteAddress).awaitUninterruptibly();
           if (future.isSuccess()) {

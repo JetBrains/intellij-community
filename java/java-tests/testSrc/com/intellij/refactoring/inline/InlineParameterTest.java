@@ -122,6 +122,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
+  public void testRightSideAssignment() throws Exception {
+    doTest(false);
+  }
+
   public void testRefNewInnerForMethod() throws Exception {
     doTest(false);
   }

@@ -1,5 +1,6 @@
 package org.jetbrains.protocolReader;
 
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jsonProtocol.JsonField;
 import org.jetbrains.jsonProtocol.JsonOptionalField;
@@ -11,9 +12,9 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 final class FieldProcessor<T> {
-  private final List<FieldLoader> fieldLoaders = new ArrayList<>();
-  private final LinkedHashMap<Method, MethodHandler> methodHandlerMap = new LinkedHashMap<>();
-  private final List<VolatileFieldBinding> volatileFields = new ArrayList<>();
+  final List<FieldLoader> fieldLoaders = new ArrayList<>();
+  final LinkedHashMap<Method, MethodHandler> methodHandlerMap = new LinkedHashMap<>();
+  final List<VolatileFieldBinding> volatileFields = new ArrayList<>();
   boolean lazyRead;
   private final InterfaceReader reader;
 
@@ -22,12 +23,16 @@ final class FieldProcessor<T> {
 
     Method[] methods = typeClass.getMethods();
     // todo sort by source location
-    Arrays.sort(methods, new Comparator<Method>() {
-      @Override
-      public int compare(@NotNull Method o1, @NotNull Method o2) {
-        return o1.getName().compareTo(o2.getName());
+    Arrays.sort(methods, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+
+    Set<String> skippedNames = new THashSet<>();
+    for (Method method : methods) {
+      JsonField annotation = method.getAnnotation(JsonField.class);
+      if (annotation != null && !annotation.primitiveValue().isEmpty()) {
+        skippedNames.add(annotation.primitiveValue());
+        skippedNames.add(annotation.primitiveValue() + "Type");
       }
-    });
+    }
 
     Package classPackage = typeClass.getPackage();
     for (Method method : methods) {
@@ -50,7 +55,7 @@ final class FieldProcessor<T> {
         MethodHandler methodHandler;
         JsonSubtypeCasting jsonSubtypeCaseAnnotation = method.getAnnotation(JsonSubtypeCasting.class);
         if (jsonSubtypeCaseAnnotation == null) {
-          methodHandler = processFieldGetterMethod(method);
+          methodHandler = createMethodHandler(method, skippedNames.contains(method.getName()));
         }
         else {
           methodHandler = processManualSubtypeMethod(method, jsonSubtypeCaseAnnotation);
@@ -65,7 +70,7 @@ final class FieldProcessor<T> {
   }
 
   @NotNull
-  private MethodHandler processFieldGetterMethod(@NotNull Method method) {
+  private MethodHandler createMethodHandler(@NotNull Method method, boolean skipRead) {
     String jsonName = method.getName();
     JsonField fieldAnnotation = method.getAnnotation(JsonField.class);
     if (fieldAnnotation != null && !fieldAnnotation.name().isEmpty()) {
@@ -87,7 +92,7 @@ final class FieldProcessor<T> {
 
     ValueReader fieldTypeParser = reader.getFieldTypeParser(genericReturnType, false, method);
     if (fieldTypeParser != InterfaceReader.VOID_PARSER) {
-      fieldLoaders.add(new FieldLoader(method.getName(), jsonName, fieldTypeParser));
+      fieldLoaders.add(new FieldLoader(method.getName(), jsonName, fieldTypeParser, skipRead));
     }
 
     final String effectiveFieldName = fieldTypeParser == InterfaceReader.VOID_PARSER ? null : method.getName();
@@ -100,7 +105,7 @@ final class FieldProcessor<T> {
         writeMethodDeclarationJava(out, method);
         out.openBlock();
         if (effectiveFieldName != null) {
-          out.append("return ").append(FieldLoader.FIELD_PREFIX).append(effectiveFieldName).semi();
+          out.append("return ").append(TypeWriter.FIELD_PREFIX).append(effectiveFieldName).semi();
         }
         out.closeBlock();
       }
@@ -122,18 +127,6 @@ final class FieldProcessor<T> {
       reader.subtypeCasters.add(subtypeCaster);
     }
     return handler;
-  }
-
-  List<VolatileFieldBinding> getVolatileFields() {
-    return volatileFields;
-  }
-
-  List<FieldLoader> getFieldLoaders() {
-    return fieldLoaders;
-  }
-
-  LinkedHashMap<Method, MethodHandler> getMethodHandlerMap() {
-    return methodHandlerMap;
   }
 
   @NotNull

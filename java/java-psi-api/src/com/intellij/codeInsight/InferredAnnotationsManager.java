@@ -53,9 +53,6 @@ public abstract class InferredAnnotationsManager {
    * 
    * {@link Contract} and {@link NotNull} annotations on methods are not necessarily applicable to the overridden implementations, so they're ignored, too.<p/> 
    * 
-   * In addition, package-default annotations like @ParametersAreNonnullByDefault are not honored for parameters where 
-   * {@link NotNull} inference is ignored.
-   * 
    * @return whether inference is to be suppressed the given annotation on the given method or parameter  
    */
   public abstract boolean ignoreInference(@NotNull PsiModifierListOwner owner, @Nullable String annotationFQN);

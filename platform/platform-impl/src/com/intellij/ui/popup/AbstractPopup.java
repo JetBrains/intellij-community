@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ChildFocusWatcher;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -292,7 +293,7 @@ public class AbstractPopup implements JBPopup {
     else {
       myCaption = new CaptionPanel();
       myCaption.setBorder(null);
-      myCaption.setPreferredSize(new Dimension(0, 0));
+      myCaption.setPreferredSize(JBUI.emptySize());
     }
 
     setWindowActive(myHeaderAlwaysFocusable);

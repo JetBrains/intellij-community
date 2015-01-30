@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -984,16 +984,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
             setupSelectionOnPreferredComponent(toFocus);
 
             if (toFocus != null) {
-              final JComponent toRequest = toFocus;
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  if (isShowing() && isActive()) {
-                    getFocusManager().requestFocus(toRequest, true);
-                    notifyFocused(wrapper);
-                  }
-                }
-              });
+              if (isShowing() && isActive()) {
+                getFocusManager().requestFocus(toFocus, true);
+                notifyFocused(wrapper);
+              }
             } else {
               if (isShowing()) {
                 notifyFocused(wrapper);

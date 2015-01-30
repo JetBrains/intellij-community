@@ -621,7 +621,7 @@ public class CodeCompletionHandlerBase {
                                                                                     injectedMap);
           contexts.add(currentContext);
         }
-      }, true);
+      });
       context = contexts.get(contexts.size() - 1);
       if (context.shouldAddCompletionChar() && context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {

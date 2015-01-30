@@ -53,7 +53,7 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null || aClass.hasModifierProperty(PsiModifier.FINAL) || !CloneUtils.isCloneable(aClass)) {
+      if (aClass == null || aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       method.accept(new JavaRecursiveElementVisitor() {

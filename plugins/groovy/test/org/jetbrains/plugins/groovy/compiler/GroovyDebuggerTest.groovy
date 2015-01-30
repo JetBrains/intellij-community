@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.compiler
-
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.ContextUtil
@@ -33,7 +32,6 @@ import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.GenericDebuggerRunner
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
-import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.OSProcessManager
@@ -48,6 +46,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
@@ -55,7 +54,6 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author peter
  */
@@ -90,11 +88,8 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
   }
 
-  private void runDebugger(String mainClass, Closure cl) {
-    runDebugger(createApplicationConfiguration(mainClass, myModule), cl)
-  }
-  private void runDebugger(RunProfile configuration, Closure cl) {
-    make()
+  private void runDebugger(PsiFile script, Closure cl) {
+    def configuration = createScriptConfiguration(script.virtualFile.path, myModule)
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
       def listener = [onTextAvailable: { ProcessEvent evt, type -> /*println evt.text*/}] as ProcessAdapter
@@ -118,10 +113,10 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   public void testVariableInScript() {
-    myFixture.addFileToProject("Foo.groovy", """def a = 2
+    def file = myFixture.addFileToProject("Foo.groovy", """def a = 2
 a""");
     addBreakpoint 'Foo.groovy', 1
-    runDebugger 'Foo', {
+    runDebugger file, {
       waitForBreakpoint()
       eval 'a', '2'
       eval '2?:3', '2'
@@ -130,7 +125,7 @@ a""");
   }
 
   public void testVariableInsideClosure() {
-    myFixture.addFileToProject("Foo.groovy", """def a = 2
+    def file = myFixture.addFileToProject("Foo.groovy", """def a = 2
 Closure c = {
   a++;
   a    //3
@@ -138,7 +133,7 @@ Closure c = {
 c()
 a++""");
     addBreakpoint 'Foo.groovy', 3
-    runDebugger 'Foo', {
+    runDebugger file, {
       waitForBreakpoint()
       eval 'a', '3'
     }
@@ -162,7 +157,7 @@ class Foo {
 }""")
 
 
-    myFixture.addFileToProject("com/Bar.groovy", """package com
+    def file = myFixture.addFileToProject("com/Bar.groovy", """package com
 import static com.Goo.*
 
 def lst = [new Foo()] as Set
@@ -170,7 +165,8 @@ println 2 //4
 """)
 
     addBreakpoint 'com/Bar.groovy', 4
-    runDebugger 'com.Bar', {
+    make()
+    runDebugger file, {
       waitForBreakpoint()
       eval 'Foo.bar', '2'
       eval 'mainConstant', '42'
@@ -183,7 +179,7 @@ println 2 //4
   }
 
   public void testCall() {
-    myFixture.addFileToProject 'B.groovy', '''class B {
+    def file = myFixture.addFileToProject 'B.groovy', '''class B {
     def getFoo() {2}
 
     def call(Object... args){
@@ -195,7 +191,7 @@ println 2 //4
     }
 }'''
     addBreakpoint 'B.groovy', 4
-    runDebugger 'B', {
+    runDebugger file, {
       waitForBreakpoint()
       eval 'foo', '2'
       eval 'getFoo()', '2'
@@ -209,7 +205,7 @@ println 2 //4
   }
 
   public void testStaticContext() {
-    myFixture.addFileToProject 'B.groovy', '''
+    def file = myFixture.addFileToProject 'B.groovy', '''
 class B {
     public static void main(String[] args) {
         def cl = { a ->
@@ -221,7 +217,7 @@ class B {
 }'''
     addBreakpoint 'B.groovy', 4
     addBreakpoint 'B.groovy', 7
-    runDebugger 'B', {
+    runDebugger file, {
       waitForBreakpoint()
       eval 'args.size()', '0'
       eval 'cl.delegate.size()', '6'
@@ -237,7 +233,7 @@ class B {
   }
 
   public void "test closures in instance context with delegation"() {
-    myFixture.addFileToProject 'B.groovy', '''
+    def file = myFixture.addFileToProject 'B.groovy', '''
 def cl = { a ->
   hashCode() //2
 }
@@ -247,7 +243,7 @@ cl(42) // 5
 def getFoo() { 13 }
 '''
     addBreakpoint 'B.groovy', 2
-    runDebugger 'B', {
+    runDebugger file, {
       waitForBreakpoint()
       eval 'a', '42'
       eval 'size()', '6'
@@ -286,13 +282,12 @@ static def foo(def a) {
 
     addBreakpoint(myClass, 5)
 
-    myFixture.addFileToProject("Foo.groovy", """
+    def file = myFixture.addFileToProject("Foo.groovy", """
 def cl = new GroovyClassLoader()
 cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
     """)
-    make()
 
-    runDebugger 'Foo', {
+    runDebugger file, {
       waitForBreakpoint()
       assert myClass == sourcePosition.file.virtualFile
       eval 'a', '2'
@@ -308,7 +303,7 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
   }
 
   void testAnonymousClassInScript() {
-    myFixture.addFileToProject('Foo.groovy', '''\
+    def file = myFixture.addFileToProject('Foo.groovy', '''\
 new Runnable() {
   void run() {
     print 'foo'
@@ -317,14 +312,14 @@ new Runnable() {
 
 ''')
     addBreakpoint 'Foo.groovy', 2
-    runDebugger 'Foo', {
+    runDebugger file, {
       waitForBreakpoint()
       eval '1+1', '2'
     }
   }
 
   void testEvalInStaticMethod() {
-    myFixture.addFileToProject('Foo.groovy', '''\
+    def file = myFixture.addFileToProject('Foo.groovy', '''\
 static def foo() {
   int x = 5
   print x
@@ -334,7 +329,7 @@ foo()
 
 ''')
     addBreakpoint 'Foo.groovy', 2
-    runDebugger 'Foo', {
+    runDebugger file, {
       waitForBreakpoint()
       eval 'x', '5'
     }
@@ -353,14 +348,14 @@ foo()
     myFixture.addFileToProject('module2/Scr.groovy', 'println "hello"')
 
     addBreakpoint('module1/Scr.groovy', 0)
-    runDebugger(createScriptConfiguration(scr.virtualFile.path, myModule)) {
+    runDebugger(scr) {
       waitForBreakpoint()
       assert scr == sourcePosition.file
     }
   }
 
   public void "test in static inner class"() {
-    myFixture.addFileToProject "Foo.groovy", """
+    def file = myFixture.addFileToProject "Foo.groovy", """
 class Outer {               //1
     static class Inner {
         def x = 1
@@ -385,7 +380,7 @@ public static void main(String[] args) {
 }
 """
     addBreakpoint('Foo.groovy', 6)
-    runDebugger 'Foo', {
+    runDebugger file, {
       waitForBreakpoint()
       eval 'x', '1'
       eval 'this', 'str'

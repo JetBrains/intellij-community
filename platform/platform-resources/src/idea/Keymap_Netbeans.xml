@@ -227,6 +227,7 @@
     <action id="IntroduceField">
       <keyboard-shortcut first-keystroke="shift alt E" />
     </action>
+    <action id="IntroduceFunctionalParameter"/>
     <action id="IntroduceVariable">
       <keyboard-shortcut first-keystroke="shift alt V" />
     </action>

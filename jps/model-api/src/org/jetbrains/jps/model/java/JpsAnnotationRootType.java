@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,10 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 public class JpsAnnotationRootType extends JpsOrderRootType {
   public static final JpsAnnotationRootType INSTANCE = new JpsAnnotationRootType();
 
-  private JpsAnnotationRootType() {
+  private JpsAnnotationRootType() { }
+
+  @Override
+  public String toString() {
+    return "annotation root";
   }
 }

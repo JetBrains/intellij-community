@@ -270,20 +270,26 @@ public class SingleInspectionProfilePanel extends JPanel {
     configPanelAnchor.removeAll();
     final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
     if (additionalConfigPanel != null) {
-      final JScrollPane pane = ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE);
-      FocusManager.getCurrentManager().addPropertyChangeListener("focusOwner", new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (!(evt.getNewValue() instanceof JComponent)) {
-            return;
+      // assume that the panel does not need scrolling if it already contains a scrollable content
+      if (UIUtil.hasScrollPane(additionalConfigPanel)) {
+        configPanelAnchor.add(additionalConfigPanel);
+      }
+      else {
+        final JScrollPane pane = ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE);
+        FocusManager.getCurrentManager().addPropertyChangeListener("focusOwner", new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent evt) {
+            if (!(evt.getNewValue() instanceof JComponent)) {
+              return;
+            }
+            final JComponent component = (JComponent)evt.getNewValue();
+            if (component.isAncestorOf(pane)) {
+              pane.scrollRectToVisible(component.getBounds());
+            }
           }
-          final JComponent component = (JComponent)evt.getNewValue();
-          if (component.isAncestorOf(pane)) {
-            pane.scrollRectToVisible(component.getBounds());
-          }
-        }
-      });
-      configPanelAnchor.add(pane);
+        });
+        configPanelAnchor.add(pane);
+      }
     }
     UIUtil.setEnabled(configPanelAnchor, state.isEnabled(), true);
   }

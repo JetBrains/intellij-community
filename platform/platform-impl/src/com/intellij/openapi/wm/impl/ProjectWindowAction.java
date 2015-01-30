@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +121,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     }
     final JFrame projectFrame = WindowManager.getInstance().getFrame(project);
     final int frameState = projectFrame.getExtendedState();
-    if ((frameState & Frame.ICONIFIED) == Frame.ICONIFIED) {
+    if (BitUtil.isSet(frameState, Frame.ICONIFIED)) {
       // restore the frame if it is minimized
       projectFrame.setExtendedState(frameState ^ Frame.ICONIFIED);
     }

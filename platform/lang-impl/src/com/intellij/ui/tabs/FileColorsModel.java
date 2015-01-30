@@ -23,9 +23,13 @@ import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.TestsScope;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,28 +221,16 @@ public class FileColorsModel implements Cloneable {
 
   @Nullable
   private FileColorConfiguration findConfiguration(@NotNull final VirtualFile colored) {
-    for (final FileColorConfiguration configuration : myConfigurations) {
-      final NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
+    for (FileColorConfiguration configuration : ContainerUtil.concat(myConfigurations, mySharedConfigurations)) {
+      NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
       if (scope != null) {
-        final NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
-        final PackageSet packageSet = scope.getValue();
+        NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
+        PackageSet packageSet = scope.getValue();
         if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, myProject, namedScopesHolder)) {
           return configuration;
         }
       }
     }
-
-    for (FileColorConfiguration configuration : mySharedConfigurations) {
-      final NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
-      if (scope != null) {
-        final NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
-        final PackageSet packageSet = scope.getValue();
-        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, myProject, namedScopesHolder)) {
-          return configuration;
-        }
-      }
-    }
-
     return null;
   }
 

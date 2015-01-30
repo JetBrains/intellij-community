@@ -450,7 +450,15 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     else {
       nothingToSearchFor();
     }
+    if (mySearchField instanceof JTextArea) {
+      adjustRows((JTextArea)mySearchField, 2, 6);
+    }
   }
+
+  private static void adjustRows(JTextArea area, int minRows, int maxRows) {
+    area.setRows(Math.max(minRows, Math.min(maxRows, area.getText().split("\n").length)));
+  }
+
 
   public boolean isRegexp() {
     return myFindModel.isRegularExpressions();
@@ -637,6 +645,9 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   private void replaceFieldDocumentChanged() {
     setMatchesLimit(LivePreviewController.MATCHES_LIMIT);
     myFindModel.setStringToReplace(myReplaceField.getText());
+    if (myReplaceField instanceof JTextArea) {
+        adjustRows((JTextArea)myReplaceField, 2, 6);
+    }
   }
 
   private boolean canReplaceCurrent() {
@@ -697,12 +708,17 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
           super.paintBorder(g);
           paintBorderOfTextField(g);
         }
+
+        @Override
+        public Dimension getPreferredSize() {
+          return super.getPreferredSize();
+        }
       };
       ((JTextArea)editorTextField).setColumns(25);
-      ((JTextArea)editorTextField).setRows(3);
+      ((JTextArea)editorTextField).setRows(2);
       final JScrollPane scrollPane = new JBScrollPane(editorTextField,
-                                                     ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
-                                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+                                                     ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
       myLeftComponent.add(scrollPane, constraint);
       componentRef.set(scrollPane);
     }

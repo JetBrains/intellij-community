@@ -221,20 +221,31 @@ public class TypesUtil {
                                            @NotNull PsiElement context,
                                            @NotNull ApplicableTo position) {
     if (actualType instanceof PsiIntersectionType) {
+      ConversionResult min = ConversionResult.ERROR;
       for (PsiType child : ((PsiIntersectionType)actualType).getConjuncts()) {
-        if (canAssign(targetType, child, context, position) == ConversionResult.OK) {
+        final ConversionResult result = canAssign(targetType, child, context, position);
+        if (result.ordinal() < min.ordinal()) {
+          min = result;
+        }
+        if (min == ConversionResult.OK) {
           return ConversionResult.OK;
         }
       }
-      return ConversionResult.ERROR;
+      return min;
     }
+    
     if (targetType instanceof PsiIntersectionType) {
+      ConversionResult max = ConversionResult.OK;
       for (PsiType child : ((PsiIntersectionType)targetType).getConjuncts()) {
-        if (canAssign(child, actualType, context, position) != ConversionResult.OK) {
+        final ConversionResult result = canAssign(child, actualType, context, position);
+        if (result.ordinal() > max.ordinal()) {
+          max = result;
+        }
+        if (max == ConversionResult.ERROR) {
           return ConversionResult.ERROR;
         }
       }
-      return ConversionResult.OK;
+      return max;
     }
 
     final ConversionResult result = areTypesConvertible(targetType, actualType, context, position);

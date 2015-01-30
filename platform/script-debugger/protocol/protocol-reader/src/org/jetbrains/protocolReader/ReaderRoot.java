@@ -13,11 +13,11 @@ import java.util.*;
 class ReaderRoot<R> {
   private final Class<R> rootClass;
 
-  private final LinkedHashMap<Class<?>, TypeHandler<?>> typeToTypeHandler;
+  private final LinkedHashMap<Class<?>, TypeWriter<?>> typeToTypeHandler;
   private final Set<Class<?>> visitedInterfaces = new THashSet<>(1);
   final LinkedHashMap<Method, ReadDelegate> methodMap = new LinkedHashMap<>();
 
-  ReaderRoot(Class<R> rootClass, LinkedHashMap<Class<?>, TypeHandler<?>> typeToTypeHandler) {
+  ReaderRoot(Class<R> rootClass, LinkedHashMap<Class<?>, TypeWriter<?>> typeToTypeHandler) {
     this.rootClass = rootClass;
     this.typeToTypeHandler = typeToTypeHandler;
     readInterfaceRecursive(rootClass);
@@ -60,10 +60,10 @@ class ReaderRoot<R> {
       }
 
       //noinspection SuspiciousMethodCalls
-      TypeHandler<?> typeHandler = typeToTypeHandler.get(returnType);
-      if (typeHandler == null) {
-        typeHandler = InterfaceReader.createHandler(typeToTypeHandler, m.getReturnType());
-        if (typeHandler == null) {
+      TypeWriter<?> typeWriter = typeToTypeHandler.get(returnType);
+      if (typeWriter == null) {
+        typeWriter = InterfaceReader.createHandler(typeToTypeHandler, m.getReturnType());
+        if (typeWriter == null) {
           throw new JsonProtocolModelParseException("Unknown return type in " + m);
         }
       }
@@ -74,7 +74,7 @@ class ReaderRoot<R> {
       }
       Type argument = arguments[0];
       if (argument == JsonReaderEx.class || argument == Object.class) {
-        methodMap.put(m, new ReadDelegate(typeHandler, isList, arguments.length != 1));
+        methodMap.put(m, new ReadDelegate(typeWriter, isList, arguments.length != 1));
       }
       else {
         throw new JsonProtocolModelParseException("Unrecognized argument type in " + m);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -361,7 +362,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         if (myProgressLabel != null) {
           myProgressLabel.removeAll();
           myProgressLabel.add(progress.create());
-          myProgressLabel.setMinimumSize(new Dimension(0, 0));
+          myProgressLabel.setMinimumSize(JBUI.emptySize());
         }
       }
     });

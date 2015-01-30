@@ -33,14 +33,13 @@ public class ReplaceConfiguration extends Configuration {
   }
 
   public boolean equals(Object configuration) {
+    if (this == configuration) return true;
+    if (!(configuration instanceof ReplaceConfiguration)) return false;
     if (!super.equals(configuration)) return false;
-    if (configuration instanceof ReplaceConfiguration) {
-      return options.equals(((ReplaceConfiguration)configuration).options);
-    }
-    return false;
+    return options.equals(((ReplaceConfiguration)configuration).options);
   }
 
   public int hashCode() {
-    return options.hashCode();
+    return 31 * super.hashCode() + options.hashCode();
   }
 }

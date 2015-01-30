@@ -452,6 +452,7 @@ public class CommonCodeStyleSettings {
    * int end   = 10;
    */
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
+  public boolean ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = false;
 
 //----------------- SPACES --------------------
 

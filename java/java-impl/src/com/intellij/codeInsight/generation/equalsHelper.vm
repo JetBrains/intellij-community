@@ -1,10 +1,25 @@
-#set($classInstanceName = $helper.getUniqueLocalVarName($instanceName, $members, $settings))
-#set($paramName = $helper.getUniqueLocalVarName($baseParamName, $members, $settings))
+#set($classInstanceName = $helper.getUniqueLocalVarName($instanceBaseName, $fields, $settings))
+#set($paramName = $helper.getUniqueLocalVarName($baseParamName, $fields, $settings))
 #macro(addClassInstance)
   #if ($settings.generateFinalLocals)
   final ##
   #end
-  $classname $classInstanceName = ($classname)$paramName;
+  #set($wildcards = "#generateWildcards()")
+  $classname$wildcards $classInstanceName = ($classname$wildcards)$paramName;
+#end
+##
+#macro(generateWildcards)
+  #if ($class.typeParams > 0)
+  <##
+    #set( $arr = [1..$class.typeParams] )
+    #foreach( $i in $arr )
+      #if ($i > 1)
+      , ##
+      #end
+      ?##
+    #end
+  >##
+  #end
 #end
 ##
 #macro(addEqualsPrologue)

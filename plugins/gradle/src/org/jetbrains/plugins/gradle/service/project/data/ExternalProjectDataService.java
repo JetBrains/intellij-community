@@ -26,6 +26,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
@@ -122,7 +123,21 @@ public class ExternalProjectDataService implements ProjectDataService<ExternalPr
 
   @Nullable
   public ExternalProject getRootExternalProject(@NotNull ProjectSystemId systemId, @NotNull File projectRootDir) {
-    return myExternalRootProjects.get(Pair.create(systemId, projectRootDir));
+    ExternalProject externalProject = myExternalRootProjects.get(Pair.create(systemId, projectRootDir));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Can not find data for project at: " + projectRootDir);
+      LOG.debug("Existing imported projects paths: " + ContainerUtil.map(
+        myExternalRootProjects.entrySet(),
+        new Function<Map.Entry<Pair<ProjectSystemId, File>, ExternalProject>, Object>() {
+          @Override
+          public Object fun(Map.Entry<Pair<ProjectSystemId, File>, ExternalProject> entry) {
+            //noinspection ConstantConditions
+            if (!(entry.getValue() instanceof ExternalProject)) return null;
+            return Pair.create(entry.getKey(), entry.getValue().getProjectDir());
+          }
+        }));
+    }
+    return externalProject;
   }
 
   public void saveExternalProject(@NotNull ExternalProject externalProject) {

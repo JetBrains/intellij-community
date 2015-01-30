@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -312,6 +312,10 @@ public class UnscrambleDialog extends DialogWrapper {
       }
       if (inAuxInfo) {
         builder.append(trimSuffix(line)).append("\n");
+        continue;
+      }
+      if (line.startsWith("at breakpoint")) { // possible thread status mixed with "at ..."
+        builder.append(" ").append(trimSuffix(line));
         continue;
       }
       if (!first && mustHaveNewLineBefore(line)) {

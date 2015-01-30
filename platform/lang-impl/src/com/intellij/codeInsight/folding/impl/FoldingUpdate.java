@@ -281,6 +281,13 @@ public class FoldingUpdate {
   }
 
   public static class FoldingMap extends MultiMap<PsiElement, FoldingDescriptor>{
+    public FoldingMap() {
+    }
+
+    public FoldingMap(FoldingMap map) {
+      super(map);
+    }
+    
     @NotNull
     @Override
     protected Map<PsiElement, Collection<FoldingDescriptor>> createMap() {

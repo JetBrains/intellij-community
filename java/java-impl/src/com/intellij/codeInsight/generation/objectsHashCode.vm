@@ -5,14 +5,12 @@ public int hashCode() {
      super.hashCode() ##
      #set($i = 1)
     #end
-    #foreach($member in $members)
-      #if (!$member.static)
-        #if ($i > 0)
-        , ##
-        #end
-        $member.name ##
-        #set($i = $i + 1)
+    #foreach($field in $fields)
+      #if ($i > 0)
+      , ##
       #end
+      $field.accessor ##
+      #set($i = $i + 1)
     #end
   );
 }

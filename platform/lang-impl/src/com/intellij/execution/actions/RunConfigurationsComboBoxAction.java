@@ -149,6 +149,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         final IdeFrame frame = findFrame(this);
         LOG.assertTrue(frame != null);
         frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, null);
+        presentation.setIcon(null);
+        setIcon(null);
         super.removeNotify();
       }
     };

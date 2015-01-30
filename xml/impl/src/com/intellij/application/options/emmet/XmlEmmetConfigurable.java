@@ -19,6 +19,8 @@ import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class XmlEmmetConfigurable implements Configurable, Disposable, Configurable.NoScroll {
+public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable, Configurable.NoScroll {
   private JPanel myPanel;
   private JBCheckBox myEnableEmmetJBCheckBox;
   private JBCheckBox myEnablePreviewJBCheckBox;
@@ -76,6 +78,8 @@ public class XmlEmmetConfigurable implements Configurable, Disposable, Configura
 
   @Override
   public void dispose() {
+    myFilterCheckboxes.clear();
+    myFilterCheckboxes = null;
   }
 
   @Nullable
@@ -124,6 +128,7 @@ public class XmlEmmetConfigurable implements Configurable, Disposable, Configura
 
   @Override
   public void disposeUIResources() {
+    Disposer.dispose(this);
   }
 
   @NotNull
@@ -147,5 +152,17 @@ public class XmlEmmetConfigurable implements Configurable, Disposable, Configura
   @Override
   public String getHelpTopic() {
     return XmlBundle.message("emmet.configuration.title");
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "xml.emmet";
+  }
+
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

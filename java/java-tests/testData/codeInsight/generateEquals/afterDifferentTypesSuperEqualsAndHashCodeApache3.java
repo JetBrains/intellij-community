@@ -38,20 +38,20 @@ class A extends B {
 
         return new org.apache.commons.lang3.builder.EqualsBuilder()
                 .appendSuper(super.equals(o))
-                .append(a10, a.a10)
-                .append(a11, a.a11)
-                .append(a12, a.a12)
                 .append(a7, a.a7)
                 .append(a8, a.a8)
                 .append(a9, a.a9)
+                .append(a10, a.a10)
+                .append(a11, a.a11)
+                .append(a12, a.a12)
                 .append(a1, a.a1)
-                .append(a13, a.a13)
-                .append(a14, a.a14)
                 .append(a2, a.a2)
                 .append(a3, a.a3)
                 .append(a4, a.a4)
                 .append(a5, a.a5)
                 .append(a6, a.a6)
+                .append(a13, a.a13)
+                .append(a14, a.a14)
                 .isEquals();
     }
 

@@ -15,23 +15,29 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.util.List;
 
 /**
  * @author Rustam Vishnyakov
  */
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   private boolean myIsEnabledInTest;
+  private final List<VirtualFile> myAcceptedFiles = new WeakList<VirtualFile>();
 
   @Nullable
   @Override
@@ -62,5 +68,32 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   @Nullable
   public static DetectableIndentOptionsProvider getInstance() {
     return FileIndentOptionsProvider.EP_NAME.findExtension(DetectableIndentOptionsProvider.class);
+  }
+
+  @Nullable
+  @Override
+  public String getDisplayName() {
+    return ApplicationBundle.message("code.style.indents.detector.display.name");
+  }
+
+  @Override
+  public boolean canBeDisabled() {
+    return true;
+  }
+
+  @Override
+  public void disable(@NotNull Project project) {
+    CodeStyleSettingsManager.getSettings(project).AUTODETECT_INDENTS = false;
+    myAcceptedFiles.clear();
+  }
+
+  @Override
+  public void setAccepted(@NotNull VirtualFile file) {
+    myAcceptedFiles.add(file);
+  }
+
+  @Override
+  public boolean isAcceptedWithoutWarning(@NotNull VirtualFile file) {
+    return myAcceptedFiles.contains(file);
   }
 }

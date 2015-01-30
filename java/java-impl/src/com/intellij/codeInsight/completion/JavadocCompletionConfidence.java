@@ -33,11 +33,16 @@ public class JavadocCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (psiElement().inside(PsiDocTag.class).accepts(contextElement) && findJavaReference(psiFile, offset - 1) != null) {
-      return ThreeState.NO;
-    }
-    if (PlatformPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME).accepts(contextElement)) {
-      return ThreeState.NO;
+    if (psiElement().inside(PsiDocTag.class).accepts(contextElement)) {
+      if (findJavaReference(psiFile, offset - 1) != null) {
+        return ThreeState.NO;
+      }
+      if (PlatformPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME).accepts(contextElement)) {
+        return ThreeState.NO;
+      }
+      if (contextElement.textMatches("#")) {
+        return ThreeState.NO;
+      }
     }
     return super.shouldSkipAutopopup(contextElement, psiFile, offset);
   }

@@ -167,4 +167,24 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
     checkResultByText("class Foo { String s = \"a\\<caret>b\"; }");
   }
+  
+  public void testUpWithSelectionOnCaretInsideSelection() throws Exception {
+    initText("blah blah\n" +
+             "blah <selection>bl<caret>ah</selection>\n" +
+             "blah blah");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResultByText("blah bl<selection><caret>ah\n" +
+                      "blah blah</selection>\n" +
+                      "blah blah");
+  }
+  
+  public void testDownWithSelectionOnCaretInsideSelection() throws Exception {
+    initText("blah blah\n" +
+             "blah <selection>bl<caret>ah</selection>\n" +
+             "blah blah");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    checkResultByText("blah blah\n" +
+                      "blah <selection>blah\n" +
+                      "blah bl<caret></selection>ah");
+  }
 }

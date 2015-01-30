@@ -17,6 +17,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
+import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -24,11 +25,14 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.openapi.wm.impl.status.TextPanel;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
@@ -39,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.Multiframe, CustomStatusBarWidget {
   static final String WIDGET_ID = "Scratch";
@@ -50,16 +55,16 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        final Project project = getProject();
+        Project project = getProject();
         Editor editor = getEditor();
-        final LightVirtualFile selectedFile = getScratchFile();
-        if (project == null || editor == null || selectedFile == null) return false;
+        final VirtualFile file = getSelectedFile();
+        if (project == null || editor == null || file == null) return false;
+        final PerFileMappings<Language> fileService = ScratchFileService.getInstance().getScratchesMapping();
 
-        ListPopup popup = NewScratchFileAction.buildLanguagePopup(project, selectedFile.getLanguage(), new Consumer<Language>() {
+        ListPopup popup = NewScratchFileAction.buildLanguagePopup(project, fileService.getMapping(file), new Consumer<Language>() {
           @Override
           public void consume(Language language) {
-            selectedFile.setLanguage(NewScratchFileAction.substitute(project, language));
-            FileContentUtilCore.reparseFiles(selectedFile);
+            fileService.setMapping(file, language);
             update();
           }
         });
@@ -70,6 +75,17 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
         return true;
       }
     }.installOn(myPanel);
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event.getRequestor() == FileContentUtilCore.FORCE_RELOAD_REQUESTOR) {
+            update();
+            break;
+          }
+        }
+      }
+    });
   }
 
   @NotNull
@@ -85,9 +101,16 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
   }
 
   private void update() {
-    LightVirtualFile file = getScratchFile();
-    if (file != null) {
-      Language lang = file.getLanguage();
+    Project project = getProject();
+    if (project == null) return;
+    VirtualFile file = getSelectedFile();
+    if (file == null) return;
+    ScratchFileService fileService = ScratchFileService.getInstance();
+    if (fileService.getRootType(file) instanceof ScratchRootType) {
+      Language lang = fileService.getScratchesMapping().getMapping(file);
+      if (lang == null) {
+        lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
+      }
       myPanel.setText(lang.getDisplayName());
       myPanel.setBorder(WidgetBorder.INSTANCE);
       myPanel.setIcon(getDefaultIcon(lang));
@@ -100,12 +123,6 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     if (myStatusBar != null) {
       myStatusBar.updateWidget(WIDGET_ID);
     }
-  }
-
-  @Nullable
-  private LightVirtualFile getScratchFile() {
-    VirtualFile file = getSelectedFile();
-    return file instanceof LightVirtualFile && file.getFileSystem() instanceof ScratchpadFileSystem ? (LightVirtualFile)file : null;
   }
 
   @Override

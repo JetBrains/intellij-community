@@ -338,6 +338,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if ( mySearchPopup != null ) mySearchPopup.refreshSelection();
   }
 
+  @Override
+  public void findAndSelectElement(@NotNull String searchQuery) {
+    selectElement(findElement(searchQuery), searchQuery);
+  }
+
   private class SearchPopup extends JPanel {
     private final SearchField mySearchField;
 
@@ -425,7 +430,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
 
     public void refreshSelection () {
-      updateSelection(findElement(mySearchField.getText()));
+      findAndSelectElement(mySearchField.getText());
     }
 
     private void updateSelection(Object element) {

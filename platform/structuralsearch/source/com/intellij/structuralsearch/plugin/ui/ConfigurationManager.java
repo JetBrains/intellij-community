@@ -26,14 +26,14 @@ public class ConfigurationManager {
   @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
 
   private List<Configuration> configurations;
-  private LinkedList<Configuration> historyConfigurations;
+  private List<Configuration> historyConfigurations;
 
   public void addHistoryConfigurationToFront(Configuration configuration) {
-    if (historyConfigurations == null) historyConfigurations = new LinkedList<Configuration>();
+    if (historyConfigurations == null) historyConfigurations = new ArrayList<Configuration>();
 
-    if (historyConfigurations.indexOf(configuration) == -1) {
-      historyConfigurations.addFirst(configuration);
-    }
+    historyConfigurations.remove(configuration);
+    historyConfigurations.add(0, configuration);
+    configuration.setCreated(System.currentTimeMillis());
   }
 
   public void removeHistoryConfiguration(Configuration configuration) {
@@ -90,15 +90,8 @@ public class ConfigurationManager {
     ArrayList<Configuration> configurations = new ArrayList<Configuration>();
     ArrayList<Configuration> historyConfigurations = new ArrayList<Configuration>();
     readConfigurations(element, configurations, historyConfigurations);
-    for (Configuration configuration : historyConfigurations) {
-      addHistoryConfigurationToFront(configuration);
-    }
-    for (Configuration configuration : configurations) {
-      addConfiguration(configuration);
-    }
-    if (this.historyConfigurations != null) {
-      Collections.reverse(this.historyConfigurations);
-    }
+    this.configurations = configurations;
+    this.historyConfigurations = historyConfigurations;
   }
 
   public static void readConfigurations(final Element element, @NotNull Collection<Configuration> configurations, @NotNull Collection<Configuration> historyConfigurations) {
@@ -139,7 +132,11 @@ public class ConfigurationManager {
     return null;
   }
 
+  @NotNull
   public Collection<Configuration> getHistoryConfigurations() {
+    if (historyConfigurations == null) {
+      return Collections.emptyList();
+    }
     return historyConfigurations;
   }
 

@@ -147,8 +147,10 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
       if (parametersToDelete.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
         String message = RefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters", UsageViewUtil.getLongName(method));
-        if (Messages.showYesNoDialog(project, message, SafeDeleteHandler.REFACTORING_NAME,
-            Messages.getQuestionIcon()) != Messages.YES) return null;
+        int result = Messages.showYesNoCancelDialog(project, message, SafeDeleteHandler.REFACTORING_NAME,
+                                               Messages.getQuestionIcon());
+        if (result == Messages.CANCEL) return null;
+        if (result == Messages.NO) return Collections.singletonList(element);
       }
       return parametersToDelete;
     }
@@ -318,7 +320,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
     }
 
-    if (delegatingParams.size() == 1) {
+    if (!delegatingParams.isEmpty()) {
       final SafeDeleteParameterCallHierarchyUsageInfo parameterHierarchyUsageInfo = delegatingParams.get(0);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         result.addAll(delegatingParams);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,27 +35,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class TreeBasedStructureViewBuilder implements StructureViewBuilder {
   /**
-   * @deprecated Use createStructureViewModel(Editor editor)
-   */
-  @NotNull
-  @Deprecated
-  public StructureViewModel createStructureViewModel() {
-    throw new AbstractMethodError();
-  }
-
-  /**
    * Returns the structure view model defining the data displayed in the structure view
    * for a specific file.
-   *
-   * todo This method must be abstract, but due to compatibility reasons we wait IDEA 13 release
    *
    * @return the structure view model instance.
    * @see TextEditorBasedStructureViewModel
    */
   @NotNull
-  public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
-    return createStructureViewModel();
-  }
+  public abstract StructureViewModel createStructureViewModel(@Nullable Editor editor);
 
   @Override
   @NotNull

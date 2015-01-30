@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -207,7 +208,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeStringList(String name, List<String> value) {
+  protected final void writeStringList(@NotNull String name, @NotNull Collection<String> value) {
     try {
       beginArguments();
       JsonWriters.writeStringList(writer, name, value);

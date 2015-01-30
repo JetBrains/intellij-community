@@ -101,7 +101,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
                                                     }
                                                   }, "<br><li>") +
                                                   "</ul><br>Would you like to proceed and possibly lose your configurations?</body></html>",
-                                         "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != Messages.OK) {
+                                         EclipseBundle.message("eclipse.export.dialog.title"), Messages.getWarningIcon()) != Messages.OK) {
       return;
     }
 

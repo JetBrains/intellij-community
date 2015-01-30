@@ -104,4 +104,9 @@ public class ResourceBundleImpl extends ResourceBundle {
   public String getUrl() {
     return getBaseDirectory() + "/" + getBaseName();
   }
+
+  @Override
+  public String toString() {
+    return "ResourceBundleImpl:" + getBaseName();
+  }
 }

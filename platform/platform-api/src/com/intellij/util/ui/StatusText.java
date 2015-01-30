@@ -20,13 +20,15 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.JBViewport;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class StatusText {
@@ -157,7 +159,7 @@ public abstract class StatusText {
     myComponent.clear();
     myClickListeners.clear();
     myHasActiveClickListeners = false;
-    if (myOwner != null) myOwner.repaint();
+    if (myOwner != null && isStatusVisible()) myOwner.repaint();
     return this;
   }
 
@@ -181,18 +183,42 @@ public abstract class StatusText {
     if (listener != null) {
       myHasActiveClickListeners = true;
     }
-    if (myOwner != null) myOwner.repaint();
+    if (myOwner != null && isStatusVisible()) myOwner.repaint();
     return this;
   }
 
   public void paint(Component owner, Graphics g) {
-    boolean wrongComponent = owner != myOwner && owner != null && owner.getParent() != myOwner;
-    if (!isStatusVisible() || wrongComponent) return;
+    if (!isStatusVisible()) return;
 
-    Rectangle b = getTextComponentBound();
-    myComponent.setBounds(0, 0, b.width, b.height);
+    if (owner == myOwner) {
+      doPaintStatusText(g, getTextComponentBound());
+    }
+    else {
+      paintOnComponentUnderViewport(owner, g);
+    }
+  }
 
-    Graphics2D g2 = (Graphics2D)g.create(b.x, b.y, b.width, b.height);
+  private void paintOnComponentUnderViewport(Component component, Graphics g) {
+    JBViewport viewport = ObjectUtils.tryCast(myOwner, JBViewport.class);
+    if (viewport == null || viewport.getView() != component || viewport.isPaintingNow()) return;
+
+    // We're painting a component which has a viewport as it's ancestor.
+    // As the viewport paints status text, we'll erase it, so we need to schedule a repaint for the viewport with status text's bounds.
+    // But it causes flicker, so we paint status text over the component first and then schedule the viewport repaint.
+
+    Rectangle textBoundsInViewport = getTextComponentBound();
+
+    int xInOwner = textBoundsInViewport.x - component.getX();
+    int yInOwner = textBoundsInViewport.y - component.getY();
+    Rectangle textBoundsInOwner = new Rectangle(xInOwner, yInOwner, textBoundsInViewport.width, textBoundsInViewport.height);
+    doPaintStatusText(g, textBoundsInOwner);
+
+    viewport.repaint(textBoundsInViewport);
+  }
+
+  private void doPaintStatusText(Graphics g, Rectangle textComponentBounds) {
+    myComponent.setBounds(0, 0, textComponentBounds.width, textComponentBounds.height);
+    Graphics2D g2 = (Graphics2D)g.create(textComponentBounds.x, textComponentBounds.y, textComponentBounds.width, textComponentBounds.height);
     myComponent.paint(g2);
     g2.dispose();
   }

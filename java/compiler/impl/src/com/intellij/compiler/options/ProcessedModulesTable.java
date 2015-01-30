@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,7 @@ public class ProcessedModulesTable extends JPanel {
     myTable.getEmptyText().setText("No modules configured");
 
     //myTable.setShowGrid(false);
-    myTable.setIntercellSpacing(new Dimension(0, 0));
+    myTable.setIntercellSpacing(JBUI.emptySize());
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
 
@@ -71,7 +72,7 @@ public class ProcessedModulesTable extends JPanel {
 
     final JPanel panel = ToolbarDecorator.createDecorator(myTable)
       .disableUpDownActions()
-      .setPreferredSize(new Dimension(100, 155))
+      .setPreferredSize(JBUI.size(100, 155))
       .createPanel();
     add(panel, BorderLayout.CENTER);
 

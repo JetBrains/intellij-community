@@ -95,6 +95,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testSwitchEnumConstant() { doTest(); }
   public void testEnumConstantNotNull() throws Throwable { doTest(); }
   public void testEqualsConstant() throws Throwable { doTest(); }
+  public void testDontSaveTypeValue() { doTest(); }
   public void testFinalLoopVariableInstanceof() throws Throwable { doTest(); }
   public void testGreaterIsNotEquals() throws Throwable { doTest(); }
   public void testNotGreaterIsNotEquals() throws Throwable { doTest(); }
@@ -106,6 +107,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAccessorPlusMutator() throws Throwable { doTest(); }
   public void testClosureVariableField() throws Throwable { doTest(); }
   public void testOptionalThis() { doTest(); }
+  public void testQualifiedThis() { doTest(); }
 
   public void testAssigningNullableToNotNull() throws Throwable { doTest(); }
   public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
@@ -214,6 +216,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testContractAnnotation() { doTest(); }
   public void testContractInapplicableComparison() { doTest(); }
   public void testContractInLoopNotTooComplex() { doTest(); }
+  public void testContractWithManyParameters() { doTest(); }
   public void testContractWithNullable() { doTest(); }
   public void testContractWithNotNull() { doTest(); }
   public void testContractPreservesUnknownNullability() { doTest(); }

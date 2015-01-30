@@ -60,6 +60,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -70,14 +72,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -123,8 +125,11 @@ public class FindDialog extends DialogWrapper {
   private static boolean myPreviewResultsTabWasSelected;
   private static final int RESULTS_PREVIEW_TAB_INDEX = 1;
 
+  private Splitter myPreviewSplitter;
   private JBTable myResultsPreviewTable;
+  private UsagePreviewPanel myUsagePreviewPanel;
   private TabbedPane myContent;
+  private Alarm mySearchRescheduleOnCancellationsAlarm;
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
   public FindDialog(@NotNull Project project, @NotNull FindModel model, @NotNull Consumer<FindModel> myOkHandler){
@@ -173,6 +178,8 @@ public class FindDialog extends DialogWrapper {
   @Override
   protected void dispose() {
     finishPreviousPreviewSearch();
+    if (mySearchRescheduleOnCancellationsAlarm != null) Disposer.dispose(mySearchRescheduleOnCancellationsAlarm);
+    if (myUsagePreviewPanel != null) Disposer.dispose(myUsagePreviewPanel);
     for(Map.Entry<EditorTextField, DocumentAdapter> e: myComboBoxListeners.entrySet()) {
       e.getKey().removeDocumentListener(e.getValue());
     }
@@ -320,6 +327,7 @@ public class FindDialog extends DialogWrapper {
       if (state == ModalityState.NON_MODAL) return; // skip initial changes
 
       finishPreviousPreviewSearch();
+      mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
       final DefaultTableModel model = new DefaultTableModel() {
         @Override
         public boolean isCellEditable(int row, int column) {
@@ -333,7 +341,6 @@ public class FindDialog extends DialogWrapper {
       applyTo(modelClone, false);
 
       ValidationInfo result = getValidationInfo(modelClone);
-      if (result != null) return;  // todo
 
       final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(modelClone, myProject);
 
@@ -341,6 +348,12 @@ public class FindDialog extends DialogWrapper {
       myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
 
       myResultsPreviewTable.setModel(model);
+
+      if (result != null) {
+        myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+        return;
+      }
+
       myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new UsageTableCellRenderer());
 
       myResultsPreviewTable.getEmptyText().setText("Searching...");
@@ -371,7 +384,7 @@ public class FindDialog extends DialogWrapper {
               return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
             }
           }, processPresentation);
-          if (resultsCount.get() == 0) {
+          if (resultsCount.get() == 0 && !progressIndicatorWhenSearchStarted.isCanceled()) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
@@ -385,8 +398,14 @@ public class FindDialog extends DialogWrapper {
 
         @Override
         public void onCanceled(@NotNull ProgressIndicator indicator) {
-          if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && resultsCount.get() == 0) {
-            myResultsPreviewTable.getEmptyText().setText("Cancelled");
+          if (isShowing() && progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress) {
+            mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
+            mySearchRescheduleOnCancellationsAlarm.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                findSettingsChanged();
+              }
+            }, 100);
           }
         }
       });
@@ -489,8 +508,30 @@ public class FindDialog extends DialogWrapper {
           }
         };
         table.setShowColumns(false);
+        table.setShowGrid(false);
         new NavigateToSourceListener().installOn(table);
+
+        Splitter previewSplitter = new Splitter(true, 0.5f, 0.1f, 0.9f);
+        myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
         myResultsPreviewTable = table;
+        myResultsPreviewTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+          @Override
+          public void valueChanged(ListSelectionEvent e) {
+            if (e.getValueIsAdjusting()) return;
+            int index = myResultsPreviewTable.getSelectionModel().getLeadSelectionIndex();
+            if (index != -1) {
+              UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
+              myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+            }
+            else {
+              myUsagePreviewPanel.updateLayout(null);
+            }
+          }
+        });
+        mySearchRescheduleOnCancellationsAlarm = new Alarm();
+        previewSplitter.setFirstComponent(new JBScrollPane(myResultsPreviewTable));
+        previewSplitter.setSecondComponent(myUsagePreviewPanel.createComponent());
+        myPreviewSplitter = previewSplitter;
       }
     }
     else {
@@ -513,10 +554,10 @@ public class FindDialog extends DialogWrapper {
       resultsOptionPanel.add(myCbToOpenInNewTab);
     }
 
-    if (myResultsPreviewTable != null) {
+    if (myPreviewSplitter != null) {
       TabbedPane pane = new TabbedPaneImpl(SwingConstants.TOP);
       pane.insertTab("Options", null, optionsPanel, null, 0);
-      pane.insertTab("Preview", null, new JBScrollPane(myResultsPreviewTable), null, RESULTS_PREVIEW_TAB_INDEX);
+      pane.insertTab("Preview", null, myPreviewSplitter, null, RESULTS_PREVIEW_TAB_INDEX);
       myContent = pane;
       if (myPreviewResultsTabWasSelected) myContent.setSelectedIndex(RESULTS_PREVIEW_TAB_INDEX);
 
@@ -1389,36 +1430,46 @@ public class FindDialog extends DialogWrapper {
   }
 
   private static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
-    private SimpleColoredComponent myUsageRenderer = new SimpleColoredComponent();
-    private SimpleColoredComponent myFileAndLineNumber = new SimpleColoredComponent();
+    private ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        if (value instanceof UsageInfo2UsageAdapter) {
+          TextChunk[] text = ((UsageInfo2UsageAdapter)value).getPresentation().getText();
+
+          // skip line number / file info
+          for (int i = 1; i < text.length; ++i) {
+            TextChunk textChunk = text[i];
+            myUsageRenderer.append(textChunk.getText(), textChunk.getSimpleAttributesIgnoreBackground());
+          }
+        }
+        setBorder(null);
+      }
+    };
+    private ColoredTableCellRenderer myFileAndLineNumber = new ColoredTableCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        if (value instanceof UsageInfo2UsageAdapter) {
+          TextChunk[] text = ((UsageInfo2UsageAdapter)value).getPresentation().getText();
+          // line number / file info
+          append(((UsageInfo2UsageAdapter)value).getFile().getName() + " " + text[0].getText(), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+        }
+        setBorder(null);
+      }
+    };
 
     UsageTableCellRenderer() {
       setLayout(new BorderLayout());
+
       add(myUsageRenderer, BorderLayout.WEST);
       add(myFileAndLineNumber, BorderLayout.EAST);
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      myUsageRenderer.clear();
-      myFileAndLineNumber.clear();
-      setBackground(isSelected && hasFocus ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
+      setBackground(UIUtil.getTableBackground(isSelected));
+      myUsageRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      myFileAndLineNumber.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-      if (value instanceof UsageInfo2UsageAdapter) {
-        UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
-        UsagePresentation presentation = usageAdapter.getPresentation();
-        TextChunk[] text = presentation.getText();
-
-        // put line number / file info at the right
-        for (int i = 1; i < text.length; ++i) {
-          TextChunk textChunk = text[i];
-          SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
-          myUsageRenderer.append(textChunk.getText(), simples);
-        }
-
-        myFileAndLineNumber.append(usageAdapter.getFile().getName() + " " + text[0].getText(),
-                                    SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
-      }
       return this;
     }
   }

@@ -43,5 +43,6 @@ public class CompletionContributorForTextField extends CompletionContributor imp
     }
 
     field.addCompletionVariants(text, offset, prefix, activeResult);
+    activeResult.stopHere();
   }
 }

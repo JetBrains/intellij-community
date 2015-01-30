@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.util.Function;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogHighlighter;
@@ -39,6 +40,8 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.ColorGenerator;
 import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.graph.RowInfo;
+import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphMouseAction;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
@@ -112,7 +115,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     setRowHeight(HEIGHT_CELL);
     setShowHorizontalLines(false);
-    setIntercellSpacing(new Dimension(0, 0));
+    setIntercellSpacing(JBUI.emptySize());
 
     MouseAdapter mouseAdapter = new MyMouseAdapter();
     addMouseMotionListener(mouseAdapter);
@@ -321,16 +324,17 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   public void applyHighlighters(@NotNull Component rendererComponent, int row, boolean selected) {
+    RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
     boolean fgUpdated = false;
     for (VcsLogHighlighter highlighter : myHighlighters) {
-      Color color = highlighter.getForeground(myDataPack.getVisibleGraph().getRowInfo(row).getCommit(), selected);
+      Color color = highlighter.getForeground(rowInfo.getCommit(), selected);
       if (color != null) {
         rendererComponent.setForeground(color);
         fgUpdated = true;
       }
     }
     if (!fgUpdated) { // reset highlighting if no-one wants to change it
-      rendererComponent.setForeground(UIUtil.getTableForeground(selected));
+      rendererComponent.setForeground(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : UIUtil.getTableForeground(selected));
     }
   }
 

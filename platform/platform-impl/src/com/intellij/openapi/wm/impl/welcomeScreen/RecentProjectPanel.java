@@ -59,7 +59,7 @@ public class RecentProjectPanel extends JPanel {
   protected AnAction removeRecentProjectAction;
   private int myHoverIndex = -1;
   private final int closeButtonInset = JBUI.scale(7);
-  private Icon currentIcon = AllIcons.Welcome.RemoveRecentProject;
+  private Icon currentIcon = AllIcons.Welcome.Project.Remove;
 
   private final JPanel myCloseButtonForEditor = new JPanel() {
     {
@@ -221,9 +221,9 @@ public class RecentProjectPanel extends JPanel {
           if (cellBounds != null && cellBounds.contains(point)) {
             myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             if (rectInListCoordinatesContains(cellBounds, point)) {
-              currentIcon = AllIcons.Welcome.RemoveRecentProjectHover;
+              currentIcon = AllIcons.Welcome.Project.Remove_hover;
             } else {
-              currentIcon = AllIcons.Welcome.RemoveRecentProject;
+              currentIcon = AllIcons.Welcome.Project.Remove;
             }
             myHoverIndex = index;
             myList.repaint(cellBounds);
@@ -242,7 +242,7 @@ public class RecentProjectPanel extends JPanel {
       @Override
       public void mouseExited(MouseEvent e) {
         myHoverIndex = -1;
-        currentIcon = AllIcons.Welcome.RemoveRecentProject;
+        currentIcon = AllIcons.Welcome.Project.Remove;
         myList.repaint();
       }
     };

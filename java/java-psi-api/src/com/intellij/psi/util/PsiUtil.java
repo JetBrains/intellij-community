@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,6 +317,9 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @MagicConstant(intValues = {ACCESS_LEVEL_PUBLIC, ACCESS_LEVEL_PROTECTED, ACCESS_LEVEL_PACKAGE_LOCAL, ACCESS_LEVEL_PRIVATE})
+  public @interface AccessLevel {}
+
+  @AccessLevel
   public static int getAccessLevel(@NotNull PsiModifierList modifierList) {
     if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
       return ACCESS_LEVEL_PRIVATE;
@@ -332,7 +335,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @PsiModifier.ModifierConstant
   @Nullable
-  public static String getAccessModifier(int accessLevel) {
+  public static String getAccessModifier(@AccessLevel int accessLevel) {
     @SuppressWarnings("UnnecessaryLocalVariable") @PsiModifier.ModifierConstant
     final String modifier = accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];
     return modifier;

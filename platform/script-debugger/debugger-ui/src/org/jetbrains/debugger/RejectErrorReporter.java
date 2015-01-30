@@ -4,6 +4,8 @@ import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.rpc.CommandProcessor;
 
 public final class RejectErrorReporter implements Consumer<Throwable> {
   private final XDebugSession session;
@@ -19,7 +21,10 @@ public final class RejectErrorReporter implements Consumer<Throwable> {
   }
 
   @Override
-  public void consume(@Nullable Throwable error) {
-    session.reportError((description == null ? "" : description + ": ") + (error == null ? "Unknown error" : error));
+  public void consume(Throwable error) {
+    if (!(error instanceof Promise.MessageError)) {
+      CommandProcessor.LOG.error(error);
+    }
+    session.reportError((description == null ? "" : description + ": ") + error.getMessage());
   }
 }

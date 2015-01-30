@@ -36,9 +36,7 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
   public ManageButton(final ManageButtonBuilder builder) {
     myBuilder = builder;
     getTemplatePresentation().setText("Manage");
-    if (SystemInfo.isMac) {
-      setSmallVariant(false);
-    }
+    setSmallVariant(false);
   }
 
   public JComponent build() {

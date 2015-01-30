@@ -120,7 +120,9 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                   final PsiElement[] children = parent.getChildren();
                   TextRange selection = new TextRange(start, end);
                   for (PsiElement child : children) {
-                    if (!(child instanceof PsiWhiteSpace) && child.getContainingFile() != null && selection.contains(child.getTextOffset())) {
+                    if (!(child instanceof PsiWhiteSpace) &&
+                        child.getContainingFile() != null &&
+                        selection.contains(child.getTextOffset())) {
                       elements.add(child);
                     }
                   }
@@ -147,6 +149,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
           if (!files.isEmpty()) {
             GlobalSearchScope prev = new GlobalSearchScope(project) {
               private Set<VirtualFile> myFiles = null;
+
               @NotNull
               @Override
               public String getDisplayName() {
@@ -199,7 +202,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     if (favoritesManager != null) {
       for (final String favorite : favoritesManager.getAvailableFavoritesListNames()) {
-        final Collection<TreeItem<Pair<AbstractUrl,String>>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
+        final Collection<TreeItem<Pair<AbstractUrl, String>>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
         if (rootUrls.isEmpty()) continue;  // ignore unused root
         result.add(new GlobalSearchScope(project) {
           @NotNull
@@ -247,7 +250,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
         }
       });
       if (!selectedFiles.isEmpty()) {
-        return new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, selectedFiles)){
+        return new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, selectedFiles)) {
           @NotNull
           @Override
           public String getDisplayName() {

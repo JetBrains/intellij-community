@@ -30,25 +30,79 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.LocalTimeCounter;
+import org.jetbrains.java.generate.element.ClassElement;
+import org.jetbrains.java.generate.element.FieldElement;
+import org.jetbrains.java.generate.element.GenerationHelper;
 import org.jetbrains.java.generate.template.TemplateResource;
+import org.jetbrains.java.generate.template.TemplatesManager;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     private final TemplateResource template;
     private final Editor myEditor;
+    private final List<String> availableImplicits = new ArrayList<String>();
 
-    public GenerateTemplateConfigurable(TemplateResource template, Project project) {
-        this.template = template;
-        final EditorFactory factory = EditorFactory.getInstance();
-        final Document doc = factory.createDocument(template.getTemplate());
-        final FileType ftl = FileTypeManager.getInstance().findFileTypeByName("VTL");
-        myEditor = factory.createEditor(doc, project, ftl != null ? ftl : FileTypes.PLAIN_TEXT, template.isDefault());
+  public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project) {
+    this(template, contextMap, project, true);
+  }
+
+  public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project, boolean multipleFields) {
+      this.template = template;
+      final EditorFactory factory = EditorFactory.getInstance();
+      Document doc = factory.createDocument(template.getTemplate());
+      final FileType ftl = FileTypeManager.getInstance().findFileTypeByName("VTL");
+      if (project != null && ftl != null) {
+        final PsiFile file = PsiFileFactory.getInstance(project)
+            .createFileFromText(template.getFileName(), ftl, template.getTemplate(), LocalTimeCounter.currentTime(), true);
+        if (!template.isDefault()) {
+          final HashMap<String, PsiType> map = new LinkedHashMap<String, PsiType>();
+          map.put("java_version", PsiType.INT);
+          map.put("class", TemplatesManager.createElementType(project, ClassElement.class));
+          if (multipleFields) {
+            map.put("fields", TemplatesManager.createFieldListElementType(project));
+          } 
+          else {
+            map.put("field", TemplatesManager.createElementType(project, FieldElement.class));
+          }
+          map.put("helper", TemplatesManager.createElementType(project, GenerationHelper.class));
+          map.put("settings", PsiType.NULL);
+          map.putAll(contextMap);
+          availableImplicits.addAll(map.keySet());
+          file.getViewProvider().putUserData(TemplatesManager.TEMPLATE_IMPLICITS, map);
+        }
+        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        if (document != null) {
+          doc = document;
+        }
+      }
+      myEditor = factory.createEditor(doc, project, ftl != null ? ftl : FileTypes.PLAIN_TEXT, template.isDefault());
     }
 
     public JComponent createComponent() {
-        return myEditor.getComponent();
+      final JComponent component = myEditor.getComponent();
+      if (availableImplicits.isEmpty()) {
+        return component;
+      }
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.add(component, BorderLayout.CENTER);
+      MultiLineLabel label =
+        new MultiLineLabel("<html>Available implicit variables:\n" + StringUtil.join(availableImplicits, ", ") + "</html>");
+      label.setPreferredSize(new Dimension(250, 30));
+      panel.add(label, BorderLayout.SOUTH);
+      return panel;
     }
 
     public boolean isModified() {

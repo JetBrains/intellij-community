@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public abstract class XFetchValueActionBase extends AnAction {
       return;
     }
 
-    ValueCollector valueCollector = new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
+    ValueCollector valueCollector = createCollector(e);
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       if (node instanceof XValueNodeImpl) {
@@ -97,7 +97,12 @@ public abstract class XFetchValueActionBase extends AnAction {
     valueCollector.finish(e.getProject());
   }
 
-  private final class ValueCollector {
+  @NotNull
+  protected ValueCollector createCollector(@NotNull AnActionEvent e) {
+    return new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
+  }
+
+  protected class ValueCollector {
     private final List<String> values = new SmartList<String>();
     private final XDebuggerTree myTree;
     private volatile boolean processed;
@@ -112,8 +117,12 @@ public abstract class XFetchValueActionBase extends AnAction {
 
     public void finish(Project project) {
       if (processed && !values.contains(null) && !project.isDisposed()) {
-        handle(project, StringUtil.join(values, "\n"), myTree);
+        handleInCollector(project, StringUtil.join(values, "\n"), myTree);
       }
+    }
+
+    public void handleInCollector(final Project project, final String value, XDebuggerTree tree) {
+      handle(project, value, tree);
     }
 
     public int acquire() {

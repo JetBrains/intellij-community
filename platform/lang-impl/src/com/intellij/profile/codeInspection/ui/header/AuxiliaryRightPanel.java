@@ -38,15 +38,16 @@ public class AuxiliaryRightPanel extends JPanel {
   private final JLabel myErrorLabel;
   private final ValidatedTextField myValidatedTextField;
   private final CardLayout myLayout;
+  private final JPanel myCardPanel;
 
   public AuxiliaryRightPanel(final DescriptionSaveListener descriptionListener) {
+    myCardPanel = new JPanel();
     myDescriptionLabel = new DescriptionLabel();
 
     myErrorLabel = new JLabel();
-    myErrorLabel.setBackground(UIUtil.isUnderDarcula() ? JBColor.PINK.darker() :JBColor.PINK);
+    myErrorLabel.setBackground(UIUtil.isUnderDarcula() ? JBColor.PINK.darker() : JBColor.PINK);
     myErrorLabel.setForeground(JBColor.BLACK);
     myErrorLabel.setOpaque(true);
-    myErrorLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
 
     myValidatedTextField = new ValidatedTextField(new SaveInputComponentValidator() {
       @Override
@@ -66,7 +67,8 @@ public class AuxiliaryRightPanel extends JPanel {
     });
 
     myLayout = new CardLayout();
-    setLayout(myLayout);
+    myCardPanel.setLayout(myLayout);
+    myCardPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 4, 0));
 
     new ClickListener() {
       @Override
@@ -79,11 +81,15 @@ public class AuxiliaryRightPanel extends JPanel {
       }
     }.installOn(myDescriptionLabel);
 
-    add(myDescriptionLabel, SHOW_DESCRIPTION_CARD);
-    add(myErrorLabel, ERROR_CARD);
-    add(myValidatedTextField, EDIT_DESCRIPTION_CARD);
+    myCardPanel.add(myDescriptionLabel, SHOW_DESCRIPTION_CARD);
+    myCardPanel.add(myErrorLabel, ERROR_CARD);
+    myCardPanel.add(myValidatedTextField, EDIT_DESCRIPTION_CARD);
 
     showDescription(null);
+
+    setLayout(new BorderLayout());
+    add(myValidatedTextField.getHintLabel(), BorderLayout.NORTH);
+    add(myCardPanel, BorderLayout.CENTER);
   }
 
   public void showDescription(@Nullable String newDescription) {
@@ -91,7 +97,7 @@ public class AuxiliaryRightPanel extends JPanel {
       newDescription = "";
     }
     myDescriptionLabel.setAllText(newDescription);
-    myLayout.show(this, SHOW_DESCRIPTION_CARD);
+    myLayout.show(myCardPanel, SHOW_DESCRIPTION_CARD);
   }
 
   public void editDescription(@Nullable String startValue) {
@@ -99,17 +105,13 @@ public class AuxiliaryRightPanel extends JPanel {
       startValue = "";
     }
     myValidatedTextField.setText(startValue);
-    myLayout.show(this, EDIT_DESCRIPTION_CARD);
+    myLayout.show(myCardPanel, EDIT_DESCRIPTION_CARD);
     myValidatedTextField.requestFocus();
   }
 
   public void showError(final @NotNull String errorText) {
     myErrorLabel.setText(errorText);
-    myLayout.show(this, ERROR_CARD);
-  }
-
-  public JPanel getHintLabel() {
-    return myValidatedTextField.getHintLabel();
+    myLayout.show(myCardPanel, ERROR_CARD);
   }
 
   public interface DescriptionSaveListener {

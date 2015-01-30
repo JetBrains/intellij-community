@@ -26,6 +26,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesImplUtil;
@@ -36,6 +37,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -47,6 +50,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -85,6 +89,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     Logger.getInstance("#com.intellij.lang.properties.editor.ResourceBundleEditor");
   @NonNls private static final String VALUES               = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
+  public static final Key<ResourceBundleEditor> RESOURCE_BUNDLE_EDITOR_KEY = Key.create("resourceBundleEditor");
 
   private final StructureViewComponent      myStructureViewComponent;
   private final Map<PropertiesFile, Editor> myEditors;
@@ -103,6 +108,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private boolean             myDisposed;
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
+  private String              myPropertyToSelectWhenVisible;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -186,6 +192,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return myResourceBundle;
   }
 
+  public void updateTreeRoot() {
+    final Object element = myStructureViewComponent.getTreeStructure().getRootElement();
+    if (element instanceof CachingChildrenTreeNode) {
+      ((CachingChildrenTreeNode)element).rebuildChildren();
+    }
+  }
+
   private void onSelectionChanged(@NotNull FileEditorManagerEvent event) {
     // Ignore events which don't target current editor.
     FileEditor oldEditor = event.getOldEditor();
@@ -198,6 +211,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     if (newEditor == this) {
       if (oldEditor instanceof TextEditor) {
         setStructureViewSelectionFromPropertiesFile(((TextEditor)oldEditor).getEditor());
+      } else if (myPropertyToSelectWhenVisible != null) {
+        setStructureViewSelection(myPropertyToSelectWhenVisible);
+        myPropertyToSelectWhenVisible = null;
       }
     }
     else if (newEditor instanceof TextEditor) {
@@ -229,6 +245,17 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     Object root = tree.getModel().getRoot();
     if (AbstractTreeUi.isLoadingChildrenFor(root)) {
+      boolean isEditorVisible = false;
+      for (FileEditor editor : FileEditorManager.getInstance(myProject).getSelectedEditors()) {
+        if (editor == this) {
+          isEditorVisible = true;
+          break;
+        }
+      }
+      if (!isEditorVisible) {
+        myPropertyToSelectWhenVisible = propertyName;
+        return;
+      }
       mySelectionChangeAlarm.cancelAllRequests();
       mySelectionChangeAlarm.addRequest(new Runnable() {
         @Override
@@ -464,7 +491,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              updateDocumentFromPropertyValue(getPropertyEditorValue(property), document, propertiesFile);
+              final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
+              if (!undoManager.isActive() || !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
+                updateDocumentFromPropertyValue(getPropertyEditorValue(property), document, propertiesFile);
+              }
             }
           });
         }
@@ -702,13 +732,15 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }
 
-  @Override
-  public void setState(@NotNull FileEditorState state) {
-    ResourceBundleEditorState myState = (ResourceBundleEditorState)state;
-    String propertyName = myState.myPropertyName;
+  public void selectProperty(@Nullable final String propertyName) {
     if (propertyName != null) {
       setStructureViewSelection(propertyName);
     }
+  }
+
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+    selectProperty(((ResourceBundleEditorState)state).getPropertyName());
   }
 
   @Override
@@ -798,11 +830,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
   }
 
-  private static Editor createEditor() {
+  private Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument("");
     EditorEx editor = (EditorEx)editorFactory.createEditor(document);
     reinitSettings(editor);
+    editor.putUserData(RESOURCE_BUNDLE_EDITOR_KEY, this);
     return editor;
   }
 

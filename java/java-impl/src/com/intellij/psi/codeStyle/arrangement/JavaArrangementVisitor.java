@@ -274,12 +274,21 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
     final Set<PsiField> containingClassFields = classFields;
     fieldInitializer.accept(new JavaRecursiveElementVisitor() {
+      public int myCurrentMethodLookupDepth;
+      private static final int MAX_METHOD_LOOKUP_DEPTH = 3;
+
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         PsiElement ref = expression.resolve();
         if (ref instanceof PsiField && containingClassFields.contains(ref)) {
           referencedElements.add((PsiField)ref);
         }
+        else if (ref instanceof PsiMethod && myCurrentMethodLookupDepth < MAX_METHOD_LOOKUP_DEPTH) {
+          myCurrentMethodLookupDepth++;
+          visitMethod((PsiMethod)ref);
+          myCurrentMethodLookupDepth--;
+        }
+
         super.visitReferenceExpression(expression);
       }
     });

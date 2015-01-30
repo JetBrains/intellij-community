@@ -88,7 +88,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
     cache = new HashMap<Integer, LastRevision>();
 
     ProgressManager.getInstance().run(
-    new Task.Backgroundable(myEditor.getProject(), "Getting file history", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+    new Task.Backgroundable(myEditor.getProject(), "Getting File History", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
       @Override
       public boolean shouldStartInBackground() {
         return true;

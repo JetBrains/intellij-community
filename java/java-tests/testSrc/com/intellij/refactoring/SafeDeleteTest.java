@@ -80,7 +80,15 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeepDeleteParameterOtherTypeInBinaryExpression() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testImpossibleToDeepDeleteParameter() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testNoDeepDeleteParameterUsedInCallQualifier() throws Exception {
     doSingleFileTest();
   }
 

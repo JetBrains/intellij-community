@@ -16,9 +16,11 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
@@ -38,6 +40,9 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
     else if (object instanceof PsiPackage) {
       final String name = ((PsiPackage)object).getName();
       return name != null ? name : AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
+    }
+    else if (object instanceof PsiDirectory && JrtFileSystem.isRoot(((PsiDirectory)object).getVirtualFile())) {
+      return LangBundle.message("jrt.node.short");
     }
     return null;
   }

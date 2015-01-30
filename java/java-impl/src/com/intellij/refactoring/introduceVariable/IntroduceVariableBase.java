@@ -1000,7 +1000,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     } else {
       expr2 = RefactoringUtil.outermostParenthesizedExpression(expr1);
     }
-    if (expr2.isPhysical()) {
+    if (expr2.isPhysical() || expr1.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) != null) {
       return expr2.replace(ref);
     }
     else {
