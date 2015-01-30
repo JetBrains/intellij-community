@@ -33,7 +33,6 @@ import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
-import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +91,6 @@ public class ShowDiffAction extends AnAction implements DumbAware {
         Change selectedChane = null;
         List<Change> result = null;
 
-        // TODO: wtf ?
         if (convertedChanges.length == 1) {
           selectedChane = convertedChanges[0];
           ChangeList changeList = ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChane);
