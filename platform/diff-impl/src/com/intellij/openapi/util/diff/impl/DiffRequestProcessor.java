@@ -78,7 +78,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final OpenInEditorAction myOpenInEditorAction;
   @Nullable private DefaultActionGroup myPopupActionGroup;
 
-  @NotNull private final MyPanel myPanel;
+  @NotNull private final JPanel myPanel;
+  @NotNull private final MyPanel myMainPanel;
   @NotNull private final ModifiablePanel myContentPanel;
   @NotNull private final ModifiablePanel myToolbarPanel; // TODO: allow to call 'updateToolbar' from Viewer ?
   @NotNull private final ModifiablePanel myToolbarStatusPanel;
@@ -104,24 +105,27 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myDiffWindow = new MyDiffWindow();
 
-    myPanel = new MyPanel();
+    myPanel = new JPanel(new BorderLayout());
+    myMainPanel = new MyPanel();
     myContentPanel = new ModifiablePanel();
     myToolbarPanel = new ModifiablePanel();
     myToolbarStatusPanel = new ModifiablePanel();
+
+    myPanel.add(myMainPanel, BorderLayout.CENTER);
 
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(myToolbarPanel, BorderLayout.CENTER);
     topPanel.add(myToolbarStatusPanel, BorderLayout.EAST);
 
 
-    myPanel.add(topPanel, BorderLayout.NORTH);
-    myPanel.add(myContentPanel, BorderLayout.CENTER);
+    myMainPanel.add(topPanel, BorderLayout.NORTH);
+    myMainPanel.add(myContentPanel, BorderLayout.CENTER);
 
-    myPanel.setFocusTraversalPolicyProvider(true);
-    myPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
+    myMainPanel.setFocusTraversalPolicyProvider(true);
+    myMainPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
     JComponent bottomPanel = myContext.getUserData(DiffUserDataKeysEx.BOTTOM_PANEL);
-    if (bottomPanel != null) myPanel.add(bottomPanel, BorderLayout.SOUTH);
+    if (bottomPanel != null) myMainPanel.add(bottomPanel, BorderLayout.SOUTH);
     if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
 
 
@@ -226,7 +230,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myToolbarStatusPanel.setContent(null);
     myToolbarPanel.setContent(null);
     myContentPanel.setContent(null);
-    myPanel.putClientProperty(AnAction.ourClientProperty, null);
+    myMainPanel.putClientProperty(AnAction.ourClientProperty, null);
 
     myActiveRequest.onAssigned(false);
     myActiveRequest = request;
@@ -365,13 +369,13 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myToolbarPanel.setContent(toolbar.getComponent());
     for (AnAction action : group.getChildren(null)) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
+      action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
     }
   }
 
   protected void buildActionPopup(@Nullable List<AnAction> viewerActions) {
     ShowActionGroupPopupAction action = new ShowActionGroupPopupAction();
-    action.registerCustomShortcutSet(action.getShortcutSet(), myPanel);
+    action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
 
     myPopupActionGroup = collectPopupActions(viewerActions);
   }
