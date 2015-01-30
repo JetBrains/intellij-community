@@ -1701,14 +1701,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     descriptors.addAll(intentions.inspectionFixesToShow);
     descriptors.addAll(intentions.guttersToShow);
 
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    final int fileOffset = editor.getCaretModel().getOffset();
+    PsiElement hostElement = file.getViewProvider().findElementAt(fileOffset, file.getLanguage());
+    PsiElement injectedElement = InjectedLanguageUtil.findElementAtNoCommit(file, fileOffset);
+    
+    PsiFile injectedFile = injectedElement != null ? injectedElement.getContainingFile() : null;
+    Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+    
     List<IntentionAction> result = new ArrayList<IntentionAction>();
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject()).getFileLevelHighlights(file.getProject(), file);
     for (HighlightInfo info : infos) {
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
         HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
-        if (actionInGroup.getAction().isAvailable(file.getProject(), editor, file)) {
+        final IntentionAction action = actionInGroup.getAction();
+        
+        if (ShowIntentionActionsHandler.availableFor(file, editor, action)
+          || (injectedElement != null && hostElement != injectedElement && ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
           descriptors.add(actionInGroup);
         }
       }
@@ -1717,11 +1726,25 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // add all intention options for simplicity
     for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
       result.add(descriptor.getAction());
-      List<IntentionAction> options = descriptor.getOptions(element,editor);
-      if (options != null) {
-        for (IntentionAction option : options) {
-          if (option.isAvailable(file.getProject(), editor, file)) {
-            result.add(option);
+      
+      if (injectedElement != null && injectedElement != hostElement) {
+        List<IntentionAction> options = descriptor.getOptions(injectedElement, injectedEditor);
+        if (options != null) {
+          for (IntentionAction option : options) {
+            if (ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, option)) {
+              result.add(option);
+            }
+          }
+        }
+      }
+      
+      if (hostElement != null) {
+        List<IntentionAction> options = descriptor.getOptions(hostElement, editor);
+        if (options != null) {
+          for (IntentionAction option : options) {
+            if (ShowIntentionActionsHandler.availableFor(file, editor, option)) {
+              result.add(option);
+            }
           }
         }
       }
