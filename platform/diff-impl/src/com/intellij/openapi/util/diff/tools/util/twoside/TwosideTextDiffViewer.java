@@ -156,6 +156,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   protected List<EditorEx> createEditors() {
     boolean[] forceReadOnly = checkForceReadOnly();
 
+    // TODO: we may want to set editor highlighter in init() to speedup editor initialization
     EditorEx editor1 = null;
     EditorEx editor2 = null;
     if (myActualContent1 != null) {
