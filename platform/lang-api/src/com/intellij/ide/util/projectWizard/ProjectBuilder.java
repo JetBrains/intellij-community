@@ -28,6 +28,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -39,9 +40,9 @@ public abstract class ProjectBuilder {
   }
 
   @Nullable
-  public abstract List<Module> commit(final Project project, @Nullable final ModifiableModuleModel model, final ModulesProvider modulesProvider);
+  public abstract List<Module> commit(final @NotNull Project project, @Nullable final ModifiableModuleModel model, final ModulesProvider modulesProvider);
 
-  public List<Module> commit(@Nullable Project project) {
+  public List<Module> commit(@NotNull Project project) {
     return commit(project, null, DefaultModulesProvider.createForProject(project));
   }
 
