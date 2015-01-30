@@ -332,7 +332,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   private class BekAction extends ToggleAction implements DumbAware {
     public BekAction() {
-      super("BEK", "BEK", AllIcons.Actions.Lightning);
+      super("IntelliSort", "IntelliSort", AllIcons.Actions.Lightning);
     }
 
     @Override
@@ -355,7 +355,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   private class LinearBekAction extends ToggleAction implements DumbAware {
     public LinearBekAction() {
-      super("Linear BEK", "Linear BEK", new ColorIcon(16, new Color(0, 90, 120)));
+      super("Linear IntelliSort", "Linear IntelliSort", new ColorIcon(16, new Color(0, 90, 120)));
     }
 
     @Override
