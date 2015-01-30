@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.diff.util.DiffPlaces;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,127 +34,125 @@ import java.util.Map;
   storages = {@Storage(
     file = DiffUtil.DIFF_CONFIG)})
 public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiffSettingsHolder.State> {
-  public static class TextDiffSettings {
-    public static final Key<TextDiffSettings> KEY = Key.create("TextDiffSettings");
+  public static final Key<TextDiffSettings> KEY = Key.create("TextDiffSettings");
 
-    public static final int[] CONTEXT_RANGE_MODES = {1, 2, 4, 8, -1};
-    public static final String[] CONTEXT_RANGE_MODE_LABELS = {"1", "2", "4", "8", "Disable"};
+  public static final int[] CONTEXT_RANGE_MODES = {1, 2, 4, 8, -1};
+  public static final String[] CONTEXT_RANGE_MODE_LABELS = {"1", "2", "4", "8", "Disable"};
 
-    private SharedSettings SHARED_SETTINGS = new SharedSettings();
+  private static class SharedSettings {
+    // Fragments settings
+    public int CONTEXT_RANGE = 4;
+  }
 
+  private static class PlaceSettings {
     // Diff settings
-    private HighlightPolicy HIGHLIGHT_POLICY = HighlightPolicy.BY_WORD;
-    private IgnorePolicy IGNORE_POLICY = IgnorePolicy.DEFAULT;
+    public HighlightPolicy HIGHLIGHT_POLICY = HighlightPolicy.BY_WORD;
+    public IgnorePolicy IGNORE_POLICY = IgnorePolicy.DEFAULT;
 
-    private static class SharedSettings {
-      // Presentation settings
-      private boolean ENABLE_SYNC_SCROLL = true;
+    // Presentation settings
+    public boolean ENABLE_SYNC_SCROLL = true;
 
-      // Editor settings
-      public boolean SHOW_WHITESPACES = false;
-      public boolean SHOW_LINE_NUMBERS = true;
-      public boolean SHOW_INDENT_LINES = false;
-      public boolean USE_SOFT_WRAPS = false;
+    // Editor settings
+    public boolean SHOW_WHITESPACES = false;
+    public boolean SHOW_LINE_NUMBERS = true;
+    public boolean SHOW_INDENT_LINES = false;
+    public boolean USE_SOFT_WRAPS = false;
 
-      // Fragments settings
-      private int CONTEXT_RANGE = 4;
-      private boolean EXPAND_BY_DEFAULT = true;
-    }
+    // Fragments settings
+    public boolean EXPAND_BY_DEFAULT = true;
+  }
+
+  public static class TextDiffSettings {
+    @NotNull public SharedSettings SHARED_SETTINGS = new SharedSettings();
+    @NotNull public PlaceSettings PLACE_SETTINGS = new PlaceSettings();
 
     public TextDiffSettings() {
     }
 
-    private TextDiffSettings(@NotNull SharedSettings SHARED_SETTINGS,
-                             @NotNull HighlightPolicy HIGHLIGHT_POLICY, @NotNull IgnorePolicy IGNORE_POLICY) {
+    public TextDiffSettings(@NotNull SharedSettings SHARED_SETTINGS,
+                            @NotNull PlaceSettings PLACE_SETTINGS) {
       this.SHARED_SETTINGS = SHARED_SETTINGS;
-      this.HIGHLIGHT_POLICY = HIGHLIGHT_POLICY;
-      this.IGNORE_POLICY = IGNORE_POLICY;
-    }
-
-    @NotNull
-    private TextDiffSettings copy() {
-      return new TextDiffSettings(SHARED_SETTINGS,
-                                  HIGHLIGHT_POLICY, IGNORE_POLICY);
+      this.PLACE_SETTINGS = PLACE_SETTINGS;
     }
 
     // Presentation settings
 
     public boolean isEnableSyncScroll() {
-      return SHARED_SETTINGS.ENABLE_SYNC_SCROLL;
+      return PLACE_SETTINGS.ENABLE_SYNC_SCROLL;
     }
 
     public void setEnableSyncScroll(boolean value) {
-      this.SHARED_SETTINGS.ENABLE_SYNC_SCROLL = value;
+      this.PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
     }
 
     // Diff settings
 
     @NotNull
     public HighlightPolicy getHighlightPolicy() {
-      return HIGHLIGHT_POLICY;
+      return PLACE_SETTINGS.HIGHLIGHT_POLICY;
     }
 
     public void setHighlightPolicy(@NotNull HighlightPolicy value) {
-      HIGHLIGHT_POLICY = value;
+      PLACE_SETTINGS.HIGHLIGHT_POLICY = value;
     }
 
     @NotNull
     public IgnorePolicy getIgnorePolicy() {
-      return IGNORE_POLICY;
+      return PLACE_SETTINGS.IGNORE_POLICY;
     }
 
     public void setIgnorePolicy(@NotNull IgnorePolicy policy) {
-      IGNORE_POLICY = policy;
+      PLACE_SETTINGS.IGNORE_POLICY = policy;
     }
 
     // Editor settings
 
     public boolean isShowLineNumbers() {
-      return this.SHARED_SETTINGS.SHOW_LINE_NUMBERS;
+      return PLACE_SETTINGS.SHOW_LINE_NUMBERS;
     }
 
     public void setShowLineNumbers(boolean state) {
-      this.SHARED_SETTINGS.SHOW_LINE_NUMBERS = state;
+      PLACE_SETTINGS.SHOW_LINE_NUMBERS = state;
     }
 
     public boolean isShowWhitespaces() {
-      return this.SHARED_SETTINGS.SHOW_WHITESPACES;
+      return PLACE_SETTINGS.SHOW_WHITESPACES;
     }
 
     public void setShowWhiteSpaces(boolean state) {
-      this.SHARED_SETTINGS.SHOW_WHITESPACES = state;
+      PLACE_SETTINGS.SHOW_WHITESPACES = state;
     }
 
     public boolean isShowIndentLines() {
-      return this.SHARED_SETTINGS.SHOW_INDENT_LINES;
+      return PLACE_SETTINGS.SHOW_INDENT_LINES;
     }
 
     public void setShowIndentLines(boolean state) {
-      this.SHARED_SETTINGS.SHOW_INDENT_LINES = state;
+      PLACE_SETTINGS.SHOW_INDENT_LINES = state;
     }
 
     public boolean isUseSoftWraps() {
-      return this.SHARED_SETTINGS.USE_SOFT_WRAPS;
+      return PLACE_SETTINGS.USE_SOFT_WRAPS;
     }
 
     public void setUseSoftWraps(boolean state) {
-      this.SHARED_SETTINGS.USE_SOFT_WRAPS = state;
+      PLACE_SETTINGS.USE_SOFT_WRAPS = state;
     }
 
     public int getContextRange() {
-      return this.SHARED_SETTINGS.CONTEXT_RANGE;
+      return SHARED_SETTINGS.CONTEXT_RANGE;
     }
 
     public void setContextRange(int value) {
-      this.SHARED_SETTINGS.CONTEXT_RANGE = value;
+      SHARED_SETTINGS.CONTEXT_RANGE = value;
     }
 
     public boolean isExpandByDefault() {
-      return this.SHARED_SETTINGS.EXPAND_BY_DEFAULT;
+      return PLACE_SETTINGS.EXPAND_BY_DEFAULT;
     }
 
     public void setExpandByDefault(boolean value) {
-      this.SHARED_SETTINGS.EXPAND_BY_DEFAULT = value;
+      PLACE_SETTINGS.EXPAND_BY_DEFAULT = value;
     }
 
     //
@@ -166,33 +165,30 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     }
 
     @NotNull
-    public static TextDiffSettings getSettingsDefaults() { // TODO: remove default settings?
-      return getInstance().getSettings(null);
+    public static TextDiffSettings getSettings(@Nullable String place) {
+      return getInstance().getSettings(place);
     }
+  }
 
-    @NotNull
-    public static TextDiffSettings getSettings(@Nullable String name) {
-      if (name == null) return getInstance().getSettings(null).copy();
-      return getInstance().getSettings(name);
+  @NotNull
+  public TextDiffSettings getSettings(@Nullable String place) {
+    if (place == null) place = DiffPlaces.DEFAULT;
+
+    PlaceSettings placeSettings = myState.PLACES_MAP.get(place);
+    if (placeSettings == null) {
+      placeSettings = new PlaceSettings();
+      myState.PLACES_MAP.put(place, placeSettings);
     }
+    return new TextDiffSettings(myState.SHARED_SETTINGS, placeSettings);
   }
 
   public static class State {
-    public Map<String, TextDiffSettings> MAP = new HashMap<String, TextDiffSettings>();
+    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+    public Map<String, PlaceSettings> PLACES_MAP = getDefaultPlaceSettings();
+    public SharedSettings SHARED_SETTINGS = new SharedSettings();
   }
 
   private State myState = new State();
-
-  @NotNull
-  public TextDiffSettings getSettings(@Nullable String name) {
-    if (name == null) name = DiffPlaces.DEFAULT;
-    TextDiffSettings settings = myState.MAP.get(name);
-    if (settings == null) {
-      settings = new TextDiffSettings();
-      myState.MAP.put(name, settings);
-    }
-    return settings;
-  }
 
   @NotNull
   public State getState() {
@@ -205,5 +201,21 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
   public static TextDiffSettingsHolder getInstance() {
     return ServiceManager.getService(TextDiffSettingsHolder.class);
+  }
+
+  @NotNull
+  public static Map<String, PlaceSettings> getDefaultPlaceSettings() {
+    HashMap<String, PlaceSettings> map = new HashMap<String, PlaceSettings>();
+
+    PlaceSettings changes = new PlaceSettings();
+    changes.EXPAND_BY_DEFAULT = false;
+    PlaceSettings commit = new PlaceSettings();
+    commit.EXPAND_BY_DEFAULT = false;
+
+    map.put(DiffPlaces.DEFAULT, new PlaceSettings());
+    map.put(DiffPlaces.CHANGES_VIEW, changes);
+    map.put(DiffPlaces.COMMIT_DIALOG, commit);
+
+    return map;
   }
 }
