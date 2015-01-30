@@ -60,15 +60,25 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider imp
     TabbedLanguageCodeStylePanel panel = new TabbedLanguageCodeStylePanel(getLanguage(), settings, settings) {
       @Override
       protected void initTabs(CodeStyleSettings settings) {
-        addSpacesTab(settings);
-        addWrappingAndBracesTab(settings);
+        MySpacesPanel spacesPanel = new MySpacesPanel(settings) {
+          @Override
+          protected void somethingChanged() {
+            reformatWithNewSettings();
+          }
+        };
+        MyWrappingAndBracesPanel bracesPanel = new MyWrappingAndBracesPanel(settings) {
+          @Override
+          protected void somethingChanged() {
+            reformatWithNewSettings();
+          }
+        };
+        
+        addTab(spacesPanel);
+        addTab(bracesPanel);
       }
 
-
-      @Override
-      protected void somethingChanged() {
-        super.somethingChanged();
-
+      
+      private void reformatWithNewSettings() {
         final SelectionModel model = editor.getSelectionModel();
         if (model.hasSelection()) {
 
