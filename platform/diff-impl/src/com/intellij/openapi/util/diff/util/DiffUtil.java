@@ -65,6 +65,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
@@ -341,7 +342,7 @@ public class DiffUtil {
     if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
     panel.add(createTitlePanel(title), BorderLayout.WEST);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
