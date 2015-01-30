@@ -210,6 +210,7 @@ public class MovablePopup implements Disposable {
       myView.setBounds(location.x, location.y, size.width, size.height);
       if (myView.isVisible()) {
         myView.invalidate();
+        myView.validate();
         myView.repaint();
       }
     }
