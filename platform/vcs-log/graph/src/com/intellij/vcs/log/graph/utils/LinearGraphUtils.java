@@ -66,8 +66,7 @@ public class LinearGraphUtils {
   }
 
   public static int getNotNullNodeIndex(@NotNull GraphEdge edge) {
-    if (edge.getUpNodeIndex() != null)
-      return edge.getUpNodeIndex();
+    if (edge.getUpNodeIndex() != null) return edge.getUpNodeIndex();
     assert edge.getDownNodeIndex() != null;
     return edge.getDownNodeIndex();
   }
@@ -101,8 +100,7 @@ public class LinearGraphUtils {
       @Override
       public Integer fun(GraphEdge graphEdge) {
         if (isEdgeDown(graphEdge, nodeIndex)) {
-          if (graphEdge.getType() == GraphEdgeType.NOT_LOAD_COMMIT)
-            return graphEdge.getTargetId();
+          if (graphEdge.getType() == GraphEdgeType.NOT_LOAD_COMMIT) return graphEdge.getTargetId();
           return graphEdge.getDownNodeIndex();
         }
         return null;
@@ -146,9 +144,20 @@ public class LinearGraphUtils {
   public static Cursor getCursor(boolean hand) {
     if (hand) {
       return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-    } else {
+    }
+    else {
       return Cursor.getDefaultCursor();
     }
+  }
+
+  public static LinearGraphController.LinearGraphAnswer createSelectedAnswer(@NotNull LinearGraph linearGraph,
+                                                                             @NotNull Collection<Integer> selectedNodeIndexes) {
+    Set<Integer> selectedId = ContainerUtil.newHashSet();
+    for (Integer nodeIndex : selectedNodeIndexes) {
+      if (nodeIndex == null) continue;
+      selectedId.add(linearGraph.getNodeId(nodeIndex));
+    }
+    return new LinearGraphController.LinearGraphAnswer(null, getCursor(true), null, selectedId);
   }
 
   @Nullable
@@ -182,5 +191,4 @@ public class LinearGraphUtils {
     });
     return ContainerUtil.newHashSet(result);
   }
-
 }
