@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ExternalDiffTool {
@@ -108,7 +109,10 @@ public class ExternalDiffTool {
     UserDataHolderBase context = new UserDataHolderBase();
     List<String> errorRequests = new ArrayList<String>();
 
-    for (DiffRequestPresentable presentable : chain.getRequests()) {
+    // TODO: show all changes on explicit selection
+    List<? extends DiffRequestPresentable> presentables = Collections.singletonList(chain.getRequests().get(chain.getIndex()));
+
+    for (DiffRequestPresentable presentable : presentables) {
       try {
         requests.add(presentable.process(context, indicator));
       }
