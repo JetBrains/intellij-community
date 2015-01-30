@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,7 @@ public abstract class DiffRequest {
   protected DiffRequest(@Nullable Project project) {
     myProject = project;
     myGenericData = new HashMap<String, Object>(2);
-    myAdditional = new ArrayList<Pair<String, DiffRequest>>(0);
+    myAdditional = new SmartList<Pair<String, DiffRequest>>();
   }
 
   public void setToolbarAddons(@NotNull ToolbarAddons toolbarAddons) {

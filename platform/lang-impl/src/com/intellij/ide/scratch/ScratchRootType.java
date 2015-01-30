@@ -18,8 +18,6 @@ package com.intellij.ide.scratch;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.lang.PerFileMappings;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutors;
@@ -35,8 +33,6 @@ import javax.swing.*;
  */
 public final class ScratchRootType extends RootType {
 
-  public static final LanguageFileType SCRATCH_FILE_TYPE = new MyFileType();
-
   @NotNull
   public static ScratchRootType getInstance() {
     return findByClass(ScratchRootType.class);
@@ -50,69 +46,14 @@ public final class ScratchRootType extends RootType {
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
     PerFileMappings<Language> mapping = ScratchFileService.getInstance().getScratchesMapping();
     Language language = mapping.getMapping(file);
-    return language != null && language != SCRATCH_FILE_TYPE.getLanguage() ?
+    return language != null && language != ScratchFileType.INSTANCE.getLanguage() ?
            LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project) : language;
   }
 
   @Nullable
   @Override
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
-    Icon icon = ObjectUtils.chooseNotNull(super.substituteIcon(project, file), SCRATCH_FILE_TYPE.getIcon());
+    Icon icon = ObjectUtils.chooseNotNull(super.substituteIcon(project, file), ScratchFileType.INSTANCE.getIcon());
     return LayeredIcon.create(icon, AllIcons.Actions.Scratch);
-  }
-
-  public static class TypeFactory extends FileTypeFactory {
-
-    @Override
-    public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-      consumer.consume(SCRATCH_FILE_TYPE);
-    }
-  }
-
-  private static class MyFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
-
-    MyFileType() {
-      super(PlainTextLanguage.INSTANCE);
-    }
-
-    @Override
-    public boolean isMyFileType(@NotNull VirtualFile file) {
-      return ScratchFileService.getInstance().getRootType(file) != null;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "Scratch";
-    }
-
-    @NotNull
-    @Override
-    public String getDescription() {
-      return "Scratch";
-    }
-
-    @NotNull
-    @Override
-    public String getDefaultExtension() {
-      return "";
-    }
-
-    @Nullable
-    @Override
-    public Icon getIcon() {
-      return PlainTextFileType.INSTANCE.getIcon();
-    }
-
-    @Override
-    public boolean isReadOnly() {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
-      return null;
-    }
   }
 }

@@ -115,11 +115,6 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       Responses.send(Responses.response("text/xml", result), context.channel(), request);
       return true;
     }
-    else if (HttpMethod.POST.name().equals(request.headers().get("Access-Control-Request-Method"))) {
-      LOG.assertTrue(request.method() == HttpMethod.OPTIONS);
-      Responses.sendOptionsResponse("POST, OPTIONS", request, context);
-      return true;
-    }
     return false;
   }
 
