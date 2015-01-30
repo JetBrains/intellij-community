@@ -52,16 +52,17 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
     LogListener logListener = myPipeName2LogListener.get(pipeName);
     if (logListener == null) {
       final LoggingHandler loggingHandler = myLogManager.addAdditionalLog(pipeName);
-      logListener = new LogListener() {
-
-        @Override
-        public void lineLogged(String line) {
-          loggingHandler.print(line + "\n");
-        }
-      };
+      logListener = new LogListenerImpl(loggingHandler);
       myPipeName2LogListener.put(pipeName, logListener);
     }
     return logListener;
+  }
+
+  @Override
+  public LogListener getOrCreateEmptyLogListener(String pipeName) {
+    LogListenerImpl result = (LogListenerImpl)getOrCreateLogListener(pipeName);
+    result.clear();
+    return result;
   }
 
   @Override
@@ -98,5 +99,23 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
         loggingHandler.print(line);
       }
     };
+  }
+
+  private static class LogListenerImpl implements LogListener {
+
+    private final LoggingHandler myLoggingHandler;
+
+    public LogListenerImpl(LoggingHandler loggingHandler) {
+      myLoggingHandler = loggingHandler;
+    }
+
+    @Override
+    public void lineLogged(String line) {
+      myLoggingHandler.print(line + "\n");
+    }
+
+    public void clear() {
+      myLoggingHandler.clear();
+    }
   }
 }

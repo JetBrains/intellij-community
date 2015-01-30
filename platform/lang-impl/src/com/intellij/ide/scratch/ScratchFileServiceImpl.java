@@ -21,23 +21,23 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,10 +49,12 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.psi.LanguageSubstitutor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,8 +77,8 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
     private final MyLanguages myScratchMapping = new MyLanguages();
 
-    public App(WindowManager windowManager) {
-      WindowManagerListener listener = new WindowManagerListener() {
+    public App(WindowManager windowManager, MessageBus messageBus) {
+      final WindowManagerListener windowListener = new WindowManagerListener() {
         @Override
         public void frameCreated(IdeFrame frame) {
           Project project = frame.getProject();
@@ -92,9 +94,33 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
         }
       };
       for (IdeFrame frame : windowManager.getAllProjectFrames()) {
-        listener.frameCreated(frame);
+        windowListener.frameCreated(frame);
       }
-      windowManager.addListener(listener);
+      windowManager.addListener(windowListener);
+
+      final FileEditorManagerAdapter editorListener = new FileEditorManagerAdapter() {
+        @Override
+        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          RootType rootType = getRootType(file);
+          if (rootType != null) {
+            rootType.fileOpened(file, source);
+          }
+        }
+      };
+      ProjectManagerAdapter projectListener = new ProjectManagerAdapter() {
+        @Override
+        public void projectOpened(Project project) {
+          project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener);
+          FileEditorManager editorManager = FileEditorManager.getInstance(project);
+          for (VirtualFile virtualFile : editorManager.getOpenFiles()) {
+            editorListener.fileOpened(editorManager, virtualFile);
+          }
+        }
+      };
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        projectListener.projectOpened(project);
+      }
+      messageBus.connect().subscribe(ProjectManager.TOPIC, projectListener);
     }
 
     @NotNull
@@ -230,7 +256,7 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     @Nullable
     @Override
     public Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
-      if (project == null) return null;
+      if (project == null || file.isDirectory()) return null;
       RootType rootType = ScratchFileService.getInstance(project).getRootType(file);
       if (rootType == null) return null;
       return rootType.substituteIcon(project, file);
@@ -258,10 +284,16 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     @Nullable
     @Override
     public String getPresentableText(Object object) {
-      PsiFile psiFile = object instanceof PsiFile ? (PsiFile)object : null;
-      VirtualFile virtualFile = psiFile != null ? psiFile.getVirtualFile() : null;
-      RootType rootType = virtualFile != null && virtualFile.isValid() ? ScratchFileService.getInstance(psiFile.getProject()).getRootType(virtualFile) : null;
-      return rootType != null ? rootType.substituteName(psiFile.getProject(), virtualFile) : null;
+      if (!(object instanceof PsiElement)) return null;
+      Project project = ((PsiElement)object).getProject();
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)object);
+      if (virtualFile == null || !virtualFile.isValid()) return null;
+      RootType rootType = ScratchFileService.getInstance(project).getRootType(virtualFile);
+      if (rootType == null) return null;
+      if (virtualFile.isDirectory()) {
+        return additionalRoots(project).contains(virtualFile) ? rootType.getDisplayName() : null;
+      }
+      return rootType.substituteName(project, virtualFile);
     }
 
     @NotNull
@@ -299,7 +331,7 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
       new WriteCommandAction<VirtualFile>(project, UIBundle.message("file.chooser.create.new.file.command.name")) {
         @Override
         protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-          VirtualFile dir = VfsUtil.createDirectories(getRootPath(Extensions.findExtension(RootType.ROOT_EP, ScratchRootType.class)));
+          VirtualFile dir = VfsUtil.createDirectories(getRootPath(ScratchRootType.getInstance()));
           VirtualFile file = VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, "");
           getScratchesMapping().setMapping(file, language);
           VfsUtil.saveText(file, initialContent);
@@ -323,25 +355,35 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     for (RootType r : RootType.getAllRootIds()) {
       String root = getRootPath(r);
       VirtualFile rootFile = fileSystem.findFileByPath(root);
-      if (rootFile != null && VfsUtilCore.isAncestor(rootFile, file, true)) return r;
+      if (rootFile != null && VfsUtilCore.isAncestor(rootFile, file, false)) return r;
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getOrCreateFile(@NotNull final RootType rootId, @NotNull final String pathName) throws IOException {
-    return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-      @Override
-      public VirtualFile compute() throws IOException {
-        VirtualFile dir = VfsUtil.createDirectories(getRootPath(rootId));
-        VirtualFile existingFile = dir.findChild(pathName);
-        if (existingFile != null && !existingFile.isDirectory()) return existingFile;
-        String ext = PathUtil.getFileExtension(pathName);
-        String name = ext == null ? pathName : StringUtil.trimEnd(pathName, "." + ext);
-        return VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, name, StringUtil.notNullize(ext));
+  public VirtualFile findFile(@NotNull final RootType rootType, @NotNull final String pathName, Option option) throws IOException {
+    String fullPath = getRootPath(rootType) + "/" + pathName;
+    if (option != Option.create_new_always) {
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fullPath);
+      if (file != null && !file.isDirectory()) return file;
+      if (option == Option.existing_only) return null;
+    }
+    String ext = PathUtil.getFileExtension(pathName);
+    String fileNameExt = PathUtil.getFileName(pathName);
+    String fileName = StringUtil.trimEnd(fileNameExt, ext == null ? "" : "." + ext);
+    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+    try {
+      VirtualFile dir = VfsUtil.createDirectories(PathUtil.getParentPath(fullPath));
+      if (option == Option.create_new_always) {
+        return VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, StringUtil.notNullize(ext));
       }
-    });
+      else {
+        return dir.createChildData(LocalFileSystem.getInstance(), fileNameExt);
+      }
+    }
+    finally {
+      token.finish();
+    }
   }
 
 }

@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.format.TaskFile;
-import com.jetbrains.edu.coursecreator.format.TaskWindow;
+import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,7 @@ import javax.swing.*;
 
 abstract public class CCTaskWindowAction extends DumbAwareAction {
 
-  public CCTaskWindowAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+  protected CCTaskWindowAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
@@ -44,11 +44,11 @@ abstract public class CCTaskWindowAction extends DumbAwareAction {
     if (taskFile == null) {
       return null;
     }
-    TaskWindow taskWindow = taskFile.getTaskWindow(editor.getDocument(), editor.getCaretModel().getLogicalPosition());
-    if (taskWindow == null) {
+    AnswerPlaceholder answerPlaceholder = taskFile.getTaskWindow(editor.getDocument(), editor.getCaretModel().getLogicalPosition());
+    if (answerPlaceholder == null) {
       return null;
     }
-    return new CCState(taskFile, taskWindow, psiFile, editor, project);
+    return new CCState(taskFile, answerPlaceholder, psiFile, editor, project);
   }
 
   @Override
@@ -72,18 +72,18 @@ abstract public class CCTaskWindowAction extends DumbAwareAction {
 
   protected static class CCState {
     private TaskFile myTaskFile;
-    private TaskWindow myTaskWindow;
+    private AnswerPlaceholder myAnswerPlaceholder;
     private PsiFile myFile;
     private Editor myEditor;
     private Project myProject;
 
     public CCState(@NotNull final TaskFile taskFile,
-                   @NotNull final TaskWindow taskWindow,
+                   @NotNull final AnswerPlaceholder answerPlaceholder,
                    @NotNull final PsiFile file,
                    @NotNull final Editor editor,
                    @NotNull final Project project) {
       myTaskFile = taskFile;
-      myTaskWindow = taskWindow;
+      myAnswerPlaceholder = answerPlaceholder;
       myFile = file;
       myEditor = editor;
       myProject = project;
@@ -95,8 +95,8 @@ abstract public class CCTaskWindowAction extends DumbAwareAction {
     }
 
     @NotNull
-    public TaskWindow getTaskWindow() {
-      return myTaskWindow;
+    public AnswerPlaceholder getAnswerPlaceholder() {
+      return myAnswerPlaceholder;
     }
 
     @NotNull

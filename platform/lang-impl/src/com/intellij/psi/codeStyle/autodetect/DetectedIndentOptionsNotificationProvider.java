@@ -79,7 +79,8 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
               !userOptions.equals(detectedOptions)) {
             final EditorNotificationPanel panel =
               new EditorNotificationPanel()
-                .text(ApplicationBundle.message("code.style.indents.detector.message", provider.getDisplayName()));
+                .text(ApplicationBundle.message("code.style.indents.detector.message", provider.getDisplayName(),
+                                                getOptionDiffInfoString(userOptions, detectedOptions)));
             if (provider.getIcon() != null) {
               panel.icon(provider.getIcon());
             }
@@ -116,4 +117,25 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
     return null;
   }
 
+  @NotNull
+  private static String getOptionDiffInfoString(CommonCodeStyleSettings.IndentOptions user,
+                                                CommonCodeStyleSettings.IndentOptions detected) {
+    StringBuilder sb = new StringBuilder();
+    if (user.INDENT_SIZE != detected.INDENT_SIZE) {
+      sb.append("indent size=").append(detected.INDENT_SIZE);
+    }
+    if (user.TAB_SIZE != detected.TAB_SIZE) {
+      if (sb.length() > 0) sb.append(", ");
+      sb.append("tab size=").append(detected.TAB_SIZE);
+    }
+    if (user.USE_TAB_CHARACTER != detected.USE_TAB_CHARACTER) {
+      if (sb.length() > 0) sb.append(", ");
+      sb.append(detected.USE_TAB_CHARACTER ? "tabs" : "no tabs");
+    }
+    if (user.SMART_TABS != detected.SMART_TABS) {
+      if (sb.length() > 0) sb.append(", ");
+      sb.append(detected.SMART_TABS ? "smart tabs" : "no smart tabs");
+    }
+    return sb.toString();
+  }
 }

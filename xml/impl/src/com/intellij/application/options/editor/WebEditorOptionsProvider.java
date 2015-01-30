@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.editor;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.xml.XmlBundle;
@@ -49,7 +48,6 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
 
   @Override
   public JComponent createComponent() {
-    mySyncTagEditing.setVisible(ApplicationManager.getApplication().isInternal());
     return myWholePanel;
   }
 

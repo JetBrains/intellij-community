@@ -16,31 +16,42 @@
 package com.jetbrains.python.commandInterface.commandsWithArgs;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * Command
+ * TODO: add args
  *
  * @author Ilya.Kazakevich
  */
-public class Command {
+public final class Command {
   @NotNull
   private final String myName;
   @NotNull
   private final List<Argument> myArguments = new ArrayList<Argument>();
+  @Nullable
+  private final String myHelp;
 
   /**
+   * @param help help text
    * @param name      command name
    * @param arguments command arguments
    */
-  public Command(@NotNull final String name, @NotNull final Argument... arguments) {
-    this(name, Arrays.asList(arguments));
+  public Command(@NotNull final String name, @Nullable final String help, @NotNull final Argument... arguments) {
+    this(name, help, Arrays.asList(arguments));
   }
 
-  public Command(@NotNull final String name, @NotNull final Collection<Argument> arguments) {
+  /**
+   * @param help help text
+   * @param name      command name
+   * @param arguments command arguments
+   */
+  public Command(@NotNull final String name, @Nullable final String help, @NotNull final Collection<Argument> arguments) {
     myName = name;
     myArguments.addAll(arguments);
+    myHelp = help;
   }
 
   /**
@@ -57,5 +68,10 @@ public class Command {
   @NotNull
   List<Argument> getArguments() {
     return Collections.unmodifiableList(myArguments);
+  }
+
+  @Nullable
+  public String getHelp() {
+    return myHelp;
   }
 }

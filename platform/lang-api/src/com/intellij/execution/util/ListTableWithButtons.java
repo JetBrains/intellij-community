@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
@@ -83,7 +83,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
       }
     };
     myTableView.setRowHeight(new JTextField().getPreferredSize().height);
-    myTableView.setIntercellSpacing(new Dimension(0, 0));
+    myTableView.setIntercellSpacing(JBUI.emptySize());
     myTableView.setStriped(true);
     
     myTableView.getTableViewModel().setSortable(false);

@@ -996,6 +996,9 @@
   <action id="VcsHistory.ShowAllAffected">
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
+  <action id="ShelveChanges.UnshelveWithDialog">
+    <keyboard-shortcut first-keystroke="ctrl shift U" />
+  </action>
 
   <action id="DatabaseView.PropertiesAction" />
 

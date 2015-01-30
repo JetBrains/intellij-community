@@ -46,7 +46,7 @@ public class CreateTaskWindowPanel extends JPanel {
     });
   }
 
-  public void enableHint(boolean isEnable) {
+  private void enableHint(boolean isEnable) {
     myHintName.setEnabled(isEnable);
     myHintText.setEnabled(isEnable);
     myHintNameLabel.setEnabled(isEnable);

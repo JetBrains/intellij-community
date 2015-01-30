@@ -42,7 +42,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     if (lesson != null) {
       data.clearText();
       data.addText(valueName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      data.addText(" (" + lesson.name + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      data.addText(" (" + lesson.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
     }
     else {

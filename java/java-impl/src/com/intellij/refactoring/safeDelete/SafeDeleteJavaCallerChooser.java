@@ -96,7 +96,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                                                                             public void run() {
                                                                               ApplicationManager.getApplication().runReadAction(runnable);
                                                                             }
-                                                                          }, "Search for caller method usages...", true, myProject)) {
+                                                                          }, "Search for Caller Method Usages...", true, myProject)) {
       myResult.addAll(foreignMethodUsages);
     }
     super.doOKAction();
@@ -135,13 +135,15 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                   public boolean process(PsiReference reference) {
                     final PsiElement element = reference.getElement();
                     if (element instanceof PsiReferenceExpression) {
-                      PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
+                      PsiCallExpression parent = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
                       while (parent != null) {
-                        final PsiMethod resolved = ((PsiCallExpression)parent).resolveMethod();
+                        final PsiMethod resolved = parent.resolveMethod();
                         if (scope.equals(resolved)) {
+                          if (usedInQualifier(element, parent)) return false;
                           return true;
                         }
                         if (nodeMethod.equals(resolved)) {
+                          if (usedInQualifier(element, parent)) return false;
                           ref.set(true);
                           return true;
                         }
@@ -151,8 +153,19 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                     }
                     return true;
                   }
+
+                  private boolean usedInQualifier(PsiElement element, PsiCallExpression parent) {
+                    PsiExpression qualifier = null;
+                    if (parent instanceof PsiMethodCallExpression) {
+                      qualifier = ((PsiMethodCallExpression)parent).getMethodExpression();
+                    }
+                    else if (parent instanceof PsiNewExpression) {
+                      qualifier = ((PsiNewExpression)parent).getQualifier();
+                    }
+                    return PsiTreeUtil.isAncestor(qualifier, element, true);
+                  }
                 }) && ref.get()) {
-                  return (PsiParameter)parameter;
+                  return parameter;
                 }
               }
             }

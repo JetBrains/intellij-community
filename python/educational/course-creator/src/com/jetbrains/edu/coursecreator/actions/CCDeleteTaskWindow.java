@@ -9,7 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.format.Course;
 import com.jetbrains.edu.coursecreator.format.TaskFile;
-import com.jetbrains.edu.coursecreator.format.TaskWindow;
+import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,14 +30,14 @@ public class CCDeleteTaskWindow extends CCTaskWindowAction {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     TaskFile taskFile = state.getTaskFile();
-    TaskWindow taskWindow = state.getTaskWindow();
-    final List<TaskWindow> taskWindows = taskFile.getTaskWindows();
-    if (taskWindows.contains(taskWindow)) {
-      taskWindow.removeResources(project);
-      taskWindows.remove(taskWindow);
+    AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
+    final List<AnswerPlaceholder> answerPlaceholders = taskFile.getTaskWindows();
+    if (answerPlaceholders.contains(answerPlaceholder)) {
+      answerPlaceholder.removeResources(project);
+      answerPlaceholders.remove(answerPlaceholder);
       final Editor editor = state.getEditor();
       editor.getMarkupModel().removeAllHighlighters();
-      CCProjectService.getInstance(project).drawTaskWindows(psiFile.getVirtualFile(), editor, course);
+      CCProjectService.getInstance(project).drawTaskWindows(psiFile.getVirtualFile(), editor);
       taskFile.createGuardedBlocks(editor);
     }
   }

@@ -18,13 +18,16 @@ package com.intellij.ide.scratch;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
 
 /**
  * @author gregsh
@@ -35,8 +38,22 @@ public abstract class RootType {
 
   public static final ExtensionPointName<RootType> ROOT_EP = ExtensionPointName.create("com.intellij.scratch.rootType");
 
+  @NotNull
   public static RootType[] getAllRootIds() {
     return Extensions.getExtensions(ROOT_EP);
+  }
+
+  @NotNull
+  public static RootType findById(@NotNull String id) {
+    for (RootType type : getAllRootIds()) {
+      if (id.equals(type.getId())) return type;
+    }
+    throw new AssertionError(id);
+  }
+
+  @NotNull
+  public static <T extends RootType> T findByClass(Class<T> aClass) {
+    return Extensions.findExtension(ROOT_EP, aClass);
   }
 
   private final String myId;
@@ -58,10 +75,10 @@ public abstract class RootType {
   }
 
   public boolean isHidden() {
-    return myDisplayName == null;
+    return StringUtil.isEmpty(myDisplayName);
   }
 
-  public boolean canBeProject() { return true; }
+  public boolean canBeProject() { return false; }
 
   @Nullable
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
@@ -78,5 +95,13 @@ public abstract class RootType {
   @Nullable
   public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
     return null;
+  }
+
+  public VirtualFile findFile(@Nullable Project project, @NotNull String pathName, ScratchFileService.Option option) throws IOException {
+    ScratchFileService fileService = project == null ? ScratchFileService.getInstance() : ScratchFileService.getInstance(project);
+    return fileService.findFile(this, pathName, option);
+  }
+
+  public void fileOpened(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
   }
 }

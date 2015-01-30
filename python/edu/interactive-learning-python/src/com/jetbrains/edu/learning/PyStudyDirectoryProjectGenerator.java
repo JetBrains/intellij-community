@@ -17,8 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.util.Map;
+import java.util.List;
 
 
 public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
@@ -85,7 +84,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
     return settingsPanel.getContentPanel();
   }
 
-  public Map<CourseInfo, File> getCourses() {
+  public List<CourseInfo> getCourses() {
     return myGenerator.getCourses();
   }
 

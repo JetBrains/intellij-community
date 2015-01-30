@@ -41,12 +41,15 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author cdr
@@ -135,21 +138,32 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   @Override
   @NotNull
   public String[] getSubIds() {
-    NamedScope[] scopes = getShownScopes();
-    String[] ids = new String[scopes.length];
-    for (int i = 0; i < scopes.length; i++) {
-      final NamedScope scope = scopes[i];
-      ids[i] = scope.getName();
-    }
-    return ids;
+    return ContainerUtil.map2Array(getShownScopes(), String.class, new Function<NamedScope, String>() {
+      @Override
+      public String fun(NamedScope scope) {
+        return scope.getName();
+      }
+    });
   }
 
-  private NamedScope[] getShownScopes() {
-    NamedScope[] scopes = myDependencyValidationManager.getScopes();
-    scopes = ArrayUtil.mergeArrays(scopes, myNamedScopeManager.getScopes());
-    scopes = NonProjectFilesScope.removeFromList(scopes);
-    scopes = ArrayUtil.remove(scopes, CustomScopesProviderEx.getAllScope());
-    return scopes;
+  @NotNull
+  public static Collection<NamedScope> getShownScopes(@NotNull Project project) {
+    return getShownScopes(DependencyValidationManager.getInstance(project), NamedScopeManager.getInstance(project));
+  }
+
+  private Collection<NamedScope> getShownScopes() {
+    return getShownScopes(myDependencyValidationManager, myNamedScopeManager);
+  }
+
+  @NotNull
+  private static Collection<NamedScope> getShownScopes(DependencyValidationManager dependencyValidationManager, NamedScopeManager namedScopeManager) {
+    List<NamedScope> list = ContainerUtil.newArrayList();
+    for (NamedScope scope : ContainerUtil.concat(dependencyValidationManager.getScopes(), namedScopeManager.getScopes())) {
+      if (scope instanceof NonProjectFilesScope) continue;
+      if (scope == CustomScopesProviderEx.getAllScope()) continue;
+      list.add(scope);
+    }
+    return list;
   }
 
   @Override
@@ -187,13 +201,12 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     if (psiFile == null) return;
     if (!(element instanceof PsiElement)) return;
 
-    NamedScope[] allScopes = getShownScopes();
-    for (int i = 0; i < allScopes.length; i++) {
-      final NamedScope scope = allScopes[i];
+    List<NamedScope> allScopes = ContainerUtil.newArrayList(getShownScopes());
+    for (NamedScope scope : allScopes) {
       String name = scope.getName();
       if (name.equals(getSubId())) {
-        allScopes[i] = allScopes[0];
-        allScopes[0] = scope;
+        allScopes.remove(scope);
+        allScopes.add(0, scope);
         break;
       }
     }

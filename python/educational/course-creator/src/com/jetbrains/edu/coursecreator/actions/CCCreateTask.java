@@ -37,7 +37,7 @@ public class CCCreateTask extends DumbAwareAction {
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
-    if (project == null) {
+    if (project == null || view == null) {
       return;
     }
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);

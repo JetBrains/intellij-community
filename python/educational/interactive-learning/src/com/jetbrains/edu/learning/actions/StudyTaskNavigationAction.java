@@ -14,8 +14,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.jetbrains.edu.learning.StudyNames;
 import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.course.Lesson;
 import com.jetbrains.edu.learning.course.Task;
 import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -52,7 +52,7 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
       return;
     }
     VirtualFile projectDir = project.getBaseDir();
-    String lessonDirName = Lesson.LESSON_DIR + String.valueOf(lessonIndex + 1);
+    String lessonDirName = StudyNames.LESSON_DIR + String.valueOf(lessonIndex + 1);
     if (projectDir == null) {
       return;
     }
@@ -72,7 +72,7 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
       VirtualFile vf = taskDir.findChild(name);
       if (vf != null) {
         FileEditorManager.getInstance(project).openFile(vf, true);
-        if (!taskFile.getTaskWindows().isEmpty()) {
+        if (!taskFile.getAnswerPlaceholders().isEmpty()) {
           shouldBeActive = vf;
         }
       }

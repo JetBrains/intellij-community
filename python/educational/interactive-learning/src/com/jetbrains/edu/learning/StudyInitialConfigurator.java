@@ -65,7 +65,7 @@ public class StudyInitialConfigurator {
     ZipUtil.unzip(null, courseDir, bundledCourse, null, null, true);
   }
 
-  public static File getCoursesRoot() {
+  private static File getCoursesRoot() {
     @NonNls String jarPath = PathUtil.getJarPathForClass(StudyInitialConfigurator.class);
     if (jarPath.endsWith(".jar")) {
       final File jarFile = new File(jarPath);

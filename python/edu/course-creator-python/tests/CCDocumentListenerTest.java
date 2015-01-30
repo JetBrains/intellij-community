@@ -7,14 +7,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive;
 import com.jetbrains.edu.coursecreator.format.TaskFile;
-import com.jetbrains.edu.coursecreator.format.TaskWindow;
+import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class CCDocumentListenerTest extends CCTestCase {
-
 
   //EDU-221
   public void testLongTaskWindows() throws Exception {
@@ -26,21 +25,21 @@ public class CCDocumentListenerTest extends CCTestCase {
     assertNotNull(taskFile);
     CCCreateCourseArchive.InsertionListener listener = new CCCreateCourseArchive.InsertionListener(taskFile);
     document.addDocumentListener(listener);
-    List<TaskWindow> taskWindows = taskFile.getTaskWindows();
-    for (TaskWindow tw : taskWindows) {
+    List<AnswerPlaceholder> answerPlaceholders = taskFile.getTaskWindows();
+    for (AnswerPlaceholder tw : answerPlaceholders) {
       replaceTaskWindow(myFixture.getProject(), document, tw);
     }
-    assertEquals(5, taskWindows.size());
-    checkTaskWindowLocation(document, taskWindows.get(0), 0, taskWindows.get(0).getLength());
-    int startOffset = 8 + taskWindows.get(0).getLength();
-    checkTaskWindowLocation(document, taskWindows.get(1), startOffset, startOffset + taskWindows.get(1).getLength());
-    checkTaskWindowLocation(document, taskWindows.get(4), document.getLineStartOffset(2),
-                            document.getLineStartOffset(2) + taskWindows.get(4).getLength());
+    assertEquals(5, answerPlaceholders.size());
+    checkTaskWindowLocation(document, answerPlaceholders.get(0), 0, answerPlaceholders.get(0).getLength());
+    int startOffset = 8 + answerPlaceholders.get(0).getLength();
+    checkTaskWindowLocation(document, answerPlaceholders.get(1), startOffset, startOffset + answerPlaceholders.get(1).getLength());
+    checkTaskWindowLocation(document, answerPlaceholders.get(4), document.getLineStartOffset(2),
+                            document.getLineStartOffset(2) + answerPlaceholders.get(4).getLength());
   }
 
-  private static void checkTaskWindowLocation(Document document, TaskWindow taskWindow, int startOffset, int endOffset) {
-    int twStart = taskWindow.getRealStartOffset(document);
-    int twEnd = taskWindow.getLength() + twStart;
+  private static void checkTaskWindowLocation(Document document, AnswerPlaceholder answerPlaceholder, int startOffset, int endOffset) {
+    int twStart = answerPlaceholder.getRealStartOffset(document);
+    int twEnd = answerPlaceholder.getLength() + twStart;
     assertEquals(startOffset, twStart);
     assertEquals(endOffset, twEnd);
   }
@@ -48,17 +47,17 @@ public class CCDocumentListenerTest extends CCTestCase {
 
   private static void replaceTaskWindow(@NotNull final Project project,
                                         @NotNull final Document document,
-                                        @NotNull final TaskWindow taskWindow) {
-    final String taskText = taskWindow.getTaskText();
-    final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
-    final int offset = lineStartOffset + taskWindow.start;
+                                        @NotNull final AnswerPlaceholder answerPlaceholder) {
+    final String taskText = answerPlaceholder.getTaskText();
+    final int lineStartOffset = document.getLineStartOffset(answerPlaceholder.getLine());
+    final int offset = lineStartOffset + answerPlaceholder.getStart();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            document.replaceString(offset, offset + taskWindow.getReplacementLength(), taskText);
+            document.replaceString(offset, offset + answerPlaceholder.getReplacementLength(), taskText);
             FileDocumentManager.getInstance().saveDocument(document);
           }
         });

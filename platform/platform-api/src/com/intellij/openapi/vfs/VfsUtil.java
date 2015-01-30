@@ -436,7 +436,7 @@ public class VfsUtil extends VfsUtilCore {
     String fileName = prefix + dotExt;
     int i = 1;
     while (dir.findChild(fileName) != null) {
-      fileName = prefix + i + dotExt;
+      fileName = prefix + "_" + i + dotExt;
       i++;
     }
     return dir.createChildData(requestor, fileName);

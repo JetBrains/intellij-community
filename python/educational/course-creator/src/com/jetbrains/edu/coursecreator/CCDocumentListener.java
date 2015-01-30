@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.jetbrains.edu.coursecreator.format.TaskFile;
-import com.jetbrains.edu.coursecreator.format.TaskWindow;
+import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public abstract class CCDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
-  private List<TaskWindowWrapper> myTaskWindows = new ArrayList<TaskWindowWrapper>();
+  private final List<TaskWindowWrapper> myTaskWindows = new ArrayList<TaskWindowWrapper>();
 
 
   public CCDocumentListener(TaskFile taskFile) {
@@ -30,11 +30,11 @@ public abstract class CCDocumentListener extends DocumentAdapter {
   public void beforeDocumentChange(DocumentEvent e) {
     Document document = e.getDocument();
     myTaskWindows.clear();
-    for (TaskWindow taskWindow : myTaskFile.getTaskWindows()) {
-      int twStart = taskWindow.getRealStartOffset(document);
-      int length = useLength() ? taskWindow.getLength() : taskWindow.getReplacementLength();
+    for (AnswerPlaceholder answerPlaceholder : myTaskFile.getTaskWindows()) {
+      int twStart = answerPlaceholder.getRealStartOffset(document);
+      int length = useLength() ? answerPlaceholder.getLength() : answerPlaceholder.getReplacementLength();
       int twEnd = twStart + length;
-      myTaskWindows.add(new TaskWindowWrapper(taskWindow, twStart, twEnd));
+      myTaskWindows.add(new TaskWindowWrapper(answerPlaceholder, twStart, twEnd));
     }
   }
 
@@ -54,16 +54,16 @@ public abstract class CCDocumentListener extends DocumentAdapter {
         if (twEnd >= offset) {
           twEnd += change;
         }
-        TaskWindow taskWindow = taskWindowWrapper.getTaskWindow();
+        AnswerPlaceholder answerPlaceholder = taskWindowWrapper.getAnswerPlaceholder();
         int line = document.getLineNumber(twStart);
         int start = twStart - document.getLineStartOffset(line);
         int length = twEnd - twStart;
-        taskWindow.setLine(line);
-        taskWindow.setStart(start);
+        answerPlaceholder.setLine(line);
+        answerPlaceholder.setStart(start);
         if (useLength()) {
-          taskWindow.setLength(length);
+          answerPlaceholder.setLength(length);
         } else {
-          taskWindow.setReplacementLength(length);
+          answerPlaceholder.setReplacementLength(length);
         }
       }
     }
@@ -72,12 +72,12 @@ public abstract class CCDocumentListener extends DocumentAdapter {
   protected abstract  boolean useLength();
 
   private static class TaskWindowWrapper {
-    public TaskWindow myTaskWindow;
+    public AnswerPlaceholder myAnswerPlaceholder;
     public int myTwStart;
     public int myTwEnd;
 
-    public TaskWindowWrapper(TaskWindow taskWindow, int twStart, int twEnd) {
-      myTaskWindow = taskWindow;
+    public TaskWindowWrapper(AnswerPlaceholder answerPlaceholder, int twStart, int twEnd) {
+      myAnswerPlaceholder = answerPlaceholder;
       myTwStart = twStart;
       myTwEnd = twEnd;
     }
@@ -90,8 +90,8 @@ public abstract class CCDocumentListener extends DocumentAdapter {
       return myTwEnd;
     }
 
-    public TaskWindow getTaskWindow() {
-      return myTaskWindow;
+    public AnswerPlaceholder getAnswerPlaceholder() {
+      return myAnswerPlaceholder;
     }
   }
 }

@@ -24,37 +24,35 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
                                              @NotNull Collection<AbstractTreeNode> children,
                                              ViewSettings settings) {
-    if (!needModify(parent)) {
+    if (!isCourseBasedProject(parent)) {
       return children;
     }
     Collection<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
     for (AbstractTreeNode node : children) {
-      Project project = node.getProject();
+      final Project project = node.getProject();
       if (project != null) {
         if (node.getValue() instanceof PsiDirectory) {
-          PsiDirectory nodeValue = (PsiDirectory)node.getValue();
+          final PsiDirectory nodeValue = (PsiDirectory)node.getValue();
           if (!nodeValue.getName().contains(Task.USER_TESTS)) {
             StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
             nodes.add(newNode);
           }
         }
         else {
-          if (parent instanceof StudyDirectoryNode) {
-            if (node instanceof PsiFileNode) {
-              PsiFileNode psiFileNode = (PsiFileNode)node;
-              VirtualFile virtualFile = psiFileNode.getVirtualFile();
-              if (virtualFile == null) {
-                return nodes;
-              }
-              TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(virtualFile);
-              if (taskFile != null) {
+          if (parent instanceof StudyDirectoryNode && node instanceof PsiFileNode) {
+            final PsiFileNode psiFileNode = (PsiFileNode)node;
+            final VirtualFile virtualFile = psiFileNode.getVirtualFile();
+            if (virtualFile == null) {
+              return nodes;
+            }
+            final TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(virtualFile);
+            if (taskFile != null) {
+              nodes.add(node);
+            }
+            final String parentName = parent.getName();
+            if (parentName != null) {
+              if (parentName.equals(Course.SANDBOX_DIR)) {
                 nodes.add(node);
-              }
-              String parentName = parent.getName();
-              if (parentName != null) {
-                if (parentName.equals(Course.SANDBOX_DIR)) {
-                  nodes.add(node);
-                }
               }
             }
           }
@@ -64,10 +62,10 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     return nodes;
   }
 
-  private static boolean needModify(AbstractTreeNode parent) {
-    Project project = parent.getProject();
+  private static boolean isCourseBasedProject(@NotNull final AbstractTreeNode parent) {
+    final Project project = parent.getProject();
     if (project != null) {
-      StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
+      final StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
       if (studyTaskManager.getCourse() == null) {
         return false;
       }

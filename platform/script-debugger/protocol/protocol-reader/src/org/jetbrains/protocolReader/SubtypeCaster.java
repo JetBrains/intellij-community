@@ -17,7 +17,7 @@ abstract class SubtypeCaster {
 
   abstract void writeJava(TextOutput out);
 
-  TypeHandler<?> getSubtypeHandler() {
+  TypeWriter<?> getSubtypeHandler() {
     return subtypeRef.type;
   }
 }

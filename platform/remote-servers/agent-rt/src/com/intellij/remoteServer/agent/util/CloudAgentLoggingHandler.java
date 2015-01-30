@@ -28,5 +28,7 @@ public interface CloudAgentLoggingHandler {
 
   LogListener getOrCreateLogListener(String pipeName);
 
+  LogListener getOrCreateEmptyLogListener(String pipeName);
+
   LogListener createConsole(String pipeName, OutputStream consoleInput);
 }

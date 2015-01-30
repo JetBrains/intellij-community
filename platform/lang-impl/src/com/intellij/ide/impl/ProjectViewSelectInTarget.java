@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,11 +78,18 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
+        Runnable r = new Runnable() {
+          @Override
+          public void run() {
+            projectView.selectCB(toSelect, virtualFile, requestFocus).notify(result);
+          }
+        };
         if (requestFocus) {
-          projectView.changeView(viewId, subviewId);
+          projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectViewPane.ID), subviewId).doWhenProcessed(r);
         }
-
-        projectView.selectCB(toSelect, virtualFile, requestFocus).notify(result);
+        else {
+          r.run();
+        }
       }
     };
 
@@ -166,5 +174,9 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   public final void setSubId(String subId) {
     mySubId = subId;
+  }
+
+  public final String getSubId() {
+    return mySubId;
   }
 }

@@ -79,8 +79,9 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
 
     //text editor
     Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file), focusEditor);
+    assert editor != null;
     final FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    return Pair.create (new FileEditor[] {fileEditor}, new FileEditorProvider[] {getProvider (fileEditor)});
+    return Pair.create (new FileEditor[] {fileEditor}, new FileEditorProvider[] {getProvider ()});
   }
 
   @NotNull
@@ -192,11 +193,7 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
     }
   }
 
-  public Editor openTextEditorEnsureNoFocus(@NotNull OpenFileDescriptor descriptor) {
-    return openTextEditor(descriptor, false);
-  }
-
-  private static FileEditorProvider getProvider(FileEditor editor) {
+  private static FileEditorProvider getProvider() {
     return new FileEditorProvider() {
       @Override
       public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
@@ -391,11 +388,6 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
 
   @Override
   public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
-  }
-
-  public void registerFileAsOpened(VirtualFile file, Editor editor) {
-    myVirtualFile2Editor.put(file, editor);
-    myActiveFile = file;
   }
 
   @Override

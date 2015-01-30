@@ -70,6 +70,15 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
     });
   }
 
+  public void testOverrideAnnotation() throws Exception {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
   @Override
   protected Sdk getTestProjectSdk() {
     return IdeaTestUtil.getMockJdk18();

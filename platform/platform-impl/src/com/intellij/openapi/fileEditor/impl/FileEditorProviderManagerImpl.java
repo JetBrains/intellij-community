@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -83,10 +82,8 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     // Collect all possible editors
     List<FileEditorProvider> mySharedProviderList = new ArrayList<FileEditorProvider>();
     boolean doNotShowTextEditor = false;
-    final boolean dumb = DumbService.getInstance(project).isDumb();
     for (final FileEditorProvider provider : myProviders) {
-      boolean canUseProvider = !dumb || DumbService.isDumbAware(provider);
-      if (canUseProvider && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
           return provider.accept(project, file);
@@ -190,6 +187,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     return mySelectedProviders;
   }
 
+  @SuppressWarnings("unused")
   public void setSelectedProviders(Map<String, String> selectedProviders) {
     mySelectedProviders.clear();
     mySelectedProviders.putAll(selectedProviders);

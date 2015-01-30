@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning.course;
 
+import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -30,21 +31,26 @@ import java.util.List;
  */
 
 public class TaskFile implements Stateful {
-  public List<TaskWindow> taskWindows = new ArrayList<TaskWindow>();
+  public String name;
+  public String text;
+  @SerializedName("placeholders")
+  private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
+
   private Task myTask;
   @Transient
-  private TaskWindow mySelectedTaskWindow = null;
-  public int myIndex = -1;
+  private AnswerPlaceholder mySelectedAnswerPlaceholder = null;
+  private int myIndex = -1;
   private boolean myUserCreated = false;
   private boolean myTrackChanges = true;
+  private boolean myHighlightErrors = false;
 
   /**
    * @return if all the windows in task file are marked as resolved
    */
   @Transient
   public StudyStatus getStatus() {
-    for (TaskWindow taskWindow : taskWindows) {
-      StudyStatus windowStatus = taskWindow.getStatus();
+    for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
+      StudyStatus windowStatus = answerPlaceholder.getStatus();
       if (windowStatus == StudyStatus.Failed) {
         return StudyStatus.Failed;
       }
@@ -61,24 +67,24 @@ public class TaskFile implements Stateful {
 
   @Nullable
   @Transient
-  public TaskWindow getSelectedTaskWindow() {
-    return mySelectedTaskWindow;
+  public AnswerPlaceholder getSelectedAnswerPlaceholder() {
+    return mySelectedAnswerPlaceholder;
   }
 
   /**
-   * @param selectedTaskWindow window from this task file to be set as selected
+   * @param selectedAnswerPlaceholder window from this task file to be set as selected
    */
-  public void setSelectedTaskWindow(@NotNull final TaskWindow selectedTaskWindow) {
-    if (selectedTaskWindow.getTaskFile() == this) {
-      mySelectedTaskWindow = selectedTaskWindow;
+  public void setSelectedAnswerPlaceholder(@NotNull final AnswerPlaceholder selectedAnswerPlaceholder) {
+    if (selectedAnswerPlaceholder.getTaskFile() == this) {
+      mySelectedAnswerPlaceholder = selectedAnswerPlaceholder;
     }
     else {
       throw new IllegalArgumentException("Window may be set as selected only in task file which it belongs to");
     }
   }
 
-  public List<TaskWindow> getTaskWindows() {
-    return taskWindows;
+  public List<AnswerPlaceholder> getAnswerPlaceholders() {
+    return myAnswerPlaceholders;
   }
 
   /**
@@ -102,8 +108,8 @@ public class TaskFile implements Stateful {
 
   public void drawAllWindows(Editor editor) {
     editor.getMarkupModel().removeAllHighlighters();
-    for (TaskWindow taskWindow : taskWindows) {
-      taskWindow.draw(editor, false, false);
+    for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
+      answerPlaceholder.draw(editor);
     }
     final Document document = editor.getDocument();
     EditorActionManager.getInstance()
@@ -117,14 +123,14 @@ public class TaskFile implements Stateful {
    * @return task window located in specified position or null if there is no task window in this position
    */
   @Nullable
-  public TaskWindow getTaskWindow(@NotNull final Document document, @NotNull final LogicalPosition pos) {
+  public AnswerPlaceholder getTaskWindow(@NotNull final Document document, @NotNull final LogicalPosition pos) {
     int line = pos.line;
     if (line >= document.getLineCount()) {
       return null;
     }
     int column = pos.column;
     int offset = document.getLineStartOffset(line) + column;
-    for (TaskWindow tw : taskWindows) {
+    for (AnswerPlaceholder tw : myAnswerPlaceholders) {
       if (tw.getLine() <= line) {
         int twStartOffset = tw.getRealStartOffset(document);
         final int length = tw.getLength() > 0 ? tw.getLength() : 0;
@@ -145,12 +151,12 @@ public class TaskFile implements Stateful {
 
   public void init(final Task task, boolean isRestarted) {
     myTask = task;
-    for (TaskWindow taskWindow : taskWindows) {
-      taskWindow.init(this, isRestarted);
+    for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
+      answerPlaceholder.init(this, isRestarted);
     }
-    Collections.sort(taskWindows);
-    for (int i = 0; i < taskWindows.size(); i++) {
-      taskWindows.get(i).setIndex(i);
+    Collections.sort(myAnswerPlaceholders);
+    for (int i = 0; i < myAnswerPlaceholders.size(); i++) {
+      myAnswerPlaceholders.get(i).setIndex(i);
     }
   }
 
@@ -163,27 +169,27 @@ public class TaskFile implements Stateful {
 
 
   public static void copy(@NotNull final TaskFile source, @NotNull final TaskFile target) {
-    List<TaskWindow> sourceTaskWindows = source.getTaskWindows();
-    List<TaskWindow> windowsCopy = new ArrayList<TaskWindow>(sourceTaskWindows.size());
-    for (TaskWindow taskWindow : sourceTaskWindows) {
-      TaskWindow taskWindowCopy = new TaskWindow();
-      taskWindowCopy.setLine(taskWindow.getLine());
-      taskWindowCopy.setStart(taskWindow.getStart());
-      taskWindowCopy.setLength(taskWindow.getLength());
-      taskWindowCopy.setPossibleAnswer(taskWindow.getPossibleAnswer());
-      taskWindowCopy.setIndex(taskWindow.getIndex());
-      windowsCopy.add(taskWindowCopy);
+    List<AnswerPlaceholder> sourceAnswerPlaceholders = source.getAnswerPlaceholders();
+    List<AnswerPlaceholder> windowsCopy = new ArrayList<AnswerPlaceholder>(sourceAnswerPlaceholders.size());
+    for (AnswerPlaceholder answerPlaceholder : sourceAnswerPlaceholders) {
+      AnswerPlaceholder answerPlaceholderCopy = new AnswerPlaceholder();
+      answerPlaceholderCopy.setLine(answerPlaceholder.getLine());
+      answerPlaceholderCopy.setStart(answerPlaceholder.getStart());
+      answerPlaceholderCopy.setLength(answerPlaceholder.getLength());
+      answerPlaceholderCopy.setPossibleAnswer(answerPlaceholder.getPossibleAnswer());
+      answerPlaceholderCopy.setIndex(answerPlaceholder.getIndex());
+      windowsCopy.add(answerPlaceholderCopy);
     }
-    target.setTaskWindows(windowsCopy);
+    target.setAnswerPlaceholders(windowsCopy);
   }
 
-  public void setTaskWindows(List<TaskWindow> taskWindows) {
-    this.taskWindows = taskWindows;
+  public void setAnswerPlaceholders(List<AnswerPlaceholder> answerPlaceholders) {
+    this.myAnswerPlaceholders = answerPlaceholders;
   }
 
   public void setStatus(@NotNull final StudyStatus status, @NotNull final StudyStatus oldStatus) {
-    for (TaskWindow taskWindow : taskWindows) {
-      taskWindow.setStatus(status, oldStatus);
+    for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
+      answerPlaceholder.setStatus(status, oldStatus);
     }
   }
 
@@ -196,33 +202,33 @@ public class TaskFile implements Stateful {
   }
 
   public void navigateToFirstTaskWindow(@NotNull final Editor editor) {
-    if (!taskWindows.isEmpty()) {
-      TaskWindow firstTaskWindow = StudyUtils.getFirst(taskWindows);
-      navigateToTaskWindow(editor, firstTaskWindow);
+    if (!myAnswerPlaceholders.isEmpty()) {
+      AnswerPlaceholder firstAnswerPlaceholder = StudyUtils.getFirst(myAnswerPlaceholders);
+      navigateToTaskWindow(editor, firstAnswerPlaceholder);
     }
   }
 
-  public void navigateToTaskWindow(@NotNull final Editor editor, @NotNull final TaskWindow taskWindow) {
-    if (!taskWindow.isValid(editor.getDocument())) {
+  public void navigateToTaskWindow(@NotNull final Editor editor, @NotNull final AnswerPlaceholder answerPlaceholder) {
+    if (!answerPlaceholder.isValid(editor.getDocument())) {
       return;
     }
-    mySelectedTaskWindow = taskWindow;
-    LogicalPosition taskWindowStart = new LogicalPosition(taskWindow.getLine(), taskWindow.getStart());
+    mySelectedAnswerPlaceholder = answerPlaceholder;
+    LogicalPosition taskWindowStart = new LogicalPosition(answerPlaceholder.getLine(), answerPlaceholder.getStart());
     editor.getCaretModel().moveToLogicalPosition(taskWindowStart);
   }
 
   public void navigateToFirstFailedTaskWindow(@NotNull final Editor editor) {
-    for (TaskWindow taskWindow : taskWindows) {
-      if (taskWindow.getStatus() != StudyStatus.Failed) {
+    for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
+      if (answerPlaceholder.getStatus() != StudyStatus.Failed) {
         continue;
       }
-      navigateToTaskWindow(editor, taskWindow);
+      navigateToTaskWindow(editor, answerPlaceholder);
       break;
     }
   }
 
   public boolean hasFailedTaskWindows() {
-    return taskWindows.size() > 0 && getStatus() == StudyStatus.Failed;
+    return myAnswerPlaceholders.size() > 0 && getStatus() == StudyStatus.Failed;
   }
 
   /**
@@ -233,12 +239,12 @@ public class TaskFile implements Stateful {
     if (document instanceof DocumentImpl) {
       DocumentImpl documentImpl = (DocumentImpl)document;
       List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
-      for (TaskWindow taskWindow : taskWindows) {
-        if (!taskWindow.isValid(document)) {
+      for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
+        if (!answerPlaceholder.isValid(document)) {
           return;
         }
-        int start = taskWindow.getRealStartOffset(document);
-        int end = start + taskWindow.getLength();
+        int start = answerPlaceholder.getRealStartOffset(document);
+        int end = start + answerPlaceholder.getLength();
         if (start != 0) {
           createGuardedBlock(editor, blocks, start - 1, start);
         }
@@ -261,5 +267,13 @@ public class TaskFile implements Stateful {
 
   public void setTrackChanges(boolean trackChanges) {
     myTrackChanges = trackChanges;
+  }
+
+  public boolean isHighlightErrors() {
+    return myHighlightErrors;
+  }
+
+  public void setHighlightErrors(boolean highlightErrors) {
+    myHighlightErrors = highlightErrors;
   }
 }

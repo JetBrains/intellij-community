@@ -6,7 +6,8 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.TaskWindow;
+import com.jetbrains.edu.learning.course.AnswerPlaceholder;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private List<TaskWindowWrapper> myTaskWindows = new ArrayList<TaskWindowWrapper>();
 
-  public StudyDocumentListener(TaskFile taskFile) {
+  public StudyDocumentListener(@NotNull final TaskFile taskFile) {
     myTaskFile = taskFile;
   }
 
@@ -31,12 +32,13 @@ public class StudyDocumentListener extends DocumentAdapter {
     if (!myTaskFile.isTrackChanges()) {
       return;
     }
-    Document document = e.getDocument();
+    myTaskFile.setHighlightErrors(true);
+    final Document document = e.getDocument();
     myTaskWindows.clear();
-    for (TaskWindow taskWindow : myTaskFile.getTaskWindows()) {
-      int twStart = taskWindow.getRealStartOffset(document);
-      int twEnd = twStart + taskWindow.getLength();
-      myTaskWindows.add(new TaskWindowWrapper(taskWindow, twStart, twEnd));
+    for (AnswerPlaceholder answerPlaceholder : myTaskFile.getAnswerPlaceholders()) {
+      int twStart = answerPlaceholder.getRealStartOffset(document);
+      int twEnd = twStart + answerPlaceholder.getLength();
+      myTaskWindows.add(new TaskWindowWrapper(answerPlaceholder, twStart, twEnd));
     }
   }
 
@@ -46,8 +48,8 @@ public class StudyDocumentListener extends DocumentAdapter {
       return;
     }
     if (e instanceof DocumentEventImpl) {
-      DocumentEventImpl event = (DocumentEventImpl)e;
-      Document document = e.getDocument();
+      final DocumentEventImpl event = (DocumentEventImpl)e;
+      final Document document = e.getDocument();
       int offset = e.getOffset();
       int change = event.getNewLength() - event.getOldLength();
       for (TaskWindowWrapper taskWindowWrapper : myTaskWindows) {
@@ -59,24 +61,24 @@ public class StudyDocumentListener extends DocumentAdapter {
         if (twEnd >= offset) {
           twEnd += change;
         }
-        TaskWindow taskWindow = taskWindowWrapper.getTaskWindow();
+        final AnswerPlaceholder answerPlaceholder = taskWindowWrapper.getAnswerPlaceholder();
         int line = document.getLineNumber(twStart);
         int start = twStart - document.getLineStartOffset(line);
         int length = twEnd - twStart;
-        taskWindow.setLine(line);
-        taskWindow.setStart(start);
-        taskWindow.setLength(length);
+        answerPlaceholder.setLine(line);
+        answerPlaceholder.setStart(start);
+        answerPlaceholder.setLength(length);
       }
     }
   }
 
   private static class TaskWindowWrapper {
-    public TaskWindow myTaskWindow;
+    public AnswerPlaceholder myAnswerPlaceholder;
     public int myTwStart;
     public int myTwEnd;
 
-    public TaskWindowWrapper(TaskWindow taskWindow, int twStart, int twEnd) {
-      myTaskWindow = taskWindow;
+    public TaskWindowWrapper(AnswerPlaceholder answerPlaceholder, int twStart, int twEnd) {
+      myAnswerPlaceholder = answerPlaceholder;
       myTwStart = twStart;
       myTwEnd = twEnd;
     }
@@ -89,8 +91,8 @@ public class StudyDocumentListener extends DocumentAdapter {
       return myTwEnd;
     }
 
-    public TaskWindow getTaskWindow() {
-      return myTaskWindow;
+    public AnswerPlaceholder getAnswerPlaceholder() {
+      return myAnswerPlaceholder;
     }
   }
 }

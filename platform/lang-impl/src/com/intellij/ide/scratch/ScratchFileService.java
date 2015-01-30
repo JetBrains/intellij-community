@@ -27,6 +27,8 @@ import java.io.IOException;
 
 public abstract class ScratchFileService {
 
+  public enum Option { existing_only, create_if_missing, create_new_always }
+
   public static ScratchFileService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ScratchFileService.class);
   }
@@ -41,8 +43,7 @@ public abstract class ScratchFileService {
   @Nullable
   public abstract RootType getRootType(@NotNull VirtualFile file);
 
-  @Nullable
-  public abstract VirtualFile getOrCreateFile(@NotNull RootType rootId, @NotNull String pathName) throws IOException;
+  public abstract VirtualFile findFile(@NotNull RootType rootType, @NotNull String pathName, Option option) throws IOException;
 
   @Nullable
   public abstract VirtualFile createScratchFile(@NotNull Project project, @NotNull Language language, @NotNull String initialContent);

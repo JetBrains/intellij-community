@@ -87,7 +87,7 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
   private final EditorEx myConsoleEditor;
   private final EditorEx myHistoryViewer;
   private final Document myEditorDocument;
-  private final LightVirtualFile myVirtualFile;
+  private final VirtualFile myVirtualFile;
 
   protected PsiFile myFile; // will change on language change
 
@@ -125,13 +125,13 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     this(project, title, new LightVirtualFile(title, language, ""), initComponents);
   }
 
-  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull LightVirtualFile lightFile, boolean initComponents) {
-    this(project, title, lightFile, initComponents, null);
+  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull VirtualFile virtualFile, boolean initComponents) {
+    this(project, title, virtualFile, initComponents, null);
   }
 
   LanguageConsoleImpl(@NotNull Project project,
                       @NotNull String title,
-                      @NotNull LightVirtualFile lightFile,
+                      @NotNull VirtualFile lightFile,
                       boolean initComponents,
                       @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
     myProject = project;
@@ -143,7 +143,7 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     if (myEditorDocument == null) {
       throw new AssertionError("no document for: " + lightFile);
     }
-    myFile = psiFileFactory == null ? createFile(myVirtualFile, myEditorDocument, myProject) : psiFileFactory.fun(myVirtualFile, myProject);
+    myFile = psiFileFactory == null ? createFile(myProject, myVirtualFile) : psiFileFactory.fun(myVirtualFile, myProject);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
@@ -686,7 +686,7 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
 
   @NotNull
   public Language getLanguage() {
-    return ObjectUtils.assertNotNull(myVirtualFile.getLanguage());
+    return myFile.getLanguage();
   }
 
   public boolean isValid() {
@@ -694,10 +694,14 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
   }
 
   public void setLanguage(@NotNull Language language) {
-    myVirtualFile.setLanguage(language);
-    myVirtualFile.setContent(myEditorDocument, myEditorDocument.getText(), false);
-    FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singletonList(myVirtualFile), false);
-    myFile = createFile(myVirtualFile, myEditorDocument, myProject);
+    if (!(myVirtualFile instanceof LightVirtualFile)) {
+      throw new UnsupportedOperationException();
+    }
+    LightVirtualFile virtualFile = (LightVirtualFile)myVirtualFile;
+    virtualFile.setLanguage(language);
+    virtualFile.setContent(myEditorDocument, myEditorDocument.getText(), false);
+    FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singletonList(virtualFile), false);
+    myFile = createFile(myProject, virtualFile);
   }
 
   public void setInputText(@NotNull final String query) {
@@ -710,7 +714,7 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
   }
 
   @NotNull
-  protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
+  protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     return ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(virtualFile));
   }
 

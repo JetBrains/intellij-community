@@ -4,5 +4,9 @@ class Test {
         bar();
     }
 
+    void baz() {
+        bar();
+    }
+
     void bar(){}
 }

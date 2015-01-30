@@ -480,7 +480,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     }
   }
 
-  public static class InstallFromDiskAction extends AnAction {
+  public static class InstallFromDiskAction extends DumbAwareAction {
     public InstallFromDiskAction(@Nullable String text) {
       super(text, "", AllIcons.Nodes.Plugin);
     }
