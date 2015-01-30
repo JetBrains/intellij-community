@@ -56,7 +56,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -396,7 +395,7 @@ public class AbstractPopup implements JBPopup {
   @Override
   public void setAdText(@NotNull final String s, int alignment) {
     if (myAdComponent == null) {
-      myAdComponent = HintUtil.createAdComponent(s, BorderFactory.createEmptyBorder(1, 5, 1, 5), alignment);
+      myAdComponent = HintUtil.createAdComponent(s, JBUI.Borders.empty(1, 5), alignment);
       JPanel wrapper = new JPanel(new BorderLayout()) {
         @Override
         protected void paintComponent(Graphics g) {
@@ -406,7 +405,7 @@ public class AbstractPopup implements JBPopup {
         }
       };
       wrapper.setOpaque(false);
-      wrapper.setBorder(new EmptyBorder(1, 0, 0, 0));
+      wrapper.setBorder(JBUI.Borders.emptyTop(1));
       wrapper.add(myAdComponent, BorderLayout.CENTER);
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
@@ -579,11 +578,11 @@ public class AbstractPopup implements JBPopup {
         final int spaceOnTheRight = screen.x + screen.width - leftTopCornerScreen.x;
         if (spaceOnTheLeft > spaceOnTheRight) {
           relativePoint = new RelativePoint(layeredPane, new Point(0, bounds.y));
-          myComponent.setPreferredSize(new Dimension(spaceOnTheLeft, Math.max(preferredSize.height, 200)));
+          myComponent.setPreferredSize(new Dimension(spaceOnTheLeft, Math.max(preferredSize.height, JBUI.scale(200))));
         }
         else {
           relativePoint = new RelativePoint(layeredPane, leftTopCorner);
-          myComponent.setPreferredSize(new Dimension(spaceOnTheRight, Math.max(preferredSize.height, 200)));
+          myComponent.setPreferredSize(new Dimension(spaceOnTheRight, Math.max(preferredSize.height, JBUI.scale(200))));
         }
       }
     }
