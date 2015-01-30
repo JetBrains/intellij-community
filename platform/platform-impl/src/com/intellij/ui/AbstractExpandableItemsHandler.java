@@ -19,10 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.OurHeavyWeightPopup;
+import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +48,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   };
 
   private boolean myEnabled = Registry.is("ide.expansion.hints.enabled");
-  private Popup myPopup;
+  private final MovablePopup myPopup;
   private KeyType myKey;
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
@@ -58,6 +57,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent = component;
     myComponent.add(myRendererPane);
     myComponent.validate();
+    myPopup = new MovablePopup(myComponent, myTipComponent);
 
     MouseAdapter tipMouseAdapter = new MouseAdapter() {
       @Override
@@ -290,9 +290,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       return;
     }
 
-    if (!Comparing.equal(myKey, selected)) {
-      hideHint();
-    }
     myKey = selected;
 
     Point location = createToolTipImage(myKey);
@@ -300,18 +297,12 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (location == null) {
       hideHint();
     }
-    else if (myPopup == null) {
-      myPopup = new OurHeavyWeightPopup(myComponent, myTipComponent, location.x, location.y);
-      Window popupWindow = SwingUtilities.getWindowAncestor(myTipComponent);
-      WindowManagerEx.getInstanceEx().setWindowShadow(popupWindow, WindowManagerEx.WindowShadowMode.DISABLED);
-      myPopup.show();
-      repaintKeyItem();
-    }
     else {
       Dimension size = myTipComponent.getPreferredSize();
-      Window popupWindow = SwingUtilities.getWindowAncestor(myTipComponent);
-      popupWindow.setBounds(location.x, location.y, size.width, size.height);
-      myTipComponent.repaint();
+      myPopup.setBounds(location.x, location.y, size.width, size.height);
+      if (!myPopup.isVisible()) {
+        myPopup.setVisible(true);
+      }
       repaintKeyItem();
     }
   }
@@ -335,16 +326,15 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   private void hideHint() {
     myUpdateAlarm.cancelAllRequests();
-    if (myPopup != null) {
-      myPopup.hide();
-      myPopup = null;
+    if (myPopup.isVisible()) {
+      myPopup.setVisible(false);
       repaintKeyItem();
     }
     myKey = null;
   }
 
   public boolean isShowing() {
-    return myPopup != null;
+    return myPopup.isVisible();
   }
 
   private void repaintKeyItem() {
