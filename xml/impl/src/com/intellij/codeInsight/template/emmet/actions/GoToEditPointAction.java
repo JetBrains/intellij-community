@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.emmet.actions;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -31,6 +32,15 @@ import org.jetbrains.annotations.Nullable;
 public abstract class GoToEditPointAction extends EditorAction implements DumbAware {
   protected GoToEditPointAction(EditorActionHandler defaultHandler) {
     super(defaultHandler);
+  }
+
+  @Override
+  public void update(Editor editor, Presentation presentation, DataContext dataContext) {
+    super.update(editor, presentation, dataContext);
+    final PsiFile file = getFile(dataContext);
+    if (!EmmetEditPointUtil.isApplicableFile(file)) {
+      presentation.setEnabledAndVisible(false);
+    }
   }
 
   private static PsiFile getFile(DataContext context) {
