@@ -17,6 +17,8 @@ package com.intellij.codeInsight.template.emmet.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,14 +35,25 @@ import com.intellij.psi.xml.XmlTokenType;
  * @author Dennis.Ushakov
  */
 public class EmmetEditPointUtil {
-  public static void moveForward(Editor editor, PsiFile file) {
+  public static void moveForward(final Editor editor, final PsiFile file) {
     if (!isApplicableFile(file)) return;
-    moveToNextPoint(editor, file, editor.getCaretModel().getOffset(), 1);
+    editor.getCaretModel().runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        moveToNextPoint(editor, file, caret.getOffset(), 1);
+      }
+    });
+
   }
 
-  public static void moveBackward(Editor editor, PsiFile file) {
+  public static void moveBackward(final Editor editor, final PsiFile file) {
     if (!isApplicableFile(file)) return;
-    moveToNextPoint(editor, file, editor.getCaretModel().getOffset(), -1);
+    editor.getCaretModel().runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        moveToNextPoint(editor, file, caret.getOffset(), -1);
+      }
+    });
   }
 
   private static void moveToNextPoint(Editor editor, PsiFile file, int offset, int inc) {
