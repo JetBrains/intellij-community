@@ -60,6 +60,7 @@ import java.util.Map;
  */
 public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
 
+  private static final String DEFAULT_FILE_NAME = "ide-scripting";
   private static final Key<WeakReference<ConsoleView>> CONSOLE_VIEW_KEY = Key.create("CONSOLE_VIEW_KEY");
   private static final Key<ConsoleHistoryController> HISTORY_CONTROLLER_KEY = Key.create("HISTORY_CONTROLLER_KEY");
 
@@ -77,6 +78,16 @@ public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    if (ourEngines.size() == 1) {
+      runConsole(e, ourEngines.values().iterator().next());
+    }
+    else {
+      super.actionPerformed(e);
+    }
+  }
+
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
@@ -88,26 +99,31 @@ public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
         return new AnAction(engine.getLanguageName()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            Project project = e.getProject();
-            if (project == null) return;
-            List<String> extensions = engine.getExtensions();
-            try {
-              String pathName = PathUtil.makeFileName(engine.getLanguageName(), ContainerUtil.getFirstItem(extensions));
-              VirtualFile virtualFile = IdeConsoleRootType.getInstance().findFile(project, pathName, ScratchFileService.Option.create_if_missing);
-              if (virtualFile != null) {
-                FileEditorManager.getInstance(project).openFile(virtualFile, true);
-              }
-            }
-            catch (IOException ignored) {
-            }
+            runConsole(e, engine);
           }
         };
       }
     });
   }
 
+  protected void runConsole(@NotNull AnActionEvent e, @NotNull ScriptEngineFactory engine) {
+    Project project = e.getProject();
+    if (project == null) return;
+    List<String> extensions = engine.getExtensions();
+    try {
+      String pathName = PathUtil.makeFileName(DEFAULT_FILE_NAME, ContainerUtil.getFirstItem(extensions));
+      VirtualFile virtualFile = IdeConsoleRootType.getInstance().findFile(project, pathName, ScratchFileService.Option.create_if_missing);
+      if (virtualFile != null) {
+        FileEditorManager.getInstance(project).openFile(virtualFile, true);
+      }
+    }
+    catch (IOException ignored) {
+    }
+  }
+
   public static void configureConsole(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
-    ScriptEngine engine = createScriptEngine(file);
+    ScriptEngine engine = findScriptEngine(file);
+    if (engine == null) return;
     //new ConsoleHistoryController(IdeConsoleRootType.getInstance(), engine.getFactory().getLanguageName())
     MyRunAction runAction = new MyRunAction(engine);
     for (FileEditor fileEditor : source.getEditors(file)) {
@@ -117,14 +133,14 @@ public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
     }
   }
 
-  @NotNull
-  private static ScriptEngine createScriptEngine(VirtualFile file) {
+  @Nullable
+  private static ScriptEngine findScriptEngine(@NotNull VirtualFile file) {
     for (ScriptEngineFactory factory : ourEngines.values()) {
       if (factory.getExtensions().contains(file.getExtension())) {
         return factory.getScriptEngine();
       }
     }
-    throw new AssertionError(file);
+    return null;
   }
 
   private static void executeQuery(@NotNull Project project,
@@ -158,8 +174,6 @@ public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
     WeakReference<ConsoleView> ref = psiFile == null ? null : psiFile.getCopyableUserData(CONSOLE_VIEW_KEY);
     ConsoleView existing = ref == null ? null : ref.get();
     if (existing != null && !Disposer.isDisposed(existing)) return existing;
-    //LanguageConsoleImpl console = new LanguageConsoleImpl(project, "", file, true);
-    //ConsoleView consoleView = new LanguageConsoleViewImpl(console);
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     if (psiFile != null) psiFile.putCopyableUserData(CONSOLE_VIEW_KEY, new WeakReference<ConsoleView>(consoleView));
     DefaultActionGroup toolbarActions = new DefaultActionGroup();

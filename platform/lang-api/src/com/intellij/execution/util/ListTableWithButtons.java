@@ -147,8 +147,6 @@ public abstract class ListTableWithButtons<T> extends Observable {
     myActionsPanel = decorator.getActionsPanel();
 
     myTableView.getComponent().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    
-    myTableView.getComponent().putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
   }
 
   @NotNull
