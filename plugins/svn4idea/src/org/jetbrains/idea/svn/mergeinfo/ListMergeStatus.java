@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.mergeinfo;
 
 import icons.SvnIcons;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,5 +44,25 @@ public enum ListMergeStatus {
   @Nullable
   public Icon getIcon() {
     return myIcon;
+  }
+
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static ListMergeStatus from(@Nullable SvnMergeInfoCache.MergeCheckResult mergeCheckResult) {
+    ListMergeStatus result = null;
+
+    if (mergeCheckResult != null) {
+      switch (mergeCheckResult) {
+        case MERGED:
+          result = MERGED;
+          break;
+        case COMMON:
+          result = COMMON;
+          break;
+        default:
+          result = NOT_MERGED;
+      }
+    }
+
+    return result;
   }
 }

@@ -1052,6 +1052,9 @@ public class IncProjectBuilder {
                 doneSomething = true;
               }
             }
+            for (String outputPath : outputs) {
+              outputToSourceRegistry.removeMapping(outputPath, buildTargetId);
+            }
             if (!deletedOutputPaths.isEmpty()) {
               if (logger.isEnabled()) {
                 logger.logDeletedFiles(deletedOutputPaths);

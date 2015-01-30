@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
@@ -24,37 +25,44 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 
-public class WCInfo implements WCPaths {
+public class WCInfo {
+
   private final boolean myIsWcRoot;
-  private final Depth myStickyDepth;
+  @NotNull private final Depth myStickyDepth;
   @NotNull private final RootUrlInfo myRootInfo;
 
-  public WCInfo(@NotNull RootUrlInfo rootInfo, boolean isWcRoot, Depth stickyDepth) {
+  public WCInfo(@NotNull RootUrlInfo rootInfo, boolean isWcRoot, @NotNull Depth stickyDepth) {
     myRootInfo = rootInfo;
     myIsWcRoot = isWcRoot;
     myStickyDepth = stickyDepth;
   }
 
+  @NotNull
   public Depth getStickyDepth() {
     return myStickyDepth;
   }
 
+  @NotNull
   public String getPath() {
     return myRootInfo.getPath();
   }
 
+  @Nullable
   public VirtualFile getVcsRoot() {
     return null;
   }
 
+  @NotNull
   public SVNURL getUrl() {
     return myRootInfo.getAbsoluteUrlAsUrl();
   }
 
+  @NotNull
   public String getRootUrl() {
     return getUrl().toString();
   }
 
+  @NotNull
   public String getRepoUrl() {
     return getRepositoryRoot();
   }
@@ -68,6 +76,7 @@ public class WCInfo implements WCPaths {
     return getRootInfo().getNode().hasError();
   }
 
+  @NotNull
   public String getErrorMessage() {
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     SvnBindException error = getRootInfo().getNode().getError();
@@ -80,6 +89,7 @@ public class WCInfo implements WCPaths {
     return myRootInfo.getFormat();
   }
 
+  @NotNull
   public String getRepositoryRoot() {
     return myRootInfo.getRepositoryUrl();
   }
@@ -94,20 +104,16 @@ public class WCInfo implements WCPaths {
     if (!(o instanceof WCInfo)) return false;
 
     final WCInfo wcInfo = (WCInfo)o;
-    final String path = getPath();
 
-    if (path != null ? !path.equals(wcInfo.getPath()) : wcInfo.getPath() != null) return false;
-
-    return true;
+    return getPath().equals(wcInfo.getPath());
   }
 
   @Override
   public int hashCode() {
-    final String path = getPath();
-
-    return (path != null ? path.hashCode() : 0);
+    return getPath().hashCode();
   }
 
+  @Nullable
   public NestedCopyType getType() {
     return myRootInfo.getType();
   }

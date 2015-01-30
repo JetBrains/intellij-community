@@ -62,13 +62,14 @@ public abstract class ListTableWithButtons<T> extends Observable {
                   @Override
                   public void run() {
                     stopEditing();
-                    int nextColumn = column < myTableView.getColumnCount() - 1? column + 1 : 0;
+                    int nextColumn = column < myTableView.getColumnCount() - 1 ? column + 1 : 0;
                     int nextRow = nextColumn == 0 ? row + 1 : row;
                     if (nextRow > myTableView.getRowCount() - 1) {
                       if (myElements.isEmpty() || !ListTableWithButtons.this.isEmpty(myElements.get(myElements.size() - 1))) {
                         ToolbarDecorator.findAddButton(myPanel).actionPerformed(null);
                         return;
-                      } else {
+                      }
+                      else {
                         nextRow = 0;
                       }
                     }
@@ -146,6 +147,8 @@ public abstract class ListTableWithButtons<T> extends Observable {
     myActionsPanel = decorator.getActionsPanel();
 
     myTableView.getComponent().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    
+    myTableView.getComponent().putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
   }
 
   @NotNull

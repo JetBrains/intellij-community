@@ -15,28 +15,38 @@
  */
 package org.jetbrains.idea.svn.mergeinfo;
 
-import java.util.HashMap;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Map;
 
-public class MergeinfoCached {
-  private final Map<Long, SvnMergeInfoCache.MergeCheckResult> myMap;
+public class MergeInfoCached {
+
+  @NotNull private final Map<Long, SvnMergeInfoCache.MergeCheckResult> myMap;
   private final long myCopyRevision;
 
-  public MergeinfoCached() {
-    myMap = new HashMap<Long, SvnMergeInfoCache.MergeCheckResult>();
+  public MergeInfoCached() {
+    myMap = ContainerUtil.newHashMap();
     myCopyRevision = -1;
   }
 
-  public MergeinfoCached(final Map<Long, SvnMergeInfoCache.MergeCheckResult> map, final long copyRevision) {
-    myMap = map;
+  public MergeInfoCached(@NotNull Map<Long, SvnMergeInfoCache.MergeCheckResult> map, long copyRevision) {
+    myMap = ContainerUtil.newHashMap(map);
     myCopyRevision = copyRevision;
   }
 
+  @NotNull
   public Map<Long, SvnMergeInfoCache.MergeCheckResult> getMap() {
     return myMap;
   }
 
-  public long getCopyRevision() {
-    return myCopyRevision;
+  @NotNull
+  public MergeInfoCached copy() {
+    return new MergeInfoCached(myMap, myCopyRevision);
+  }
+
+  public boolean copiedAfter(@NotNull CommittedChangeList list) {
+    return myCopyRevision != -1 && myCopyRevision >= list.getNumber();
   }
 }

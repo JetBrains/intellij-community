@@ -27,10 +27,15 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,6 +54,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,8 +77,8 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
     private final MyLanguages myScratchMapping = new MyLanguages();
 
-    public App(WindowManager windowManager) {
-      WindowManagerListener listener = new WindowManagerListener() {
+    public App(WindowManager windowManager, MessageBus messageBus) {
+      final WindowManagerListener windowListener = new WindowManagerListener() {
         @Override
         public void frameCreated(IdeFrame frame) {
           Project project = frame.getProject();
@@ -88,9 +94,33 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
         }
       };
       for (IdeFrame frame : windowManager.getAllProjectFrames()) {
-        listener.frameCreated(frame);
+        windowListener.frameCreated(frame);
       }
-      windowManager.addListener(listener);
+      windowManager.addListener(windowListener);
+
+      final FileEditorManagerAdapter editorListener = new FileEditorManagerAdapter() {
+        @Override
+        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          RootType rootType = getRootType(file);
+          if (rootType != null) {
+            rootType.fileOpened(file, source);
+          }
+        }
+      };
+      ProjectManagerAdapter projectListener = new ProjectManagerAdapter() {
+        @Override
+        public void projectOpened(Project project) {
+          project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener);
+          FileEditorManager editorManager = FileEditorManager.getInstance(project);
+          for (VirtualFile virtualFile : editorManager.getOpenFiles()) {
+            editorListener.fileOpened(editorManager, virtualFile);
+          }
+        }
+      };
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        projectListener.projectOpened(project);
+      }
+      messageBus.connect().subscribe(ProjectManager.TOPIC, projectListener);
     }
 
     @NotNull
