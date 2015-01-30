@@ -52,56 +52,31 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return editor.getSelectionModel().hasSelection() && getSettingsProvider(file.getLanguage()) != null;
+    Language language = file.getLanguage();
+    return editor.getSelectionModel().hasSelection() && LanguageCodeStyleSettingsProvider.forLanguage(language) != null;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    Language language = file.getLanguage();
-    CodeStyleSettingsProvider languageSettingsProvider = getSettingsProvider(language);
-    
-    if (languageSettingsProvider == null) {
-      LOG.info("No code style settings provider found for " + language);
-    }
-    
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-
-    if (languageSettingsProvider instanceof CodeFragmentSettingProvider) {
-      CodeFragmentSettingProvider fragmentSettingProvider = (CodeFragmentSettingProvider)languageSettingsProvider;
-      TabbedLanguageCodeStylePanel fragment = fragmentSettingProvider.createSettingsForSelectedFragment(editor, settings, settings.clone());
-      DialogWrapper dialog = new FragmentCodeStyleSettingsDialog(project, fragment, settings);
-      dialog.show();
-    }
+    TabbedLanguageCodeStylePanel fragment = new CodeFragmentCodeStyleSettingsPanel(settings, editor, file);
+    new FragmentCodeStyleSettingsDialog(project, fragment, settings).show();
   }
-
-  @Nullable
-  private CodeStyleSettingsProvider getSettingsProvider(Language language) {
-    CodeStyleSettingsProvider forLanguage = null;
-    
-    CodeStyleSettingsProvider[] extensions = Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME);
-    for (CodeStyleSettingsProvider extension : extensions) {
-      if (language.is(extension.getLanguage()) && extension.hasSettingsPage()) {
-        forLanguage = extension;
-        break;
-      }
-    }
-    
-    return forLanguage;
-  }
-
+  
   @Override
   public boolean startInWriteAction() {
     return false;
   }
   
   static class FragmentCodeStyleSettingsDialog extends DialogWrapper {
-    private final TabbedLanguageCodeStylePanel myComponent;
+    private final TabbedLanguageCodeStylePanel myTabbedLanguagePanel;
     private final CodeStyleSettings mySettings;
 
     public FragmentCodeStyleSettingsDialog(@NotNull Project project, TabbedLanguageCodeStylePanel component, CodeStyleSettings settings) {
       super(project, true);
-      myComponent = component;
+      myTabbedLanguagePanel = component;
       mySettings = settings;
+      
       setTitle("Configure Code Style Settings on Selected Fragment");
       setOKButtonText("Save");
       init();
@@ -110,13 +85,13 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      return myComponent.getPanel();
+      return myTabbedLanguagePanel.getPanel();
     }
 
     @Override
     protected void doOKAction() {
       try {
-        myComponent.apply(mySettings);
+        myTabbedLanguagePanel.apply(mySettings);
       }
       catch (ConfigurationException e) {
         LOG.debug("Can not apply code style settings from context menu to project code style settings");
@@ -124,5 +99,4 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
       super.doOKAction();
     }
   }
-
 }
