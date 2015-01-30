@@ -31,13 +31,14 @@ import java.util.regex.Pattern;
  * Command-line interface presenter that is command-based
  *
  * @author Ilya.Kazakevich
+ * @param <C> Command type
  */
-public class CommandInterfacePresenterCommandBased extends CommandInterfacePresenterAdapter {
+public class CommandInterfacePresenterCommandBased<C extends Command> extends CommandInterfacePresenterAdapter {
   private static final Pattern EMPTY_SPACE = Pattern.compile("\\s+");
   /**
    * [name] -> command. Linked is used to preserve order.
    */
-  private final Map<String, Command> myCommands = new LinkedHashMap<String, Command>();
+  private final Map<String, C> myCommands = new LinkedHashMap<String, C>();
   /**
    * currenly used strategy (see interface for more info)
    */
@@ -53,9 +54,9 @@ public class CommandInterfacePresenterCommandBased extends CommandInterfacePrese
    * @param commands available commands
    */
   public CommandInterfacePresenterCommandBased(@NotNull final CommandInterfaceView view,
-                                               @NotNull final Iterable<Command> commands) {
+                                               @NotNull final Iterable<C> commands) {
     super(view);
-    for (final Command command : commands) {
+    for (final C command : commands) {
       myCommands.put(command.getName(), command);
     }
   }
@@ -65,7 +66,7 @@ public class CommandInterfacePresenterCommandBased extends CommandInterfacePrese
    * @param commands available commands
    */
   public CommandInterfacePresenterCommandBased(@NotNull final CommandInterfaceView view,
-                                               @NotNull final Command... commands) {
+                                               @NotNull final C... commands) {
     this(view, Arrays.asList(commands));
   }
 
@@ -217,7 +218,7 @@ public class CommandInterfacePresenterCommandBased extends CommandInterfacePrese
    * @return [command_name => command] all available commands
    */
   @NotNull
-  Map<String, Command> getCommands() {
+  protected final Map<String, C> getCommands() {
     return Collections.unmodifiableMap(myCommands);
   }
 

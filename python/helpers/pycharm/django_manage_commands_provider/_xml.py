@@ -1,6 +1,5 @@
 # coding=utf-8
 """
-TODO: Support real help (from show_help()), not only help text
 This module exports information about manage commands and options from django to PyCharm.
 Information is provided in XML (to prevent encoding troubles and simplify deserialization on java side).
 It does not have schema (yet!) but here is XML format it uses.
@@ -14,14 +13,11 @@ It does not have schema (yet!) but here is XML format it uses.
 </commandInfo>
 </commandInfo-array>
 
-
+Classes like DjangoCommandsInfo is used on Java side.
 
 """
-from distutils.version import StrictVersion
 from xml.dom import minidom
 from xml.dom.minidom import Element
-import django
-import _django_obtainer_optparse
 
 __author__ = 'Ilya.Kazakevich'
 
