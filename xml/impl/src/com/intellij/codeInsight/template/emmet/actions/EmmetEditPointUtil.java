@@ -17,8 +17,7 @@ package com.intellij.codeInsight.template.emmet.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -68,8 +67,15 @@ public class EmmetEditPointUtil {
 
   private static boolean moveCaret(Editor editor, PsiElement current, int offset) {
     editor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, current.getContainingFile());
-    if (editor.getCaretModel().getOffset() == offset) return false;
-    editor.getCaretModel().moveToOffset(offset);
+    final CaretModel caretModel = editor.getCaretModel();
+    if (caretModel.getOffset() == offset) return false;
+
+    caretModel.moveToOffset(offset);
+    final Caret caret = caretModel.getCurrentCaret();
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    if (caret == caretModel.getPrimaryCaret()) {
+      scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+    }
     return true;
   }
 
