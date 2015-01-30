@@ -22,28 +22,23 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class SendStatisticsProjectComponent implements ProjectComponent {
+public class SendStatisticsComponent implements ApplicationComponent {
 
-  private static final Logger LOG = Logger.getInstance("#" + SendStatisticsProjectComponent.class.getName());
+  private static final Logger LOG = Logger.getInstance(SendStatisticsComponent.class);
 
   private static final int DELAY_IN_MIN = 10;
 
-  private Project myProject;
-  private Alarm   myAlarm;
+  private Alarm myAlarm;
 
-  public SendStatisticsProjectComponent(Project project) {
-    myProject = project;
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
+  public SendStatisticsComponent() {
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
 
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
     NotificationsConfiguration.getNotificationsConfiguration().register(
@@ -52,23 +47,11 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
       false);
   }
 
-  @Override
-  public void projectOpened() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-      @Override
-      public void run() {
-        runStatisticsService();
-      }
-    });
-  }
-
   private void runStatisticsService() {
     StatisticsService statisticsService = StatisticsUploadAssistant.getStatisticsService();
 
     if (StatisticsUploadAssistant.showNotification()) {
-      StatisticsNotificationManager.showNotification(statisticsService, myProject);
+      StatisticsNotificationManager.showNotification(statisticsService);
     }
     else if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
       StatisticsService serviceToUse = null;
@@ -90,22 +73,16 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (DumbService.isDumb(myProject)) {
-          runWithDelay(statisticsService);
-        }
-        else {
-          statisticsService.send();
-        }
+        statisticsService.send();
       }
     }, DELAY_IN_MIN * 60 * 1000);
   }
 
   @Override
-  public void projectClosed() {
-  }
-
-  @Override
   public void initComponent() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    runStatisticsService();
   }
 
   @Override
@@ -115,6 +92,6 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
   @NotNull
   @Override
   public String getComponentName() {
-    return SendStatisticsProjectComponent.class.getName();
+    return SendStatisticsComponent.class.getName();
   }
 }

@@ -15,10 +15,13 @@
     <xi:fallback/>
   </xi:include>
 
-  <project-components>
+  <application-components>
     <component>
-      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>
+      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsComponent</implementation-class>
     </component>
+  </application-components>
+
+  <project-components>
     <component>
       <implementation-class>com.jetbrains.python.PyModuleListener</implementation-class>
     </component>
