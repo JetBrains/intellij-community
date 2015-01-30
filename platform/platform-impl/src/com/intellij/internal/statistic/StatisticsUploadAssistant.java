@@ -29,8 +29,6 @@ import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.Pair;
@@ -75,7 +73,7 @@ public class StatisticsUploadAssistant {
   }
 
   public String getData(@NotNull Set<String> disabledGroups) {
-    return getStringPatch(disabledGroups, ProjectManager.getInstance().getOpenProjects());
+    return getStringPatch(disabledGroups);
   }
 
   public static void persistSentPatch(@NotNull String patchStr) {
@@ -90,19 +88,18 @@ public class StatisticsUploadAssistant {
   }
 
   @NotNull
-  public static String getStringPatch(@NotNull Set<String> disabledGroups, Project... project) {
-    return getStringPatch(disabledGroups, project, UsageStatisticsPersistenceComponent.getInstance(), 0);
+  public static String getStringPatch(@NotNull Set<String> disabledGroups) {
+    return getStringPatch(disabledGroups, UsageStatisticsPersistenceComponent.getInstance(), 0);
   }
 
   @NotNull
   public static String getStringPatch(@NotNull Set<String> disabledGroups,
-                                      @NotNull Project[] projects,
                                       @NotNull SentUsagesPersistence usagesPersistence,
                                       int maxSize) {
-    return getStringPatch(getPatchedUsages(disabledGroups, projects, usagesPersistence), maxSize);
+    return getStringPatch(getPatchedUsages(disabledGroups, usagesPersistence), maxSize);
   }
 
-  public static String getStringPatch(@NotNull Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages, int maxSize) {
+  public static <T extends UsageDescriptor> String getStringPatch(@NotNull Map<GroupDescriptor, Set<T>> patchedUsages, int maxSize) {
     if (patchedUsages.isEmpty()) {
       return "";
     }
@@ -113,14 +110,11 @@ public class StatisticsUploadAssistant {
 
   @NotNull
   public static Map<GroupDescriptor, Set<PatchedUsage>> getPatchedUsages(@NotNull Set<String> disabledGroups,
-                                                                         @NotNull Project[] projects,
                                                                          @NotNull SentUsagesPersistence usagesPersistence) {
     Map<GroupDescriptor, Set<PatchedUsage>> usages = new LinkedHashMap<GroupDescriptor, Set<PatchedUsage>>();
-    for (Project project : projects) {
-      Map<GroupDescriptor, Set<UsageDescriptor>> allUsages = getAllUsages(project, disabledGroups);
-      Map<GroupDescriptor, Set<UsageDescriptor>> sentUsages = filterDisabled(disabledGroups, usagesPersistence.getSentUsages());
-      usages.putAll(getPatchedUsages(allUsages, sentUsages));
-    }
+    Map<GroupDescriptor, Set<UsageDescriptor>> allUsages = getAllUsages(disabledGroups);
+    Map<GroupDescriptor, Set<UsageDescriptor>> sentUsages = filterDisabled(disabledGroups, usagesPersistence.getSentUsages());
+    usages.putAll(getPatchedUsages(allUsages, sentUsages));
     return usages;
   }
 
@@ -226,13 +220,13 @@ public class StatisticsUploadAssistant {
   }
 
   @NotNull
-  public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@Nullable Project project, @NotNull Set<String> disabledGroups) {
+  public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@NotNull Set<String> disabledGroups) {
     Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<GroupDescriptor, Set<UsageDescriptor>>();
     for (UsagesCollector usagesCollector : UsagesCollector.EP_NAME.getExtensions()) {
       GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
       if (!disabledGroups.contains(groupDescriptor.getId())) {
         try {
-          usageDescriptors.put(groupDescriptor, usagesCollector.getUsages(project));
+          usageDescriptors.put(groupDescriptor, usagesCollector.getUsages());
         }
         catch (CollectUsagesException e) {
           LOG.info(e);

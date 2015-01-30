@@ -20,11 +20,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
@@ -35,7 +33,7 @@ import java.util.Set;
 class UiInfoUsageCollector extends UsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
+  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
     Set<UsageDescriptor> set = new THashSet<UsageDescriptor>();
 
     add(set, "Nav Bar visible", navbar() ? 1 : 0);

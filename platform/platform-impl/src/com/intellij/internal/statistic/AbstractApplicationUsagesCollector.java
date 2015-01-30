@@ -24,7 +24,6 @@ import com.intellij.util.containers.ObjectIntHashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -64,7 +63,7 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
         result.ensureCapacity(usageDescriptors.size());
         for (UsageDescriptor usageDescriptor : usageDescriptors) {
           String key = usageDescriptor.getKey();
-          result.put(key, result.get(key, 0) + 1);
+          result.put(key, result.get(key, 0) + usageDescriptor.getValue());
         }
       }
     }
@@ -87,10 +86,7 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
 
   @Override
   @NotNull
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
-    if (project != null) {
-      persistProjectUsages(project, getProjectUsages(project));
-    }
+  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
     return getApplicationUsages();
   }
 
