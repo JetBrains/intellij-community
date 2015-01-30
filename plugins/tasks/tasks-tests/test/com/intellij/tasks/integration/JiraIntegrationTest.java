@@ -47,7 +47,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   /**
    * JIRA 4.4.5, REST API 2.0.alpha1
    */
-  @NonNls private static final String JIRA_4_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8014";
+  @NonNls private static final String JIRA_4_TEST_SERVER_URL = "http://idea-qa-task-2.labs.intellij.net:8014";
   /**
    * JIRA 5.0.6, REST API 2.0
    */
