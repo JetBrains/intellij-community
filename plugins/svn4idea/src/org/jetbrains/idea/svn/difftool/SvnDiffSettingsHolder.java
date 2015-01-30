@@ -5,50 +5,57 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.diff.util.DiffPlaces;
 import com.intellij.openapi.util.diff.util.DiffUtil;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 @State(
   name = "SvnDiffSettings",
   storages = {@Storage(
     file = DiffUtil.DIFF_CONFIG)})
-public class SvnDiffSettingsHolder implements PersistentStateComponent<SvnDiffSettingsHolder.SvnDiffSettings> {
+public class SvnDiffSettingsHolder implements PersistentStateComponent<SvnDiffSettingsHolder.State> {
+  public static final Key<SvnDiffSettings> KEY = Key.create("SvnDiffSettings");
+
+  private static class SharedSettings {
+  }
+
+  private static class PlaceSettings {
+    public float SPLITTER_PROPORTION = 0.9f;
+    public boolean HIDE_PROPERTIES = false;
+  }
+
   public static class SvnDiffSettings {
-    public static final Key<SvnDiffSettings> KEY = Key.create("SvnDiffSettings");
-
-    private SharedSettings SHARED_SETTINGS = new SharedSettings();
-
-    private static class SharedSettings {
-      float SPLITTER_PROPORTION = 0.9f;
-      boolean HIDE_PROPERTIES = false;
-    }
+    @NotNull public SharedSettings SHARED_SETTINGS = new SharedSettings();
+    @NotNull public PlaceSettings PLACE_SETTINGS = new PlaceSettings();
 
     public SvnDiffSettings() {
     }
 
-    public SvnDiffSettings(@NotNull SharedSettings SHARED_SETTINGS) {
+    public SvnDiffSettings(@NotNull SharedSettings SHARED_SETTINGS,
+                           @NotNull PlaceSettings PLACE_SETTINGS) {
       this.SHARED_SETTINGS = SHARED_SETTINGS;
-    }
-
-    @NotNull
-    private SvnDiffSettings copy() {
-      return new SvnDiffSettings(SHARED_SETTINGS);
+      this.PLACE_SETTINGS = PLACE_SETTINGS;
     }
 
     public boolean isHideProperties() {
-      return SHARED_SETTINGS.HIDE_PROPERTIES;
+      return PLACE_SETTINGS.HIDE_PROPERTIES;
     }
 
     public void setHideProperties(boolean value) {
-      SHARED_SETTINGS.HIDE_PROPERTIES = value;
+      PLACE_SETTINGS.HIDE_PROPERTIES = value;
     }
 
     public float getSplitterProportion() {
-      return SHARED_SETTINGS.SPLITTER_PROPORTION;
+      return PLACE_SETTINGS.SPLITTER_PROPORTION;
     }
 
     public void setSplitterProportion(float value) {
-      SHARED_SETTINGS.SPLITTER_PROPORTION = value;
+      PLACE_SETTINGS.SPLITTER_PROPORTION = value;
     }
 
     //
@@ -57,23 +64,41 @@ public class SvnDiffSettingsHolder implements PersistentStateComponent<SvnDiffSe
 
     @NotNull
     public static SvnDiffSettings getSettings() {
-      return getInstance().getState().copy();
+      return getSettings(null);
     }
 
     @NotNull
-    public static SvnDiffSettings getSettingsDefaults() {
-      return getInstance().getState();
+    public static SvnDiffSettings getSettings(@Nullable String place) {
+      return getInstance().getSettings(place);
     }
   }
 
-  private SvnDiffSettings myState = new SvnDiffSettings();
+  @NotNull
+  public SvnDiffSettings getSettings(@Nullable String place) {
+    if (place == null) place = DiffPlaces.DEFAULT;
+
+    PlaceSettings placeSettings = myState.PLACES_MAP.get(place);
+    if (placeSettings == null) {
+      placeSettings = new PlaceSettings();
+      myState.PLACES_MAP.put(place, placeSettings);
+    }
+    return new SvnDiffSettings(myState.SHARED_SETTINGS, placeSettings);
+  }
+
+  public static class State {
+    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+    public Map<String, PlaceSettings> PLACES_MAP = new HashMap<String, PlaceSettings>();
+    public SharedSettings SHARED_SETTINGS = new SharedSettings();
+  }
+
+  private State myState = new State();
 
   @NotNull
-  public SvnDiffSettings getState() {
+  public State getState() {
     return myState;
   }
 
-  public void loadState(SvnDiffSettings state) {
+  public void loadState(State state) {
     myState = state;
   }
 
