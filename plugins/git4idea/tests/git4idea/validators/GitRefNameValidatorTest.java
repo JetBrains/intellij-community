@@ -58,7 +58,9 @@ public class GitRefNameValidatorTest {
         { "HIERARCHY_2",       "user/branch/sub_branch" },
         { "BEGINS_WITH_SLASH", "/branch"                }, // actual branch name will be with trimmed slash
         { "NON_CONS_DOTS",     "complex.branch.name"    },
-        { "GERRIT_PATTERN",    "refs/for/master%topic=my-cool-feature,r=some-reviewer"}
+        { "GERRIT_PATTERN",    "refs/for/master%topic=my-cool-feature,r=some-reviewer"},
+        { "CONTAINS_MINUS",    "b-ranch"},
+        { "STARTS_WITH_PLUS",  "+branch"}
       };
     }
 
@@ -73,7 +75,8 @@ public class GitRefNameValidatorTest {
         { "TWO_DOTS_2",          "..name"       },
         { "TWO_DOTS_3",          "..branch"     },
         { "EMPTY",               ""},
-        { "SPACES",              "  "}
+        { "SPACES",              "  "},
+        { "STARTS_WITH_MINUS",    "-branch" }
       };
     }
 
