@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
+import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import javax.swing.*;
 public interface CodeFragmentSettingProvider {
   
   @NotNull
-  JComponent createSettingsForSelectedFragment(@NotNull Editor editor, CodeStyleSettings settings, CodeStyleSettings originalSettings);
+  TabbedLanguageCodeStylePanel createSettingsForSelectedFragment(@NotNull Editor editor, CodeStyleSettings settings, CodeStyleSettings originalSettings);
   
   
 }

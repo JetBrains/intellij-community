@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -53,11 +54,12 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider imp
 
   @Override
   @NotNull
-  public JComponent createSettingsForSelectedFragment(final @NotNull Editor editor,
-                                                      CodeStyleSettings settings,
-                                                      CodeStyleSettings originalSettings) 
+  public TabbedLanguageCodeStylePanel createSettingsForSelectedFragment(final @NotNull Editor editor,
+                                                                        CodeStyleSettings currentSettings,
+                                                                        CodeStyleSettings settings) 
   {
-    TabbedLanguageCodeStylePanel panel = new TabbedLanguageCodeStylePanel(getLanguage(), settings, settings) {
+    //todo may be better way will be to return only list of settings so we can show only selected ones
+    return new TabbedLanguageCodeStylePanel(getLanguage(), currentSettings, settings) {
       @Override
       protected void initTabs(CodeStyleSettings settings) {
         MySpacesPanel spacesPanel = new MySpacesPanel(settings) {
@@ -75,6 +77,7 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider imp
         
         addTab(spacesPanel);
         addTab(bracesPanel);
+        reset(getSettings());
       }
 
       
@@ -82,12 +85,13 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider imp
         final SelectionModel model = editor.getSelectionModel();
         if (model.hasSelection()) {
 
-          //try {
-          //  apply(getSettings());
-          //}
-          //catch (ConfigurationException e) {
-          //  e.printStackTrace();
-          //}
+          try {
+            apply(getSettings());
+          }
+          catch (ConfigurationException e) {
+            //todo log!
+            e.printStackTrace();
+          }
 
           CodeStyleSettings clone = getSettings().clone();
 
@@ -123,9 +127,6 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider imp
         }, "Reformat", null);
       }
     };
-
-
-    return panel.getPanel();
   }
 
   @Override

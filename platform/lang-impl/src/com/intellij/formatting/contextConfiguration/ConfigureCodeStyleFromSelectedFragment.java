@@ -15,11 +15,13 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
+import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiFile;
@@ -32,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
-
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleFromSelectedFragment.class); 
   
   @Nls
@@ -67,8 +68,8 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
 
     if (languageSettingsProvider instanceof CodeFragmentSettingProvider) {
       CodeFragmentSettingProvider fragmentSettingProvider = (CodeFragmentSettingProvider)languageSettingsProvider;
-      JComponent viewer = fragmentSettingProvider.createSettingsForSelectedFragment(editor, settings, settings);
-      DialogWrapper dialog = new FragmentCodeStyleSettingsDialog(project, viewer);
+      TabbedLanguageCodeStylePanel fragment = fragmentSettingProvider.createSettingsForSelectedFragment(editor, settings, settings.clone());
+      DialogWrapper dialog = new FragmentCodeStyleSettingsDialog(project, fragment, settings);
       dialog.show();
     }
   }
@@ -92,24 +93,36 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
   public boolean startInWriteAction() {
     return false;
   }
-}
+  
+  static class FragmentCodeStyleSettingsDialog extends DialogWrapper {
+    private final TabbedLanguageCodeStylePanel myComponent;
+    private final CodeStyleSettings mySettings;
 
+    public FragmentCodeStyleSettingsDialog(@NotNull Project project, TabbedLanguageCodeStylePanel component, CodeStyleSettings settings) {
+      super(project, true);
+      myComponent = component;
+      mySettings = settings;
+      setTitle("Configure Code Style Settings on Selected Fragment");
+      setOKButtonText("Save");
+      init();
+    }
 
-class FragmentCodeStyleSettingsDialog extends DialogWrapper {
-  private final JComponent myComponent;
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      return myComponent.getPanel();
+    }
 
-  public FragmentCodeStyleSettingsDialog(@NotNull Project project, @NotNull JComponent component) {
-    super(project, true);
-    myComponent = component;
-    setTitle("Configure Code Style Settings on Selected Fragment");
-    setOKButtonText("Save");
-    init();
-  }
-
-  @Nullable
-  @Override
-  protected JComponent createCenterPanel() {
-    return myComponent;
+    @Override
+    protected void doOKAction() {
+      try {
+        myComponent.apply(mySettings);
+      }
+      catch (ConfigurationException e) {
+        LOG.debug("Can not apply code style settings from context menu to project code style settings");
+      }
+      super.doOKAction();
+    }
   }
 
 }
