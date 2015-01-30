@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.diff.util.DiffPlaces;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -1379,7 +1380,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       super(project);
 
       putContextUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
-      putContextUserData(DiffUserDataKeys.PLACE, "CommitDialog");
+      putContextUserData(DiffUserDataKeys.PLACE, DiffPlaces.COMMIT_DIALOG);
     }
 
     @NotNull

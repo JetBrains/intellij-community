@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.diff.util.DiffPlaces;
 import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -184,7 +185,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
   @NotNull
   public TextDiffSettings getSettings(@Nullable String name) {
-    if (name == null) name = "default";
+    if (name == null) name = DiffPlaces.DEFAULT;
     TextDiffSettings settings = myState.MAP.get(name);
     if (settings == null) {
       settings = new TextDiffSettings();
