@@ -174,8 +174,6 @@ public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
     WeakReference<ConsoleView> ref = psiFile == null ? null : psiFile.getCopyableUserData(CONSOLE_VIEW_KEY);
     ConsoleView existing = ref == null ? null : ref.get();
     if (existing != null && !Disposer.isDisposed(existing)) return existing;
-    //LanguageConsoleImpl console = new LanguageConsoleImpl(project, "", file, true);
-    //ConsoleView consoleView = new LanguageConsoleViewImpl(console);
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     if (psiFile != null) psiFile.putCopyableUserData(CONSOLE_VIEW_KEY, new WeakReference<ConsoleView>(consoleView));
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
