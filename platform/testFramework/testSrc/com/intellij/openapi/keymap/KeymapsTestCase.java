@@ -73,7 +73,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "ENTER",                    "EditorChooseLookupItem", "NextTemplateVariable", "EditorEnter", "Images.Thumbnails.EnterAction",
                                   "PropertyInspectorActions.EditValue", "Console.Execute"},
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
-    { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
+    { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "F5",                       "UML.ApplyCurrentLayout", "CopyElement"},
     { "F7",                       "NextDiff", "StepInto"},
     { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add"},
@@ -162,15 +162,15 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
     { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
+    { "meta E",                   "RecentFiles", "Vcs.ShowMessageHistory"},
     { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft", },
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight", },
     { "shift control K",          "hg4idea.push", "Git.Push"},
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
-    { "meta E",                   "RecentFiles", "Vcs.ShowMessageHistory"},
     });
     put("Emacs", new String[][] {
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
-    { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
+    { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", 
                                   "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
     { "alt DOWN",                 "ShowContent", "MethodDown"},
@@ -239,7 +239,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     });
     put("Eclipse", new String[][] {
     { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc"},
-    { "alt ENTER",                "Console.TableResult.EditValue", "ShowIntentionActions"},
+    { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "F5",                       "UML.ApplyCurrentLayout", "StepInto"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
     { "alt DOWN",                 "ShowContent", "MoveStatementDown"},
@@ -329,6 +329,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       { "meta 1",                   "FileChooser.GotoHome", "ShowIntentionActions", "DuplicatesForm.SendToLeft"},
       { "meta 3",                   "FileChooser.GotoModule", "GotoAction"},
       { "meta D",                   "EditorDeleteLine", "CompareTwoFiles", "CompareDirs", "SendEOF", "FileChooser.GotoDesktop"},
+      { "meta I",                   "DatabaseView.PropertiesAction", "AutoIndentLines"},
       { "meta P",                   "FileChooser.TogglePathShowing", "Print"},
       { "meta R",                   "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "RunToCursor"},
       { "meta U",                   "CommanderSwapPanels", "EvaluateExpression"},

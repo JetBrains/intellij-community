@@ -454,6 +454,9 @@
       <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
 
+    <action id="DatabaseView.PropertiesAction">
+      <keyboard-shortcut first-keystroke="meta I"/>
+    </action>
     <action id="Console.TableResult.Reload" />
 
 
