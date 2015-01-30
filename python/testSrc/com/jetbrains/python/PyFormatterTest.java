@@ -483,10 +483,25 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-12748
   public void testIndentCommentariesInsideFromImportStatement() {
-      doTest();
+    doTest();
   }
 
   public void testClosingParenthesisInFromImportStatementWithNoHangingIndent() {
+    doTest();
+  }
+
+  // PY-12932
+  public void testCommentedCodeFragmentIgnored() {
+    doTest();
+  }
+
+  // PY-12932
+  public void testTrailingComment() {
+    doTest();
+  }
+
+  // PY-12932
+  public void testMultilineCommentIgnored() {
     doTest();
   }
 
