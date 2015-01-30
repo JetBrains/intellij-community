@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
@@ -53,7 +54,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @NotNull private final WaitingBackgroundableTaskExecutor myTaskExecutor = new WaitingBackgroundableTaskExecutor();
   @NotNull private final Alarm myAlarm = new Alarm();
 
-  private volatile boolean myDisposed = false;
+  @NotNull private final AtomicBoolean myDisposed = new AtomicBoolean(false);
 
   public DiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     myProject = context.getProject();
@@ -75,7 +76,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @Override
   public final void dispose() {
-    myDisposed = true;
+    if (!myDisposed.compareAndSet(false, true)) return;
 
     Disposer.dispose(myAlarm);
     abortRediff();
@@ -93,7 +94,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @CalledInAwt
   public final void scheduleRediff() {
-    if (myDisposed) return;
+    if (myDisposed.get()) return;
     final int modificationStamp = myTaskExecutor.getModificationStamp();
 
     myAlarm.cancelAllRequests();
@@ -118,7 +119,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @CalledInAwt
   public final void rediff(boolean trySync) {
-    if (myDisposed) return;
+    if (myDisposed.get()) return;
 
     onBeforeRediff();
 
