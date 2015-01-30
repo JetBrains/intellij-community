@@ -177,27 +177,25 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
         String summary = selectString(getSelector(SUMMARY), context);
         assert id != null && summary != null;
         task = new GenericTask(id, summary, myRepository);
-        if (!myRepository.getDownloadTasksInSeparateRequests()) {
-          String description = selectString(getSelector(DESCRIPTION), context);
-          if (description != null) {
-            task.setDescription(description);
-          }
-          String issueUrl = selectString(getSelector(ISSUE_URL), context);
-          if (issueUrl != null) {
-            task.setIssueUrl(issueUrl);
-          }
-          Boolean closed = selectBoolean(getSelector(CLOSED), context);
-          if (closed != null) {
-            task.setClosed(closed);
-          }
-          Date updated = selectDate(getSelector(UPDATED), context);
-          if (updated != null) {
-            task.setUpdated(updated);
-          }
-          Date created = selectDate(getSelector(CREATED), context);
-          if (created != null) {
-            task.setCreated(created);
-          }
+        String description = selectString(getSelector(DESCRIPTION), context);
+        if (description != null) {
+          task.setDescription(description);
+        }
+        String issueUrl = selectString(getSelector(ISSUE_URL), context);
+        if (issueUrl != null) {
+          task.setIssueUrl(issueUrl);
+        }
+        Boolean closed = selectBoolean(getSelector(CLOSED), context);
+        if (closed != null) {
+          task.setClosed(closed);
+        }
+        Date updated = selectDate(getSelector(UPDATED), context);
+        if (updated != null) {
+          task.setUpdated(updated);
+        }
+        Date created = selectDate(getSelector(CREATED), context);
+        if (created != null) {
+          task.setCreated(created);
         }
       }
       result.add(task);

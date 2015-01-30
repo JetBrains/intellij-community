@@ -9,7 +9,7 @@ $field.type ##
     #set($name = $StringUtil.decapitalize($name))
   #else
     is##
-  #end
+#end
 #else
   get##
 #end

@@ -23,7 +23,11 @@ import java.awt.*;
  */
 public class JBDimension extends Dimension {
   public JBDimension(int width, int height) {
-    super(JBUI.scale(width), JBUI.scale(height));
+    super(scale(width), scale(height));
+  }
+
+  private static int scale(int size) {
+    return size == -1 ? -1 : JBUI.scale(size);
   }
 
   public static JBDimension create(Dimension from) {

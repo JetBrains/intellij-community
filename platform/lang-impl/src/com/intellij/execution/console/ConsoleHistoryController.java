@@ -405,7 +405,7 @@ public class ConsoleHistoryController {
 
     @NotNull
     private String getOldHistoryFilePath(final String id) {
-      String pathName = myRootType.getId().substring(ConsoleRootType.PATH_PREFIX.length()) + Long.toHexString(StringHash.calc(id));
+      String pathName = myRootType.getConsoleTypeId() + Long.toHexString(StringHash.calc(id));
       return PathManager.getSystemPath() + File.separator + "userHistory" + File.separator + pathName + ".hist.xml";
     }
 
@@ -585,7 +585,7 @@ public class ConsoleHistoryController {
 
   @NotNull
   private static String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String id) {
-    return rootType.getId().substring(ConsoleRootType.PATH_PREFIX.length()) + "/" +
+    return rootType.getConsoleTypeId() + "/" +
            PathUtil.makeFileName(rootType.getDefaultPathName(id), rootType.getDefaultFileExtension());
   }
 

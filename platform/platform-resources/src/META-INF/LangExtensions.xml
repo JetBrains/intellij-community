@@ -342,6 +342,7 @@
     <syntaxHighlighter factoryClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Highlighter" order="first"/>
     <scratch.rootType implementation="com.intellij.ide.scratch.ScratchRootType" />
     <scratch.rootType implementation="com.intellij.execution.console.HistoryRootType"/>
+    <scratch.rootType implementation="com.intellij.execution.console.IdeConsoleRootType"/>
     <fileTypeFactory implementation="com.intellij.ide.scratch.ScratchRootType$TypeFactory"/>
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>

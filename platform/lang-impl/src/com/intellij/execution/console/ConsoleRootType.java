@@ -26,10 +26,14 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ConsoleRootType extends RootType {
 
   public static final String SEPARATOR = "-. . -..- - / . -. - .-. -.--";
-  static final String PATH_PREFIX = "consoles/";
+  private static final String PATH_PREFIX = "consoles/";
 
-  protected ConsoleRootType(@NotNull String consoleId, @Nullable String displayName) {
-    super(PATH_PREFIX + consoleId, displayName);
+  protected ConsoleRootType(@NotNull String consoleTypeId, @Nullable String displayName) {
+    super(PATH_PREFIX + consoleTypeId, displayName);
+  }
+
+  public final String getConsoleTypeId() {
+    return getId().substring(PATH_PREFIX.length());
   }
 
   @NotNull
