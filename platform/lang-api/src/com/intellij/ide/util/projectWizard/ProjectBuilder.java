@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class ProjectBuilder {
+
   public boolean isUpdate() {
     return false;
   }
@@ -47,6 +48,7 @@ public abstract class ProjectBuilder {
   public boolean validate(Project current, Project dest) {
     return true;
   }
+
   public void cleanup() {}
 
   public boolean isOpenProjectSettingsAfter() {
@@ -54,7 +56,7 @@ public abstract class ProjectBuilder {
   }
 
   /**
-   * Deprecated. Use {@link #isSuitableSdkType(com.intellij.openapi.projectRoots.SdkTypeId)} instead.
+   * Deprecated. Use {@link #isSuitableSdkType(SdkTypeId)} instead.
    *
    * Used for automatically assigning an SDK to the project when it gets created.
    * If no SDK is specified in the template project and there is no specific SDK chooser step,
@@ -72,7 +74,6 @@ public abstract class ProjectBuilder {
   public boolean isSuitableSdkType(SdkTypeId sdkType) {
     return true;
   }
-
 
   @Nullable
   public Project createProject(String name, String path) {
