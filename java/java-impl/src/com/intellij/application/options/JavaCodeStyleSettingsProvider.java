@@ -29,11 +29,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Rustam Vishnyakov
@@ -58,17 +60,60 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider imp
                                                                         CodeStyleSettings currentSettings,
                                                                         CodeStyleSettings settings) 
   {
+
+
     //todo may be better way will be to return only list of settings so we can show only selected ones
+
+
     return new TabbedLanguageCodeStylePanel(getLanguage(), currentSettings, settings) {
       @Override
       protected void initTabs(CodeStyleSettings settings) {
+
         MySpacesPanel spacesPanel = new MySpacesPanel(settings) {
+          private JPanel myPanel;
+
           @Override
           protected void somethingChanged() {
             reformatWithNewSettings();
           }
+
+          @Override
+          protected void init() {
+            //todo what this is doing?
+            customizeSettings();
+            initTables();
+            
+            myOptionsTree = createOptionsTree();
+            myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
+          
+            JBScrollPane pane = new JBScrollPane(myOptionsTree) {
+              @Override
+              public Dimension getMinimumSize() {
+                return super.getPreferredSize();
+              }
+            };
+          
+            myPanel = new JPanel(new BorderLayout());
+            myPanel.add(pane);
+            
+            //todo what is this? is this really needed?
+            //isFirstUpdate = false;
+          }
+          
+          @Override
+          public JComponent getPanel() {
+            return myPanel;
+          }
+          
         };
+
+
         MyWrappingAndBracesPanel bracesPanel = new MyWrappingAndBracesPanel(settings) {
+          
+          
+          
+          
+          
           @Override
           protected void somethingChanged() {
             reformatWithNewSettings();

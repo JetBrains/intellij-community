@@ -47,7 +47,7 @@ import java.util.List;
  */
 public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
-  private JTree myOptionsTree;
+  protected JTree myOptionsTree;
   private final ArrayList<BooleanOptionKey> myKeys = new ArrayList<BooleanOptionKey>();
   protected final JPanel myPanel = new JPanel(new GridBagLayout());
 
@@ -420,7 +420,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return renamed == null ? defaultTitle : renamed;
   }
 
-  private static class MyTreeCellRenderer implements TreeCellRenderer {
+  protected static class MyTreeCellRenderer implements TreeCellRenderer {
     private final JLabel myLabel;
     private final JCheckBox myCheckBox;
 
