@@ -47,7 +47,7 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
     DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
     FrameDiffTool.DiffContext context = e.getData(DiffDataKeys.DIFF_CONTEXT);
 
-    if (DiffUtil.getUserData(request, context, DiffUserDataKeys.GO_TO_SOURCE_DISABLE) != null) {
+    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, request, context)) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
     }

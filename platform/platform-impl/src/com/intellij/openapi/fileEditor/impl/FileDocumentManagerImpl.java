@@ -679,7 +679,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           String title1 = UIBundle.message("file.cache.conflict.diff.content.file.system.content");
           String title2 = UIBundle.message("file.cache.conflict.diff.content.memory.content");
           DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
-          request.putUserData(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, new Object());
+          request.putUserData(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, true);
           DialogBuilder diffBuilder = new DialogBuilder(project);
           DiffRequestPanel diffPanel = DiffManager.getInstance().createRequestPanel(project, diffBuilder, diffBuilder.getWindow());
           diffPanel.setRequest(request);

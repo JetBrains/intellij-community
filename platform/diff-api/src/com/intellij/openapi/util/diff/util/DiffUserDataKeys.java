@@ -46,7 +46,7 @@ public interface DiffUserDataKeys {
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
   Key<ThreeSide> PREFERRED_FOCUS_THREESIDE = Key.create("Diff.PreferredFocusThreeSide");
 
-  Key<Object> DO_NOT_IGNORE_WHITESPACES = Key.create("Diff.DoNotIgnoreWhitespaces");
+  Key<Boolean> DO_NOT_IGNORE_WHITESPACES = Key.create("Diff.DoNotIgnoreWhitespaces");
   Key<String> DIALOG_GROUP_KEY = Key.create("Diff.DialogGroupKey");
 
   Key<String> PLACE = Key.create("Diff.Place");
@@ -59,6 +59,6 @@ public interface DiffUserDataKeys {
 
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
-  Key<Object> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");
-  Key<Object> FORCE_READ_ONLY = Key.create("Diff.ForceReadOnly");
+  Key<Boolean> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");
+  Key<Boolean> FORCE_READ_ONLY = Key.create("Diff.ForceReadOnly");
 }

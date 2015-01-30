@@ -38,10 +38,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.api.DiffTool;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
@@ -758,6 +755,15 @@ public class DiffUtil {
   //
   // UserData
   //
+
+  public static boolean isUserDataFlagSet(@NotNull Key<Boolean> key, UserDataHolder... holders) {
+    for (UserDataHolder holder : holders) {
+      if (holder == null) continue;
+      Boolean data = holder.getUserData(key);
+      if (data != null) return data;
+    }
+    return false;
+  }
 
   public static <T> T getUserData(@Nullable DiffRequest request, @Nullable FrameDiffTool.DiffContext context, @NotNull Key<T> key) {
     if (request != null) {

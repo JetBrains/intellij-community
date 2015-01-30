@@ -128,7 +128,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     if (settings == null) {
       settings = TextDiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
       context.putUserData(TextDiffSettings.KEY, settings);
-      if (context.getUserData(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES) != null) {
+      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, context)) {
         settings.setIgnorePolicy(IgnorePolicy.DEFAULT);
       }
     }
@@ -144,7 +144,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     int contentCount = myRequest.getContents().length;
     boolean[] result = new boolean[contentCount];
 
-    if (DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.FORCE_READ_ONLY) != null) {
+    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.FORCE_READ_ONLY, myRequest, myContext)) {
       Arrays.fill(result, true);
       return result;
     }

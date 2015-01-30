@@ -31,7 +31,7 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
     myRequests = requests;
     myIndex = index;
 
-    putContextUserData(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, new Object());
+    putContextUserData(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, true);
   }
 
   //
