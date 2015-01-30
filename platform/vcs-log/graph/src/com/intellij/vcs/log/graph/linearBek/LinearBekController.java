@@ -32,7 +32,9 @@ import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearBekGraph myCompiledGraph;
@@ -77,7 +79,7 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (graphElement instanceof GraphEdge) {
           GraphEdge edge = (GraphEdge)graphElement;
           if (edge.getType() == GraphEdgeType.DOTTED){
-            return LinearGraphUtils.createCursorAnswer(/*handCursor =*/ true);
+            return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, ContainerUtil.set(edge.getUpNodeIndex(), edge.getDownNodeIndex()));
           }
         }
       }

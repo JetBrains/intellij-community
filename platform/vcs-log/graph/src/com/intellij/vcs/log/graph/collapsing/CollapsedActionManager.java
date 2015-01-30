@@ -166,15 +166,6 @@ class CollapsedActionManager {
     }
   }
 
-  private static LinearGraphAnswer createSelectedAnswer(@NotNull LinearGraph linearGraph, Collection<Integer> selectedNodeIndexes) {
-    Set<Integer> selectedId = ContainerUtil.newHashSet();
-    for (Integer nodeIndex : selectedNodeIndexes) {
-      if (nodeIndex == null) continue;
-      selectedId.add(linearGraph.getNodeId(nodeIndex));
-    }
-    return new LinearGraphAnswer(null, getCursor(true), null, selectedId);
-  }
-
   private final static ActionCase CLEAR_HOVER = new ActionCase() {
     @Nullable
     @Override
@@ -217,7 +208,7 @@ class CollapsedActionManager {
         GraphFragment fragment = compiledLinearFragmentGenerator.getPartLongFragment(affectedGraphElement);
         if (fragment == null) return null;
         Set<Integer> middleCompiledNodes = compiledFragmentGenerator.getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex, false);
-        return createSelectedAnswer(context.getCompiledGraph(), middleCompiledNodes);
+        return LinearGraphUtils.createSelectedAnswer(context.getCompiledGraph(), middleCompiledNodes);
       }
 
       GraphFragment fragment = compiledLinearFragmentGenerator.getLongFragment(affectedGraphElement);
@@ -321,7 +312,7 @@ class CollapsedActionManager {
         int downNodeIndex = context.convertToDelegateNodeIndex(assertInt(dottedEdge.getDownNodeIndex()));
 
         if (context.getActionType() == GraphAction.Type.MOUSE_OVER) {
-          return createSelectedAnswer(context.getDelegatedGraph(), ContainerUtil.set(upNodeIndex, downNodeIndex));
+          return LinearGraphUtils.createSelectedAnswer(context.getDelegatedGraph(), ContainerUtil.set(upNodeIndex, downNodeIndex));
         }
 
         Set<Integer> middleNodes = context.myDelegatedFragmentGenerators.fragmentGenerator.getMiddleNodes(upNodeIndex, downNodeIndex, true);
