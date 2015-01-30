@@ -1130,11 +1130,11 @@ public class InferenceSession {
       final PsiType pType = signature.getParameterTypes()[0];
 
       PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
-      // 15.28.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
+      // 15.13.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
       // the type to search is the result of capture conversion (5.1.10) applied to T; 
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
-      if (PsiUtil.isRawSubstitutor(containingClass, qualifierResolveResult.getSubstitutor())) {
-        final PsiClassType.ClassResolveResult pResult = PsiUtil.resolveGenericsClassInType(pType);
+      if (PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
+        final PsiClassType.ClassResolveResult pResult = PsiUtil.resolveGenericsClassInType(PsiUtil.captureToplevelWildcards(pType, myContext));
         final PsiClass pClass = pResult.getElement();
         final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil
           .getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;
@@ -1412,8 +1412,7 @@ public class InferenceSession {
   }
 
   public PsiType substituteWithInferenceVariables(PsiType type) {
-    final PsiType substituted = myInferenceSubstitution.substitute(type);
-    return isProperType(substituted) ? type : substituted;
+    return myInferenceSubstitution.substitute(type);
   }
 
   public InferenceSession findNestedCallSession(PsiExpression arg) {
