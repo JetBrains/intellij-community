@@ -16,8 +16,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
-class VcsLogUserFilterImpl implements VcsLogUserFilter {
+public class VcsLogUserFilterImpl implements VcsLogUserFilter {
 
   @NotNull static final String ME = "me";
 
