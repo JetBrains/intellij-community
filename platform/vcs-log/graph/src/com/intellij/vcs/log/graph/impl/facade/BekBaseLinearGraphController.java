@@ -48,7 +48,7 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
 
   @NotNull
   @Override
-  protected LinearGraphAnswer performDelegateUpdate(@NotNull LinearGraphAnswer delegateAnswer) {
+  protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
     throw new IllegalStateException();
   }
 
@@ -65,7 +65,7 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
 
   @Nullable
   @Override
-  protected GraphElement convert(@NotNull GraphElement graphElement) {
+  protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
     if (graphElement instanceof GraphEdge) {
       Integer upIndex = ((GraphEdge)graphElement).getUpNodeIndex();
       Integer downIndex = ((GraphEdge)graphElement).getDownNodeIndex();

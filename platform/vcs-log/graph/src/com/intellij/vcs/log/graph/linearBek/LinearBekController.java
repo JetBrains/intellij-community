@@ -55,7 +55,7 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   @NotNull
   @Override
-  protected LinearGraphAnswer performDelegateUpdate(@NotNull LinearGraphAnswer delegateAnswer) {
+  protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
     return delegateAnswer;
   }
 

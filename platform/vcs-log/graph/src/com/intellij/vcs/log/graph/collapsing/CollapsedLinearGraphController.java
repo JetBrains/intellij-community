@@ -44,7 +44,7 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
 
   @NotNull
   @Override
-  protected LinearGraphAnswer performDelegateUpdate(@NotNull LinearGraphAnswer delegateAnswer) {
+  protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
     if (delegateAnswer.getGraphChanges() != null) {
       LinearGraph delegateGraph = getDelegateLinearGraphController().getCompiledGraph();
       myCollapsedGraph = CollapsedGraph.updateInstance(myCollapsedGraph, delegateGraph);
@@ -108,7 +108,7 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
 
   @Nullable
   @Override
-  protected GraphElement convert(@NotNull GraphElement graphElement) {
+  protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
     if (graphElement instanceof GraphEdge) {
       Integer upIndex = ((GraphEdge)graphElement).getUpNodeIndex();
       Integer downIndex = ((GraphEdge)graphElement).getDownNodeIndex();
