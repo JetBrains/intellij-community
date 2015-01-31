@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -53,6 +52,25 @@ import java.util.Map;
  * Supports the int <-> Hash persistent mapping.
  */
 public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
+
+  public static final VcsLogHashMap EMPTY = new VcsLogHashMap() {
+    @Override
+    public int getCommitIndex(@NotNull Hash hash) {
+      return 0;
+    }
+
+    @NotNull
+    @Override
+    public Hash getHash(int commitIndex) {
+      return HashImpl.build("");
+    }
+
+    @Nullable
+    @Override
+    public Hash findHashByString(@NotNull String string) {
+      return null;
+    }
+  };
 
   private static final File LOG_CACHE_APP_DIR = new File(new File(PathManager.getSystemPath(), "vcs-log"), "hashes");
   private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
@@ -155,28 +173,6 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
       LOG.error(e);
       return null;
     }
-  }
-
-  @NotNull
-  public NotNullFunction<Hash, Integer> asIndexGetter() {
-    return new NotNullFunction<Hash, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Hash hash) {
-        return getCommitIndex(hash);
-      }
-    };
-  }
-
-  @NotNull
-  public NotNullFunction<Integer, Hash> asHashGetter() {
-    return new NotNullFunction<Integer, Hash>() {
-      @NotNull
-      @Override
-      public Hash fun(Integer commitIndex) {
-        return getHash(commitIndex);
-      }
-    };
   }
 
   public void flush() {

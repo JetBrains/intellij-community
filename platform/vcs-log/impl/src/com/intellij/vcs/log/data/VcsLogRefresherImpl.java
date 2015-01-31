@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -171,8 +172,14 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @NotNull
   private GraphCommitImpl<Integer> compactCommit(@NotNull TimedVcsCommit commit) {
-    return new GraphCommitImpl<Integer>(myHashMap.getCommitIndex(commit.getId()),
-                                        ContainerUtil.map(commit.getParents(), myHashMap.asIndexGetter()), commit.getTimestamp());
+    List<Integer> parents = ContainerUtil.map(commit.getParents(), new NotNullFunction<Hash, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Hash hash) {
+        return myHashMap.getCommitIndex(hash);
+      }
+    });
+    return new GraphCommitImpl<Integer>(myHashMap.getCommitIndex(commit.getId()), parents, commit.getTimestamp());
   }
 
   private void storeUsersAndDetails(@NotNull Collection<? extends VcsCommitMetadata> metadatas) {
