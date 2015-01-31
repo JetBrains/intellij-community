@@ -1448,8 +1448,8 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
     }
 
-    if (qualifier != null && expr.getParent() instanceof PsiMethodReferenceExpression && aClass.isInterface()) {
-      //15.13
+    if (qualifier != null && aClass.isInterface() && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+      //15.12.1 for method invocation expressions; 15.13 for method references
       //If TypeName denotes an interface, I, then let T be the type declaration immediately enclosing the method reference expression.
       //It is a compile-time error if I is not a direct superinterface of T,
       //or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
