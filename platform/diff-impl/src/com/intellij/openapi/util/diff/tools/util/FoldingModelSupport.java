@@ -31,9 +31,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.IntPair;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
-import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.fragments.MergeLineFragment;
-import com.intellij.openapi.util.diff.util.*;
+import com.intellij.openapi.util.diff.util.DiffDividerDrawUtil;
+import com.intellij.openapi.util.diff.util.DiffDrawUtil;
+import com.intellij.openapi.util.diff.util.Side;
+import com.intellij.openapi.util.diff.util.ThreeSide;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
@@ -116,10 +118,12 @@ public class FoldingModelSupport {
       }
     }
 
-    public void install(@Nullable LineFragments lineFragments, @NotNull UserDataHolder context, boolean defaultExpanded, final int range) {
-      if (lineFragments == null) return;
+    public void install(@Nullable final List<LineFragment> fragments,
+                        @NotNull UserDataHolder context,
+                        boolean defaultExpanded,
+                        final int range) {
+      if (fragments == null) return;
       if (range == -1) return;
-      final List<? extends LineFragment> fragments = lineFragments.getFragments();
       final MyExpandSuggester suggester = new MyExpandSuggester(context.getUserData(CACHE_KEY), defaultExpanded);
 
       invokeBatchOperation(new Runnable() {

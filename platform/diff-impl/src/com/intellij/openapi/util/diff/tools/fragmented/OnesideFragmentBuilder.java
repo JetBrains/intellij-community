@@ -19,9 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.IntPair;
 import com.intellij.openapi.util.diff.fragments.DiffFragment;
-import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
-import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.util.Side;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +28,7 @@ import java.util.List;
 
 // This class works incorrectly with non-fair differences (when chunk of matched lines has different length in left/right files)
 class OnesideFragmentBuilder {
-  @NotNull private final LineFragments myFragments;
+  @NotNull private final List<LineFragment> myFragments;
   @NotNull private final Document myDocument1;
   @NotNull private final Document myDocument2;
   private final boolean myInlineFragments;
@@ -42,7 +40,7 @@ class OnesideFragmentBuilder {
   @NotNull private final LineNumberConvertor.Builder myConvertor = new LineNumberConvertor.Builder();
   @NotNull private final List<IntPair> myChangedLines = new ArrayList<IntPair>();
 
-  public OnesideFragmentBuilder(@NotNull LineFragments fragments,
+  public OnesideFragmentBuilder(@NotNull List<LineFragment> fragments,
                                 @NotNull Document document1,
                                 @NotNull Document document2,
                                 boolean inlineFragments,
@@ -61,13 +59,13 @@ class OnesideFragmentBuilder {
   private int totalLines = 0;
 
   public void exec() {
-    if (myFragments.getFragments().isEmpty()) {
+    if (myFragments.isEmpty()) {
       myEqual = true;
       appendTextMaster(0, 0, getLineCount(myDocument1) - 1, getLineCount(myDocument2) - 1);
       return;
     }
 
-    for (LineFragment fragment : myFragments.getFragments()) {
+    for (LineFragment fragment : myFragments) {
       processEquals(fragment.getStartLine1() - 1, fragment.getStartLine2() - 1);
       processChanged(fragment);
     }
@@ -118,10 +116,7 @@ class OnesideFragmentBuilder {
 
     linesAfter = totalLines;
 
-    List<DiffFragment> innerFragments = null;
-    if (myInlineFragments && fragment instanceof FineLineFragment) {
-      innerFragments = ((FineLineFragment)fragment).getFineFragments();
-    }
+    List<DiffFragment> innerFragments = myInlineFragments ? fragment.getInnerFragments() : null;
     myBlocks.add(new ChangedBlock(blockStartOffset1, blockEndOffset1,
                                   blockStartOffset2, blockEndOffset2,
                                   linesBefore, linesAfter, innerFragments));

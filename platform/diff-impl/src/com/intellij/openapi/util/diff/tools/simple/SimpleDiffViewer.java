@@ -43,14 +43,12 @@ import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragmentImpl;
-import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.*;
 import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.SimpleFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.twoside.TwosideTextDiffViewer;
-import org.intellij.lang.annotations.CalledInAwt;
 import com.intellij.openapi.util.diff.util.DiffDividerDrawUtil;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.DiffUtil;
@@ -58,6 +56,7 @@ import com.intellij.openapi.util.diff.util.DiffUtil.DocumentData;
 import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
+import org.intellij.lang.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,9 +177,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         CompareData data = ApplicationManager.getApplication().runReadAction(new Computable<CompareData>() {
           @Override
           public CompareData compute() {
-            LineFragmentImpl fragment = new LineFragmentImpl(0, 0, 0, getLineCount(document),
-                                                             0, 0, 0, document.getTextLength());
-            LineFragments fragments = LineFragments.create(Collections.singletonList(fragment));
+            List<LineFragment> fragments = Collections.<LineFragment>singletonList(new LineFragmentImpl(0, 0, 0, getLineCount(document),
+                                                                                                        0, 0, 0, document.getTextLength()));
             return new CompareData(fragments, false, 0, document.getModificationStamp());
           }
         });
@@ -195,9 +193,8 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         CompareData data = ApplicationManager.getApplication().runReadAction(new Computable<CompareData>() {
           @Override
           public CompareData compute() {
-            LineFragmentImpl fragment = new LineFragmentImpl(0, getLineCount(document), 0, 0,
-                                                             0, document.getTextLength(), 0, 0);
-            LineFragments fragments = LineFragments.create(Collections.singletonList(fragment));
+            List<LineFragment> fragments = Collections.<LineFragment>singletonList(new LineFragmentImpl(0, getLineCount(document), 0, 0,
+                                                                                                        0, document.getTextLength(), 0, 0));
             return new CompareData(fragments, false, document.getModificationStamp(), 0);
           }
         });
@@ -218,12 +215,12 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         }
       });
 
-      LineFragments lineFragments = null;
+      List<LineFragment> lineFragments = null;
       if (getHighlightPolicy().isShouldCompare()) {
         lineFragments = DiffUtil.compareWithCache(myRequest, data, getDiffConfig(), indicator);
       }
 
-      boolean isEqualContents = (lineFragments == null || lineFragments.getFragments().isEmpty()) &&
+      boolean isEqualContents = (lineFragments == null || lineFragments.isEmpty()) &&
                                 StringUtil.equals(document1.getCharsSequence(), document2.getCharsSequence());
 
       return apply(new CompareData(lineFragments, isEqualContents, data.getStamp1(), data.getStamp2()));
@@ -282,7 +279,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (data.isEqualContent()) myPanel.addContentsEqualNotification();
 
         if (data.getFragments() != null) {
-          for (LineFragment fragment : data.getFragments().getFragments()) {
+          for (LineFragment fragment : data.getFragments()) {
             myDiffChanges.add(new SimpleDiffChange(fragment, myEditor1, myEditor2, getHighlightPolicy().isFineFragments()));
           }
         }
@@ -792,12 +789,12 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private static class CompareData {
-    @Nullable private final LineFragments myFragments;
+    @Nullable private final List<LineFragment> myFragments;
     private final boolean myEqualContent;
     private final long myStamp1;
     private final long myStamp2;
 
-    public CompareData(@Nullable LineFragments fragments, boolean equalContent, long stamp1, long stamp2) {
+    public CompareData(@Nullable List<LineFragment> fragments, boolean equalContent, long stamp1, long stamp2) {
       myFragments = fragments;
       myEqualContent = equalContent;
       myStamp1 = stamp1;
@@ -805,7 +802,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
 
     @Nullable
-    public LineFragments getFragments() {
+    public List<LineFragment> getFragments() {
       return myFragments;
     }
 

@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.diff.fragments.DiffFragment;
-import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -80,7 +79,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
         CharSequence sequence1 = text1.getCharsSequence();
         CharSequence sequence2 = text2.getCharsSequence();
 
-        List<FineLineFragment> fragments = ComparisonUtil.compareFineLines(sequence1, sequence2, policy, INDICATOR);
+        List<LineFragment> fragments = ComparisonUtil.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
         debugData.set(fragments);
 
         checkResultLine(text1, text2, fragments, policy, true);
@@ -97,10 +96,10 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
         CharSequence sequence1 = text1.getCharsSequence();
         CharSequence sequence2 = text2.getCharsSequence();
 
-        List<FineLineFragment> fragments = ComparisonUtil.compareFineLines(sequence1, sequence2, policy, INDICATOR);
+        List<LineFragment> fragments = ComparisonUtil.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
         debugData.set(fragments);
 
-        List<? extends FineLineFragment> squashedFragments = ComparisonUtil.squashFine(fragments);
+        List<LineFragment> squashedFragments = ComparisonUtil.squash(fragments);
         debugData.set(new Object[]{fragments, squashedFragments});
 
         checkResultLine(text1, text2, squashedFragments, policy, false);
@@ -117,10 +116,10 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
         CharSequence sequence1 = text1.getCharsSequence();
         CharSequence sequence2 = text2.getCharsSequence();
 
-        List<FineLineFragment> fragments = ComparisonUtil.compareFineLines(sequence1, sequence2, policy, INDICATOR);
+        List<LineFragment> fragments = ComparisonUtil.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
         debugData.set(fragments);
 
-        List<? extends FineLineFragment> processed = ComparisonUtil.processBlocksFine(fragments, sequence1, sequence2, policy, true, true);
+        List<LineFragment> processed = ComparisonUtil.processBlocks(fragments, sequence1, sequence2, policy, true, true);
         debugData.set(new Object[]{fragments, processed});
 
         checkResultLine(text1, text2, processed, policy, false);
@@ -181,17 +180,17 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
   }
 
   private static void checkResultLine(@NotNull Document text1, @NotNull Document text2,
-                                      @NotNull List<? extends FineLineFragment> fragments,
+                                      @NotNull List<LineFragment> fragments,
                                       @NotNull ComparisonPolicy policy,
                                       boolean allowNonSquashed) {
     checkLineConsistency(text1, text2, fragments, allowNonSquashed);
 
-    for (FineLineFragment fragment : fragments) {
-      if (fragment.getFineFragments() != null) {
+    for (LineFragment fragment : fragments) {
+      if (fragment.getInnerFragments() != null) {
         CharSequence sequence1 = subsequence(text1, fragment.getStartOffset1(), fragment.getEndOffset1());
         CharSequence sequence2 = subsequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
 
-        checkResultWord(sequence1, sequence2, fragment.getFineFragments(), policy);
+        checkResultWord(sequence1, sequence2, fragment.getInnerFragments(), policy);
       }
     }
 
@@ -215,12 +214,12 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
   }
 
   private static void checkLineConsistency(@NotNull Document text1, @NotNull Document text2,
-                                           @NotNull List<? extends FineLineFragment> fragments,
+                                           @NotNull List<LineFragment> fragments,
                                            boolean allowNonSquashed) {
     int last1 = -1;
     int last2 = -1;
 
-    for (FineLineFragment fragment : fragments) {
+    for (LineFragment fragment : fragments) {
       int startOffset1 = fragment.getStartOffset1();
       int startOffset2 = fragment.getStartOffset2();
       int endOffset1 = fragment.getEndOffset1();

@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.diff.fragments.DiffFragment;
-import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.UsefulTestCase;
@@ -70,12 +69,12 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
                                  @Nullable Couple<BitSet> matchings,
                                  @Nullable List<Change> expected,
                                  @NotNull ComparisonPolicy policy) {
-    List<FineLineFragment> rawFragments = ComparisonUtil.compareFineLines(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR);
-    List<? extends FineLineFragment> fragments = ComparisonUtil.squashFine(rawFragments);
+    List<LineFragment> rawFragments = ComparisonUtil.compareLinesInner(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR);
+    List<LineFragment> fragments = ComparisonUtil.squash(rawFragments);
 
     checkConsistencyWord(fragments, before, after, policy);
 
-    List<DiffFragment> diffFragments = fragments.get(0).getFineFragments();
+    List<DiffFragment> diffFragments = fragments.get(0).getInnerFragments();
     assert diffFragments != null;
 
     if (matchings != null) checkDiffMatching(diffFragments, before, after, matchings, policy);
@@ -98,19 +97,19 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
                                      @Nullable Couple<BitSet> matchings,
                                      @Nullable List<Change> expected,
                                      @NotNull ComparisonPolicy policy) {
-    List<FineLineFragment> fragments = ComparisonUtil.compareFineLines(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR);
+    List<LineFragment> fragments = ComparisonUtil.compareLinesInner(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR);
     checkConsistency(fragments, before, after, policy);
     if (matchings != null) checkLineMatching(fragments, before, after, matchings, policy);
     if (expected != null) checkLineChanges(fragments, before, after, expected, policy);
   }
 
-  private static void checkConsistencyWord(@NotNull List<? extends FineLineFragment> fragments,
+  private static void checkConsistencyWord(@NotNull List<LineFragment> fragments,
                                            @NotNull Document before,
                                            @NotNull Document after,
                                            @NotNull ComparisonPolicy policy) {
     assertTrue(fragments.size() == 1);
-    FineLineFragment fragment = fragments.get(0);
-    List<DiffFragment> diffFragments = fragment.getFineFragments();
+    LineFragment fragment = fragments.get(0);
+    List<DiffFragment> diffFragments = fragment.getInnerFragments();
     assertNotNull(diffFragments); // It could be null if there are no common words. We do not test such cases here.
 
     assertTrue(fragment.getStartOffset1() == 0 &&
@@ -142,13 +141,10 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
         assertTrue(lineFragment.getEndLine2() <= getLineCount(after));
 
         checkLineOffsets(lineFragment, before, after, policy);
+
+        if (lineFragment.getInnerFragments() != null) checkConsistency(lineFragment.getInnerFragments(), before, after, policy);
       } else {
         assertTrue(fragment.getStartOffset1() != fragment.getEndOffset1() || fragment.getStartOffset2() != fragment.getEndOffset2());
-      }
-
-      if (fragment instanceof FineLineFragment) {
-        List<DiffFragment> fineFragments = ((FineLineFragment)fragment).getFineFragments();
-        if (fineFragments != null) checkConsistency(fineFragments, before, after, policy);
       }
     }
   }

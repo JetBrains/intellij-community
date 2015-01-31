@@ -43,7 +43,7 @@ import com.intellij.openapi.util.diff.comparison.DiffTooBigException;
 import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.IntPair;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.fragments.LineFragments;
+import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
@@ -54,9 +54,12 @@ import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.IgnorePolicy;
 import com.intellij.openapi.util.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.openapi.util.diff.tools.util.twoside.TwosideTextDiffViewer;
-import com.intellij.openapi.util.diff.util.*;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.openapi.util.diff.util.DiffUserDataKeysEx;
+import com.intellij.openapi.util.diff.util.DiffUtil;
 import com.intellij.openapi.util.diff.util.DiffUtil.DocumentData;
+import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
@@ -258,7 +261,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
         }
       });
 
-      final LineFragments fragments = DiffUtil.compareWithCache(myRequest, documentData, getDiffConfig(), indicator);
+      final List<LineFragment> fragments = DiffUtil.compareWithCache(myRequest, documentData, getDiffConfig(), indicator);
 
       indicator.checkCanceled();
       TwosideDocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<TwosideDocumentData>() {

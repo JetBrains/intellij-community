@@ -24,9 +24,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.diff.fragments.DiffFragment;
-import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
-import com.intellij.openapi.util.diff.util.*;
+import com.intellij.openapi.util.diff.util.DiffDrawUtil;
+import com.intellij.openapi.util.diff.util.DiffUtil;
+import com.intellij.openapi.util.diff.util.Side;
+import com.intellij.openapi.util.diff.util.TextDiffType;
 import org.intellij.lang.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +38,7 @@ import java.util.List;
 
 class SimpleDiffChange {
   @NotNull private final LineFragment myFragment;
-  @Nullable private final List<DiffFragment> myFineFragments;
+  @Nullable private final List<DiffFragment> myInnerFragments;
 
   @Nullable private final EditorEx myEditor1;
   @Nullable private final EditorEx myEditor2;
@@ -54,7 +56,7 @@ class SimpleDiffChange {
                           @Nullable EditorEx editor2,
                           boolean inlineHighlight) {
     myFragment = fragment;
-    myFineFragments = inlineHighlight && fragment instanceof FineLineFragment ? ((FineLineFragment)fragment).getFineFragments() : null;
+    myInnerFragments = inlineHighlight ? fragment.getInnerFragments() : null;
 
     myEditor1 = editor1;
     myEditor2 = editor2;
@@ -65,7 +67,7 @@ class SimpleDiffChange {
   public void installHighlighter() {
     assert myHighlighters.isEmpty();
 
-    if (myFineFragments != null) {
+    if (myInnerFragments != null) {
       doInstallHighlighterWithInner();
     }
     else {
@@ -92,12 +94,12 @@ class SimpleDiffChange {
   }
 
   private void doInstallHighlighterWithInner() {
-    assert myFineFragments != null;
+    assert myInnerFragments != null;
 
     createHighlighter(Side.LEFT, true);
     createHighlighter(Side.RIGHT, true);
 
-    for (DiffFragment fragment : myFineFragments) {
+    for (DiffFragment fragment : myInnerFragments) {
       createInlineHighlighter(fragment, Side.LEFT);
       createInlineHighlighter(fragment, Side.RIGHT);
     }

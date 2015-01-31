@@ -15,6 +15,10 @@
  */
 package com.intellij.openapi.util.diff.fragments;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
 public interface LineFragment extends DiffFragment {
   int getStartLine1();
 
@@ -23,4 +27,10 @@ public interface LineFragment extends DiffFragment {
   int getStartLine2();
 
   int getEndLine2();
+
+  /*
+   * null - no inner similarities was found
+   */
+  @Nullable
+  List<DiffFragment> getInnerFragments();
 }

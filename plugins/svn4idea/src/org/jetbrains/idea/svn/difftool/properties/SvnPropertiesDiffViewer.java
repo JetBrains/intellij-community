@@ -162,7 +162,7 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
 
     try {
       if (words1 < MAX_ITEM_COUNT && words2 < MAX_ITEM_COUNT) {
-        return ComparisonUtil.squashFine(ComparisonUtil.compareFineLines(text1, text2, ComparisonPolicy.DEFAULT, INSTANCE));
+        return ComparisonUtil.squash(ComparisonUtil.compareLinesInner(text1, text2, ComparisonPolicy.DEFAULT, INSTANCE));
       }
       if (lines1 < MAX_ITEM_COUNT && lines2 < MAX_ITEM_COUNT) {
         return ComparisonUtil.squash(ComparisonUtil.compareLines(text1, text2, ComparisonPolicy.DEFAULT, INSTANCE));

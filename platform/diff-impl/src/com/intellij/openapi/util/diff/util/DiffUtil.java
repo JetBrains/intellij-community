@@ -49,12 +49,11 @@ import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.contents.EmptyContent;
 import com.intellij.openapi.util.diff.fragments.DiffFragment;
-import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
-import com.intellij.openapi.util.diff.fragments.LineFragments;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.LineFragmentCache;
+import com.intellij.openapi.util.diff.tools.util.LineFragmentCache.PolicyData;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.base.IgnorePolicy;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -425,83 +424,70 @@ public class DiffUtil {
   //
 
   @NotNull
-  public static LineFragments compareWithCache(@NotNull DiffRequest request,
-                                               @NotNull DocumentData data,
-                                               @NotNull DiffConfig config,
-                                               @NotNull ProgressIndicator indicator) {
+  public static List<LineFragment> compareWithCache(@NotNull DiffRequest request,
+                                                    @NotNull DocumentData data,
+                                                    @NotNull DiffConfig config,
+                                                    @NotNull ProgressIndicator indicator) {
     return compareWithCache(request, data.getText1(), data.getText2(), data.getStamp1(), data.getStamp2(), config, indicator);
   }
 
   @NotNull
-  public static LineFragments compareWithCache(@NotNull DiffRequest request,
-                                               @NotNull CharSequence text1,
-                                               @NotNull CharSequence text2,
-                                               long stamp1,
-                                               long stamp2,
-                                               @NotNull DiffConfig config,
-                                               @NotNull ProgressIndicator indicator) {
-    // TODO: check instanceOf LineFragments, keep some additional data inside ?
-    LineFragments lineFragments = doCompareWithCache(request, text1, text2, stamp1, stamp2, config, indicator);
+  public static List<LineFragment> compareWithCache(@NotNull DiffRequest request,
+                                                    @NotNull CharSequence text1,
+                                                    @NotNull CharSequence text2,
+                                                    long stamp1,
+                                                    long stamp2,
+                                                    @NotNull DiffConfig config,
+                                                    @NotNull ProgressIndicator indicator) {
+    List<LineFragment> fragments = doCompareWithCache(request, text1, text2, stamp1, stamp2, config, indicator);
 
     indicator.checkCanceled();
-    if (lineFragments.isFine()) {
-      List<? extends FineLineFragment> fragments = lineFragments.getFineFragments();
-      fragments = ComparisonUtil.processBlocksFine(fragments, text1, text2, config.policy, config.squashFragments, config.trimFragments);
-      return LineFragments.createFine(fragments);
-    }
-    else {
-      List<? extends LineFragment> fragments = lineFragments.getFragments();
-      fragments = ComparisonUtil.processBlocks(fragments, text1, text2, config.policy, config.squashFragments, config.trimFragments);
-      return LineFragments.create(fragments);
-    }
+    return ComparisonUtil.processBlocks(fragments, text1, text2, config.policy, config.squashFragments, config.trimFragments);
   }
 
   @NotNull
-  private static LineFragments doCompareWithCache(@NotNull DiffRequest request,
-                                                  @NotNull CharSequence text1,
-                                                  @NotNull CharSequence text2,
-                                                  long stamp1,
-                                                  long stamp2,
-                                                  @NotNull DiffConfig config,
-                                                  @NotNull ProgressIndicator indicator) {
+  private static List<LineFragment> doCompareWithCache(@NotNull DiffRequest request,
+                                                       @NotNull CharSequence text1,
+                                                       @NotNull CharSequence text2,
+                                                       long stamp1,
+                                                       long stamp2,
+                                                       @NotNull DiffConfig config,
+                                                       @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
-    LineFragments lineFragments = getFromCache(request, config, stamp1, stamp2);
+    PolicyData cachedData = getFromCache(request, config, stamp1, stamp2);
 
-    LineFragments newLineFragments;
-    if (lineFragments != null) {
-      if (lineFragments.getFragments().isEmpty()) return lineFragments;
-      if (!config.fineFragments) return lineFragments;
-      if (lineFragments.isFine()) return lineFragments;
-      List<FineLineFragment> result = ComparisonUtil.compareFineLines(text1, text2, lineFragments.getFragments(), config.policy, indicator);
-      newLineFragments = LineFragments.createFine(result);
+    List<LineFragment> newFragments;
+    if (cachedData != null) {
+      if (cachedData.getFragments().isEmpty()) return cachedData.getFragments();
+      if (!config.innerFragments) return cachedData.getFragments();
+      if (cachedData.isInnerFragments()) return cachedData.getFragments();
+      newFragments = ComparisonUtil.compareLinesInner(text1, text2, cachedData.getFragments(), config.policy, indicator);
     }
     else {
-      if (config.fineFragments) {
-        List<FineLineFragment> result = ComparisonUtil.compareFineLines(text1, text2, config.policy, indicator);
-        newLineFragments = LineFragments.createFine(result);
+      if (config.innerFragments) {
+        newFragments = ComparisonUtil.compareLinesInner(text1, text2, config.policy, indicator);
       }
       else {
-        List<LineFragment> result = ComparisonUtil.compareLines(text1, text2, config.policy, indicator);
-        newLineFragments = LineFragments.create(result);
+        newFragments = ComparisonUtil.compareLines(text1, text2, config.policy, indicator);
       }
     }
 
     indicator.checkCanceled();
-    putToCache(request, config, stamp1, stamp2, newLineFragments);
-    return newLineFragments;
+    putToCache(request, config, stamp1, stamp2, newFragments, config.innerFragments);
+    return newFragments;
   }
 
   @Nullable
-  public static LineFragments getFromCache(@NotNull DiffRequest request, @NotNull DiffConfig config, long stamp1, long stamp2) {
+  public static PolicyData getFromCache(@NotNull DiffRequest request, @NotNull DiffConfig config, long stamp1, long stamp2) {
     LineFragmentCache cache = request.getUserData(DiffUserDataKeysEx.LINE_FRAGMENT_CACHE);
     if (cache != null && cache.checkStamps(stamp1, stamp2)) {
-      return cache.getFragments(config.policy);
+      return cache.getData(config.policy);
     }
     return null;
   }
 
   public static void putToCache(@NotNull DiffRequest request, @NotNull DiffConfig config, long stamp1, long stamp2,
-                                @NotNull LineFragments fragments) {
+                                @NotNull List<LineFragment> fragments, boolean isInnerFragments) {
     // We can't rely on monotonicity on modificationStamps, so we can't check if we actually compared freshest versions of documents
     // Possible data races also could make cache outdated.
     // But these cases shouldn't be often and won't break anything.
@@ -515,7 +501,7 @@ public class DiffUtil {
       cache = new LineFragmentCache(oldCache);
     }
 
-    cache.putFragments(config.policy, fragments);
+    cache.putData(config.policy, fragments, isInnerFragments);
     request.putUserData(DiffUserDataKeysEx.LINE_FRAGMENT_CACHE, cache);
   }
 
@@ -854,13 +840,13 @@ public class DiffUtil {
 
   public static class DiffConfig {
     @NotNull public final ComparisonPolicy policy;
-    public final boolean fineFragments;
+    public final boolean innerFragments;
     public final boolean squashFragments;
     public final boolean trimFragments;
 
-    public DiffConfig(@NotNull ComparisonPolicy policy, boolean fineFragments, boolean squashFragments, boolean trimFragments) {
+    public DiffConfig(@NotNull ComparisonPolicy policy, boolean innerFragments, boolean squashFragments, boolean trimFragments) {
       this.policy = policy;
-      this.fineFragments = fineFragments;
+      this.innerFragments = innerFragments;
       this.squashFragments = squashFragments;
       this.trimFragments = trimFragments;
     }

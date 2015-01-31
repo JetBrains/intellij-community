@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.diff.fragments.DiffFragment;
-import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.diff.util.DiffDrawUtil;
 import com.intellij.openapi.util.diff.util.DiffUtil;
@@ -349,7 +348,7 @@ public class PropertiesTableModel extends ListTableModel<PropertyDiffRecord> {
     editor.getDocument().setText(text);
 
     for (LineFragment fragment : record.getFragments()) {
-      List<DiffFragment> innerFragments = fragment instanceof FineLineFragment ? ((FineLineFragment)fragment).getFineFragments() : null;
+      List<DiffFragment> innerFragments = fragment.getInnerFragments();
 
       int start = side.getStartOffset(fragment);
       int end = side.getEndOffset(fragment);
@@ -358,7 +357,6 @@ public class PropertiesTableModel extends ListTableModel<PropertyDiffRecord> {
       DiffDrawUtil.createHighlighter(editor, start, end, type, innerFragments != null);
 
       if (innerFragments != null) {
-
         for (DiffFragment innerFragment : innerFragments) {
           int innerStart = side.getStartOffset(innerFragment);
           int innerEnd = side.getEndOffset(innerFragment);

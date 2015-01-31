@@ -16,33 +16,39 @@
 package com.intellij.openapi.util.diff.fragments;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class LineFragmentImpl implements LineFragment {
-  protected final int myStartLine1;
-  protected final int myEndLine1;
-  protected final int myStartLine2;
-  protected final int myEndLine2;
+  private final int myStartLine1;
+  private final int myEndLine1;
+  private final int myStartLine2;
+  private final int myEndLine2;
 
-  protected final int myStartOffset1;
-  protected final int myEndOffset1;
-  protected final int myStartOffset2;
-  protected final int myEndOffset2;
+  private final int myStartOffset1;
+  private final int myEndOffset1;
+  private final int myStartOffset2;
+  private final int myEndOffset2;
 
-  public LineFragmentImpl(@NotNull LineFragment fragment) {
-    this(
-      fragment.getStartLine1(),
-      fragment.getEndLine1(),
-      fragment.getStartLine2(),
-      fragment.getEndLine2(),
-      fragment.getStartOffset1(),
-      fragment.getEndOffset1(),
-      fragment.getStartOffset2(),
-      fragment.getEndOffset2()
-    );
-  }
+  @Nullable private final List<DiffFragment> myInnerFragments;
 
   public LineFragmentImpl(int startLine1, int endLine1, int startLine2, int endLine2,
                           int startOffset1, int endOffset1, int startOffset2, int endOffset2) {
+    this(startLine1, endLine1, startLine2, endLine2,
+         startOffset1, endOffset1, startOffset2, endOffset2,
+         null);
+  }
+
+  public LineFragmentImpl(@NotNull LineFragment fragment, @Nullable List<DiffFragment> fragments) {
+    this(fragment.getStartLine1(), fragment.getEndLine1(), fragment.getStartLine2(), fragment.getEndLine2(),
+         fragment.getStartOffset1(), fragment.getEndOffset1(), fragment.getStartOffset2(), fragment.getEndOffset2(),
+         fragments);
+  }
+
+  public LineFragmentImpl(int startLine1, int endLine1, int startLine2, int endLine2,
+                          int startOffset1, int endOffset1, int startOffset2, int endOffset2,
+                          @Nullable List<DiffFragment> innerFragments) {
     myStartLine1 = startLine1;
     myEndLine1 = endLine1;
     myStartLine2 = startLine2;
@@ -51,6 +57,8 @@ public class LineFragmentImpl implements LineFragment {
     myEndOffset1 = endOffset1;
     myStartOffset2 = startOffset2;
     myEndOffset2 = endOffset2;
+
+    myInnerFragments = dropWholeChangedFragments(innerFragments, endOffset1 - startOffset1, endOffset2 - startOffset2);
   }
 
   @Override
@@ -91,5 +99,24 @@ public class LineFragmentImpl implements LineFragment {
   @Override
   public int getEndOffset2() {
     return myEndOffset2;
+  }
+
+  @Nullable
+  public List<DiffFragment> getInnerFragments() {
+    return myInnerFragments;
+  }
+
+  @Nullable
+  private static List<DiffFragment> dropWholeChangedFragments(@Nullable List<DiffFragment> fragments, int length1, int length2) {
+    if (fragments != null && fragments.size() == 1) {
+      DiffFragment diffFragment = fragments.get(0);
+      if (diffFragment.getStartOffset1() == 0 &&
+          diffFragment.getStartOffset2() == 0 &&
+          diffFragment.getEndOffset1() == length1 &&
+          diffFragment.getEndOffset2() == length2) {
+        return null;
+      }
+    }
+    return fragments;
   }
 }

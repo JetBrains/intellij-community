@@ -16,25 +16,26 @@
 package com.intellij.openapi.util.diff.tools.util;
 
 import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
-import com.intellij.openapi.util.diff.fragments.LineFragments;
+import com.intellij.openapi.util.diff.fragments.LineFragment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class LineFragmentCache {
   private final long myModificationStamp1;
   private final long myModificationStamp2;
 
-  @NotNull private final Map<ComparisonPolicy, LineFragments> myFragments;
+  @NotNull private final Map<ComparisonPolicy, PolicyData> myFragments;
 
   public LineFragmentCache(@NotNull LineFragmentCache cache) {
     myModificationStamp1 = cache.myModificationStamp1;
     myModificationStamp2 = cache.myModificationStamp2;
 
-    myFragments = new HashMap<ComparisonPolicy, LineFragments>(3);
-    for (Map.Entry<ComparisonPolicy, LineFragments> entry : cache.myFragments.entrySet()) {
+    myFragments = new HashMap<ComparisonPolicy, PolicyData>(3);
+    for (Map.Entry<ComparisonPolicy, PolicyData> entry : cache.myFragments.entrySet()) {
       myFragments.put(entry.getKey(), entry.getValue());
     }
   }
@@ -43,7 +44,7 @@ public class LineFragmentCache {
                            long modificationStamp2) {
     myModificationStamp1 = modificationStamp1;
     myModificationStamp2 = modificationStamp2;
-    myFragments = new HashMap<ComparisonPolicy, LineFragments>(3);
+    myFragments = new HashMap<ComparisonPolicy, PolicyData>(3);
   }
 
   public long getStamp1() {
@@ -59,11 +60,30 @@ public class LineFragmentCache {
   }
 
   @Nullable
-  public LineFragments getFragments(@NotNull ComparisonPolicy policy) {
+  public PolicyData getData(@NotNull ComparisonPolicy policy) {
     return myFragments.get(policy);
   }
 
-  public void putFragments(@NotNull ComparisonPolicy policy, @NotNull LineFragments fragments) {
-    myFragments.put(policy, fragments);
+  public void putData(@NotNull ComparisonPolicy policy, @NotNull List<LineFragment> fragments, boolean isInnerFragments) {
+    myFragments.put(policy, new PolicyData(fragments, isInnerFragments));
+  }
+
+  public static class PolicyData {
+    @NotNull private final List<LineFragment> myFragments;
+    private final boolean myInnerFragments;
+
+    public PolicyData(@NotNull List<LineFragment> fragments, boolean innerFragments) {
+      myFragments = fragments;
+      myInnerFragments = innerFragments;
+    }
+
+    @NotNull
+    public List<LineFragment> getFragments() {
+      return myFragments;
+    }
+
+    public boolean isInnerFragments() {
+      return myInnerFragments;
+    }
   }
 }

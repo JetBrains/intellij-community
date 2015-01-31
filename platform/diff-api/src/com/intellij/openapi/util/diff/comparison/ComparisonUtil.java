@@ -18,7 +18,10 @@ package com.intellij.openapi.util.diff.comparison;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.diff.comparison.iterables.DiffIterableUtil.Range;
-import com.intellij.openapi.util.diff.fragments.*;
+import com.intellij.openapi.util.diff.fragments.DiffFragment;
+import com.intellij.openapi.util.diff.fragments.DiffFragmentImpl;
+import com.intellij.openapi.util.diff.fragments.LineFragment;
+import com.intellij.openapi.util.diff.fragments.LineFragmentImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,21 +57,21 @@ public class ComparisonUtil {
   }
 
   @NotNull
-  public static List<FineLineFragment> compareFineLines(@NotNull CharSequence text1,
-                                                        @NotNull CharSequence text2,
-                                                        @NotNull ComparisonPolicy policy,
-                                                        @NotNull ProgressIndicator indicator) {
+  public static List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
+                                                     @NotNull CharSequence text2,
+                                                     @NotNull ComparisonPolicy policy,
+                                                     @NotNull ProgressIndicator indicator) {
     List<LineFragment> fragments = compareLines(text1, text2, policy, indicator);
-    return compareFineLines(text1, text2, fragments, policy, indicator);
+    return compareLinesInner(text1, text2, fragments, policy, indicator);
   }
 
   @NotNull
-  public static List<FineLineFragment> compareFineLines(@NotNull CharSequence text1,
-                                                        @NotNull CharSequence text2,
-                                                        @NotNull List<? extends LineFragment> lineFragments,
-                                                        @NotNull ComparisonPolicy policy,
-                                                        @NotNull ProgressIndicator indicator) {
-    List<FineLineFragment> fineFragments = new ArrayList<FineLineFragment>(lineFragments.size());
+  public static List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
+                                                     @NotNull CharSequence text2,
+                                                     @NotNull List<LineFragment> lineFragments,
+                                                     @NotNull ComparisonPolicy policy,
+                                                     @NotNull ProgressIndicator indicator) {
+    List<LineFragment> fineFragments = new ArrayList<LineFragment>(lineFragments.size());
     int tooBigChunksCount = 0;
 
     for (LineFragment fragment : lineFragments) {
@@ -78,16 +81,16 @@ public class ComparisonUtil {
       if (fragment.getStartLine1() == fragment.getEndLine1() ||
           fragment.getStartLine2() == fragment.getEndLine2()) { // Do not try to build fine blocks after few fails)
         if (isEquals(subSequence1, subSequence2, policy)) {
-          fineFragments.add(new FineLineFragmentImpl(fragment, Collections.<DiffFragment>emptyList()));
+          fineFragments.add(new LineFragmentImpl(fragment, Collections.<DiffFragment>emptyList()));
         }
         else {
-          fineFragments.add(new FineLineFragmentImpl(fragment, null));
+          fineFragments.add(new LineFragmentImpl(fragment, null));
         }
         continue;
       }
 
       if (tooBigChunksCount >= 3) { // Do not try to build fine blocks after few fails)
-        fineFragments.add(new FineLineFragmentImpl(fragment, null));
+        fineFragments.add(new LineFragmentImpl(fragment, null));
         continue;
       }
 
@@ -109,17 +112,17 @@ public class ComparisonUtil {
           int currentEndLine1 = i != lineBlocks.size() - 1 ? currentStartLine1 + block.newlines1 : fragment.getEndLine1();
           int currentEndLine2 = i != lineBlocks.size() - 1 ? currentStartLine2 + block.newlines2 : fragment.getEndLine2();
 
-          fineFragments.add(new FineLineFragmentImpl(currentStartLine1, currentEndLine1, currentStartLine2, currentEndLine2,
-                                                     offsets.start1 + startOffset1, offsets.end1 + startOffset1,
-                                                     offsets.start2 + startOffset2, offsets.end2 + startOffset2,
-                                                     block.fragments));
+          fineFragments.add(new LineFragmentImpl(currentStartLine1, currentEndLine1, currentStartLine2, currentEndLine2,
+                                                 offsets.start1 + startOffset1, offsets.end1 + startOffset1,
+                                                 offsets.start2 + startOffset2, offsets.end2 + startOffset2,
+                                                 block.fragments));
 
           currentStartLine1 = currentEndLine1;
           currentStartLine2 = currentEndLine2;
         }
       }
       catch (DiffTooBigException e) {
-        fineFragments.add(new FineLineFragmentImpl(fragment, null));
+        fineFragments.add(new LineFragmentImpl(fragment, null));
         tooBigChunksCount++;
       }
     }
@@ -168,13 +171,13 @@ public class ComparisonUtil {
   //
 
   @NotNull
-  public static List<? extends LineFragment> squash(@NotNull final List<? extends LineFragment> oldFragments) {
+  public static List<LineFragment> squash(@NotNull List<LineFragment> oldFragments) {
     if (oldFragments.isEmpty()) return oldFragments;
 
     final List<LineFragment> newFragments = new ArrayList<LineFragment>();
-    processAdjoining(oldFragments, new Consumer<List<? extends LineFragment>>() {
+    processAdjoining(oldFragments, new Consumer<List<LineFragment>>() {
       @Override
-      public void consume(List<? extends LineFragment> fragments) {
+      public void consume(List<LineFragment> fragments) {
         newFragments.add(doSquash(fragments));
       }
     });
@@ -182,57 +185,25 @@ public class ComparisonUtil {
   }
 
   @NotNull
-  public static List<? extends FineLineFragment> squashFine(@NotNull List<? extends FineLineFragment> oldFragments) {
-    if (oldFragments.isEmpty()) return oldFragments;
-
-    final List<FineLineFragment> newFragments = new ArrayList<FineLineFragment>();
-    processAdjoining(oldFragments, new Consumer<List<? extends FineLineFragment>>() {
-      @Override
-      public void consume(List<? extends FineLineFragment> fragments) {
-        newFragments.add(doSquashFine(fragments));
-      }
-    });
-    return newFragments;
-  }
-
-  @NotNull
-  public static List<? extends LineFragment> processBlocks(@NotNull List<? extends LineFragment> oldFragments,
-                                                           @NotNull final CharSequence text1, @NotNull final CharSequence text2,
-                                                           @NotNull final ComparisonPolicy policy,
-                                                           final boolean squash, final boolean trim) {
+  public static List<LineFragment> processBlocks(@NotNull List<LineFragment> oldFragments,
+                                                 @NotNull final CharSequence text1, @NotNull final CharSequence text2,
+                                                 @NotNull final ComparisonPolicy policy,
+                                                 final boolean squash, final boolean trim) {
     if (!squash && !trim) return oldFragments;
     if (oldFragments.isEmpty()) return oldFragments;
 
     final List<LineFragment> newFragments = new ArrayList<LineFragment>();
-    processAdjoining(oldFragments, new Consumer<List<? extends LineFragment>>() {
+    processAdjoining(oldFragments, new Consumer<List<LineFragment>>() {
       @Override
-      public void consume(List<? extends LineFragment> fragments) {
+      public void consume(List<LineFragment> fragments) {
         newFragments.addAll(processAdjoining(fragments, text1, text2, policy, squash, trim));
       }
     });
     return newFragments;
   }
 
-  @NotNull
-  public static List<? extends FineLineFragment> processBlocksFine(@NotNull List<? extends FineLineFragment> oldFragments,
-                                                                   @NotNull final CharSequence text1, @NotNull final CharSequence text2,
-                                                                   @NotNull final ComparisonPolicy policy,
-                                                                   final boolean squash, final boolean trim) {
-    if (!squash && !trim) return oldFragments;
-    if (oldFragments.isEmpty()) return oldFragments;
-
-    final List<FineLineFragment> newFragments = new ArrayList<FineLineFragment>();
-    processAdjoining(oldFragments, new Consumer<List<? extends FineLineFragment>>() {
-      @Override
-      public void consume(List<? extends FineLineFragment> fragments) {
-        newFragments.addAll(processAdjoiningFine(fragments, text1, text2, policy, squash, trim));
-      }
-    });
-    return newFragments;
-  }
-
-  private static <T extends LineFragment> void processAdjoining(@NotNull List<? extends T> oldFragments,
-                                                                @NotNull Consumer<List<? extends T>> consumer) {
+  private static void processAdjoining(@NotNull List<LineFragment> oldFragments,
+                                       @NotNull Consumer<List<LineFragment>> consumer) {
     int startIndex = 0;
     for (int i = 1; i < oldFragments.size(); i++) {
       if (!isAdjoining(oldFragments.get(i - 1), oldFragments.get(i))) {
@@ -246,9 +217,9 @@ public class ComparisonUtil {
   }
 
   @NotNull
-  private static List<? extends LineFragment> processAdjoining(@NotNull List<? extends LineFragment> fragments,
-                                                               @NotNull CharSequence text1, @NotNull CharSequence text2,
-                                                               @NotNull ComparisonPolicy policy, boolean squash, boolean trim) {
+  private static List<LineFragment> processAdjoining(@NotNull List<LineFragment> fragments,
+                                                     @NotNull CharSequence text1, @NotNull CharSequence text2,
+                                                     @NotNull ComparisonPolicy policy, boolean squash, boolean trim) {
     int start = 0;
     int end = fragments.size();
 
@@ -259,7 +230,10 @@ public class ComparisonUtil {
         CharSequenceSubSequence sequence1 = new CharSequenceSubSequence(text1, fragment.getStartOffset1(), fragment.getEndOffset1());
         CharSequenceSubSequence sequence2 = new CharSequenceSubSequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
 
-        if (!StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) break;
+        if ((fragment.getInnerFragments() == null || !fragment.getInnerFragments().isEmpty()) &&
+            !StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) {
+          break;
+        }
         start++;
       }
       while (start < end) {
@@ -267,7 +241,10 @@ public class ComparisonUtil {
         CharSequenceSubSequence sequence1 = new CharSequenceSubSequence(text1, fragment.getStartOffset1(), fragment.getEndOffset1());
         CharSequenceSubSequence sequence2 = new CharSequenceSubSequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
 
-        if (!StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) break;
+        if ((fragment.getInnerFragments() == null || !fragment.getInnerFragments().isEmpty()) &&
+            !StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) {
+          break;
+        }
         end--;
       }
     }
@@ -280,60 +257,7 @@ public class ComparisonUtil {
   }
 
   @NotNull
-  private static List<? extends FineLineFragment> processAdjoiningFine(@NotNull List<? extends FineLineFragment> fragments,
-                                                                       @NotNull CharSequence text1, @NotNull CharSequence text2,
-                                                                       @NotNull ComparisonPolicy policy, boolean squash, boolean trim) {
-    int start = 0;
-    int end = fragments.size();
-
-    if (trim && policy == ComparisonPolicy.IGNORE_WHITESPACES) {
-      while (start < end) {
-        FineLineFragment fragment = fragments.get(start);
-        CharSequenceSubSequence sequence1 = new CharSequenceSubSequence(text1, fragment.getStartOffset1(), fragment.getEndOffset1());
-        CharSequenceSubSequence sequence2 = new CharSequenceSubSequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
-
-        if ((fragment.getFineFragments() == null || !fragment.getFineFragments().isEmpty()) &&
-            !StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) {
-          break;
-        }
-        start++;
-      }
-      while (start < end) {
-        FineLineFragment fragment = fragments.get(end - 1);
-        CharSequenceSubSequence sequence1 = new CharSequenceSubSequence(text1, fragment.getStartOffset1(), fragment.getEndOffset1());
-        CharSequenceSubSequence sequence2 = new CharSequenceSubSequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
-
-        if ((fragment.getFineFragments() == null || !fragment.getFineFragments().isEmpty()) &&
-            !StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) {
-          break;
-        }
-        end--;
-      }
-    }
-
-    if (start == end) return Collections.emptyList();
-    if (squash) {
-      return Collections.singletonList(doSquashFine(fragments.subList(start, end)));
-    }
-    return fragments.subList(start, end);
-  }
-
-  @NotNull
-  private static LineFragment doSquash(@NotNull List<? extends LineFragment> oldFragments) {
-    assert !oldFragments.isEmpty();
-    if (oldFragments.size() == 1) return oldFragments.get(0);
-
-    LineFragment firstFragment = oldFragments.get(0);
-    LineFragment lastFragment = oldFragments.get(oldFragments.size() - 1);
-
-    return new LineFragmentImpl(firstFragment.getStartLine1(), lastFragment.getEndLine1(),
-                                firstFragment.getStartLine2(), lastFragment.getEndLine2(),
-                                firstFragment.getStartOffset1(), lastFragment.getEndOffset1(),
-                                firstFragment.getStartOffset2(), lastFragment.getEndOffset2());
-  }
-
-  @NotNull
-  private static FineLineFragment doSquashFine(@NotNull List<? extends FineLineFragment> oldFragments) {
+  private static LineFragment doSquash(@NotNull List<LineFragment> oldFragments) {
     assert !oldFragments.isEmpty();
     if (oldFragments.size() == 1) return oldFragments.get(0);
 
@@ -341,7 +265,7 @@ public class ComparisonUtil {
     LineFragment lastFragment = oldFragments.get(oldFragments.size() - 1);
 
     List<DiffFragment> newInnerFragments = new ArrayList<DiffFragment>();
-    for (FineLineFragment fragment : oldFragments) {
+    for (LineFragment fragment : oldFragments) {
       for (DiffFragment innerFragment : extractInnerFragments(fragment)) {
         int shift1 = fragment.getStartOffset1() - firstFragment.getStartOffset1();
         int shift2 = fragment.getStartOffset2() - firstFragment.getStartOffset2();
@@ -359,11 +283,11 @@ public class ComparisonUtil {
       }
     }
 
-    return new FineLineFragmentImpl(firstFragment.getStartLine1(), lastFragment.getEndLine1(),
-                                    firstFragment.getStartLine2(), lastFragment.getEndLine2(),
-                                    firstFragment.getStartOffset1(), lastFragment.getEndOffset1(),
-                                    firstFragment.getStartOffset2(), lastFragment.getEndOffset2(),
-                                    newInnerFragments);
+    return new LineFragmentImpl(firstFragment.getStartLine1(), lastFragment.getEndLine1(),
+                                firstFragment.getStartLine2(), lastFragment.getEndLine2(),
+                                firstFragment.getStartOffset1(), lastFragment.getEndOffset1(),
+                                firstFragment.getStartOffset2(), lastFragment.getEndOffset2(),
+                                newInnerFragments);
   }
 
   private static boolean isAdjoining(@NotNull LineFragment beforeFragment, @NotNull LineFragment afterFragment) {
@@ -388,8 +312,8 @@ public class ComparisonUtil {
   }
 
   @NotNull
-  private static List<? extends DiffFragment> extractInnerFragments(@NotNull FineLineFragment lineFragment) {
-    if (lineFragment.getFineFragments() != null) return lineFragment.getFineFragments();
+  private static List<? extends DiffFragment> extractInnerFragments(@NotNull LineFragment lineFragment) {
+    if (lineFragment.getInnerFragments() != null) return lineFragment.getInnerFragments();
 
     int length1 = lineFragment.getEndOffset1() - lineFragment.getStartOffset1();
     int length2 = lineFragment.getEndOffset2() - lineFragment.getStartOffset2();
