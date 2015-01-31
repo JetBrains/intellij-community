@@ -19,12 +19,14 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -45,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
@@ -144,18 +147,33 @@ public class RunIdeConsoleAction extends DumbAwareAction {
                                    @NotNull VirtualFile file,
                                    @NotNull Editor editor,
                                    @NotNull ScriptEngine engine) {
+
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
-    if (selectedRange.getLength() == 0) return;
-    String command = editor.getDocument().getText(selectedRange);
-    ConsoleView consoleView = getConsoleView(project, file, engine);
+    Document document = editor.getDocument();
+    if (selectedRange.getLength() == 0) {
+      int line = document.getLineNumber(selectedRange.getStartOffset());
+      selectedRange = TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    }
+    String command = document.getText(selectedRange);
+    final ConsoleView consoleView = getConsoleView(project, file, engine);
     try {
+      class IDE {
+        public void print(String s) {
+          consoleView.print(s + "\n", ConsoleViewContentType.NORMAL_OUTPUT);
+        }
+        public void error(String s) {
+          consoleView.print(s + "\n", ConsoleViewContentType.ERROR_OUTPUT);
+        }
+      }
+
       // todo
       //myHistoryController.getModel().addToHistory(command);
       consoleView.print("> " + command, ConsoleViewContentType.USER_INPUT);
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
+      engine.getBindings(ScriptContext.ENGINE_SCOPE).put("IDE", new IDE());
       Object o = engine.eval(command);
-      String string = o == null ? "nil" : String.valueOf(o);
-      consoleView.print(string, ConsoleViewContentType.NORMAL_OUTPUT);
+      consoleView.print("=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
+      consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Exception e) {
@@ -163,6 +181,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       //consoleView.print(ExceptionUtil.getThrowableText(e), ConsoleViewContentType.ERROR_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.ERROR_OUTPUT);
     }
+    ((ConsoleViewImpl)consoleView).scrollToEnd();
   }
 
   @NotNull
