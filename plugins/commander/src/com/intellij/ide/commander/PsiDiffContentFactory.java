@@ -15,15 +15,15 @@
  */
 package com.intellij.ide.commander;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.actions.DocumentFragmentContent;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.diff.actions.DocumentFragmentContent;
-import com.intellij.openapi.util.diff.contents.DiffContent;
-import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.DiffContentFactory;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;

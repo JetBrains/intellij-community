@@ -15,6 +15,15 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -24,15 +33,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.diff.DiffDialogHints;
-import com.intellij.openapi.util.diff.DiffManager;
-import com.intellij.openapi.util.diff.contents.DiffContent;
-import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.DiffContentFactory;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
-import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
-import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;

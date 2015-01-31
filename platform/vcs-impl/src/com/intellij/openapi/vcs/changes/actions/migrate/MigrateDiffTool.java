@@ -24,9 +24,9 @@ import com.intellij.openapi.diff.impl.external.BinaryDiffTool;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.diff.impl.external.FrameDiffTool;
 import com.intellij.openapi.ui.WindowWrapper;
-import com.intellij.openapi.util.diff.DiffDialogHints;
-import com.intellij.openapi.util.diff.DiffManager;
-import com.intellij.openapi.util.diff.chains.DiffRequestChain;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.chains.DiffRequestChain;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

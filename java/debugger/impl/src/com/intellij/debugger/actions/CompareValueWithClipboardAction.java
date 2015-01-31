@@ -17,11 +17,11 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.diff.DiffDialogHints;
-import com.intellij.openapi.util.diff.DiffManager;
-import com.intellij.openapi.util.diff.DiffRequestFactory;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
 
 /**
  * @author Jeka

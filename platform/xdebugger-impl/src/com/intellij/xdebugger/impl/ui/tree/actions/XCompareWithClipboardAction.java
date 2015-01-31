@@ -15,11 +15,11 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.diff.DiffDialogHints;
-import com.intellij.openapi.util.diff.DiffManager;
-import com.intellij.openapi.util.diff.DiffRequestFactory;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 

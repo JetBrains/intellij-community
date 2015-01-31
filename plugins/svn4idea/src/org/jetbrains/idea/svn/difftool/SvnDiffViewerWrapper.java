@@ -1,9 +1,9 @@
 package org.jetbrains.idea.svn.difftool;
 
-import com.intellij.openapi.util.diff.api.DiffContext;
-import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffViewer;
-import com.intellij.openapi.util.diff.impl.DiffViewerWrapper;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.diff.DiffContext;
+import com.intellij.diff.FrameDiffTool.DiffViewer;
+import com.intellij.diff.impl.DiffViewerWrapper;
+import com.intellij.diff.requests.DiffRequest;
 import org.jetbrains.annotations.NotNull;
 
 public class SvnDiffViewerWrapper implements DiffViewerWrapper {

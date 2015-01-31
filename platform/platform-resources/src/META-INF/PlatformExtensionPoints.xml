@@ -242,6 +242,6 @@
 
     <extensionPoint name="cachesInvalidator" interface="com.intellij.ide.caches.CachesInvalidator"/>
 
-    <extensionPoint qualifiedName="com.intellij.openapi.util.diff.api.DiffTool" interface="com.intellij.openapi.util.diff.api.DiffTool"/>
+    <extensionPoint qualifiedName="com.intellij.diff.DiffTool" interface="com.intellij.diff.DiffTool"/>
   </extensionPoints>
 </idea-plugin>

@@ -1,16 +1,15 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContentImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.diff.contents.DiffContent;
-import com.intellij.openapi.util.diff.contents.DocumentContentImpl;
-import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;

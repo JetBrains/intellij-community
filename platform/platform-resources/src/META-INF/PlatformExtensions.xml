@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <appStarter implementation="com.intellij.openapi.util.diff.applications.DiffApplication"/>
+    <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter implementation="com.intellij.openapi.diff.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
@@ -81,20 +81,20 @@
                         serviceImplementation="com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.diff.DiffManager"
                         serviceImplementation="com.intellij.openapi.diff.impl.external.DiffManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.util.diff.DiffManager"
-                        serviceImplementation="com.intellij.openapi.util.diff.DiffManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.util.diff.DiffContentFactory"
-                        serviceImplementation="com.intellij.openapi.util.diff.impl.DiffContentFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.util.diff.DiffRequestFactory"
-                        serviceImplementation="com.intellij.openapi.util.diff.impl.DiffRequestFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.util.diff.tools.util.base.TextDiffSettingsHolder"
-                        serviceImplementation="com.intellij.openapi.util.diff.tools.util.base.TextDiffSettingsHolder"/>
-    <applicationService serviceInterface="com.intellij.openapi.util.diff.tools.external.ExternalDiffSettings"
-                        serviceImplementation="com.intellij.openapi.util.diff.tools.external.ExternalDiffSettings"/>
+    <applicationService serviceInterface="com.intellij.diff.DiffManager"
+                        serviceImplementation="com.intellij.diff.DiffManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.DiffContentFactory"
+                        serviceImplementation="com.intellij.diff.impl.DiffContentFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.DiffRequestFactory"
+                        serviceImplementation="com.intellij.diff.impl.DiffRequestFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"
+                        serviceImplementation="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
+    <applicationService serviceInterface="com.intellij.diff.tools.external.ExternalDiffSettings"
+                        serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
     <applicationConfigurable groupId="tools" id="diff.base" displayName="Diff"
-                             instance="com.intellij.openapi.util.diff.settings.DiffSettingsConfigurable" />
+                             instance="com.intellij.diff.settings.DiffSettingsConfigurable"/>
     <applicationConfigurable groupId="tools" id="diff.external" displayName="External Diff Tools" parentId="diff.base"
-                             instance="com.intellij.openapi.util.diff.settings.ExternalDiffSettingsConfigurable" />
+                             instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
 
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>

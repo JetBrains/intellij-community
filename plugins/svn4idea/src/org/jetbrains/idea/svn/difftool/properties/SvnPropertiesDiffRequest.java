@@ -2,9 +2,9 @@ package org.jetbrains.idea.svn.difftool.properties;
 
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.diff.contents.DiffContent;
-import com.intellij.openapi.util.diff.contents.EmptyContent;
-import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.requests.ContentDiffRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.properties.PropertyData;

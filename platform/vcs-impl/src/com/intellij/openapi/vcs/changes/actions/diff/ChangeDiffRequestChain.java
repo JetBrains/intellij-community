@@ -2,8 +2,8 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.diff.actions.impl.GoToChangePopupBuilder;
-import com.intellij.openapi.util.diff.chains.DiffRequestChain;
+import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;

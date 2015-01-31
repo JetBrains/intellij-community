@@ -1,8 +1,8 @@
 package org.jetbrains.idea.svn.difftool.properties;
 
-import com.intellij.openapi.util.diff.api.DiffContext;
-import com.intellij.openapi.util.diff.api.FrameDiffTool;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
+import com.intellij.diff.DiffContext;
+import com.intellij.diff.FrameDiffTool;
+import com.intellij.diff.requests.DiffRequest;
 import org.jetbrains.annotations.NotNull;
 
 public class SvnPropertiesDiffTool implements FrameDiffTool {
