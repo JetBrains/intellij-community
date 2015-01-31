@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.Page;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ import java.util.Map;
 /**
  * Supports the int <-> Hash persistent mapping.
  */
-public class VcsLogHashMap implements Disposable {
+public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
 
   private static final File LOG_CACHE_APP_DIR = new File(new File(PathManager.getSystemPath(), "vcs-log"), "hashes");
   private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
@@ -59,7 +60,7 @@ public class VcsLogHashMap implements Disposable {
 
   private final PersistentEnumerator<Hash> myPersistentEnumerator;
 
-  VcsLogHashMap(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
+  public VcsLogHashMapImpl(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
     cleanupOldNaming(project, logProviders);
     String logId = calcLogId(project, logProviders);
     final File mapFile = new File(LOG_CACHE_APP_DIR, logId + "." + VERSION);
@@ -113,6 +114,7 @@ public class VcsLogHashMap implements Disposable {
     return myPersistentEnumerator.enumerate(hash);
   }
 
+  @Override
   public int getCommitIndex(@NotNull Hash hash) {
     try {
       return getOrPut(hash);
@@ -122,6 +124,7 @@ public class VcsLogHashMap implements Disposable {
     }
   }
 
+  @Override
   @NotNull
   public Hash getHash(int commitIndex) {
     try {
@@ -136,6 +139,7 @@ public class VcsLogHashMap implements Disposable {
     }
   }
 
+  @Override
   @Nullable
   public Hash findHashByString(@NotNull String string) {
     final String pHash = string.toLowerCase();
