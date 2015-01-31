@@ -52,14 +52,14 @@ public class FilterLinearGraphController extends CascadeLinearGraphController {
 
   @Nullable
   @Override
-  protected GraphElement convert(@NotNull GraphElement graphElement) {
+  protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
     // filter prohibits any actions on delegate graph for now
     return null;
   }
 
   @NotNull
   @Override
-  protected LinearGraphAnswer performDelegateUpdate(@NotNull LinearGraphAnswer delegateAnswer) {
+  protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
     if (delegateAnswer == LinearGraphUtils.DEFAULT_GRAPH_ANSWER) return delegateAnswer;
     throw new UnsupportedOperationException(); // todo fix later
   }

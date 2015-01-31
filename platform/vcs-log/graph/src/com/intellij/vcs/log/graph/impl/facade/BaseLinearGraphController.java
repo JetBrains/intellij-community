@@ -27,7 +27,7 @@ public class BaseLinearGraphController extends CascadeLinearGraphController {
 
   @NotNull
   @Override
-  protected LinearGraphAnswer performDelegateUpdate(@NotNull LinearGraphAnswer delegateAnswer) {
+  protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
     throw new IllegalStateException();
   }
 

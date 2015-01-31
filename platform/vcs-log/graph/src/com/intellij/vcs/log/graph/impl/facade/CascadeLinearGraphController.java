@@ -39,8 +39,9 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   public LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphAction action) {
     LinearGraphAnswer answer = performAction(action);
     if (answer == null && myDelegateLinearGraphController != null) {
-      answer = myDelegateLinearGraphController.performLinearGraphAction(new VisibleGraphImpl.LinearGraphActionImpl(convert(action.getAffectedElement()), action.getType()));
-      answer = performDelegateUpdate(answer);
+      answer = myDelegateLinearGraphController.performLinearGraphAction(new VisibleGraphImpl.LinearGraphActionImpl(
+        convertToDelegate(action.getAffectedElement()), action.getType()));
+      answer = delegateGraphChanged(answer);
     }
     if (answer != null)
       return answer;
@@ -48,15 +49,15 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   }
 
   @Nullable
-  private PrintElementWithGraphElement convert(@Nullable PrintElementWithGraphElement element) {
+  private PrintElementWithGraphElement convertToDelegate(@Nullable PrintElementWithGraphElement element) {
     if (element == null) return null;
-    GraphElement convertedGraphElement = convert(element.getGraphElement());
+    GraphElement convertedGraphElement = convertToDelegate(element.getGraphElement());
     if (convertedGraphElement == null) return null;
     return PrintElementWithGraphElement.converted(element, convertedGraphElement);
   }
 
   @Nullable
-  protected GraphElement convert(@NotNull GraphElement graphElement) {
+  protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
     return graphElement;
   }
 
@@ -72,7 +73,7 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   }
 
   @NotNull
-  protected abstract LinearGraphAnswer performDelegateUpdate(@NotNull LinearGraphAnswer delegateAnswer);
+  protected abstract LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer);
 
   // null mean that this action must be performed by delegateGraphController
   @Nullable
