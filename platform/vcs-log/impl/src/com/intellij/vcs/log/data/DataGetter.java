@@ -9,6 +9,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
@@ -39,7 +40,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   private static final int DOWN_PRELOAD_COUNT = 40;
   private static final int MAX_LOADING_TASKS = 10;
 
-  @NotNull protected final VcsLogDataHolder myDataHolder;
+  @NotNull protected final VcsLogHashMap myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsCommitCache<Integer, T> myCache;
   @NotNull private final SequentialLimitedLifoExecutor<TaskDescriptor> myLoader;
@@ -51,12 +52,14 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
 
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<Runnable>();
 
-  DataGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-             @NotNull VcsCommitCache<Integer, T> cache) {
-    myDataHolder = dataHolder;
+  DataGetter(@NotNull VcsLogHashMap hashMap,
+             @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+             @NotNull VcsCommitCache<Integer, T> cache,
+             @NotNull Disposable parentDisposable) {
+    myHashMap = hashMap;
     myLogProviders = logProviders;
     myCache = cache;
-    Disposer.register(dataHolder, this);
+    Disposer.register(parentDisposable, this);
     myLoader = new SequentialLimitedLifoExecutor<TaskDescriptor>(this, MAX_LOADING_TASKS,
                                                                  new ThrowableConsumer<TaskDescriptor, VcsException>() {
       @Override
@@ -129,7 +132,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
       // even if it will be loaded within a previous query
       for (int commitId : hashes) {
         if (!myCache.isKeyCached(commitId)) {
-          myCache.put(commitId, (T)new LoadingDetails(myDataHolder.getHash(commitId), taskNumber, root));
+          myCache.put(commitId, (T)new LoadingDetails(myHashMap.getHash(commitId), taskNumber, root));
         }
       }
     }
@@ -157,7 +160,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
       List<String> hashStrings = ContainerUtil.map(entry.getValue(), new Function<Integer, String>() {
         @Override
         public String fun(Integer commitId) {
-          return myDataHolder.getHash(commitId).asString();
+          return myHashMap.getHash(commitId).asString();
         }
       });
       List<? extends T> details = readDetails(myLogProviders.get(entry.getKey()), entry.getKey(), hashStrings);
@@ -170,7 +173,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
       @Override
       public void run() {
         for (T data : details) {
-          myCache.put(myDataHolder.getCommitIndex(data.getId()), data);
+          myCache.put(myHashMap.getCommitIndex(data.getId()), data);
         }
       }
     });
