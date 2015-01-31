@@ -27,7 +27,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
-import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DirectoryContent;
 import com.intellij.openapi.util.diff.contents.FileContent;

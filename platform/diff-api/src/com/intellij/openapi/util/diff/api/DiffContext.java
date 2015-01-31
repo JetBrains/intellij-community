@@ -15,15 +15,17 @@
  */
 package com.intellij.openapi.util.diff.api;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.diff.requests.DiffRequest;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.Nullable;
 
-public interface DiffTool {
-  ExtensionPointName<DiffTool> EP_NAME = ExtensionPointName.create("com.intellij.openapi.util.diff.api.DiffTool");
+public interface DiffContext extends UserDataHolder {
+  @Nullable
+  Project getProject();
 
-  @NotNull
-  String getName();
+  boolean isWindowFocused();
 
-  boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request);
+  boolean isFocused();
+
+  void requestFocus();
 }

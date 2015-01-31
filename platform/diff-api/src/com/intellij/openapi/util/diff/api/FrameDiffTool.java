@@ -17,8 +17,6 @@ package com.intellij.openapi.util.diff.api;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -42,17 +40,6 @@ public interface FrameDiffTool extends DiffTool {
     @NotNull
     @CalledInAwt
     ToolbarComponents init();
-  }
-
-  interface DiffContext extends UserDataHolder {
-    @Nullable
-    Project getProject();
-
-    boolean isWindowFocused();
-
-    boolean isFocused();
-
-    void requestFocus();
   }
 
   class ToolbarComponents {

@@ -26,7 +26,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
-import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffViewer;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;

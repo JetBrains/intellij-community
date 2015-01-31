@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.diff.tools.dir;
 
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;

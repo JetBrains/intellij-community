@@ -17,7 +17,7 @@ package com.intellij.openapi.util.diff.tools.binary;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.tools.util.EditorsDiffPanelBase;
 import com.intellij.openapi.util.diff.util.TextDiffType;
 import org.jetbrains.annotations.NotNull;

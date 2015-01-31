@@ -34,7 +34,7 @@ import com.intellij.openapi.util.diff.DiffManagerEx;
 import com.intellij.openapi.util.diff.actions.impl.*;
 import com.intellij.openapi.util.diff.api.DiffTool;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
-import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffViewer;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;

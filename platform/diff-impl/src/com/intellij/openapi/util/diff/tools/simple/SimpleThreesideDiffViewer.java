@@ -29,7 +29,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.comparison.ByLine;
 import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.comparison.DiffTooBigException;

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.diff.tools.binary;
 
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import org.jetbrains.annotations.NotNull;

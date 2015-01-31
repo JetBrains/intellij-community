@@ -40,8 +40,8 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.diff.DiffDialogHints;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.api.DiffTool;
-import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.api.SuppressiveDiffTool;
 import com.intellij.openapi.util.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.util.diff.comparison.ComparisonUtil;
@@ -766,7 +766,7 @@ public class DiffUtil {
     return false;
   }
 
-  public static <T> T getUserData(@Nullable DiffRequest request, @Nullable FrameDiffTool.DiffContext context, @NotNull Key<T> key) {
+  public static <T> T getUserData(@Nullable DiffRequest request, @Nullable DiffContext context, @NotNull Key<T> key) {
     if (request != null) {
       T data = request.getUserData(key);
       if (data != null) return data;
@@ -778,7 +778,7 @@ public class DiffUtil {
     return null;
   }
 
-  public static <T> T getUserData(@Nullable FrameDiffTool.DiffContext context, @Nullable DiffRequest request, @NotNull Key<T> key) {
+  public static <T> T getUserData(@Nullable DiffContext context, @Nullable DiffRequest request, @NotNull Key<T> key) {
     if (context != null) {
       T data = context.getUserData(key);
       if (data != null) return data;

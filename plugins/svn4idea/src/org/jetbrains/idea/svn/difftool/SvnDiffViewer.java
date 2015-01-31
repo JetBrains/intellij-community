@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffViewer;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.ToolbarComponents;
 import com.intellij.openapi.util.diff.contents.DiffContent;

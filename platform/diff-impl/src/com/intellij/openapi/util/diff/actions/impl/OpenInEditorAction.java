@@ -24,7 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.diff.api.FrameDiffTool;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
@@ -45,7 +45,7 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
-    FrameDiffTool.DiffContext context = e.getData(DiffDataKeys.DIFF_CONTEXT);
+    DiffContext context = e.getData(DiffDataKeys.DIFF_CONTEXT);
 
     if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, request, context)) {
       e.getPresentation().setVisible(false);

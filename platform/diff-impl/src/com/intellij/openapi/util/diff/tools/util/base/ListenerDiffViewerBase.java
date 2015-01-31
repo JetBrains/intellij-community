@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.util.diff.api.FrameDiffTool;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.contents.BinaryFileContent;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
@@ -38,7 +38,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   @NotNull private final DocumentListener myDocumentListener;
   @Nullable private final VirtualFileListener myFileListener;
 
-  public ListenerDiffViewerBase(@NotNull FrameDiffTool.DiffContext context, @NotNull ContentDiffRequest request) {
+  public ListenerDiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request);
     myDocumentListener = createDocumentListener();
     myFileListener = createFileListener(request);

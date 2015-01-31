@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.api.FrameDiffTool;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.impl.ModifiablePanel;
@@ -89,14 +89,14 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
   }
 
   private static class SvnTreeConflictDiffViewer implements FrameDiffTool.DiffViewer {
-    @NotNull private final FrameDiffTool.DiffContext myContext;
+    @NotNull private final DiffContext myContext;
     @NotNull private final SvnTreeConflictDiffRequest myRequest;
     @NotNull private final ModifiablePanel myPanel = new ModifiablePanel();
 
     @NotNull private final BackgroundTaskQueue myQueue;
     @NotNull private final TreeConflictRefreshablePanel myDelegate;
 
-    public SvnTreeConflictDiffViewer(@NotNull FrameDiffTool.DiffContext context, @NotNull SvnTreeConflictDiffRequest request) {
+    public SvnTreeConflictDiffViewer(@NotNull DiffContext context, @NotNull SvnTreeConflictDiffRequest request) {
       myContext = context;
       myRequest = request;
 

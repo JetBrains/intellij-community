@@ -1,6 +1,6 @@
 package org.jetbrains.idea.svn.difftool;
 
-import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffContext;
+import com.intellij.openapi.util.diff.api.DiffContext;
 import com.intellij.openapi.util.diff.api.FrameDiffTool.DiffViewer;
 import com.intellij.openapi.util.diff.impl.DiffViewerWrapper;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
