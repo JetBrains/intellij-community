@@ -20,8 +20,8 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.SuppressiveDiffTool;
+import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
@@ -442,7 +442,8 @@ public class DiffUtil {
     List<LineFragment> fragments = doCompareWithCache(request, text1, text2, stamp1, stamp2, config, indicator);
 
     indicator.checkCanceled();
-    return ComparisonUtil.processBlocks(fragments, text1, text2, config.policy, config.squashFragments, config.trimFragments);
+    return ComparisonManager.getInstance().processBlocks(fragments, text1, text2,
+                                                         config.policy, config.squashFragments, config.trimFragments);
   }
 
   @NotNull
@@ -461,14 +462,14 @@ public class DiffUtil {
       if (cachedData.getFragments().isEmpty()) return cachedData.getFragments();
       if (!config.innerFragments) return cachedData.getFragments();
       if (cachedData.isInnerFragments()) return cachedData.getFragments();
-      newFragments = ComparisonUtil.compareLinesInner(text1, text2, cachedData.getFragments(), config.policy, indicator);
+      newFragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, cachedData.getFragments(), config.policy, indicator);
     }
     else {
       if (config.innerFragments) {
-        newFragments = ComparisonUtil.compareLinesInner(text1, text2, config.policy, indicator);
+        newFragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
       }
       else {
-        newFragments = ComparisonUtil.compareLines(text1, text2, config.policy, indicator);
+        newFragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
       }
     }
 

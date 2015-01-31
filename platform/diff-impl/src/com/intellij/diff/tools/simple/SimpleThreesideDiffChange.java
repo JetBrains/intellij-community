@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.tools.simple;
 
+import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.editor.Document;
@@ -203,7 +203,7 @@ class SimpleThreesideDiffChange {
     CharSequence content1 = getRangeContent(fragment, editors, side1);
     CharSequence content2 = getRangeContent(fragment, editors, side2);
 
-    return ComparisonUtil.isEquals(content1, content2, policy);
+    return ComparisonManager.getInstance().isEquals(content1, content2, policy);
   }
 
   @NotNull

@@ -1,19 +1,19 @@
 package org.jetbrains.idea.svn.difftool.properties;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.FrameDiffTool.ToolbarComponents;
+import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.TrimUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.LineFragmentImpl;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
@@ -161,11 +161,12 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
     int lines2 = couple2.second;
 
     try {
+      ComparisonManager comparisonManager = ComparisonManager.getInstance();
       if (words1 < MAX_ITEM_COUNT && words2 < MAX_ITEM_COUNT) {
-        return ComparisonUtil.squash(ComparisonUtil.compareLinesInner(text1, text2, ComparisonPolicy.DEFAULT, INSTANCE));
+        return comparisonManager.squash(comparisonManager.compareLinesInner(text1, text2, ComparisonPolicy.DEFAULT, INSTANCE));
       }
       if (lines1 < MAX_ITEM_COUNT && lines2 < MAX_ITEM_COUNT) {
-        return ComparisonUtil.squash(ComparisonUtil.compareLines(text1, text2, ComparisonPolicy.DEFAULT, INSTANCE));
+        return comparisonManager.squash(comparisonManager.compareLines(text1, text2, ComparisonPolicy.DEFAULT, INSTANCE));
       }
     }
     catch (DiffTooBigException e) {

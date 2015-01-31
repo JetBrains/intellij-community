@@ -34,20 +34,14 @@ import java.util.List;
 
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.convertIntoFragments;
 
-/**
- * Class for the text comparison
- * CharSequences should to have '\n' as line separator
- * <p/>
- * It's good idea not to compare String due to expensive subSequence() implementation. Try to wrap into CharSequenceSubSequence.
- */
-public class ComparisonUtil {
-  public static final Logger LOG = Logger.getInstance(ComparisonUtil.class);
+public class ComparisonManagerImpl extends ComparisonManager {
+  public static final Logger LOG = Logger.getInstance(ComparisonManagerImpl.class);
 
   @NotNull
-  public static List<LineFragment> compareLines(@NotNull CharSequence text1,
-                                                @NotNull CharSequence text2,
-                                                @NotNull ComparisonPolicy policy,
-                                                @NotNull ProgressIndicator indicator) {
+  public List<LineFragment> compareLines(@NotNull CharSequence text1,
+                                         @NotNull CharSequence text2,
+                                         @NotNull ComparisonPolicy policy,
+                                         @NotNull ProgressIndicator indicator) {
     if (policy == ComparisonPolicy.IGNORE_WHITESPACES) {
       return ByLine.compare(text1, text2, policy, indicator);
     }
@@ -57,20 +51,20 @@ public class ComparisonUtil {
   }
 
   @NotNull
-  public static List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
-                                                     @NotNull CharSequence text2,
-                                                     @NotNull ComparisonPolicy policy,
-                                                     @NotNull ProgressIndicator indicator) {
+  public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
+                                              @NotNull CharSequence text2,
+                                              @NotNull ComparisonPolicy policy,
+                                              @NotNull ProgressIndicator indicator) {
     List<LineFragment> fragments = compareLines(text1, text2, policy, indicator);
     return compareLinesInner(text1, text2, fragments, policy, indicator);
   }
 
   @NotNull
-  public static List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
-                                                     @NotNull CharSequence text2,
-                                                     @NotNull List<LineFragment> lineFragments,
-                                                     @NotNull ComparisonPolicy policy,
-                                                     @NotNull ProgressIndicator indicator) {
+  public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
+                                              @NotNull CharSequence text2,
+                                              @NotNull List<LineFragment> lineFragments,
+                                              @NotNull ComparisonPolicy policy,
+                                              @NotNull ProgressIndicator indicator) {
     List<LineFragment> fineFragments = new ArrayList<LineFragment>(lineFragments.size());
     int tooBigChunksCount = 0;
 
@@ -131,18 +125,18 @@ public class ComparisonUtil {
   }
 
   @NotNull
-  public static List<DiffFragment> compareWords(@NotNull CharSequence text1,
-                                                @NotNull CharSequence text2,
-                                                @NotNull ComparisonPolicy policy,
-                                                @NotNull ProgressIndicator indicator) {
+  public List<DiffFragment> compareWords(@NotNull CharSequence text1,
+                                         @NotNull CharSequence text2,
+                                         @NotNull ComparisonPolicy policy,
+                                         @NotNull ProgressIndicator indicator) {
     return ByWord.compare(text1, text2, policy, indicator);
   }
 
   @NotNull
-  public static List<DiffFragment> compareChars(@NotNull CharSequence text1,
-                                                @NotNull CharSequence text2,
-                                                @NotNull ComparisonPolicy policy,
-                                                @NotNull ProgressIndicator indicator) {
+  public List<DiffFragment> compareChars(@NotNull CharSequence text1,
+                                         @NotNull CharSequence text2,
+                                         @NotNull ComparisonPolicy policy,
+                                         @NotNull ProgressIndicator indicator) {
     if (policy == ComparisonPolicy.IGNORE_WHITESPACES) {
       return convertIntoFragments(ByChar.compareIgnoreWhitespaces(text1, text2, indicator));
     }
@@ -153,7 +147,7 @@ public class ComparisonUtil {
     return convertIntoFragments(ByChar.compareTwoStep(text1, text2, indicator));
   }
 
-  public static boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
+  public boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
     switch (policy) {
       case DEFAULT:
         return StringUtil.equals(text1, text2);
@@ -171,7 +165,7 @@ public class ComparisonUtil {
   //
 
   @NotNull
-  public static List<LineFragment> squash(@NotNull List<LineFragment> oldFragments) {
+  public List<LineFragment> squash(@NotNull List<LineFragment> oldFragments) {
     if (oldFragments.isEmpty()) return oldFragments;
 
     final List<LineFragment> newFragments = new ArrayList<LineFragment>();
@@ -185,10 +179,10 @@ public class ComparisonUtil {
   }
 
   @NotNull
-  public static List<LineFragment> processBlocks(@NotNull List<LineFragment> oldFragments,
-                                                 @NotNull final CharSequence text1, @NotNull final CharSequence text2,
-                                                 @NotNull final ComparisonPolicy policy,
-                                                 final boolean squash, final boolean trim) {
+  public List<LineFragment> processBlocks(@NotNull List<LineFragment> oldFragments,
+                                          @NotNull final CharSequence text1, @NotNull final CharSequence text2,
+                                          @NotNull final ComparisonPolicy policy,
+                                          final boolean squash, final boolean trim) {
     if (!squash && !trim) return oldFragments;
     if (oldFragments.isEmpty()) return oldFragments;
 
