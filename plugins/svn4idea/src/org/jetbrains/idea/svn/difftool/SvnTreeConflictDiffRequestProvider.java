@@ -50,7 +50,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
     return new SvnTreeConflictDiffRequest(((ConflictedSvnChange)presentable.getChange()));
   }
 
-  public static class SvnTreeConflictDiffRequest extends UserDataHolderBase implements DiffRequest {
+  public static class SvnTreeConflictDiffRequest extends DiffRequest {
     @NotNull private final ConflictedSvnChange myChange;
 
     public SvnTreeConflictDiffRequest(@NotNull ConflictedSvnChange change) {
@@ -66,10 +66,6 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
     @Override
     public String getTitle() {
       return ChangeDiffRequestPresentable.getRequestTitle(myChange);
-    }
-
-    @Override
-    public void onAssigned(boolean isAssigned) {
     }
   }
 

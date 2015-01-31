@@ -15,14 +15,13 @@
  */
 package com.intellij.openapi.util.diff.requests;
 
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.util.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface DiffRequest extends UserDataHolder {
+public abstract class DiffRequest extends UserDataHolderBase {
   @Nullable
-  String getTitle();
+  public abstract String getTitle();
 
   /*
    * Called when DiffRequest is shown
@@ -34,5 +33,6 @@ public interface DiffRequest extends UserDataHolder {
    *                   Total number of calls with true should be same as for false
    */
   @CalledInAwt
-  void onAssigned(boolean isAssigned);
+  public void onAssigned(boolean isAssigned) {
+  }
 }

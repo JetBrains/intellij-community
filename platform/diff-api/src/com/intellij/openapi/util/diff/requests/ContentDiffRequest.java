@@ -22,14 +22,14 @@ import org.jetbrains.annotations.NotNull;
  * 2 contents: left - right (before - after)
  * 3 contents: left - middle - right (local - base - server)
  */
-public interface ContentDiffRequest extends DiffRequest {
+public abstract class ContentDiffRequest extends DiffRequest {
   @NotNull
-  DiffContent[] getContents();
+  public abstract DiffContent[] getContents();
 
   /**
    * @return contents names. Should have same length as {@link #getContents()}
    * Titles could be null.
    */
   @NotNull
-  String[] getContentTitles();
+  public abstract String[] getContentTitles();
 }

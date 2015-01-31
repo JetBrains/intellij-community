@@ -19,7 +19,7 @@ import com.intellij.openapi.util.diff.contents.DiffContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SimpleDiffRequest extends DiffRequestBase implements ContentDiffRequest {
+public class SimpleDiffRequest extends ContentDiffRequest {
   @Nullable private final String myTitle;
   @NotNull private final DiffContent[] myContents;
   @NotNull private final String[] myContentTitles;

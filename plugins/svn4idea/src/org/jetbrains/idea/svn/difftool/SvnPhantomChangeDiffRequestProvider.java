@@ -39,7 +39,7 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
     return new SvnPhantomDiffRequest(presentable.getChange());
   }
 
-  public static class SvnPhantomDiffRequest extends UserDataHolderBase implements DiffRequest {
+  public static class SvnPhantomDiffRequest extends DiffRequest {
     @NotNull private final Change myChange;
 
     public SvnPhantomDiffRequest(@NotNull Change change) {
@@ -50,10 +50,6 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
     @Override
     public String getTitle() {
       return ChangeDiffRequestPresentable.getRequestTitle(myChange);
-    }
-
-    @Override
-    public void onAssigned(boolean isAssigned) {
     }
   }
 
