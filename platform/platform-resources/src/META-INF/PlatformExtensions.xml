@@ -84,9 +84,9 @@
     <applicationService serviceInterface="com.intellij.diff.DiffManager"
                         serviceImplementation="com.intellij.diff.DiffManagerImpl"/>
     <applicationService serviceInterface="com.intellij.diff.DiffContentFactory"
-                        serviceImplementation="com.intellij.diff.impl.DiffContentFactoryImpl"/>
+                        serviceImplementation="com.intellij.diff.DiffContentFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.diff.DiffRequestFactory"
-                        serviceImplementation="com.intellij.diff.impl.DiffRequestFactoryImpl"/>
+                        serviceImplementation="com.intellij.diff.DiffRequestFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.diff.comparison.ComparisonManager"
                         serviceImplementation="com.intellij.diff.comparison.ComparisonManagerImpl"/>
     <applicationService serviceInterface="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"

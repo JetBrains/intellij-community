@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.impl;
+package com.intellij.diff;
 
-import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
