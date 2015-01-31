@@ -61,6 +61,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TIntFunction;
+import org.intellij.lang.annotations.CalledInAwt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

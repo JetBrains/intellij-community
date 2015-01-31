@@ -50,7 +50,7 @@ import com.intellij.openapi.util.diff.tools.util.*;
 import com.intellij.openapi.util.diff.tools.util.FoldingModelSupport.SimpleFoldingModel;
 import com.intellij.openapi.util.diff.tools.util.base.HighlightPolicy;
 import com.intellij.openapi.util.diff.tools.util.twoside.TwosideTextDiffViewer;
-import com.intellij.openapi.util.diff.util.CalledInAwt;
+import org.intellij.lang.annotations.CalledInAwt;
 import com.intellij.openapi.util.diff.util.DiffDividerDrawUtil;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys.ScrollToPolicy;
 import com.intellij.openapi.util.diff.util.DiffUtil;

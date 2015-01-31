@@ -18,7 +18,7 @@ package com.intellij.openapi.util.diff.contents;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
-import com.intellij.openapi.util.diff.util.CalledInAwt;
+import org.intellij.lang.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nullable;
 
 /**

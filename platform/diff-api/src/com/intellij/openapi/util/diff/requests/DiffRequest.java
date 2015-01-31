@@ -16,7 +16,7 @@
 package com.intellij.openapi.util.diff.requests;
 
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.diff.util.CalledInAwt;
+import org.intellij.lang.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class DiffRequest extends UserDataHolderBase {

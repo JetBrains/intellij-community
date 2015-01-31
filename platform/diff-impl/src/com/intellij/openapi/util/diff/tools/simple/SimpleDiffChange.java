@@ -27,6 +27,7 @@ import com.intellij.openapi.util.diff.fragments.DiffFragment;
 import com.intellij.openapi.util.diff.fragments.FineLineFragment;
 import com.intellij.openapi.util.diff.fragments.LineFragment;
 import com.intellij.openapi.util.diff.util.*;
+import org.intellij.lang.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

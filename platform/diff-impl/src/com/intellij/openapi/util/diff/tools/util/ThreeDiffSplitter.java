@@ -16,7 +16,7 @@
 package com.intellij.openapi.util.diff.tools.util;
 
 import com.intellij.openapi.util.diff.tools.util.DiffSplitter.Painter;
-import com.intellij.openapi.util.diff.util.CalledInAwt;
+import org.intellij.lang.annotations.CalledInAwt;
 import com.intellij.openapi.util.diff.util.Side;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.openapi.util.diff.util;
+package org.intellij.lang.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,9 +22,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to indicate that a method should be called in AWT thread
+ * Used to indicate that a method should be called holding read lock
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.METHOD})
-public @interface CalledInAwt {
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+public @interface CalledWithReadLock {
 }

@@ -24,7 +24,7 @@ import com.intellij.openapi.util.diff.contents.BinaryFileContent;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
-import com.intellij.openapi.util.diff.util.CalledInAwt;
+import org.intellij.lang.annotations.CalledInAwt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.openapi.util.diff.util;
+package org.intellij.lang.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,6 +25,6 @@ import java.lang.annotation.Target;
  * Used to indicate that a method should be called holding write lock
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.METHOD})
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
 public @interface CalledWithWriteLock {
 }
