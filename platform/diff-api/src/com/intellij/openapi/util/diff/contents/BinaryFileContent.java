@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public interface BinaryFileContent extends DiffContent, FileContent {
+public interface BinaryFileContent extends FileContent {
   /**
    * @return Binary representation of content.
    */

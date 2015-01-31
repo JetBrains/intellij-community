@@ -18,7 +18,7 @@ package com.intellij.openapi.util.diff.contents;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface FileContent {
+public interface FileContent extends DiffContent {
   /**
    * @return VirtualFile from which this content gets data.
    */
