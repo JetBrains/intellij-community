@@ -84,8 +84,6 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
-    myMiniDetailsGetter = new MiniDetailsGetter(this, logProviders);
-    myDetailsGetter = new CommitDetailsGetter(this, logProviders);
     mySettings = settings;
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
@@ -95,6 +93,8 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     catch (IOException e) {
       throw new RuntimeException(e); // TODO: show a message to the user & fallback to using in-memory Hashes
     }
+    myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
+    myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
 
     myFilterer = new VcsLogFiltererImpl(myProject, myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter,
