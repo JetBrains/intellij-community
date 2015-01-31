@@ -237,7 +237,7 @@ private fun <T, R> Iterable<T>.map2(transform: (Int, T) -> R): List<R> {
 class TestPermanentGraphInfo(
     val graph: LinearGraph,
     vararg val headsOrder: Int = IntArray(0),
-    val branchNodes: Set<Int> = emptySet()
+    val branchNodes: Set<Int> = setOf()
 ) : PermanentGraphInfo<Int> {
 
   val commitInfo = object : PermanentCommitsInfo<Int> {
