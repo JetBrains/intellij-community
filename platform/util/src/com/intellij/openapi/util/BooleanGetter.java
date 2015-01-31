@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util.diff.util;
+package com.intellij.openapi.util;
 
 public interface BooleanGetter {
   BooleanGetter TRUE = new BooleanGetter() {
     @Override
     public boolean get() {
       return true;
+    }
+  };
+
+  BooleanGetter FALSE = new BooleanGetter() {
+    @Override
+    public boolean get() {
+      return false;
     }
   };
 

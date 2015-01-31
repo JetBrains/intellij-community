@@ -17,6 +17,7 @@ package com.intellij.openapi.util.diff.util;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
