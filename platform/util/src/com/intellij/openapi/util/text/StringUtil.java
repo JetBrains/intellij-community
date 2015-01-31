@@ -1511,7 +1511,7 @@ public class StringUtil extends StringUtilRt {
       final int to = len > 1 && isQuoteAt(text, len - 1) ? len - 1 : len;
       if (from > 0 || to < len) {
         return text.substring(from, to);
-      };
+      }
     }
     return text;
   }
@@ -2950,6 +2950,16 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static char toLowerCase(final char a) {
     return StringUtilRt.toLowerCase(a);
+  }
+
+  @Nullable
+  public static LineSeparator detectSeparators(@NotNull CharSequence text) {
+    int index = indexOfAny(text, "\n\r");
+    if (index == -1) return null;
+    if (startsWith(text, index, "\r\n")) return LineSeparator.CRLF;
+    if (text.charAt(index) == '\r') return LineSeparator.CR;
+    if (text.charAt(index) == '\n') return LineSeparator.LF;
+    throw new IllegalStateException();
   }
 
   @NotNull

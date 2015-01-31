@@ -26,13 +26,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.BinaryLightVirtualFile;
-import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,9 +50,9 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   @Override
   @NotNull
   public DocumentContent create(@NotNull String text, @Nullable FileType type) {
-    Pair<Document, LineSeparator> pair = buildDocument(text);
-    pair.first.setReadOnly(true);
-    return new DocumentContentImpl(pair.first, type, null, null, null);
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text));
+    document.setReadOnly(true);
+    return new DocumentContentImpl(document, type, null, null, null);
   }
 
   @Override
@@ -135,10 +133,10 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   }
 
   @NotNull
-  public VirtualFile createTemporalFile(@Nullable Project project,
-                                        @NotNull String prefix,
-                                        @NotNull String suffix,
-                                        @NotNull byte[] content) throws IOException {
+  public static VirtualFile createTemporalFile(@Nullable Project project,
+                                               @NotNull String prefix,
+                                               @NotNull String suffix,
+                                               @NotNull byte[] content) throws IOException {
     File tempFile = FileUtil.createTempFile(prefix + "_", "_" + suffix, true);
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
@@ -148,85 +146,5 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
       throw new IOException("Can't create temp file for revision content");
     }
     return file;
-  }
-
-  @Override
-  @NotNull
-  public Pair<Document, LineSeparator> buildDocument(@NotNull String text) {
-    Pair<String, LineSeparator> pair = convertLineSeparators(text);
-    Document document = EditorFactory.getInstance().createDocument(pair.getFirst());
-    return Pair.create(document, pair.getSecond());
-  }
-
-  @NotNull
-  private static Pair<String, LineSeparator> convertLineSeparators(@NotNull String text) {
-    StringBuilder builder = null;
-
-    // TODO: remove duplication with LoadTextUtil
-
-    char prev = ' ';
-    int crCount = 0;
-    int lfCount = 0;
-    int crlfCount = 0;
-
-    final int length = text.length();
-
-    for (int src = 0; src < length; src++) {
-      char c = text.charAt(src);
-      switch (c) {
-        case '\r':
-          if (builder == null) {
-            builder = new StringBuilder(text.length());
-            builder.append(text, 0, src);
-          }
-          builder.append('\n');
-          crCount++;
-          break;
-        case '\n':
-          if (prev == '\r') {
-            crCount--;
-            crlfCount++;
-          }
-          else {
-            if (builder != null) builder.append('\n');
-            lfCount++;
-          }
-          break;
-        default:
-          if (builder != null) builder.append(c);
-          break;
-      }
-      prev = c;
-    }
-
-    LineSeparator separator;
-    if (crCount == 0 && lfCount == 0 && crlfCount == 0) {
-      separator = null;
-    }
-    else if (lfCount == 0 && crlfCount == 0) {
-      separator = LineSeparator.CR;
-    }
-    else if (crCount == 0 && crlfCount == 0) {
-      separator = LineSeparator.LF;
-    }
-    else if (crCount == 0 && lfCount == 0) {
-      separator = LineSeparator.CRLF;
-    }
-    else if (crlfCount > crCount && crlfCount > lfCount) {
-      separator = LineSeparator.CRLF;
-    }
-    else if (crCount > lfCount) {
-      separator = LineSeparator.CR;
-    }
-    else if (lfCount > 0) {
-      separator = LineSeparator.LF;
-    }
-    else {
-      separator = null;
-    }
-
-    String result = builder == null ? text : builder.toString();
-
-    return Pair.create(result, separator);
   }
 }

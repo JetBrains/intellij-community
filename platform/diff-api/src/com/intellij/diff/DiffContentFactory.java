@@ -68,7 +68,4 @@ public abstract class DiffContentFactory {
                                            @NotNull String name,
                                            @NotNull FileType type,
                                            @NotNull byte[] content) throws IOException;
-
-  @NotNull
-  public abstract Pair<Document, LineSeparator> buildDocument(@NotNull String text);
 }

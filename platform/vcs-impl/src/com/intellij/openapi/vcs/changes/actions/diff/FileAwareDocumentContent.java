@@ -1,15 +1,15 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
-import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContentImpl;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,9 +63,10 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
                                     @Nullable FileType fileType,
                                     @Nullable VirtualFile file,
                                     @Nullable Charset charset) {
-    Pair<Document, LineSeparator> pair = DiffContentFactory.getInstance().buildDocument(content);
-    pair.first.setReadOnly(true);
+    LineSeparator separator = StringUtil.detectSeparators(content);
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(content));
+    document.setReadOnly(true);
     if (FileTypes.UNKNOWN.equals(fileType)) fileType = PlainTextFileType.INSTANCE;
-    return new FileAwareDocumentContent(project, pair.first, fileType, file, pair.second, charset);
+    return new FileAwareDocumentContent(project, document, fileType, file, separator, charset);
   }
 }
