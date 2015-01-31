@@ -354,6 +354,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNewParameterizedReferenceOnRawType() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
