@@ -18,12 +18,11 @@ package com.intellij.openapi.util.diff.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.DiffRequestPanel;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.NoDiffRequest;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +50,12 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
   @Override
   public void setRequest(@Nullable DiffRequest request) {
     myProcessor.setRequest(request);
-    myProcessor.updateRequest();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myProcessor.updateRequest();
+      }
+    });
   }
 
   @Override
