@@ -16,16 +16,16 @@
 package com.intellij.diff;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.Nullable;
 
-public interface DiffContext extends UserDataHolder {
+public abstract class DiffContext extends UserDataHolderBase {
   @Nullable
-  Project getProject();
+  public abstract Project getProject();
 
-  boolean isWindowFocused();
+  public abstract boolean isWindowFocused();
 
-  boolean isFocused();
+  public abstract boolean isFocused();
 
-  void requestFocus();
+  public abstract void requestFocus();
 }

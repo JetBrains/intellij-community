@@ -1,5 +1,15 @@
 package org.jetbrains.idea.svn.difftool;
 
+import com.intellij.diff.DiffContext;
+import com.intellij.diff.FrameDiffTool.DiffViewer;
+import com.intellij.diff.FrameDiffTool.ToolbarComponents;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.impl.ModifiablePanel;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.ErrorDiffRequest;
+import com.intellij.diff.tools.ErrorDiffTool;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -11,17 +21,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.diff.DiffContext;
-import com.intellij.diff.FrameDiffTool.DiffViewer;
-import com.intellij.diff.FrameDiffTool.ToolbarComponents;
-import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.EmptyContent;
-import com.intellij.diff.impl.ModifiablePanel;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.requests.ErrorDiffRequest;
-import com.intellij.diff.tools.ErrorDiffTool;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -300,7 +299,7 @@ public class SvnDiffViewer implements DiffViewer {
   // Helpers
   //
 
-  private class MyPropertyContext extends UserDataHolderBase implements DiffContext {
+  private class MyPropertyContext extends DiffContext {
     @Nullable
     @Override
     public Project getProject() {

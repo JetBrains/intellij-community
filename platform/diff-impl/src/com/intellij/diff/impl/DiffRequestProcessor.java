@@ -731,7 +731,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private class MyDiffContext implements DiffContext {
+  private class MyDiffContext extends DiffContext {
     @NotNull private final UserDataHolder myContext;
 
     public MyDiffContext(@NotNull UserDataHolder context) {
