@@ -17,6 +17,7 @@ package com.intellij.diff.util;
 
 import com.intellij.diff.tools.util.LineFragmentCache;
 import com.intellij.openapi.diff.DiffNavigationContext;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
 
 import javax.swing.*;
@@ -25,6 +26,9 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   //
   // DiffRequest
   //
+  enum ScrollToPolicy {FIRST_CHANGE, LAST_CHANGE}
+  Key<ScrollToPolicy> SCROLL_TO_CHANGE = Key.create("Diff.ScrollToChange");
+  Key<LogicalPosition[]> EDITORS_CARET_POSITION = Key.create("Diff.EditorsCaretPosition");
 
   Key<DiffNavigationContext> NAVIGATION_CONTEXT = Key.create("Diff.NavigationContext");
   Key<LineFragmentCache> LINE_FRAGMENT_CACHE = Key.create("Diff.LineFragmentCache");
@@ -33,5 +37,6 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   // DiffContext
   //
 
+  Key<String> PLACE = Key.create("Diff.Place");
   Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel"); // Could implement Disposable
 }

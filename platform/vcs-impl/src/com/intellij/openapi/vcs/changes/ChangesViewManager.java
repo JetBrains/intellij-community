@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -563,7 +564,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private class MyChangeProcessor extends CacheChangeProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project);
-      putContextUserData(DiffUserDataKeys.PLACE, DiffPlaces.CHANGES_VIEW);
+      putContextUserData(DiffUserDataKeysEx.PLACE, DiffPlaces.CHANGES_VIEW);
     }
 
     @Override

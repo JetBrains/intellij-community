@@ -26,11 +26,8 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.ThreesideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.TextDiffViewerBase;
-import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUserDataKeys.ScrollToPolicy;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -425,9 +422,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     @Nullable private Pair<ThreeSide, Integer> myScrollToLine;
 
     public void processContext() {
-      myScrollToChange = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_CHANGE);
+      myScrollToChange = myRequest.getUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE);
       myEditorsPosition = myRequest.getUserData(EditorsPosition.KEY);
-      myCaretPosition = myRequest.getUserData(DiffUserDataKeys.EDITORS_CARET_POSITION);
+      myCaretPosition = myRequest.getUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION);
       myScrollToLine = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_LINE_THREESIDE);
     }
 
@@ -444,9 +441,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
       EditorsPosition editorsPosition = new EditorsPosition(carets, points);
 
-      myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
+      myRequest.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, null);
       myRequest.putUserData(EditorsPosition.KEY, editorsPosition);
-      myRequest.putUserData(DiffUserDataKeys.EDITORS_CARET_POSITION, carets);
+      myRequest.putUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION, carets);
       myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_LINE_THREESIDE, null);
     }
 

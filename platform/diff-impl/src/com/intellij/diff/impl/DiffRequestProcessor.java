@@ -30,7 +30,7 @@ import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
@@ -221,7 +221,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     boolean hadFocus = isFocused();
     if (!force && request == myActiveRequest) return;
 
-    request.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, scrollToChangePolicy);
+    request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, scrollToChangePolicy);
 
     myState.destroy();
     myToolbarStatusPanel.setContent(null);

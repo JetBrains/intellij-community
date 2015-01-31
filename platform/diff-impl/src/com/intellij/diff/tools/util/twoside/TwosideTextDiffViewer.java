@@ -27,7 +27,7 @@ import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
@@ -451,9 +451,9 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     @Nullable private DiffNavigationContext myNavigationContext;
 
     public void processContext() {
-      myScrollToChange = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_CHANGE);
+      myScrollToChange = myRequest.getUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE);
       myEditorsPosition = myRequest.getUserData(EditorsPosition.KEY);
-      myCaretPosition = myRequest.getUserData(DiffUserDataKeys.EDITORS_CARET_POSITION);
+      myCaretPosition = myRequest.getUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION);
       myScrollToLine = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_LINE);
       myNavigationContext = myRequest.getUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT);
     }
@@ -468,9 +468,9 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
       EditorsPosition editorsPosition = new EditorsPosition(carets, point1, point2);
 
-      myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_CHANGE, null);
+      myRequest.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, null);
       myRequest.putUserData(EditorsPosition.KEY, editorsPosition);
-      myRequest.putUserData(DiffUserDataKeys.EDITORS_CARET_POSITION, carets);
+      myRequest.putUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION, carets);
       myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, null);
       myRequest.putUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT, null);
     }

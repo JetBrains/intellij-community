@@ -18,7 +18,7 @@ package com.intellij.diff.impl;
 import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.NoDiffRequest;
-import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -95,7 +95,7 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
     }
 
     @Override
-    public void updateRequest(boolean force, @Nullable DiffUserDataKeys.ScrollToPolicy scrollToChangePolicy) {
+    public void updateRequest(boolean force, @Nullable DiffUserDataKeysEx.ScrollToPolicy scrollToChangePolicy) {
       applyRequest(myRequest, force, scrollToChangePolicy);
     }
 

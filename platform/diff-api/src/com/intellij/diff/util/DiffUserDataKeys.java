@@ -28,18 +28,14 @@ public interface DiffUserDataKeys {
   // DiffRequest
   //
 
-  enum ScrollToPolicy {FIRST_CHANGE, LAST_CHANGE}
-  Key<ScrollToPolicy> SCROLL_TO_CHANGE = Key.create("Diff.ScrollToChange");
   Key<Pair<Side, Integer>> SCROLL_TO_LINE = Key.create("Diff.ScrollToLine");
   Key<Pair<ThreeSide, Integer>> SCROLL_TO_LINE_THREESIDE = Key.create("Diff.ScrollToLineThreeside");
-  Key<LogicalPosition[]> EDITORS_CARET_POSITION = Key.create("Diff.EditorsCaretPosition");
+
   Key<String> HELP_ID = Key.create("Diff.HelpId");
   Key<boolean[]> FORCE_READ_ONLY_CONTENTS = Key.create("Diff.ForceReadOnlyContents");
 
   //
   // DiffContext
-  //
-  // User data from DiffRequestChain is passed to DiffContext
   //
 
   Key<Side> MASTER_SIDE = Key.create("Diff.MasterSide");
@@ -48,8 +44,6 @@ public interface DiffUserDataKeys {
 
   Key<Boolean> DO_NOT_IGNORE_WHITESPACES = Key.create("Diff.DoNotIgnoreWhitespaces");
   Key<String> DIALOG_GROUP_KEY = Key.create("Diff.DialogGroupKey");
-
-  Key<String> PLACE = Key.create("Diff.Place");
 
   //
   // DiffContext / DiffRequest

@@ -34,7 +34,7 @@ import com.intellij.diff.tools.util.FoldingModelSupport.SimpleThreesideFoldingMo
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.threeside.ThreesideTextDiffViewer;
 import com.intellij.diff.util.DiffDividerDrawUtil;
-import com.intellij.diff.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;

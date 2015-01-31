@@ -31,7 +31,7 @@ import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import org.intellij.lang.annotations.CalledInBackground;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUserDataKeys.ScrollToPolicy;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.WaitingBackgroundableTaskExecutor;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestPresentable;
 import com.intellij.util.containers.Convertor;

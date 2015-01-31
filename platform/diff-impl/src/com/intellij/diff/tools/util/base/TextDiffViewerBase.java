@@ -20,6 +20,7 @@ import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
@@ -126,7 +127,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
   private static TextDiffSettings initTextSettings(@NotNull DiffContext context) {
     TextDiffSettings settings = context.getUserData(TextDiffSettingsHolder.KEY);
     if (settings == null) {
-      settings = TextDiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
+      settings = TextDiffSettings.getSettings(context.getUserData(DiffUserDataKeysEx.PLACE));
       context.putUserData(TextDiffSettingsHolder.KEY, settings);
       if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, context)) {
         settings.setIgnorePolicy(IgnorePolicy.DEFAULT);

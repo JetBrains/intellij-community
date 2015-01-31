@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -1380,7 +1381,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       super(project);
 
       putContextUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
-      putContextUserData(DiffUserDataKeys.PLACE, DiffPlaces.COMMIT_DIALOG);
+      putContextUserData(DiffUserDataKeysEx.PLACE, DiffPlaces.COMMIT_DIALOG);
     }
 
     @NotNull
