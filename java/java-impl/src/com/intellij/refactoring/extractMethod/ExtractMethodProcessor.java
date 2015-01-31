@@ -637,7 +637,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     prepareMethodBody(emptyMethod, false);
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
-      .findClass(manager.getDefaultNullable(), GlobalSearchScope.allScope(myProject));
+      .findClass(manager.getDefaultNullable(), myElements[0].getResolveScope());
     if (nullableAnnotationClass != null) {
       if (myNotNullConditionalCheck || myNullConditionalCheck) {
         return Nullness.NULLABLE;
