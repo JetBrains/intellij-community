@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.diff.impl.DiffRequestFactory;
+import com.intellij.openapi.util.diff.DiffRequestFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -69,10 +69,10 @@ public class CompareFilesAction extends BaseShowDiffAction {
       VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, data[0]);
 
       if (result.length != 1 || result[0] == null) return null;
-      return DiffRequestFactory.createFromFile(project, data[0], result[0]);
+      return DiffRequestFactory.getInstance().createFromFile(project, data[0], result[0]);
     }
     else {
-      return DiffRequestFactory.createFromFile(project, data[0], data[1]);
+      return DiffRequestFactory.getInstance().createFromFile(project, data[0], data[1]);
     }
   }
 

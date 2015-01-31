@@ -28,7 +28,7 @@ import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
@@ -74,7 +74,7 @@ public abstract class DiffActionExecutor {
       final byte[] content = ((BinaryContentRevision)fileRevision).getBinaryContent();
       if (content == null) return null;
 
-      return DiffContentFactory.createBinary(myProject, filePath.getName(), filePath.getFileType(), content);
+      return DiffContentFactory.getInstance().createBinary(myProject, filePath.getName(), filePath.getFileType(), content);
     }
 
     if (fileRevision != null) {
@@ -104,7 +104,7 @@ public abstract class DiffActionExecutor {
           }
           DiffContent content1 = createRemote(revisionNumber);
           if (content1 == null) return;
-          DiffContent content2 = DiffContentFactory.create(myProject, mySelectedFile);
+          DiffContent content2 = DiffContentFactory.getInstance().create(myProject, mySelectedFile);
 
           String title = mySelectedFile.getPresentableUrl();
 
@@ -234,7 +234,7 @@ public abstract class DiffActionExecutor {
       if (myFileStillExists) {
         return super.createRemote(revisionNumber);
       } else {
-        return DiffContentFactory.createEmpty();
+        return DiffContentFactory.getInstance().createEmpty();
       }
     }
   }

@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.impl.DiffRequestFactory;
+import com.intellij.openapi.util.diff.DiffRequestFactory;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
@@ -88,7 +88,7 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
 
     assert selectedFile != null && currentFile != null;
 
-    ContentDiffRequest request = DiffRequestFactory.createFromFile(project, selectedFile, currentFile);
+    ContentDiffRequest request = DiffRequestFactory.getInstance().createFromFile(project, selectedFile, currentFile);
 
     DiffContent editorContent = request.getContents()[1];
     if (editorContent instanceof DocumentContent) {

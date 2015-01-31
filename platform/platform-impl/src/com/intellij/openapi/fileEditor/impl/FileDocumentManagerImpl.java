@@ -46,10 +46,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.DiffRequestPanel;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.impl.DiffContentFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
@@ -673,8 +673,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
           FileType fileType = file.getFileType();
           String fsContent = LoadTextUtil.loadText(file).toString();
-          DocumentContent content1 = DiffContentFactory.create(fsContent, fileType);
-          DocumentContent content2 = DiffContentFactory.create(project, document, file);
+          DocumentContent content1 = DiffContentFactory.getInstance().create(fsContent, fileType);
+          DocumentContent content2 = DiffContentFactory.getInstance().create(project, document, file);
           String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
           String title1 = UIBundle.message("file.cache.conflict.diff.content.file.system.content");
           String title2 = UIBundle.message("file.cache.conflict.diff.content.memory.content");

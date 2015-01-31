@@ -25,8 +25,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.impl.DiffContentFactory;
-import com.intellij.openapi.util.diff.impl.DiffRequestFactory;
+import com.intellij.openapi.util.diff.DiffContentFactory;
+import com.intellij.openapi.util.diff.DiffRequestFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.util.diff.util.DiffUserDataKeys;
@@ -63,7 +63,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     assert editor != null;
 
     DocumentContent content2 = createContent(project, editor);
-    DocumentContent content1 = DiffContentFactory.createClipboardContent(content2);
+    DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(content2);
 
     String title1 = DiffBundle.message("diff.content.clipboard.content.title");
     String title2 = createContentTitle(editor);
@@ -79,7 +79,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
 
   @NotNull
   private static DocumentContent createContent(@NotNull Project project, @NotNull Editor editor) {
-    DocumentContent content = DiffContentFactory.create(project, editor.getDocument());
+    DocumentContent content = DiffContentFactory.getInstance().create(project, editor.getDocument());
 
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
@@ -93,7 +93,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @NotNull
   private static String createContentTitle(@NotNull Editor editor) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    String title = file != null ? DiffRequestFactory.getVirtualFileContentTitle(file) : "Editor";
+    String title = file != null ? DiffRequestFactory.getInstance().getVirtualFileContentTitle(file) : "Editor";
 
     if (editor.getSelectionModel().hasSelection()) {
       title = DiffBundle.message("diff.content.selection.from.file.content.title", title);

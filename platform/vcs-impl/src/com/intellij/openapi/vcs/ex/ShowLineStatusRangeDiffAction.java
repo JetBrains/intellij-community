@@ -26,7 +26,7 @@ import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.actions.DocumentFragmentContent;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -69,7 +69,7 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
   @NotNull
   private DiffContent createDiffContent(@NotNull Document document, @NotNull TextRange textRange, @Nullable VirtualFile file) {
     final Project project = myLineStatusTracker.getProject();
-    DocumentContent content = DiffContentFactory.create(project, document, file);
+    DocumentContent content = DiffContentFactory.getInstance().create(project, document, file);
     return new DocumentFragmentContent(project, content, textRange);
   }
 

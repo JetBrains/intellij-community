@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.contents.DiffContent;
-import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.vcs.FilePath;
@@ -81,8 +81,8 @@ public class VcsHistoryUtil {
    * @param filePath  file which revisions are compared.
    * @param revision1 first revision - 'before', to the left.
    * @param revision2 second revision - 'after', to the right.
-   * @throws com.intellij.openapi.vcs.VcsException
-   * @throws java.io.IOException
+   * @throws VcsException
+   * @throws IOException
    */
   public static void showDiff(@NotNull final Project project, @NotNull FilePath filePath,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
@@ -134,13 +134,13 @@ public class VcsHistoryUtil {
                                            @NotNull FilePath filePath) throws IOException {
     if (isCurrent(revision)) {
       VirtualFile file = filePath.getVirtualFile();
-      if (file != null) return DiffContentFactory.create(project, file);
+      if (file != null) return DiffContentFactory.getInstance().create(project, file);
     }
     if (isEmpty(revision)) {
-      return DiffContentFactory.createEmpty();
+      return DiffContentFactory.getInstance().createEmpty();
     }
     if (filePath.getFileType().isBinary()) {
-      return DiffContentFactory.createBinary(project, filePath.getName(), filePath.getFileType(), content);
+      return DiffContentFactory.getInstance().createBinary(project, filePath.getName(), filePath.getFileType(), content);
     }
     String text = CharsetToolkit.bytesToString(content, filePath.getCharset());
     return FileAwareDocumentContent.create(project, text, filePath);

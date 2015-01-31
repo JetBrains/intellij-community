@@ -83,6 +83,10 @@
                         serviceImplementation="com.intellij.openapi.diff.impl.external.DiffManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.util.diff.DiffManager"
                         serviceImplementation="com.intellij.openapi.util.diff.DiffManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.util.diff.DiffContentFactory"
+                        serviceImplementation="com.intellij.openapi.util.diff.impl.DiffContentFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.util.diff.DiffRequestFactory"
+                        serviceImplementation="com.intellij.openapi.util.diff.impl.DiffRequestFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.util.diff.tools.util.base.TextDiffSettingsHolder"
                         serviceImplementation="com.intellij.openapi.util.diff.tools.util.base.TextDiffSettingsHolder"/>
     <applicationService serviceInterface="com.intellij.openapi.util.diff.tools.external.ExternalDiffSettings"

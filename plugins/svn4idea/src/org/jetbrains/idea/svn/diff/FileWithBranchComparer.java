@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManager;
 import com.intellij.openapi.util.diff.contents.DiffContent;
-import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.vcs.VcsException;
@@ -77,7 +77,7 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
 
       String contentText = CharsetToolkit.bytesToString(content.get(), myVirtualFile.getCharset());
       DiffContent content1 = FileAwareDocumentContent.create(myProject, contentText, myVirtualFile);
-      DiffContent content2 = DiffContentFactory.create(myProject, myVirtualFile);
+      DiffContent content2 = DiffContentFactory.getInstance().create(myProject, myVirtualFile);
 
       DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
 

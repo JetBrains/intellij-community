@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.diff.DiffDialogHints;
 import com.intellij.openapi.util.diff.DiffManagerEx;
-import com.intellij.openapi.util.diff.impl.DiffRequestFactory;
+import com.intellij.openapi.util.diff.DiffRequestFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ public class DiffApplication extends ApplicationStarterBase {
 
     file1.refresh(false, true);
     file2.refresh(false, true);
-    DiffRequest request = DiffRequestFactory.createFromFile(null, file1, file2);
+    DiffRequest request = DiffRequestFactory.getInstance().createFromFile(null, file1, file2);
 
     DiffManagerEx.getInstance().showDiffBuiltin(null, request, DiffDialogHints.MODAL);
   }

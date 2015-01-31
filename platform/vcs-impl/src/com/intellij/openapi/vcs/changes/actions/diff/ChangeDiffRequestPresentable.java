@@ -33,7 +33,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentable;
 import com.intellij.openapi.util.diff.chains.DiffRequestPresentableException;
 import com.intellij.openapi.util.diff.contents.DiffContent;
-import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.util.diff.impl.DiffViewerWrapper;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
@@ -401,12 +401,12 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     try {
       indicator.checkCanceled();
 
-      if (revision == null) return DiffContentFactory.createEmpty();
+      if (revision == null) return DiffContentFactory.getInstance().createEmpty();
 
       if (revision instanceof CurrentContentRevision) {
         VirtualFile vFile = ((CurrentContentRevision)revision).getVirtualFile();
         if (vFile == null) throw new DiffRequestPresentableException("Can't get current revision content");
-        return DiffContentFactory.create(project, vFile);
+        return DiffContentFactory.getInstance().create(project, vFile);
       }
 
       FilePath filePath = revision.getFile();
@@ -419,7 +419,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
         if (content == null) {
           throw new DiffRequestPresentableException("Can't get binary revision content");
         }
-        return DiffContentFactory.createBinary(project, filePath.getName(), filePath.getFileType(), content);
+        return DiffContentFactory.getInstance().createBinary(project, filePath.getName(), filePath.getFileType(), content);
       }
 
       String revisionContent = revision.getContent();
@@ -438,7 +438,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   @NotNull
   public static DiffContent createTextContent(@NotNull byte[] bytes, @NotNull VirtualFile file) {
-    return DiffContentFactory.create(CharsetToolkit.bytesToString(bytes, file.getCharset()), file.getFileType());
+    return DiffContentFactory.getInstance().create(CharsetToolkit.bytesToString(bytes, file.getCharset()), file.getFileType());
   }
 
   public static void checkContentRevision(@NotNull Project project,

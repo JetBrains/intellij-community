@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.diff.actions.DocumentFragmentContent;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.contents.DocumentContent;
-import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
 import com.intellij.psi.PsiDirectory;
@@ -43,18 +43,18 @@ public class PsiDiffContentFactory {
   @Nullable
   private static DiffContent fromPsiElement(@NotNull PsiElement psiElement) {
     if (psiElement instanceof PsiFile) {
-      return DiffContentFactory.create(psiElement.getProject(), ((PsiFile)psiElement).getVirtualFile());
+      return DiffContentFactory.getInstance().create(psiElement.getProject(), ((PsiFile)psiElement).getVirtualFile());
     }
     else if (psiElement instanceof PsiDirectory) {
-      return DiffContentFactory.create(psiElement.getProject(), ((PsiDirectory)psiElement).getVirtualFile());
+      return DiffContentFactory.getInstance().create(psiElement.getProject(), ((PsiDirectory)psiElement).getVirtualFile());
     }
     PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) {
       String text = psiElement.getText();
       if (text == null) return null;
-      return DiffContentFactory.create(text, psiElement.getLanguage().getAssociatedFileType());
+      return DiffContentFactory.getInstance().create(text, psiElement.getLanguage().getAssociatedFileType());
     }
-    DocumentContent wholeFileContent = DiffContentFactory.createDocument(psiElement.getProject(), containingFile.getVirtualFile());
+    DocumentContent wholeFileContent = DiffContentFactory.getInstance().createDocument(psiElement.getProject(), containingFile.getVirtualFile());
     if (wholeFileContent == null) return null;
     return new DocumentFragmentContent(psiElement.getProject(), wholeFileContent, psiElement.getTextRange());
   }

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.diff.contents.DiffContent;
-import com.intellij.openapi.util.diff.impl.DiffContentFactory;
+import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.util.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.util.diff.requests.DiffRequest;
 import com.intellij.openapi.util.diff.requests.ErrorDiffRequest;
@@ -53,17 +53,17 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
       String title1;
       String title2 = ExecutionBundle.message("diff.content.actual.title");
       DiffContent content1;
-      DiffContent content2 = DiffContentFactory.create(hyperlink.getRight(), null);
+      DiffContent content2 = DiffContentFactory.getInstance().create(hyperlink.getRight(), null);
 
       String filePath = hyperlink.getFilePath();
       final VirtualFile vFile;
       if (filePath != null && (vFile = LocalFileSystem.getInstance().findFileByPath(filePath)) != null) {
         title1 = ExecutionBundle.message("diff.content.expected.title") + " (" + vFile.getPresentableUrl() + ")";
-        content1 = DiffContentFactory.create(getProject(), vFile);
+        content1 = DiffContentFactory.getInstance().create(getProject(), vFile);
       }
       else {
         title1 = ExecutionBundle.message("diff.content.expected.title");
-        content1 = DiffContentFactory.create(hyperlink.getLeft(), null);
+        content1 = DiffContentFactory.getInstance().create(hyperlink.getLeft(), null);
       }
 
       return new SimpleDiffRequest(title, content1, content2, title1, title2);

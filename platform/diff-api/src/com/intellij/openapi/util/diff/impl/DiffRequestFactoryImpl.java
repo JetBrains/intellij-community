@@ -17,6 +17,8 @@ package com.intellij.openapi.util.diff.impl;
 
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.diff.DiffContentFactory;
+import com.intellij.openapi.util.diff.DiffRequestFactory;
 import com.intellij.openapi.util.diff.contents.DiffContent;
 import com.intellij.openapi.util.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.util.diff.requests.SimpleDiffRequest;
@@ -25,11 +27,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DiffRequestFactory {
+public class DiffRequestFactoryImpl extends DiffRequestFactory {
+  private DiffContentFactory myContentFactory = DiffContentFactory.getInstance();
+
+  @Override
   @NotNull
-  public static ContentDiffRequest createFromFile(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    DiffContent content1 = DiffContentFactory.create(project, file1);
-    DiffContent content2 = DiffContentFactory.create(project, file2);
+  public ContentDiffRequest createFromFile(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+    DiffContent content1 = myContentFactory.create(project, file1);
+    DiffContent content2 = myContentFactory.create(project, file2);
 
     String title1 = getVirtualFileContentTitle(file1);
     String title2 = getVirtualFileContentTitle(file2);
@@ -40,8 +45,9 @@ public class DiffRequestFactory {
     return new SimpleDiffRequest(title, content1, content2, title1, title2);
   }
 
+  @Override
   @NotNull
-  public static String getVirtualFileContentTitle(@NotNull VirtualFile file) {
+  public String getVirtualFileContentTitle(@NotNull VirtualFile file) {
     String name = file.getName();
     VirtualFile parent = file.getParent();
     if (parent != null) {
@@ -50,10 +56,11 @@ public class DiffRequestFactory {
     return name;
   }
 
+  @Override
   @NotNull
-  public static ContentDiffRequest createClipboardVsValue(@NotNull String value) {
-    DiffContent content1 = DiffContentFactory.createClipboardContent();
-    DiffContent content2 = DiffContentFactory.create(value, null);
+  public ContentDiffRequest createClipboardVsValue(@NotNull String value) {
+    DiffContent content1 = myContentFactory.createClipboardContent();
+    DiffContent content2 = myContentFactory.create(value, null);
 
     String title1 = DiffBundle.message("diff.content.clipboard.content.title");
     String title2 = DiffBundle.message("diff.content.selected.value");

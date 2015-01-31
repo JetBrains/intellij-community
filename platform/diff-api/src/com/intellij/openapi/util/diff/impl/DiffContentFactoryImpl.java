@@ -26,6 +26,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.diff.DiffContentFactory;
 import com.intellij.openapi.util.diff.contents.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,43 +41,49 @@ import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
 
-public class DiffContentFactory {
-  public static final Logger LOG = Logger.getInstance(DiffContentFactory.class);
+public class DiffContentFactoryImpl extends DiffContentFactory {
+  public final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
 
+  @Override
   @NotNull
-  public static EmptyContent createEmpty() {
+  public EmptyContent createEmpty() {
     return new EmptyContent();
   }
 
+  @Override
   @NotNull
-  public static DocumentContent create(@NotNull String text, @Nullable FileType type) {
+  public DocumentContent create(@NotNull String text, @Nullable FileType type) {
     Pair<Document, LineSeparator> pair = buildDocument(text);
     pair.first.setReadOnly(true);
     return new DocumentContentImpl(pair.first, type, null, null, null);
   }
 
+  @Override
   @NotNull
-  public static DocumentContent create(@Nullable Project project, @NotNull Document document) {
+  public DocumentContent create(@Nullable Project project, @NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return create(project, document, file);
   }
 
+  @Override
   @NotNull
-  public static DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile file) {
+  public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile file) {
     if (file != null) return new FileDocumentContentImpl(project, document, file);
     return new DocumentContentImpl(document);
   }
 
+  @Override
   @NotNull
-  public static DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
+  public DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return new DirectoryContentImpl(project, file);
     DocumentContent content = createDocument(project, file);
     if (content != null) return content;
     return new BinaryFileContentImpl(project, file);
   }
 
+  @Override
   @Nullable
-  public static DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
+  public DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
     // TODO: add notification, that file is decompiled ?
     if (file.isDirectory()) return null;
     Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
@@ -89,23 +96,26 @@ public class DiffContentFactory {
     return new FileDocumentContentImpl(project, document, file);
   }
 
+  @Override
   @NotNull
-  public static DiffContent createClipboardContent() {
+  public DiffContent createClipboardContent() {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     return new DocumentContentImpl(new DocumentImpl(StringUtil.notNullize(text)));
   }
 
+  @Override
   @NotNull
-  public static DocumentContent createClipboardContent(@NotNull DocumentContent mainContent) {
+  public DocumentContent createClipboardContent(@NotNull DocumentContent mainContent) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     return new DocumentContentWrapper(mainContent, StringUtil.notNullize(text));
   }
 
+  @Override
   @NotNull
-  public static DiffContent createBinary(@Nullable Project project,
-                                         @NotNull String name,
-                                         @NotNull FileType type,
-                                         @NotNull byte[] content) throws IOException {
+  public DiffContent createBinary(@Nullable Project project,
+                                  @NotNull String name,
+                                  @NotNull FileType type,
+                                  @NotNull byte[] content) throws IOException {
     boolean useTemporalFile = true; // TODO: workaround for Decompiler
     //boolean useTemporalFile = type instanceof ArchiveFileType; // workaround - our JarFileSystem can't process non-local files
 
@@ -126,10 +136,10 @@ public class DiffContentFactory {
   }
 
   @NotNull
-  public static VirtualFile createTemporalFile(@Nullable Project project,
-                                               @NotNull String prefix,
-                                               @NotNull String suffix,
-                                               @NotNull byte[] content) throws IOException {
+  public VirtualFile createTemporalFile(@Nullable Project project,
+                                        @NotNull String prefix,
+                                        @NotNull String suffix,
+                                        @NotNull byte[] content) throws IOException {
     File tempFile = FileUtil.createTempFile(prefix + "_", "_" + suffix, true);
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
@@ -141,8 +151,9 @@ public class DiffContentFactory {
     return file;
   }
 
+  @Override
   @NotNull
-  public static Pair<Document, LineSeparator> buildDocument(@NotNull String text) {
+  public Pair<Document, LineSeparator> buildDocument(@NotNull String text) {
     Pair<String, LineSeparator> pair = convertLineSeparators(text);
     Document document = EditorFactory.getInstance().createDocument(pair.getFirst());
     return Pair.create(document, pair.getSecond());
