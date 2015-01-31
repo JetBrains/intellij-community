@@ -47,7 +47,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogHashMapImpl myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
@@ -59,7 +59,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull private DataPack myDataPack = DataPack.EMPTY;
 
   public VcsLogRefresherImpl(@NotNull final Project project,
-                             @NotNull VcsLogHashMap hashMap,
+                             @NotNull VcsLogHashMapImpl hashMap,
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
                              @NotNull final VcsUserRegistryImpl userRegistry,
                              @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,

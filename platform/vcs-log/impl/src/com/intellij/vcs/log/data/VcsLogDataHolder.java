@@ -68,7 +68,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
 
   private final VcsUserRegistryImpl myUserRegistry;
 
-  private final VcsLogHashMap myHashMap;
+  private final VcsLogHashMapImpl myHashMap;
   private final ContainingBranchesGetter myContainingBranchesGetter;
 
   @NotNull private final VcsLogRefresher myRefresher;
@@ -90,7 +90,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
     try {
-      myHashMap = new VcsLogHashMap(myProject, logProviders);
+      myHashMap = new VcsLogHashMapImpl(myProject, logProviders);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // TODO: show a message to the user & fallback to using in-memory Hashes
@@ -136,7 +136,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  public VcsLogHashMap getHashMap() {
+  public VcsLogHashMapImpl getHashMap() {
     return myHashMap;
   }
 

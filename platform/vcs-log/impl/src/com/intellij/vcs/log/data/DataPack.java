@@ -37,7 +37,7 @@ public class DataPack {
   static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
                         @NotNull Map<VirtualFile, Set<VcsRef>> refs,
                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                        @NotNull VcsLogHashMap hashMap,
+                        @NotNull VcsLogHashMapImpl hashMap,
                         boolean full) {
     RefsModel refsModel = new RefsModel(refs, hashMap.asIndexGetter());
     PermanentGraph<Integer> graph = buildPermanentGraph(commits, refsModel, hashMap.asIndexGetter(), hashMap.asHashGetter(), providers);
