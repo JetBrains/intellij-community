@@ -32,9 +32,7 @@ import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearBekGraph myCompiledGraph;
@@ -70,7 +68,7 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (graphElement instanceof GraphEdge) {
           GraphEdge edge = (GraphEdge)graphElement;
           if (edge.getType() == GraphEdgeType.DOTTED) {
-            return new ExpandedEdgeAnswer(edge, myCompiledGraph.expandEdge(edge));
+            return new ExpandedEdgeAnswer(edge, myCompiledGraph.expandEdge(edge), getDelegateLinearGraphController().getCompiledGraph());
           }
         }
       }
@@ -78,8 +76,9 @@ public class LinearBekController extends CascadeLinearGraphController {
         GraphElement graphElement = action.getAffectedElement().getGraphElement();
         if (graphElement instanceof GraphEdge) {
           GraphEdge edge = (GraphEdge)graphElement;
-          if (edge.getType() == GraphEdgeType.DOTTED){
-            return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, ContainerUtil.set(edge.getUpNodeIndex(), edge.getDownNodeIndex()));
+          if (edge.getType() == GraphEdgeType.DOTTED) {
+            return LinearGraphUtils
+              .createSelectedAnswer(myCompiledGraph, ContainerUtil.set(edge.getUpNodeIndex(), edge.getDownNodeIndex()));
           }
         }
       }
@@ -146,17 +145,19 @@ public class LinearBekController extends CascadeLinearGraphController {
   }
 
   private static class ExpandedEdgeAnswer extends LinearGraphAnswer {
-    private ExpandedEdgeAnswer(@NotNull GraphEdge expanded, @NotNull Collection<GraphEdge> addedEdges) {
-      super(calculateChanges(expanded, addedEdges), null, null, null); // TODO
-      calculateChanges(expanded, addedEdges);
+    private ExpandedEdgeAnswer(@NotNull GraphEdge expanded, @NotNull Collection<GraphEdge> addedEdges, LinearGraph delegateGraph) {
+      super(calculateChanges(expanded, addedEdges, delegateGraph), null, null, null); // TODO
+      calculateChanges(expanded, addedEdges, delegateGraph);
     }
 
-    private static GraphChanges<Integer> calculateChanges(GraphEdge expanded, Collection<GraphEdge> addedEdges) {
+    private static GraphChanges<Integer> calculateChanges(GraphEdge expanded, Collection<GraphEdge> addedEdges, LinearGraph delegateGraph) {
       final Set<GraphChanges.Edge<Integer>> edgeChanges = ContainerUtil.newHashSet();
 
-      edgeChanges.add(new ChangedEdge(expanded.getUpNodeIndex(), expanded.getDownNodeIndex(), true));
+      edgeChanges.add(
+        new ChangedEdge(delegateGraph.getNodeId(expanded.getUpNodeIndex()), delegateGraph.getNodeId(expanded.getDownNodeIndex()), true));
       for (GraphEdge edge : addedEdges) {
-        edgeChanges.add(new ChangedEdge(edge.getUpNodeIndex(), edge.getDownNodeIndex(), false));
+        edgeChanges
+          .add(new ChangedEdge(delegateGraph.getNodeId(edge.getUpNodeIndex()), delegateGraph.getNodeId(edge.getDownNodeIndex()), false));
       }
 
       return new GraphChanges<Integer>() {

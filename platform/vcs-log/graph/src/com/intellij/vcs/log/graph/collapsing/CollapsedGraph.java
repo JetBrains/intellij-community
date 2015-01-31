@@ -15,13 +15,10 @@
  */
 package com.intellij.vcs.log.graph.collapsing;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
@@ -187,6 +184,12 @@ public class CollapsedGraph {
     boolean isNodeHidden(int nodeIndex) {
       assert myProgress == COLLECTING;
       return myNodesToHide.contains(nodeIndex);
+    }
+
+    /*package private*/
+    boolean isNodeShown(int nodeIndex) {
+      assert myProgress == COLLECTING;
+      return myNodesToShow.contains(nodeIndex);
     }
 
     public void apply() {

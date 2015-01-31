@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph;
 import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator;
@@ -38,6 +39,22 @@ public class FilterLinearGraphController extends CascadeLinearGraphController {
 
     myCollapsedGraph = CollapsedGraph.newInstance(delegateLinearGraphController.getCompiledGraph(), initVisibility);
     DottedFilterEdgesGenerator.update(myCollapsedGraph, 0, myCollapsedGraph.getDelegatedGraph().nodesCount() - 1);
+  }
+
+  @NotNull
+  @Override
+  public LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphAction action) {
+    // filter prohibits any actions on delegate graph for now
+    LinearGraphAnswer answer = performAction(action);
+    if (answer != null) return answer;
+    return LinearGraphUtils.DEFAULT_GRAPH_ANSWER;
+  }
+
+  @Nullable
+  @Override
+  protected GraphElement convert(@NotNull GraphElement graphElement) {
+    // filter prohibits any actions on delegate graph for now
+    return null;
   }
 
   @NotNull
