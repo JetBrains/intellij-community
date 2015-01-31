@@ -19,6 +19,7 @@ import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
@@ -60,6 +61,22 @@ public class BekBaseLinearGraphController extends CascadeLinearGraphController {
   @NotNull
   public BekIntMap getBekIntMap() {
     return myBekIntMap;
+  }
+
+  @Nullable
+  @Override
+  protected GraphElement convert(@NotNull GraphElement graphElement) {
+    if (graphElement instanceof GraphEdge) {
+      Integer upIndex = ((GraphEdge)graphElement).getUpNodeIndex();
+      Integer downIndex = ((GraphEdge)graphElement).getDownNodeIndex();
+      Integer convertedUpIndex = upIndex == null ? null : myBekIntMap.getUsualIndex(upIndex);
+      Integer convertedDownIndex = downIndex == null ? null : myBekIntMap.getUsualIndex(downIndex);
+
+      return new GraphEdge(convertedUpIndex, convertedDownIndex, ((GraphEdge)graphElement).getTargetId(), ((GraphEdge)graphElement).getType());
+    } else if (graphElement instanceof GraphNode) {
+      return new GraphNode(myBekIntMap.getUsualIndex((((GraphNode)graphElement).getNodeIndex())), ((GraphNode)graphElement).getType());
+    }
+    return null;
   }
 
   @NotNull

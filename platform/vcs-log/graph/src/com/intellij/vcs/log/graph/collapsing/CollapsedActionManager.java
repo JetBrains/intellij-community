@@ -62,7 +62,6 @@ class CollapsedActionManager {
     return null;
   }
 
-  @Nullable
   private static boolean isForDelegateGraph(@NotNull ActionContext context) {
     GraphElement affectedGraphElement = context.getAffectedGraphElement();
     if (affectedGraphElement == null) return false;
@@ -76,6 +75,39 @@ class CollapsedActionManager {
     }
     return false;
   }
+
+  public static void expandNodes(@NotNull final CollapsedGraph collapsedGraph, Set<Integer> nodesToShow) {
+
+    FragmentGenerator generator =
+      new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(collapsedGraph.getDelegatedGraph()), new Condition<Integer>() {
+        @Override
+        public boolean value(Integer nodeIndex) {
+          return collapsedGraph.isNodeVisible(nodeIndex);
+        }
+      });
+
+    CollapsedGraph.Modification modification = collapsedGraph.startModification();
+
+    for (Integer nodeToShow : nodesToShow) {
+      if (modification.isNodeShown(nodeToShow)) continue;
+
+      FragmentGenerator.GreenFragment fragment = generator.getGreenFragmentForCollapse(nodeToShow, Integer.MAX_VALUE);
+      if (fragment.getUpRedNode() == null ||
+          fragment.getDownRedNode() == null ||
+          fragment.getUpRedNode().equals(fragment.getDownRedNode())) {
+        continue;
+      }
+
+      for (Integer n : fragment.getMiddleGreenNodes()) {
+        modification.showNode(n);
+      }
+
+      modification.removeEdge(GraphEdge.createNormalEdge(fragment.getUpRedNode(), fragment.getDownRedNode(), GraphEdgeType.DOTTED));
+    }
+
+    modification.apply();
+  }
+
 
   private interface ActionCase {
     @Nullable

@@ -232,11 +232,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     }
   }
 
-  private static class LinearGraphActionImpl implements LinearGraphAction {
+  public static class LinearGraphActionImpl implements LinearGraphAction {
     @Nullable private final PrintElementWithGraphElement myAffectedElement;
     @NotNull private final Type myType;
 
-    private LinearGraphActionImpl(@Nullable PrintElementWithGraphElement affectedElement, @NotNull Type type) {
+    public LinearGraphActionImpl(@Nullable PrintElementWithGraphElement affectedElement, @NotNull Type type) {
       myAffectedElement = affectedElement;
       myType = type;
     }

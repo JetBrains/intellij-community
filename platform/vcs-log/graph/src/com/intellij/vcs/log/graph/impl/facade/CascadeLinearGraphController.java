@@ -15,7 +15,9 @@
  */
 package com.intellij.vcs.log.graph.impl.facade;
 
+import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,12 +39,25 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   public LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphAction action) {
     LinearGraphAnswer answer = performAction(action);
     if (answer == null && myDelegateLinearGraphController != null) {
-      answer = myDelegateLinearGraphController.performLinearGraphAction(action);
+      answer = myDelegateLinearGraphController.performLinearGraphAction(new VisibleGraphImpl.LinearGraphActionImpl(convert(action.getAffectedElement()), action.getType()));
       answer = performDelegateUpdate(answer);
     }
     if (answer != null)
       return answer;
     return LinearGraphUtils.DEFAULT_GRAPH_ANSWER;
+  }
+
+  @Nullable
+  private PrintElementWithGraphElement convert(@Nullable PrintElementWithGraphElement element) {
+    if (element == null) return null;
+    GraphElement convertedGraphElement = convert(element.getGraphElement());
+    if (convertedGraphElement == null) return null;
+    return PrintElementWithGraphElement.converted(element, convertedGraphElement);
+  }
+
+  @Nullable
+  protected GraphElement convert(@NotNull GraphElement graphElement) {
+    return graphElement;
   }
 
   @NotNull
