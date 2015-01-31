@@ -93,7 +93,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @NotNull
   private static String createContentTitle(@NotNull Editor editor) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    String title = file != null ? DiffRequestFactory.getInstance().getVirtualFileContentTitle(file) : "Editor";
+    String title = file != null ? DiffRequestFactory.getInstance().getContentTitle(file) : "Editor";
 
     if (editor.getSelectionModel().hasSelection()) {
       title = DiffBundle.message("diff.content.selection.from.file.content.title", title);

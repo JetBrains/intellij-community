@@ -20,7 +20,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,28 +30,16 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
   @Override
   @NotNull
-  public ContentDiffRequest createFromFile(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+  public ContentDiffRequest createFromFiles(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     DiffContent content1 = myContentFactory.create(project, file1);
     DiffContent content2 = myContentFactory.create(project, file2);
 
-    String title1 = getVirtualFileContentTitle(file1);
-    String title2 = getVirtualFileContentTitle(file2);
+    String title1 = getContentTitle(file1);
+    String title2 = getContentTitle(file2);
 
-    String title = DiffBundle.message("diff.element.qualified.name.vs.element.qualified.name.dialog.title",
-                                      file1.getName(), file2.getName());
+    String title = getTitle(file1, file2);
 
     return new SimpleDiffRequest(title, content1, content2, title1, title2);
-  }
-
-  @Override
-  @NotNull
-  public String getVirtualFileContentTitle(@NotNull VirtualFile file) {
-    String name = file.getName();
-    VirtualFile parent = file.getParent();
-    if (parent != null) {
-      return name + " (" + FileUtil.toSystemDependentName(parent.getPath()) + ")";
-    }
-    return name;
   }
 
   @Override
@@ -66,5 +54,70 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     String title = DiffBundle.message("diff.clipboard.vs.value.dialog.title");
 
     return new SimpleDiffRequest(title, content1, content2, title1, title2);
+  }
+
+  @Override
+  @NotNull
+  public String getContentTitle(@NotNull VirtualFile file) {
+    if (file.isDirectory()) return file.getPath();
+
+    VirtualFile parent = file.getParent();
+    return getContentTitle(file.getName(), file.getPath(), parent != null ? parent.getPath() : null);
+  }
+
+  @NotNull
+  public String getTitle(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+    if ((file1.isDirectory() || file2.isDirectory()) && file1.getPath().equals(file2.getPath())) return file1.getPath();
+    if (file1.isDirectory() ^ file2.isDirectory()) return getContentTitle(file1) + " vs " + getContentTitle(file2);
+
+    VirtualFile parent1 = file1.getParent();
+    VirtualFile parent2 = file2.getParent();
+    return getRequestTitle(file1.getName(), file1.getPath(), parent1 != null ? parent1.getPath() : null,
+                           file2.getName(), file2.getPath(), parent2 != null ? parent2.getPath() : null,
+                           " vs ");
+  }
+
+  @NotNull
+  public static String getContentTitle(@NotNull String name, @NotNull String path, @Nullable String parentPath) {
+    if (parentPath != null) {
+      return name + " (" + parentPath + ")";
+    }
+    else {
+      return path;
+    }
+  }
+
+  @NotNull
+  public static String getRequestTitle(@NotNull String name1, @NotNull String path1, @Nullable String parentPath1,
+                                       @NotNull String name2, @NotNull String path2, @Nullable String parentPath2,
+                                       @NotNull String sep) {
+    if (path1.equals(path2)) return getContentTitle(name1, path1, parentPath1);
+
+    if (Comparing.equal(parentPath1, parentPath2)) {
+      if (parentPath1 != null) {
+        return name1 + sep + name2 + " (" + parentPath1 + ")";
+      }
+      else {
+        return path1 + sep + path2;
+      }
+    }
+    else {
+      if (name1.equals(name2)) {
+        if (parentPath1 != null && parentPath2 != null) {
+          return name1 + " (" + parentPath1 + sep + parentPath2 + ")";
+        }
+        else {
+          return path1 + sep + path2;
+        }
+      }
+      else {
+        if (parentPath1 != null && parentPath2 != null) {
+          return name1 + sep + name2 + " (" + parentPath1 + sep + parentPath2 + ")";
+        }
+        else {
+          return path1 + sep + path2;
+        }
+      }
+    }
   }
 }

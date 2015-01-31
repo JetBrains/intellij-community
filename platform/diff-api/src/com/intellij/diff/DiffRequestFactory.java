@@ -32,11 +32,15 @@ public abstract class DiffRequestFactory {
   }
 
   @NotNull
-  public abstract ContentDiffRequest createFromFile(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2);
-
-  @NotNull
-  public abstract String getVirtualFileContentTitle(@NotNull VirtualFile file);
+  public abstract ContentDiffRequest createFromFiles(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2);
 
   @NotNull
   public abstract ContentDiffRequest createClipboardVsValue(@NotNull String value);
+
+
+  @NotNull
+  public abstract String getContentTitle(@NotNull VirtualFile file);
+
+  @NotNull
+  public abstract String getTitle(@NotNull VirtualFile file1, @NotNull VirtualFile file2);
 }

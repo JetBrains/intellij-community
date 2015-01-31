@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.chains.DiffRequestPresentable;
 import com.intellij.diff.chains.DiffRequestPresentableException;
 import com.intellij.diff.contents.DiffContent;
@@ -328,61 +329,33 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
       FilePath bPath = bRev.getFile();
       FilePath aPath = aRev.getFile();
       if (bPath.equals(aPath)) {
-        return getPathPresentable(bPath);
+        return getContentTitle(bRev.getFile());
       }
       else {
-        return getPathPresentable(bPath, aPath);
+        return getRequestTitle(bRev.getFile(), aRev.getFile());
       }
     }
     else if (bRev != null) {
-      return getPathPresentable(bRev.getFile());
+      return getContentTitle(bRev.getFile());
     }
     else {
-      return getPathPresentable(aRev.getFile());
+      return getContentTitle(aRev.getFile());
     }
   }
 
   @NotNull
-  public static String getPathPresentable(@NotNull FilePath path) {
+  public static String getContentTitle(@NotNull FilePath path) {
     FilePath parentPath = path.getParentPath();
-    if (!path.isDirectory() && parentPath != null) {
-      return path.getName() + " (" + parentPath.getPath() + ")";
-    }
-    else {
-      return path.getPath();
-    }
+    return DiffRequestFactoryImpl.getContentTitle(path.getName(), path.getPath(), parentPath != null ? parentPath.getPath() : null);
   }
 
   @NotNull
-  public static String getPathPresentable(@NotNull FilePath bPath, @NotNull FilePath aPath) {
+  public static String getRequestTitle(@NotNull FilePath bPath, @NotNull FilePath aPath) {
     FilePath bParentPath = bPath.getParentPath();
     FilePath aParentPath = aPath.getParentPath();
-    if (Comparing.equal(bParentPath, aParentPath)) {
-      if (bParentPath != null) {
-        return bPath.getName() + " -> " + aPath.getName() + " (" + bParentPath.getPath() + ")";
-      }
-      else {
-        return bPath.getPath() + " -> " + aPath.getPath();
-      }
-    }
-    else {
-      if (bPath.getName().equals(aPath.getName())) {
-        if (bParentPath != null && aParentPath != null) {
-          return bPath.getName() + " (" + bParentPath.getPath() + " -> " + bParentPath.getPath() + ")";
-        }
-        else {
-          return bPath.getPath() + " -> " + aPath.getPath();
-        }
-      }
-      else {
-        if (bParentPath != null && aParentPath != null) {
-          return bPath.getName() + " -> " + aPath.getName() + " (" + bParentPath.getPath() + " -> " + bParentPath.getPath() + ")";
-        }
-        else {
-          return bPath.getPath() + " -> " + aPath.getPath();
-        }
-      }
-    }
+    return DiffRequestFactoryImpl.getRequestTitle(bPath.getName(), bPath.getPath(), bParentPath != null ? bParentPath.getPath() : null,
+                                                  aPath.getName(), aPath.getPath(), aParentPath != null ? aParentPath.getPath() : null,
+                                                  " -> ");
   }
 
   @NotNull

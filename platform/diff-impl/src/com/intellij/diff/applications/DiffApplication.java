@@ -57,7 +57,7 @@ public class DiffApplication extends ApplicationStarterBase {
 
     file1.refresh(false, true);
     file2.refresh(false, true);
-    DiffRequest request = DiffRequestFactory.getInstance().createFromFile(null, file1, file2);
+    DiffRequest request = DiffRequestFactory.getInstance().createFromFiles(null, file1, file2);
 
     DiffManagerEx.getInstance().showDiffBuiltin(null, request, DiffDialogHints.MODAL);
   }

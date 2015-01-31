@@ -69,10 +69,10 @@ public class CompareFilesAction extends BaseShowDiffAction {
       VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, data[0]);
 
       if (result.length != 1 || result[0] == null) return null;
-      return DiffRequestFactory.getInstance().createFromFile(project, data[0], result[0]);
+      return DiffRequestFactory.getInstance().createFromFiles(project, data[0], result[0]);
     }
     else {
-      return DiffRequestFactory.getInstance().createFromFile(project, data[0], data[1]);
+      return DiffRequestFactory.getInstance().createFromFiles(project, data[0], data[1]);
     }
   }
 
