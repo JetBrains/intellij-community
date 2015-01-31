@@ -1448,6 +1448,24 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
     }
 
+    if (qualifier != null && expr.getParent() instanceof PsiMethodReferenceExpression && aClass.isInterface()) {
+      //15.13
+      //If TypeName denotes an interface, I, then let T be the type declaration immediately enclosing the method reference expression.
+      //It is a compile-time error if I is not a direct superinterface of T,
+      //or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
+      final PsiClass classT = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
+      if (classT != null) {
+        for (PsiClass superClass : classT.getSupers()) {
+          if (superClass.isInterface() && //check spec-javac relations
+              superClass.isInheritor(aClass, true)) {
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(qualifier)
+              .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", format(aClass), formatClass(superClass))).create();
+          }
+        }
+      }
+    }
+
     if (expr instanceof PsiThisExpression) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
       if (psiMethod == null || psiMethod.getContainingClass() != aClass && !isInsideDefaultMethod(psiMethod, aClass)) {
