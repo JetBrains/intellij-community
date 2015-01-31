@@ -358,6 +358,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testArrayTypeNewReifiable() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
