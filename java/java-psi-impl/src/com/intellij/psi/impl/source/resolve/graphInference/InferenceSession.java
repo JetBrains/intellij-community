@@ -1293,6 +1293,9 @@ public class InferenceSession {
                 }
               }
             }
+            else if (sPrimitive) {
+              return false;
+            }
           }
           return true;
         }
