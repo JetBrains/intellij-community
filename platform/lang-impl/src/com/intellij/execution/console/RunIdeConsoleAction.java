@@ -67,28 +67,29 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   private static final Key<WeakReference<ConsoleView>> CONSOLE_VIEW_KEY = Key.create("CONSOLE_VIEW_KEY");
   private static final Key<ConsoleHistoryController> HISTORY_CONTROLLER_KEY = Key.create("HISTORY_CONTROLLER_KEY");
 
-  private static final Map<String, ScriptEngineFactory> ourEngines = ContainerUtil.newLinkedHashMap();
-
-  static {
-    for (ScriptEngineFactory factory : new ScriptEngineManager().getEngineFactories()) {
-      ourEngines.put(factory.getLanguageName(), factory);
+  static class Engines {
+    static final Map<String, ScriptEngineFactory> ourEngines = ContainerUtil.newLinkedHashMap();
+    static  {
+      for (ScriptEngineFactory factory : new ScriptEngineManager().getEngineFactories()) {
+        ourEngines.put(factory.getLanguageName(), factory);
+      }
     }
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean enabled = !ourEngines.isEmpty() && e.getProject() != null;
+    boolean enabled = !Engines.ourEngines.isEmpty() && e.getProject() != null;
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    if (ourEngines.size() == 1) {
-      runConsole(e, ourEngines.values().iterator().next());
+    if (Engines.ourEngines.size() == 1) {
+      runConsole(e, Engines.ourEngines.values().iterator().next());
     }
     else {
       DefaultActionGroup actions = new DefaultActionGroup(
-        ContainerUtil.map(ourEngines.values(), new NotNullFunction<ScriptEngineFactory, AnAction>() {
+        ContainerUtil.map(Engines.ourEngines.values(), new NotNullFunction<ScriptEngineFactory, AnAction>() {
           @NotNull
           @Override
           public AnAction fun(final ScriptEngineFactory engine) {
@@ -135,7 +136,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
   @Nullable
   private static ScriptEngine findScriptEngine(@NotNull VirtualFile file) {
-    for (ScriptEngineFactory factory : ourEngines.values()) {
+    for (ScriptEngineFactory factory : Engines.ourEngines.values()) {
       if (factory.getExtensions().contains(file.getExtension())) {
         return factory.getScriptEngine();
       }
