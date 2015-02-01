@@ -1267,7 +1267,7 @@ public class InferenceSession {
 
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
 
-      if (LambdaUtil.isFunctionalType(sReturnType) && LambdaUtil.isFunctionalType(tReturnType) && 
+      if (LambdaUtil.isFunctionalType(sReturnType) && LambdaUtil.isFunctionalType(tReturnType) &&
           !TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(sReturnType), TypeConversionUtil.erasure(tReturnType)) &&
           !TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(tReturnType), TypeConversionUtil.erasure(sReturnType))) {
 
@@ -1311,11 +1311,17 @@ public class InferenceSession {
     if (arg instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)arg).isExact()) {
       final PsiParameter[] sParameters = sInterfaceMethod.getParameterList().getParameters();
       final PsiParameter[] tParameters = tInterfaceMethod.getParameterList().getParameters();
-      if (session != null) {
-        LOG.assertTrue(sParameters.length == tParameters.length);
-        for (int i = 0; i < tParameters.length; i++) {
-          session.addConstraint(new TypeEqualityConstraint(tSubstitutor.substitute(tParameters[i].getType()),
-                                                           sSubstitutor.substitute(sParameters[i].getType())));
+      LOG.assertTrue(sParameters.length == tParameters.length);
+      for (int i = 0; i < tParameters.length; i++) {
+        final PsiType tSubstituted = tSubstitutor.substitute(tParameters[i].getType());
+        final PsiType sSubstituted = sSubstitutor.substitute(sParameters[i].getType());
+        if (session != null) {
+          session.addConstraint(new TypeEqualityConstraint(tSubstituted, sSubstituted));
+        }
+        else {
+          if (!Comparing.equal(tSubstituted, sSubstituted)) {
+            return false;
+          }
         }
       }
       final PsiType sReturnType = sSubstitutor.substitute(sInterfaceMethod.getReturnType());

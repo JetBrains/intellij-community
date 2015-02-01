@@ -75,6 +75,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testDetectNotEqualParametersInFunctionalTypesForExactMethodReferences() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
