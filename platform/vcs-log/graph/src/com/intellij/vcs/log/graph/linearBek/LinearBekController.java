@@ -68,8 +68,9 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (graphElement instanceof GraphEdge) {
           GraphEdge edge = (GraphEdge)graphElement;
           if (edge.getType() == GraphEdgeType.DOTTED) {
-            return new LinearGraphAnswer(calculateChanges(edge, myCompiledGraph.expandEdge(edge),
-                                                          getDelegateLinearGraphController().getCompiledGraph()), null, null, null);
+            return new LinearGraphAnswer(
+              calculateChanges(edge, myCompiledGraph.expandEdge(edge), getDelegateLinearGraphController().getCompiledGraph()), null, null,
+              null);
           }
         }
       }
@@ -148,60 +149,15 @@ public class LinearBekController extends CascadeLinearGraphController {
   private static GraphChanges<Integer> calculateChanges(GraphEdge expanded, Collection<GraphEdge> addedEdges, LinearGraph delegateGraph) {
     final Set<GraphChanges.Edge<Integer>> edgeChanges = ContainerUtil.newHashSet();
 
-    edgeChanges.add(new ChangedEdge(delegateGraph.getNodeId(expanded.getUpNodeIndex()), delegateGraph.getNodeId(expanded.getDownNodeIndex()), true));
+    edgeChanges.add(new GraphChanges.EdgeImpl<Integer>(delegateGraph.getNodeId(expanded.getUpNodeIndex()),
+                                                       delegateGraph.getNodeId(expanded.getDownNodeIndex()), null, true));
 
     for (GraphEdge edge : addedEdges) {
-      edgeChanges.add(new ChangedEdge(delegateGraph.getNodeId(edge.getUpNodeIndex()), delegateGraph.getNodeId(edge.getDownNodeIndex()), false));
+      edgeChanges.add(
+        new GraphChanges.EdgeImpl<Integer>(delegateGraph.getNodeId(edge.getUpNodeIndex()), delegateGraph.getNodeId(edge.getDownNodeIndex()),
+                                           false));
     }
 
-    return new GraphChanges<Integer>() {
-      @NotNull
-      @Override
-      public Collection<Node<Integer>> getChangedNodes() {
-        return Collections.emptySet();
-      }
-
-      @NotNull
-      @Override
-      public Collection<Edge<Integer>> getChangedEdges() {
-        return edgeChanges;
-      }
-    };
+    return new GraphChanges.GraphChangesImpl<Integer>(Collections.<GraphChanges.Node<Integer>>emptySet(), edgeChanges);
   }
-
-  private static class ChangedEdge implements GraphChanges.Edge<Integer> {
-    private final int myUpNodeId;
-    private final int myDownNodeId;
-    private final boolean myRemoved;
-
-    private ChangedEdge(int upNodeId, int downNodeId, boolean removed) {
-      myUpNodeId = upNodeId;
-      myDownNodeId = downNodeId;
-      myRemoved = removed;
-    }
-
-    @Nullable
-    @Override
-    public Integer upNodeId() {
-      return myUpNodeId;
-    }
-
-    @Nullable
-    @Override
-    public Integer downNodeId() {
-      return myDownNodeId;
-    }
-
-    @Nullable
-    @Override
-    public Integer additionInfo() {
-      return null; // TODO huh?
-    }
-
-    @Override
-    public boolean removed() {
-      return myRemoved;
-    }
-  }
-
 }
