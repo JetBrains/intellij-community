@@ -177,9 +177,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     }
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
 
-    leftType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(leftType, this);
-
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
     if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
       if (candidateProperties != null) {
@@ -194,6 +191,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       }
     }
 
+    leftType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(leftType, this);
     if (!isPotentiallyCompatible(leftType)) {
       return false;
     }
@@ -202,8 +200,11 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       return true;
     }
 
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod == null) return false;
+
+    if (interfaceMethod.hasTypeParameters()) return false;
 
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
 
