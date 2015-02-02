@@ -32,11 +32,11 @@ import com.intellij.diff.tools.util.FoldingModelSupport.SimpleFoldingModel;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffIcons;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.diff.util.Side;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -57,6 +57,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
 import org.intellij.lang.annotations.CalledInAwt;
+import org.intellij.lang.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +135,9 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new MyApplySelectedChangesAction());
+    group.add(new ReplaceSelectedChangesAction());
+    group.add(new AppendSelectedChangesAction());
+    group.add(new RevertSelectedChangesAction());
 
     return group;
   }
@@ -457,6 +460,26 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     return TwosideTextDiffViewer.canShowRequest(context, request);
   }
 
+  @NotNull
+  @CalledInAwt
+  private List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
+    EditorEx editor = side.select(myEditor1, myEditor2);
+    if (editor == null) return Collections.emptyList();
+
+    final BitSet lines = DiffUtil.getSelectedLines(editor);
+    List<SimpleDiffChange> affectedChanges = new ArrayList<SimpleDiffChange>();
+    for (int i = myDiffChanges.size() - 1; i >= 0; i--) {
+      SimpleDiffChange change = myDiffChanges.get(i);
+      int line1 = change.getStartLine(side);
+      int line2 = change.getEndLine(side);
+
+      if (DiffUtil.isSelectedByLine(lines, line1, line2)) {
+        affectedChanges.add(change);
+      }
+    }
+    return affectedChanges;
+  }
+
   //
   // Actions
   //
@@ -544,72 +567,70 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private class MyApplySelectedChangesAction extends AnAction implements DumbAware {
-    public MyApplySelectedChangesAction() {
-      super("Replace selected", null, AllIcons.Diff.Arrow); // TODO: rotate arrow in for popup in left editor
+  //
+  // Modification operations
+  //
+
+  private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
+    private final boolean myModifyOpposite;
+
+    public ApplySelectedChangesActionBase(@Nullable String text,
+                                          @Nullable String description,
+                                          @Nullable Icon icon,
+                                          boolean modifyOpposite) {
+      super(text, description, icon);
+      myModifyOpposite = modifyOpposite;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       Side side = Side.fromLeft(editor == myEditor1);
-      EditorEx oEditor = side.select(myEditor2, myEditor1);
 
-      if (editor == null || oEditor == null) {
-        e.getPresentation().setEnabled(false);
+      if (myEditor1 == null || myEditor2 == null) {
+        e.getPresentation().setEnabledAndVisible(false);
         return;
       }
 
       if (editor != myEditor1 && editor != myEditor2) {
-        e.getPresentation().setEnabled(false);
+        e.getPresentation().setEnabledAndVisible(false);
         return;
       }
 
-      if (myDiffChanges.isEmpty()) {
-        e.getPresentation().setEnabled(false);
+      Editor modifiedEditor = side.other(myModifyOpposite).selectN(myEditor1, myEditor2);
+      if (!DiffUtil.isEditable(modifiedEditor)) {
+        e.getPresentation().setEnabledAndVisible(false);
         return;
       }
 
-      if (!isSomeChangeSelected(editor, side)) {
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-
-      if (!DiffUtil.isEditable(oEditor)) {
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-
-      e.getPresentation().setEnabled(true);
+      e.getPresentation().setIcon(getIcon(side));
+      e.getPresentation().setEnabled(isSomeChangeSelected(side));
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      assert myEditor1 != null && myEditor2 != null;
+
+      Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
       final Side side = Side.fromLeft(editor == myEditor1);
-      EditorEx oEditor = side.select(myEditor2, myEditor1);
+      final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
 
-      assert editor != null && oEditor != null;
-
-      final BitSet lines = DiffUtil.getSelectedLines(editor);
-
-      DiffUtil.executeWriteCommand(oEditor.getDocument(), e.getProject(), "Replace selected changes", new Runnable() {
+      Editor modifiedEditor = side.other(myModifyOpposite).selectN(myEditor1, myEditor2);
+      String title = e.getPresentation().getText() + " selected changes";
+      DiffUtil.executeWriteCommand(modifiedEditor.getDocument(), e.getProject(), title, new Runnable() {
         @Override
         public void run() {
-          for (int i = myDiffChanges.size() - 1; i >= 0; i--) {
-            SimpleDiffChange change = myDiffChanges.get(i);
-            int line1 = change.getStartLine(side);
-            int line2 = change.getEndLine(side);
-
-            if (DiffUtil.isSelectedByLine(lines, line1, line2)) {
-              change.replaceChange(side);
-            }
-          }
+          apply(side, selectedChanges);
         }
       });
     }
 
-    protected boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull Side side) {
+    protected boolean isSomeChangeSelected(@NotNull Side side) {
+      if (myDiffChanges.isEmpty()) return false;
+
+      Editor editor = side.select(myEditor1, myEditor2);
+      if (editor == null) return false;
+
       List<Caret> carets = editor.getCaretModel().getAllCarets();
       if (carets.size() != 1) return true;
       Caret caret = carets.get(0);
@@ -620,6 +641,69 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (change.isSelectedByLine(line, side)) return true;
       }
       return false;
+    }
+
+    @NotNull
+    protected abstract Icon getIcon(@NotNull Side side);
+
+    @CalledWithWriteLock
+    protected abstract void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes);
+  }
+
+  private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
+    public ReplaceSelectedChangesAction() {
+      super("Replace", null, DiffIcons.getReplaceIcon(null), true);
+    }
+
+    @NotNull
+    @Override
+    protected Icon getIcon(@NotNull Side side) {
+      return DiffIcons.getReplaceIcon(side);
+    }
+
+    @Override
+    protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
+      for (SimpleDiffChange change : changes) {
+        change.replaceChange(side);
+      }
+    }
+  }
+
+  private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
+    public AppendSelectedChangesAction() {
+      super("Insert", null, DiffIcons.getAppendIcon(null), true);
+    }
+
+    @NotNull
+    @Override
+    protected Icon getIcon(@NotNull Side side) {
+      return DiffIcons.getAppendIcon(side);
+    }
+
+    @Override
+    protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
+      for (SimpleDiffChange change : changes) {
+        change.appendChange(side);
+      }
+    }
+  }
+
+  private class RevertSelectedChangesAction extends ApplySelectedChangesActionBase {
+    public RevertSelectedChangesAction() {
+      super("Revert", null, DiffIcons.getRevertIcon(null), false);
+    }
+
+    @NotNull
+    @Override
+    protected Icon getIcon(@NotNull Side side) {
+      return DiffIcons.getRevertIcon(side);
+    }
+
+    @Override
+    protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
+      for (SimpleDiffChange change : changes) {
+        change.replaceChange(side.other());
+      }
     }
   }
 

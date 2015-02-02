@@ -51,6 +51,11 @@ public enum Side {
     return isLeft() ? RIGHT : LEFT;
   }
 
+  @NotNull
+  public Side other(boolean other) {
+    return other ? other() : this;
+  }
+
   //
   // Helpers
   //
