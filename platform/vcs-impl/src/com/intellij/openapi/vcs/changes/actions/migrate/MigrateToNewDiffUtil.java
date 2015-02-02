@@ -19,8 +19,8 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestPresentable;
-import com.intellij.diff.chains.DiffRequestPresentableException;
+import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.BinaryFileContentImpl;
 import com.intellij.diff.contents.DiffContent;
@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,7 +75,7 @@ public class MigrateToNewDiffUtil {
     DiffRequest request = convertRequestFair(oldRequest);
     if (request != null) return request;
 
-    ErrorDiffRequest erorRequest = new ErrorDiffRequest(new MyDiffRequestPresentable(oldRequest), "Can't convert from old-style request");
+    ErrorDiffRequest erorRequest = new ErrorDiffRequest(new MyDiffRequestProducer(oldRequest), "Can't convert from old-style request");
     erorRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(oldRequest)));
     return erorRequest;
   }
@@ -136,17 +137,17 @@ public class MigrateToNewDiffUtil {
 
   private static class ChangeRequestChainWrapper extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
     @NotNull private final ChangeRequestChain myChain;
-    @NotNull private final List<MyPresentableWrapper> myRequests;
+    @NotNull private final List<MyProducerWrapper> myRequests;
 
     private int myIndex;
 
     public ChangeRequestChainWrapper(@NotNull ChangeRequestChain chain) {
       myChain = chain;
       myRequests = ContainerUtil.map(myChain.getAllRequests(),
-                                     new Function<com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable, MyPresentableWrapper>() {
+                                     new Function<DiffRequestPresentable, MyProducerWrapper>() {
                                        @Override
-                                       public MyPresentableWrapper fun(com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable presentable) {
-                                         return new MyPresentableWrapper(myChain, presentable);
+                                       public MyProducerWrapper fun(DiffRequestPresentable presentable) {
+                                         return new MyProducerWrapper(myChain, presentable);
                                        }
                                      });
 
@@ -155,7 +156,7 @@ public class MigrateToNewDiffUtil {
 
     @NotNull
     @Override
-    public List<? extends MyPresentableWrapper> getRequests() {
+    public List<? extends MyProducerWrapper> getRequests() {
       return myRequests;
     }
 
@@ -171,7 +172,7 @@ public class MigrateToNewDiffUtil {
     }
 
     @Nullable
-    private static Change getChange(@NotNull com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable presentable) {
+    private static Change getChange(@NotNull DiffRequestPresentable presentable) {
       if (presentable instanceof DiffRequestPresentableProxy) {
         try {
           presentable = ((DiffRequestPresentableProxy)presentable).init();
@@ -194,10 +195,10 @@ public class MigrateToNewDiffUtil {
         @NotNull
         @Override
         protected List<Change> getChanges() {
-          return ContainerUtil.mapNotNull(myChain.getRequests(), new Function<MyPresentableWrapper, Change>() {
+          return ContainerUtil.mapNotNull(myChain.getRequests(), new Function<MyProducerWrapper, Change>() {
             @Override
             @Nullable
-            public Change fun(MyPresentableWrapper wrapper) {
+            public Change fun(MyProducerWrapper wrapper) {
               return getChange(wrapper.getPresentable());
             }
           });
@@ -224,12 +225,12 @@ public class MigrateToNewDiffUtil {
     }
   }
 
-  private static class MyPresentableWrapper implements DiffRequestPresentable {
-    @NotNull private final com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable myPresentable;
+  private static class MyProducerWrapper implements DiffRequestProducer {
+    @NotNull private final DiffRequestPresentable myPresentable;
     @NotNull private final ChangeRequestChain myChain;
 
-    public MyPresentableWrapper(@NotNull ChangeRequestChain chain,
-                                @NotNull com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable presentable) {
+    public MyProducerWrapper(@NotNull ChangeRequestChain chain,
+                             @NotNull DiffRequestPresentable presentable) {
       myPresentable = presentable;
       myChain = chain;
     }
@@ -241,14 +242,14 @@ public class MigrateToNewDiffUtil {
     }
 
     @NotNull
-    public com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable getPresentable() {
+    public DiffRequestPresentable getPresentable() {
       return myPresentable;
     }
 
     @NotNull
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-      throws DiffRequestPresentableException, ProcessCanceledException {
+      throws DiffRequestProducerException, ProcessCanceledException {
       com.intellij.openapi.diff.DiffRequest oldRequest =
         UIUtil.invokeAndWaitIfNeeded(new Computable<com.intellij.openapi.diff.DiffRequest>() {
           @Override
@@ -286,10 +287,10 @@ public class MigrateToNewDiffUtil {
     }
   }
 
-  private static class MyDiffRequestPresentable implements DiffRequestPresentable {
+  private static class MyDiffRequestProducer implements DiffRequestProducer {
     @NotNull private final com.intellij.openapi.diff.DiffRequest myRequest;
 
-    public MyDiffRequestPresentable(@NotNull com.intellij.openapi.diff.DiffRequest request) {
+    public MyDiffRequestProducer(@NotNull com.intellij.openapi.diff.DiffRequest request) {
       myRequest = request;
     }
 
@@ -302,7 +303,7 @@ public class MigrateToNewDiffUtil {
     @NotNull
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-      throws DiffRequestPresentableException, ProcessCanceledException {
+      throws DiffRequestProducerException, ProcessCanceledException {
       ErrorDiffRequest errorRequest = new ErrorDiffRequest(this, "Can't convert from old-style request");
       errorRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(myRequest)));
       return errorRequest;

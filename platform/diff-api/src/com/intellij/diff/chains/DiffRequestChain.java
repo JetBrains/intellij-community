@@ -22,7 +22,7 @@ import java.util.List;
 
 public interface DiffRequestChain extends UserDataHolder {
   @NotNull
-  List<? extends DiffRequestPresentable> getRequests();
+  List<? extends DiffRequestProducer> getRequests();
 
   int getIndex();
 

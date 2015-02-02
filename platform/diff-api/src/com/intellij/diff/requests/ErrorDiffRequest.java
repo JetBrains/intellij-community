@@ -15,12 +15,12 @@
  */
 package com.intellij.diff.requests;
 
-import com.intellij.diff.chains.DiffRequestPresentable;
+import com.intellij.diff.chains.DiffRequestProducer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ErrorDiffRequest extends MessageDiffRequest {
-  @Nullable private final DiffRequestPresentable myPresentable;
+  @Nullable private final DiffRequestProducer myProducer;
   @Nullable private final Throwable myException;
 
   public ErrorDiffRequest(@NotNull String message) {
@@ -39,26 +39,26 @@ public class ErrorDiffRequest extends MessageDiffRequest {
     this(null, e.getMessage(), null, e);
   }
 
-  public ErrorDiffRequest(@Nullable DiffRequestPresentable presentable, @NotNull Throwable e) {
-    this(presentable != null ? presentable.getName() : null, e.getMessage(), presentable, e);
+  public ErrorDiffRequest(@Nullable DiffRequestProducer producer, @NotNull Throwable e) {
+    this(producer != null ? producer.getName() : null, e.getMessage(), producer, e);
   }
 
-  public ErrorDiffRequest(@Nullable DiffRequestPresentable presentable, @NotNull String message) {
-    this(presentable != null ? presentable.getName() : null, message, presentable, null);
+  public ErrorDiffRequest(@Nullable DiffRequestProducer producer, @NotNull String message) {
+    this(producer != null ? producer.getName() : null, message, producer, null);
   }
 
   public ErrorDiffRequest(@Nullable String title,
                           @NotNull String message,
-                          @Nullable DiffRequestPresentable presentable,
+                          @Nullable DiffRequestProducer producer,
                           @Nullable Throwable e) {
     super(title, message);
-    myPresentable = presentable;
+    myProducer = producer;
     myException = e;
   }
 
   @Nullable
-  public DiffRequestPresentable getPresentable() {
-    return myPresentable;
+  public DiffRequestProducer getProducer() {
+    return myProducer;
   }
 
   @Nullable

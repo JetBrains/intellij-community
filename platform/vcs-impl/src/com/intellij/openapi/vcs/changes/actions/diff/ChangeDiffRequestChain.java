@@ -14,16 +14,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
-  @NotNull private final List<ChangeDiffRequestPresentable> myRequests;
+  @NotNull private final List<ChangeDiffRequestProducer> myRequests;
   private int myIndex;
 
-  public ChangeDiffRequestChain(@NotNull List<ChangeDiffRequestPresentable> requests) {
+  public ChangeDiffRequestChain(@NotNull List<ChangeDiffRequestProducer> requests) {
     myRequests = requests;
   }
 
   @NotNull
   @Override
-  public List<? extends ChangeDiffRequestPresentable> getRequests() {
+  public List<? extends ChangeDiffRequestProducer> getRequests() {
     return myRequests;
   }
 
@@ -55,9 +55,9 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
       @NotNull
       @Override
       protected List<Change> getChanges() {
-        return ContainerUtil.mapNotNull(myChain.getRequests(), new Function<ChangeDiffRequestPresentable, Change>() {
+        return ContainerUtil.mapNotNull(myChain.getRequests(), new Function<ChangeDiffRequestProducer, Change>() {
           @Override
-          public Change fun(ChangeDiffRequestPresentable presentable) {
+          public Change fun(ChangeDiffRequestProducer presentable) {
             return presentable.getChange();
           }
         });

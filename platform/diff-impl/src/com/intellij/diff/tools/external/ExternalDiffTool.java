@@ -18,8 +18,8 @@ package com.intellij.diff.tools.external;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestPresentable;
-import com.intellij.diff.chains.DiffRequestPresentableException;
+import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -110,15 +110,15 @@ public class ExternalDiffTool {
     List<String> errorRequests = new ArrayList<String>();
 
     // TODO: show all changes on explicit selection
-    List<? extends DiffRequestPresentable> presentables = Collections.singletonList(chain.getRequests().get(chain.getIndex()));
+    List<? extends DiffRequestProducer> producers = Collections.singletonList(chain.getRequests().get(chain.getIndex()));
 
-    for (DiffRequestPresentable presentable : presentables) {
+    for (DiffRequestProducer producer : producers) {
       try {
-        requests.add(presentable.process(context, indicator));
+        requests.add(producer.process(context, indicator));
       }
-      catch (DiffRequestPresentableException e) {
+      catch (DiffRequestProducerException e) {
         LOG.warn(e);
-        errorRequests.add(presentable.getName());
+        errorRequests.add(producer.getName());
       }
     }
 

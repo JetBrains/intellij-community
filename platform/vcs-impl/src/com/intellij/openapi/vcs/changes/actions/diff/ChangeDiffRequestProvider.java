@@ -20,7 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.diff.chains.DiffRequestPresentableException;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.ThreeState;
@@ -36,7 +36,7 @@ public interface ChangeDiffRequestProvider {
   boolean canCreate(@NotNull Project project, @NotNull Change change);
 
   @NotNull
-  DiffRequest process(@NotNull ChangeDiffRequestPresentable presentable,
+  DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
                       @NotNull UserDataHolder context,
-                      @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException, ProcessCanceledException;
+                      @NotNull ProgressIndicator indicator) throws DiffRequestProducerException, ProcessCanceledException;
 }

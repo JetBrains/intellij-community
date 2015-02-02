@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
-import com.intellij.diff.chains.DiffRequestPresentableException;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
 import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.UIVcsUtil;
@@ -32,9 +32,9 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
 
   @NotNull
   @Override
-  public DiffRequest process(@NotNull ChangeDiffRequestPresentable presentable,
+  public DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
                              @NotNull UserDataHolder context,
-                             @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException, ProcessCanceledException {
+                             @NotNull ProgressIndicator indicator) throws DiffRequestProducerException, ProcessCanceledException {
     indicator.checkCanceled();
     return new SvnPhantomDiffRequest(presentable.getChange());
   }
@@ -49,7 +49,7 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
     @Nullable
     @Override
     public String getTitle() {
-      return ChangeDiffRequestPresentable.getRequestTitle(myChange);
+      return ChangeDiffRequestProducer.getRequestTitle(myChange);
     }
   }
 

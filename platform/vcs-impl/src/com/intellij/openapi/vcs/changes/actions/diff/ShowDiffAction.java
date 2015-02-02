@@ -159,10 +159,10 @@ public class ShowDiffAction extends AnAction implements DumbAware {
                                        @NotNull Condition<Change> condition,
                                        @NotNull ShowDiffContext context) {
     int index = 0;
-    List<ChangeDiffRequestPresentable> presentables = new ArrayList<ChangeDiffRequestPresentable>();
+    List<ChangeDiffRequestProducer> presentables = new ArrayList<ChangeDiffRequestProducer>();
     for (Change change : changes) {
       if (condition.value(change)) index = presentables.size();
-      ChangeDiffRequestPresentable presentable = ChangeDiffRequestPresentable.create(project, change, context.getChangeContext(change));
+      ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
       if (presentable != null) presentables.add(presentable);
     }
 
@@ -175,10 +175,10 @@ public class ShowDiffAction extends AnAction implements DumbAware {
                                        @NotNull ShowDiffContext context) {
     int i = 0;
     int newIndex = 0;
-    List<ChangeDiffRequestPresentable> presentables = new ArrayList<ChangeDiffRequestPresentable>();
+    List<ChangeDiffRequestProducer> presentables = new ArrayList<ChangeDiffRequestProducer>();
     for (Change change : changes) {
       if (i == index) newIndex = presentables.size();
-      ChangeDiffRequestPresentable presentable = ChangeDiffRequestPresentable.create(project, change, context.getChangeContext(change));
+      ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
       if (presentable != null) {
         presentables.add(presentable);
       }
@@ -189,7 +189,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   }
 
   private static void showDiffForChange(@NotNull Project project,
-                                        @NotNull List<ChangeDiffRequestPresentable> presentables,
+                                        @NotNull List<ChangeDiffRequestProducer> presentables,
                                         int index,
                                         @NotNull ShowDiffContext context) {
     if (presentables.isEmpty()) return;

@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRequestChain {
-  @NotNull private final List<DiffRequestPresentableWrapper> myRequests;
+  @NotNull private final List<DiffRequestProducerWrapper> myRequests;
   private int myIndex = 0;
 
   public SimpleDiffRequestChain(@NotNull DiffRequest request) {
@@ -37,17 +37,17 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
   }
 
   public SimpleDiffRequestChain(@NotNull List<? extends DiffRequest> requests) {
-    myRequests = ContainerUtil.map(requests, new Function<DiffRequest, DiffRequestPresentableWrapper>() {
+    myRequests = ContainerUtil.map(requests, new Function<DiffRequest, DiffRequestProducerWrapper>() {
       @Override
-      public DiffRequestPresentableWrapper fun(DiffRequest request) {
-        return new DiffRequestPresentableWrapper(request);
+      public DiffRequestProducerWrapper fun(DiffRequest request) {
+        return new DiffRequestProducerWrapper(request);
       }
     });
   }
 
   @Override
   @NotNull
-  public List<DiffRequestPresentableWrapper> getRequests() {
+  public List<DiffRequestProducerWrapper> getRequests() {
     return myRequests;
   }
 
@@ -62,10 +62,10 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
     myIndex = index;
   }
 
-  public static class DiffRequestPresentableWrapper implements DiffRequestPresentable {
+  public static class DiffRequestProducerWrapper implements DiffRequestProducer {
     @NotNull private final DiffRequest myRequest;
 
-    public DiffRequestPresentableWrapper(@NotNull DiffRequest request) {
+    public DiffRequestProducerWrapper(@NotNull DiffRequest request) {
       myRequest = request;
     }
 
@@ -83,7 +83,7 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
     @NotNull
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-      throws DiffRequestPresentableException, ProcessCanceledException {
+      throws DiffRequestProducerException, ProcessCanceledException {
       return myRequest;
     }
   }

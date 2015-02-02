@@ -619,7 +619,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  // Iterate presentable
+  // Iterate requests
 
   protected class MyNextChangeAction extends NextChangeAction {
     @Override

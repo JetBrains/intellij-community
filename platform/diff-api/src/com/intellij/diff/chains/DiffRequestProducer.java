@@ -22,12 +22,12 @@ import com.intellij.openapi.util.UserDataHolder;
 import org.intellij.lang.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 
-public interface DiffRequestPresentable {
+public interface DiffRequestProducer {
   @NotNull
   String getName();
 
   @CalledInBackground
   @NotNull
   DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-    throws DiffRequestPresentableException, ProcessCanceledException;
+    throws DiffRequestProducerException, ProcessCanceledException;
 }

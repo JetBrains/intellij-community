@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.diff.chains.DiffRequestPresentableException;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
@@ -33,7 +33,7 @@ import org.intellij.lang.annotations.CalledInBackground;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.WaitingBackgroundableTaskExecutor;
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +100,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       new Runnable() {
         @Override
         public void run() {
-          applyRequest(new LoadingDiffRequest(ChangeDiffRequestPresentable.getRequestTitle(change)), force, scrollToChangePolicy);
+          applyRequest(new LoadingDiffRequest(ChangeDiffRequestProducer.getRequestTitle(change)), force, scrollToChangePolicy);
         }
       },
       ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
@@ -115,13 +115,13 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     Pair<Change, DiffRequest> pair = myRequestCache.get(change);
     if (pair != null) {
       Change oldChange = pair.first;
-      if (ChangeDiffRequestPresentable.isEquals(oldChange, change)) {
+      if (ChangeDiffRequestProducer.isEquals(oldChange, change)) {
         return pair.second;
       }
     }
 
     if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
-      return new LoadingDiffRequest(ChangeDiffRequestPresentable.getRequestTitle(change));
+      return new LoadingDiffRequest(ChangeDiffRequestProducer.getRequestTitle(change));
     }
 
     return null;
@@ -130,7 +130,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   @NotNull
   @CalledInBackground
   private DiffRequest loadRequest(@NotNull Change change, @NotNull ProgressIndicator indicator) {
-    ChangeDiffRequestPresentable presentable = ChangeDiffRequestPresentable.create(myProject, change);
+    ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(myProject, change);
     if (presentable == null) return new ErrorDiffRequest("Can't show diff");
     try {
       return presentable.process(getContext(), indicator);
@@ -140,7 +140,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       request.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new ReloadRequestAction(change)));
       return request;
     }
-    catch (DiffRequestPresentableException e) {
+    catch (DiffRequestProducerException e) {
       return new ErrorDiffRequest(presentable, e);
     }
     catch (Exception e) {

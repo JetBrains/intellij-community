@@ -15,19 +15,19 @@
  */
 package com.intellij.diff.chains;
 
-public class DiffRequestPresentableException extends Exception {
-  public DiffRequestPresentableException(Throwable cause) {
+public class DiffRequestProducerException extends Exception {
+  public DiffRequestProducerException(Throwable cause) {
     super(cause);
   }
 
-  public DiffRequestPresentableException(String message, Throwable cause) {
+  public DiffRequestProducerException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public DiffRequestPresentableException(String message) {
+  public DiffRequestProducerException(String message) {
     super(message);
   }
 
-  public DiffRequestPresentableException() {
+  public DiffRequestProducerException() {
   }
 }

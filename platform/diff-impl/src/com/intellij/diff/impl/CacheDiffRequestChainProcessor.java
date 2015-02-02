@@ -17,8 +17,8 @@ package com.intellij.diff.impl;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestPresentable;
-import com.intellij.diff.chains.DiffRequestPresentableException;
+import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffUserDataKeys;
@@ -48,8 +48,8 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
 
   @NotNull private final DiffRequestChain myRequestChain;
 
-  @NotNull private final SoftHardCacheMap<DiffRequestPresentable, DiffRequest> myRequestCache =
-    new SoftHardCacheMap<DiffRequestPresentable, DiffRequest>(5, 5);
+  @NotNull private final SoftHardCacheMap<DiffRequestProducer, DiffRequest> myRequestCache =
+    new SoftHardCacheMap<DiffRequestProducer, DiffRequest>(5, 5);
 
   @NotNull private final WaitingBackgroundableTaskExecutor myTaskExecutor = new WaitingBackgroundableTaskExecutor();
 
@@ -63,16 +63,16 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   //
 
   public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
-    List<? extends DiffRequestPresentable> requests = myRequestChain.getRequests();
+    List<? extends DiffRequestProducer> requests = myRequestChain.getRequests();
     int index = myRequestChain.getIndex();
     if (index < 0 || index >= requests.size()) {
       applyRequest(new NoDiffRequest(), force, scrollToChangePolicy);
       return;
     }
 
-    final DiffRequestPresentable presentable = requests.get(index);
+    final DiffRequestProducer producer = requests.get(index);
 
-    DiffRequest request = loadRequestFast(presentable);
+    DiffRequest request = loadRequestFast(producer);
     if (request != null) {
       applyRequest(request, force, scrollToChangePolicy);
       return;
@@ -82,11 +82,11 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
       new Convertor<ProgressIndicator, Runnable>() {
         @Override
         public Runnable convert(ProgressIndicator indicator) {
-          final DiffRequest request = loadRequest(presentable, indicator);
+          final DiffRequest request = loadRequest(producer, indicator);
           return new Runnable() {
             @Override
             public void run() {
-              myRequestCache.put(presentable, request);
+              myRequestCache.put(producer, request);
               applyRequest(request, force, scrollToChangePolicy);
             }
           };
@@ -95,7 +95,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
       new Runnable() {
         @Override
         public void run() {
-          applyRequest(new LoadingDiffRequest(presentable.getName()), force, scrollToChangePolicy);
+          applyRequest(new LoadingDiffRequest(producer.getName()), force, scrollToChangePolicy);
         }
       },
       ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
@@ -103,26 +103,26 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   }
 
   @Nullable
-  protected DiffRequest loadRequestFast(@NotNull DiffRequestPresentable presentable) {
-    return myRequestCache.get(presentable);
+  protected DiffRequest loadRequestFast(@NotNull DiffRequestProducer producer) {
+    return myRequestCache.get(producer);
   }
 
   @NotNull
   @CalledInBackground
-  private DiffRequest loadRequest(@NotNull DiffRequestPresentable presentable, @NotNull ProgressIndicator indicator) {
+  private DiffRequest loadRequest(@NotNull DiffRequestProducer producer, @NotNull ProgressIndicator indicator) {
     try {
-      return presentable.process(getContext(), indicator);
+      return producer.process(getContext(), indicator);
     }
     catch (ProcessCanceledException e) {
-      OperationCanceledDiffRequest request = new OperationCanceledDiffRequest(presentable.getName());
-      request.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new ReloadRequestAction(presentable)));
+      OperationCanceledDiffRequest request = new OperationCanceledDiffRequest(producer.getName());
+      request.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new ReloadRequestAction(producer)));
       return request;
     }
-    catch (DiffRequestPresentableException e) {
-      return new ErrorDiffRequest(presentable, e);
+    catch (DiffRequestProducerException e) {
+      return new ErrorDiffRequest(producer, e);
     }
     catch (Exception e) {
-      return new ErrorDiffRequest(presentable, e);
+      return new ErrorDiffRequest(producer, e);
     }
   }
 
@@ -207,16 +207,16 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   //
 
   protected class ReloadRequestAction extends DumbAwareAction {
-    @NotNull private final DiffRequestPresentable myPresentable;
+    @NotNull private final DiffRequestProducer myProducer;
 
-    public ReloadRequestAction(@NotNull DiffRequestPresentable presentable) {
+    public ReloadRequestAction(@NotNull DiffRequestProducer producer) {
       super("Reload", null, AllIcons.Actions.Refresh);
-      myPresentable = presentable;
+      myProducer = producer;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myRequestCache.remove(myPresentable);
+      myRequestCache.remove(myProducer);
       updateRequest(true);
     }
   }

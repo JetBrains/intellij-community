@@ -5,14 +5,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.diff.chains.DiffRequestPresentableException;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.impl.DiffViewerWrapper;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +47,9 @@ public class SvnChangeDiffViewerProvider implements ChangeDiffViewerWrapperProvi
 
   @NotNull
   @Override
-  public DiffViewerWrapper process(@NotNull ChangeDiffRequestPresentable presentable,
+  public DiffViewerWrapper process(@NotNull ChangeDiffRequestProducer presentable,
                                    @NotNull UserDataHolder context,
-                                   @NotNull ProgressIndicator indicator) throws DiffRequestPresentableException, ProcessCanceledException {
+                                   @NotNull ProgressIndicator indicator) throws DiffRequestProducerException, ProcessCanceledException {
     // TODO: support properties conflict for three-way-diff
 
     DiffRequest propertyRequest = createPropertyRequest(presentable.getChange(), indicator);
@@ -58,21 +58,21 @@ public class SvnChangeDiffViewerProvider implements ChangeDiffViewerWrapperProvi
 
   @NotNull
   private static SvnPropertiesDiffRequest createPropertyRequest(@NotNull Change change, @NotNull ProgressIndicator indicator)
-    throws DiffRequestPresentableException {
+    throws DiffRequestProducerException {
     try {
       Change propertiesChange = getSvnChangeLayer(change);
-      if (propertiesChange == null) throw new DiffRequestPresentableException(SvnBundle.getString("diff.cant.get.properties.changes"));
+      if (propertiesChange == null) throw new DiffRequestProducerException(SvnBundle.getString("diff.cant.get.properties.changes"));
 
       ContentRevision bRevRaw = propertiesChange.getBeforeRevision();
       ContentRevision aRevRaw = propertiesChange.getAfterRevision();
 
       if (bRevRaw != null && !(bRevRaw instanceof PropertyRevision)) {
         LOG.warn("Before change is not PropertyRevision");
-        throw new DiffRequestPresentableException(SvnBundle.getString("diff.cant.get.properties.changes"));
+        throw new DiffRequestProducerException(SvnBundle.getString("diff.cant.get.properties.changes"));
       }
       if (aRevRaw != null && !(aRevRaw instanceof PropertyRevision)) {
         LOG.warn("After change is not PropertyRevision");
-        throw new DiffRequestPresentableException(SvnBundle.getString("diff.cant.get.properties.changes"));
+        throw new DiffRequestProducerException(SvnBundle.getString("diff.cant.get.properties.changes"));
       }
 
       PropertyRevision bRev = (PropertyRevision)bRevRaw;
@@ -84,7 +84,7 @@ public class SvnChangeDiffViewerProvider implements ChangeDiffViewerWrapperProvi
       indicator.checkCanceled();
       List<PropertyData> aContent = aRev != null ? aRev.getProperties() : null;
 
-      if (aRev == null && bRev == null) throw new DiffRequestPresentableException(SvnBundle.getString("diff.cant.get.properties.changes"));
+      if (aRev == null && bRev == null) throw new DiffRequestProducerException(SvnBundle.getString("diff.cant.get.properties.changes"));
 
       ContentRevision bRevMain = change.getBeforeRevision();
       ContentRevision aRevMain = change.getAfterRevision();
@@ -94,7 +94,7 @@ public class SvnChangeDiffViewerProvider implements ChangeDiffViewerWrapperProvi
       return new SvnPropertiesDiffRequest(bContent, aContent, title1, title2);
     }
     catch (VcsException e) {
-      throw new DiffRequestPresentableException(e);
+      throw new DiffRequestProducerException(e);
     }
   }
 

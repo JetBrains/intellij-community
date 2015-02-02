@@ -16,7 +16,7 @@
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestPresentable;
+import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -94,7 +94,7 @@ public class GoToChangePopupBuilder {
       return JBPopupFactory.getInstance().createListPopup(new MyListPopupStep(e.getProject()));
     }
 
-    private class MyListPopupStep extends BaseListPopupStep<DiffRequestPresentable> {
+    private class MyListPopupStep extends BaseListPopupStep<DiffRequestProducer> {
       private final Project myProject;
 
       public MyListPopupStep(@Nullable Project project) {
@@ -105,7 +105,7 @@ public class GoToChangePopupBuilder {
 
       @NotNull
       @Override
-      public String getTextFor(DiffRequestPresentable value) {
+      public String getTextFor(DiffRequestProducer value) {
         return value.getName();
       }
 
@@ -115,7 +115,7 @@ public class GoToChangePopupBuilder {
       }
 
       @Override
-      public PopupStep onChosen(final DiffRequestPresentable selectedValue, boolean finalChoice) {
+      public PopupStep onChosen(final DiffRequestProducer selectedValue, boolean finalChoice) {
         return doFinalStep(new Runnable() {
           @Override
           public void run() {
