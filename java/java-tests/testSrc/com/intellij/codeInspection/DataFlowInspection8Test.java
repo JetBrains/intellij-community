@@ -76,6 +76,8 @@ public class DataFlowInspection8Test extends LightCodeInsightFixtureTestCase {
     });
   }
 
+  public void testMethodReferenceOnNullable() { doTest(); }
+
   public void testNullableForeachVariable() {
     setupCustomAnnotations();
     doTest();
