@@ -216,7 +216,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       ) {
       DfaValue arrayVar = myFactory.createValue(((PsiArrayAccessExpression)lExpr).getArrayExpression());
       if (arrayVar instanceof DfaVariableValue) {
-        addInstruction(new FlushVariableInstruction((DfaVariableValue)arrayVar));
+        addInstruction(new FlushVariableInstruction((DfaVariableValue)arrayVar, true));
       }
     }
   }
