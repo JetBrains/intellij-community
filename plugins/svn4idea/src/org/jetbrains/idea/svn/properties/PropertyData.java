@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn.properties;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
@@ -23,24 +25,27 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
  */
 public class PropertyData {
 
-  private final PropertyValue myValue;
+  @Nullable private final PropertyValue myValue;
+  @NotNull private final String myName;
 
-  private final String myName;
-
-  public PropertyData(String name, PropertyValue value) {
+  // TODO: Actually value is always not null for command line integration. But it is not clear enough if not null property value is always
+  // TODO: provided by SVNKit. So currently value is @Nullable.
+  public PropertyData(@NotNull String name, @Nullable PropertyValue value) {
     myName = name;
     myValue = value;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
 
+  @Nullable
   public PropertyValue getValue() {
     return myValue;
   }
 
-  @Nullable
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static PropertyData create(@Nullable SVNPropertyData data) {
     PropertyData result = null;
 

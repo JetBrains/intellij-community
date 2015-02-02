@@ -1,6 +1,7 @@
 # coding=utf-8
 """
-Exports data from optparse-based manage.py commands and reports it to pycharm.django_manage_obtainer._XmlDumper
+Exports data from optparse-based manage.py commands and reports it to _xml.XmlDumper.
+This module encapsulates Django semi-public API knowledge, and not very stable because of it.
 """
 from optparse import Option
 import django
@@ -13,9 +14,9 @@ __author__ = 'Ilya.Kazakevich'
 
 def report_data(dumper):
     """
-    Fetches data from manage.py commands and reports it to dumper.
+    Fetches data from management commands and reports it to dumper.
 
-    :type dumper _django_obtainer_core_XmlDumper
+    :type dumper _xml.XmlDumper
     :param dumper: destination to report
     """
     utility = ManagementUtility()

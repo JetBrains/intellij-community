@@ -270,7 +270,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   public static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
     final AnActionEvent event = new AnActionEvent(null, dataContext,
-                                                  ActionPlaces.UNKNOWN, new Presentation(), ActionManager.getInstance(),
+                                                  ActionPlaces.ACTION_SEARCH, new Presentation(), ActionManager.getInstance(),
                                                   0);
     ActionUtil.performDumbAwareUpdate(anAction, event, false);
     ActionUtil.performDumbAwareUpdate(anAction, event, true);

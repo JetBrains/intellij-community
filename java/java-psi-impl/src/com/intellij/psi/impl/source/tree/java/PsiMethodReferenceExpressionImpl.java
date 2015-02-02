@@ -488,7 +488,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         methodReturnType = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass, subst);
       }
 
-      return TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false);
+      return TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType);
     }
     return false;
   }

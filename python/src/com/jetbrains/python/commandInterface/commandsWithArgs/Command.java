@@ -18,60 +18,31 @@ package com.jetbrains.python.commandInterface.commandsWithArgs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 /**
- * Command
- * TODO: add args
+ * Command with arguments
  *
  * @author Ilya.Kazakevich
  */
-public final class Command {
-  @NotNull
-  private final String myName;
-  @NotNull
-  private final List<Argument> myArguments = new ArrayList<Argument>();
-  @Nullable
-  private final String myHelp;
+public interface Command {
 
-  /**
-   * @param help help text
-   * @param name      command name
-   * @param arguments command arguments
-   */
-  public Command(@NotNull final String name, @Nullable final String help, @NotNull final Argument... arguments) {
-    this(name, help, Arrays.asList(arguments));
-  }
-
-  /**
-   * @param help help text
-   * @param name      command name
-   * @param arguments command arguments
-   */
-  public Command(@NotNull final String name, @Nullable final String help, @NotNull final Collection<Argument> arguments) {
-    myName = name;
-    myArguments.addAll(arguments);
-    myHelp = help;
-  }
 
   /**
    * @return command name
    */
   @NotNull
-  String getName() {
-    return myName;
-  }
+  String getName();
 
   /**
    * @return command arguments
    */
   @NotNull
-  List<Argument> getArguments() {
-    return Collections.unmodifiableList(myArguments);
-  }
+  List<Argument> getArguments();
 
+  /**
+   * @return Command readable help text
+   */
   @Nullable
-  public String getHelp() {
-    return myHelp;
-  }
+  String getHelp();
 }

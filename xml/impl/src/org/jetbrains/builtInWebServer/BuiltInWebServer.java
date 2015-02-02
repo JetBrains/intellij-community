@@ -42,7 +42,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static org.jetbrains.io.Responses.*;
+import static org.jetbrains.io.Responses.addKeepAliveIfNeed;
+import static org.jetbrains.io.Responses.sendStatus;
 
 public final class BuiltInWebServer extends HttpRequestHandler {
   static final Logger LOG = Logger.getInstance(BuiltInWebServer.class);
@@ -77,16 +78,11 @@ public final class BuiltInWebServer extends HttpRequestHandler {
 
   @Override
   public boolean isSupported(@NotNull FullHttpRequest request) {
-    return super.isSupported(request) || request.method() == HttpMethod.POST || request.method() == HttpMethod.OPTIONS;
+    return super.isSupported(request) || request.method() == HttpMethod.POST;
   }
 
   @Override
   public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
-    if (request.method() == HttpMethod.OPTIONS) {
-      sendOptionsResponse("GET, POST, HEAD, OPTIONS", request, context);
-      return true;
-    }
-
     String host = HttpHeaders.getHost(request);
     if (StringUtil.isEmpty(host)) {
       return false;

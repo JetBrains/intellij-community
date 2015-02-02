@@ -3060,8 +3060,8 @@ public class StringUtil extends StringUtilRt {
         break;
       }
     }
-    for (int i = 0; i < words.size(); i++) {
-      String word = words.get(i);
+    for (int i = 0; i < Math.max(1, words.size()); i++) {
+      String word = words.isEmpty() ? "" : words.get(i);
       if (i == index || words.size() == 1) builder.append(toPaste);
       builder.append(word);
     }

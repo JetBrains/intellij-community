@@ -29,6 +29,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -174,6 +176,6 @@ public final class NettyUtil {
   }
 
   public static void addHttpServerCodec(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpServerCodec(), new HttpObjectAggregator(MAX_CONTENT_LENGTH));
+    pipeline.addLast(new HttpServerCodec(), new HttpObjectAggregator(MAX_CONTENT_LENGTH), new CorsHandler(CorsConfig.withAnyOrigin().build()));
   }
 }

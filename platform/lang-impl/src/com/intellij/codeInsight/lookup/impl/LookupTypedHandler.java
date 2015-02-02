@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -67,7 +68,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       return;
     }
 
-    if (!CodeInsightUtilBase.prepareEditorForWrite(originalEditor)) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(originalEditor) || !FileDocumentManager.getInstance().requestWriting(originalEditor.getDocument(), project)) {
       return;
     }
 

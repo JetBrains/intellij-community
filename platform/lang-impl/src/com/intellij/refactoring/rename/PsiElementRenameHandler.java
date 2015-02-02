@@ -17,6 +17,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -26,15 +27,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -88,8 +92,11 @@ public class PsiElementRenameHandler implements RenameHandler {
       return;
     }
 
+    VirtualFile contextFile = PsiUtilCore.getVirtualFile(nameSuggestionContext);
+
     if (nameSuggestionContext != null &&
         nameSuggestionContext.isPhysical() &&
+        (contextFile == null || contextFile.getFileType() != ScratchFileType.INSTANCE) &&
         !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
       final String message = "Selected element is used from non-project files. These usages won't be renamed. Proceed anyway?";
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
@@ -126,8 +133,11 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     if (!PsiManager.getInstance(project).isInProject(element)) {
       if (element.isPhysical()) {
-        final String message = RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element));
-        return RefactoringBundle.getCannotRefactorMessage(message);
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+        if (!(virtualFile != null && NonProjectFileWritingAccessProvider.isWriteAccessAllowedExplicitly(virtualFile, project))) {
+          String message = RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element));
+          return RefactoringBundle.getCannotRefactorMessage(message);
+        }
       }
 
       if (!element.isWritable()) {
