@@ -18,11 +18,15 @@ package com.intellij.formatting.contextConfiguration;
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.util.IncorrectOperationException;
@@ -58,8 +62,7 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    TabbedLanguageCodeStylePanel fragment = new CodeFragmentCodeStyleSettingsPanel(settings, project, editor, file);
-    new FragmentCodeStyleSettingsDialog(project, fragment, settings).show();
+    new FragmentCodeStyleSettingsDialog(project, editor, file, settings).show();
   }
   
   @Override
@@ -70,11 +73,24 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
   static class FragmentCodeStyleSettingsDialog extends DialogWrapper {
     private final TabbedLanguageCodeStylePanel myTabbedLanguagePanel;
     private final CodeStyleSettings mySettings;
+    private final Editor myEditor;
+    
+    private final String myTextBefore;
+    private final int mySelectionStart;
+    private final int mySelectionEnd;
+    private final Project myProject;
 
-    public FragmentCodeStyleSettingsDialog(@NotNull Project project, TabbedLanguageCodeStylePanel component, CodeStyleSettings settings) {
+    public FragmentCodeStyleSettingsDialog(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, CodeStyleSettings settings) {
       super(project, true);
-      myTabbedLanguagePanel = component;
+      myProject = project;
+      myEditor = editor;
       mySettings = settings;
+      
+      myTextBefore = myEditor.getSelectionModel().getSelectedText();
+      mySelectionStart = myEditor.getSelectionModel().getSelectionStart();
+      mySelectionEnd = myEditor.getSelectionModel().getSelectionEnd();
+      
+      myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, project, editor, file);
       
       setTitle("Configure Code Style Settings on Selected Fragment");
       setOKButtonText("Save");
@@ -96,6 +112,35 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
         LOG.debug("Can not apply code style settings from context menu to project code style settings");
       }
       super.doOKAction();
+    }
+
+    @Override
+    public void doCancelAction() {
+      String textAfter = myEditor.getSelectionModel().getSelectedText();
+      if (!StringUtil.equals(myTextBefore, textAfter)) {
+        restoreSelectedText();
+      }
+      super.doCancelAction();
+    }
+
+    private void restoreSelectedText() {
+      final Document document = myEditor.getDocument();
+      final int start = myEditor.getSelectionModel().getSelectionStart();
+      final int end = myEditor.getSelectionModel().getSelectionEnd();
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            @Override
+            public void run() {
+              document.replaceString(start, end, myTextBefore);
+            }
+          }, "Configure code style on selected fragment: restore text before", null);
+        }
+      });
+      
+      myEditor.getSelectionModel().setSelection(mySelectionStart, mySelectionEnd);
     }
   }
 }
