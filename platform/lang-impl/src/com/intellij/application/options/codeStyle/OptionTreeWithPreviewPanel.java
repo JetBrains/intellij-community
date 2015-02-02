@@ -54,7 +54,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   private boolean myShowAllStandardOptions = false;
   private Set<String> myAllowedOptions = new HashSet<String>();
   private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<String, CustomBooleanOptionInfo>();
-  private boolean isFirstUpdate = true;
+  protected boolean isFirstUpdate = true;
   private final Map<String, String> myRenamedFields = new THashMap<String, String>();
   private final Map<String, String> myRemappedGroups = new THashMap<String, String>();
 

@@ -122,8 +122,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       myPanel = new JPanel(new BorderLayout());
       myPanel.add(pane);
 
-      //todo what is this? is this really needed?
-      //isFirstUpdate = false;
+      isFirstUpdate = false;
     }
     
     @Override
@@ -157,9 +156,8 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
       //todo why this needed here?
       customizeSettings();
-
-      //todo needed?
-      //isFirstUpdate = false;
+      
+      isFirstUpdate = false;
     }
 
     @Override
