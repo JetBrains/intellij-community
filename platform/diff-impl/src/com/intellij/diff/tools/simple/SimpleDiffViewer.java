@@ -56,11 +56,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledWithWriteLock;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -138,6 +134,9 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new ReplaceSelectedChangesAction());
     group.add(new AppendSelectedChangesAction());
     group.add(new RevertSelectedChangesAction());
+    group.add(Separator.getInstance());
+
+    group.addAll(super.createEditorPopupActions());
 
     return group;
   }

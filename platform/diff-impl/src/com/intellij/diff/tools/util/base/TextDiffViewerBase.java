@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +41,6 @@ import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
@@ -109,7 +109,9 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
 
   @NotNull
   protected List<AnAction> createEditorPopupActions() {
-    return Collections.emptyList();
+    return ContainerUtil.list(
+      ActionManager.getInstance().getAction("CompareClipboardWithSelection") // TODO: pass FileType to DataContext for highlighting
+    );
   }
 
   //
