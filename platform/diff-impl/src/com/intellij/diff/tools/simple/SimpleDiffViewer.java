@@ -357,8 +357,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
     int offset1 = e.getOffset();
     int offset2 = e.getOffset() + e.getOldLength();
 
-    if (e.getOldLength() != 0 && e.getNewLength() != 0 &&
-        StringUtil.endsWithChar(e.getOldFragment(), '\n') &&
+    if (StringUtil.endsWithChar(e.getOldFragment(), '\n') &&
         StringUtil.endsWithChar(e.getNewFragment(), '\n')) {
       offset2--;
     }
