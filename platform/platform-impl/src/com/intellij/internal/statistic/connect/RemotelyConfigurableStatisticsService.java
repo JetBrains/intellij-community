@@ -46,7 +46,7 @@ public class RemotelyConfigurableStatisticsService implements StatisticsService 
 
     try {
       sender.send(serviceUrl, content);
-      StatisticsUploadAssistant.persistSentPatch(content);
+      StatisticsUploadAssistant.updateSentTime();
 
       return new StatisticsResult(StatisticsResult.ResultCode.SEND, content);
     }
