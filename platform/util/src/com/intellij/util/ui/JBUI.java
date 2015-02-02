@@ -25,7 +25,12 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBUI {
-  private static boolean IS_HIDPI = "true".equals(System.getProperty("hidpi"));
+  private static boolean IS_HIDPI = ("true".equals(System.getProperty("hidpi")) || getSystemDPI() >= 144)
+                                    && !("false".equals(System.getProperty("hidpi")));
+
+  private static int getSystemDPI() {
+    return Toolkit.getDefaultToolkit().getScreenResolution();
+  }
 
   public static int scale(int i) {
     return isHiDPI() ? 2 * i : i;
