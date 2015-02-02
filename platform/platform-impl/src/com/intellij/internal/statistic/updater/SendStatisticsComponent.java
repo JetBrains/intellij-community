@@ -35,7 +35,7 @@ public class SendStatisticsComponent implements ApplicationComponent {
 
   private static final int DELAY_IN_MIN = 10;
 
-  private Alarm myAlarm;
+  private final Alarm myAlarm;
 
   public SendStatisticsComponent() {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());

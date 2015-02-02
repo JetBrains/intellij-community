@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -46,6 +47,9 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   implements ApplicationComponent, PersistentStateComponent<Element> {
   private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
 
+  private final Alarm myAlarm;
+  private final long PERSIST_PERIOD = 24*60*60*1000; //1 day
+
   private static final String TOKENIZER = ",";
 
   @NonNls
@@ -61,6 +65,10 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   private static final String PROJECT_ID_ATTR = "id";
   @NonNls
   private static final String VALUES_ATTR = "values";
+
+  public ApplicationStatisticsPersistenceComponent() {
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
+  }
 
   public static ApplicationStatisticsPersistenceComponent getInstance() {
     return ApplicationManager.getApplication().getComponent(ApplicationStatisticsPersistenceComponent.class);
@@ -186,6 +194,18 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
         }
       }
     });
+
+    persistPeriodically();
+  }
+
+  private void persistPeriodically() {
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        persistOpenedProjects();
+        persistPeriodically();
+      }
+    }, PERSIST_PERIOD);
   }
 
   private static void persistOpenedProjects() {
