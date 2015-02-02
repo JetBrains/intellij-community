@@ -398,7 +398,7 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @NotNull
   @Override
   protected JComponent getStatusPanel() {
-    return myStatusPanel.getComponent();
+    return myStatusPanel;
   }
 
   //

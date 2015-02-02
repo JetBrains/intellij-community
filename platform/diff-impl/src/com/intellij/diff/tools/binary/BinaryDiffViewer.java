@@ -31,6 +31,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -49,11 +50,14 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.AnimatedIcon;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.IOException;
@@ -367,7 +371,7 @@ class BinaryDiffViewer extends ListenerDiffViewerBase {
   @NotNull
   @Override
   protected JComponent getStatusPanel() {
-    return myStatusPanel.getComponent();
+    return myStatusPanel;
   }
 
   //
@@ -450,15 +454,26 @@ class BinaryDiffViewer extends ListenerDiffViewerBase {
   // Helpers
   //
 
-  private static class MyStatusPanel extends StatusPanel {
-    @Override
-    protected int getChangesCount() {
-      return -1;
+  private static class MyStatusPanel extends JPanel {
+    private final AnimatedIcon myBusySpinner;
+
+    public MyStatusPanel() {
+      super(new BorderLayout());
+      myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
+      myBusySpinner.setVisible(false);
+
+      add(myBusySpinner, BorderLayout.WEST);
     }
 
-    @Override
-    protected boolean showText() {
-      return false;
+    public void setBusy(boolean busy) {
+      if (busy) {
+        myBusySpinner.setVisible(true);
+        myBusySpinner.resume();
+      }
+      else {
+        myBusySpinner.setVisible(false);
+        myBusySpinner.suspend();
+      }
     }
   }
 

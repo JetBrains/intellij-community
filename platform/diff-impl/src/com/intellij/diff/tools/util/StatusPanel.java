@@ -18,28 +18,22 @@ package com.intellij.diff.tools.util;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class StatusPanel {
-  private final JPanel myPanel;
+public abstract class StatusPanel extends JPanel {
   private final JLabel myTextLabel;
   private final AnimatedIcon myBusySpinner;
 
   public StatusPanel() {
+    super(new BorderLayout());
     myTextLabel = new JLabel("");
     myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
+    myBusySpinner.setVisible(false);
 
-    myPanel = new JPanel(new BorderLayout());
-    if (showText()) myPanel.add(myTextLabel, BorderLayout.CENTER);
-    if (showSpinner()) myPanel.add(myBusySpinner, BorderLayout.WEST);
-  }
-
-  @NotNull
-  public JComponent getComponent() {
-    return myPanel;
+    add(myTextLabel, BorderLayout.CENTER);
+    add(myBusySpinner, BorderLayout.WEST);
   }
 
   public void update() {
@@ -56,14 +50,6 @@ public abstract class StatusPanel {
       myBusySpinner.setVisible(false);
       myBusySpinner.suspend();
     }
-  }
-
-  protected boolean showSpinner() {
-    return true;
-  }
-
-  protected boolean showText() {
-    return true;
   }
 
   protected abstract int getChangesCount();

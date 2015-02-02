@@ -38,8 +38,8 @@ import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.diff.util.Side;
@@ -64,11 +64,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TIntFunction;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -540,7 +536,7 @@ class OnesideDiffViewer extends TextDiffViewerBase {
   @NotNull
   @Override
   protected JComponent getStatusPanel() {
-    return myStatusPanel.getComponent();
+    return myStatusPanel;
   }
 
   //
@@ -810,11 +806,6 @@ class OnesideDiffViewer extends TextDiffViewerBase {
     @Override
     protected int getChangesCount() {
       return myChangedBlockData == null ? 0 : myChangedBlockData.getDiffChanges().size();
-    }
-
-    @Override
-    protected boolean showSpinner() {
-      return false;
     }
   }
 

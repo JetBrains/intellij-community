@@ -446,7 +446,7 @@ class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   @Override
   protected JComponent getStatusPanel() {
-    return myStatusPanel.getComponent();
+    return myStatusPanel;
   }
 
   //
