@@ -757,7 +757,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private boolean isTheAmountOfTextTooBig(final int textLength) {
-    return textLength > myBuffer.getCyclicBufferSize() / consoleTooMuchTextBufferRatio;
+    return myBuffer.isUseCyclicBuffer() && textLength > myBuffer.getCyclicBufferSize() / consoleTooMuchTextBufferRatio;
   }
 
   private void clearHyperlinkAndFoldings() {
