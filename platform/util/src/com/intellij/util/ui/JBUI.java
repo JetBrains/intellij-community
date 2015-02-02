@@ -29,7 +29,11 @@ public class JBUI {
                                     && !("false".equals(System.getProperty("hidpi")));
 
   private static int getSystemDPI() {
-    return Toolkit.getDefaultToolkit().getScreenResolution();
+    try {
+      return Toolkit.getDefaultToolkit().getScreenResolution();
+    } catch (HeadlessException e) {
+      return 96;
+    }
   }
 
   public static int scale(int i) {
