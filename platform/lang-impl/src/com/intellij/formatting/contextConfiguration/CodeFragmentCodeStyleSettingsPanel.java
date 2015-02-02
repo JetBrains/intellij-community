@@ -129,6 +129,11 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     public JComponent getPanel() {
       return myPanel;
     }
+
+    @Override
+    protected String getPreviewText() {
+      return null;
+    }
   }
 
   private class WrappingAndBracesPanelWithoutPreview extends MyWrappingAndBracesPanel {
@@ -164,10 +169,15 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     public JComponent getPanel() {
       return myPanel;
     }
-
+    
     @Override
     protected void somethingChanged() {
       reformatSelectedTextWithNewSettings();
+    }
+    
+    @Override
+    protected String getPreviewText() {
+      return null;
     }
   }
 }
