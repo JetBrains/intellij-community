@@ -43,6 +43,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -106,6 +107,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   @Nullable
   @Override
   public RootType getRootType(@NotNull VirtualFile file) {
+    if (!(file instanceof VirtualFileWithId)) return null;
     if (!file.isValid()) return null;
     RootType result = myIndex.getInfoForFile(file);
     return result == NULL_TYPE ? null : result;
