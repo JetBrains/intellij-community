@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -408,6 +408,10 @@ public class IconUtil {
 
   }
 
+  @NotNull
+  public static Icon colorize(@NotNull final Icon source, @NotNull Color color) {
+    return colorize(source, color, false);
+  }
 
   @NotNull
   public static Icon colorize(@NotNull final Icon source, @NotNull Color color, boolean keepGray) {
@@ -427,7 +431,7 @@ public class IconUtil {
         if (rgba[3] != 0) {
           Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
           int rgb = Color.HSBtoRGB(base[0], base[1] * (keepGray ? hsb[1] : 1f), base[2] * hsb[2]);
-          img.getRaster().setPixel(x, y, new int[]{(rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff, rgba[3]});
+          img.getRaster().setPixel(x, y, new int[]{rgb >> 16 & 0xff, rgb >> 8 & 0xff, rgb & 0xff, rgba[3]});
         }
       }
     }

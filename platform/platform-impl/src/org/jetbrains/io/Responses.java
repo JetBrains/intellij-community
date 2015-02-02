@@ -24,9 +24,9 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
@@ -63,10 +63,6 @@ public final class Responses {
     return response;
   }
 
-  public static void addAllowAnyOrigin(HttpResponse response) {
-    response.headers().add(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-  }
-
   public static void addDate(HttpResponse response) {
     if (!response.headers().contains(HttpHeaders.Names.DATE)) {
       addDate(response, Calendar.getInstance().getTime());
@@ -99,7 +95,7 @@ public final class Responses {
     }
   }
 
-  public static void send(HttpResponse response, Channel channel, @Nullable HttpRequest request) {
+  public static void send(@NotNull HttpResponse response, Channel channel, @Nullable HttpRequest request) {
     if (response.status() != HttpResponseStatus.NOT_MODIFIED && !HttpHeaders.isContentLengthSet(response)) {
       HttpHeaders.setContentLength(response,
                                    response instanceof FullHttpResponse ? ((FullHttpResponse)response).content().readableBytes() : 0);
@@ -120,7 +116,6 @@ public final class Responses {
   public static void addCommonHeaders(HttpResponse response) {
     addServer(response);
     addDate(response);
-    addAllowAnyOrigin(response);
   }
 
   public static void send(CharSequence content, Channel channel, @Nullable HttpRequest request) {
@@ -131,7 +126,7 @@ public final class Responses {
     send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset)), channel, request);
   }
 
-  private static void send(HttpResponse response, Channel channel, boolean close) {
+  private static void send(@NotNull HttpResponse response, @NotNull Channel channel, boolean close) {
     if (!channel.isActive()) {
       return;
     }
@@ -154,7 +149,7 @@ public final class Responses {
     sendStatus(responseStatus, channel, null, request);
   }
 
-  public static void sendStatus(HttpResponseStatus responseStatus, Channel channel, @Nullable String description, @Nullable HttpRequest request) {
+  public static void sendStatus(@NotNull HttpResponseStatus responseStatus, Channel channel, @Nullable String description, @Nullable HttpRequest request) {
     send(createStatusResponse(responseStatus, request, description), channel, request);
   }
 
@@ -174,12 +169,5 @@ public final class Responses {
     DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, Unpooled.copiedBuffer(builder, CharsetUtil.UTF_8));
     response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html");
     return response;
-  }
-
-  public static void sendOptionsResponse(String allowHeaders, HttpRequest request, ChannelHandlerContext context) {
-    HttpResponse response = response(HttpResponseStatus.OK);
-    response.headers().set(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_METHODS, allowHeaders);
-    response.headers().set(HttpHeaders.Names.ALLOW, allowHeaders);
-    send(response, context.channel(), request);
   }
 }

@@ -17,7 +17,6 @@ package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,7 +56,8 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
       Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
       usages.add(new UsageDescriptor("vcs.log.commit.count", permanentGraph.getAllCommits().size()));
       for (VcsKey vcs : groupedRoots.keySet()) {
-        usages.add(new RootUsage(vcs, groupedRoots.get(vcs).size()));
+        //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+        usages.add(new UsageDescriptor("vcs.log." + vcs.getName().toLowerCase() + ".root.count", groupedRoots.get(vcs).size()));
       }
       return usages;
     }
@@ -98,12 +98,4 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   public GroupDescriptor getGroupId() {
     return ID;
   }
-
-  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
-  private static class RootUsage extends UsageDescriptor {
-    RootUsage(VcsKey vcs, int value) {
-      super(ConvertUsagesUtil.ensureProperKey("vcs.log." + vcs.getName().toLowerCase() + ".root.count"), value);
-    }
-  }
-
 }

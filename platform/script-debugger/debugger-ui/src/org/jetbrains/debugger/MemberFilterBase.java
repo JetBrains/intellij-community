@@ -9,7 +9,7 @@ import java.util.Collections;
 public abstract class MemberFilterBase implements MemberFilter {
   @Override
   public boolean isMemberVisible(@NotNull Variable variable, boolean filterFunctions) {
-    return true;
+    return variable.isReadable();
   }
 
   @NotNull

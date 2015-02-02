@@ -18,16 +18,20 @@ package com.intellij.vcs.log.graph.impl.print.elements;
 
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import org.jetbrains.annotations.NotNull;
 
-public class EdgePrintElementImpl extends AbstractPrintElement implements EdgePrintElement {
+public class EdgePrintElementImpl extends PrintElementWithGraphElement implements EdgePrintElement {
   @NotNull
-  public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdge.Type edgeType) {
+  public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdgeType edgeType) {
     switch (edgeType) {
       case USUAL:
+      case NOT_LOAD_COMMIT:
         return EdgePrintElement.LineStyle.SOLID;
-      case HIDE:
+      case DOTTED:
+      case DOTTED_ARROW_UP:
+      case DOTTED_ARROW_DOWN:
         return EdgePrintElement.LineStyle.DASHED;
       default:
         throw new IllegalStateException("Edge type not supported: " + edgeType);
@@ -45,8 +49,8 @@ public class EdgePrintElementImpl extends AbstractPrintElement implements EdgePr
                               int positionInOtherRow,
                               @NotNull Type type,
                               @NotNull GraphEdge graphEdge,
-                              @NotNull PrintElementsManager printElementsManager) {
-    super(rowIndex, positionInCurrentRow, graphEdge, printElementsManager);
+                              @NotNull PrintElementManager printElementManager) {
+    super(rowIndex, positionInCurrentRow, graphEdge, printElementManager);
     myType = type;
     myLineStyle = convertToLineStyle(graphEdge.getType());
     myPositionInOtherRow = positionInOtherRow;

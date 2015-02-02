@@ -19,20 +19,22 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -45,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
@@ -58,56 +61,70 @@ import java.util.Map;
 /**
  * @author gregsh
  */
-public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
+public class RunIdeConsoleAction extends DumbAwareAction {
 
+  private static final String DEFAULT_FILE_NAME = "ide-scripting";
   private static final Key<WeakReference<ConsoleView>> CONSOLE_VIEW_KEY = Key.create("CONSOLE_VIEW_KEY");
   private static final Key<ConsoleHistoryController> HISTORY_CONTROLLER_KEY = Key.create("HISTORY_CONTROLLER_KEY");
 
-  private static final Map<String, ScriptEngineFactory> ourEngines = ContainerUtil.newLinkedHashMap();
-
-  static {
-    for (ScriptEngineFactory factory : new ScriptEngineManager().getEngineFactories()) {
-      ourEngines.put(factory.getLanguageName(), factory);
+  static class Engines {
+    static final Map<String, ScriptEngineFactory> ourEngines = ContainerUtil.newLinkedHashMap();
+    static  {
+      for (ScriptEngineFactory factory : new ScriptEngineManager().getEngineFactories()) {
+        ourEngines.put(factory.getLanguageName(), factory);
+      }
     }
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean enabled = !ourEngines.isEmpty() && e.getProject() != null;
+    boolean enabled = !Engines.ourEngines.isEmpty() && e.getProject() != null;
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    if (e == null) return EMPTY_ARRAY;
-    return ContainerUtil.map2Array(ourEngines.values(), AnAction.class, new NotNullFunction<ScriptEngineFactory, AnAction>() {
-      @NotNull
-      @Override
-      public AnAction fun(final ScriptEngineFactory engine) {
-        return new AnAction(engine.getLanguageName()) {
+  public void actionPerformed(AnActionEvent e) {
+    if (Engines.ourEngines.size() == 1) {
+      runConsole(e, Engines.ourEngines.values().iterator().next());
+    }
+    else {
+      DefaultActionGroup actions = new DefaultActionGroup(
+        ContainerUtil.map(Engines.ourEngines.values(), new NotNullFunction<ScriptEngineFactory, AnAction>() {
+          @NotNull
           @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            Project project = e.getProject();
-            if (project == null) return;
-            List<String> extensions = engine.getExtensions();
-            try {
-              String pathName = PathUtil.makeFileName(engine.getLanguageName(), ContainerUtil.getFirstItem(extensions));
-              VirtualFile virtualFile = IdeConsoleRootType.getInstance().findFile(project, pathName, ScratchFileService.Option.create_if_missing);
-              if (virtualFile != null) {
-                FileEditorManager.getInstance(project).openFile(virtualFile, true);
+          public AnAction fun(final ScriptEngineFactory engine) {
+            return new AnAction(engine.getLanguageName()) {
+              @Override
+              public void actionPerformed(@NotNull AnActionEvent e) {
+                runConsole(e, engine);
               }
-            }
-            catch (IOException ignored) {
-            }
+            };
           }
-        };
+        })
+      );
+      JBPopupFactory.getInstance().createActionGroupPopup("Script Engine", actions, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false).
+        showInBestPositionFor(e.getDataContext());
+    }
+  }
+
+  protected void runConsole(@NotNull AnActionEvent e, @NotNull ScriptEngineFactory engine) {
+    Project project = e.getProject();
+    if (project == null) return;
+    List<String> extensions = engine.getExtensions();
+    try {
+      String pathName = PathUtil.makeFileName(DEFAULT_FILE_NAME, ContainerUtil.getFirstItem(extensions));
+      VirtualFile virtualFile = IdeConsoleRootType.getInstance().findFile(project, pathName, ScratchFileService.Option.create_if_missing);
+      if (virtualFile != null) {
+        FileEditorManager.getInstance(project).openFile(virtualFile, true);
       }
-    });
+    }
+    catch (IOException ignored) {
+    }
   }
 
   public static void configureConsole(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
-    ScriptEngine engine = createScriptEngine(file);
+    ScriptEngine engine = findScriptEngine(file);
+    if (engine == null) return;
     //new ConsoleHistoryController(IdeConsoleRootType.getInstance(), engine.getFactory().getLanguageName())
     MyRunAction runAction = new MyRunAction(engine);
     for (FileEditor fileEditor : source.getEditors(file)) {
@@ -117,32 +134,47 @@ public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
     }
   }
 
-  @NotNull
-  private static ScriptEngine createScriptEngine(VirtualFile file) {
-    for (ScriptEngineFactory factory : ourEngines.values()) {
+  @Nullable
+  private static ScriptEngine findScriptEngine(@NotNull VirtualFile file) {
+    for (ScriptEngineFactory factory : Engines.ourEngines.values()) {
       if (factory.getExtensions().contains(file.getExtension())) {
         return factory.getScriptEngine();
       }
     }
-    throw new AssertionError(file);
+    return null;
   }
 
   private static void executeQuery(@NotNull Project project,
                                    @NotNull VirtualFile file,
                                    @NotNull Editor editor,
                                    @NotNull ScriptEngine engine) {
+
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
-    if (selectedRange.getLength() == 0) return;
-    String command = editor.getDocument().getText(selectedRange);
-    ConsoleView consoleView = getConsoleView(project, file, engine);
+    Document document = editor.getDocument();
+    if (selectedRange.getLength() == 0) {
+      int line = document.getLineNumber(selectedRange.getStartOffset());
+      selectedRange = TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    }
+    String command = document.getText(selectedRange);
+    final ConsoleView consoleView = getConsoleView(project, file, engine);
     try {
+      class IDE {
+        public void print(String s) {
+          consoleView.print(s + "\n", ConsoleViewContentType.NORMAL_OUTPUT);
+        }
+        public void error(String s) {
+          consoleView.print(s + "\n", ConsoleViewContentType.ERROR_OUTPUT);
+        }
+      }
+
       // todo
       //myHistoryController.getModel().addToHistory(command);
       consoleView.print("> " + command, ConsoleViewContentType.USER_INPUT);
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
+      engine.getBindings(ScriptContext.ENGINE_SCOPE).put("IDE", new IDE());
       Object o = engine.eval(command);
-      String string = o == null ? "nil" : String.valueOf(o);
-      consoleView.print(string, ConsoleViewContentType.NORMAL_OUTPUT);
+      consoleView.print("=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
+      consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Exception e) {
@@ -150,6 +182,7 @@ public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
       //consoleView.print(ExceptionUtil.getThrowableText(e), ConsoleViewContentType.ERROR_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.ERROR_OUTPUT);
     }
+    ((ConsoleViewImpl)consoleView).scrollToEnd();
   }
 
   @NotNull
@@ -158,8 +191,6 @@ public class RunIdeConsoleAction extends ActionGroup implements DumbAware {
     WeakReference<ConsoleView> ref = psiFile == null ? null : psiFile.getCopyableUserData(CONSOLE_VIEW_KEY);
     ConsoleView existing = ref == null ? null : ref.get();
     if (existing != null && !Disposer.isDisposed(existing)) return existing;
-    //LanguageConsoleImpl console = new LanguageConsoleImpl(project, "", file, true);
-    //ConsoleView consoleView = new LanguageConsoleViewImpl(console);
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     if (psiFile != null) psiFile.putCopyableUserData(CONSOLE_VIEW_KEY, new WeakReference<ConsoleView>(consoleView));
     DefaultActionGroup toolbarActions = new DefaultActionGroup();

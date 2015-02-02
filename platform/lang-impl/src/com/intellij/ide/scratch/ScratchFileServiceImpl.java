@@ -169,7 +169,7 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     @Override
     public Language getMapping(@Nullable VirtualFile file) {
       Language language = super.getMapping(file);
-      if (language == null && file != null && file.getFileType() == ScratchRootType.SCRATCH_FILE_TYPE) {
+      if (language == null && file != null && file.getFileType() == ScratchFileType.INSTANCE) {
         String extension = file.getExtension();
         FileType fileType = extension == null ? null : FileTypeManager.getInstance().getFileTypeByExtension(extension);
         language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
@@ -229,6 +229,14 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
     }
   }
 
+  public static class TypeFactory extends FileTypeFactory {
+
+    @Override
+    public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+      consumer.consume(ScratchFileType.INSTANCE);
+    }
+  }
+
   public static class Substitutor extends LanguageSubstitutor {
     @Nullable
     @Override
@@ -275,7 +283,7 @@ public abstract class ScratchFileServiceImpl extends ScratchFileService {
 
     @Override
     public boolean isWritable(@NotNull VirtualFile file) {
-      return ScratchFileService.getInstance().getRootType(file) != null;
+      return file.getFileType() == ScratchFileType.INSTANCE;
     }
   }
 

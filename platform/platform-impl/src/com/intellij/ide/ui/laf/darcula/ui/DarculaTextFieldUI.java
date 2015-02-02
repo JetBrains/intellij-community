@@ -103,9 +103,10 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
 
   protected void showSearchPopup() {
     final Object value = myTextField.getClientProperty("JTextField.Search.FindPopup");
-    if (value instanceof JPopupMenu) {
+    final JTextComponent editor = getComponent();
+    if (editor != null && value instanceof JPopupMenu) {
       final JPopupMenu popup = (JPopupMenu)value;
-      popup.show(getComponent(), getSearchIconCoord().x, getComponent().getHeight());
+      popup.show(editor, getSearchIconCoord().x, editor.getHeight());
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -29,7 +28,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -64,8 +62,6 @@ import java.util.*;
 import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
-  private static final TextAttributesKey NO_ANALYSIS = TextAttributesKey.createTextAttributesKey("NO_ANALYSIS");
-  private static final Icon NO_ANALYSIS_ICON = new HighlightDisplayLevel.SingleColorIcon(NO_ANALYSIS);
   private final Project myProject;
   private final Document myDocument;
   private final PsiFile myFile;
@@ -296,7 +292,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (PowerSaveMode.isEnabled() || status.reasonWhySuspended != null || status.reasonWhyDisabled != null || status.errorAnalyzingFinished) {
       return icon;
     }
-    return AllIcons.General.Eye;
+    return AllIcons.General.InspectionsEye;
   }
 
   // return true if panel needs to be rebuilt
@@ -326,7 +322,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       statusExtraLine = "(" + status.reasonWhyDisabled + ")";
       passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
-      icon = NO_ANALYSIS_ICON;
+      icon = AllIcons.General.InspectionsTrafficOff;
       return result;
     }
     if (status.reasonWhySuspended != null) {
@@ -338,7 +334,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       return result;
     }
 
-    Icon icon = HighlightDisplayLevel.DO_NOT_SHOW.getIcon();
+    Icon icon = AllIcons.General.InspectionsOK;
     for (int i = status.errorCount.length - 1; i >= 0; i--) {
       if (status.errorCount[i] != 0) {
         icon = SeverityRegistrar.getSeverityRegistrar(project).getRendererIconByIndex(i);

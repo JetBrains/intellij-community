@@ -28,10 +28,14 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -52,7 +56,9 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -61,6 +67,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -69,11 +76,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -441,10 +451,50 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       Disposer.dispose(myPopup);
     }
     myPopup = JBPopupFactory.getInstance().createListPopup(step);
+    
+    final PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(myFile, myEditor.getCaretModel().getOffset());
+    final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
+    
+    final ScopeHighlighter highlighter = new ScopeHighlighter(myEditor);
+    final ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
+    
     myPopup.addListener(new JBPopupListener.Adapter() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
+        highlighter.dropHighlight();
+        injectionHighlighter.dropHighlight();
         myPopupShown = false;
+      }
+    });
+    myPopup.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        final Object source = e.getSource();
+        highlighter.dropHighlight();
+        injectionHighlighter.dropHighlight();
+        
+        if (source instanceof DataProvider) {
+          final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
+          if (selectedItem instanceof IntentionActionWithTextCaching) {
+            final IntentionAction action = ((IntentionActionWithTextCaching)selectedItem).getAction();
+            if (action instanceof SuppressIntentionActionFromFix) {
+              if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+                final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
+                final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+                if (container != null) {
+                  injectionHighlighter.highlight(container, Collections.singletonList(container));
+                }
+              }
+              else {
+                final PsiElement at = myFile.findElementAt(myEditor.getCaretModel().getOffset());
+                final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+                if (container != null) {
+                  highlighter.highlight(container, Collections.singletonList(container));
+                }
+              }
+            }
+          }
+        }
       }
     });
 

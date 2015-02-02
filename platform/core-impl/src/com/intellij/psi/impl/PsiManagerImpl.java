@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -49,7 +48,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
-  private final FileIndexFacade myExcludedFileIndex;
+  private final FileIndexFacade myFileIndex;
   private final MessageBus myMessageBus;
   private final PsiModificationTracker myModificationTracker;
 
@@ -71,11 +70,11 @@ public class PsiManagerImpl extends PsiManagerEx {
   public PsiManagerImpl(Project project,
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
-                        FileIndexFacade excludedFileIndex,
+                        FileIndexFacade fileIndex,
                         MessageBus messageBus,
                         PsiModificationTracker modificationTracker) {
     myProject = project;
-    myExcludedFileIndex = excludedFileIndex;
+    myFileIndex = fileIndex;
     myMessageBus = messageBus;
     myModificationTracker = modificationTracker;
 
@@ -84,7 +83,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
     boolean isProjectDefault = project.isDefault();
 
-    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, excludedFileIndex);
+    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, fileIndex);
 
     myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)modificationTracker);
     Collections.addAll(myTreeChangePreprocessors, Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject));
@@ -131,10 +130,9 @@ public class PsiManagerImpl extends PsiManagerEx {
       virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
     }
     if (file != null && file.isPhysical() && virtualFile instanceof LightVirtualFile) return true;
-    if (virtualFile != null && virtualFile.getFileType() instanceof InternalFileType) return true;
 
     if (virtualFile != null) {
-      return myExcludedFileIndex.isInContent(virtualFile);
+      return myFileIndex.isInContent(virtualFile);
     }
     return false;
   }
