@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
@@ -33,7 +34,12 @@ import org.jetbrains.io.Responses;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
+/**
+ * Document your service using <a href="http://apidocjs.com">apiDoc</a>. To extract big example from source code, consider to use *.coffee file near your source file.
+ * (or Python/Ruby, but coffee recommended because it's plugin is lightweight). See {@link AboutHttpService} for example.
+ */
 public abstract class RestService extends HttpRequestHandler {
   protected static final Logger LOG = Logger.getInstance(RestService.class);
 
@@ -55,17 +61,20 @@ public abstract class RestService extends HttpRequestHandler {
         return true;
       }
       else {
-        char c = uri.charAt(minLength + 1);
+        char c = uri.charAt(minLength);
         return c == '/' || c == '?';
       }
     }
     return false;
   }
 
-  protected abstract boolean isMethodSupported(@NotNull HttpMethod method);
-
   @NotNull
+  /**
+   * Use human-readable name or UUID if it is an internal service.
+   */
   protected abstract String getServiceName();
+
+  protected abstract boolean isMethodSupported(@NotNull HttpMethod method);
 
   @Override
   public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
@@ -114,5 +123,16 @@ public abstract class RestService extends HttpRequestHandler {
       return openProjects.length > 0 ? openProjects[0] : null;
     }
     return project;
+  }
+
+  protected static boolean getBooleanParameter(@NotNull String name, @NotNull QueryStringDecoder urlDecoder) {
+    List<String> values = urlDecoder.parameters().get(name);
+    if (ContainerUtil.isEmpty(values)) {
+      return false;
+    }
+
+    String value = values.get(values.size() - 1);
+    // if just name specified, so, true
+    return value.isEmpty() || Boolean.parseBoolean(value);
   }
 }

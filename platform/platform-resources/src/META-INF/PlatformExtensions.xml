@@ -341,6 +341,7 @@
     <postStartupActivity implementation="org.jetbrains.ide.BuiltInServerManagerImpl$MyPostStartupActivity"/>
 
     <httpRequestHandler implementation="org.jetbrains.ide.DiffHttpService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
