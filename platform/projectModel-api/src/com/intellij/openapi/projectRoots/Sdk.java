@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene Zhuravlev
  *         Date: Sep 23, 2004
+ * @see ProjectJdkTable
  */
 public interface Sdk extends UserDataHolder {
   @NotNull
