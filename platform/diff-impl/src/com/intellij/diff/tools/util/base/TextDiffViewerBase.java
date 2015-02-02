@@ -27,8 +27,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
@@ -37,8 +37,6 @@ import org.intellij.lang.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
@@ -368,22 +366,13 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     protected abstract void expandAll(boolean expand);
   }
 
-  // TODO: EditorActionUtil.createEditorPopupHandler() ?
   private final class MyEditorMouseListener extends EditorPopupHandler {
     @Override
     public void invokePopup(final EditorMouseEvent event) {
-      if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-        if (myEditorPopupActions.isEmpty()) return;
-        ActionGroup group = new DefaultActionGroup(myEditorPopupActions);
-        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
-
-        MouseEvent e = event.getMouseEvent();
-        final Component c = e.getComponent();
-        if (c != null && c.isShowing()) {
-          popupMenu.getComponent().show(c, e.getX(), e.getY());
-        }
-        e.consume();
-      }
+      if (myEditorPopupActions.isEmpty()) return;
+      ActionGroup group = new DefaultActionGroup(myEditorPopupActions);
+      EditorPopupHandler handler = EditorActionUtil.createEditorPopupHandler(group);
+      handler.invokePopup(event);
     }
   }
 }
