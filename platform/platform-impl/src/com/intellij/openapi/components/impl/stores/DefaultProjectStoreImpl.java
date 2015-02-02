@@ -32,7 +32,6 @@ import java.util.Collections;
 
 //todo: extends from base store class
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
-  @Nullable private final Element myElement;
   private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
@@ -40,34 +39,25 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     super(project);
 
     myProjectManager = projectManager;
-    myElement = projectManager.getDefaultProjectRootElement();
   }
 
   @Nullable
   Element getStateCopy() {
-    final Element element = myProjectManager.getDefaultProjectRootElement();
+    Element element = myProjectManager.getDefaultProjectRootElement();
     return element != null ? element.clone() : null;
   }
 
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    Element _d = null;
-
-    if (myElement != null) {
-      myElement.detach();
-      _d = myElement;
-    }
-
     ComponentManager componentManager = getComponentManager();
-    final Element element = _d;
     final XmlElementStorage storage = new XmlElementStorage("", RoamingType.DISABLED, PathMacroManager.getInstance(componentManager).createTrackingSubstitutor(),
                                                             ROOT_TAG_NAME, null,
                                                             ComponentVersionProvider.EMPTY) {
       @Override
       @Nullable
       protected Element loadLocalData() {
-        return element;
+        return getStateCopy();
       }
 
       @Override
@@ -198,7 +188,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
   @Override
   public void load() throws IOException, StateStorageException {
-    if (myElement == null) return;
+    if (myProjectManager.getDefaultProjectRootElement() == null) return;
     super.load();
   }
 
