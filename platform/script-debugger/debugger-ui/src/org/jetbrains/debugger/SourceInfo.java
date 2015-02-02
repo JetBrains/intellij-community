@@ -38,4 +38,9 @@ public class SourceInfo extends XSourcePositionWrapper {
   public Navigatable createNavigatable(@NotNull Project project) {
     return new OpenFileDescriptor(project, myPosition.getFile(), myPosition.getLine(), column);
   }
+
+  @Override
+  public String toString() {
+    return myPosition.getFile() + ":" + myPosition.getLine() + (column == -1 ? "": (":" + getColumn()));
+  }
 }
