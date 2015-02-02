@@ -173,9 +173,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appClosing() {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          doPersistProjectUsages(project);
-        }
+        persistOpenedProjects();
         persistOnClosing = false;
       }
     });
@@ -190,14 +188,22 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     });
   }
 
-  private static void doPersistProjectUsages(@NotNull Project project) {
-    if (!project.isInitialized() || DumbService.isDumb(project)) {
-      return;
+  private static void persistOpenedProjects() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      doPersistProjectUsages(project);
     }
+  }
 
-    for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
-      if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
-        ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
+  private static void doPersistProjectUsages(@NotNull Project project) {
+    synchronized (ApplicationStatisticsPersistenceComponent.class) {
+      if (!project.isInitialized() || DumbService.isDumb(project)) {
+        return;
+      }
+
+      for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
+        if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
+          ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
+        }
       }
     }
   }
