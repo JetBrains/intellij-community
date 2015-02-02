@@ -29,10 +29,6 @@ public abstract class ScratchFileService {
 
   public enum Option { existing_only, create_if_missing, create_new_always }
 
-  public static ScratchFileService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ScratchFileService.class);
-  }
-
   public static ScratchFileService getInstance() {
     return ServiceManager.getService(ScratchFileService.class);
   }
