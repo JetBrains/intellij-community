@@ -23,25 +23,41 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
-  private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class); 
-  
+  private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
+
+  private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
 
-  public CodeFragmentCodeStyleSettingsPanel(CodeStyleSettings settings, Editor editor, PsiFile file) {
+  public CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings, 
+                                            @NotNull Project project, 
+                                            @NotNull Editor editor, 
+                                            @NotNull PsiFile file) 
+  {
     super(file.getLanguage(), settings, settings.clone());
+    myProject = project;
     myEditor = editor;
     myFile = file;
+    ensureTabs();
+  }
+
+  @Override
+  protected String getPreviewText() {
+    return null;
+  }
+
+  @Override
+  protected void updatePreview(boolean useDefaultSample) {
   }
 
   @Override
@@ -54,7 +70,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private void reformatSelectedTextWithNewSettings() {
     final SelectionModel model = myEditor.getSelectionModel();
     if (model.hasSelection()) {
-      
       try {
         apply(getSettings());
       }
@@ -64,20 +79,17 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
       CodeStyleSettings clone = getSettings().clone();
 
-      Project project = myEditor.getProject();
-      if (project == null) return;
-
       try {
-        CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-        reformatSelectedFragment(model, myFile);
+        CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(clone);
+        reformatRange(myFile, getSelectedRange());
       }
       finally {
-        CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+        CodeStyleSettingsManager.getInstance(myProject).dropTemporarySettings();
       }
     }
   }
 
-  private static void reformatSelectedFragment(final SelectionModel model, final PsiFile file) {
+  private static void reformatRange(final @NotNull PsiFile file, final @NotNull TextRange range) {
     final Project project = file.getProject();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
@@ -85,11 +97,28 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            CodeStyleManager.getInstance(project).reformatText(file, model.getSelectionStart(), model.getSelectionEnd());
+            CodeStyleManager.getInstance(project).reformatText(file, range.getStartOffset(), range.getEndOffset());
           }
         });
       }
     }, "Reformat", null);
+  }
+
+  private void customizeSettingsForSelectedFragment(@NotNull CodeStyleSettingsCustomizable customizable, 
+                                                    @NotNull LanguageCodeStyleSettingsProvider.SettingsType type) 
+  {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
+    if (provider != null) {
+      provider.customizeSettingsForCodeFragment(customizable, type, myFile, getSelectedRange());
+    }
+  }
+  
+  @NotNull
+  private TextRange getSelectedRange() {
+    SelectionModel model = myEditor.getSelectionModel();
+    int start = model.getSelectionStart();
+    int end = model.getSelectionEnd();
+    return TextRange.create(start, end);
   }
   
   private class SpacesPanelWithoutPreview extends MySpacesPanel {
@@ -106,7 +135,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
     @Override
     protected void init() {
-      customizeSettings();
+      customizeSettingsForSelectedFragment(this, getSettingsType());
       initTables();
 
       myOptionsTree = createOptionsTree();
@@ -145,7 +174,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
     @Override
     protected void init() {
-      customizeSettings();
+      customizeSettingsForSelectedFragment(this, getSettingsType());
       initTables();
 
       myTreeTable = createOptionsTree(getSettings());
@@ -159,9 +188,10 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       myPanel = new JPanel(new BorderLayout());
       myPanel.add(scrollPane);
 
-      //todo why this needed here?
-      customizeSettings();
-      
+      //todo why without it options are disabled ?
+      //todo why on combo value change - nothing happens?
+      customizeSettingsForSelectedFragment(this, getSettingsType());
+
       isFirstUpdate = false;
     }
 

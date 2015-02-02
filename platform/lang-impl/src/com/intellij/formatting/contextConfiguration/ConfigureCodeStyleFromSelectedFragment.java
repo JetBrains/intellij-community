@@ -20,7 +20,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -59,7 +58,7 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    TabbedLanguageCodeStylePanel fragment = new CodeFragmentCodeStyleSettingsPanel(settings, editor, file);
+    TabbedLanguageCodeStylePanel fragment = new CodeFragmentCodeStyleSettingsPanel(settings, project, editor, file);
     new FragmentCodeStyleSettingsDialog(project, fragment, settings).show();
   }
   

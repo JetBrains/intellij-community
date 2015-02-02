@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,13 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
+  }
+  
+  public void customizeSettingsForCodeFragment(@NotNull CodeStyleSettingsCustomizable consumer, 
+                                               @NotNull SettingsType settingsType, 
+                                               @NotNull PsiFile file,
+                                               @NotNull TextRange range) {
+    customizeSettings(consumer, settingsType);
   }
 
   /**
