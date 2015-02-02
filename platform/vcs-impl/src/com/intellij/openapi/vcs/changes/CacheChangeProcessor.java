@@ -29,7 +29,7 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
-import org.intellij.lang.annotations.CalledInBackground;
+import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.WaitingBackgroundableTaskExecutor;

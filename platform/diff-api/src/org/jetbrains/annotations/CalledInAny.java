@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.intellij.lang.annotations;
+package org.jetbrains.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,9 +22,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to indicate that a method should be called holding read lock
+ * Used to indicate that a method could be called in both AWT and background threads
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
-public @interface CalledWithReadLock {
+public @interface CalledInAny {
 }

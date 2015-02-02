@@ -16,7 +16,7 @@
 package com.intellij.diff.tools.util.twoside;
 
 import com.intellij.diff.tools.util.DiffSplitter;
-import org.intellij.lang.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
