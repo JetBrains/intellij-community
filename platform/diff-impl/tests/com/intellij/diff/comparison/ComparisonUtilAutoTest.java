@@ -35,6 +35,7 @@ import java.util.Map;
 @SuppressWarnings({"InstanceofCatchParameter"})
 public class ComparisonUtilAutoTest extends AutoTestCase {
   private static DumbProgressIndicator INDICATOR = DumbProgressIndicator.INSTANCE;
+  private static ComparisonManager myComparisonManager = new ComparisonManagerImpl();
 
   private static int CHAR_COUNT = 12;
   private static Map<Integer, Character> CHAR_TABLE = initCharMap();
@@ -79,7 +80,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
         CharSequence sequence1 = text1.getCharsSequence();
         CharSequence sequence2 = text2.getCharsSequence();
 
-        List<LineFragment> fragments = ComparisonManager.getInstance().compareLinesInner(sequence1, sequence2, policy, INDICATOR);
+        List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
         debugData.set(fragments);
 
         checkResultLine(text1, text2, fragments, policy, true);
@@ -96,10 +97,10 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
         CharSequence sequence1 = text1.getCharsSequence();
         CharSequence sequence2 = text2.getCharsSequence();
 
-        List<LineFragment> fragments = ComparisonManager.getInstance().compareLinesInner(sequence1, sequence2, policy, INDICATOR);
+        List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
         debugData.set(fragments);
 
-        List<LineFragment> squashedFragments = ComparisonManager.getInstance().squash(fragments);
+        List<LineFragment> squashedFragments = myComparisonManager.squash(fragments);
         debugData.set(new Object[]{fragments, squashedFragments});
 
         checkResultLine(text1, text2, squashedFragments, policy, false);
@@ -116,10 +117,10 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
         CharSequence sequence1 = text1.getCharsSequence();
         CharSequence sequence2 = text2.getCharsSequence();
 
-        List<LineFragment> fragments = ComparisonManager.getInstance().compareLinesInner(sequence1, sequence2, policy, INDICATOR);
+        List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
         debugData.set(fragments);
 
-        List<LineFragment> processed = ComparisonManager.getInstance().processBlocks(fragments, sequence1, sequence2, policy, true, true);
+        List<LineFragment> processed = myComparisonManager.processBlocks(fragments, sequence1, sequence2, policy, true, true);
         debugData.set(new Object[]{fragments, processed});
 
         checkResultLine(text1, text2, processed, policy, false);
@@ -133,11 +134,13 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     doTest(seed, runs, maxLength, policies, new TestTask() {
       @Override
       public void run(@NotNull Document text1, @NotNull Document text2, @NotNull ComparisonPolicy policy, @NotNull Ref<Object> debugData) {
-        List<DiffFragment> fragments = ComparisonManager.getInstance()
-          .compareChars(text1.getCharsSequence(), text2.getCharsSequence(), policy, INDICATOR);
+        CharSequence sequence1 = text1.getCharsSequence();
+        CharSequence sequence2 = text2.getCharsSequence();
+
+        List<DiffFragment> fragments = myComparisonManager.compareChars(sequence1, sequence2, policy, INDICATOR);
         debugData.set(fragments);
 
-        checkResultChar(text1.getCharsSequence(), text2.getCharsSequence(), fragments, policy);
+        checkResultChar(sequence1, sequence2, fragments, policy);
       }
     });
   }

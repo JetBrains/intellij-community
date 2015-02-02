@@ -33,6 +33,7 @@ import java.util.List;
 
 public abstract class ComparisonUtilTestBase extends UsefulTestCase {
   private static DumbProgressIndicator INDICATOR = DumbProgressIndicator.INSTANCE;
+  private static ComparisonManager myComparisonManager = new ComparisonManagerImpl();
 
   private boolean myOldRegistryValue;
 
@@ -58,8 +59,9 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
                                  @Nullable Couple<BitSet> matchings,
                                  @Nullable List<Change> expected,
                                  @NotNull ComparisonPolicy policy) {
-    List<LineFragment> fragments = ComparisonManager.getInstance()
-      .compareLines(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR);
+    CharSequence sequence1 = before.getCharsSequence();
+    CharSequence sequence2 = after.getCharsSequence();
+    List<LineFragment> fragments = myComparisonManager.compareLines(sequence1, sequence2, policy, INDICATOR);
     checkConsistency(fragments, before, after, policy);
     if (matchings != null) checkLineMatching(fragments, before, after, matchings, policy);
     if (expected != null) checkLineChanges(fragments, before, after, expected, policy);
@@ -70,9 +72,10 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
                                  @Nullable Couple<BitSet> matchings,
                                  @Nullable List<Change> expected,
                                  @NotNull ComparisonPolicy policy) {
-    List<LineFragment> rawFragments = ComparisonManager.getInstance()
-      .compareLinesInner(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR);
-    List<LineFragment> fragments = ComparisonManager.getInstance().squash(rawFragments);
+    CharSequence sequence1 = before.getCharsSequence();
+    CharSequence sequence2 = after.getCharsSequence();
+    List<LineFragment> rawFragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
+    List<LineFragment> fragments = myComparisonManager.squash(rawFragments);
 
     checkConsistencyWord(fragments, before, after, policy);
 
@@ -88,8 +91,9 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
                                  @Nullable Couple<BitSet> matchings,
                                  @Nullable List<Change> expected,
                                  @NotNull ComparisonPolicy policy) {
-    List<DiffFragment> fragments = ComparisonManager.getInstance()
-      .compareChars(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR);
+    CharSequence sequence1 = before.getCharsSequence();
+    CharSequence sequence2 = after.getCharsSequence();
+    List<DiffFragment> fragments = myComparisonManager.compareChars(sequence1, sequence2, policy, INDICATOR);
     checkConsistency(fragments, before, after, policy);
     if (matchings != null) checkDiffMatching(fragments, before, after, matchings, policy);
     if (expected != null) checkDiffChanges(fragments, before, after, expected, policy);
@@ -100,8 +104,9 @@ public abstract class ComparisonUtilTestBase extends UsefulTestCase {
                                      @Nullable Couple<BitSet> matchings,
                                      @Nullable List<Change> expected,
                                      @NotNull ComparisonPolicy policy) {
-    List<LineFragment> fragments = ComparisonManager.getInstance()
-      .compareLinesInner(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR);
+    CharSequence sequence1 = before.getCharsSequence();
+    CharSequence sequence2 = after.getCharsSequence();
+    List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2, policy, INDICATOR);
     checkConsistency(fragments, before, after, policy);
     if (matchings != null) checkLineMatching(fragments, before, after, matchings, policy);
     if (expected != null) checkLineChanges(fragments, before, after, expected, policy);
