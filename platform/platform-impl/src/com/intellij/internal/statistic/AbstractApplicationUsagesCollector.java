@@ -18,6 +18,8 @@ package com.intellij.internal.statistic;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistence;
 import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.persistence.CollectedUsages;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ObjectIntHashMap;
@@ -33,19 +35,19 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
 
   public void persistProjectUsages(@NotNull Project project) {
     try {
-      persistProjectUsages(project, getProjectUsages(project));
+      persistProjectUsages(project, new CollectedUsages(getProjectUsages(project), System.currentTimeMillis()));
     }
     catch (CollectUsagesException e) {
       LOG.info(e);
     }
   }
 
-  public void persistProjectUsages(@NotNull Project project, @NotNull Set<UsageDescriptor> usages) {
+  public void persistProjectUsages(@NotNull Project project, @NotNull CollectedUsages usages) {
     persistProjectUsages(project, usages, ApplicationStatisticsPersistenceComponent.getInstance());
   }
 
   public void persistProjectUsages(@NotNull Project project,
-                                   @NotNull Set<UsageDescriptor> usages,
+                                   @NotNull CollectedUsages usages,
                                    @NotNull ApplicationStatisticsPersistence persistence) {
     persistence.persistUsages(getGroupId(), project, usages);
   }
@@ -58,10 +60,11 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
   @NotNull
   public Set<UsageDescriptor> getApplicationUsages(@NotNull ApplicationStatisticsPersistence persistence) {
     ObjectIntHashMap<String> result = new ObjectIntHashMap<String>();
-    for (Set<UsageDescriptor> usageDescriptors : persistence.getApplicationData(getGroupId()).values()) {
-      if (!usageDescriptors.isEmpty()) {
-        result.ensureCapacity(usageDescriptors.size());
-        for (UsageDescriptor usageDescriptor : usageDescriptors) {
+    long lastTimeSent = UsageStatisticsPersistenceComponent.getInstance().getLastTimeSent();
+    for (CollectedUsages usageDescriptors : persistence.getApplicationData(getGroupId()).values()) {
+      if (!usageDescriptors.usages.isEmpty() && usageDescriptors.collectionTime > lastTimeSent) {
+        result.ensureCapacity(usageDescriptors.usages.size());
+        for (UsageDescriptor usageDescriptor : usageDescriptors.usages) {
           String key = usageDescriptor.getKey();
           result.put(key, result.get(key, 0) + usageDescriptor.getValue());
         }

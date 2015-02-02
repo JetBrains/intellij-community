@@ -56,6 +56,8 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   @NonNls
   private static final String PROJECT_TAG = "project";
   @NonNls
+  private static final String COLLECTION_TIME_TAG = "collectionTime";
+  @NonNls
   private static final String PROJECT_ID_ATTR = "id";
   @NonNls
   private static final String VALUES_ATTR = "values";
@@ -80,7 +82,13 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
               frameworkDescriptors.add(descriptor);
             }
           }
-          getApplicationData(groupDescriptor).put(projectId, frameworkDescriptors);
+          long collectionTime;
+          try {
+            collectionTime = Long.valueOf(projectElement.getAttributeValue(COLLECTION_TIME_TAG));
+          } catch (NumberFormatException ignored) {
+            collectionTime = 0;
+          }
+          getApplicationData(groupDescriptor).put(projectId, new CollectedUsages(frameworkDescriptors, collectionTime));
         }
       }
     }
@@ -90,17 +98,18 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   public Element getState() {
     Element element = new Element("state");
 
-    for (Map.Entry<GroupDescriptor, Map<String, Set<UsageDescriptor>>> appData : getApplicationData().entrySet()) {
+    for (Map.Entry<GroupDescriptor, Map<String, CollectedUsages>> appData : getApplicationData().entrySet()) {
       Element groupElement = new Element(GROUP_TAG);
       groupElement.setAttribute(GROUP_NAME_ATTR, appData.getKey().getId());
       boolean isEmptyGroup = true;
 
-      for (Map.Entry<String, Set<UsageDescriptor>> projectData : appData.getValue().entrySet()) {
+      for (Map.Entry<String, CollectedUsages> projectData : appData.getValue().entrySet()) {
         Element projectElement = new Element(PROJECT_TAG);
         projectElement.setAttribute(PROJECT_ID_ATTR, projectData.getKey());
-        final Set<UsageDescriptor> projectDataValue = projectData.getValue();
-        if (!projectDataValue.isEmpty()) {
-          projectElement.setAttribute(VALUES_ATTR, joinUsages(projectDataValue));
+        final CollectedUsages projectDataValue = projectData.getValue();
+        if (!projectDataValue.usages.isEmpty()) {
+          projectElement.setAttribute(VALUES_ATTR, joinUsages(projectDataValue.usages));
+          projectElement.setAttribute(COLLECTION_TIME_TAG, String.valueOf(projectDataValue.collectionTime));
           groupElement.addContent(projectElement);
           isEmptyGroup = false;
         }
