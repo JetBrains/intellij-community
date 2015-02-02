@@ -47,8 +47,8 @@ class SimpleDiffChange {
   @NotNull private final List<RangeHighlighter> myActionHighlighters = new ArrayList<RangeHighlighter>();
 
   private boolean myIsValid = true;
-  private int myLineShift1;
-  private int myLineShift2;
+  private int[] myLineStartShifts = new int[2];
+  private int[] myLineEndShifts = new int[2];
 
   // TODO: adjust color from inner fragments - configurable
   public SimpleDiffChange(@NotNull LineFragment fragment,
@@ -161,11 +161,11 @@ class SimpleDiffChange {
   //
 
   public int getStartLine(@NotNull Side side) {
-    return side.getStartLine(myFragment) + getShift(side);
+    return side.getStartLine(myFragment) + side.select(myLineStartShifts);
   }
 
   public int getEndLine(@NotNull Side side) {
-    return side.getEndLine(myFragment) + getShift(side);
+    return side.getEndLine(myFragment) + side.select(myLineEndShifts);
   }
 
   @NotNull
@@ -181,32 +181,24 @@ class SimpleDiffChange {
     int line1 = getStartLine(side);
     int line2 = getEndLine(side);
 
-    if (line2 > oldLine1 && line1 < oldLine2) {
-      for (RangeHighlighter highlighter : myActionHighlighters) {
-        highlighter.dispose();
-      }
-      myActionHighlighters.clear();
-      myIsValid = false;
-      return true;
+    if (line2 <= oldLine1) return false;
+    if (line1 >= oldLine2) {
+      myLineStartShifts[side.getIndex()] += shift;
+      myLineEndShifts[side.getIndex()] += shift;
+      return false;
     }
 
-    if (oldLine2 <= getStartLine(side)) {
-      shift(side, shift);
+    if (line1 <= oldLine1 && line2 >= oldLine2) {
+      myLineEndShifts[side.getIndex()] += shift;
+      return false;
     }
-    return false;
-  }
 
-  private void shift(@NotNull Side side, int shift) {
-    if (side.isLeft()) {
-      myLineShift1 += shift;
+    for (RangeHighlighter highlighter : myActionHighlighters) {
+      highlighter.dispose();
     }
-    else {
-      myLineShift2 += shift;
-    }
-  }
-
-  private int getShift(@NotNull Side side) {
-    return side.isLeft() ? myLineShift1 : myLineShift2;
+    myActionHighlighters.clear();
+    myIsValid = false;
+    return true;
   }
 
   //

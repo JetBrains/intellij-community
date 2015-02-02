@@ -40,7 +40,8 @@ class SimpleThreesideDiffChange {
   @NotNull private final List<RangeHighlighter> myActionHighlighters = new ArrayList<RangeHighlighter>();
 
   private boolean myIsValid = true;
-  private int[] myLineShifts = new int[3];
+  private int[] myLineStartShifts = new int[3];
+  private int[] myLineEndShifts = new int[3];
 
   public SimpleThreesideDiffChange(@NotNull MergeLineFragment fragment,
                                    @NotNull List<EditorEx> editors,
@@ -118,11 +119,11 @@ class SimpleThreesideDiffChange {
   //
 
   public int getStartLine(@NotNull ThreeSide side) {
-    return myFragment.getStartLine(side) + getShift(side);
+    return myFragment.getStartLine(side) + side.select(myLineStartShifts);
   }
 
   public int getEndLine(@NotNull ThreeSide side) {
-    return myFragment.getEndLine(side) + getShift(side);
+    return myFragment.getEndLine(side) + side.select(myLineEndShifts);
   }
 
   @NotNull
@@ -143,27 +144,24 @@ class SimpleThreesideDiffChange {
     int line1 = getStartLine(side);
     int line2 = getEndLine(side);
 
-    if (line2 > oldLine1 && line1 < oldLine2) {
-      for (RangeHighlighter highlighter : myActionHighlighters) {
-        highlighter.dispose();
-      }
-      myActionHighlighters.clear();
-      myIsValid = false;
-      return true;
+    if (line2 <= oldLine1) return false;
+    if (line1 >= oldLine2) {
+      myLineStartShifts[side.getIndex()] += shift;
+      myLineEndShifts[side.getIndex()] += shift;
+      return false;
     }
 
-    if (oldLine2 <= getStartLine(side)) {
-      shift(side, shift);
+    if (line1 <= oldLine1 && line2 >= oldLine2) {
+      myLineEndShifts[side.getIndex()] += shift;
+      return false;
     }
-    return false;
-  }
 
-  private void shift(@NotNull ThreeSide side, int shift) {
-    myLineShifts[side.getIndex()] += shift;
-  }
-
-  private int getShift(@NotNull ThreeSide side) {
-    return side.select(myLineShifts);
+    for (RangeHighlighter highlighter : myActionHighlighters) {
+      highlighter.dispose();
+    }
+    myActionHighlighters.clear();
+    myIsValid = false;
+    return true;
   }
 
   //
