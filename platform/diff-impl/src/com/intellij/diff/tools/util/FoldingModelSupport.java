@@ -619,7 +619,7 @@ public class FoldingModelSupport {
         for (int i = 0; i < myCount; i++) {
           FoldRegion region = myRegions[i];
           if (region == null || !region.isValid()) continue;
-          myHighlighters.add(DiffDrawUtil.createLineSeparatorHighlighter(myEditors[i], region.getEndOffset(), new RangeCondition(region)));
+          myHighlighters.add(createFoldingHighlighter(myEditors[i], region));
         }
       }
 
@@ -659,6 +659,11 @@ public class FoldingModelSupport {
 
   private static int bound(int value, int min, int max) {
     return Math.min(Math.max(value, min), max);
+  }
+
+  @NotNull
+  private static RangeHighlighter createFoldingHighlighter(@NotNull Editor editor, @NotNull FoldRegion region) {
+    return DiffDrawUtil.createLineSeparatorHighlighter(editor, region.getStartOffset(), region.getEndOffset(), new RangeCondition(region));
   }
 
   private static class RangeCondition implements BooleanGetter {

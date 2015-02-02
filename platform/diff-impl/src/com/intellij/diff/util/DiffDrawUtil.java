@@ -247,13 +247,11 @@ public class DiffDrawUtil {
   }
 
   @NotNull
-  public static RangeHighlighter createLineSeparatorHighlighter(@NotNull Editor editor, int offset) {
-    return createLineSeparatorHighlighter(editor, offset, BooleanGetter.TRUE);
-  }
-
-  @NotNull
-  public static RangeHighlighter createLineSeparatorHighlighter(@NotNull Editor editor, int offset, @NotNull BooleanGetter condition) {
-    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, null,
+  public static RangeHighlighter createLineSeparatorHighlighter(@NotNull Editor editor,
+                                                                int offset1,
+                                                                int offset2,
+                                                                @NotNull BooleanGetter condition) {
+    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset1, offset2, HighlighterLayer.SELECTION - 1, null,
                                                                           HighlighterTargetArea.LINES_IN_RANGE);
 
     DiffLineSeparatorRenderer renderer = new DiffLineSeparatorRenderer(editor, condition);
