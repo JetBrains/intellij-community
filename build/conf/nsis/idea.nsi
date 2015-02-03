@@ -1181,7 +1181,7 @@ remove_IntelliJIdeaProjectFile:
 done:
   DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
 ; UNCOMMENT THIS IN RELEASE BUILD
-  StrCmp "${UNINSTALL_WEB_PAGE}" "NotRequired" finish_uninstall
+  StrCmp "${UNINSTALL_WEB_PAGE}" "NotRequired" end_of_uninstall
   ExecShell "" "${UNINSTALL_WEB_PAGE}"
-finish_uninstall:
+end_of_uninstall:
 SectionEnd
