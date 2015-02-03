@@ -37,6 +37,9 @@ public abstract class DiffManager {
   //
 
   @CalledInAwt
+  public abstract void showDiff(@Nullable Project project, @NotNull DiffRequest request);
+
+  @CalledInAwt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints);
 
   @CalledInAwt

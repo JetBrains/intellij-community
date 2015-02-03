@@ -37,6 +37,9 @@ public abstract class DiffManagerEx extends DiffManager {
   //
 
   @CalledInAwt
+  public abstract void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequest request);
+
+  @CalledInAwt
   public abstract void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints);
 
   @CalledInAwt

@@ -40,6 +40,11 @@ public class DiffManagerImpl extends DiffManagerEx {
   private static final Logger LOG = Logger.getInstance(DiffManagerImpl.class);
 
   @Override
+  public void showDiff(@Nullable Project project, @NotNull DiffRequest request) {
+    showDiff(project, request, DiffDialogHints.DEFAULT);
+  }
+
+  @Override
   public void showDiff(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints) {
     DiffRequestChain requestChain = new SimpleDiffRequestChain(request);
     showDiff(project, requestChain, hints);
@@ -53,6 +58,11 @@ public class DiffManagerImpl extends DiffManagerEx {
     }
 
     showDiffBuiltin(project, requests, hints);
+  }
+
+  @Override
+  public void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequest request) {
+    showDiffBuiltin(project, request, DiffDialogHints.DEFAULT);
   }
 
   @Override
