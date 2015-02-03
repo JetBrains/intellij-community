@@ -2,7 +2,7 @@ var gulp = require('gulp')
 var apidoc = require('gulp-apidoc')
 var path = require('path')
 
-var sources = path.normalize("../../platform/platform-impl/src/org/jetbrains/ide")
+var sources = path.normalize("../../platform/platform-impl/src")
 
 gulp.task('apidoc', function () {
   apidoc.exec({src: sources, dest: (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + "/idea-rest-api"})
