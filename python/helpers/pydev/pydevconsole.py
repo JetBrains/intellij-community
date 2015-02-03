@@ -336,10 +336,6 @@ def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
-        # fake return_controll_callback function just to prevent exception in PyCharm debug console
-        from pydev_ipython.inputhook import set_return_control_callback
-        set_return_control_callback(lambda x: True)
-
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
 
@@ -359,7 +355,6 @@ def get_completions(text, token, globals, locals):
 
 def exec_code(code, globals, locals):
     interpreterInterface = get_interpreter()
-
     interpreterInterface.interpreter.update(globals, locals)
 
     res = interpreterInterface.needMore(code)
