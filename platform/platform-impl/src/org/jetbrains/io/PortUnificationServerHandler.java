@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package org.jetbrains.io;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
-import io.netty.handler.codec.compression.JZlibEncoder;
-import io.netty.handler.codec.compression.JdkZlibDecoder;
+import io.netty.handler.codec.compression.ZlibCodecFactory;
 import io.netty.handler.codec.compression.ZlibWrapper;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.ssl.SslHandler;
@@ -82,7 +81,7 @@ class PortUnificationServerHandler extends Decoder {
   }
 
   @Override
-  protected void messageReceived(ChannelHandlerContext context, ByteBuf message) throws Exception {
+  protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf message) throws Exception {
     ByteBuf buffer = getBufferIfSufficient(message, 5, context);
     if (buffer == null) {
       message.release();
@@ -92,7 +91,7 @@ class PortUnificationServerHandler extends Decoder {
     }
   }
 
-  protected void decode(ChannelHandlerContext context, ByteBuf buffer) throws Exception {
+  protected void decode(@NotNull ChannelHandlerContext context, @NotNull ByteBuf buffer) throws Exception {
     ChannelPipeline pipeline = context.pipeline();
     if (detectSsl && SslHandler.isEncrypted(buffer)) {
       SSLEngine engine = SSL_SERVER_CONTEXT.getValue().createSSLEngine();
@@ -104,7 +103,7 @@ class PortUnificationServerHandler extends Decoder {
       int magic1 = buffer.getUnsignedByte(buffer.readerIndex());
       int magic2 = buffer.getUnsignedByte(buffer.readerIndex() + 1);
       if (detectGzip && magic1 == 31 && magic2 == 139) {
-        pipeline.addLast(new JZlibEncoder(ZlibWrapper.GZIP), new JdkZlibDecoder(ZlibWrapper.GZIP),
+        pipeline.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.GZIP), ZlibCodecFactory.newZlibDecoder(ZlibWrapper.GZIP),
                          new PortUnificationServerHandler(delegatingHttpRequestHandler, detectSsl, false));
       }
       else if (isHttp(magic1, magic2)) {
@@ -112,7 +111,7 @@ class PortUnificationServerHandler extends Decoder {
         pipeline.addLast(delegatingHttpRequestHandler);
         // added earlier if HTTPS
         if (pipeline.get(ChunkedWriteHandler.class) == null) {
-          pipeline.addLast(new ChunkedWriteHandler());
+          pipeline.addLast("chunkedWriteHandler", new ChunkedWriteHandler());
         }
         if (BuiltInServer.LOG.isDebugEnabled()) {
           pipeline.addLast(new ChannelOutboundHandlerAdapter() {
@@ -137,20 +136,20 @@ class PortUnificationServerHandler extends Decoder {
         context.close();
       }
     }
+
     // must be after new channels handlers addition (netty bug?)
-    ensureThatExceptionHandlerIsLast(pipeline);
     pipeline.remove(this);
+    ensureThatExceptionHandlerIsLast(pipeline);
+    // we must fire channel read - new added handler must read buffer
     context.fireChannelRead(buffer);
   }
 
   private static void ensureThatExceptionHandlerIsLast(ChannelPipeline pipeline) {
     ChannelHandler exceptionHandler = ChannelExceptionHandler.getInstance();
-    if (pipeline.last() != exceptionHandler || pipeline.context(exceptionHandler) == null) {
-      return;
+    if (pipeline.last() != exceptionHandler) {
+      pipeline.remove(exceptionHandler);
+      pipeline.addLast(exceptionHandler);
     }
-
-    pipeline.remove(exceptionHandler);
-    pipeline.addLast(exceptionHandler);
   }
 
   private static boolean isHttp(int magic1, int magic2) {
@@ -170,7 +169,7 @@ class PortUnificationServerHandler extends Decoder {
     private static final int UUID_LENGTH = 16;
 
     @Override
-    protected void messageReceived(ChannelHandlerContext context, ByteBuf message) throws Exception {
+    protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf message) throws Exception {
       ByteBuf buffer = getBufferIfSufficient(message, UUID_LENGTH, context);
       if (buffer == null) {
         message.release();
@@ -181,8 +180,8 @@ class PortUnificationServerHandler extends Decoder {
           if (uuid.equals(customHandler.getId())) {
             ChannelPipeline pipeline = context.pipeline();
             pipeline.addLast(customHandler.getInboundHandler());
-            ensureThatExceptionHandlerIsLast(pipeline);
             pipeline.remove(this);
+            ensureThatExceptionHandlerIsLast(pipeline);
             context.fireChannelRead(buffer);
             break;
           }

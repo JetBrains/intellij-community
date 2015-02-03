@@ -25,12 +25,12 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PlatformUtils;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.Responses;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -109,7 +109,7 @@ class AboutHttpService extends RestService {
 
     writer.endObject();
     writer.close();
-    Responses.send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.wrappedBuffer(byteOut.getInternalBuffer(), 0, byteOut.size())), context.channel(), request);
+    send(byteOut, request, context);
     return null;
   }
 }

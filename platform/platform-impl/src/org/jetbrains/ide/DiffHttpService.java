@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import io.netty.channel.ChannelHandlerContext;
@@ -106,18 +107,19 @@ final class DiffHttpService extends RestService {
       return "Empty request";
     }
 
-    final Project project = guessProject();
+    Project project = guessProject();
     if (project == null) {
       // Argument for @NotNull parameter 'project' of com/intellij/openapi/components/ServiceManager.getService must not be null
-      return "No opened project, please open any project";
+      project = ProjectManager.getInstance().getDefaultProject();
     }
 
     final boolean finalFocused = focused;
     final String finalWindowTitle = windowTitle;
+    final Project finalProject = project;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        DiffManager.getInstance().getDiffTool().show(new DiffRequest(project) {
+        DiffManager.getInstance().getDiffTool().show(new DiffRequest(finalProject) {
           @NotNull
           @Override
           public DiffContent[] getContents() {
@@ -136,18 +138,20 @@ final class DiffHttpService extends RestService {
         });
 
         if (finalFocused) {
-          ProjectUtil.focusProjectWindow(project, true);
+          ProjectUtil.focusProjectWindow(finalProject, true);
         }
       }
     }, project.getDisposed());
+
+    sendOk(request, context);
     return null;
   }
 
   @Nullable
-  private static String readContent(@NotNull JsonReader reader, @NotNull List<DiffContent> contents, @NotNull List<String> titles, @Nullable String defaultfileType) throws IOException {
+  private static String readContent(@NotNull JsonReader reader, @NotNull List<DiffContent> contents, @NotNull List<String> titles, @Nullable String defaultFileTypeName) throws IOException {
     FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
 
-    FileType defaultFileType = defaultfileType == null ? null : fileTypeRegistry.findFileTypeByName(defaultfileType);
+    FileType defaultFileType = defaultFileTypeName == null ? null : fileTypeRegistry.findFileTypeByName(defaultFileTypeName);
     reader.beginArray();
     while (reader.hasNext()) {
       String title = null;

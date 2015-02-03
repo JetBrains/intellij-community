@@ -7,6 +7,7 @@ import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.Decoder;
 
 import static org.jetbrains.io.fastCgi.FastCgiService.LOG;
@@ -42,7 +43,7 @@ public class FastCgiDecoder extends Decoder {
   }
 
   @Override
-  protected void messageReceived(ChannelHandlerContext context, ByteBuf input) throws Exception {
+  protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) throws Exception {
     while (true) {
       switch (state) {
         case HEADER: {

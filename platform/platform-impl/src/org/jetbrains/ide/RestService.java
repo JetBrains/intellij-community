@@ -20,12 +20,14 @@ import com.google.gson.stream.MalformedJsonException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
@@ -80,10 +82,7 @@ public abstract class RestService extends HttpRequestHandler {
   public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     try {
       String error = execute(urlDecoder, request, context);
-      if (error == null) {
-        Responses.send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK), context.channel(), request);
-      }
-      else {
+      if (error != null) {
         Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), error, request);
       }
     }
@@ -105,6 +104,9 @@ public abstract class RestService extends HttpRequestHandler {
   }
 
   @Nullable("error text or null if successful")
+  /**
+   * Return error or send response using {@link #sendOk(FullHttpRequest, ChannelHandlerContext)}, {@link #send(BufferExposingByteArrayOutputStream, FullHttpRequest, ChannelHandlerContext)}
+   */
   public abstract String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException;
 
   @NotNull
@@ -123,6 +125,16 @@ public abstract class RestService extends HttpRequestHandler {
       return openProjects.length > 0 ? openProjects[0] : null;
     }
     return project;
+  }
+
+  protected static void sendOk(@NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
+    Responses.send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK), context.channel(), request);
+  }
+
+  protected static void send(@NotNull BufferExposingByteArrayOutputStream byteOut, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
+    HttpResponse response = Responses.response("application/json", Unpooled.wrappedBuffer(byteOut.getInternalBuffer(), 0, byteOut.size()));
+    Responses.addNoCache(response);
+    Responses.send(response, context.channel(), request);
   }
 
   protected static boolean getBooleanParameter(@NotNull String name, @NotNull QueryStringDecoder urlDecoder) {
