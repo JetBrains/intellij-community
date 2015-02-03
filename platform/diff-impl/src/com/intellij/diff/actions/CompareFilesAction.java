@@ -18,18 +18,23 @@ package com.intellij.diff.actions;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CompareFilesAction extends BaseShowDiffAction {
   public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFilesAction.DiffRequest");
+
+  public static final String LAST_USED_FILE_KEY = "two.files.diff.last.used.file";
+  public static final String LAST_USED_FOLDER_KEY = "two.files.diff.last.used.folder";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -75,25 +80,45 @@ public class CompareFilesAction extends BaseShowDiffAction {
 
     VirtualFile[] data = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (data.length == 1) {
-      FileChooserDescriptor descriptor = getDescriptor(data[0]);
-      // TODO: remember last used directory ?
-      VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, data[0]);
-
-      if (result.length != 1 || result[0] == null) return null;
-      return DiffRequestFactory.getInstance().createFromFiles(project, data[0], result[0]);
+      VirtualFile otherFile = getOtherFile(project, data[0]);
+      if (otherFile == null) return null;
+      return DiffRequestFactory.getInstance().createFromFiles(project, data[0], otherFile);
     }
     else {
       return DiffRequestFactory.getInstance().createFromFiles(project, data[0], data[1]);
     }
   }
 
-  @NotNull
-  private static FileChooserDescriptor getDescriptor(@NotNull VirtualFile file) {
+  @Nullable
+  private static VirtualFile getOtherFile(@Nullable Project project, @NotNull VirtualFile file) {
+    FileChooserDescriptor descriptor;
+    String key;
     if (file.isDirectory() || file.getFileType() instanceof ArchiveFileType) {
-      return new FileChooserDescriptor(false, true, true, false, false, false);
+      descriptor = new FileChooserDescriptor(false, true, true, false, false, false);
+      key = LAST_USED_FOLDER_KEY;
     }
     else {
-      return new FileChooserDescriptor(true, false, false, true, true, false);
+      descriptor = new FileChooserDescriptor(true, false, false, true, true, false);
+      key = LAST_USED_FILE_KEY;
     }
+    VirtualFile selectedFile = getDefaultSelection(project, key, file);
+    VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, selectedFile);
+    VirtualFile otherFile = result.length == 1 ? result[0] : null;
+    if (otherFile != null) updateDefaultSelection(project, key, otherFile);
+    return otherFile;
+  }
+
+  @NotNull
+  private static VirtualFile getDefaultSelection(@Nullable Project project, @NotNull String key, @NotNull VirtualFile file) {
+    if (project == null) return file;
+    final String path = PropertiesComponent.getInstance(project).getValue(key);
+    if (path == null) return file;
+    VirtualFile lastSelection = LocalFileSystem.getInstance().findFileByPath(path);
+    return lastSelection != null ? lastSelection : file;
+  }
+
+  private static void updateDefaultSelection(@Nullable Project project, @NotNull String key, @NotNull VirtualFile file) {
+    if (project == null) return;
+    PropertiesComponent.getInstance(project).setValue(key, file.getPath());
   }
 }
