@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
@@ -77,22 +78,22 @@ public class VcsHistoryUtil {
   /**
    * Invokes {@link com.intellij.openapi.diff.DiffManager#getDiffTool()} to show difference between the given revisions of the given file.
    * @param project   project under vcs control.
-   * @param filePath  file which revisions are compared.
+   * @param path  file which revisions are compared.
    * @param revision1 first revision - 'before', to the left.
    * @param revision2 second revision - 'after', to the right.
    * @throws VcsException
    * @throws IOException
    */
-  public static void showDiff(@NotNull final Project project, @NotNull FilePath filePath,
+  public static void showDiff(@NotNull final Project project, @NotNull FilePath path,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
                               @NotNull String title1, @NotNull String title2) throws VcsException, IOException {
     final byte[] content1 = loadRevisionContent(revision1);
     final byte[] content2 = loadRevisionContent(revision2);
 
-    String title = filePath.getPresentableUrl();
+    String title = DiffRequestFactoryImpl.getContentTitle(path);
 
-    DiffContent diffContent1 = createContent(project, content1, revision1, filePath);
-    DiffContent diffContent2 = createContent(project, content2, revision2, filePath);
+    DiffContent diffContent1 = createContent(project, content1, revision1, path);
+    DiffContent diffContent2 = createContent(project, content2, revision2, path);
 
     final DiffRequest request = new SimpleDiffRequest(title, diffContent1, diffContent2, title1, title2);
 

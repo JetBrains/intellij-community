@@ -21,6 +21,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +66,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return getContentTitle(file.getName(), file.getPath(), parent != null ? parent.getPath() : null);
   }
 
+  @Override
   @NotNull
   public String getTitle(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     if ((file1.isDirectory() || file2.isDirectory()) && file1.getPath().equals(file2.getPath())) return file1.getPath();
@@ -78,7 +80,26 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   }
 
   @NotNull
-  public static String getContentTitle(@NotNull String name, @NotNull String path, @Nullable String parentPath) {
+  public static String getContentTitle(@NotNull FilePath path) {
+    if (path.isDirectory()) return path.getPath();
+    FilePath parent = path.getParentPath();
+    return getContentTitle(path.getName(), path.getPath(), parent != null ? parent.getPath() : null);
+  }
+
+  @NotNull
+  public static String getTitle(@NotNull FilePath path1, @NotNull FilePath path2, @NotNull String separator) {
+    if ((path1.isDirectory() || path2.isDirectory()) && path1.getPath().equals(path2.getPath())) return path1.getPath();
+    if (path1.isDirectory() ^ path2.isDirectory()) return getContentTitle(path1) + " vs " + getContentTitle(path2);
+
+    FilePath parent1 = path1.getParentPath();
+    FilePath parent2 = path2.getParentPath();
+    return getRequestTitle(path1.getName(), path1.getPath(), parent1 != null ? parent1.getPath() : null,
+                           path2.getName(), path2.getPath(), parent2 != null ? parent2.getPath() : null,
+                           separator);
+  }
+
+  @NotNull
+  private static String getContentTitle(@NotNull String name, @NotNull String path, @Nullable String parentPath) {
     if (parentPath != null) {
       return name + " (" + parentPath + ")";
     }
@@ -88,9 +109,9 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   }
 
   @NotNull
-  public static String getRequestTitle(@NotNull String name1, @NotNull String path1, @Nullable String parentPath1,
-                                       @NotNull String name2, @NotNull String path2, @Nullable String parentPath2,
-                                       @NotNull String sep) {
+  private static String getRequestTitle(@NotNull String name1, @NotNull String path1, @Nullable String parentPath1,
+                                        @NotNull String name2, @NotNull String path2, @Nullable String parentPath2,
+                                        @NotNull String sep) {
     if (path1.equals(path2)) return getContentTitle(name1, path1, parentPath1);
 
     if (Comparing.equal(parentPath1, parentPath2)) {

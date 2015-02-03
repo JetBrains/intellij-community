@@ -329,33 +329,18 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       FilePath bPath = bRev.getFile();
       FilePath aPath = aRev.getFile();
       if (bPath.equals(aPath)) {
-        return getContentTitle(bRev.getFile());
+        return DiffRequestFactoryImpl.getContentTitle(bPath);
       }
       else {
-        return getRequestTitle(bRev.getFile(), aRev.getFile());
+        return DiffRequestFactoryImpl.getTitle(bPath, aPath, " -> ");
       }
     }
     else if (bRev != null) {
-      return getContentTitle(bRev.getFile());
+      return DiffRequestFactoryImpl.getContentTitle(bRev.getFile());
     }
     else {
-      return getContentTitle(aRev.getFile());
+      return DiffRequestFactoryImpl.getContentTitle(aRev.getFile());
     }
-  }
-
-  @NotNull
-  public static String getContentTitle(@NotNull FilePath path) {
-    FilePath parentPath = path.getParentPath();
-    return DiffRequestFactoryImpl.getContentTitle(path.getName(), path.getPath(), parentPath != null ? parentPath.getPath() : null);
-  }
-
-  @NotNull
-  public static String getRequestTitle(@NotNull FilePath bPath, @NotNull FilePath aPath) {
-    FilePath bParentPath = bPath.getParentPath();
-    FilePath aParentPath = aPath.getParentPath();
-    return DiffRequestFactoryImpl.getRequestTitle(bPath.getName(), bPath.getPath(), bParentPath != null ? bParentPath.getPath() : null,
-                                                  aPath.getName(), aPath.getPath(), aParentPath != null ? aParentPath.getPath() : null,
-                                                  " -> ");
   }
 
   @NotNull
