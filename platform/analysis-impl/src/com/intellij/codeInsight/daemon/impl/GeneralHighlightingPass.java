@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
-  static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
+  private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   protected static final Condition<PsiFile> SHOULD_HIGHIGHT_FILTER = new Condition<PsiFile>() {
     @Override
@@ -368,7 +368,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       List<HighlightInfo> infosForThisRange = holder.size() == 0 ? null : new ArrayList<HighlightInfo>(holder.size());
       for (int j = 0; j < holder.size(); j++) {
         final HighlightInfo info = holder.get(j);
-        assert info != null;
 
         if (!myRestrictRange.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
         List<HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) && !(element instanceof PsiFile) ? insideResult : outsideResult;
@@ -421,8 +420,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static final int POST_UPDATE_ALL = 5;
 
-  static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
-                                          @NotNull final Project project) throws ProcessCanceledException {
+  private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
+                                                  @NotNull final Project project) throws ProcessCanceledException {
     progress.cancel();
     JobScheduler.getScheduler().schedule(new Runnable() {
 
@@ -458,14 +457,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return new CustomHighlightInfoHolder(file, getColorsScheme(), filters);
   }
 
-  protected static void highlightTodos(@NotNull PsiFile file,
-                                       @NotNull CharSequence text,
-                                       int startOffset,
-                                       int endOffset,
-                                       @NotNull ProgressIndicator progress,
-                                       @NotNull ProperTextRange priorityRange,
-                                       @NotNull Collection<HighlightInfo> insideResult,
-                                       @NotNull Collection<HighlightInfo> outsideResult) {
+  static void highlightTodos(@NotNull PsiFile file,
+                             @NotNull CharSequence text,
+                             int startOffset,
+                             int endOffset,
+                             @NotNull ProgressIndicator progress,
+                             @NotNull ProperTextRange priorityRange,
+                             @NotNull Collection<HighlightInfo> insideResult,
+                             @NotNull Collection<HighlightInfo> outsideResult) {
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
     if (helper == null) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
