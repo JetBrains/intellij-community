@@ -1,7 +1,8 @@
-package com.intellij.ide;
+package org.jetbrains.ide;
 
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.Bootstrap;
@@ -12,9 +13,8 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.util.CharsetUtil;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.BinaryRequestHandler;
-import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.io.ChannelExceptionHandler;
 import org.jetbrains.io.Decoder;
 import org.jetbrains.io.NettyUtil;
@@ -22,6 +22,11 @@ import org.jetbrains.io.NettyUtil;
 import java.util.UUID;
 
 public class BinaryRequestHandlerTest extends LightPlatformTestCase {
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  public BinaryRequestHandlerTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
+
   public void test() throws InterruptedException {
     final String text = "Hello!";
     final AsyncResult<String> result = new AsyncResult<String>();
@@ -66,11 +71,11 @@ public class BinaryRequestHandlerTest extends LightPlatformTestCase {
       result.doWhenRejected(new Consumer<String>() {
         @Override
         public void consume(String error) {
-          fail(error);
+          TestCase.fail(error);
         }
       });
 
-      assertEquals("got-" + text, result.getResultSync(5000));
+      TestCase.assertEquals("got-" + text, result.getResultSync(5000));
     }
     finally {
       channel.close();

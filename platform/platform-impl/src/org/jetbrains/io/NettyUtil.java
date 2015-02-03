@@ -43,6 +43,8 @@ import java.net.Socket;
 import java.util.Random;
 
 public final class NettyUtil {
+  private static final Logger LOG = Logger.getInstance(NettyUtil.class);
+
   public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
 
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
@@ -90,7 +92,7 @@ public final class NettyUtil {
             Throwable cause = future.cause();
             if (promise != null) {
               if (cause != null && cause.getMessage() == null) {
-                BuiltInServer.LOG.warn(cause);
+                LOG.warn(cause);
               }
               promise.reject("Cannot connect: " + (cause == null ? "unknown error" : cause.getMessage()));
             }
