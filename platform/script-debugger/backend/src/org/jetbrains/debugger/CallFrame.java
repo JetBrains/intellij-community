@@ -13,6 +13,8 @@ public interface CallFrame {
   @NotNull
   List<Scope> getVariableScopes();
 
+  boolean hasOnlyGlobalScope();
+
   /**
    * @return the receiver variable known in this frame ("this" variable)
    *

@@ -22,12 +22,12 @@ import java.util.Set;
 
 public interface PermanentCommitsInfo<CommitId> {
   @NotNull
-  CommitId getCommitId(int permanentNodeIndex);
+  CommitId getCommitId(int nodeId);
 
-  long getTimestamp(int permanentNodeIndex);
+  long getTimestamp(int nodeId);
 
-  int getPermanentNodeIndex(@NotNull CommitId commitId);
+  int getNodeId(@NotNull CommitId commitId);
 
   @NotNull
-  Set<Integer> convertToCommitIndexes(Collection<CommitId> heads);
+  Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> heads);
 }

@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class UrlFilter implements Filter {
-  public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto\\:|(news|(ht|f)tp(s?))\\://|www\\.)[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]");
+  public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]");
 
   @Nullable
   @Override

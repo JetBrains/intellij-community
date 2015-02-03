@@ -140,6 +140,11 @@
       <interface-class>com.intellij.openapi.editor.EditorLastActionTracker</interface-class>
       <implementation-class>com.intellij.openapi.editor.impl.EditorLastActionTrackerImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>org.jetbrains.ide.BuiltInServerManager</interface-class>
+      <implementation-class>org.jetbrains.ide.BuiltInServerManagerImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

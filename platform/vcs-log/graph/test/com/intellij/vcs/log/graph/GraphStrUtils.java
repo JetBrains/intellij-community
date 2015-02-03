@@ -18,84 +18,30 @@ package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.api.GraphLayout;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
 import com.intellij.vcs.log.graph.impl.print.EdgesInRowGenerator;
+import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
 import com.intellij.vcs.log.graph.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
+import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.toChar;
 
 public class GraphStrUtils {
 
-  public static <T extends Comparable<? super T>> void appendSortList(List<T> list, StringBuilder s) {
-    ArrayList<T> sorted = new ArrayList<T>(list);
-    Collections.sort(sorted);
-    appendList(sorted, s);
-  }
-
-  public static <T> void appendList(List<T> list, StringBuilder s) {
-
-    boolean first = true;
-    for (T element : list) {
-      if (first) {
-        first = false;
-      } else {
-        s.append(" ");
-      }
-
-      s.append(element);
+  public static final Comparator<GraphElement> GRAPH_ELEMENT_COMPARATOR = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
+    @NotNull
+    @Override
+    public Integer fun(Integer nodeIndex) {
+      return 0;
     }
-  }
-
-  public static String linearGraphToStr(LinearGraph graph) {
-    StringBuilder s = new StringBuilder();
-    for (int nodeIndex = 0; nodeIndex < graph.nodesCount(); nodeIndex++) {
-      if (nodeIndex != 0)
-        s.append("\n");
-
-      s.append(nodeIndex);
-
-      s.append(CommitParser.SEPARATOR);
-      appendSortList(graph.getUpNodes(nodeIndex), s);
-
-      s.append(CommitParser.SEPARATOR);
-      appendList(graph.getDownNodes(nodeIndex), s);
-    }
-    return s.toString();
-  }
-
-  public static <CommitId extends Comparable<CommitId>> String commitsWithNotLoadParentMapToStr(Map<CommitId, GraphCommit<CommitId>> commitMap,
-                                                                                                Function<CommitId, String> toStr) {
-    List<CommitId> hashes = new ArrayList<CommitId>(commitMap.keySet());
-    Collections.sort(hashes);
-
-    StringBuilder s = new StringBuilder();
-    for (int i = 0; i < hashes.size(); i++) {
-      if (i != 0)
-        s.append("\n");
-
-      CommitId hash = hashes.get(i);
-      GraphCommit<CommitId> commit = commitMap.get(hash);
-      assertEquals(toStr.fun(hash), toStr.fun(commit.getId()));
-
-      s.append(toStr.fun(hash)).append(CommitParser.SEPARATOR);
-      List<CommitId> parentIndices = commit.getParents();
-      for (int j = 0 ; j < parentIndices.size(); j++) {
-        if (j > 0)
-          s.append(" ");
-        s.append(toStr.fun(parentIndices.get(j)));
-      }
-    }
-    return s.toString();
-  }
+  });
 
   public static <CommitId> String commitsInfoToStr(PermanentCommitsInfo<CommitId> commitsInfo, int size, Function<CommitId, String> toStr) {
     StringBuilder s = new StringBuilder();
@@ -104,7 +50,7 @@ public class GraphStrUtils {
         s.append("\n");
 
       CommitId commitId = commitsInfo.getCommitId(i);
-      int commitIndex = commitsInfo.getPermanentNodeIndex(commitId);
+      int commitIndex = commitsInfo.getNodeId(commitId);
       long timestamp = commitsInfo.getTimestamp(i);
 
       s.append(commitIndex).append(CommitParser.SEPARATOR);
@@ -150,45 +96,6 @@ public class GraphStrUtils {
     }
     return s.toString();
   }
-  
-  private static char toChar(GraphNode.Type type) {
-    switch (type) {
-      case USUAL:
-        return 'U';
-      default:
-        throw new IllegalStateException("Unexpected graph node type: " + type);
-    }
-  }
-  
-  private static char toChar(GraphEdge.Type type) {
-    switch (type) {
-      case USUAL:
-        return 'U';
-      case HIDE:
-        return 'H';
-      default:
-        throw new IllegalStateException("Unexpected graph edge type: " + type);
-    }
-  }
-  
-  public static String linearGraphWithElementInfoToStr(@NotNull LinearGraphWithElementInfo graph) {
-    StringBuilder s = new StringBuilder();
-    for (int i = 0; i < graph.nodesCount(); i++) {
-      if (i > 0)
-        s.append("\n");
-      s.append(i).append('_').append(toChar(graph.getNodeType(i)));
-      s.append(CommitParser.SEPARATOR);
-      boolean first = true;
-      for (int downNode : graph.getDownNodes(i)) {
-        if (first)
-          first = false;
-        else
-          s.append(" ");
-        s.append(downNode).append('_').append(toChar(graph.getEdgeType(i, downNode)));
-      }
-    }
-    return s.toString();
-  }
 
   public static String edgesInRowToStr(@NotNull EdgesInRowGenerator edgesInRowGenerator, int nodesCount) {
     StringBuilder s = new StringBuilder();
@@ -206,15 +113,7 @@ public class GraphStrUtils {
       return "none";
 
     List<GraphEdge> sortedEdges = new ArrayList<GraphEdge>(edges);
-    Collections.sort(sortedEdges, new Comparator<GraphEdge>() {
-      @Override
-      public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
-        if (o1.getUpNodeIndex() == o2.getUpNodeIndex())
-          return o1.getDownNodeIndex() - o2.getDownNodeIndex();
-        else
-          return o1.getUpNodeIndex() - o2.getUpNodeIndex();
-      }
-    });
+    Collections.sort(sortedEdges, GRAPH_ELEMENT_COMPARATOR);
 
     return StringUtil.join(sortedEdges, new Function<GraphEdge, String>() {
       @Override

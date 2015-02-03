@@ -16,7 +16,6 @@
 
 package com.intellij.vcs.log.graph.utils;
 
-import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;

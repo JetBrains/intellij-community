@@ -330,7 +330,9 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                      "<name>${<caret>project.build.finalName}</name>");
 
-    assertResolved(myProjectPom, findTag(getMavenGeneralSettings().getEffectiveSuperPom(), "project.build.finalName"));
+    VirtualFile effectiveSuperPom = getMavenGeneralSettings().getEffectiveSuperPom();
+    assertNotNull(effectiveSuperPom);
+    assertResolved(myProjectPom, findTag(effectiveSuperPom, "project.build.finalName"));
   }
 
   public void testHandleResolutionRecursion() throws Exception {

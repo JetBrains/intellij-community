@@ -42,7 +42,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
@@ -139,7 +138,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       nameFieldPanel.add(myProjectName);
 
       namePanel.add(nameFieldPanel, BorderLayout.CENTER);
-      final JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      final JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
       wrapper.add(namePanel);
       wrapper.setAlignmentX(0);
       myPanel.add(wrapper, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
@@ -150,7 +149,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, model);
     myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
                                                                                    GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                                                   new Insets(4, 4, 0, 0), 0, 0));
+                                                                                   new Insets(4, 0, 0, 0), 0, 0));
 
     myPanel.add(myWholePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
@@ -224,8 +223,9 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
           compilerProjectExtension.setCompilerOutputPointer(null);
         }
 
-        final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
-        LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(newLevel);
+        LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
+        extension.setLanguageLevel(myLanguageLevelCombo.getSelectedLevel());
+        extension.setDefault(myLanguageLevelCombo.isDefault());
         myProjectJdkConfigurable.apply();
 
         if (myProjectName != null) {

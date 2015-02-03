@@ -28,7 +28,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import org.jetbrains.annotations.NotNull;
@@ -175,7 +176,10 @@ public final class NettyUtil {
     return bootstrap;
   }
 
-  public static void addHttpServerCodec(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpServerCodec(), new HttpObjectAggregator(MAX_CONTENT_LENGTH), new CorsHandler(CorsConfig.withAnyOrigin().build()));
+  public static void addHttpServerCodec(@NotNull ChannelPipeline pipeline) {
+    pipeline.addLast(new HttpRequestDecoder(),
+                     new HttpResponseEncoder(),
+                     new CorsHandler(CorsConfig.withAnyOrigin().allowCredentials().allowNullOrigin().allowedRequestMethods().build()),
+                     new HttpObjectAggregator(MAX_CONTENT_LENGTH));
   }
 }

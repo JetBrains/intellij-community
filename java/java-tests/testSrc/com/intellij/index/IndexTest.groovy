@@ -285,7 +285,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(findClass("Foo"));
   }
 
-  public void "_test rename unsaved file"() {
+  public void "test rename unsaved file"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 
@@ -304,7 +304,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
   }
 
-  public void "_test rename dir with unsaved file"() {
+  public void "test rename dir with unsaved file"() {
     def psiFile = myFixture.addFileToProject("foo/Foo.java", "package pkg; class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 
@@ -324,7 +324,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope)
   }
 
-  public void "_test language level change"() {
+  public void "test language level change"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 

@@ -20,11 +20,13 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -58,8 +60,12 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   @NotNull private final JComponent myToolbar;
   @NotNull private final RepositoryChangesBrowser myChangesBrowser;
 
-  public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiImpl vcsLogUI, @NotNull Project project,
-                   @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log,
+  public MainFrame(@NotNull VcsLogDataHolder logDataHolder,
+                   @NotNull VcsLogUiImpl vcsLogUI,
+                   @NotNull Project project,
+                   @NotNull VcsLogSettings settings,
+                   @NotNull VcsLogUiProperties uiProperties,
+                   @NotNull VcsLog log,
                    @NotNull VisiblePack initialDataPack) {
     // collect info
     myLogDataHolder = logDataHolder;
@@ -122,6 +128,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   /**
    * Informs components that the actual DataPack has been updated (e.g. due to a log refresh). <br/>
    * Components may want to update their fields and/or rebuild.
+   *
    * @param dataPack new data pack.
    */
   public void updateDataPack(@NotNull VisiblePack dataPack) {
@@ -178,18 +185,35 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   private JComponent createActionsToolbar() {
     AnAction bekAction = new BekAction();
+    AnAction linearBekAction = new LinearBekAction();
 
-    AnAction hideBranchesAction = new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
+    AnAction collapseBranchesAction = new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.hideAll();
       }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        if (!myFilterUi.getFilters().isEmpty()) {
+          e.getPresentation().setEnabled(false);
+        }
+      }
     };
 
-    AnAction showBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
+    AnAction expandBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.showAll();
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        if (!myFilterUi.getFilters().isEmpty()) {
+          e.getPresentation().setEnabled(false);
+        }
       }
     };
 
@@ -210,8 +234,8 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     refreshAction.registerShortcutOn(this);
 
-    DefaultActionGroup toolbarGroup = new DefaultActionGroup(bekAction, hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction,
-                                                             showDetailsAction);
+    DefaultActionGroup toolbarGroup =
+      new DefaultActionGroup(bekAction, linearBekAction, collapseBranchesAction, expandBranchesAction, showFullPatchAction, refreshAction, showDetailsAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
@@ -308,17 +332,17 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   private class BekAction extends ToggleAction implements DumbAware {
     public BekAction() {
-      super("BEK", "BEK", AllIcons.Actions.Lightning);
+      super("IntelliSort", "IntelliSort", AllIcons.Actions.Lightning);
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myUI.isBek();
+      return !myUI.getBekType().equals(PermanentGraph.SortType.Normal);
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myUI.setBek(state);
+      myUI.setBek(state ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
     }
 
     @Override
@@ -326,6 +350,29 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       super.update(e);
       e.getPresentation().setVisible(BekSorter.isBekEnabled());
       e.getPresentation().setEnabled(areGraphActionsEnabled());
+    }
+  }
+
+  private class LinearBekAction extends ToggleAction implements DumbAware {
+    public LinearBekAction() {
+      super("Linear IntelliSort", "Linear IntelliSort", new ColorIcon(16, new Color(0, 90, 120)));
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myUI.getBekType().equals(PermanentGraph.SortType.LinearBek);
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myUI.setBek(state ? PermanentGraph.SortType.LinearBek : PermanentGraph.SortType.Bek);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(BekSorter.isLinearBekEnabled());
+      e.getPresentation().setEnabled(areGraphActionsEnabled() && myUI.getBekType() != PermanentGraph.SortType.Normal);
     }
   }
 

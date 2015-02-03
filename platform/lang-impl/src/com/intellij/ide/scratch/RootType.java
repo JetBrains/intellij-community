@@ -78,8 +78,6 @@ public abstract class RootType {
     return StringUtil.isEmpty(myDisplayName);
   }
 
-  public boolean canBeProject() { return false; }
-
   @Nullable
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
     return null;
@@ -98,8 +96,7 @@ public abstract class RootType {
   }
 
   public VirtualFile findFile(@Nullable Project project, @NotNull String pathName, ScratchFileService.Option option) throws IOException {
-    ScratchFileService fileService = project == null ? ScratchFileService.getInstance() : ScratchFileService.getInstance(project);
-    return fileService.findFile(this, pathName, option);
+    return ScratchFileService.getInstance().findFile(this, pathName, option);
   }
 
   public void fileOpened(@NotNull VirtualFile file, @NotNull FileEditorManager source) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,27 @@ package org.jetbrains.io;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class Decoder extends SimpleChannelInboundHandlerAdapter<ByteBuf> {
+public abstract class Decoder extends ChannelInboundHandlerAdapter {
   protected ByteBuf cumulation;
 
-  protected Decoder() {
-    super(false);
+  @Override
+  public final void channelRead(ChannelHandlerContext context, Object message) throws Exception {
+    if (message instanceof ByteBuf) {
+      messageReceived(context, (ByteBuf)message);
+    }
+    else {
+      context.fireChannelRead(message);
+    }
   }
 
+  protected abstract void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf message) throws Exception;
+
   @Nullable
-  protected final ByteBuf getBufferIfSufficient(ByteBuf input, int requiredLength, ChannelHandlerContext context) {
+  protected final ByteBuf getBufferIfSufficient(@NotNull ByteBuf input, int requiredLength, @NotNull ChannelHandlerContext context) {
     if (!input.isReadable()) {
       return null;
     }

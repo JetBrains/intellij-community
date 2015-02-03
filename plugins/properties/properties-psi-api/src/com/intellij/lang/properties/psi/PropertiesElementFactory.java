@@ -42,9 +42,14 @@ public class PropertiesElementFactory {
 
   @NotNull
   public static IProperty createProperty(@NotNull Project project, @NonNls @NotNull String name, @NonNls @NotNull String value) {
-    String text = escape(name) + "=" + escapeValue(value);
+    String text = getPropertyText(name, value);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
+  }
+
+  @NotNull
+  public static String getPropertyText(@NonNls @NotNull String name, @NonNls @NotNull String value) {
+    return escape(name) + "=" + escapeValue(value);
   }
 
   @NotNull

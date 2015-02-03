@@ -318,8 +318,8 @@ public class UnscrambleDialog extends DialogWrapper {
         builder.append(" ").append(trimSuffix(line));
         continue;
       }
-      if (!first && mustHaveNewLineBefore(line)) {
-        builder.append("\n");
+      if (!first && (mustHaveNewLineBefore(line) || StringUtil.endsWith(builder, ")"))) {
+        if (!StringUtil.endsWith(builder, "\n")) builder.append("\n");
         if (line.startsWith("\"")) builder.append("\n"); // Additional line break for thread names
       }
       first = false;

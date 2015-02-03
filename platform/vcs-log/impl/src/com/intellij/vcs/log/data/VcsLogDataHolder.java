@@ -98,8 +98,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
 
     myFilterer = new VcsLogFiltererImpl(myProject, myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter,
-                                                       uiProperties.isBek() ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal,
-                                                       visiblePackConsumer);
+                                        PermanentGraph.SortType.values()[uiProperties.getBekSortType()], visiblePackConsumer);
 
     myDataPackUpdateHandler = new Consumer<DataPack>() {
       @Override
@@ -108,15 +107,16 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       }
     };
 
-    myRefresher = new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache,
-                                          myDataPackUpdateHandler, new Consumer<Exception>() {
-      @Override
-      public void consume(Exception e) {
-        if (!(e instanceof ProcessCanceledException)) {
-          LOG.error(e);
-        }
-      }
-    }, mySettings.getRecentCommitsCount());
+    myRefresher =
+      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache, myDataPackUpdateHandler,
+                              new Consumer<Exception>() {
+                                @Override
+                                public void consume(Exception e) {
+                                  if (!(e instanceof ProcessCanceledException)) {
+                                    LOG.error(e);
+                                  }
+                                }
+                              }, mySettings.getRecentCommitsCount());
   }
 
   @NotNull

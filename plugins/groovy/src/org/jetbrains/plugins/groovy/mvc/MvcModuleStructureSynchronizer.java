@@ -456,6 +456,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   }
 
   private void updateProjectViewVisibility() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
       @Override
       public void run() {

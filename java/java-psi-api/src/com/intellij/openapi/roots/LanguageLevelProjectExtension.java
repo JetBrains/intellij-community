@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -33,6 +34,21 @@ public abstract class LanguageLevelProjectExtension {
   public abstract LanguageLevel getLanguageLevel();
 
   public abstract void setLanguageLevel(@NotNull LanguageLevel languageLevel);
+
+  private Boolean myDefault;
+
+  /**
+   * Auto-detect language level from project JDK maximum possible level.
+   * @return null if the property is not set yet (e.g. after migration).
+   */
+  @Nullable
+  public Boolean isDefault() {
+    return myDefault;
+  }
+
+  public void setDefault(@Nullable Boolean value) {
+    myDefault = value;
+  }
 
   public abstract void languageLevelsChanged();
 
