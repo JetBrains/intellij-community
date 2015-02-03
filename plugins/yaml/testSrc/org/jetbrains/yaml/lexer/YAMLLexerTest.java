@@ -15,118 +15,122 @@ public class YAMLLexerTest extends LexerTestCase {
   }
 
   public void test2docs() {
-    doFileTest("yml");
+    doTest();
   }
 
   public void testColorspage(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testDocuments(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testIndentation(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testMap_between_seq(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testMap_map(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testQuoted_scalars(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testSample_log(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testSeq_seq(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testSequence_mappings(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testWrong_string_highlighting(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testValue_injection(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testValue_injection_2(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testComma(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testIndex(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testKeydots(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testColons74100(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testOnlyyamlkey(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testKey_parens(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testKey_trailing_space(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testComments(){
-    doFileTest("yml");
+    doTest();
   }
 
   public void testNon_comment() {
-    doFileTest("yml");
+    doTest();
   }
 
   public void testNon_comment2() {
-    doFileTest("yml");
+    doTest();
   }
 
   public void testKey_with_brackets() {
-    doFileTest("yml");
+    doTest();
   }
 
   public void testStrings() {
-    doFileTest("yml");
+    doTest();
   }
 
   public void testNested_seqs() {
-    doFileTest("yml");
+    doTest();
   }
 
   public void testMultiline_seq() {
-    doFileTest("yml");
+    doTest();
   }
 
   public void testClosing_braces_in_value() {
-    doFileTest("yml");
+    doTest();
   }
 
   public void testQuoted_keys() {
+    doTest();
+  }
+
+  private void doTest() {
     doFileTest("yml");
   }
 }
