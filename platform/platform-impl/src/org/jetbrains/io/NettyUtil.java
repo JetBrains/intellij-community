@@ -89,6 +89,9 @@ public final class NettyUtil {
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             Throwable cause = future.cause();
             if (promise != null) {
+              if (cause != null && cause.getMessage() == null) {
+                BuiltInServer.LOG.warn(cause);
+              }
               promise.reject("Cannot connect: " + (cause == null ? "unknown error" : cause.getMessage()));
             }
             return null;
