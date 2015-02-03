@@ -166,7 +166,7 @@ public class MavenExternalParameters {
   }
 
   private static File patchConfFile(File conf, String library) throws IOException {
-    File tmpConf = File.createTempFile("idea-", "-mvn.conf");
+    File tmpConf = FileUtil.createTempFile("idea-", "-mvn.conf");
     tmpConf.deleteOnExit();
     patchConfFile(conf, tmpConf, library);
 
@@ -283,7 +283,7 @@ public class MavenExternalParameters {
     }
 
     File file = new File(PathManager.getSystemPath(), "Maven/idea-projects-state-" + project.getLocationHash() + ".properties");
-    file.getParentFile().mkdirs();
+    FileUtil.ensureExists(file.getParentFile());
 
     OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
     try {
@@ -392,6 +392,7 @@ public class MavenExternalParameters {
     }
   }
 
+  @NotNull
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
     return resolveMavenHome(coreSettings, null, null);
   }
@@ -404,6 +405,7 @@ public class MavenExternalParameters {
    * @return
    * @throws ExecutionException
    */
+  @NotNull
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings,
                                         @Nullable Project project,
                                         @Nullable MavenRunConfiguration runConfiguration) throws ExecutionException {
@@ -549,7 +551,7 @@ public class MavenExternalParameters {
     return stringBuilder.toString();
   }
 
-  private static class ProjectSettingsOpenerExecutionException extends ExecutionExceptionWithHyperlink {
+  private static class ProjectSettingsOpenerExecutionException extends WithHyperlinkExecutionException {
 
     private final Project myProject;
 
@@ -564,7 +566,7 @@ public class MavenExternalParameters {
     }
   }
 
-  private static class ProjectJdkSettingsOpenerExecutionException extends ExecutionExceptionWithHyperlink {
+  private static class ProjectJdkSettingsOpenerExecutionException extends WithHyperlinkExecutionException {
 
     private final Project myProject;
 
@@ -579,7 +581,7 @@ public class MavenExternalParameters {
     }
   }
 
-  private static class RunConfigurationOpenerExecutionException extends ExecutionExceptionWithHyperlink {
+  private static class RunConfigurationOpenerExecutionException extends WithHyperlinkExecutionException {
 
     private final MavenRunConfiguration myRunConfiguration;
 
@@ -596,9 +598,9 @@ public class MavenExternalParameters {
     }
   }
 
-  private static abstract class ExecutionExceptionWithHyperlink extends ExecutionException implements HyperlinkListener, NotificationListener {
+  private static abstract class WithHyperlinkExecutionException extends ExecutionException implements HyperlinkListener, NotificationListener {
 
-    public ExecutionExceptionWithHyperlink(String s) {
+    public WithHyperlinkExecutionException(String s) {
       super(s);
     }
 

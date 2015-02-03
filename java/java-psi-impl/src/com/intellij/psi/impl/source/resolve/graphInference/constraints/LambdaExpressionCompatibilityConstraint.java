@@ -26,7 +26,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
       return false;
     }
 
-    final PsiType groundTargetType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(myT, myExpression);
+    final PsiType groundTargetType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(myT, myExpression, false);
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(groundTargetType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod == null) {
@@ -56,11 +56,11 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     if (returnType != null) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(myExpression);
       if (returnType.equals(PsiType.VOID)) {
-        if (!returnExpressions.isEmpty() && !(myExpression.getBody() instanceof PsiExpression)) {
+        if (!myExpression.isVoidCompatible()) {
           return false;
         }
       } else {
-        if (returnExpressions.isEmpty() && !myExpression.isValueCompatible()) {  //not value-compatible
+        if (!myExpression.isValueCompatible()) {
           return false;
         }
         InferenceSession callsession = session.findNestedCallSession(myExpression);

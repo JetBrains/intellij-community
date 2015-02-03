@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,8 +154,16 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   @Nullable
   @Override
   public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-    LanguageLevel defaultLevel = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(defaultLevel);
+    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
+    Boolean aDefault = extension.isDefault();
+    LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(project);
+    if (aDefault != null && !aDefault) {
+      instance.setLanguageLevel(extension.getLanguageLevel());
+      instance.setDefault(false);
+    }
+    else {
+      instance.setDefault(true);
+    }
     return super.commit(project, model, modulesProvider);
   }
 

@@ -72,7 +72,8 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
     val mappings = context.getProjectDescriptor().dataManager.getMappings()
     val callback = JavaBuilderUtil.getDependenciesRegistrar(context)
 
-    fun generateClass(packageName: String, className: String, target: ModuleBuildTarget, sources: Collection<String>, generate: (ClassWriter.() -> Unit)? = null) {
+    fun generateClass(packageName: String, className: String, target: ModuleBuildTarget, sources: Collection<String>,
+                      allSources: Collection<String>, generate: (ClassWriter.() -> Unit)? = null) {
       val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
       val fullClassName = StringUtil.getQualifiedName(packageName, className).replace('.', '/')
       writer.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, fullClassName, null, "java/lang/Object", null)
@@ -84,39 +85,53 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
       val classBytes = writer.toByteArray()
       FileUtil.writeToFile(outputFile, classBytes)
       outputConsumer.registerOutputFile(target, outputFile, sources)
-      callback.associate(fullClassName.replace('/', '.'), sources, ClassReader(classBytes))
+      callback.associate(fullClassName.replace('/', '.'), allSources, ClassReader(classBytes))
     }
 
     for (target in chunk.getTargets()) {
       val packagesStorage = context.getProjectDescriptor().dataManager.getStorage(target, PACKAGE_CACHE_STORAGE_PROVIDER)
       for (file in filesToCompile[target]) {
-        generateClass(getPackageName(file), FileUtil.getNameWithoutExtension(file), target, listOf(file.getAbsolutePath()))
+        val sources = listOf(file.getAbsolutePath())
+        generateClass(getPackageName(file), FileUtil.getNameWithoutExtension(file), target, sources, sources)
       }
 
-      val packagesToGenerate = filesToCompile[target].mapTo(THashSet<String>(), ::getPackageName)
-      filesToCompile[target].mapNotNullTo(packagesToGenerate) { packagesStorage.getState(it.getAbsolutePath()) }
+      val packagesToGenerate = LinkedHashMap<String, MutableList<File>>()
+      filesToCompile[target].forEach {
+        val currentName = getPackageName(it)
+        if (currentName !in packagesToGenerate) packagesToGenerate[currentName] = ArrayList()
+        packagesToGenerate[currentName].add(it)
+        val oldName = packagesStorage.getState(it.getAbsolutePath())
+        if (oldName != null && oldName != currentName && oldName !in packagesToGenerate) {
+          packagesToGenerate[oldName] = ArrayList()
+        }
+      }
       val packagesFromDeletedFiles = dirtyFilesHolder.getRemovedFiles(target).filter { isCompilable(File(it)) }.mapNotNull { packagesStorage.getState(it) }
-      packagesToGenerate.addAll(packagesFromDeletedFiles)
+      packagesFromDeletedFiles.forEach {
+        if (it !in packagesToGenerate) {
+          packagesToGenerate[it] = ArrayList()
+        }
+      }
 
       val getParentFile: (File) -> File = { it.getParentFile() }
       val dirsToCheck = filesToCompile[target].mapTo(THashSet(FileUtil.FILE_HASHING_STRATEGY), getParentFile)
       packagesFromDeletedFiles.flatMap { mappings.getClassSources(mappings.getName(StringUtil.getQualifiedName(it, "PackageFacade"))) }
                               .map(getParentFile).filterNotNullTo(dirsToCheck)
 
-      for (packageName in packagesToGenerate) {
+      for ((packageName, dirtyFiles) in packagesToGenerate) {
         val files = dirsToCheck.map { it.listFiles() }.filterNotNull().flatMap { it.toList() }.filter { isCompilable(it) && packageName == getPackageName(it) }
         if (files.isEmpty()) continue
 
         val classNames = files.map { FileUtilRt.getNameWithoutExtension(it.getName()) }.sort()
-        val sources = files.map { it.getAbsolutePath() }
+        val dirtySource = dirtyFiles.map { it.getAbsolutePath() }
+        val allSources = files.map { it.getAbsolutePath() }
 
-        generateClass(packageName, "PackageFacade", target, sources) {
+        generateClass(packageName, "PackageFacade", target, dirtySource, allSources) {
           for (fileName in classNames) {
             val fieldClass = StringUtil.getQualifiedName(packageName, fileName).replace('.', '/')
             visitField(Opcodes.ACC_PUBLIC, StringUtil.decapitalize(fileName), "L$fieldClass;", null, null).visitEnd()
           }
         }
-        for (source in sources) {
+        for (source in dirtySource) {
           packagesStorage.update(FileUtil.toSystemIndependentName(source), packageName)
         }
       }

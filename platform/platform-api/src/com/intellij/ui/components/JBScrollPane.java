@@ -219,14 +219,16 @@ public class JBScrollPane extends JScrollPane {
     if (hsb != null) container.setComponentZOrder(hsb, 0);
 
     if (extendViewportUnderVScrollbar) {
+      int x2 = Math.max(vsb.getX() + vsb.getWidth(), viewportBounds.x + viewportBounds.width);
       viewportBounds.x = Math.min(viewportBounds.x, vsb.getX());
-      viewportBounds.width = vsb.getX() + vsb.getWidth() - viewportBounds.x;
+      viewportBounds.width = x2 - viewportBounds.x;
     }
     if (extendViewportUnderHScrollbar) {
+      int y2 = Math.max(hsb.getY() + hsb.getHeight(), viewportBounds.y + viewportBounds.height);
       viewportBounds.y = Math.min(viewportBounds.y, hsb.getY());
-      viewportBounds.height = hsb.getY() + hsb.getHeight() - viewportBounds.y;
+      viewportBounds.height = y2 - viewportBounds.y;
     }
- 
+
     if (extendViewportUnderVScrollbar) {
       if (hsb != null) {
         Rectangle scrollbarBounds = hsb.getBounds();

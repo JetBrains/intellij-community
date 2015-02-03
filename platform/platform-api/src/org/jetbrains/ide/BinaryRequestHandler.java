@@ -26,9 +26,10 @@ public abstract class BinaryRequestHandler {
 
   @NotNull
   /**
-   * You can use uuidgen on Mac OS X to generate UUID
+   * uuidgen on Mac OS X could be used to generate UUID
    */
   public abstract UUID getId();
 
+  @NotNull
   public abstract ChannelHandler getInboundHandler();
 }

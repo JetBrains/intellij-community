@@ -19,8 +19,8 @@ import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncFunction;
 import org.jetbrains.concurrency.ConsumerRunnable;
+import org.jetbrains.concurrency.ObsolescentAsyncFunction;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.values.*;
 
@@ -322,7 +322,12 @@ public final class VariableView extends XNamedValue implements VariableContext {
         promises.add(computeNamedProperties(objectValue, node, !hasIndexedProperties && additionalProperties == null));
       }
       else {
-        promises.add(additionalProperties.then(new AsyncFunction<Void, Void>() {
+        promises.add(additionalProperties.then(new ObsolescentAsyncFunction<Void, Void>() {
+          @Override
+          public boolean isObsolete() {
+            return node.isObsolete();
+          }
+
           @NotNull
           @Override
           public Promise<Void> fun(Void o) {
@@ -333,12 +338,10 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
 
     if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
-      Promise.all(promises).processed(new ConsumerRunnable() {
+      Promise.all(promises).processed(new ObsolescentConsumer<Void>(node) {
         @Override
-        public void run() {
-          if (!node.isObsolete()) {
-            node.addChildren(XValueChildrenList.EMPTY, true);
-          }
+        public void consume(Void aVoid) {
+          node.addChildren(XValueChildrenList.EMPTY, true);
         }
       });
     }

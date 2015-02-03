@@ -1,5 +1,7 @@
 package com.intellij.ide.browsers;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -23,9 +25,16 @@ public abstract class OpenInBrowserRequest {
 
   @Nullable
   public static OpenInBrowserRequest create(@NotNull final PsiElement element) {
-    PsiFile psiFile = element.isValid() ? element.getContainingFile() : null;
-    if (psiFile == null || psiFile.getVirtualFile() == null) {
-      return null;
+    PsiFile psiFile;
+    AccessToken token = ReadAction.start();
+    try {
+      psiFile = element.isValid() ? element.getContainingFile() : null;
+      if (psiFile == null || psiFile.getVirtualFile() == null) {
+        return null;
+      }
+    }
+    finally {
+      token.finish();
     }
 
     return new OpenInBrowserRequest(psiFile) {

@@ -32,6 +32,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,10 +52,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
       String failure = checkDuplicatesInKeymap(keymap, knownDuplicates);
-      if (failure != null) {
-        if (failMessage.length() > 0) failMessage.append("\n");
-        failMessage.append(failure);
-      }
+      if (failMessage.length() > 0) failMessage.append("\n");
+      failMessage.append(failure);
     }
     if (failMessage.length() > 0) {
       TestCase.fail(failMessage +
@@ -90,7 +89,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control DELETE",           "EditorDeleteToWordEnd", "RemoveFromFavorites"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
     { "control DOWN",             "EditorScrollDown", "EditorLookupDown"},
-    { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Jdbc.Execute", "Console.Jpa.Execute", "Groovy.Shell.Execute"},
+    { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Execute.Multiline"},
     { "control EQUALS",           "ExpandAll", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
     { "control D",                "CompareDirs", "EditorDuplicate", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
@@ -119,7 +118,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control D",          "Uml.ShowDiff", "TagDocumentationNavigation"},
     { "shift control DOWN",       "ResizeToolWindowDown", "MoveStatementDown"},
     { "shift control ENTER",      "EditorChooseLookupItemCompleteStatement", "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
-    { "shift control F10",        "Jdbc.OpenConsole", "Jdbc.RunSqlScript", "Jpa.OpenConsole", "RunClass", "RunTargetAction"},
+    { "shift control F10",        "Console.Open", "RunClass", "RunTargetAction"},
     { "shift control F8",         "ViewBreakpoints", "EditBreakpoint"},
     { "shift control G",          "ClassTemplateNavigation", "GoToClass"},
     { "shift control LEFT",       "EditorPreviousWordWithSelection", "ResizeToolWindowLeft", },
@@ -128,13 +127,13 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
     { "shift control alt DOWN",   "VcsShowNextChangeMarker", "HtmlTableCellNavigateDown"},
     { "shift control alt UP",     "VcsShowPrevChangeMarker", "HtmlTableCellNavigateUp"},
-    { "shift control alt DELETE", "Console.Jdbc.Terminate", "Console.Jpa.Terminate"},
     { "shift control K",          "hg4idea.push", "Git.Push"},
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
     { "control E",                "RecentFiles", "Vcs.ShowMessageHistory"},
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     });
     put("Mac OS X 10.5+", new String[][] {
+    { "F5",                       "CopyElement", "Console.TableResult.Reload", "UML.ApplyCurrentLayout"},
     { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
     { "shift BACK_SPACE",         "EditorBackSpace", "UsageView.Include"},
     { "meta BACK_SPACE",          "EditorDeleteLine", "$Delete"},
@@ -324,7 +323,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},
       { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc"},
       { "F3",                       "GotoDeclaration", "EditSource"},
-      { "F5",                       "StepInto", "UML.ApplyCurrentLayout"},
+      { "F5",                       "StepInto", "Console.TableResult.Reload", "UML.ApplyCurrentLayout"},
       { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},
       { "meta 1",                   "FileChooser.GotoHome", "ShowIntentionActions", "DuplicatesForm.SendToLeft"},
       { "meta 3",                   "FileChooser.GotoModule", "GotoAction"},
@@ -375,6 +374,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     }
   }
 
+  @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String checkDuplicatesInKeymap(Keymap keymap, Map<String, Map<String, List<String>>> allKnownDuplicates) {
     Set<Shortcut> shortcuts = new LinkedHashSet<Shortcut>();

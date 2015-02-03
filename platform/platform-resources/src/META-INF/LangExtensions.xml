@@ -330,9 +330,7 @@
 
     <projectViewPane implementation="com.intellij.ide.scratch.ScratchProjectViewPane"/>
     <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
-                        serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl$App"/>
-    <projectService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
-                    serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl$Prj"/>
+                        serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
 
     <fileTypeFactory implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$TypeFactory"/>
     <navbar implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$NavBarExtension"/>

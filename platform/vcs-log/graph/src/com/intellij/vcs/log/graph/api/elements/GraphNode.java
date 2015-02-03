@@ -20,14 +20,13 @@ import org.jetbrains.annotations.NotNull;
 
 public final class GraphNode implements GraphElement {
   private final int myNodeIndex;
-  @NotNull
-  private final Type myType;
+  @NotNull private final GraphNodeType myType;
 
   public GraphNode(int nodeIndex) {
-    this(nodeIndex, Type.USUAL);
+    this(nodeIndex, GraphNodeType.USUAL);
   }
 
-  public GraphNode(int nodeIndex, @NotNull Type type) {
+  public GraphNode(int nodeIndex, @NotNull GraphNodeType type) {
     myNodeIndex = nodeIndex;
     myType = type;
   }
@@ -37,7 +36,7 @@ public final class GraphNode implements GraphElement {
   }
 
   @NotNull
-  public Type getType() {
+  public GraphNodeType getType() {
     return myType;
   }
 
@@ -61,7 +60,4 @@ public final class GraphNode implements GraphElement {
     return result;
   }
 
-  public enum Type {
-    USUAL
-  }
 }

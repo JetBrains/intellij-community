@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   public final int updatePass;
   @Nullable private final Function<? super T, String> myTooltipProvider;
-  private final GutterIconRenderer.Alignment myIconAlignment;
+  @NotNull private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
 
   public LineMarkerInfo(@NotNull T element,
@@ -54,7 +54,7 @@ public class LineMarkerInfo<T extends PsiElement> {
                         int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
-                        GutterIconRenderer.Alignment alignment) {
+                        @NotNull GutterIconRenderer.Alignment alignment) {
     this(element, new TextRange(startOffset, startOffset), icon, updatePass, tooltipProvider, navHandler, alignment);
   }
   public LineMarkerInfo(@NotNull T element,
@@ -63,7 +63,7 @@ public class LineMarkerInfo<T extends PsiElement> {
                         int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
-                        GutterIconRenderer.Alignment alignment) {
+                        @NotNull GutterIconRenderer.Alignment alignment) {
     myIcon = icon;
     myTooltipProvider = tooltipProvider;
     myIconAlignment = alignment;
@@ -167,6 +167,7 @@ public class LineMarkerInfo<T extends PsiElement> {
       }
     }
 
+    @NotNull
     @Override
     public Alignment getAlignment() {
       return myInfo.myIconAlignment;

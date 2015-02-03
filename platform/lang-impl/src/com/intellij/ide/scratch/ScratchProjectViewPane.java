@@ -93,7 +93,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
         if (!super.canSelect(file)) return false;
         final VirtualFile vFile = file.getVirtualFile();
         if (vFile == null || !vFile.isValid()) return false;
-        return ScratchFileService.getInstance(myProject).getRootType(file.getVirtualFile()) != null;
+        return ScratchFileService.getInstance().getRootType(vFile) != null;
       }
 
       @Override

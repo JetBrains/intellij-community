@@ -48,7 +48,7 @@ public class FileResponses {
     String ifModifiedSince = request.headers().get(HttpHeaders.Names.IF_MODIFIED_SINCE);
     if (!StringUtil.isEmpty(ifModifiedSince)) {
       try {
-        if (DATE_FORMAT.get().parse(ifModifiedSince).getTime() >= lastModified) {
+        if (HttpHeaders.getDateHeader(request, HttpHeaders.Names.IF_MODIFIED_SINCE).getTime() >= lastModified) {
           send(response(HttpResponseStatus.NOT_MODIFIED), channel, request);
           return true;
         }
@@ -71,7 +71,7 @@ public class FileResponses {
     response.headers().add(CONTENT_TYPE, getContentType(path));
     addCommonHeaders(response);
     response.headers().set(HttpHeaders.Names.CACHE_CONTROL, "private, must-revalidate");
-    response.headers().set(HttpHeaders.Names.LAST_MODIFIED, DATE_FORMAT.get().format(new Date(lastModified)));
+    HttpHeaders.setDateHeader(response, HttpHeaders.Names.LAST_MODIFIED, new Date(lastModified));
     return response;
   }
 

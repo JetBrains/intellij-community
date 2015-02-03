@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,50 +30,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 
 public final class Responses {
-  static final ThreadLocal<DateFormat> DATE_FORMAT = new ThreadLocal<DateFormat>() {
-    @Override
-    protected DateFormat initialValue() {
-      //noinspection SpellCheckingInspection
-      SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-      format.setTimeZone(TimeZone.getTimeZone("GMT"));
-      return format;
-    }
-  };
-
   private static String SERVER_HEADER_VALUE;
 
   public static FullHttpResponse response(HttpResponseStatus status) {
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.EMPTY_BUFFER);
   }
 
-  public static HttpResponse response(@Nullable String contentType, @Nullable ByteBuf content) {
-    HttpResponse response =
-      new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content == null ? Unpooled.EMPTY_BUFFER : content);
+  @NotNull
+  public static FullHttpResponse response(@Nullable String contentType, @Nullable ByteBuf content) {
+    FullHttpResponse response = content == null
+                                ? new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
+                                : new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content);
     if (contentType != null) {
-      response.headers().add(HttpHeaders.Names.CONTENT_TYPE, contentType);
+      response.headers().set(HttpHeaders.Names.CONTENT_TYPE, contentType);
     }
     return response;
   }
 
-  public static void addDate(HttpResponse response) {
+  public static void setDate(@NotNull HttpResponse response) {
     if (!response.headers().contains(HttpHeaders.Names.DATE)) {
-      addDate(response, Calendar.getInstance().getTime());
+      HttpHeaders.setDateHeader(response, HttpHeaders.Names.DATE, Calendar.getInstance().getTime());
     }
   }
 
-  public static void addDate(HttpResponse response, Date date) {
-    response.headers().set(HttpHeaders.Names.DATE, DATE_FORMAT.get().format(date));
-  }
-
-  public static void addNoCache(HttpResponse response) {
+  public static void addNoCache(@NotNull HttpResponse response) {
     response.headers().add(HttpHeaders.Names.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0");
     response.headers().add(HttpHeaders.Names.PRAGMA, "no-cache");
   }
@@ -89,7 +72,7 @@ public final class Responses {
     return SERVER_HEADER_VALUE;
   }
 
-  public static void addServer(HttpResponse response) {
+  public static void addServer(@NotNull HttpResponse response) {
     if (getServerHeaderValue() != null) {
       response.headers().add(HttpHeaders.Names.SERVER, getServerHeaderValue());
     }
@@ -113,9 +96,9 @@ public final class Responses {
     return false;
   }
 
-  public static void addCommonHeaders(HttpResponse response) {
+  public static void addCommonHeaders(@NotNull HttpResponse response) {
     addServer(response);
-    addDate(response);
+    setDate(response);
   }
 
   public static void send(CharSequence content, Channel channel, @Nullable HttpRequest request) {

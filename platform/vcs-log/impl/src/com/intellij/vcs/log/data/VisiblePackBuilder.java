@@ -97,7 +97,7 @@ class VisiblePackBuilder {
       visibleGraph = EmptyVisibleGraph.getInstance();
     }
     else {
-      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, getFilterFromCommits(matchingCommits));
+      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, getMatchedCommitIndex(matchingCommits));
     }
     return Pair.create(new VisiblePack(dataPack, visibleGraph, canRequestMore), commitCount);
   }
@@ -116,12 +116,7 @@ class VisiblePackBuilder {
         return hash != null ? myHashMap.getCommitIndex(hash) : null;
       }
     });
-    VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return indices.contains(integer);
-      }
-    });
+    VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, indices);
     return new VisiblePack(dataPack, visibleGraph, false);
   }
 
@@ -272,23 +267,17 @@ class VisiblePackBuilder {
   }
 
   @Nullable
-  private Condition<Integer> getFilterFromCommits(@Nullable List<Hash> filteredCommits) {
-    if (filteredCommits == null) {
+  private Set<Integer> getMatchedCommitIndex(@Nullable List<Hash> commits) {
+    if (commits == null) {
       return null;
     }
 
-    final Set<Integer> commitSet = ContainerUtil.map2Set(filteredCommits, new Function<Hash, Integer>() {
+    return ContainerUtil.map2Set(commits, new Function<Hash, Integer>() {
       @Override
       public Integer fun(Hash hash) {
         return myHashMap.getCommitIndex(hash);
       }
     });
-    return new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return commitSet.contains(integer);
-      }
-    };
   }
 
 }

@@ -778,11 +778,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         processor.process(x, y + getTextAlignmentShift(icon), r);
         x += icon.getIconWidth() + GAP_BETWEEN_ICONS;
       }
-      else {
-        if (alignment == GutterIconRenderer.Alignment.CENTER) {
-          middleCount++;
-          middleSize += icon.getIconWidth() + GAP_BETWEEN_ICONS;
-        }
+      else if (alignment == GutterIconRenderer.Alignment.CENTER) {
+        middleCount++;
+        middleSize += icon.getIconWidth() + GAP_BETWEEN_ICONS;
       }
     }
 

@@ -9,13 +9,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
@@ -64,21 +60,9 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
     return System.getProperty(PROPERTY_RPC_PORT) == null ? FIRST_PORT_NUMBER : Integer.parseInt(System.getProperty(PROPERTY_RPC_PORT));
   }
 
-  static final class MyPostStartupActivity implements StartupActivity, DumbAware {
-    private boolean veryFirstProjectOpening = true;
-
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (!veryFirstProjectOpening) {
-        return;
-      }
-
-      veryFirstProjectOpening = false;
-      BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
-      if (builtInServerManager instanceof BuiltInServerManagerImpl) {
-        ((BuiltInServerManagerImpl)builtInServerManager).startServerInPooledThread();
-      }
-    }
+  @Override
+  public void initComponent() {
+    startServerInPooledThread();
   }
 
   private Future<?> startServerInPooledThread() {
@@ -151,6 +135,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   /**
    * Pass true to start the WebServerManager even in the {@link Application#isUnitTestMode() unit test mode}.
    */
+  @SuppressWarnings("unused")
   @TestOnly
   public void setEnabledInUnitTestMode(boolean enabled) {
     enabledInUnitTestMode = enabled;

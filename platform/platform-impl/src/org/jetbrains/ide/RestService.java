@@ -20,11 +20,14 @@ import com.google.gson.stream.MalformedJsonException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +36,12 @@ import org.jetbrains.io.Responses;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
+/**
+ * Document your service using <a href="http://apidocjs.com">apiDoc</a>. To extract big example from source code, consider to use *.coffee file near your source file.
+ * (or Python/Ruby, but coffee recommended because it's plugin is lightweight). See {@link AboutHttpService} for example.
+ */
 public abstract class RestService extends HttpRequestHandler {
   protected static final Logger LOG = Logger.getInstance(RestService.class);
 
@@ -43,8 +51,13 @@ public abstract class RestService extends HttpRequestHandler {
       return false;
     }
 
-    String prefix = "rest";
     String uri = request.uri();
+
+    if (isPrefixlessAllowed() && checkPrefix(uri, getServiceName())) {
+      return true;
+    }
+
+    String prefix = "rest";
     String serviceName = getServiceName();
     int minLength = 1 + prefix.length() + 1 + serviceName.length();
     if (uri.length() >= minLength &&
@@ -55,26 +68,33 @@ public abstract class RestService extends HttpRequestHandler {
         return true;
       }
       else {
-        char c = uri.charAt(minLength + 1);
+        char c = uri.charAt(minLength);
         return c == '/' || c == '?';
       }
     }
     return false;
   }
 
-  protected abstract boolean isMethodSupported(@NotNull HttpMethod method);
+  /**
+   * Service url must be "/rest/$serviceName", but to preserve backward compatibility, prefixless path could be also supported
+   */
+  protected boolean isPrefixlessAllowed() {
+    return false;
+  }
 
   @NotNull
+  /**
+   * Use human-readable name or UUID if it is an internal service.
+   */
   protected abstract String getServiceName();
+
+  protected abstract boolean isMethodSupported(@NotNull HttpMethod method);
 
   @Override
   public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     try {
       String error = execute(urlDecoder, request, context);
-      if (error == null) {
-        Responses.send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK), context.channel(), request);
-      }
-      else {
+      if (error != null) {
         Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), error, request);
       }
     }
@@ -96,6 +116,9 @@ public abstract class RestService extends HttpRequestHandler {
   }
 
   @Nullable("error text or null if successful")
+  /**
+   * Return error or send response using {@link #sendOk(FullHttpRequest, ChannelHandlerContext)}, {@link #send(BufferExposingByteArrayOutputStream, FullHttpRequest, ChannelHandlerContext)}
+   */
   public abstract String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException;
 
   @NotNull
@@ -114,5 +137,26 @@ public abstract class RestService extends HttpRequestHandler {
       return openProjects.length > 0 ? openProjects[0] : null;
     }
     return project;
+  }
+
+  protected static void sendOk(@NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
+    Responses.send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK), context.channel(), request);
+  }
+
+  protected static void send(@NotNull BufferExposingByteArrayOutputStream byteOut, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
+    HttpResponse response = Responses.response("application/json", Unpooled.wrappedBuffer(byteOut.getInternalBuffer(), 0, byteOut.size()));
+    Responses.addNoCache(response);
+    Responses.send(response, context.channel(), request);
+  }
+
+  protected static boolean getBooleanParameter(@NotNull String name, @NotNull QueryStringDecoder urlDecoder) {
+    List<String> values = urlDecoder.parameters().get(name);
+    if (ContainerUtil.isEmpty(values)) {
+      return false;
+    }
+
+    String value = values.get(values.size() - 1);
+    // if just name specified, so, true
+    return value.isEmpty() || Boolean.parseBoolean(value);
   }
 }
