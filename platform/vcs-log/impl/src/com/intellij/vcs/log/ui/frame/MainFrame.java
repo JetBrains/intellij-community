@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -20,7 +21,6 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -28,6 +28,7 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
+import com.intellij.vcs.log.ui.VcsLogPopupComponent;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
@@ -184,23 +185,21 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   private JComponent createActionsToolbar() {
-    AnAction bekAction = new BekAction();
-    AnAction linearBekAction = new LinearBekAction();
-
-    AnAction collapseBranchesAction = new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        myUI.hideAll();
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        super.update(e);
-        if (!myFilterUi.getFilters().isEmpty()) {
-          e.getPresentation().setEnabled(false);
+    AnAction collapseBranchesAction =
+      new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myUI.hideAll();
         }
-      }
-    };
+
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          if (!myFilterUi.getFilters().isEmpty()) {
+            e.getPresentation().setEnabled(false);
+          }
+        }
+      };
 
     AnAction expandBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
       @Override
@@ -235,16 +234,48 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     refreshAction.registerShortcutOn(this);
 
     DefaultActionGroup toolbarGroup =
-      new DefaultActionGroup(bekAction, linearBekAction, collapseBranchesAction, expandBranchesAction, showFullPatchAction, refreshAction, showDetailsAction);
+      new DefaultActionGroup(collapseBranchesAction, expandBranchesAction, showFullPatchAction, refreshAction, showDetailsAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
+    if (BekSorter.isBekEnabled()) {
+      mainGroup.add(createIntelliSortChooser());
+    }
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
     toolbar.setTargetComponent(this);
     return toolbar.getComponent();
+  }
+
+  @NotNull
+  private VcsLogClassicFilterUi.FilterActionComponent createIntelliSortChooser() {
+    return new VcsLogClassicFilterUi.FilterActionComponent(new Computable<JComponent>() {
+      @Override
+      public JComponent compute() {
+        VcsLogPopupComponent bekSortPanel = new VcsLogPopupComponent("IntelliSort") {
+          @Override
+          public String getCurrentText() {
+            return myUI.getBekType().getPresentation();
+          }
+
+          @Override
+          public void installChangeListener(@NotNull Runnable onChange) {
+            // todo
+          }
+
+          @Override
+          protected ActionGroup createActionGroup() {
+            return new DefaultActionGroup(new BekAction(PermanentGraph.SortType.Normal), new BekAction(PermanentGraph.SortType.Bek),
+                                          new BekAction(PermanentGraph.SortType.LinearBek));
+          }
+        };
+
+        bekSortPanel.initUi();
+        return bekSortPanel;
+      }
+    });
   }
 
   public JComponent getMainComponent() {
@@ -331,48 +362,29 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   private class BekAction extends ToggleAction implements DumbAware {
-    public BekAction() {
-      super("IntelliSort", "IntelliSort", AllIcons.Actions.Lightning);
-    }
+    private final PermanentGraph.SortType mySortType;
 
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return !myUI.getBekType().equals(PermanentGraph.SortType.Normal);
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myUI.setBek(state ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
+    public BekAction(PermanentGraph.SortType sortType) {
+      super(sortType.getPresentation(), "Set IntelliSort Type To " + sortType.getPresentation(), null);
+      mySortType = sortType;
     }
 
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setVisible(BekSorter.isBekEnabled());
       e.getPresentation().setEnabled(areGraphActionsEnabled());
     }
-  }
-
-  private class LinearBekAction extends ToggleAction implements DumbAware {
-    public LinearBekAction() {
-      super("Linear IntelliSort", "Linear IntelliSort", new ColorIcon(16, new Color(0, 90, 120)));
-    }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myUI.getBekType().equals(PermanentGraph.SortType.LinearBek);
+      return myUI.getBekType().equals(mySortType);
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myUI.setBek(state ? PermanentGraph.SortType.LinearBek : PermanentGraph.SortType.Bek);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(BekSorter.isLinearBekEnabled());
-      e.getPresentation().setEnabled(areGraphActionsEnabled() && myUI.getBekType() != PermanentGraph.SortType.Normal);
+      if (state) {
+        myUI.setBek(mySortType);
+      }
     }
   }
 
