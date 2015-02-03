@@ -36,8 +36,7 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
   @NotNull private List<? extends Editor> myEditors = Collections.emptyList();
 
   public OpenInEditorWithMouseAction() {
-    final AnAction emptyAction = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_DECLARATION); // TODO: configurable
-    setShortcutSet(emptyAction.getShortcutSet());
+    setShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_DECLARATION).getShortcutSet());
   }
 
   public void register(@NotNull List<? extends Editor> editors) {
