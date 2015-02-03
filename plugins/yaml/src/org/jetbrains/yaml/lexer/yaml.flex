@@ -77,7 +77,15 @@ INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 ESCAPE_SEQUENCE=                \\[^\n]
 DSTRING=                        \"([^\\\"]|{ESCAPE_SEQUENCE})*?\"?
 STRING=                         '([^']|(''))*?'?
-
+NS_HEX_DIGIT = [[:digit:]a-fA-F]
+NS_WORD_CHAR = [:digit:] | "-" | [a-zA-Z]
+NS_URI_CHAR =  “%” {NS_HEX_DIGIT} {NS_HEX_DIGIT} | {NS_WORD_CHAR} | [#;\/?:@&=+$,_.!~*'()\[\]]
+C_VERBATIM_TAG = “!” “<” {NS_URI_CHAR}+ “>”
+NS_TAG_CHAR = “%” {NS_HEX_DIGIT} {NS_HEX_DIGIT} | {NS_WORD_CHAR} | [#;\/?:@&=+$_.~*'()]
+C_TAG_HANDLE = “!” {NS_WORD_CHAR}+ “!” | "!" "!" | "!"
+C_NS_SHORTHAND_TAG = {C_TAG_HANDLE} {NS_TAG_CHAR}+
+C_NON_SPECIFIC_TAG = "!"
+C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TAG}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -157,7 +165,7 @@ STRING=                         '([^']|(''))*?'?
   return SCALAR_KEY;
 }
 
-{KEY} / ({WHITE_SPACE} | {EOL}) {   yyBegin(VALUE);
+{KEY} / ({WHITE_SPACE} | {EOL}) {   yyBegin( VALUE);
                                     return SCALAR_KEY;
                                 }
 {KEY}                           {   if (zzMarkedPos == zzEndRead){
@@ -203,7 +211,7 @@ STRING=                         '([^']|(''))*?'?
                                     yypushback(1);
                                 }
 
-("|"("-"|"+")?) / ({WHITE_SPACE} | {EOL})
+({C_NS_TAG_PROPERTY} {WHITE_SPACE}+)? ("|"("-"|"+")?) / ({WHITE_SPACE} | {EOL})
                                 {   yyBegin(INDENT_VALUE);
                                     valueIndent = 0; // initialization
                                     afterEOL = false;

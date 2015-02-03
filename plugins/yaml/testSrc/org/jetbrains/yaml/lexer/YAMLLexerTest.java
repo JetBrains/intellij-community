@@ -130,6 +130,10 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testTyped_scalar_list() {
+    doFileTest("yml");
+  }
+
   private void doTest() {
     doFileTest("yml");
   }
