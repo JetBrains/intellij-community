@@ -324,7 +324,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope)
   }
 
-  public void "_test language level change"() {
+  public void "test language level change"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 
