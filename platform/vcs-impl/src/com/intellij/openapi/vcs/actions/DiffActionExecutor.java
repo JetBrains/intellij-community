@@ -167,7 +167,7 @@ public abstract class DiffActionExecutor {
           return;
         }
         if (!requestRef.isNull()) {
-          DiffManager.getInstance().showDiff(myProject, requestRef.get(), DiffDialogHints.FRAME);
+          DiffManager.getInstance().showDiff(myProject, requestRef.get());
         }
       }
     };

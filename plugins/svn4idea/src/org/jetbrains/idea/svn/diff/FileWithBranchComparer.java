@@ -81,7 +81,7 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
 
       DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
 
-      DiffManager.getInstance().showDiff(myProject, request, DiffDialogHints.DEFAULT);
+      DiffManager.getInstance().showDiff(myProject, request);
     }
   }
 

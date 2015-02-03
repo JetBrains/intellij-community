@@ -99,7 +99,7 @@ public class VcsHistoryUtil {
 
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
       public void run() {
-        DiffManager.getInstance().showDiff(project, request, DiffDialogHints.FRAME);
+        DiffManager.getInstance().showDiff(project, request);
       }
     }, null, project);
   }

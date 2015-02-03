@@ -34,7 +34,7 @@ public class XCompareWithClipboardAction extends XFetchValueActionBase {
       @Override
       public void run() {
         DiffRequest request = DiffRequestFactory.getInstance().createClipboardVsValue(value);
-        DiffManager.getInstance().showDiff(project, request, DiffDialogHints.DEFAULT);
+        DiffManager.getInstance().showDiff(project, request);
       }
     });
   }

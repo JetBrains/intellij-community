@@ -178,7 +178,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
                                                     new PropertyContent(myBeforeContent), new PropertyContent(myAfterContent),
                                                     revisionToString(myBeforeRevisionValue), revisionToString(myAfterRevision));
             }
-            DiffManager.getInstance().showDiff(myProject, diffRequest, DiffDialogHints.DEFAULT);
+            DiffManager.getInstance().showDiff(myProject, diffRequest);
           }
         }
       });

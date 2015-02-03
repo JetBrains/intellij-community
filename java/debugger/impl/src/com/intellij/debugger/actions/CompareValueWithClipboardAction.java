@@ -29,6 +29,6 @@ import com.intellij.openapi.project.Project;
 public class CompareValueWithClipboardAction extends BaseValueAction {
   protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
     DiffRequest request = DiffRequestFactory.getInstance().createClipboardVsValue(text);
-    DiffManager.getInstance().showDiff(project, request, DiffDialogHints.DEFAULT);
+    DiffManager.getInstance().showDiff(project, request);
   }
 }
