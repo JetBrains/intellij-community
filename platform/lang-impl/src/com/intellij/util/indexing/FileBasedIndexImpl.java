@@ -1980,6 +1980,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                   if (resetStamp) IndexingStamp.flushCache(file);
                   scheduleForUpdate(file);
                 }
+
+                if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
+                  clearPsiIndicesForUnsavedDocuments(file);
+                }
               }
               finally {
                 FileTypeManagerImpl.cacheFileType(file, null);
@@ -2316,6 +2320,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  private boolean clearPsiIndicesForUnsavedDocuments(@NotNull VirtualFile file) {
+    Document document = myFileDocumentManager.getDocument(file);
+    if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {
+      for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
+        myUpToDateIndicesForUnsavedOrTransactedDocuments.remove(psiBackedIndex);
+      }
+      return true;
+    }
+    return false;
+  }
+
   private static int getIdMaskingNonIdBasedFile(VirtualFile file) {
     return file instanceof VirtualFileWithId ?((VirtualFileWithId)file).getId() : IndexingStamp.INVALID_FILE_ID;
   }
@@ -2457,12 +2472,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             PsiFile file = event.getFile();
             if (file != null) {
               VirtualFile virtualFile = file.getVirtualFile();
-              Document document = myFileDocumentManager.getDocument(virtualFile);
-              if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {
-                for(ID<?,?> psiBackedIndex:myPsiDependentIndices) {
-                  myUpToDateIndicesForUnsavedOrTransactedDocuments.remove(psiBackedIndex);
-                }
-              } else { // change in persistent file
+              if (!clearPsiIndicesForUnsavedDocuments(virtualFile)) {
+                // change in persistent file
                 if (virtualFile instanceof VirtualFileWithId) {
                   int fileId = ((VirtualFileWithId)virtualFile).getId();
                   boolean wasIndexed = false;
