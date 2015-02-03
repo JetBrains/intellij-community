@@ -26,9 +26,11 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.PopupHandler;
@@ -46,7 +48,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
+public class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
   private final static Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
 
   private final ResourceBundle myResourceBundle;
@@ -99,7 +101,7 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
     } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(this);
       if (psiElements != null && psiElements.length > 0) {
-        return new PsiElementsDeleteProvider(psiElements);
+        return new PsiElementsDeleteProvider(((ResourceBundleEditor)getFileEditor()).getPropertiesInsertDeleteManager(), psiElements);
       }
     } else if (UsageView.USAGE_TARGETS_KEY.is(dataId)) {
       final PsiElement[] chosenElements = (PsiElement[]) getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
@@ -145,9 +147,11 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
   }
 
   private class PsiElementsDeleteProvider implements DeleteProvider {
+    private final ResourceBundlePropertiesInsertManager myInsertDeleteManager;
     private final PsiElement[] myElements;
 
-    private PsiElementsDeleteProvider(final PsiElement[] elements) {
+    private PsiElementsDeleteProvider(ResourceBundlePropertiesInsertManager insertDeleteManager, final PsiElement[] elements) {
+      myInsertDeleteManager = insertDeleteManager;
       myElements = elements;
     }
 
@@ -171,6 +175,7 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
       }
 
       new SafeDeleteHandler().invoke(myElements[0].getProject(), PsiUtilCore.toPsiElementArray(toDelete), dataContext);
+      myInsertDeleteManager.reload();
     }
 
     @Override

@@ -17,6 +17,8 @@ public abstract class CallFrameBase implements CallFrame {
 
   protected EvaluateContext evaluateContext;
 
+  protected boolean hasOnlyGlobalScope;
+
   /**
    * You must initialize {@link #scopes} or override {@link #getVariableScopes()}
    */
@@ -26,6 +28,11 @@ public abstract class CallFrameBase implements CallFrame {
     this.column = column;
 
     this.evaluateContext = evaluateContext;
+  }
+
+  @Override
+  public final boolean hasOnlyGlobalScope() {
+    return hasOnlyGlobalScope;
   }
 
   @NotNull

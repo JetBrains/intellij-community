@@ -51,8 +51,13 @@ public abstract class RestService extends HttpRequestHandler {
       return false;
     }
 
-    String prefix = "rest";
     String uri = request.uri();
+
+    if (isPrefixlessAllowed() && checkPrefix(uri, getServiceName())) {
+      return true;
+    }
+
+    String prefix = "rest";
     String serviceName = getServiceName();
     int minLength = 1 + prefix.length() + 1 + serviceName.length();
     if (uri.length() >= minLength &&
@@ -67,6 +72,13 @@ public abstract class RestService extends HttpRequestHandler {
         return c == '/' || c == '?';
       }
     }
+    return false;
+  }
+
+  /**
+   * Service url must be "/rest/$serviceName", but to preserve backward compatibility, prefixless path could be also supported
+   */
+  protected boolean isPrefixlessAllowed() {
     return false;
   }
 
