@@ -46,7 +46,7 @@ public interface PermanentGraph<CommitId> {
 
   enum SortType {
     Normal("Off"),
-    Bek("On"),
+    Bek("Standard"),
     LinearBek("Linear");
 
     private final String myPresentation;
