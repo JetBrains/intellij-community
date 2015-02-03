@@ -15,12 +15,18 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.core.JavaCoreBundle;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -28,7 +34,10 @@ import javax.swing.*;
  * @author ven
  */
 public class LanguageLevelCombo extends ComboBox {
+
   public static final String USE_PROJECT_LANGUAGE_LEVEL = ProjectBundle.message("project.language.level.combo.item");
+  @Nullable
+  private LanguageLevel myDefaultLevel;
 
   public LanguageLevelCombo() {
     for (LanguageLevel level : LanguageLevel.values()) {
@@ -48,7 +57,47 @@ public class LanguageLevelCombo extends ComboBox {
   }
 
   public void reset(Project project) {
-    setSelectedItem(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
+    removeAllItems();
+    for (LanguageLevel level : LanguageLevel.values()) {
+      addItem(level);
+    }
+    myDefaultLevel = null;
+    Sdk sdk = ProjectRootManagerEx.getInstanceEx(project).getProjectSdk();
+    if (sdk != null) {
+      JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+      if (version != null) {
+        myDefaultLevel = version.getMaxLanguageLevel();
+      }
+    }
+    String item = null;
+    if (myDefaultLevel != null) {
+      item = JavaCoreBundle.message("default.jdk.level.description", myDefaultLevel.getPresentableText());
+      addItem(item);
+    }
+    else if (project.isDefault()) {
+      item = JavaCoreBundle.message("default.language.level.description");
+      addItem(item);
+      myDefaultLevel = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+    }
+
+    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(project);
+    Boolean aDefault = extension.isDefault();
+    if (item != null && aDefault != null && aDefault) {
+      setSelectedItem(item);
+    }
+    else {
+      setSelectedItem(extension.getLanguageLevel());
+    }
+  }
+
+  @Nullable
+  public LanguageLevel getSelectedLevel() {
+    Object item = getSelectedItem();
+    return item instanceof LanguageLevel ? (LanguageLevel)item : myDefaultLevel;
+  }
+
+  public boolean isDefault() {
+    return !(getSelectedItem() instanceof LanguageLevel);
   }
 
   @Override

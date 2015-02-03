@@ -43,7 +43,7 @@ import java.util.List;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader {
-  private static final boolean INDEX_PERSISTENCE_DISABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.disabled", "false"));
+  private static final boolean INDEX_PERSISTENCE_ENABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
   @NonNls static final String CLASS_EXTENSION = ".class";
 
   static {
@@ -121,7 +121,8 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
   public UrlClassLoader(@NotNull ClassLoader parent) {
-    this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache().usePersistentClasspathIndex(!INDEX_PERSISTENCE_DISABLED));
+    this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache().usePersistentClasspathIndex(
+      INDEX_PERSISTENCE_ENABLED));
   }
 
   /** @deprecated use {@link #build()} (to remove in IDEA 15) */

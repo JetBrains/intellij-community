@@ -31,28 +31,33 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
+  public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl");
   @Deprecated
   @NonNls private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
   @Deprecated
   @NonNls private static final String JDK_15_ATTR = "jdk-15";
+  private static final String LANGUAGE_LEVEL = "languageLevel";
+  private static final String DEFAULT_ATTRIBUTE = "default";
 
   private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_6;
   private final Project myProject;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
+    setDefault(project.isDefault() ? true : null);
   }
 
   private void readExternal(final Element element) {
-    String level = element.getAttributeValue("languageLevel");
+    String level = element.getAttributeValue(LANGUAGE_LEVEL);
     if (level == null) {
       myLanguageLevel = migrateFromIdea7(element);
     }
     else {
       myLanguageLevel = LanguageLevel.valueOf(level);
     }
+    String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
+    setDefault(aDefault == null ? null : Boolean.parseBoolean(aDefault));
   }
 
   private static LanguageLevel migrateFromIdea7(Element element) {
@@ -70,7 +75,11 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   }
 
   private void writeExternal(final Element element) {
-    element.setAttribute("languageLevel", myLanguageLevel.name());
+    element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
+    Boolean aBoolean = isDefault();
+    if (aBoolean != null) {
+      element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
+    }
     writeAttributesForIdea7(element);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +51,12 @@ public interface Document extends UserDataHolder {
    * @return document content.
    */
   @NotNull
+  @Contract(pure=true)
   String getText();
 
-  @NotNull String getText(@NotNull TextRange range);
+  @NotNull
+  @Contract(pure=true)
+  String getText(@NotNull TextRange range);
 
   /**
    * Use this method instead of {@link #getText()} if you do not need to create a copy of the content.
@@ -63,18 +67,22 @@ public interface Document extends UserDataHolder {
    * @return inplace document content.
    * @see #getTextLength()
    */
-  @NotNull CharSequence getCharsSequence();
+  @Contract(pure=true)
+  @NotNull
+  CharSequence getCharsSequence();
 
   /**
    * @return a char sequence representing document content that's guaranteed to be immutable. No read- or write-action is necessary.
    * @see com.intellij.util.text.ImmutableCharSequence
    */
   @NotNull
+  @Contract(pure=true)
   CharSequence getImmutableCharSequence();
 
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
    */
+  @Deprecated
   @NotNull char[] getChars();
 
   /**
@@ -83,6 +91,7 @@ public interface Document extends UserDataHolder {
    * @return the length of the document text.
    * @see #getCharsSequence()
    */
+  @Contract(pure=true)
   int getTextLength();
 
   /**
@@ -90,6 +99,7 @@ public interface Document extends UserDataHolder {
    *
    * @return the number of lines in the document.
    */
+  @Contract(pure=true)
   int getLineCount();
 
   /**
@@ -99,6 +109,7 @@ public interface Document extends UserDataHolder {
    * getTextLength()-1)
    * @return the line number corresponding to the offset.
    */
+  @Contract(pure=true)
   int getLineNumber(int offset);
 
   /**
@@ -107,6 +118,7 @@ public interface Document extends UserDataHolder {
    * @param line the line number (from 0 to getLineCount()-1)
    * @return the start offset for the line.
    */
+  @Contract(pure=true)
   int getLineStartOffset(int line);
 
   /**
@@ -115,6 +127,7 @@ public interface Document extends UserDataHolder {
    * @param line the line number (from 0 to getLineCount()-1)
    * @return the end offset for the line.
    */
+  @Contract(pure=true)
   int getLineEndOffset(int line);
 
   /**
@@ -156,6 +169,7 @@ public interface Document extends UserDataHolder {
    * @return true if the document text is writable, false if it is read-only.
    * @see #fireReadOnlyModificationAttempt()
    */
+  @Contract(pure=true)
   boolean isWritable();
 
   /**
@@ -166,6 +180,7 @@ public interface Document extends UserDataHolder {
    * @see com.intellij.psi.PsiFile#getModificationStamp()
    * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
    */
+  @Contract(pure=true)
   long getModificationStamp();
 
   /**
@@ -251,7 +266,8 @@ public interface Document extends UserDataHolder {
    * @see #startGuardedBlockChecking()
    * @see com.intellij.openapi.editor.actionSystem.EditorActionManager#setReadonlyFragmentModificationHandler(com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler)
    */
-  @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset);
+  @NotNull
+  RangeMarker createGuardedBlock(int startOffset, int endOffset);
 
   /**
    * Removes a marker marking a range of text in the document as read-only.
@@ -307,7 +323,9 @@ public interface Document extends UserDataHolder {
 
   void setText(@NotNull final CharSequence text);
 
-  @NotNull RangeMarker createRangeMarker(@NotNull TextRange textRange);
+  @NotNull
+  RangeMarker createRangeMarker(@NotNull TextRange textRange);
 
+  @Contract(pure=true)
   int getLineSeparatorLength(int line);
 }

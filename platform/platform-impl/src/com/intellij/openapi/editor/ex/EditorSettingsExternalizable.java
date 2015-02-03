@@ -231,6 +231,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.IS_BLOCK_CURSOR = val;
   }
 
+  public boolean isCaretRowShown() {
+    return true;
+  }
+
   public int getBlockIndent() {
     return myBlockIndent;
   }

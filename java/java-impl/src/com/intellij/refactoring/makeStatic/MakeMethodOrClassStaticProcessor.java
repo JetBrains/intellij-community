@@ -51,9 +51,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParameterListOwner> extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
@@ -111,16 +109,16 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         refUsages.set(filterInternalUsages(usagesIn));
       }
     }
-    final ArrayList<UsageInfo> toMakeStatic = new ArrayList<UsageInfo>();
+    final Set<UsageInfo> toMakeStatic = new LinkedHashSet<UsageInfo>();
     refUsages.set(filterOverriding(usagesIn, toMakeStatic));
     if (!findAdditionalMembers(toMakeStatic)) return false;
     prepareSuccessful();
     return true;
   }
 
-  protected boolean findAdditionalMembers(ArrayList<UsageInfo> toMakeStatic) {return true;}
+  protected boolean findAdditionalMembers(Set<UsageInfo> toMakeStatic) {return true;}
 
-  private static UsageInfo[] filterOverriding(UsageInfo[] usages, List<UsageInfo> suggestToMakeStatic) {
+  private static UsageInfo[] filterOverriding(UsageInfo[] usages, Set<UsageInfo> suggestToMakeStatic) {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
       if (usage instanceof ChainedCallUsageInfo) {

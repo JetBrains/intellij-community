@@ -68,6 +68,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsFoldingOutlineShown                 = null;
   private Boolean myIsSmartHome                           = null;
   private Boolean myIsBlockCursor                         = null;
+  private Boolean myCaretRowShown                         = null;
   private Boolean myIsWhitespacesShown                    = null;
   private Boolean myIsLeadingWhitespacesShown             = null;
   private Boolean myIsInnerWhitespacesShown               = null;
@@ -402,6 +403,21 @@ public class SettingsImpl implements EditorSettings {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myIsBlockCursor)) return;
     myIsBlockCursor = newValue;
+    fireEditorRefresh();
+  }
+
+  @Override
+  public boolean isCaretRowShown() {
+    return myCaretRowShown != null
+           ? myCaretRowShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isCaretRowShown();
+  }
+
+  @Override
+  public void setCaretRowShown(boolean val) {
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myCaretRowShown)) return;
+    myCaretRowShown = newValue;
     fireEditorRefresh();
   }
 

@@ -56,7 +56,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   // should not be static
   protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS = new MavenProgressIndicator(new EmptyProgressIndicator());
 
-  private static File ourTempDir;
+  private File ourTempDir;
 
   protected IdeaProjectTestFixture myTestFixture;
 
@@ -79,7 +79,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     ensureTempDirCreated();
 
     myDir = new File(ourTempDir, getTestName(false));
-    myDir.mkdirs();
+    FileUtil.ensureExists(myDir);
 
     setUpFixtures();
 
@@ -124,12 +124,12 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   }
 
-  private static void ensureTempDirCreated() {
+  private void ensureTempDirCreated() throws IOException {
     if (ourTempDir != null) return;
 
     ourTempDir = new File(FileUtil.getTempDirectory(), "mavenTests");
     FileUtil.delete(ourTempDir);
-    ourTempDir.mkdirs();
+    FileUtil.ensureExists(ourTempDir);
   }
 
   protected void setUpFixtures() throws Exception {
@@ -158,16 +158,16 @@ public abstract class MavenTestCase extends UsefulTestCase {
           }
         }
       });
-      if (!FileUtil.delete(myDir) && myDir.exists()) {
-        System.err.println("Cannot delete " + myDir);
-        //printDirectoryContent(myDir);
-        myDir.deleteOnExit();
-      }
 
       MavenIndicesManager.getInstance().clear();
     }
     finally {
       super.tearDown();
+      if (!FileUtil.delete(myDir) && myDir.exists()) {
+        System.err.println("Cannot delete " + myDir);
+        //printDirectoryContent(myDir);
+        myDir.deleteOnExit();
+      }
       resetClassFields(getClass());
     }
   }

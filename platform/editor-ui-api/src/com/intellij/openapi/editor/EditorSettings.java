@@ -78,6 +78,9 @@ public interface EditorSettings {
   boolean isBlockCursor();
   void setBlockCursor(boolean blockCursor);
 
+  boolean isCaretRowShown();
+  void setCaretRowShown(boolean caretRowShown);
+
   int getLineCursorWidth();
   void setLineCursorWidth(int width);
 

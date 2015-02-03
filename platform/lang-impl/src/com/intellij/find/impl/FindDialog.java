@@ -379,7 +379,9 @@ public class FindDialog extends DialogWrapper {
                 @Override
                 public void run() {
                   model.addRow(new Object[]{usage});
-                  if (model.getRowCount() == 1) myResultsPreviewTable.setRowSelectionInterval(0, 0);
+                  if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
+                    myResultsPreviewTable.setRowSelectionInterval(0, 0);
+                  }
                 }
               }, state);
               return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;

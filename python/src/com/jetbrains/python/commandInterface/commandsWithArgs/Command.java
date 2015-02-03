@@ -45,4 +45,11 @@ public interface Command {
    */
   @Nullable
   String getHelp();
+
+
+  /**
+   * @return Argument help string to display on arguments
+   */
+  @Nullable
+  String getArgumentHelp();
 }

@@ -75,4 +75,10 @@ public class CommandAdapter implements Command {
   public final String getHelp() {
     return myHelp;
   }
+
+  @Nullable
+  @Override
+  public String getArgumentHelp() {
+    return null;
+  }
 }
