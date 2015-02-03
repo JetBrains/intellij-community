@@ -19,22 +19,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.commandInterface.CommandInterfacePresenterAdapter;
 import com.jetbrains.python.commandInterface.CommandInterfaceView;
-import com.jetbrains.python.commandInterface.commandsWithArgs.Strategy.SuggestionInfo;
+import com.jetbrains.python.optParse.MalformedCommandLineException;
+import com.jetbrains.python.optParse.ParsedCommandLine;
 import com.jetbrains.python.suggestionList.SuggestionsBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * Command-line interface presenter that is command-based
  *
- * @author Ilya.Kazakevich
  * @param <C> Command type
+ * @author Ilya.Kazakevich
  */
 public class CommandInterfacePresenterCommandBased<C extends Command> extends CommandInterfacePresenterAdapter {
-  private static final Pattern EMPTY_SPACE = Pattern.compile("\\s+");
   /**
    * [name] -> command. Linked is used to preserve order.
    */
@@ -92,6 +91,7 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
         myView.showError(true);
         break;
     }
+    myView.setBalloons(myStrategy.getBalloonsToShow());
 
     final SuggestionInfo suggestionInfo = myStrategy.getSuggestionInfo();
     final List<String> suggestions = new ArrayList<String>(suggestionInfo.getSuggestions());
@@ -165,19 +165,15 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
    * Finds and sets appropriate strategy
    */
   private void configureStrategy() {
-    if (myView.getText().isEmpty()) {
-      myStrategy = new NoCommandStrategy(this);
-      return;
-    }
-    final String[] parts = getTextAsParts();
-    if (parts.length > 0) {
-      final Command command = myCommands.get(parts[0]);
+    final ParsedCommandLine line = getParsedCommandLine();
+    if (line != null) {
+      final Command command = myCommands.get(line.getCommand().getText());
       if (command != null) {
-        myStrategy = new InCommandStrategy(command, this);
+        myStrategy = new InCommandStrategy(command, line, this);
         return;
       }
     }
-    myStrategy = new NoCommandStrategy(this); // Junk
+    myStrategy = new NoCommandStrategy(this); // No command or bad command found
   }
 
   @Override
@@ -185,7 +181,8 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
     if (valueFromSuggestionList != null) {
       final SuggestionInfo suggestionInfo = myStrategy.getSuggestionInfo();
       if (suggestionInfo.getSuggestions().contains(valueFromSuggestionList)) {
-        final List<String> words = new ArrayList<String>(Arrays.asList(getTextAsParts()));
+        final ParsedCommandLine commandLine = getParsedCommandLine();
+        final List<String> words = commandLine != null ? commandLine.getAsWords() : new ArrayList<String>();
         if (!words.isEmpty() && myLastSuggestionTiedToWord) {
           words.remove(words.size() - 1);
         }
@@ -223,21 +220,30 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
   }
 
   /**
-   * @return current text splitted into parts
+   * @return parsed commandline entered by user
    */
-  @NotNull
-  String[] getTextAsParts() {
-    final String[] parts = EMPTY_SPACE.split(myView.getText());
-    return (((parts.length == 1) && parts[0].isEmpty()) ? ArrayUtil.EMPTY_STRING_ARRAY : parts);
+  @Nullable
+  final ParsedCommandLine getParsedCommandLine() {
+    try {
+      return new ParsedCommandLine(myView.getText());
+    }
+    catch (final MalformedCommandLineException ignored) {
+      return null;
+    }
   }
+
 
   /**
    * @return last part of splitted text (if any). I.e. "foo bar spam" will return "spam"
    */
   @Nullable
-  String getLastPart() {
-    final String[] parts = getTextAsParts();
-    return ((parts.length > 0) ? parts[parts.length - 1] : null);
+   final String getLastPart() {
+    final ParsedCommandLine commandLine = getParsedCommandLine();
+    if (commandLine == null || commandLine.getAsWords().isEmpty()) {
+      return null;
+    }
+    final List<String> words = commandLine.getAsWords();
+    return words.get(words.size() - 1);
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,43 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandInterface.commandsWithArgs;
+package com.jetbrains.python.optParse;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
- * Command with arguments
+ * This exception is thrown when command line can't be parsed
  *
  * @author Ilya.Kazakevich
  */
-public interface Command {
-
-
-  /**
-   * @return command name
-   */
-  @NotNull
-  String getName();
-
-  /**
-   * @return command arguments
-   */
-  @NotNull
-  List<Argument> getArguments();
-
-  /**
-   * @return Command readable help text
-   */
-  @Nullable
-  String getHelp();
-
-
-  /**
-   * @return Argument help string to display on arguments
-   */
-  @Nullable
-  String getArgumentHelp();
+public class MalformedCommandLineException extends Exception {
+  MalformedCommandLineException(@NotNull final String message) {
+    super(message);
+  }
 }

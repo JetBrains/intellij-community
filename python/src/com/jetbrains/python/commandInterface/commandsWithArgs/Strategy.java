@@ -15,10 +15,10 @@
  */
 package com.jetbrains.python.commandInterface.commandsWithArgs;
 
+import com.jetbrains.python.optParse.WordWithPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,12 +30,12 @@ import java.util.List;
  */
 abstract class Strategy {
   @NotNull
-  protected final CommandInterfacePresenterCommandBased myPresenter;
+  protected final CommandInterfacePresenterCommandBased<?> myPresenter;
 
   /**
    * @param presenter presenter
    */
-  protected Strategy(@NotNull final CommandInterfacePresenterCommandBased presenter) {
+  protected Strategy(@NotNull final CommandInterfacePresenterCommandBased<?> presenter) {
     myPresenter = presenter;
   }
 
@@ -51,6 +51,10 @@ abstract class Strategy {
   @NotNull
   abstract SuggestionInfo getSuggestionInfo();
 
+  @NotNull
+  List<WordWithPosition> getBalloonsToShow() {
+    return Collections.emptyList();
+  }
 
   /**
    * @return command that entered in box, or null of just entered
@@ -86,42 +90,5 @@ abstract class Strategy {
      * No, do not mark anything like error
      */
     NO
-  }
-
-  @SuppressWarnings("PackageVisibleField") // No need to hide field: everything is internal API in package, anyway
-  static class SuggestionInfo {
-    /**
-     * Suggestions
-     */
-    private final List<String> mySuggestions = new ArrayList<String>();
-    /**
-     * Display them at absolute location or relative to last letter
-     */
-    final boolean myAbsolute;
-    /**
-     * Show then any time, or only when user requests them
-     */
-    final boolean myShowOnlyWhenRequested;
-
-    /**
-     * @param absolute              Display them at absolute location or relative to last letter
-     * @param showOnlyWhenRequested Show then any time, or only when user requests them
-     * @param suggestions           Suggestions
-     */
-    SuggestionInfo(final boolean absolute,
-                   final boolean showOnlyWhenRequested,
-                   @NotNull final List<String> suggestions) {
-      myAbsolute = absolute;
-      myShowOnlyWhenRequested = showOnlyWhenRequested;
-      mySuggestions.addAll(suggestions);
-    }
-
-    /**
-     * @return suggestions
-     */
-    @NotNull
-    List<String> getSuggestions() {
-      return Collections.unmodifiableList(mySuggestions);
-    }
   }
 }
