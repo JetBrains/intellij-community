@@ -178,8 +178,7 @@ public class PropertiesTableModel extends ListTableModel<PropertyDiffRecord> {
     }
 
     private void drawBackground(@NotNull Graphics g) {
-      //UIUtil.getSeparatorBackground()
-      g.setColor(Gray._240);
+      g.setColor(UIUtil.getSeparatorBackground());
       g.fillRect(0, 0, myPanel.getWidth(), myPanel.getHeight());
 
       GraphicsUtil.setupAAPainting(g);
