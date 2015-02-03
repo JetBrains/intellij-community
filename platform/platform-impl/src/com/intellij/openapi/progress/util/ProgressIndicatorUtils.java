@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
+import javax.swing.*;
 import java.util.concurrent.Executor;
 
 /**
@@ -121,13 +122,19 @@ public class ProgressIndicatorUtils {
                                                      @NotNull final Executor executor,
                                                      @NotNull final ReadTask readTask) {
     final Application application = ApplicationManager.getApplication();
-    // later even if on EDT
+    // invoke later even if on EDT
     // to avoid tasks eagerly restarting immediately, allocating many pooled threads
     // which get cancelled too soon when a next write action arrives in the same EDT batch
     // (can happen when processing multiple VFS events or writing multiple files on save)
-    application.invokeLater(new Runnable() {
+
+    // use SwingUtilities instead of application.invokeLater
+    // to tolerate any immediate modality changes (e.g. https://youtrack.jetbrains.com/issue/IDEA-135180)
+
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
+        if (application.isDisposed()) return;
         application.assertIsDispatchThread();
         final ApplicationAdapter listener = new ApplicationAdapter() {
           @Override

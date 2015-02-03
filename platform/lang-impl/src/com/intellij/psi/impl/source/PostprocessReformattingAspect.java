@@ -42,7 +42,9 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeDebugBuilder;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
@@ -313,6 +315,18 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
     final VirtualFile virtualFile = key.getVirtualFile();
     if (!virtualFile.isValid()) return;
+
+    PsiManager manager = key.getManager();
+    if (manager instanceof PsiManagerEx) {
+      FileManager fileManager = ((PsiManagerEx)manager).getFileManager();
+      FileViewProvider viewProvider = fileManager.findCachedViewProvider(virtualFile);
+      if (viewProvider != key) { // viewProvider was invalidated e.g. due to language level change
+        if (viewProvider == null) viewProvider = fileManager.findViewProvider(virtualFile);
+        if (viewProvider != null) {
+          key = viewProvider;
+        }
+      }
+    }
 
     final TreeSet<PostprocessFormattingTask> postProcessTasks = new TreeSet<PostprocessFormattingTask>();
     Collection<Disposable> toDispose = ContainerUtilRt.newArrayList();

@@ -44,7 +44,9 @@ public abstract class JavaScriptDebugAware {
   }
 
   @Nullable
-  protected abstract ExpressionInfo getEvaluationInfo(@NotNull PsiElement elementAtOffset, @NotNull Document document, @NotNull ExpressionInfoFactory expressionInfoFactory);
+  protected ExpressionInfo getEvaluationInfo(@NotNull PsiElement elementAtOffset, @NotNull Document document, @NotNull ExpressionInfoFactory expressionInfoFactory) {
+    return null;
+  }
 
   public static boolean isBreakpointAware(@NotNull FileType fileType) {
     return getBreakpointAware(fileType) != null;

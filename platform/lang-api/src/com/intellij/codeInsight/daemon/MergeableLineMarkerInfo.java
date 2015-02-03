@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -54,6 +55,12 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   public abstract Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos);
   public abstract Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos);
+
+  public boolean configurePopupAndRenderer(@NotNull PopupChooserBuilder builder,
+                                           @NotNull JBList list,
+                                           @NotNull List<MergeableLineMarkerInfo> markers) {
+    return false;
+  }
 
   @NotNull
   public static List<LineMarkerInfo> merge(@NotNull List<MergeableLineMarkerInfo> markers) {
@@ -114,40 +121,42 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
           });
           final JBList list = new JBList(infos);
           list.setFixedCellHeight(20);
-          list.installCellRenderer(new NotNullFunction<Object, JComponent>() {
-            @NotNull
-            @Override
-            public JComponent fun(Object dom) {
-              if (dom instanceof LineMarkerInfo) {
-                Icon icon = null;
-                final GutterIconRenderer renderer = ((LineMarkerInfo)dom).createGutterRenderer();
-                if (renderer != null) {
-                  icon = renderer.getIcon();
-                }
-                PsiElement element = ((LineMarkerInfo)dom).getElement();
-                assert element != null;
-                String text = StringUtil.first(element.getText(), 100, true).replace('\n', ' ');
-
-                return new JBLabel(text, icon, SwingConstants.LEFT);
-              }
-
-              return new JBLabel();
-            }
-          });
-          JBPopupFactory.getInstance().createListPopupBuilder(list)
-            .setItemChoosenCallback(new Runnable() {
+          PopupChooserBuilder builder  = JBPopupFactory.getInstance().createListPopupBuilder(list);
+          if (!markers.get(0).configurePopupAndRenderer(builder, list, infos)) {
+            list.installCellRenderer(new NotNullFunction<Object, JComponent>() {
+              @NotNull
               @Override
-              public void run() {
-                final Object value = list.getSelectedValue();
-                if (value instanceof LineMarkerInfo) {
-                  final GutterIconNavigationHandler handler = ((LineMarkerInfo)value).getNavigationHandler();
-                  if (handler != null) {
-                    //noinspection unchecked
-                    handler.navigate(e, ((LineMarkerInfo)value).getElement());
+              public JComponent fun(Object dom) {
+                if (dom instanceof LineMarkerInfo) {
+                  Icon icon = null;
+                  final GutterIconRenderer renderer = ((LineMarkerInfo)dom).createGutterRenderer();
+                  if (renderer != null) {
+                    icon = renderer.getIcon();
                   }
+                  PsiElement element = ((LineMarkerInfo)dom).getElement();
+                  assert element != null;
+                  String text = StringUtil.first(element.getText(), 100, true).replace('\n', ' ');
+
+                  return new JBLabel(text, icon, SwingConstants.LEFT);
+                }
+
+                return new JBLabel();
+              }
+            });
+          }
+          builder.setItemChoosenCallback(new Runnable() {
+            @Override
+            public void run() {
+              final Object value = list.getSelectedValue();
+              if (value instanceof LineMarkerInfo) {
+                final GutterIconNavigationHandler handler = ((LineMarkerInfo)value).getNavigationHandler();
+                if (handler != null) {
+                  //noinspection unchecked
+                  handler.navigate(e, ((LineMarkerInfo)value).getElement());
                 }
               }
-            }).createPopup().show(new RelativePoint(e));
+            }
+          }).createPopup().show(new RelativePoint(e));
         }
       };
     }

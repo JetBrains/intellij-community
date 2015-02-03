@@ -28,21 +28,27 @@ import com.jetbrains.python.commandInterface.CommandInterfacePresenter;
 import com.jetbrains.python.commandInterface.CommandInterfaceView;
 import com.jetbrains.python.suggestionList.SuggestionList;
 import com.jetbrains.python.suggestionList.SuggestionsBuilder;
+import com.jetbrains.python.optParse.WordWithPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Command-interface view implementation based on Swing
  *
  * @author Ilya.Kazakevich
  */
-public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements CommandInterfaceView, DocumentListener {
+public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements CommandInterfaceView, DocumentListener, CaretListener {
   /**
    * Pop-up we displayed in
    */
@@ -77,6 +83,8 @@ public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements Com
    * Flag that indicates we are in "test forced" mode: current text set by presenter, not by user
    */
   private boolean myInForcedTextMode;
+  @NotNull
+  private final List<WordWithPosition> myBalloons = new ArrayList<WordWithPosition>();
 
   /**
    * @param presenter       our presenter
@@ -118,7 +126,7 @@ public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements Com
   @Override
   public void show() {
     myMainTextField.getDocument().addDocumentListener(this);
-
+    myMainTextField.addCaretListener(this);
     myMainPopUp.addListener(this);
     if (myPlaceHolderText != null) {
       myMainTextField.setWaterMarkPlaceHolderText(myPlaceHolderText);
@@ -195,9 +203,26 @@ public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements Com
   }
 
   @Override
-  public void displayInfoBaloon(@NotNull final String message) {
-    final RelativePoint point = new RelativePoint(myMainTextField, new Point(myMainTextField.getTextEndPosition(), 0));
-    JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(message)).createBalloon().show(point, Position.above);
+  public final void caretUpdate(final CaretEvent e) {
+    // When caret moved, we need to check if baloon has to be displayed
+    synchronized (myBalloons) {
+      for (final WordWithPosition balloon : myBalloons) {
+        final int position = myMainTextField.getCaretPosition();
+        if (position >= balloon.getFrom() && position <= balloon.getTo()) {
+          final RelativePoint point = new RelativePoint(myMainTextField, new Point(myMainTextField.getTextCursorPosition(), 0));
+          JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(balloon.getText())).createBalloon()
+            .show(point, Position.above);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void setBalloons(@NotNull final Collection<WordWithPosition> balloons) {
+    synchronized (myBalloons) {
+      myBalloons.clear();
+      myBalloons.addAll(balloons);
+    }
   }
 
   @Override
