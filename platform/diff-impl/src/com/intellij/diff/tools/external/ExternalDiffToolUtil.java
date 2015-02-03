@@ -105,7 +105,6 @@ public class ExternalDiffToolUtil {
 
   @NotNull
   public static File createFile(@NotNull byte[] bytes, @NotNull String name) throws IOException {
-    // TODO Could we make cancelable IO ?
     File tempFile = FileUtil.createTempFile("tmp_", "_" + name, true);
     FileUtil.writeToFile(tempFile, bytes);
     return tempFile;

@@ -104,7 +104,6 @@ public class DiffIterableUtil {
 
   @NotNull
   public static FairDiffIterable fair(@NotNull DiffIterable iterable) {
-    // TODO: could be removed - used as additional assertion
     FairDiffIterable wrapper = new FairDiffIterableWrapper(iterable);
     verifyFair(wrapper);
     return wrapper;

@@ -187,7 +187,6 @@ class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       });
 
       // TODO: cache results
-      // TODO: hide IGNORE_WHITESPACES_CHUNKS from settings, as it's not supported (or support merge of non-Fair Iterables)
       CharSequence[] sequences = data.getSequences();
       ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
       FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);

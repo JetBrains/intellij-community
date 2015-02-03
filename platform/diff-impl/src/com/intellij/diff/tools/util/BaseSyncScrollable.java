@@ -44,7 +44,6 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
 
     assert master1 != master2;
 
-    // TODO: Is new algorithm actually better here ?
     return Math.min(slave1 + (line - master1), slave2); // old
     //return (line - master1) * (slave2 - slave1) / (master2 - master1) + slave1; // new
   }
