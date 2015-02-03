@@ -30,8 +30,8 @@ import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
@@ -44,10 +44,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -95,7 +92,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myProject = project;
 
     myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
-    myToolOrder = new LinkedList<DiffTool>(myAvailableTools);
+    myToolOrder = new LinkedList<DiffTool>();
 
     myContext = new MyDiffContext(context);
     myActiveRequest = new NoDiffRequest();
@@ -135,6 +132,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   public void init() {
+    myToolOrder.addAll(getToolOrderFromSettings(myAvailableTools));
+
     myActiveRequest.onAssigned(true);
     myState = new ErrorState((MessageDiffRequest)myActiveRequest);
     myState.init();
@@ -193,6 +192,8 @@ public abstract class DiffRequestProcessor implements Disposable {
       if (myToolOrder.get(index) == toolToReplace) break;
     }
     myToolOrder.add(index, tool);
+
+    updateToolOrderSettings(myToolOrder);
   }
 
   @NotNull
@@ -294,6 +295,40 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected void requestFocusInternal() {
     JComponent component = getPreferredFocusedComponent();
     if (component != null) component.requestFocus();
+  }
+
+  @NotNull
+  protected List<DiffTool> getToolOrderFromSettings(@NotNull List<DiffTool> availableTools) {
+    DiffSettingsHolder.DiffSettings settings = DiffSettingsHolder.getInstance().getSettings(getContextUserData(DiffUserDataKeysEx.PLACE));
+
+    List<DiffTool> result = new ArrayList<DiffTool>();
+    List<String> savedOrder = settings.getDiffToolsOrder();
+
+    for (final String clazz : savedOrder) {
+      DiffTool tool = ContainerUtil.find(availableTools, new Condition<DiffTool>() {
+        @Override
+        public boolean value(DiffTool tool) {
+          return tool.getClass().getCanonicalName().equals(clazz);
+        }
+      });
+      if (tool != null) result.add(tool);
+    }
+
+    for (DiffTool tool : availableTools) {
+      if (!result.contains(tool)) result.add(tool);
+    }
+
+    return result;
+  }
+
+  protected void updateToolOrderSettings(@NotNull List<DiffTool> toolOrder) {
+    DiffSettingsHolder.DiffSettings settings = DiffSettingsHolder.getInstance().getSettings(getContextUserData(DiffUserDataKeysEx.PLACE));
+
+    List<String> savedOrder = new ArrayList<String>();
+    for (DiffTool tool : toolOrder) {
+      savedOrder.add(tool.getClass().getCanonicalName());
+    }
+    settings.setDiffToolsOrder(savedOrder);
   }
 
   @Override

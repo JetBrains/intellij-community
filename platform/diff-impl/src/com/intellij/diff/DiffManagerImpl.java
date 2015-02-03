@@ -77,7 +77,6 @@ public class DiffManagerImpl extends DiffManagerEx {
   @NotNull
   @Override
   public List<DiffTool> getDiffTools() {
-    // TODO: we need some kind of (configurable?) priorities here
     List<DiffTool> result = new ArrayList<DiffTool>();
 
     result.add(SimpleDiffTool.INSTANCE);
