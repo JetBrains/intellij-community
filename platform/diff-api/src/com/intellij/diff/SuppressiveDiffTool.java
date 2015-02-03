@@ -17,6 +17,12 @@ package com.intellij.diff;
 
 import java.util.List;
 
+/*
+ * Allows to remove other DiffTools from list of available if current one can show request.
+ *
+ * 4ex: this could be used by 'image comparator plugin' to hide default binary diff tool
+ *      or by 'code review plugin' to silently replace default SimpleDiffTool with the one that supports review comments
+ */
 public interface SuppressiveDiffTool extends DiffTool {
   List<Class<? extends DiffTool>> getSuppressedTools();
 }

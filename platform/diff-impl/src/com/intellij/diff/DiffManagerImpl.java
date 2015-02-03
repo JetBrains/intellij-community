@@ -78,9 +78,6 @@ public class DiffManagerImpl extends DiffManagerEx {
   @Override
   public List<DiffTool> getDiffTools() {
     // TODO: we need some kind of (configurable?) priorities here
-    // TODO: we could also want to 'hide' some existing tool
-    //       ex: hide default binary diff, if there'll be a brand-new image comparator plugin.
-    //           or hide default SimpleDiffTool, if there are CommentedSimpleDiffTool.INSTANCE came from plugin
     List<DiffTool> result = new ArrayList<DiffTool>();
 
     result.add(SimpleDiffTool.INSTANCE);
