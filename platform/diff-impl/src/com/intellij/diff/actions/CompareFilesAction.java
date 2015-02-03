@@ -31,6 +31,17 @@ import org.jetbrains.annotations.Nullable;
 public class CompareFilesAction extends BaseShowDiffAction {
   public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFilesAction.DiffRequest");
 
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+
+    String text = getTemplatePresentation().getText();
+    if (files != null && files.length == 1) text += "...";
+    e.getPresentation().setText(text);
+  }
+
   protected boolean isAvailable(@NotNull AnActionEvent e) {
     DiffRequest request = e.getData(DIFF_REQUEST);
     if (request != null) {
