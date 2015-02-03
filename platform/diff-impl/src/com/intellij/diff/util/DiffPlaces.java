@@ -19,4 +19,5 @@ public interface DiffPlaces {
   String DEFAULT = "Default";
   String CHANGES_VIEW = "ChangesView";
   String COMMIT_DIALOG = "CommitDialog";
+  String TESTS_FAILED_ASSERTIONS = "TestsFiledAssertions";
 }

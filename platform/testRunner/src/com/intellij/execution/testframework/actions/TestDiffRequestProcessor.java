@@ -7,7 +7,9 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
@@ -29,6 +31,7 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
     myIndex = index;
 
     putContextUserData(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, true);
+    putContextUserData(DiffUserDataKeysEx.PLACE, DiffPlaces.TESTS_FAILED_ASSERTIONS);
   }
 
   //
