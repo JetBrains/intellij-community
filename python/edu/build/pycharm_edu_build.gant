@@ -21,7 +21,7 @@ includeTargets << new File("$home/community/build/scripts/utils.gant")
 includeTargets << new File("$home/community/build/scripts/libLicenses.gant")
 includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
 
-requireProperty("buildNumber", requireProperty("build.number"))
+requireProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("buildName", "EDU-$buildNumber")
 setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
@@ -29,9 +29,6 @@ setProperty("pythonEduHome", "$ch/python/edu")
 requireProperty("jdk_bundled_mac", "1.7")
 def jdk_bundled_version = p("jdk_bundled_mac") == "1.8" ? "jdk8_mac_redist.tar" : "jdk_mac_redist.tar"
 ant.copy(file: "${home}/build/jdk/${jdk_bundled_version}", tofile: "${home}/build/jdk/jdk_mac_redist_for_${buildNumber}.tar")
-ant.gunzip (src: "${home}/build/jdk/openjdk1.8.0-release-bundle.tar.gz")
-ant.copy(file: "${home}/build/jdk/openjdk1.8.0-release-bundle.tar", tofile: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
-
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
@@ -148,13 +145,13 @@ target('default': "Build artifacts") {
   layoutEducational("${paths.sandbox}/classes/production", usedJars)
 
   def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
-  //custom jdk bundled
-  def sitFileName = "pycharm${buildName}-custom-jdk-bundled"
-  signMacZip("pycharm", extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": "custom_jdk_${buildNumber}.tar"])
-  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": "custom_jdk_${buildNumber}.tar"])
+  signMacZip("pycharm", extraArgs)
+  notifyArtifactBuilt("${paths.artifacts}/pycharm${buildName}.sit")
+  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
 
   signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
+
 }
 
 public layoutEducational(String classesPath, Set usedJars) {
@@ -164,7 +161,6 @@ public layoutEducational(String classesPath, Set usedJars) {
     usedJars = collectUsedJars(modules(), approvedJars(), ["/ant/"], null)
   }
 
-  def appInfo = appInfoFile()
   def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
@@ -172,6 +168,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     }
   }, "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true")
 
+  def appInfo = appInfoFile()
   if (!dryRun) {
     wireBuildDate("PE-${buildNumber}", appInfo)
   }
@@ -197,14 +194,13 @@ public layoutEducational(String classesPath, Set usedJars) {
     "$pythonEduHome/resources"]
   buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
-  //signExe(launcher)
   executeExternalAnt(["dirName": "${paths.distWin}/bin", "fileName": "pycharm.exe"], "$home/build/signBuild.xml")
 
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
 
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
-            "pycharmEDU-", false, true, ".py", system_selector)
+            "pycharmEDU-", false, true, ".py", "NoWebPage", system_selector)
 
   String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
@@ -212,24 +208,26 @@ public layoutEducational(String classesPath, Set usedJars) {
   String macAppRoot = isEap() ? "PyCharm Educational ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Educational.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-jdk-bundled.sit")
-  ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-custom-jdk-bundled.sit")
-  ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")
+  //ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")
 }
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    layouts.layoutPlugin("learn-python") {
+    layouts.layoutPlugin("interactive-learning")
+    layouts.layoutPlugin("interactive-learning-python") {
       dir("courses") {
-        fileset(dir: "$pythonEduHome/learn-python/resources/courses")
+        fileset(dir: "$pythonEduHome/interactive-learning-python/resources/courses")
       }
     }
+    layouts.layoutPlugin("course-creator")
+    layouts.layoutPlugin("course-creator-python")
   }
 
   layouts.layoutCommunityPlugins(ch)
 }
 
 private String appInfoFile() {
-  return "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml"
+  return "$home/out/pycharmEDU/classes/production/python-educational/idea/PyCharmEduApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
@@ -411,8 +409,9 @@ private layoutMac(Map _args, String target) {
   args.icns = "$pythonCommunityHome/resources/PyCharmCore.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "PyCharmEdu"
-  args.help_id = "PY"
+  args.help_id = "PE"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
+  args.executable = "pycharm"
   layoutMacApp(target, ch, args)
 }
