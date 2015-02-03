@@ -196,9 +196,13 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 
 <BRACES, VALUE, VALUE_OR_KEY>{
 
-{STRING}                        {   return SCALAR_STRING; }
+({C_NS_TAG_PROPERTY} {WHITE_SPACE}+)? {STRING} {
+ return SCALAR_STRING;
+}
 
-{DSTRING}                       {   return SCALAR_DSTRING; }
+({C_NS_TAG_PROPERTY} {WHITE_SPACE}+)? {DSTRING} {
+ return SCALAR_DSTRING;
+}
 
 }
 
