@@ -80,6 +80,7 @@ public class ConsoleViewUtil {
         editorSettings.setAdditionalColumnsCount(0);
         editorSettings.setAdditionalLinesCount(0);
         editorSettings.setRightMarginShown(false);
+        editorSettings.setCaretRowShown(false);
 
         editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
 
@@ -88,7 +89,6 @@ public class ConsoleViewUtil {
           scheme.setEditorFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
         }
         editor.setColorsScheme(scheme);
-        scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
       }
     });
   }
