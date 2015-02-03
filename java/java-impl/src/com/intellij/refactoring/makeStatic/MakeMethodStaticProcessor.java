@@ -16,7 +16,6 @@
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -37,10 +36,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author dsl
@@ -54,7 +51,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   }
 
   @Override
-  protected boolean findAdditionalMembers(final ArrayList<UsageInfo> toMakeStatic) {
+  protected boolean findAdditionalMembers(final Set<UsageInfo> toMakeStatic) {
     if (!toMakeStatic.isEmpty()) {
       myAdditionalMethods = new ArrayList<PsiMethod>();
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -71,7 +68,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         }) {
           @Override
           protected ArrayList<UsageInfo> getTopLevelItems() {
-            return toMakeStatic;
+            return new ArrayList<UsageInfo>(toMakeStatic);
           }
         };
         TreeUtil.expand(chooser.getTree(), 2);
