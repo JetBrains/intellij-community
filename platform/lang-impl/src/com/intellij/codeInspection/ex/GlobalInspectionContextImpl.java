@@ -780,7 +780,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           Runnable runnable = new Runnable() {
             @Override
             public void run() {
-              pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(project), lTools);
+              pass.doInspectInBatch(GlobalInspectionContextImpl.this, (InspectionManagerEx)InspectionManager.getInstance(project), lTools);
             }
           };
           ApplicationManager.getApplication().runReadAction(runnable);
