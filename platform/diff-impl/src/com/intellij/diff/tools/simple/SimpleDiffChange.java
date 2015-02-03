@@ -17,11 +17,7 @@ package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
-import com.intellij.diff.util.TextDiffType;
-import com.intellij.icons.AllIcons;
+import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -258,7 +254,7 @@ class SimpleDiffChange {
     @NotNull private final Side mySide;
 
     public MyReplaceOperation(@NotNull Side side) {
-      super("Replace", AllIcons.Diff.Arrow);
+      super("Replace", DiffIcons.getReplaceIcon(Side.RIGHT));
       mySide = side;
     }
 
