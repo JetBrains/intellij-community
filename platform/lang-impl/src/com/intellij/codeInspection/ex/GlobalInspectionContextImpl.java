@@ -378,7 +378,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                                HighlightInfoProcessor.getEmpty());
     try {
       final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file);
-      pass.doInspectInBatch(this, inspectionManager, lTools);
+      pass.doInspectInBatch(this, (InspectionManagerEx)inspectionManager, lTools);
 
       final List<GlobalInspectionToolWrapper> tools = getWrappersFromTools(globalSimpleTools, file);
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, myProgressIndicator, false, new Processor<GlobalInspectionToolWrapper>() {
