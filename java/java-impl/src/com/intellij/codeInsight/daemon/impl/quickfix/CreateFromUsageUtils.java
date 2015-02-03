@@ -394,7 +394,7 @@ public class CreateFromUsageUtils {
                                       final String name,
                                       final PsiManager manager,
                                       @NotNull final PsiElement contextElement,
-                                      @NotNull final PsiFile sourceFile,
+                                      final PsiFile sourceFile,
                                       final String superClassName) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiElementFactory factory = facade.getElementFactory();
