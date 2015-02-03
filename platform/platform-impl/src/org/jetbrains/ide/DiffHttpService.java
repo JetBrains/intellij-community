@@ -16,12 +16,12 @@
 package org.jetbrains.ide;
 
 import com.google.gson.stream.JsonReader;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
@@ -119,24 +119,9 @@ final class DiffHttpService extends RestService {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        DiffManager.getInstance().getDiffTool().show(new DiffRequest(finalProject) {
-          @NotNull
-          @Override
-          public DiffContent[] getContents() {
-            return contents.toArray(new DiffContent[contents.size()]);
-          }
-
-          @Override
-          public String[] getContentTitles() {
-            return ArrayUtil.toStringArray(titles);
-          }
-
-          @Override
-          public String getWindowTitle() {
-            return StringUtil.notNullize(finalWindowTitle, "Diff Service");
-          }
-        });
-
+        DiffManager.getInstance().showDiff(finalProject, new SimpleDiffRequest(StringUtil.notNullize(finalWindowTitle, "Diff Service"),
+                                                                               contents.toArray(new DiffContent[contents.size()]),
+                                                                               ArrayUtil.toStringArray(titles)));
         if (finalFocused) {
           ProjectUtil.focusProjectWindow(finalProject, true);
         }
@@ -180,7 +165,8 @@ final class DiffHttpService extends RestService {
         return "content is not specified";
       }
 
-      contents.add(new SimpleContent(content, fileType == null ? defaultFileType : fileTypeRegistry.findFileTypeByName(fileType)));
+      FileType type = fileType == null ? defaultFileType : fileTypeRegistry.findFileTypeByName(fileType);
+      contents.add(DiffContentFactory.getInstance().create(content, type));
       titles.add(StringUtil.isEmptyOrSpaces(title) ? "" : title);
     }
     reader.endArray();
