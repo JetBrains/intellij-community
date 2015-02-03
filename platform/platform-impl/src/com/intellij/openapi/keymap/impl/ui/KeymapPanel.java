@@ -814,6 +814,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     myKeymapList.setSelectedItem(mySelectedKeymap);
+    myActionsTree.reset(mySelectedKeymap, getCurrentQuickListIds());
   }
 
   @Override
@@ -863,7 +864,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     Keymap[] managerKeymaps = ContainerUtil.filter(keymapManager.getAllKeymaps(), new Condition<Keymap>() {
       @Override
       public boolean value(Keymap keymap) {
-        return !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+        return !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
       }
     }).toArray(new Keymap[]{});
     Keymap[] panelKeymaps = new Keymap[myKeymapListModel.getSize()];
