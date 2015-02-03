@@ -52,6 +52,11 @@ import org.jetbrains.yaml.YAMLTokenTypes;
     final char prev = previousChar();
     return prev == (char)-1 || prev == '\t' || prev == ' ';
   }
+
+  private void yyBegin(int newState) {
+    //System.out.println("yybegin(): " + newState);
+    yybegin(newState);
+  }
 %}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// REGEXPS DECLARATIONS //////////////////////////////////////////////////////////////////////////
@@ -93,7 +98,7 @@ STRING=                         '([^']|(''))*?'?
                                 }
 
 {EOL}                           {   if (braceCount == 0) {
-                                      yybegin(YYINITIAL);
+                                      yyBegin(YYINITIAL);
                                     }
                                     return EOL;
                                 }
@@ -101,7 +106,7 @@ STRING=                         '([^']|(''))*?'?
                                     if (braceCount != 0 && yystate() != BRACES) {
                                       previousState = yystate();
                                     }
-                                    yybegin(braceCount == 0 ? previousState: BRACES);
+                                    yyBegin(braceCount == 0 ? previousState: BRACES);
                                     return LBRACE;
                                 }
 "}"                             {   if (braceCount == 0) {
@@ -109,7 +114,7 @@ STRING=                         '([^']|(''))*?'?
                                     }
                                     braceCount--;
                                     if (yystate() == BRACES && braceCount == 0){
-                                      yybegin(previousState);
+                                      yyBegin(previousState);
                                     }
                                     return RBRACE;
                                 }
@@ -117,7 +122,7 @@ STRING=                         '([^']|(''))*?'?
                                     if (braceCount != 0 && yystate() != BRACES) {
                                       previousState = yystate();
                                     }
-                                    yybegin(braceCount == 0 ? previousState: BRACES);
+                                    yyBegin(braceCount == 0 ? previousState: BRACES);
                                     return LBRACKET;
                                 }
 "]"                             {   if (braceCount == 0) {
@@ -125,13 +130,13 @@ STRING=                         '([^']|(''))*?'?
                                     }
                                     braceCount--;
                                     if (yystate() == BRACES && braceCount == 0){
-                                      yybegin(previousState);
+                                      yyBegin(previousState);
                                     }
                                     return RBRACKET;
                                 }
 
 ","                             {   if (braceCount > 0) {
-                                      yybegin(BRACES);
+                                      yyBegin(BRACES);
                                       return COMMA;
                                     }
                                     return TEXT;
@@ -152,7 +157,7 @@ STRING=                         '([^']|(''))*?'?
   return SCALAR_KEY;
 }
 
-{KEY} / ({WHITE_SPACE} | {EOL}) {   yybegin(VALUE);
+{KEY} / ({WHITE_SPACE} | {EOL}) {   yyBegin(VALUE);
                                     return SCALAR_KEY;
                                 }
 {KEY}                           {   if (zzMarkedPos == zzEndRead){
@@ -171,10 +176,10 @@ STRING=                         '([^']|(''))*?'?
 <YYINITIAL, BRACES>{
 
 "---"                           {   braceCount = 0;
-                                    yybegin(YYINITIAL);
+                                    yyBegin(YYINITIAL);
                                     return DOCUMENT_MARKER; }
 
-"-" / ({WHITE_SPACE} | {EOL})   {   yybegin(VALUE_OR_KEY);
+"-" / ({WHITE_SPACE} | {EOL})   {   yyBegin(VALUE_OR_KEY);
                                     return SEQUENCE_MARKER; }
 
 .                               {   return TEXT; }
@@ -191,8 +196,7 @@ STRING=                         '([^']|(''))*?'?
 
 <VALUE, VALUE_OR_KEY>{
 
-">"/ ({WHITE_SPACE} | {EOL})      {   yybegin(INDENT_VALUE);
-                                    //System.out.println("Started SCALAR_TEXT state");
+">"/ ({WHITE_SPACE} | {EOL})      {   yyBegin(INDENT_VALUE);
                                     valueIndent = 0; // initialization
                                     afterEOL = false;
                                     valueTokenType = SCALAR_TEXT;
@@ -200,8 +204,7 @@ STRING=                         '([^']|(''))*?'?
                                 }
 
 ("|"("-"|"+")?) / ({WHITE_SPACE} | {EOL})
-                                {   yybegin(INDENT_VALUE);
-                                    //System.out.println("Started SCALAR_LIST state");
+                                {   yyBegin(INDENT_VALUE);
                                     valueIndent = 0; // initialization
                                     afterEOL = false;
                                     valueTokenType = SCALAR_LIST;
@@ -228,15 +231,13 @@ STRING=                         '([^']|(''))*?'?
                                                 //System.out.println("Indent selected:" + valueIndent);
                                             }
                                             else if (valueIndent > matched) {
-                                                yybegin(YYINITIAL);
-                                                //System.out.println("return to initial state");
+                                                yyBegin(YYINITIAL);
                                             }
                                             return isAfterEol() ? INDENT : WHITESPACE;
                                         }
 [^ \n\t] {LINE}?                        {   if (afterEOL){
                                                 yypushback(yylength());
-                                                yybegin(YYINITIAL);
-                                                //System.out.println("return to initial state");
+                                                yyBegin(YYINITIAL);
 
                                             } else {
                                                 afterEOL = false;
@@ -251,8 +252,7 @@ STRING=                         '([^']|(''))*?'?
 {EOL}                                   {   afterEOL = true;
                                             //System.out.println("Matched EOL:");
                                             if (valueIndent < 0) {
-                                                yybegin(YYINITIAL);
-                                                //System.out.println("return to initial state");
+                                                yyBegin(YYINITIAL);
                                             }
                                             else if (valueIndent == 0) {
                                                 valueIndent --;
