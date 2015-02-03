@@ -48,6 +48,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -615,7 +616,15 @@ public class MavenUtil {
     if (libs != null) {
       for (String lib : libs) {
         if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
-          return lib.substring("maven-core-".length(), lib.length() - ".jar".length());
+          String version = lib.substring("maven-core-".length(), lib.length() - ".jar".length());
+          if (StringUtil.contains(version, ".x")) {
+            Properties props = JarUtil.loadProperties(new File(mavenHome, "lib/" + lib),
+                                                      "META-INF/maven/org.apache.maven/maven-core/pom.properties");
+            return props != null ? props.getProperty("version") : null;
+          }
+          else {
+            return version;
+          }
         }
         if (lib.startsWith("maven-") && lib.endsWith("-uber.jar")) {
           return lib.substring("maven-".length(), lib.length() - "-uber.jar".length());
