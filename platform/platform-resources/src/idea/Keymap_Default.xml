@@ -458,9 +458,6 @@
   <action id="CompareTwoFiles">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
-  <action id="CompareDirs">
-    <keyboard-shortcut first-keystroke="control D"/>
-  </action>
   <action id="SendEOF">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
