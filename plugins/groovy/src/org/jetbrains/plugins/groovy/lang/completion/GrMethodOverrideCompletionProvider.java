@@ -20,7 +20,6 @@ import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -31,6 +30,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.GroovyMethodOverrideHandler;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -47,21 +47,16 @@ class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionPa
   protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
 
-    if(psiElement()
-            .inside(PsiClass.class)
-            .accepts(position)) {
+    PsiClass currentClass = PsiTreeUtil.getParentOfType(position, PsiClass.class);
 
-      PsiClass currentClass = PsiTreeUtil.getParentOfType(position, PsiClass.class);
-
-      if (currentClass != null) {
-        addSuperMethods(currentClass, result, false);
-        addSuperMethods(currentClass, result, true);
-      }
+    if (currentClass != null) {
+      addSuperMethods(currentClass, result, false);
+      addSuperMethods(currentClass, result, true);
     }
   }
 
   public static void register(CompletionContributor contributor) {
-    contributor.extend(CompletionType.BASIC, PlatformPatterns.psiElement(PsiElement.class), new GrMethodOverrideCompletionProvider());
+    contributor.extend(CompletionType.BASIC, psiElement().withParent(GrTypeDefinitionBody.class), new GrMethodOverrideCompletionProvider());
   }
 
   private void addSuperMethods(final PsiClass psiClass, CompletionResultSet completionResultSet, boolean implement) {
@@ -89,7 +84,7 @@ class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionPa
 
     PsiType type = substitutor.substitute(method.getReturnType());
 
-    String parentClassName = currentClass == null ? "" : ((PsiNamedElement) currentClass).getName();
+    String parentClassName = currentClass == null ? "" : currentClass.getName();
 
     String signature = modifiers + (type == null ? "" : type.getPresentableText() + " ") + method.getName();
 
