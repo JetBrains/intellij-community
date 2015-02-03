@@ -21,7 +21,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,21 +175,27 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
   private static void paintLine(@NotNull Graphics g,
                                 @NotNull int[] xPoints1, @NotNull int[] yPoints1,
                                 @NotNull int[] xPoints2, @NotNull int[] yPoints2) {
-    // TODO: disable AA
-    Color innerColor = getInnerColor();
-    Color outerColor = getOuterColor();
+    GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
 
-    if (innerColor != null) {
-      g.setColor(innerColor);
-      int[] xPoints = mergeReverse(xPoints1, xPoints2);
-      int[] yPoints = mergeReverse(yPoints1, yPoints2);
+    try {
+      Color innerColor = getInnerColor();
+      Color outerColor = getOuterColor();
 
-      g.fillPolygon(xPoints, yPoints, xPoints.length);
+      if (innerColor != null) {
+        g.setColor(innerColor);
+        int[] xPoints = mergeReverse(xPoints1, xPoints2);
+        int[] yPoints = mergeReverse(yPoints1, yPoints2);
+
+        g.fillPolygon(xPoints, yPoints, xPoints.length);
+      }
+      if (outerColor != null) {
+        g.setColor(outerColor);
+        g.drawPolyline(xPoints1, yPoints1, xPoints1.length);
+        g.drawPolyline(xPoints2, yPoints2, xPoints2.length);
+      }
     }
-    if (outerColor != null) {
-      g.setColor(outerColor);
-      g.drawPolyline(xPoints1, yPoints1, xPoints1.length);
-      g.drawPolyline(xPoints2, yPoints2, xPoints2.length);
+    finally {
+      config.restore();
     }
   }
 
