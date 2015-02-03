@@ -36,14 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.FileResponses;
+import org.jetbrains.io.Responses;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
-import static org.jetbrains.io.Responses.addKeepAliveIfNeed;
-import static org.jetbrains.io.Responses.sendStatus;
 
 public final class BuiltInWebServer extends HttpRequestHandler {
   static final Logger LOG = Logger.getInstance(BuiltInWebServer.class);
@@ -193,7 +191,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
           FileResponses.sendFile(request, channel, ioFile);
         }
         else {
-          sendStatus(HttpResponseStatus.FORBIDDEN, channel, request);
+          Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request);
         }
       }
       else {
@@ -202,7 +200,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
           return true;
         }
 
-        boolean keepAlive = addKeepAliveIfNeed(response, request);
+        boolean keepAlive = Responses.addKeepAliveIfNeed(response, request);
         if (request.method() != HttpMethod.HEAD) {
           HttpHeaders.setContentLength(response, file.getLength());
         }

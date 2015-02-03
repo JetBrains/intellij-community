@@ -1,4 +1,4 @@
-package org.jetbrains.io.fastCgi;
+package org.jetbrains.fastCgi;
 
 public final class FastCgiConstants {
   public static final int HEADER_LENGTH = 8;

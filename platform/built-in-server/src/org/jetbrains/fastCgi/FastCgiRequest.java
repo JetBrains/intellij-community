@@ -1,4 +1,4 @@
-package org.jetbrains.io.fastCgi;
+package org.jetbrains.fastCgi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;

@@ -1,4 +1,4 @@
-package org.jetbrains.io.fastCgi;
+package org.jetbrains.fastCgi;
 
 import io.netty.buffer.ByteBuf;
 

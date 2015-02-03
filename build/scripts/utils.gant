@@ -329,7 +329,8 @@ binding.setVariable("platformImplementationModules", [
   "json",
   "protocol-reader-runtime",
   "script-debugger-backend",
-  "script-debugger-ui"
+  "script-debugger-ui",
+  "built-in-server"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
