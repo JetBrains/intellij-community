@@ -461,6 +461,9 @@
   <action id="CompareTwoFiles">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
+  <action id="Diff.ShowSettingsPopup">
+    <keyboard-shortcut first-keystroke="control shift D"/>
+  </action>
   <action id="SendEOF">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>

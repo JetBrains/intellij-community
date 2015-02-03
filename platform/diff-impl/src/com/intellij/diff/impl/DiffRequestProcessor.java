@@ -531,9 +531,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private class ShowActionGroupPopupAction extends DumbAwareAction {
-
     public ShowActionGroupPopupAction() {
-      setShortcutSet(CommonShortcuts.getDiff()); // TODO: configurable shortcut
+      EmptyAction.setupAction(this, "Diff.ShowSettingsPopup", null);
     }
 
     @Override
