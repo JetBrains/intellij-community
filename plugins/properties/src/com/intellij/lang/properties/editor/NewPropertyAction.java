@@ -155,7 +155,7 @@ class NewPropertyAction extends AnAction {
           CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
             @Override
             public void run() {
-              defaultPropertiesFile.addProperty(newPropertyName, "");
+              myResourceBundleEditor.getPropertiesInsertDeleteManager().insertNewProperty(newPropertyName, "");
             }
           });
         }

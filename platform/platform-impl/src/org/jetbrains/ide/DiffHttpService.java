@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import io.netty.channel.ChannelHandlerContext;
@@ -38,12 +39,24 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @api {post} /diff The differences between contents
+ * @apiName diff
+ * @apiGroup Platform
+ *
+ * @apiParam (properties) {String} [fileType] The file type name of the contents (see <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/core-api/src/com/intellij/openapi/fileTypes/FileType.java">FileType.getName()</a>).
+ * You can get registered file types using <a href="#api-Platform-about">/rest/about?registeredFileTypes</a> request.
+ * @apiParam (properties) {String} [windowTitle=Diff Service] The title of the diff window.
+ * @apiParam (properties) {Boolean} [focused=true] Whether to focus project window.
+ *
+ * @apiParam (properties) {Object[]{2..}} contents The list of the contents to diff.
+ * @apiParam (properties) {String} [contents.title] The title of the content.
+ * @apiParam (properties) {String} [contents.fileType] The file type name of the content.
+ * @apiParam (properties) {String} contents.content The data of the content.
+ *
+ * @apiUse DiffRequestExample
+ */
 final class DiffHttpService extends RestService {
-  @Override
-  protected boolean isMethodSupported(@NotNull HttpMethod method) {
-    return method == HttpMethod.POST;
-  }
-
   @NotNull
   @Override
   protected String getServiceName() {
@@ -51,20 +64,31 @@ final class DiffHttpService extends RestService {
   }
 
   @Override
+  protected boolean isMethodSupported(@NotNull HttpMethod method) {
+    return method == HttpMethod.POST;
+  }
+
+  @Override
   @Nullable
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     final List<DiffContent> contents = new ArrayList<DiffContent>();
     final List<String> titles = new ArrayList<String>();
-
+    boolean focused = true;
+    String windowTitle = null;
     JsonReader reader = createJsonReader(request);
     if (reader.hasNext()) {
       String fileType = null;
-      boolean reformat;
       reader.beginObject();
       while (reader.hasNext()) {
         String name = reader.nextName();
-        if (name.equals("fileTypeName")) {
+        if (name.equals("fileType")) {
           fileType = reader.nextString();
+        }
+        else if (name.equals("focused")) {
+          focused = reader.nextBoolean();
+        }
+        else if (name.equals("windowTitle")) {
+          windowTitle = StringUtil.nullize(reader.nextString(), true);
         }
         else if (name.equals("contents")) {
           String error = readContent(reader, contents, titles, fileType);
@@ -83,16 +107,19 @@ final class DiffHttpService extends RestService {
       return "Empty request";
     }
 
-    final Project project = guessProject();
+    Project project = guessProject();
     if (project == null) {
       // Argument for @NotNull parameter 'project' of com/intellij/openapi/components/ServiceManager.getService must not be null
-      return "No opened project, please open any project";
+      project = ProjectManager.getInstance().getDefaultProject();
     }
 
+    final boolean finalFocused = focused;
+    final String finalWindowTitle = windowTitle;
+    final Project finalProject = project;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        DiffManager.getInstance().getDiffTool().show(new DiffRequest(project) {
+        DiffManager.getInstance().getDiffTool().show(new DiffRequest(finalProject) {
           @NotNull
           @Override
           public DiffContent[] getContents() {
@@ -106,13 +133,17 @@ final class DiffHttpService extends RestService {
 
           @Override
           public String getWindowTitle() {
-            return "Diff Service";
+            return StringUtil.notNullize(finalWindowTitle, "Diff Service");
           }
         });
 
-        ProjectUtil.focusProjectWindow(project, true);
+        if (finalFocused) {
+          ProjectUtil.focusProjectWindow(finalProject, true);
+        }
       }
     }, project.getDisposed());
+
+    sendOk(request, context);
     return null;
   }
 
@@ -133,7 +164,7 @@ final class DiffHttpService extends RestService {
         if (name.equals("title")) {
           title = reader.nextString();
         }
-        else if (name.equals("fileTypeName")) {
+        else if (name.equals("fileType")) {
           fileType = reader.nextString();
         }
         else if (name.equals("content")) {
@@ -145,7 +176,7 @@ final class DiffHttpService extends RestService {
       }
       reader.endObject();
 
-      if (content == null) {;
+      if (content == null) {
         return "content is not specified";
       }
 

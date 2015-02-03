@@ -42,8 +42,8 @@ import com.intellij.vcs.log.graph.ColorGenerator;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.graph.RowType;
+import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.graph.actions.GraphMouseAction;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.printer.idea.SimpleGraphCellPainter;
@@ -69,7 +69,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
@@ -88,7 +87,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private final GraphCommitCellRender myGraphCommitCellRender;
 
   private boolean myColumnsSizeInitialized = false;
-  private final AtomicInteger myRepaintFreezedCounter = new AtomicInteger();
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
@@ -232,27 +230,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
       setRowSelectionInterval(rowIndex, rowIndex);
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
-    }
-  }
-
-  @Override
-  protected void paintComponent(@NotNull Graphics g) {
-    if (myRepaintFreezedCounter.get() > 0) {
-      return;
-    }
-    super.paintComponent(g);
-  }
-
-  /**
-   * Freeze repaint to avoid repainting during changing the Graph.
-   */
-  public void executeWithoutRepaint(@NotNull Runnable action) {
-    myRepaintFreezedCounter.incrementAndGet();
-    try {
-      action.run();
-    }
-    finally {
-      myRepaintFreezedCounter.decrementAndGet();
     }
   }
 
@@ -423,7 +400,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       }
 
       if (e.getClickCount() == 1 && !expandOrCollapseRoots(e)) {
-        performAction(e, MyGraphMouseAction.Type.CLICK);
+        performAction(e, GraphAction.Type.MOUSE_CLICK);
       }
     }
 
@@ -433,22 +410,22 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
       else {
-        performAction(e, MyGraphMouseAction.Type.OVER);
+        performAction(e, GraphAction.Type.MOUSE_OVER);
       }
     }
 
-    private void performAction(@NotNull MouseEvent e, @NotNull final MyGraphMouseAction.Type actionType) {
+    private void performAction(@NotNull MouseEvent e, @NotNull final GraphAction.Type actionType) {
       int row = PositionUtil.getRowIndex(e.getPoint());
       if (row > getRowCount() - 1) {
         return;
       }
       Point point = calcPoint4Graph(e.getPoint());
-      Collection<PrintElement> printElements = myDataPack.getVisibleGraph().getRowInfo(row).getPrintElements();
+      Collection<? extends PrintElement> printElements = myDataPack.getVisibleGraph().getRowInfo(row).getPrintElements();
       PrintElement printElement = myGraphCellPainter.mouseOver(printElements, point.x, point.y);
 
       GraphAnswer<Integer> answer =
-        myDataPack.getVisibleGraph().getActionController().performMouseAction(new MyGraphMouseAction(printElement, actionType));
-      myUI.handleAnswer(answer, actionType == MyGraphMouseAction.Type.CLICK && printElement != null);
+        myDataPack.getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
+      myUI.handleAnswer(answer, actionType == GraphAction.Type.MOUSE_CLICK && printElement != null);
     }
 
     private boolean isAboveLink(MouseEvent e) {
@@ -471,27 +448,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       // Do nothing
     }
 
-    private class MyGraphMouseAction implements GraphMouseAction {
-      private final PrintElement myPrintElement;
-      private final Type myActionType;
-
-      public MyGraphMouseAction(PrintElement printElement, Type actionType) {
-        myPrintElement = printElement;
-        myActionType = actionType;
-      }
-
-      @Nullable
-      @Override
-      public PrintElement getAffectedElement() {
-        return myPrintElement;
-      }
-
-      @NotNull
-      @Override
-      public Type getType() {
-        return myActionType;
-      }
-    }
   }
 
   @NotNull
@@ -620,4 +576,5 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       return dimension;
     }
   }
+
 }

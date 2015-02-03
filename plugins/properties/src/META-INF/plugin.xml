@@ -76,6 +76,10 @@
                      key="trail.spaces.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TrailingSpacesInPropertyInspection"/>
+    <localInspection language="Properties" shortName="UnsortedPropertiesFile" bundle="messages.PropertiesBundle"
+                     key="alpha.unsorted.properties.file.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="true" level="INFO"
+                     implementationClass="com.intellij.codeInspection.AlphaUnsortedPropertiesFileInspection"/>
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,42 +15,61 @@
  */
 package com.intellij.platform;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.HttpRequestHandler;
-import org.jetbrains.io.Responses;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.RestService;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * @api {post} /openProjectSet Open project
+ * @apiName openProjectSet
+ * @apiGroup Platform
+ * @apiDescription Checkout a repository from source control and then open an IDEA project from it.
+ *
+ * @apiParam (properties) {Object} vcs The map of the VCS.
+ * @apiParam (properties) {String} project The path to project to be opened.
+ *
+ * @apiUse OpenProjectSetRequestExample
+ * @apiUse OpenProjectSetRequestExampleMulti
  */
-public class ProjectSetRequestHandler extends HttpRequestHandler {
-
+public class ProjectSetRequestHandler extends RestService {
   @Override
-  public boolean isSupported(@NotNull FullHttpRequest request) {
-    return request.method() == HttpMethod.POST && "/openProjectSet".equals(request.uri());
+  protected boolean isMethodSupported(@NotNull HttpMethod method) {
+    return method == HttpMethod.POST;
+  }
+
+  @NotNull
+  @Override
+  protected String getServiceName() {
+    return "openProjectSet";
   }
 
   @Override
-  public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
-    throws IOException {
+  protected boolean isPrefixlessAllowed() {
+    return true;
+  }
 
-    @Language("JSON") final String desc = request.content().toString(Charset.defaultCharset());
+  @Nullable
+  @Override
+  public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
+    final JsonObject descriptor = new JsonParser().parse(createJsonReader(request)).getAsJsonObject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        new ProjectSetReader().readDescriptor(desc, null);
+        new ProjectSetReader().readDescriptor(descriptor, null);
       }
     });
-    Responses.sendStatus(HttpResponseStatus.OK, context.channel(), request);
-    return true;
+    sendOk(request, context);
+    return null;
   }
 }

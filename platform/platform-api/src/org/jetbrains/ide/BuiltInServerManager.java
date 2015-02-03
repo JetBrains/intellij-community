@@ -16,12 +16,13 @@
 package org.jetbrains.ide;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BuiltInServerManager {
+public abstract class BuiltInServerManager extends ApplicationComponent.Adapter {
   public static BuiltInServerManager getInstance() {
-    return ServiceManager.getService(BuiltInServerManager.class);
+    return ApplicationManager.getApplication().getComponent(BuiltInServerManager.class);
   }
 
   public abstract int getPort();

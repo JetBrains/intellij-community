@@ -17,29 +17,59 @@
 package com.intellij.vcs.log.graph.api.elements;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class GraphEdge implements GraphElement {
-  private final int myUpNodeIndex;
-  private final int myDownNodeIndex;
-  @NotNull
-  private final Type myType;
+  public static GraphEdge createNormalEdge(int nodeIndex1, int nodeIndex2, @NotNull GraphEdgeType type) {
+    assert type.isNormalEdge() : "Unexpected edge type: " + type;
+    return new GraphEdge(Math.min(nodeIndex1, nodeIndex2), Math.max(nodeIndex1, nodeIndex2), null, type);
+  }
 
-  public GraphEdge(int upNodeIndex, int downNodeIndex, @NotNull Type type) {
+  public static GraphEdge createEdgeWithTargetId(int nodeIndex, @Nullable Integer targetId, @NotNull GraphEdgeType type) {
+    switch (type) {
+      case DOTTED_ARROW_UP:
+        return new GraphEdge(null, nodeIndex, targetId, type);
+      case NOT_LOAD_COMMIT:
+      case DOTTED_ARROW_DOWN:
+        return new GraphEdge(nodeIndex, null, targetId, type);
+
+      default:
+        throw new AssertionError("Unexpected edge type: " + type);
+    }
+  }
+
+  @Nullable private final Integer myUpNodeIndex;
+  @Nullable private final Integer myDownNodeIndex;
+  @Nullable private final Integer myTargetId;
+  @NotNull private final GraphEdgeType myType;
+
+  public GraphEdge(@Nullable Integer upNodeIndex,
+                   @Nullable Integer downNodeIndex,
+                   @Nullable Integer targetId,
+                   @NotNull GraphEdgeType type) {
     myUpNodeIndex = upNodeIndex;
     myDownNodeIndex = downNodeIndex;
+    myTargetId = targetId;
     myType = type;
   }
 
-  public int getUpNodeIndex() {
+  @Nullable
+  public Integer getUpNodeIndex() {
     return myUpNodeIndex;
   }
 
-  public int getDownNodeIndex() {
+  @Nullable
+  public Integer getDownNodeIndex() {
     return myDownNodeIndex;
   }
 
+  @Nullable
+  public Integer getTargetId() {
+    return myTargetId;
+  }
+
   @NotNull
-  public Type getType() {
+  public GraphEdgeType getType() {
     return myType;
   }
 
@@ -50,23 +80,20 @@ public final class GraphEdge implements GraphElement {
 
     GraphEdge graphEdge = (GraphEdge)o;
 
-    if (myDownNodeIndex != graphEdge.myDownNodeIndex) return false;
-    if (myUpNodeIndex != graphEdge.myUpNodeIndex) return false;
     if (myType != graphEdge.myType) return false;
+    if (myUpNodeIndex != null ? !myUpNodeIndex.equals(graphEdge.myUpNodeIndex) : graphEdge.myUpNodeIndex != null) return false;
+    if (myDownNodeIndex != null ? !myDownNodeIndex.equals(graphEdge.myDownNodeIndex) : graphEdge.myDownNodeIndex != null) return false;
+    if (myTargetId != null ? !myTargetId.equals(graphEdge.myTargetId) : graphEdge.myTargetId != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myUpNodeIndex;
-    result = 31 * result + myDownNodeIndex;
+    int result = myUpNodeIndex != null ? myUpNodeIndex.hashCode() : 0;
+    result = 31 * result + (myDownNodeIndex != null ? myDownNodeIndex.hashCode() : 0);
+    result = 31 * result + (myTargetId != null ? myTargetId.hashCode() : 0);
     result = 31 * result + myType.hashCode();
     return result;
-  }
-
-  public enum Type {
-    USUAL,
-    HIDE
   }
 }
