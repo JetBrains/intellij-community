@@ -163,7 +163,6 @@ public class GitCucumberWorld {
   @Before("@remote")
   @Order(1)
   public void setUpRemoteOperations() {
-    GitTestUtil.setDefaultBuiltInServerPort();
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
   }
 
