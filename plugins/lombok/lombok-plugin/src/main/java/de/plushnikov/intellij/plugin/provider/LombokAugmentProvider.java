@@ -7,14 +7,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.processor.Processor;
+import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -95,10 +99,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
   }
 
-//  @Nullable
-//  protected PsiType inferType(PsiTypeElement typeElement) {
-//    return new ValProcessor().inferType(typeElement);
-//  }
+  @Nullable
+  protected PsiType inferType(PsiTypeElement typeElement) {
+    return new ValProcessor().inferType(typeElement);
+  }
 
   private void initRegisteredAnnotations() {
     if (null == registeredAnnotationNames) {
