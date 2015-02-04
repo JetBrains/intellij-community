@@ -834,13 +834,9 @@ public class AbstractPopup implements JBPopup {
 
       int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
       WindowResizeListener resizeListener = new WindowResizeListener(
+        myContent,
         myMovable ? new Insets(i, i, i, i) : new Insets(0, 0, i, i),
         isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
-        @Override
-        protected Component getContent(MouseEvent event) {
-          return myContent;
-        }
-
         @Override
         protected void setCursor(Component content, Cursor cursor) {
           glass.setCursor(cursor, this);
@@ -852,12 +848,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myCaption != null && myMovable) {
-      final WindowMoveListener moveListener = new WindowMoveListener() {
-        @Override
-        protected Component getContent(MouseEvent event) {
-          return myCaption;
-        }
-
+      final WindowMoveListener moveListener = new WindowMoveListener(myCaption) {
         @Override
         public void mousePressed(final MouseEvent e) {
           if (e.isConsumed()) return;
