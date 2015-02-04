@@ -141,6 +141,8 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
     if (myRenderer != null) {
       myList.setCellRenderer(myRenderer);
     }
+    final Rectangle rect = myTable.getCellRect(myRow, myColumn, true);
+    Point point = new Point(rect.x, rect.y);
     final boolean surrendersFocusOnKeystrokeOldValue = myTable instanceof JBTable ? ((JBTable)myTable).surrendersFocusOnKeyStroke() : myTable.getSurrendersFocusOnKeystroke();
     final JBPopup popup = JBPopupFactory.getInstance()
       .createListPopupBuilder(myList)
@@ -178,12 +180,8 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
           super.onClosed(event);
         }
       })
+      .setMinSize(myWide ? new Dimension(((int)rect.getSize().getWidth()), -1) : null)
       .createPopup();
-    final Rectangle rect = myTable.getCellRect(myRow, myColumn, true);
-    Point point = new Point(rect.x, rect.y);
-    if (myWide) {
-      popup.setMinimumSize(new Dimension(((int)rect.getSize().getWidth()), -1));
-    }
     popup.show(new RelativePoint(myTable, point));
   }
 
