@@ -20,5 +20,6 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="Sanselan" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="diff-api" />
   </component>
 </module>
