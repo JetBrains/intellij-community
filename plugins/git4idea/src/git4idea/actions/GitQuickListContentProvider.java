@@ -57,7 +57,7 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
 
     addSeparator(actions);
     add("Git.Branches", manager, actions);
-    add("Git.Push", manager, actions);
+    add("Vcs.Push", manager, actions);
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);
 
