@@ -248,6 +248,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   private void initFolding(@NotNull final Editor editor) {
+    if (!editor.getSettings().isCodeFoldingEnabled()) return;
     final Document document = editor.getDocument();
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       @Override
@@ -337,6 +338,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Nullable
   private Runnable updateFoldRegions(@NotNull Editor editor, boolean applyDefaultState, boolean quick) {
+    if (!editor.getSettings().isCodeFoldingEnabled()) return null;
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     if (file != null) {
       return FoldingUpdate.updateFoldRegions(editor, file, applyDefaultState, quick);

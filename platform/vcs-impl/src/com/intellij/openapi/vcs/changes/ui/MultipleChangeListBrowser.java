@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
@@ -227,9 +228,9 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   }
 
   @Override
-  protected List<AnAction> createDiffActions(final Change change) {
-    List<AnAction> actions = super.createDiffActions(change);
-    actions.add(new MoveAction(change));
+  protected List<AnAction> createDiffActions() {
+    List<AnAction> actions = super.createDiffActions();
+    actions.add(new MoveAction());
     return actions;
   }
 
@@ -383,14 +384,16 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   }
 
   private class MoveAction extends MoveChangesToAnotherListAction {
-    private final Change myChange;
-
-    public MoveAction(final Change change) {
-      myChange = change;
+    @Override
+    protected boolean isEnabled(AnActionEvent e) {
+      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
+      if (change == null) return false;
+      return super.isEnabled(e);
     }
 
     public void actionPerformed(AnActionEvent e) {
-      askAndMove(myProject, Collections.singletonList(myChange), null);
+      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
+      askAndMove(myProject, Collections.singletonList(change), null);
     }
   }
 }

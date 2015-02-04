@@ -16,9 +16,6 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,6 +24,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -43,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest;
+import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest.PropertyContent;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
@@ -127,8 +128,8 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
   private class CalculateAndShow extends Task.Backgroundable {
     private final Change myChange;
-    private String myBeforeContent;
-    private String myAfterContent;
+    private List<PropertyData> myBeforeContent;
+    private List<PropertyData> myAfterContent;
     private SVNRevision myBeforeRevisionValue;
     private SVNRevision myAfterRevision;
     private Exception myException;
@@ -167,16 +168,17 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
             return;
           }
           if (myBeforeContent != null && myAfterContent != null && myBeforeRevisionValue != null && myAfterRevision != null) {
-            final SimpleDiffRequest diffRequest = new SimpleDiffRequest(myProject, getDiffWindowTitle(myChange));
+            SvnPropertiesDiffRequest diffRequest;
             if (compareRevisions(myBeforeRevisionValue, myAfterRevision) > 0) {
-              // before ahead
-              diffRequest.setContents(new SimpleContent(myAfterContent), new SimpleContent(myBeforeContent));
-              diffRequest.setContentTitles(revisionToString(myAfterRevision), revisionToString(myBeforeRevisionValue));
+              diffRequest = new SvnPropertiesDiffRequest(getDiffWindowTitle(myChange),
+                                                    new PropertyContent(myAfterContent), new PropertyContent(myBeforeContent),
+                                                    revisionToString(myAfterRevision), revisionToString(myBeforeRevisionValue));
             } else {
-              diffRequest.setContents(new SimpleContent(myBeforeContent), new SimpleContent(myAfterContent));
-              diffRequest.setContentTitles(revisionToString(myBeforeRevisionValue), revisionToString(myAfterRevision));
+              diffRequest = new SvnPropertiesDiffRequest(getDiffWindowTitle(myChange),
+                                                    new PropertyContent(myBeforeContent), new PropertyContent(myAfterContent),
+                                                    revisionToString(myBeforeRevisionValue), revisionToString(myAfterRevision));
             }
-            DiffManager.getInstance().getDiffTool().show(diffRequest);
+            DiffManager.getInstance().showDiff(myProject, diffRequest);
           }
         }
       });
@@ -225,12 +227,12 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
   private final static String ourPropertiesDelimiter = "\n";
 
   @NotNull
-  private static String getPropertyList(@NotNull SvnVcs vcs,
-                                        @Nullable final ContentRevision contentRevision,
-                                        @Nullable final SVNRevision revision)
+  private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs,
+                                                    @Nullable final ContentRevision contentRevision,
+                                                    @Nullable final SVNRevision revision)
   throws SVNException, VcsException {
     if (contentRevision == null) {
-      return "";
+      return null;
     }
 
     SvnTarget target;
@@ -246,13 +248,13 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
   }
 
   @NotNull
-  public static String getPropertyList(@NotNull SvnVcs vcs, @NotNull final SVNURL url, @Nullable final SVNRevision revision)
+  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull final SVNURL url, @Nullable final SVNRevision revision)
     throws VcsException {
     return getPropertyList(vcs, SvnTarget.fromURL(url, revision), revision);
   }
 
   @NotNull
-  public static String getPropertyList(@NotNull SvnVcs vcs, @NotNull final File ioFile, @Nullable final SVNRevision revision)
+  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull final File ioFile, @Nullable final SVNRevision revision)
     throws SVNException {
     try {
       return getPropertyList(vcs, SvnTarget.fromFile(ioFile, revision), revision);
@@ -263,14 +265,14 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
   }
 
   @NotNull
-  private static String getPropertyList(@NotNull SvnVcs vcs, @NotNull SvnTarget target, @Nullable SVNRevision revision)
+  private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull SvnTarget target, @Nullable SVNRevision revision)
     throws VcsException {
     final List<PropertyData> lines = new ArrayList<PropertyData>();
     final PropertyConsumer propertyHandler = createHandler(revision, lines);
 
     vcs.getFactory(target).createPropertyClient().list(target, revision, Depth.EMPTY, propertyHandler);
 
-    return toSortedStringPresentation(lines);
+    return lines;
   }
 
   @NotNull
@@ -305,7 +307,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
   }
 
   @NotNull
-  private static String toSortedStringPresentation(@NotNull List<PropertyData> lines) {
+  public static String toSortedStringPresentation(@NotNull List<PropertyData> lines) {
     StringBuilder sb = new StringBuilder();
 
     Collections.sort(lines, new Comparator<PropertyData>() {

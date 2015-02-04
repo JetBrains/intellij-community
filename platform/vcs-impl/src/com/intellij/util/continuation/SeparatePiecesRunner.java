@@ -22,7 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CalledInAwt;
+import org.jetbrains.annotations.CalledInAwt;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

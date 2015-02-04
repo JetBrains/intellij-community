@@ -230,6 +230,9 @@
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="control N"/>
   </action>
+  <action id="GotoChangedFile">
+    <keyboard-shortcut first-keystroke="control N"/>
+  </action>
   <action id="GotoSymbol">
     <keyboard-shortcut first-keystroke="control shift alt N"/>
   </action>
@@ -458,8 +461,8 @@
   <action id="CompareTwoFiles">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
-  <action id="CompareDirs">
-    <keyboard-shortcut first-keystroke="control D"/>
+  <action id="Diff.ShowSettingsPopup">
+    <keyboard-shortcut first-keystroke="control shift D"/>
   </action>
   <action id="SendEOF">
     <keyboard-shortcut first-keystroke="control D"/>

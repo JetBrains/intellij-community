@@ -48,6 +48,7 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
