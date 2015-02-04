@@ -17,28 +17,25 @@ package git4idea.repo;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
+import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
+  @NotNull private final Project myProject;
 
   public GitRepositoryManager(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
-                              @NotNull ProjectLevelVcsManager vcsManager) {
-    super(project, vcsManager, platformFacade.getVcs(project), GitUtil.DOT_GIT);
+                              @NotNull VcsRepositoryManager vcsRepositoryManager) {
+    super(vcsRepositoryManager, platformFacade.getVcs(project), GitUtil.DOT_GIT);
+    myProject = project;
     myPlatformFacade = platformFacade;
-  }
-
-  @NotNull
-  @Override
-  protected GitRepository createRepository(@NotNull VirtualFile root) {
-    return GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, this);
   }
 
   @Override
@@ -47,4 +44,9 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
            !new GitMultiRootBranchConfig(getRepositories()).diverged();
   }
 
+  @NotNull
+  @Override
+  public List<GitRepository> getRepositories() {
+    return getRepositories(GitRepository.class);
+  }
 }

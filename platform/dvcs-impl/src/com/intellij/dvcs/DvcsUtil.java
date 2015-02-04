@@ -29,13 +29,15 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -114,16 +116,6 @@ public class DvcsUtil {
     }, ", ");
   }
 
-  @NotNull
-  public static String joinRootsPaths(@NotNull Collection<VirtualFile> roots) {
-    return StringUtil.join(roots, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile virtualFile) {
-        return virtualFile.getPresentableUrl();
-      }
-    }, ", ");
-  }
-
   public static boolean anyRepositoryIsFresh(Collection<? extends Repository> repositories) {
     for (Repository repository : repositories) {
       if (repository.isFresh()) {
@@ -131,23 +123,6 @@ public class DvcsUtil {
       }
     }
     return false;
-  }
-
-  /**
-   * Report a warning that the given root has no associated Repositories.
-   */
-  public static void noVcsRepositoryForRoot(@NotNull Logger log,
-                                            @NotNull VirtualFile root,
-                                            @NotNull Project project,
-                                            @NotNull RepositoryManager repositoryManager,
-                                            @Nullable AbstractVcs vcs) {
-    if (vcs == null) {
-      return;
-    }
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    List<VirtualFile> roots = Arrays.asList(vcsManager.getRootsUnderVcs(vcs));
-    log.warn(String.format("Repository not found for root: %s. All roots: %s, all repositories: %s", root, roots,
-                           repositoryManager.getRepositories()));
   }
 
   @Nullable
@@ -262,7 +237,7 @@ public class DvcsUtil {
    * If an other exception happens, rethrows it as a {@link RepoStateException}.
    * In the case of success returns the result of the task execution.
    */
-  public static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) throws RepoStateException {
+  private static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) throws RepoStateException {
     IOException cause = null;
     for (int i = 0; i < IO_RETRIES; i++) {
       try {
@@ -318,14 +293,14 @@ public class DvcsUtil {
   }
 
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<T> repositories) {
-    List<T> repos = ContainerUtil.filter(repositories, new Condition<T>() {
+    List<T> validRepositories = ContainerUtil.filter(repositories, new Condition<T>() {
       @Override
       public boolean value(T t) {
         return t.getRoot().isValid();
       }
     });
-    Collections.sort(repos, REPOSITORY_COMPARATOR);
-    return repos;
+    Collections.sort(validRepositories, REPOSITORY_COMPARATOR);
+    return validRepositories;
   }
 
   @Nullable

@@ -110,7 +110,6 @@ public class HgCommitCommand {
     myRepository.update();
     final MessageBus messageBus = myProject.getMessageBus();
     messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
-    messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
   }
 
   private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit, boolean closeBranch) throws VcsException {

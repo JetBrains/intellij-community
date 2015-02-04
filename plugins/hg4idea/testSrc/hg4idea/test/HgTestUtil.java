@@ -17,7 +17,7 @@ package hg4idea.test;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,19 +28,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgTestUtil {
 
   public static void updateDirectoryMappings(Project project, VirtualFile mapRoot) {
-    if (project != null && (!project.isDefault()) && project.getBaseDir() != null && VfsUtil
-      .isAncestor(project.getBaseDir(), mapRoot, false)) {
+    if (project != null && (!project.isDefault()) && project.getBaseDir() != null &&
+        VfsUtilCore.isAncestor(project.getBaseDir(), mapRoot, false)) {
       mapRoot.refresh(false, false);
       final String path = mapRoot.equals(project.getBaseDir()) ? "" : mapRoot.getPath();
       ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
       manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, HgVcs.VCS_NAME));
-      manager.updateActiveVcss();
     }
   }
 
