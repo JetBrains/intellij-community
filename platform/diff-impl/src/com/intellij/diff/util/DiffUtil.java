@@ -134,7 +134,7 @@ public class DiffUtil {
       editor.getSettings().setUseTabCharacter(codeStyleFacade.useTabCharacter(fileType));
     }
     editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
-    editor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, null);
+    editor.getSettings().setCaretRowShown(false);
     editor.reinitSettings();
   }
 
