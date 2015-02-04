@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.optParse;
 
+import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,11 +27,18 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public final class WordWithPosition {
+public final class WordWithPosition extends Range<Integer> {
   @NotNull
   private final String myWord;
-  private final int myFrom;
-  private final int myTo;
+
+  /**
+   * Creates word with beam (it has start, but it is infinite)
+   * @param word word
+   * @param from start
+   */
+  public WordWithPosition(@NotNull final String word, final int from) {
+    this(word, from, Integer.MAX_VALUE);
+  }
 
   /**
    * @param word text
@@ -38,22 +46,13 @@ public final class WordWithPosition {
    * @param to   to where
    */
   public WordWithPosition(@NotNull final String word, final int from, final int to) {
+    super(from, to);
     myWord = word;
-    myFrom = from;
-    myTo = to;
   }
 
   @NotNull
   public String getText() {
     return myWord;
-  }
-
-  public int getFrom() {
-    return myFrom;
-  }
-
-  public int getTo() {
-    return myTo;
   }
 
   /**
@@ -63,8 +62,8 @@ public final class WordWithPosition {
    * @return collection of strings (text)
    */
   @NotNull
-  public static Collection<String> fetchText(@NotNull final Collection<WordWithPosition> words) {
-    final Collection<String> result = new ArrayList<String>(words.size());
+  public static List<String> fetchText(@NotNull final Collection<WordWithPosition> words) {
+    final List<String> result = new ArrayList<String>(words.size());
     for (final WordWithPosition word : words) {
       result.add(word.myWord);
     }
@@ -79,15 +78,15 @@ public final class WordWithPosition {
    */
   @NotNull
   public WordWithPosition copyWithDifferentText(@NotNull final String newText) {
-    return new WordWithPosition(newText, myFrom, myTo);
+    return new WordWithPosition(newText, getFrom(), getTo());
   }
 
   @Override
   public String toString() {
     return "WordWithPosition{" +
            "myWord='" + myWord + '\'' +
-           ", myFrom=" + myFrom +
-           ", myTo=" + myTo +
+           ", myFrom=" + getFrom() +
+           ", myTo=" + getTo() +
            '}';
   }
 
@@ -98,8 +97,8 @@ public final class WordWithPosition {
 
     WordWithPosition position = (WordWithPosition)o;
 
-    if (myFrom != position.myFrom) return false;
-    if (myTo != position.myTo) return false;
+    if (getFrom() != position.getFrom()) return false;
+    if (getTo() != position.getTo()) return false;
     if (!myWord.equals(position.myWord)) return false;
 
     return true;
@@ -108,8 +107,8 @@ public final class WordWithPosition {
   @Override
   public int hashCode() {
     int result = myWord.hashCode();
-    result = 31 * result + myFrom;
-    result = 31 * result + myTo;
+    result = 31 * result + getFrom();
+    result = 31 * result + getTo();
     return result;
   }
 

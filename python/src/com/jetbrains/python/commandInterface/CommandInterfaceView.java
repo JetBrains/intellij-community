@@ -15,12 +15,13 @@
  */
 package com.jetbrains.python.commandInterface;
 
-import com.jetbrains.python.suggestionList.SuggestionsBuilder;
 import com.jetbrains.python.optParse.WordWithPosition;
+import com.jetbrains.python.suggestionList.SuggestionsBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * View for command-line interface to be paired with view.
@@ -44,11 +45,12 @@ public interface CommandInterfaceView {
   void displaySuggestions(@NotNull SuggestionsBuilder suggestions, boolean absolute, @Nullable String toSelect);
 
   /**
-   * Displays error (like red line)
+   * Emphasize errors (like red line and special message).
    *
-   * @param lastOnly underline only last letter
+   * @param errors            list of errors (coordinates and error message. Message may be empty not to display any text)
+   * @param specialErrorPlace if you want to underline special place, you may provide it here
    */
-  void showError(boolean lastOnly);
+  void showErrors(@NotNull final List<WordWithPosition> errors, @Nullable SpecialErrorPlace specialErrorPlace);
 
   /**
    * Change text to the one provided
@@ -98,4 +100,19 @@ public interface CommandInterfaceView {
    *                 from 1 to 3, so you add 'foo',1,4 here)
    */
   void setBalloons(@NotNull final Collection<WordWithPosition> balloons);
+
+
+  /**
+   * Special place that may be underlined
+   */
+  enum SpecialErrorPlace {
+    /**
+     * Whole text (from start to end)
+     */
+    WHOLE_TEXT,
+    /**
+     * Only after last character
+     */
+    AFTER_LAST_CHAR
+  }
 }

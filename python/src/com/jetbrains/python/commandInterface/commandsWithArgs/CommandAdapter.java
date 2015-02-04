@@ -61,14 +61,6 @@ public class CommandAdapter implements Command {
     return myName;
   }
 
-  /**
-   * @return command arguments
-   */
-  @Override
-  @NotNull
-  public final List<Argument> getArguments() {
-    return Collections.unmodifiableList(myArguments);
-  }
 
   @Override
   @Nullable
@@ -76,9 +68,10 @@ public class CommandAdapter implements Command {
     return myHelp;
   }
 
-  @Nullable
+
+  @NotNull
   @Override
-  public String getArgumentHelp() {
-    return null;
+  public final ArgumentsInfo getArgumentsInfo() {
+    return NoArgumentsInfo.INSTANCE;
   }
 }

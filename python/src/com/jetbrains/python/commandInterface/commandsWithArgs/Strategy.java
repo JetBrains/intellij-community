@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.commandInterface.commandsWithArgs;
 
+import com.intellij.openapi.util.Pair;
+import com.jetbrains.python.commandInterface.CommandInterfaceView.SpecialErrorPlace;
 import com.jetbrains.python.optParse.WordWithPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +53,7 @@ abstract class Strategy {
   @NotNull
   abstract SuggestionInfo getSuggestionInfo();
 
+  // TODO: Merge baloon and error (actually the same)
   @NotNull
   List<WordWithPosition> getBalloonsToShow() {
     return Collections.emptyList();
@@ -67,28 +70,10 @@ abstract class Strategy {
    * @return errors
    */
   @NotNull
-  abstract ErrorInfo getShowErrorInfo();
+  abstract Pair<SpecialErrorPlace, List<WordWithPosition>> getErrorInfo();
 
   /**
    * @return if text entered by user contains some unknown commands
    */
   abstract boolean isUnknownTextExists();
-
-  /**
-   * Display error or not
-   */
-  enum ErrorInfo {
-    /**
-     * Yes, mark whole text as error
-     */
-    FULL,
-    /**
-     * Yes, mark last part as error
-     */
-    RELATIVE,
-    /**
-     * No, do not mark anything like error
-     */
-    NO
-  }
 }
