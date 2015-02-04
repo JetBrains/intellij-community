@@ -252,7 +252,12 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       context.putChainContext(DiffUserDataKeysEx.BOTTOM_PANEL, myDiffBottomComponent);
     }
 
+    updateDiffContext(context);
+
     ShowDiffAction.showDiffForChange(myProject, Arrays.asList(changesArray), indexInSelection, context);
+  }
+
+  protected void updateDiffContext(@NotNull ShowDiffContext context) {
   }
 
   private void showDiff() {
