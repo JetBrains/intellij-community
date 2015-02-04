@@ -104,7 +104,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       result = injectedResult;
     }
     for (HighlightInfo info : result) {
-      if (myPriorityRange.contains(info)) {
+      if (myRestrictRange.contains(info)) {
         gotHighlights.add(info);
       }
       else {
