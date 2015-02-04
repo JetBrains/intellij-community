@@ -16,7 +16,9 @@
 package com.intellij.ui.components.editors;
 
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
@@ -24,6 +26,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -138,6 +141,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
     if (myRenderer != null) {
       myList.setCellRenderer(myRenderer);
     }
+    final boolean surrendersFocusOnKeystrokeOldValue = myTable instanceof JBTable ? ((JBTable)myTable).surrendersFocusOnKeyStroke() : myTable.getSurrendersFocusOnKeystroke();
     final JBPopup popup = JBPopupFactory.getInstance()
       .createListPopupBuilder(myList)
       .setItemChoosenCallback(new Runnable() {
@@ -159,6 +163,19 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
         public Boolean compute() {
           TableUtil.stopEditing(myTable);
           return true;
+        }
+      })
+      .addListener(new JBPopupAdapter() {
+        @Override
+        public void beforeShown(LightweightWindowEvent event) {
+          super.beforeShown(event);
+          myTable.setSurrendersFocusOnKeystroke(false);
+        }
+
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          myTable.setSurrendersFocusOnKeystroke(surrendersFocusOnKeystrokeOldValue);
+          super.onClosed(event);
         }
       })
       .createPopup();
