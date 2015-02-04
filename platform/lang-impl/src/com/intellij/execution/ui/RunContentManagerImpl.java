@@ -299,9 +299,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         @Override
         public void startNotified(final ProcessEvent event) {
           IconAnimator animator = myIconAnimators.get(executor.getToolWindowId());
-          if (animator != null) {
-            animator.setActive(true);
-          }
+          //if (animator != null) {
+          //  animator.setActive(true);
+          //}
         }
 
         @Override
@@ -311,24 +311,24 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
             public void run() {
               final Icon icon = descriptor.getIcon();
 
-              boolean alive = false;
-              String toolWindowId = executor.getToolWindowId();
-              ContentManager manager = myToolwindowIdToContentManagerMap.get(toolWindowId);
-              for (Content content : manager.getContents()) {
-                RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
-                if (descriptor != null) {
-                  ProcessHandler handler = descriptor.getProcessHandler();
-                  if (handler != null && !handler.isProcessTerminated()) {
-                    alive = true;
-                    break;
-                  }
-                }
-              }
-
-              IconAnimator animator = myIconAnimators.get(toolWindowId);
-              if (animator != null) {
-                animator.setActive(/*alive*/false);
-              }
+              //boolean alive = false;
+              //String toolWindowId = executor.getToolWindowId();
+              //ContentManager manager = myToolwindowIdToContentManagerMap.get(toolWindowId);
+              //for (Content content : manager.getContents()) {
+              //  RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
+              //  if (descriptor != null) {
+              //    ProcessHandler handler = descriptor.getProcessHandler();
+              //    if (handler != null && !handler.isProcessTerminated()) {
+              //      alive = true;
+              //      break;
+              //    }
+              //  }
+              //}
+              //
+              //IconAnimator animator = myIconAnimators.get(toolWindowId);
+              //if (animator != null) {
+              //  animator.setActive(alive);
+              //}
               content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
             }
           });
