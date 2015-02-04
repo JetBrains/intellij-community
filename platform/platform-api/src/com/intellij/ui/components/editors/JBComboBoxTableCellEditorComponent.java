@@ -15,11 +15,13 @@
  */
 package com.intellij.ui.components.editors;
 
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
@@ -32,7 +34,6 @@ import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
 
 /**
@@ -49,7 +50,7 @@ import java.util.List;
  *   <p>3. Return the instance
  *
  * @author Konstantin Bulenkov
- * @see com.intellij.ui.components.JBComboBoxLabel
+ * @see JBComboBoxLabel
  */
 public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private JTable myTable;
@@ -58,6 +59,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private final JBList myList = new JBList();
   private Object[] myOptions = {};
   private Object myValue;
+  public boolean myWide = false;
   private Function<Object, String> myToString = StringUtil.createToStringFunction(Object.class);
   private final List<ActionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -132,13 +134,11 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
 
   private void initAndShowPopup() {
     myList.removeAll();
-    final Rectangle rect = myTable.getCellRect(myRow, myColumn, true);
-    final Point point = new Point(rect.x, rect.y);
     myList.setModel(JBList.createDefaultListModel(myOptions));
     if (myRenderer != null) {
       myList.setCellRenderer(myRenderer);
     }
-    JBPopupFactory.getInstance()
+    final JBPopup popup = JBPopupFactory.getInstance()
       .createListPopupBuilder(myList)
       .setItemChoosenCallback(new Runnable() {
         @Override
@@ -161,8 +161,17 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
           return true;
         }
       })
-      .createPopup()
-      .show(new RelativePoint(myTable, point));
+      .createPopup();
+    final Rectangle rect = myTable.getCellRect(myRow, myColumn, true);
+    Point point = new Point(rect.x, rect.y);
+    if (myWide) {
+      popup.setMinimumSize(new Dimension(((int)rect.getSize().getWidth()), -1));
+    }
+    popup.show(new RelativePoint(myTable, point));
+  }
+
+  public void setWide(boolean wide) {
+    this.myWide = wide;
   }
 
   public Object getEditorValue() {
