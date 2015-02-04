@@ -23,12 +23,13 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -72,8 +73,9 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
 
     final String selectedUrl = VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getData(dc);
 
-    ShowDiffAction.showDiffForChange(new MyIterableWrapper(iterable.iterator(), before, after, project), new MySelectionMarker(selectedUrl),
-                                     project, new ShowDiffUIContext(true));
+    Iterable<Change> changes = new MyIterableWrapper(iterable.iterator(), before, after, project);
+    Condition<Change> selection = new MySelectionMarker(selectedUrl);
+    ShowDiffAction.showDiffForChange(project, changes, selection, new ShowDiffContext(DiffDialogHints.FRAME));
   }
 
   private static class MySelectionMarker implements Condition<Change> {

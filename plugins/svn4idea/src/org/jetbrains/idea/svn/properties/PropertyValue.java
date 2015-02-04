@@ -52,4 +52,21 @@ public class PropertyValue {
   public String toString() {
     return myValue;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PropertyValue value = (PropertyValue)o;
+
+    if (!myValue.equals(value.myValue)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myValue.hashCode();
+  }
 }

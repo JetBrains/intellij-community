@@ -388,6 +388,9 @@
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="meta O"/>
     </action>
+    <action id="GotoChangedFile">
+      <keyboard-shortcut first-keystroke="meta O"/>
+    </action>
     <action id="GotoSymbol">
       <keyboard-shortcut first-keystroke="meta alt O"/>
     </action>

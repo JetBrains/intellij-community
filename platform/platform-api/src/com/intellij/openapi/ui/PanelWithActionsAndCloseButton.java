@@ -72,6 +72,9 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, ! myVerticalToolbar);
     JComponent centerPanel = createCenterPanel();
     toolbar.setTargetComponent(centerPanel);
+    for (AnAction action : myToolbarGroup.getChildren(null)) {
+      action.registerCustomShortcutSet(action.getShortcutSet(), centerPanel);
+    }
 
     add(centerPanel, BorderLayout.CENTER);
     if (myVerticalToolbar) {

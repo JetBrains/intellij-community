@@ -160,6 +160,10 @@ public class DiffHyperlink implements Printable {
     return ExecutionBundle.message("strings.equal.failed.dialog.title");
   }
 
+  public String getDiffTitle() {
+    return getTitle();
+  }
+
   public String getLeft() {
     return myExpected;
   }
