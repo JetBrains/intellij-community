@@ -295,6 +295,7 @@ binding.setVariable("platformApiModules", [
   "xml-openapi",
   "xml-psi-api",
   "xml-structure-view-api",
+  "built-in-server-api"
 ])
 
 
