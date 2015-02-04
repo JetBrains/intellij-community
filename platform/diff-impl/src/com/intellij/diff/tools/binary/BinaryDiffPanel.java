@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-class BinaryDiffPanel extends EditorsDiffPanelBase {
+public class BinaryDiffPanel extends EditorsDiffPanelBase {
   @NotNull protected final JPanel INSERTED_CONTENT_NOTIFICATION =
     createNotification("Content added", TextDiffType.INSERTED.getColor(null));
   @NotNull protected final JPanel REMOVED_CONTENT_NOTIFICATION =

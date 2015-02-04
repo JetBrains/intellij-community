@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-class BinaryContentPanel extends TwosideContentPanel {
+public class BinaryContentPanel extends TwosideContentPanel {
   public BinaryContentPanel(@NotNull List<JComponent> titleComponents,
                             @Nullable FileEditor editor1,
                             @Nullable FileEditor editor2) {

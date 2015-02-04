@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class OnesideDiffChange {
+public class OnesideDiffChange {
   @NotNull private final EditorEx myEditor;
 
   private final int myStartOffset1;

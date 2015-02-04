@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-class SimpleThreesideDiffChange {
+public class SimpleThreesideDiffChange {
   @NotNull private final MergeLineFragment myFragment;
   @NotNull private final List<EditorEx> myEditors;
 

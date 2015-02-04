@@ -63,7 +63,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-class SimpleDiffViewer extends TwosideTextDiffViewer {
+public class SimpleDiffViewer extends TwosideTextDiffViewer {
   public static final Logger LOG = Logger.getInstance(SimpleDiffViewer.class);
 
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;

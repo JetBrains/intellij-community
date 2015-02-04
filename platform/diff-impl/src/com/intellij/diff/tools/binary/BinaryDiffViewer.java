@@ -62,7 +62,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-class BinaryDiffViewer extends ListenerDiffViewerBase {
+public class BinaryDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(BinaryDiffViewer.class);
 
   @NotNull private final BinaryDiffPanel myPanel;

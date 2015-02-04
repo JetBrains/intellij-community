@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class ChangedBlock {
+public class ChangedBlock {
   private final int myStartOffset1;
   private final int myEndOffset1;
   private final int myStartOffset2;

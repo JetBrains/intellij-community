@@ -30,7 +30,7 @@ import java.awt.*;
 
 import static com.intellij.diff.util.DiffUtil.createMessagePanel;
 
-class OnesideDiffPanel extends DiffPanelBase {
+public class OnesideDiffPanel extends DiffPanelBase {
   private static final String GOOD_CONTENT = "GoodContent";
   private static final String LOADING_CONTENT = "LoadingContent";
   private static final String TOO_BIG_CONTENT = "TooBigContent";

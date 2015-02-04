@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.TreeMap;
 
-class LineNumberConvertor {
+public class LineNumberConvertor {
   @NotNull private final TreeMap<Integer, Integer> myFragments1;
   @NotNull private final TreeMap<Integer, Integer> myFragments2;
 

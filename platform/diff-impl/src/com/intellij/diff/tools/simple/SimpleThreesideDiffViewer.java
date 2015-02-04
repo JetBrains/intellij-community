@@ -64,7 +64,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // TODO: extract common methods with Twoside
-class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
+public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   public static final Logger LOG = Logger.getInstance(SimpleThreesideDiffViewer.class);
 
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable1;

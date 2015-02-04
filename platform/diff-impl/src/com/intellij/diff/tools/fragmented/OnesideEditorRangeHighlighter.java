@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class OnesideEditorRangeHighlighter {
+public class OnesideEditorRangeHighlighter {
   public static final Logger LOG = OnesideDiffViewer.LOG;
 
   @NotNull private final List<Element> myPieces;

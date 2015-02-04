@@ -73,7 +73,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-class OnesideDiffViewer extends TextDiffViewerBase {
+public class OnesideDiffViewer extends TextDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(OnesideDiffViewer.class);
 
   @NotNull private final EditorEx myEditor;
