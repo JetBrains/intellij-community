@@ -189,17 +189,17 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean isSearchInLibraries() {
-      return !myBaseScope.isSearchInLibraries();
+      return true; // not (in library A) is perfectly fine to find classes in another library B.
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
-      return !myBaseScope.isSearchInModuleContent(aModule, testSources);
+      return true; // not (some files in module A) is perfectly fine to find classes in another part of module A.
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return !myBaseScope.isSearchInModuleContent(aModule);
+      return true; // not (some files in module A) is perfectly fine to find classes in another part of module A.
     }
 
     @Override

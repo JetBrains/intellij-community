@@ -152,7 +152,7 @@ public class FrameDiffTool implements DiffTool {
     builder.showModal(!hints.contains(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG));
   }
 
-  static boolean shouldOpenDialog(Collection hints) {
+  public static boolean shouldOpenDialog(Collection hints) {
     if (hints.contains(DiffTool.HINT_SHOW_MODAL_DIALOG)) return true;
     if (hints.contains(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG)) return true;
     if (hints.contains(DiffTool.HINT_SHOW_FRAME)) return false;

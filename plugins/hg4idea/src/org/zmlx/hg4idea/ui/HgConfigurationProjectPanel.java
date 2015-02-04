@@ -64,8 +64,13 @@ public class HgConfigurationProjectPanel {
         );
       }
     });
-    final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);
-    mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
+    if (!project.isDefault()) {
+      final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);
+      mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
+    }
+    else {
+      mySyncControl.setVisible(true);
+    }
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Mercurial"));
   }
 

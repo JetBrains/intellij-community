@@ -493,9 +493,7 @@ class PyDB:
             # a single operation, so we don't return True on every
             # call when the debug hook is in place to allow the GUI to run
             _DebugConsoleHelper._return_control_osc = not _DebugConsoleHelper._return_control_osc
-            if _DebugConsoleHelper._return_control_osc:
-                return True
-            return False
+            return _DebugConsoleHelper._return_control_osc
 
         from pydev_ipython.inputhook import get_inputhook, set_return_control_callback
         set_return_control_callback(return_control)

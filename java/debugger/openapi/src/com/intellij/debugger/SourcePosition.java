@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,6 +280,11 @@ public abstract class SourcePosition implements Navigatable{
       protected int calcLine() {
         return line;
       }
+
+      @Override
+      public String toString() {
+        return getFile().getName() + ":" + line;
+      }
     };
   }
 
@@ -289,6 +294,11 @@ public abstract class SourcePosition implements Navigatable{
       @Override
       protected int calcOffset() {
         return offset;
+      }
+
+      @Override
+      public String toString() {
+        return getFile().getName() + " offset " + offset;
       }
     };
   }

@@ -373,9 +373,8 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.associatePattern(perlFileType, "*.cgi");
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
-    Element element = new Element("foo");
-    myFileTypeManager.writeExternal(element);
-    myFileTypeManager.readExternal(element);
+    Element element = myFileTypeManager.getState();
+    myFileTypeManager.loadState(element);
     myFileTypeManager.initComponent();
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
@@ -407,8 +406,7 @@ public class FileTypesTest extends PlatformTestCase {
   // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
   public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
     myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin");
-    Element element = new Element("foo");
-    myFileTypeManager.writeExternal(element);
+    Element element = myFileTypeManager.getState();
     String s = JDOMUtil.writeElement(element);
     log(s);
 
@@ -420,7 +418,7 @@ public class FileTypesTest extends PlatformTestCase {
       }
     }, getTestRootDisposable());
     myFileTypeManager.initStandardFileTypes();
-    myFileTypeManager.readExternal(element);
+    myFileTypeManager.loadState(element);
 
     myFileTypeManager.initComponent();
     Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
@@ -447,38 +445,34 @@ public class FileTypesTest extends PlatformTestCase {
         consumer.consume(typeFromPlugin, "fromPlugin");
       }
     };
-    Element element = new Element("foo");
-    myFileTypeManager.writeExternal(element);
+    Element element = myFileTypeManager.getState();
     try {
       Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).registerExtension(factory);
       myFileTypeManager.initStandardFileTypes();
-      myFileTypeManager.readExternal(element);
+      myFileTypeManager.loadState(element);
       myFileTypeManager.initComponent();
 
       myFileTypeManager.associatePattern(typeFromPlugin, "*.foo");
 
-      element = new Element("foo");
-      myFileTypeManager.writeExternal(element);
+      element = myFileTypeManager.getState();
       log(JDOMUtil.writeElement(element));
 
       Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).unregisterExtension(factory);
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
-      myFileTypeManager.readExternal(element);
+      myFileTypeManager.loadState(element);
       myFileTypeManager.initComponent();
 
-      element = new Element("foo");
-      myFileTypeManager.writeExternal(element);
+      element = myFileTypeManager.getState();
       log(JDOMUtil.writeElement(element));
 
       Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).registerExtension(factory);
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
-      myFileTypeManager.readExternal(element);
+      myFileTypeManager.loadState(element);
       myFileTypeManager.initComponent();
 
-      element = new Element("foo");
-      myFileTypeManager.writeExternal(element);
+      element = myFileTypeManager.getState();
       log(JDOMUtil.writeElement(element));
 
       assertEquals(typeFromPlugin, myFileTypeManager.getFileTypeByFileName("foo.foo"));

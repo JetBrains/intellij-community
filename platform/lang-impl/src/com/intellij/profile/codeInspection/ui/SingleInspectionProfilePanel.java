@@ -70,6 +70,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -959,25 +960,40 @@ public class SingleInspectionProfilePanel extends JPanel {
 
             @Override
             protected void onSettingsChanged() {
-              myTreeTable.updateUI();
+              update(false);
             }
 
             @Override
             protected void onScopeAdded() {
-              myTreeTable.updateUI();
-              updateOptionsAndDescriptionPanel();
+              update(true);
             }
 
             @Override
             protected void onScopesOrderChanged() {
-              myTreeTable.updateUI();
-              updateOptionsAndDescriptionPanel();
+              update(true);
             }
 
             @Override
             protected void onScopeRemoved(final int scopesCount) {
+              update(scopesCount == 1);
+            }
+
+            private void update(final boolean updateOptionsAndDescriptionPanel) {
+              Queue<InspectionConfigTreeNode> q = new Queue<InspectionConfigTreeNode>(nodes.size());
+              for (InspectionConfigTreeNode node : nodes) {
+                q.addLast(node);
+              }
+              while (!q.isEmpty()) {
+                final InspectionConfigTreeNode inspectionConfigTreeNode = q.pullFirst();
+                inspectionConfigTreeNode.dropCache();
+                final TreeNode parent = inspectionConfigTreeNode.getParent();
+                if (parent != null && parent.getParent() != null) {
+                  q.addLast((InspectionConfigTreeNode)parent);
+                }
+              }
+
               myTreeTable.updateUI();
-              if (scopesCount == 1) {
+              if (updateOptionsAndDescriptionPanel) {
                 updateOptionsAndDescriptionPanel();
               }
             }

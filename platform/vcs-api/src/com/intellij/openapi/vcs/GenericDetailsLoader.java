@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;

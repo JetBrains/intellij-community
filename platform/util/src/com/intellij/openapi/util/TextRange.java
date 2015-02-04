@@ -71,6 +71,9 @@ public class TextRange implements Segment, Serializable {
   }
 
   public boolean contains(@NotNull TextRange range) {
+    return contains((Segment)range);
+  }
+  public boolean contains(@NotNull Segment range) {
     return containsRange(range.getStartOffset(), range.getEndOffset());
   }
 

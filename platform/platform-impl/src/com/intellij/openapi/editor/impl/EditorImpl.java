@@ -28,7 +28,10 @@ import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -2325,7 +2328,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // line (caret cursor is located on it). We want to draw corresponding 'caret line' background for soft wraps-introduced
       // virtual space then.
       if (color == null && position.y == getCaretModel().getVisualPosition().line * getLineHeight()) {
-        color = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+        color = mySettings.isCaretRowShown() ? getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR) : null;
       }
 
       if (color != null) {
@@ -2542,7 +2545,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else if (position.y == activeRowY) {
       // Draw 'active line' background after soft wrap.
-      Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+      Color caretRowColor = mySettings.isCaretRowShown()? getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR) : null;
       drawBackground(g, caretRowColor, afterSoftWrapWidth, position, defaultBackground, clip);
       caretRowPainted[0] = true;
     }
@@ -2560,7 +2563,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else if (position.y == activeRowY) {
       // Draw 'active line' background for the soft wrap-introduced virtual space.
-      Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+      Color caretRowColor = mySettings.isCaretRowShown()? getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR) : null;
       drawBackground(g, caretRowColor, width, position, defaultBackground, clip);
     }
 
@@ -3070,7 +3073,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void paintLineMarkerSeparator(@NotNull RangeHighlighter marker, @NotNull Rectangle clip, @NotNull Graphics g) {
     Color separatorColor = marker.getLineSeparatorColor();
-    if (separatorColor == null) {
+    LineSeparatorRenderer lineSeparatorRenderer = marker.getLineSeparatorRenderer();
+    if (separatorColor == null && lineSeparatorRenderer == null) {
       return;
     }
     int line = marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP ? marker.getDocument()
@@ -3103,7 +3107,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       endShift = Math.min(endShift, mySettings.getRightMargin(myProject) * EditorUtil.getSpaceWidth(Font.PLAIN, this));
     }
 
-    final LineSeparatorRenderer lineSeparatorRenderer = marker.getLineSeparatorRenderer();
     if (lineSeparatorRenderer != null) {
       lineSeparatorRenderer.drawLine(g, 0, endShift, y - 1);
     }

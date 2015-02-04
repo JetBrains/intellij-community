@@ -32,6 +32,7 @@ public class MovablePopup implements Disposable {
   private Container myView;
   private boolean myAlwaysOnTop;
   private boolean myHeavyWeight;
+  private boolean myWindowFocusable;
   private boolean myWindowShadow;
 
   /**
@@ -68,6 +69,17 @@ public class MovablePopup implements Disposable {
   public void setHeavyWeight(boolean value) {
     if (myHeavyWeight != value) {
       myHeavyWeight = value;
+      disposeAndUpdate(true);
+    }
+  }
+
+  /**
+   * Sets whether this popup should grab a focus.
+   * This property is used by heavy weight popups only.
+   */
+  public void setWindowFocusable(boolean value) {
+    if (myWindowFocusable != value) {
+      myWindowFocusable = value;
       disposeAndUpdate(true);
     }
   }
@@ -119,6 +131,16 @@ public class MovablePopup implements Disposable {
       if (owner != null) {
         if (myHeavyWeight) {
           JWindow view = new JWindow(owner);
+          // TODO 1.7+: temporary fix for the i3 window manager because of Java 1.6
+          try {
+            @SuppressWarnings("unchecked")
+            Class<? extends Enum> type = (Class<? extends Enum>)Class.forName("java.awt.Window$Type");
+            Object value = Enum.valueOf(type, "POPUP");
+            view.getClass().getMethod("setType", type).invoke(view, value);
+          }
+          catch (Exception ignored) {
+          }
+          // TODO 1.7+: setType(Window.Type.POPUP); // or UTILITY
           if (myAlwaysOnTop) {
             try {
               view.setAlwaysOnTop(true);
@@ -127,6 +149,7 @@ public class MovablePopup implements Disposable {
               myAlwaysOnTop = false;
             }
           }
+          view.setFocusableWindowState(myWindowFocusable);
           if (!myWindowShadow) {
             view.getRootPane().putClientProperty("Window.shadow", Boolean.FALSE);
           }

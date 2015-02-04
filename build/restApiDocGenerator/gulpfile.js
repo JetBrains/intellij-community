@@ -2,10 +2,12 @@ var gulp = require('gulp')
 var apidoc = require('gulp-apidoc')
 var path = require('path')
 
-var sources = path.normalize("../../platform/platform-impl/src")
+var sources = path.resolve("../../platform/")
 
 gulp.task('apidoc', function () {
-  apidoc.exec({src: sources, dest: (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + "/idea-rest-api"})
+  var destDir = (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + "/idea-rest-api";
+  console.info("generating docs from " + sources + " to " + destDir)
+  apidoc.exec({src: sources, dest: destDir, debug: true})
 })
 
 gulp.task('default', ['apidoc'])

@@ -69,7 +69,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     for (TabInfo eachInfo : data.toLayout) {
       final TabLabel label = myTabs.myInfo2Label.get(eachInfo);
       if (tabWidth == 0) {
-        tabWidth = GraphicsUtil.stringWidth("m", label.getLabelComponent().getFont()) * 15;
+        tabWidth = GraphicsUtil.stringWidth("m", label.getLabelComponent().getFont()) * 20;
       }
       lengthEstimation += tabWidth;
     }

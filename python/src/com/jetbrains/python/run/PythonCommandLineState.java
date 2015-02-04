@@ -42,7 +42,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteProcessHandlerBase;
@@ -225,7 +224,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static GeneralCommandLine createCommandLine() {
-    return Registry.is("run.processes.with.pty") ? new PtyCommandLine() : new GeneralCommandLine();
+    return PtyCommandLine.isEnabled() ? new PtyCommandLine() : new GeneralCommandLine();
   }
 
   /**

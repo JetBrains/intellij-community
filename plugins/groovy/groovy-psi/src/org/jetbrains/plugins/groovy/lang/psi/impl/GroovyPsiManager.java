@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -60,12 +61,13 @@ public class GroovyPsiManager {
                                                                                 CommonClassNames.JAVA_UTIL_LIST,
                                                                                 CommonClassNames.JAVA_UTIL_COLLECTION,
                                                                                 CommonClassNames.JAVA_LANG_STRING);
+  private static final Ref<PsiClass> EMPTY_REF = new Ref<PsiClass>();
   private final Project myProject;
 
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
-  private final Map<String, Map<GlobalSearchScope, PsiClass>> myClassCache = ContainerUtil.createConcurrentSoftValueMap();
+  private final Map<String, Map<GlobalSearchScope, Ref<PsiClass>>> myClassCache = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.newConcurrentMap();
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
@@ -159,20 +161,18 @@ public class GroovyPsiManager {
 
   @Nullable
   public PsiClass findClassWithCache(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
-    Map<GlobalSearchScope, PsiClass> map = myClassCache.get(fqName);
+    Map<GlobalSearchScope, Ref<PsiClass>> map = myClassCache.get(fqName);
     if (map == null) {
       map = ContainerUtil.newConcurrentMap();
       myClassCache.put(fqName, map);
     }
-    PsiClass cached = map.get(resolveScope);
+    Ref<PsiClass> cached = map.get(resolveScope);
     if (cached != null) {
-      return cached;
+      return cached.get();
     }
 
     PsiClass result = JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
-    if (result != null) {
-      map.put(resolveScope, result);
-    }
+    map.put(resolveScope, result != null ? Ref.create(result) : EMPTY_REF);
     return result;
   }
 

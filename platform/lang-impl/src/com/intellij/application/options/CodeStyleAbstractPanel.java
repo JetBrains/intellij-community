@@ -373,7 +373,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private void updatePreviewHighlighter(final EditorEx editor) {
     EditorColorsScheme scheme = editor.getColorsScheme();
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+    editor.getSettings().setCaretRowShown(false);
     editor.setHighlighter(createHighlighter(scheme));
   }
 

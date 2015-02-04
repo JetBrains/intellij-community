@@ -60,9 +60,8 @@ public class UIUtil {
     editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setFoldingOutlineShown(false);
+    editorSettings.setCaretRowShown(false);
 
-    EditorColorsScheme scheme = editor.getColorsScheme();
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     if (!editable) {
       final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       Color c = globalScheme.getColor(EditorColors.READONLY_BACKGROUND_COLOR);

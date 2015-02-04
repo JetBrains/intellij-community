@@ -135,6 +135,9 @@
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="shift meta T" />
     </action>
+    <action id="GotoChangedFile">
+      <keyboard-shortcut first-keystroke="shift meta T" />
+    </action>
     <action id="GotoDeclaration">
       <keyboard-shortcut first-keystroke="F3" />
       <mouse-shortcut keystroke="ctrl button1"/>

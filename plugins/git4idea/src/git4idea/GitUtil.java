@@ -330,7 +330,7 @@ public class GitUtil {
   }
 
   public static boolean isGitRoot(final File file) {
-    return file != null && file.exists() && file.isDirectory() && new File(file, DOT_GIT).exists();
+    return file != null && file.exists() && new File(file, DOT_GIT).exists();
   }
 
   /**

@@ -134,7 +134,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     editor.setRendererMode(true);
 
     editor.setColorsScheme(editor.createBoundColorSchemeDelegate(null));
-    editor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, null);
+    editor.getSettings().setCaretRowShown(false);
 
     editor.getScrollPane().setBorder(null);
 

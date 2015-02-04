@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,10 +66,10 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         file.putUserData(POINTERS_KEY, null);
       }
       else {
-        for (SmartPointerEx pointer : pointers) {
-          if (pointer != null) {
-            pointer.fastenBelt(offset, cachedRangeMarkers);
-          }
+        // pointers might change in fastenBelt()
+        List<SmartPointerEx> strongPointers = ((UnsafeWeakList<SmartPointerEx>)pointers).toStrongList();
+        for (SmartPointerEx pointer : strongPointers) {
+          pointer.fastenBelt(offset, cachedRangeMarkers);
         }
       }
 
@@ -113,10 +113,10 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         file.putUserData(POINTERS_KEY, null);
       }
       else {
-        for (SmartPointerEx pointer : pointers) {
-          if (pointer != null) {
-            pointer.unfastenBelt(offset);
-          }
+        // pointers might change in unfastenBelt()
+        List<SmartPointerEx> strongPointers = ((UnsafeWeakList<SmartPointerEx>)pointers).toStrongList();
+        for (SmartPointerEx pointer : strongPointers) {
+          pointer.unfastenBelt(offset);
         }
       }
 
