@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.roots;
+package com.intellij.dvcs.repo;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.VcsRootChecker;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 /**
- * @author Kirill Likhodedov
+ * Creates {@link Repository} instance for appropriate vcs if root is valid
  */
-public class GitRootChecker extends VcsRootChecker {
+public abstract class VcsRepositoryCreator {
+  @NonNls public static final ExtensionPointName<VcsRepositoryCreator> EXTENSION_POINT_NAME =
+    ExtensionPointName.create("com.intellij.vcsRepositoryCreator");
 
-  @Override
-  public boolean isRoot(@NotNull String path) {
-    return GitUtil.isGitRoot(new File(path));
-  }
+  @Nullable
+  public abstract Repository createRepositoryIfValid(@NotNull VirtualFile root);
 
-  @Override
   @NotNull
-  public VcsKey getSupportedVcs() {
-    return GitVcs.getKey();
-  }
-
-  @Override
-  public boolean isVcsDir(@Nullable String path) {
-    return path != null && path.toLowerCase().endsWith(GitUtil.DOT_GIT);
-  }
+  public abstract VcsKey getVcsKey();
 }

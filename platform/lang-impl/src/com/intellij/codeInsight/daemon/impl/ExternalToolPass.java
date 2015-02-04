@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.Language;
@@ -28,6 +27,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
@@ -42,12 +42,8 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class ExternalToolPass extends TextEditorHighlightingPass {
-  private final PsiFile myFile;
-  private final int myStartOffset;
-  private final int myEndOffset;
+public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private final AnnotationHolderImpl myAnnotationHolder;
-  private final Editor myEditor;
 
   private final Map<ExternalAnnotator, MyData> myAnnotator2DataMap = new HashMap<ExternalAnnotator, MyData>();
 
@@ -69,20 +65,27 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
                           @NotNull Editor editor,
                           int startOffset,
                           int endOffset) {
-    super(file.getProject(), editor.getDocument(), false);
-    myEditor = editor;
-    myFile = file;
-    myStartOffset = startOffset;
-    myEndOffset = endOffset;
+    super(file.getProject(), editor.getDocument(), "External annotators", file, editor, new TextRange(startOffset, endOffset), false, HighlightInfoProcessor.getEmpty());
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
 
     myExternalToolPassFactory = externalToolPassFactory;
   }
 
   @Override
-  public void doCollectInformation(@NotNull ProgressIndicator progress) {
+  protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getLanguages();
+    int externalAnnotatorsInRoots = 0;
+
+    for (Language language : relevantLanguages) {
+      PsiFile psiRoot = viewProvider.getPsi(language);
+      if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(psiRoot)) continue;
+      final List<ExternalAnnotator> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, psiRoot);
+
+      externalAnnotatorsInRoots += externalAnnotators.size();
+    }
+    setProgressLimit(externalAnnotatorsInRoots);
+
     for (Language language : relevantLanguages) {
       PsiFile psiRoot = viewProvider.getPsi(language);
       if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(psiRoot)) continue;
@@ -93,7 +96,8 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
         boolean errorFound = daemonCodeAnalyzer.getFileStatusMap().wasErrorFound(myDocument);
 
         for(ExternalAnnotator externalAnnotator: externalAnnotators) {
-          final Object collectedInfo = externalAnnotator.collectInformation(psiRoot, myEditor, errorFound);
+          final Object collectedInfo = externalAnnotator.collectInformation(psiRoot, getEditor(), errorFound);
+          advanceProgress(1);
           if (collectedInfo != null) {
             myAnnotator2DataMap.put(externalAnnotator, new MyData(psiRoot, collectedInfo));
           }
@@ -103,7 +107,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doApplyInformationToEditor() {
+  protected void applyInformationWithProgress() {
     final long modificationStampBefore = myDocument.getModificationStamp();
 
     Update update = new Update(myFile) {
@@ -165,11 +169,11 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
         if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
           return;
         }
-        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, highlights, getColorsScheme(), getId());
+        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), highlights, getColorsScheme(), getId());
         DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
         daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
       }
-    }, ModalityState.stateForComponent(myEditor.getComponent()));
+    }, ModalityState.stateForComponent(getEditor().getComponent()));
   }
 
   private void doAnnotate() {

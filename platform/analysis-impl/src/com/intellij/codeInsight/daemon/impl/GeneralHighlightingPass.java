@@ -73,11 +73,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   };
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
-  protected final int myStartOffset;
-  protected final int myEndOffset;
   protected final boolean myUpdateAll;
   protected final ProperTextRange myPriorityRange;
-  protected final Editor myEditor;
 
   protected final List<HighlightInfo> myHighlights = new ArrayList<HighlightInfo>();
 
@@ -102,11 +99,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  @Nullable Editor editor,
                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     super(project, document, PRESENTABLE_NAME, file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
-    myStartOffset = startOffset;
-    myEndOffset = endOffset;
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
-    myEditor = editor;
 
     PsiUtilCore.ensureValid(file);
     boolean wholeFileHighlighting = isWholeFileHighlighting();
@@ -117,7 +111,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     // initial guess to show correct progress in the traffic light icon
     setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
-    myGlobalScheme = myEditor != null ? myEditor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+    myGlobalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
@@ -189,7 +183,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     try {
       List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
       List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
-      Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, insideElements, insideRanges, outsideElements,
+      Divider.divideInsideAndOutside(myFile, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, insideElements, insideRanges, outsideElements,
                                      outsideRanges, false, SHOULD_HIGHIGHT_FILTER);
       // put file element always in outsideElements
       if (!insideElements.isEmpty() && insideElements.get(insideElements.size()-1) instanceof PsiFile) {
@@ -204,7 +198,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       final boolean forceHighlightParents = forceHighlightParents();
 
       if (!isDumbMode()) {
-        highlightTodos(myFile, myDocument.getCharsSequence(), myStartOffset, myEndOffset, progress, myPriorityRange, insideResult,
+        highlightTodos(myFile, myDocument.getCharsSequence(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), progress, myPriorityRange, insideResult,
                        outsideResult);
       }
 
@@ -235,7 +229,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private boolean isWholeFileHighlighting() {
-    return myUpdateAll && myStartOffset == 0 && myEndOffset == myDocument.getTextLength();
+    return myUpdateAll && myRestrictRange.equalsToRange(0, myDocument.getTextLength());
   }
 
   @Override
@@ -523,6 +517,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   public String toString() {
-    return super.toString() + " updateAll="+myUpdateAll+" range=("+myStartOffset+","+myEndOffset+")";
+    return super.toString() + " updateAll="+myUpdateAll+" range= "+myRestrictRange;
   }
 }

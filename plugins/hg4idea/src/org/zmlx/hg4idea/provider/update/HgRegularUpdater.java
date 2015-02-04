@@ -205,7 +205,12 @@ public class HgRegularUpdater implements HgUpdater {
 
   private HgCommandResult doMerge(ProgressIndicator indicator) throws VcsException {
     indicator.setText2(HgVcsMessages.message("hg4idea.update.progress.merging"));
-    HgMergeCommand mergeCommand = new HgMergeCommand(project, repoRoot);
+    HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(repoRoot);
+    if (repository == null) {
+      LOG.error("Couldn't find repository for " + repoRoot.getName());
+      return null;
+    }
+    HgMergeCommand mergeCommand = new HgMergeCommand(project, repository);
     //do not explicitly set the revision, that way mercurial itself checks that there are exactly
     //two heads in this branch
     //    mergeCommand.setRevision(headToMerge.getRevision());
@@ -255,8 +260,7 @@ public class HgRegularUpdater implements HgUpdater {
     return statusCommand.execute(repoRoot);
   }
 
-  private HgCommandExitCode pull(VirtualFile repo, ProgressIndicator indicator)
-    throws VcsException {
+  private HgCommandExitCode pull(@NotNull VirtualFile repo, @NotNull ProgressIndicator indicator) {
     indicator.setText2(HgVcsMessages.message("hg4idea.progress.pull.with.update"));
     HgPullCommand hgPullCommand = new HgPullCommand(project, repo);
     final String defaultPath = HgUtil.getRepositoryDefaultPath(project, repo);
