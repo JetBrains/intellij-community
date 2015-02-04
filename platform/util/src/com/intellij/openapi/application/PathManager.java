@@ -322,7 +322,7 @@ public class PathManager {
     String prop_file = System.getProperty(PROPERTIES_FILE);
     String ide_prop = getUserPropertiesPath() + "/idea.properties";
     String ide_prop_bin = getHomePath() + "/bin/idea.properties";
-    String ide_prop_home = getHomePath() + "/community/bin/idea.properties"};
+    String ide_prop_home = getHomePath() + "/community/bin/idea.properties";
 
   System.out.println("prop_file: " + prop_file);
   System.out.println("ide_prop: " + ide_prop);
