@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 
 /**
@@ -58,7 +59,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       myLinkWidth = linkSize.width;
       myLink.setBounds(0, 0, linkSize.width, linkSize.height);
       Rectangle treeVisibleRect = tree.getVisibleRect();
-      int rowX = ((XDebuggerTree.LinkTreeUI)tree.getUI()).getRowX(row, tree.getPathForRow(row).getPathCount() - 1);
+      TreePath path = tree.getPathForRow(row);
+      int rowX = path != null ? ((XDebuggerTree.LinkTreeUI)tree.getUI()).getRowX(row, path.getPathCount() - 1) : 0;
       myLinkOffset = Math.min(super.getPreferredSize().width, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
     }
     putClientProperty(AbstractExpandableItemsHandler.DISABLE_EXPANDABLE_HANDLER, myHaveLink ? true : null);
