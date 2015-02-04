@@ -319,7 +319,17 @@ public class PathManager {
   }
 
   public static void loadProperties() {
-    String[] propFiles = new String[]{
+    String prop_file = System.getProperty(PROPERTIES_FILE);
+    String ide_prop = getUserPropertiesPath() + "/idea.properties";
+    String ide_prop_bin = getHomePath() + "/bin/idea.properties";
+    String ide_prop_home = getHomePath() + "/community/bin/idea.properties"};
+
+  System.out.println("prop_file: " + prop_file);
+  System.out.println("ide_prop: " + ide_prop);
+  System.out.println("ide_prop_bin: " + ide_prop_bin);
+  System.out.println("ide_prop_home: " + ide_prop_home);
+
+  String[] propFiles = new String[]{
       System.getProperty(PROPERTIES_FILE),
       getUserPropertiesPath() + "/idea.properties",
       getHomePath() + "/bin/idea.properties",
@@ -335,6 +345,7 @@ public class PathManager {
               Map<String, String> properties = FileUtil.loadProperties(fis);
 
               String home = properties.get("idea.home");
+              System.out.println("idea.home: " + home);
               if (home != null && ourHomePath == null) {
                 ourHomePath = getAbsolutePath(substituteVars(home));
               }
@@ -343,6 +354,7 @@ public class PathManager {
               for (String key : properties.keySet()) {
                 if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
                   String value = substituteVars(properties.get(key));
+                  System.out.println("property key: " + key + " value: " + value);
                   sysProperties.setProperty(key, value);
                 }
               }
