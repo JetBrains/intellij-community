@@ -252,6 +252,15 @@ public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements Com
   }
 
   @Override
+  public final boolean isCaretOnWord() {
+    final int caretPosition = myMainTextField.getCaretPosition();
+    if (caretPosition == 0) {
+      return false; // At the beginning of the line
+    }
+    return !Character.isWhitespace(myMainTextField.getText().toCharArray()[caretPosition - 1]);
+  }
+
+  @Override
   public void setBalloons(@NotNull final Collection<WordWithPosition> balloons) {
     synchronized (myBalloons) {
       myBalloons.clear();

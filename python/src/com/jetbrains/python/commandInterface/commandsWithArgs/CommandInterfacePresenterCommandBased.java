@@ -45,10 +45,6 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
    * currenly used strategy (see interface for more info)
    */
   private Strategy myStrategy;
-  /**
-   * When user asks for completion, last word should be removed if it is tied to suggestion
-   */
-  private boolean myLastSuggestionTiedToWord;
 
 
   /**
@@ -81,7 +77,6 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
 
   @Override
   public void textChanged(final boolean inForcedTextMode) {
-    myLastSuggestionTiedToWord = false;
     configureStrategy();
     myView.setSubText(myStrategy.getSubText());
     final Pair<SpecialErrorPlace, List<WordWithPosition>> errorInfo = myStrategy.getErrorInfo();
@@ -94,7 +89,6 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
     final String lastPart = getLastPart();
     if ((lastPart != null) && myStrategy.isUnknownTextExists()) {
       //Filter to starts from
-      myLastSuggestionTiedToWord = true;
       final Iterator<String> iterator = suggestions.iterator();
       while (iterator.hasNext()) {
         final String textToCheck = iterator.next();
@@ -122,7 +116,10 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
    */
   @NotNull
   private SuggestionsBuilder getBuilderWithHistory() {
-    final SuggestionsBuilder suggestionsBuilder = new SuggestionsBuilder();
+    return new SuggestionsBuilder();
+
+    // TODO: Uncomment when history would be fixed
+    /*final SuggestionsBuilder suggestionsBuilder = new SuggestionsBuilder();
     final List<CommandExecutionInfo> history = getHistory();
     final Collection<String> historyCommands = new LinkedHashSet<String>();
     for (final CommandExecutionInfo info : history) {
@@ -137,7 +134,7 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
       suggestionsBuilder.changeGroup(true);
     }
 
-    return suggestionsBuilder;
+    return suggestionsBuilder;*/
   }
 
   /**
@@ -178,7 +175,7 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
       if (suggestionInfo.getSuggestions().contains(valueFromSuggestionList)) {
         final ParsedCommandLine commandLine = getParsedCommandLine();
         final List<String> words = commandLine != null ? commandLine.getAsWords() : new ArrayList<String>();
-        if (!words.isEmpty() && myLastSuggestionTiedToWord) {
+        if (!words.isEmpty() && myView.isCaretOnWord()) {
           words.remove(words.size() - 1);
         }
         words.add(valueFromSuggestionList);
@@ -190,13 +187,10 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
 
   @Override
   public void suggestionRequested() {
-    myLastSuggestionTiedToWord = false;
-
     final SuggestionInfo suggestionInfo = myStrategy.getSuggestionInfo();
     final List<String> suggestions = suggestionInfo.getSuggestions();
     if (!suggestions.isEmpty()) {
-      // TODO: Uncomment when history would be fixed
-      final SuggestionsBuilder suggestionsBuilder = new SuggestionsBuilder();/*getBuilderWithHistory();*/
+      final SuggestionsBuilder suggestionsBuilder = getBuilderWithHistory();
       suggestionsBuilder.add(suggestions);
       myView.displaySuggestions(suggestionsBuilder, suggestionInfo.myAbsolute, null);
     }

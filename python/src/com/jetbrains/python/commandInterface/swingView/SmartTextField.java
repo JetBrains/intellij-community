@@ -98,7 +98,7 @@ public class SmartTextField extends JTextField {
   }
 
   /**
-   * @return place (in chars) where caret.
+   * @return place (in px) where caret.
    */
   int getTextCursorPosition() {
     return (getCaretPosition() + 1) * getColumnWidth();

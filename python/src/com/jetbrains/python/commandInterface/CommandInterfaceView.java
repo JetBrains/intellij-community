@@ -101,6 +101,11 @@ public interface CommandInterfaceView {
    */
   void setBalloons(@NotNull final Collection<WordWithPosition> balloons);
 
+  /**
+   * @return true if current caret position is on the word (no on whitespace)
+   */
+  boolean isCaretOnWord();
+
 
   /**
    * Special place that may be underlined
