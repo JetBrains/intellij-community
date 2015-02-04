@@ -45,7 +45,7 @@ public class UrlClassLoaderTest extends TestCase {
     assertNotNull(UrlClassLoader.build().allowBootstrapResources().get().getResourceAsStream(name));
   }
 
-  public void _testConcurrentResourceLoading() throws IOException, ClassNotFoundException, ExecutionException, InterruptedException {
+  public void testConcurrentResourceLoading() throws IOException, ClassNotFoundException, ExecutionException, InterruptedException {
     final List<String> resourceNames = ContainerUtil.newArrayList();
     List<URL> urls = ContainerUtil.newArrayList();
 
@@ -67,7 +67,7 @@ public class UrlClassLoaderTest extends TestCase {
       }
     }
 
-    int attemptCount = 1000;
+    int attemptCount = 1000; // 10000
     int threadCount = 3;
     final int resourceCount = 20;
 
@@ -82,7 +82,7 @@ public class UrlClassLoaderTest extends TestCase {
             return true; // fails also without cache pool (but with cache enabled), but takes much longer
           }
         }).get();
-      //System.out.println("Attempt " + attempt);
+      //if (attempt % 10 == 0) System.out.println("Attempt " + attempt);
 
       final List<String> namesToLoad = ContainerUtil.newArrayList();
       for (int j = 0; j < resourceCount; j++) {
@@ -96,15 +96,28 @@ public class UrlClassLoaderTest extends TestCase {
           public void run() {
             for (String name : namesToLoad) {
               try {
-                assertNotNull(loader.findResource(name));
+                assertNotNull(findResource(name));
               }
               catch (Throwable e) {
                 System.out.println("Failed loading " + name);
-                TimeoutUtil.sleep(100);
-                System.out.println("Repeated: " + loader.findResource(name));
                 throw new RuntimeException(e);
               }
             }
+          }
+
+          private final Random findResourceOrFindResourcesChooser = new Random();
+          private URL findResource(String name) {
+            if (findResourceOrFindResourcesChooser.nextInt(10) < 5) {
+              try {
+                Enumeration<URL> resources = loader.getResources(name);
+                assertTrue(resources.hasMoreElements());
+                return resources.nextElement();
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            }
+            return loader.findResource(name);
           }
         }));
       }
