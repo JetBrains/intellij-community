@@ -88,7 +88,9 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement,
       }
 
       public String getPresentableText() {
-        return myPresentableName == null ? myProperty.getUnescapedKey() : (myPresentableName.isEmpty() ? ResourceBundlePropertyStructureViewElement.PROPERTY_GROUP_KEY_TEXT : myPresentableName);
+        return myPresentableName == null
+               ? myProperty.getUnescapedKey()
+               : (myPresentableName.isEmpty() ? ResourceBundlePropertyStructureViewElement.PROPERTY_GROUP_KEY_TEXT : myPresentableName);
       }
 
       public String getLocationString() {
