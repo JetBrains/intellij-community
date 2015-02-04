@@ -340,15 +340,15 @@
       <separator/>
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
+
+      <action id="NewScratchFile" class="com.intellij.ide.scratch.NewScratchFileAction" />
+      <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction" text="Open IDE Scripting Console"/>
     </group>
 
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <action id="NewScratchFile" class="com.intellij.ide.scratch.NewScratchFileAction">
-      <add-to-group group-id="ToolsBasicGroup" anchor="first"/>
-    </action>
 
     <group id="NewGroup" popup="true">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
@@ -475,8 +475,6 @@
       <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
-      <reference ref="CompareDirs"/>
-      <reference ref="CompareJars"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
       <separator/>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
@@ -31,10 +33,12 @@ import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -42,6 +46,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -79,15 +84,15 @@ public class EditorTestUtil {
     }
   }
 
-  public static void executeAction(Editor editor, String actionId) {
+  public static void executeAction(@NotNull Editor editor, @NotNull String actionId) {
     executeAction(editor, actionId, false);
   }
 
-  public static void executeAction(Editor editor, String actionId, boolean assertActionIsEnabled) {
+  public static void executeAction(@NotNull Editor editor, @NotNull String actionId, boolean assertActionIsEnabled) {
     ActionManager actionManager = ActionManager.getInstance();
     AnAction action = actionManager.getAction(actionId);
     assertNotNull(action);
-    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+    DataContext dataContext = createEditorContext(editor);
     AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), actionManager, 0);
     action.beforeActionPerformedUpdate(event);
     if (!event.getPresentation().isEnabled()) {
@@ -95,6 +100,16 @@ public class EditorTestUtil {
       return;
     }
     action.actionPerformed(event);
+  }
+
+  @NotNull
+  private static DataContext createEditorContext(@NotNull Editor editor) {
+    Object e = editor;
+    Object hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    Map<String, Object> map = ContainerUtil.newHashMap(Pair.create(CommonDataKeys.HOST_EDITOR.getName(), hostEditor),
+                                                       Pair.createNonNull(CommonDataKeys.EDITOR.getName(), e));
+    DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
+    return SimpleDataContext.getSimpleContext(map, parent);
   }
 
   public static void performReferenceCopy(Editor editor) {

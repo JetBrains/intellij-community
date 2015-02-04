@@ -18,12 +18,10 @@ package com.intellij.ide.plugins;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -37,8 +35,8 @@ public class NonBundledPluginsUsagesCollector extends UsagesCollector {
   }
 
   @NotNull
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) {
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+  public Set<UsageDescriptor> getUsages() {
+    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     final List<IdeaPluginDescriptor> nonBundledEnabledPlugins = ContainerUtil.filter(plugins, new Condition<IdeaPluginDescriptor>() {
       public boolean value(final IdeaPluginDescriptor d) {
         return d.isEnabled() && !d.isBundled() && d.getPluginId() != null;

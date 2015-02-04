@@ -15,10 +15,13 @@
     <xi:fallback/>
   </xi:include>
 
-  <project-components>
+  <application-components>
     <component>
-      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>
+      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsComponent</implementation-class>
     </component>
+  </application-components>
+
+  <project-components>
     <component>
       <implementation-class>com.jetbrains.python.PyModuleListener</implementation-class>
     </component>
@@ -83,7 +86,6 @@
     <projectService serviceInterface="com.jetbrains.python.configuration.PyConfigurableInterpreterList"
                     serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
 
-    <bundledColorScheme path="/colorSchemes/Darcula"/>
     <bundledColorScheme path="/colorSchemes/monokai"/>
     <bundledColorScheme path="/colorSchemes/twilight"/>
     <bundledColorScheme path="/colorSchemes/WarmNeon"/>

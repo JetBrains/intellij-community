@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public abstract class GutterIconRenderer implements GutterMark {
    *
    * @return the gutter icon.
    */
+  @Override
   @NotNull
   public abstract Icon getIcon();
 
@@ -60,6 +61,7 @@ public abstract class GutterIconRenderer implements GutterMark {
    *
    * @return the tooltip text, or null if no tooltip is required.
    */
+  @Override
   @Nullable
   public String getTooltipText() {
     return null;
@@ -106,6 +108,7 @@ public abstract class GutterIconRenderer implements GutterMark {
    *
    * @return the priority value.
    */
+  @NotNull
   public Alignment getAlignment() {
     return Alignment.CENTER;
   }
@@ -138,5 +141,6 @@ public abstract class GutterIconRenderer implements GutterMark {
 
   @Override
   public abstract boolean equals(Object obj);
+  @Override
   public abstract int hashCode();
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Function;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -1944,6 +1945,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   }
 
   public void testCollectingProfilesFromParentsAfterResolve() throws Exception {
+    MavenServerManager.getInstance().setUseMaven2(true);
+
     createModulePom("parent1",
                     "<groupId>test</groupId>" +
                     "<artifactId>parent1</artifactId>" +

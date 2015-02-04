@@ -25,7 +25,16 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBUI {
-  private static boolean IS_HIDPI = "true".equals(System.getProperty("hidpi"));
+  private static boolean IS_HIDPI = ("true".equals(System.getProperty("hidpi")) || getSystemDPI() >= 144)
+                                    && !("false".equals(System.getProperty("hidpi")));
+
+  private static int getSystemDPI() {
+    try {
+      return Toolkit.getDefaultToolkit().getScreenResolution();
+    } catch (HeadlessException e) {
+      return 96;
+    }
+  }
 
   public static int scale(int i) {
     return isHiDPI() ? 2 * i : i;
@@ -33,6 +42,10 @@ public class JBUI {
 
   public static JBDimension size(int width, int height) {
     return new JBDimension(width, height);
+  }
+
+  public static JBDimension size(int widthAndHeight) {
+    return new JBDimension(widthAndHeight, widthAndHeight);
   }
 
   public static JBDimension size(Dimension size) {

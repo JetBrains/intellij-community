@@ -266,6 +266,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private void initExtensions() {
     try {
+      File indexRoot = PathManager.getIndexRoot();
+      final File corruptionMarker = new File(indexRoot, CORRUPTION_MARKER_NAME);
+      final boolean currentVersionCorrupted = corruptionMarker.exists();
+      if (currentVersionCorrupted) {
+        FileUtil.deleteWithRenaming(indexRoot);
+        indexRoot.mkdirs();
+      }
+
       FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
 
       boolean versionChanged = false;
@@ -280,14 +288,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         catch (Throwable t) {
           PluginManager.handleComponentError(t, extension.getClass().getName(), null);
         }
-      }
-
-      File indexRoot = PathManager.getIndexRoot();
-      final File corruptionMarker = new File(indexRoot, CORRUPTION_MARKER_NAME);
-      final boolean currentVersionCorrupted = corruptionMarker.exists();
-      if (currentVersionCorrupted) {
-        FileUtil.deleteWithRenaming(indexRoot);
-        indexRoot.mkdirs();
       }
 
       for (List<ID<?, ?>> value : myFileType2IndicesWithFileTypeInfoMap.values()) {
@@ -373,8 +373,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   /**
    * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted
    */
-  private <K, V> boolean registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension)
-    throws IOException {
+  private <K, V> boolean registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension) throws IOException {
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
     final File versionFile = IndexInfrastructure.getVersionFile(name);
@@ -1981,6 +1980,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                   if (resetStamp) IndexingStamp.flushCache(file);
                   scheduleForUpdate(file);
                 }
+
+                if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
+                  clearPsiIndicesForUnsavedDocuments(file);
+                }
               }
               finally {
                 FileTypeManagerImpl.cacheFileType(file, null);
@@ -2317,6 +2320,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  private boolean clearPsiIndicesForUnsavedDocuments(@NotNull VirtualFile file) {
+    Document document = myFileDocumentManager.getDocument(file);
+    if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {
+      for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
+        myUpToDateIndicesForUnsavedOrTransactedDocuments.remove(psiBackedIndex);
+      }
+      return true;
+    }
+    return false;
+  }
+
   private static int getIdMaskingNonIdBasedFile(VirtualFile file) {
     return file instanceof VirtualFileWithId ?((VirtualFileWithId)file).getId() : IndexingStamp.INVALID_FILE_ID;
   }
@@ -2458,12 +2472,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             PsiFile file = event.getFile();
             if (file != null) {
               VirtualFile virtualFile = file.getVirtualFile();
-              Document document = myFileDocumentManager.getDocument(virtualFile);
-              if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {
-                for(ID<?,?> psiBackedIndex:myPsiDependentIndices) {
-                  myUpToDateIndicesForUnsavedOrTransactedDocuments.remove(psiBackedIndex);
-                }
-              } else { // change in persistent file
+              if (!clearPsiIndicesForUnsavedDocuments(virtualFile)) {
+                // change in persistent file
                 if (virtualFile instanceof VirtualFileWithId) {
                   int fileId = ((VirtualFileWithId)virtualFile).getId();
                   boolean wasIndexed = false;

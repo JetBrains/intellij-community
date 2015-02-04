@@ -406,7 +406,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       throw e;
     }
     catch (Throwable e) {
-      LOG.error("In file: " + file, e);
+      LOG.error("In file: " + file.getName(), e);
     }
     finally {
       InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);

@@ -495,7 +495,6 @@ public class GitLogProvider implements VcsLogProvider {
 
   @Nullable
   private GitRepository getRepository(@NotNull VirtualFile root) {
-    myRepositoryManager.waitUntilInitialized();
     return myRepositoryManager.getRepositoryForRoot(root);
   }
 

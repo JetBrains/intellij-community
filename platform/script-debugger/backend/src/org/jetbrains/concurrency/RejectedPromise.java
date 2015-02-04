@@ -27,7 +27,9 @@ class RejectedPromise<T> extends Promise<T> {
   @NotNull
   @Override
   public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
-    rejected.consume(error);
+    if (!AsyncPromise.isObsolete(rejected)) {
+      rejected.consume(error);
+    }
     return this;
   }
 

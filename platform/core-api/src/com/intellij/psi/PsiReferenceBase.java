@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,27 +30,27 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiReferenceBase");
 
   protected final T myElement;
-  private TextRange myRange;
+  private TextRange myRangeInElement;
   protected boolean mySoft;
 
   /**
    * @param element PSI element
-   * @param range range relatively to the element's start offset
+   * @param rangeInElement range relatively to the element's start offset
    * @param soft soft
    */
-  public PsiReferenceBase(T element, TextRange range, boolean soft) {
+  public PsiReferenceBase(T element, TextRange rangeInElement, boolean soft) {
     myElement = element;
-    myRange = range;
+    myRangeInElement = rangeInElement;
     mySoft = soft;
   }
 
   /**
    * @param element PSI element
-   * @param range range relatively to the element's start offset
+   * @param rangeInElement range relatively to the element's start offset
    */
-  public PsiReferenceBase(T element, TextRange range) {
+  public PsiReferenceBase(T element, TextRange rangeInElement) {
     this(element);
-    myRange = range;
+    myRangeInElement = rangeInElement;
   }
 
   /**
@@ -72,8 +72,8 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     mySoft = false;
   }
 
-  public void setRangeInElement(TextRange range) {
-    myRange = range;
+  public void setRangeInElement(TextRange rangeInElement) {
+    myRangeInElement = rangeInElement;
   }
 
   @NotNull
@@ -97,10 +97,10 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   @Override
   public TextRange getRangeInElement() {
-    if (myRange == null) {
-      myRange = calculateDefaultRangeInElement();
+    if (myRangeInElement == null) {
+      myRangeInElement = calculateDefaultRangeInElement();
     }
-    return myRange;
+    return myRangeInElement;
   }
 
   protected TextRange calculateDefaultRangeInElement() {
@@ -132,8 +132,8 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return new Immediate<T>(element, true, resolveTo);
   }
 
-  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, TextRange range, final PsiElement resolveTo) {
-    return new Immediate<T>(element, range, resolveTo);
+  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, TextRange rangeInElement, final PsiElement resolveTo) {
+    return new Immediate<T>(element, rangeInElement, resolveTo);
   }
 
   ElementManipulator<T> getManipulator() {
@@ -159,8 +159,8 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
       super(element, soft);
     }
 
-    public Poly(final T element, final TextRange range, final boolean soft) {
-      super(element, range, soft);
+    public Poly(final T element, final TextRange rangeInElement, final boolean soft) {
+      super(element, rangeInElement, soft);
     }
 
     @Override
@@ -185,13 +185,13 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   public static class Immediate<T extends PsiElement> extends PsiReferenceBase<T> {
     private final PsiElement myResolveTo;
 
-    public Immediate(T element, TextRange range, boolean soft, PsiElement resolveTo) {
-      super(element, range, soft);
+    public Immediate(T element, TextRange rangeInElement, boolean soft, PsiElement resolveTo) {
+      super(element, rangeInElement, soft);
       myResolveTo = resolveTo;
     }
 
-    public Immediate(T element, TextRange range, PsiElement resolveTo) {
-      super(element, range);
+    public Immediate(T element, TextRange rangeInElement, PsiElement resolveTo) {
+      super(element, rangeInElement);
       myResolveTo = resolveTo;
     }
 

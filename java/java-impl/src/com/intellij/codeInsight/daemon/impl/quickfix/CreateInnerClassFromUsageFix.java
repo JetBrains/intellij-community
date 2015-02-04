@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.CLASS;
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.INTERFACE;
-
 /**
  * @author ven
  */
@@ -53,8 +50,10 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     final PsiJavaCodeReferenceElement element = getRefElement();
-    assert element != null;
+    if (element == null) return;
     final String superClassName = getSuperClassName(element);
     PsiClass[] targets = getPossibleTargets(element);
     LOG.assertTrue(targets.length > 0);
@@ -96,11 +95,8 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     if (extendsList != null && PsiTreeUtil.isAncestor(extendsList, element, false)) {
       return true;
     }
-      
-    if (implementsList != null && PsiTreeUtil.isAncestor(implementsList, element, false)) {
-      return true;
-    }
-    return false;
+
+    return implementsList != null && PsiTreeUtil.isAncestor(implementsList, element, false);
   }
 
   private void chooseTargetClass(PsiClass[] classes, final Editor editor, final String superClassName) {
@@ -152,9 +148,9 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-    PsiClass created = myKind == INTERFACE
+    PsiClass created = myKind == CreateClassKind.INTERFACE
                       ? elementFactory.createInterface(refName)
-                      : myKind == CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);
+                      : myKind == CreateClassKind.CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
     if (aClass.isInterface()) {

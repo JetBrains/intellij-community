@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.platform.ProjectBaseDirectory;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,23 +43,20 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
 
   @Override
   public String getFileTitle(@NotNull final Project project, @NotNull final VirtualFile file) {
-    if (SystemInfo.isMac) {
-      return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
-    }
+    String fileTitle = EditorTabbedContainer.calcTabTitle(project, file);
+    if (SystemInfo.isMac) return fileTitle;
 
-    if (file instanceof VirtualFilePathWrapper) {
-      return ((VirtualFilePathWrapper)file).getPresentablePath();
-    }
+    VirtualFile parent = file.getParent();
+    if (parent == null || !fileTitle.endsWith(file.getName())) return fileTitle;
 
-    String url = FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
-    if (url == null) url = file.getPresentableUrl();
+    String url = FileUtil.getLocationRelativeToUserHome(parent.getPresentableUrl() + "/" + PathUtil.getFileName(fileTitle));
 
     VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).getBaseDir();
     if (baseDir == null) baseDir = project.getBaseDir();
 
     if (baseDir != null) {
       final String projectHomeUrl = FileUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl());
-      if (projectHomeUrl != null && url.startsWith(projectHomeUrl)) {
+      if (url.startsWith(projectHomeUrl)) {
         url = "..." + url.substring(projectHomeUrl.length());
       }
     }

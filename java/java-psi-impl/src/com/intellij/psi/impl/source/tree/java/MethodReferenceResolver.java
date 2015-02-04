@@ -100,7 +100,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
               final PsiExpressionList argumentList = getArgumentList();
               final PsiType[] typeParameters = reference.getTypeParameters();
               return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
-                                             argumentList != null ? argumentList.getExpressionTypes() : null, typeParameters.length > 0 ? typeParameters : null,
+                                             argumentList != null ? argumentList.getExpressionTypes() : null,
+                                             method.hasTypeParameters() && typeParameters.length > 0 ? typeParameters : null,
                                              getLanguageLevel()) {
                 @Override
                 public boolean isVarargs() {

@@ -275,6 +275,7 @@ public class FilePathImpl implements FilePath {
   }
 
   @Override
+  @NotNull
   public FileType getFileType() {
     return myVirtualFile != null ? myVirtualFile.getFileType() : FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName());
   }

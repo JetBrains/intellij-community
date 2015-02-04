@@ -17,7 +17,11 @@
 /**
  * Command-line like interface presenter that uses conception of command and its arguments.
  * See {@link com.jetbrains.python.commandInterface.commandsWithArgs.CommandInterfacePresenterCommandBased}
- * and its arguments: {@link com.jetbrains.python.commandInterface.commandsWithArgs.Argument}
+ * and its arguments: {@link com.jetbrains.python.commandInterface.commandsWithArgs.Argument}.
+ *
+ * It supports <a href="https://docs.python.org/2/library/optparse.html">optparse</a> terminology, so
+ * read it first and use {@link com.jetbrains.python.optParse} package
+ * @see com.jetbrains.python.optParse
  * @author Ilya.Kazakevich
  */
 package com.jetbrains.python.commandInterface.commandsWithArgs;

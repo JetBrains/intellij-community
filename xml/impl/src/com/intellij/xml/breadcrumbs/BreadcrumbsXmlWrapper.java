@@ -46,6 +46,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.ui.Gray;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -390,9 +391,10 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   @Override
   public void itemHovered(@Nullable BreadcrumbsPsiItem item) {
+    HighlightManager hm = HighlightManager.getInstance(myProject);
     if (myHighlighed != null) {
       for (RangeHighlighter highlighter : myHighlighed) {
-        HighlightManager.getInstance(myProject).removeSegmentHighlighter(myEditor, highlighter);
+        hm.removeSegmentHighlighter(myEditor, highlighter);
       }
       myHighlighed = null;
     }
@@ -402,10 +404,10 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       final CrumbPresentation p = item.getPresentation();
       final Color color = p != null ? p.getBackgroundColor(false, false, false) : BreadcrumbsComponent.ButtonSettings.DEFAULT_BG_COLOR;
       final Color background = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR);
-      attributes.setBackgroundColor(XmlTagTreeHighlightingUtil.makeTransparent(color, background, 0.3));
+      attributes.setBackgroundColor(XmlTagTreeHighlightingUtil.makeTransparent(color, background != null ? background : Gray._200, 0.3));
       myHighlighed = new ArrayList<RangeHighlighter>(1);
-      HighlightManager.getInstance(myProject).addRangeHighlight(myEditor, range.getStartOffset(), range.getEndOffset(),
-                                                                attributes, true, true, myHighlighed);
+      int flags = HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE | HighlightManager.HIDE_BY_ANY_KEY;
+      hm.addOccurrenceHighlight(myEditor, range.getStartOffset(), range.getEndOffset(), attributes, flags, myHighlighed, null);
     }
   }
 
@@ -433,7 +435,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     return null;
   }
 
-  private class MyUpdate extends Update {
+  private static class MyUpdate extends Update {
     private final BreadcrumbsXmlWrapper myBreadcrumbsComponent;
     private final Editor myEditor;
 

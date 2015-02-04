@@ -59,5 +59,7 @@
     <orderEntry type="module" module-name="vcs-log-impl" />
     <orderEntry type="module" module-name="vcs-log-graph" />
     <orderEntry type="module" module-name="dvcs-api" exported="" />
+    <orderEntry type="module" module-name="built-in-server" scope="TEST" />
+    <orderEntry type="module" module-name="built-in-server-api" />
   </component>
 </module>

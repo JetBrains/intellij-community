@@ -371,6 +371,8 @@ class PyDB:
         self.plugin = None
         self.has_plugin_line_breaks = False
         self.has_plugin_exception_breaks = False
+
+        self.use_hooks_in_debug_console = False
         
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
@@ -481,6 +483,29 @@ class PyDB:
             traceback.print_exc()
 
 
+    def init_matplotlib_in_debug_console(self):
+        # import hook and patches for matplotlib support
+        class _DebugConsoleHelper:
+            _return_control_osc = False
+
+        def return_control():
+            # Some of the input hooks (e.g. Qt4Agg) check return control without doing
+            # a single operation, so we don't return True on every
+            # call when the debug hook is in place to allow the GUI to run
+            _DebugConsoleHelper._return_control_osc = not _DebugConsoleHelper._return_control_osc
+            return _DebugConsoleHelper._return_control_osc
+
+        from pydev_ipython.inputhook import get_inputhook, set_return_control_callback
+        set_return_control_callback(return_control)
+
+        from pydev_import_hook import import_hook_manager
+        from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
+        import_hook_manager.add_module_name("matplotlib", activate_matplotlib())
+        import_hook_manager.add_module_name("pylab", activate_pylab)
+        import_hook_manager.add_module_name("pyplot", activate_pyplot)
+        self.use_hooks_in_debug_console = True
+
+
     def processInternalCommands(self):
         '''This function processes internal commands
         '''
@@ -528,6 +553,14 @@ class PyDB:
                                 else:
                                     PydevdLog(2, "NOT processing internal command ", str(int_cmd))
                                     cmdsToReadd.append(int_cmd)
+
+                                if not self.use_hooks_in_debug_console and isinstance(int_cmd, InternalConsoleExec):
+                                    # patch matplotlib if only debug console was started
+                                    try:
+                                        self.init_matplotlib_in_debug_console()
+                                    except:
+                                        sys.stderr.write("Matplotlib support in debug console failed\n")
+                                        pydev_log.error("Error in matplotlib init %s\n" % sys.exc_info()[0])
 
                         except _queue.Empty: #@UndefinedVariable
                             for int_cmd in cmdsToReadd:
@@ -1353,10 +1386,21 @@ class PyDB:
         finally:
             CustomFramesContainer.custom_frames_lock.release()
 
-
-
+        imported = False
         info = thread.additionalInfo
         while info.pydev_state == STATE_SUSPEND and not self._finishDebuggingSession:
+            if self.use_hooks_in_debug_console:
+                # import and call input hooks if only debug console was started
+                try:
+                    if not imported:
+                        from pydev_ipython.inputhook import get_inputhook
+                        imported = True
+                    inputhook = get_inputhook()
+                    if inputhook:
+                        inputhook()
+                except:
+                    pydev_log.error("Error while calling matplotlib input hooks in debug console %s\n" % sys.exc_info()[0])
+
             self.processInternalCommands()
             time.sleep(0.01)
 

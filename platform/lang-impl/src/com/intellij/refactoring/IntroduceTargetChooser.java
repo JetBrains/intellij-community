@@ -31,7 +31,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class IntroduceTargetChooser {
@@ -104,9 +104,7 @@ public class IntroduceTargetChooser {
         final int index = list.getSelectedIndex();
         if (index < 0 ) return;
         final T expr = (T)model.get(index);
-        final ArrayList<PsiElement> toExtract = new ArrayList<PsiElement>();
-        toExtract.add(expr);
-        highlighter.highlight(expr, toExtract);
+        highlighter.highlight(expr, Collections.<PsiElement>singletonList(expr));
       }
     });
 

@@ -52,7 +52,7 @@ public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCom
   @Override
   public PsiElement getContainer(PsiElement context) {
     PsiParameter psiParameter = PsiTreeUtil.getParentOfType(context, PsiParameter.class, false);
-    return psiParameter != null && JavaSuppressionUtil.canHave15Suppressions(psiParameter) ? psiParameter : null;
+    return psiParameter != null && psiParameter.getTypeElement() != null && JavaSuppressionUtil.canHave15Suppressions(psiParameter) ? psiParameter : null;
   }
 
   @Override

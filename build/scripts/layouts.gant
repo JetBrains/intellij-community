@@ -301,8 +301,14 @@ public def layoutCommunityPlugins(String home) {
       jar("maven2-server-impl.jar") {
         module("maven2-server-impl")
       }
-      jar("maven3-server-impl.jar") {
-        module("maven3-server-impl")
+      jar("maven3-server-common.jar") {
+        module("maven3-server-common")
+      }
+      jar("maven30-server-impl.jar") {
+        module("maven30-server-impl")
+      }
+      jar("maven32-server-impl.jar") {
+        module("maven32-server-impl")
       }
 
       jar("artifact-resolver-m2.jar") {
@@ -323,15 +329,19 @@ public def layoutCommunityPlugins(String home) {
         }
       }
 
+      dir("maven3-server-lib") {
+        fileset(dir: "$home/plugins/maven/maven3-server-common/lib") {include(name: "*.jar")}
+      }
       dir("maven3") {
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "*.jar")}
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "*.jar")}
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/boot")
+        fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3")
       }
 
-      dir("maven2") {
+      dir("maven2-server-lib") {
         fileset(dir: "$home/lib/") { include(name: "jaxb*.jar")}
-        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
+        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib") {include(name: "*.jar")}
+      }
+      dir("maven2") {
+        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib/maven2")
       }
 
       fileset(dir: "$home/plugins/maven/lib") {exclude(name: "plexus-utils-*") }
@@ -774,7 +784,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
 
       jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
       jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
-      fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
+      fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
 
       jar("eclipse-jps-plugin.jar") {
         module("common-eclipse-util")

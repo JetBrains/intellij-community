@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.util.text;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
@@ -24,6 +23,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -1511,7 +1511,7 @@ public class StringUtil extends StringUtilRt {
       final int to = len > 1 && isQuoteAt(text, len - 1) ? len - 1 : len;
       if (from > 0 || to < len) {
         return text.substring(from, to);
-      };
+      }
     }
     return text;
   }
@@ -1525,38 +1525,33 @@ public class StringUtil extends StringUtilRt {
    */
   @NotNull
   @Contract(pure = true)
-  public static String formatFileSize(final long fileSize) {
-    if (fileSize < 0x400) {
-      return CommonBundle.message("format.file.size.bytes", fileSize);
-    }
-    if (fileSize < 0x100000) {
-      long kbytes = fileSize * 100 / 1024;
-      final String kbs = kbytes / 100 + "." + formatMinor(kbytes % 100);
-      return CommonBundle.message("format.file.size.kbytes", kbs);
-    }
-    long mbytes = fileSize * 100 / 1024 / 1024;
-    final String size = mbytes / 100 + "." + formatMinor(mbytes % 100);
-    return CommonBundle.message("format.file.size.mbytes", size);
+  public static String formatFileSize(long size) {
+    return formatValue(size, false,
+                       new String[]{"", "K", "M", "G", "T", "P"},
+                       new long[]{1000L, 1000L, 1000L, 1000L, 1000L});
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration) {
-    final long minutes = duration / 60000;
-    final long seconds = ((duration + 500L) % 60000) / 1000;
-    if (minutes > 0L) {
-      return minutes + " min " + seconds + " sec";
-    }
-    return seconds + " sec";
+    return formatValue(duration, true,
+                       new String[]{"ms", "sec", "min", "h", "d"},
+                       new long[]{1000L, 60, 60, 24});
   }
 
   @NotNull
-  @Contract(pure = true)
-  private static String formatMinor(long number) {
-    if (number > 0L && number <= 9L) {
-      return "0" + number;
+  private static String formatValue(long value, boolean decimalsOnly, String[] units, long[] multipliers) {
+    long count = value;
+    long remainder = 0;
+    String suffix = units[0];
+    for (int i = 0; i < units.length; i++) {
+      suffix = units[i];
+      long multiplier = i < multipliers.length ? multipliers[i] : -1;
+      if (multiplier == -1 || count < multiplier) break;
+      remainder = (count % multiplier) * 100 / multiplier;
+      count /= multiplier;
     }
-    return String.valueOf(number);
+    return count + (remainder == 0 || decimalsOnly && remainder <= 9 ? "" : (remainder <= 9 ? ".0" : ".") + remainder) + suffix;
   }
 
   /**
@@ -2792,6 +2787,43 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static boolean equalsTrimWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
+    int start1 = 0;
+    int end1 = s1.length();
+    int start2 = 0;
+    int end2 = s2.length();
+
+    while (start1 < end1) {
+      char c = s1.charAt(start1);
+      if (!isWhiteSpace(c)) break;
+      start1++;
+    }
+
+    while (start1 < end1) {
+      char c = s1.charAt(end1 - 1);
+      if (!isWhiteSpace(c)) break;
+      end1--;
+    }
+
+    while (start2 < end2) {
+      char c = s2.charAt(start2);
+      if (!isWhiteSpace(c)) break;
+      start2++;
+    }
+
+    while (start2 < end2) {
+      char c = s2.charAt(end2 - 1);
+      if (!isWhiteSpace(c)) break;
+      end2--;
+    }
+
+    CharSequence ts1 = new CharSequenceSubSequence(s1, start1, end1);
+    CharSequence ts2 = new CharSequenceSubSequence(s2, start2, end2);
+
+    return equals(ts1, ts2);
+  }
+
+  @Contract(pure = true)
   public static int compare(char c1, char c2, boolean ignoreCase) {
     // duplicating String.equalsIgnoreCase logic
     int d = c1 - c2;
@@ -2918,6 +2950,16 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static char toLowerCase(final char a) {
     return StringUtilRt.toLowerCase(a);
+  }
+
+  @Nullable
+  public static LineSeparator detectSeparators(@NotNull CharSequence text) {
+    int index = indexOfAny(text, "\n\r");
+    if (index == -1) return null;
+    if (startsWith(text, index, "\r\n")) return LineSeparator.CRLF;
+    if (text.charAt(index) == '\r') return LineSeparator.CR;
+    if (text.charAt(index) == '\n') return LineSeparator.LF;
+    throw new IllegalStateException();
   }
 
   @NotNull
@@ -3066,8 +3108,8 @@ public class StringUtil extends StringUtilRt {
         break;
       }
     }
-    for (int i = 0; i < words.size(); i++) {
-      String word = words.get(i);
+    for (int i = 0; i < Math.max(1, words.size()); i++) {
+      String word = words.isEmpty() ? "" : words.get(i);
       if (i == index || words.size() == 1) builder.append(toPaste);
       builder.append(word);
     }

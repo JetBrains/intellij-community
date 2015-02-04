@@ -56,7 +56,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
   public abstract void setOpenProjectSettingsAfter(boolean on);
 
   @Override
-  public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+  public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
     return commit(project, model, modulesProvider, null);
   }
 

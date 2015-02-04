@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,12 @@ public class JavaValueModifier extends XValueModifier {
   public void calculateInitialValueEditorText(final XInitialValueCallback callback) {
     final Value value = myJavaValue.getDescriptor().getValue();
     if (value instanceof PrimitiveValue) {
-      callback.setValue(myJavaValue.getValueString());
+      String valueString = myJavaValue.getValueString();
+      int pos = valueString.lastIndexOf('('); //skip hex presentation if any
+      if (pos > 1) {
+        valueString = valueString.substring(0, pos).trim();
+      }
+      callback.setValue(valueString);
     }
     else if (value instanceof StringReference) {
       final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();

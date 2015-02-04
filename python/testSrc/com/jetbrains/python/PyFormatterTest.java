@@ -461,9 +461,32 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-13004
+  public void testAlignmentOfClosingParenthesisOfArgumentListWhenNoHangingIndent() {
+    doTest();
+  }
+
   // PY-14408
   public void testIndentsWithTabsInsideDictLiteral() {
     getCommonSettings().getIndentOptions().USE_TAB_CHARACTER = true;
+    doTest();
+  }
+
+  // PY-12749
+  public void testContinuationIndentIsNotUsedForNestedFunctionCallsInWithStatement() {
+    doTest();
+  }
+
+  public void testAlignmentOfClosingParenthesisInNestedFunctionCallsWithSingleArgument() {
+    doTest();
+  }
+
+  // PY-12748
+  public void testIndentCommentariesInsideFromImportStatement() {
+      doTest();
+  }
+
+  public void testClosingParenthesisInFromImportStatementWithNoHangingIndent() {
     doTest();
   }
 

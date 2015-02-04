@@ -15,9 +15,16 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -159,5 +166,34 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
                fontName2, 21);
     assertEquals(fontName2, myScheme.getConsoleFontName());
     assertEquals(21, myScheme.getConsoleFontSize());
+  }
+
+  public void testWriteInheritedFromDefault() throws Exception {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
+    editorColorsScheme.setName("test");
+    Element root = new Element("scheme");
+    editorColorsScheme.writeExternal(root);
+    root.removeChildren("option"); // Remove font options
+    assertXmlOutputEquals("<scheme name=\"test\" version=\"124\" parent_scheme=\"Default\" />", root);
+  }
+
+  public void testWriteInheritedFromDarcula() throws Exception {
+    EditorColorsScheme darculaScheme = EditorColorsManager.getInstance().getScheme("Darcula");
+    EditorColorsScheme editorColorsScheme = (EditorColorsScheme)darculaScheme.clone();
+    editorColorsScheme.setName("test");
+    Element root = new Element("scheme");
+    editorColorsScheme.writeExternal(root);
+    root.removeChildren("option"); // Remove font options
+    assertXmlOutputEquals("<scheme name=\"test\" version=\"124\" parent_scheme=\"Darcula\" />", root);
+  }
+
+  private static void assertXmlOutputEquals(String expected, Element root) throws IOException {
+    StringWriter writer = new StringWriter();
+    Format format = Format.getPrettyFormat();
+    format.setLineSeparator("\n");
+    new XMLOutputter(format).output(root, writer);
+    String actual = writer.toString();
+    assertEquals(expected, actual);
   }
 }

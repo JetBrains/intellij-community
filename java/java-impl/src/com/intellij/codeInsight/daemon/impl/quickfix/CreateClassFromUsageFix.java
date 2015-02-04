@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.IncorrectOperationException;
@@ -46,8 +47,9 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final PsiJavaCodeReferenceElement element = getRefElement();
-    assert element != null;
+    if (element == null) return;
     if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     final String superClassName = getSuperClassName(element);
     final PsiClass aClass = CreateFromUsageUtils.createClass(element, myKind, superClassName);

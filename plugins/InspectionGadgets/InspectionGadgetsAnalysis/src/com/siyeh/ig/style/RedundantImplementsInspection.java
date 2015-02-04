@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,17 +119,9 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
       if (extendsList == null) {
         return;
       }
-      final PsiJavaCodeReferenceElement[] extendsElements =
-        extendsList.getReferenceElements();
-      for (final PsiJavaCodeReferenceElement extendsElement :
-        extendsElements) {
-        final PsiElement referent = extendsElement.resolve();
-        if (!(referent instanceof PsiClass)) {
-          continue;
-        }
-        final PsiClass extendedInterface = (PsiClass)referent;
-        checkExtendedInterface(extendedInterface, extendsElement,
-                               extendsElements);
+      final PsiJavaCodeReferenceElement[] extendsElements = extendsList.getReferenceElements();
+      for (final PsiJavaCodeReferenceElement extendsElement : extendsElements) {
+        checkExtendedInterface(extendsElement, extendsElements);
       }
     }
 
@@ -139,27 +131,38 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
       if (extendsList == null || implementsList == null) {
         return;
       }
-      final PsiJavaCodeReferenceElement[] extendsElements =
-        extendsList.getReferenceElements();
-      final PsiJavaCodeReferenceElement[] implementsElements =
-        implementsList.getReferenceElements();
-      for (final PsiJavaCodeReferenceElement implementsElement :
-        implementsElements) {
-        final PsiElement referent = implementsElement.resolve();
-        if (!(referent instanceof PsiClass)) {
-          continue;
+      final PsiJavaCodeReferenceElement[] extendsElements = extendsList.getReferenceElements();
+      final PsiJavaCodeReferenceElement extendsElement;
+      if (extendsElements.length != 1) {
+        if (aClass.isEnum()) {
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
+          extendsElement = factory.createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_ENUM, aClass.getResolveScope());
         }
-        final PsiClass implementedClass = (PsiClass)referent;
-        checkImplementedClass(implementedClass, implementsElement,
-                              extendsElements, implementsElements);
+        else {
+          extendsElement = null;
+        }
+      }
+      else {
+        extendsElement = extendsElements[0];
+      }
+      final PsiJavaCodeReferenceElement[] implementsElements = implementsList.getReferenceElements();
+      for (final PsiJavaCodeReferenceElement implementsElement : implementsElements) {
+        checkImplementedClass(implementsElement, extendsElement, implementsElements);
       }
     }
 
     private void checkImplementedClass(
-      PsiClass implementedClass,
       PsiJavaCodeReferenceElement implementsElement,
-      PsiJavaCodeReferenceElement[] extendsElements,
+      PsiJavaCodeReferenceElement extendsElement,
       PsiJavaCodeReferenceElement[] implementsElements) {
+      final PsiElement target = implementsElement.resolve();
+      if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass implementedClass = (PsiClass)target;
+      if (!implementedClass.isInterface()) {
+        return;
+      }
       final String qualifiedName = implementedClass.getQualifiedName();
       if (ignoreSerializable &&
           CommonClassNames.JAVA_IO_SERIALIZABLE.equals(
@@ -171,11 +174,10 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
                  qualifiedName)) {
         return;
       }
-      for (final PsiJavaCodeReferenceElement extendsElement :
-        extendsElements) {
+      if (extendsElement != null) {
         final PsiElement extendsReferent = extendsElement.resolve();
         if (!(extendsReferent instanceof PsiClass)) {
-          continue;
+          return;
         }
         final PsiClass extendedClass = (PsiClass)extendsReferent;
         if (extendedClass.isInheritor(implementedClass, true)) {
@@ -202,10 +204,15 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
       }
     }
 
-    private void checkExtendedInterface(
-      PsiClass extendedInterface,
-      PsiJavaCodeReferenceElement extendsElement,
-      PsiJavaCodeReferenceElement[] extendsElements) {
+    private void checkExtendedInterface(PsiJavaCodeReferenceElement extendsElement, PsiJavaCodeReferenceElement[] extendsElements) {
+      final PsiElement target = extendsElement.resolve();
+      if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass extendedInterface = (PsiClass)target;
+      if (!extendedInterface.isInterface()) {
+        return;
+      }
       for (final PsiJavaCodeReferenceElement testExtendsElement :
         extendsElements) {
         if (testExtendsElement.equals(extendsElement)) {

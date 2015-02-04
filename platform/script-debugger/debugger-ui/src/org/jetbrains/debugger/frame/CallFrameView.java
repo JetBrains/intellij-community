@@ -1,23 +1,25 @@
 package org.jetbrains.debugger.frame;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.*;
 
-import java.util.List;
-
-public final class CallFrameView extends StackFrameImplBase implements VariableContext {
+public final class CallFrameView extends XStackFrame implements VariableContext {
+  private final SourceInfo sourceInfo;
   private final DebuggerViewSupport viewSupport;
   private final CallFrame callFrame;
 
   private final Script script;
 
   private final boolean inLibraryContent;
+  private XDebuggerEvaluator evaluator;
 
   public CallFrameView(@NotNull CallFrame callFrame, @NotNull DebuggerViewSupport viewSupport, @Nullable Script script) {
     this(callFrame, viewSupport.getSourceInfo(script, callFrame), viewSupport, script);
@@ -27,7 +29,7 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
                        @Nullable SourceInfo sourceInfo,
                        @NotNull DebuggerViewSupport viewSupport,
                        @Nullable Script script) {
-    super(sourceInfo);
+    this.sourceInfo = sourceInfo;
 
     this.viewSupport = viewSupport;
     this.callFrame = callFrame;
@@ -43,33 +45,8 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
   }
 
   @Override
-  protected boolean isInFileScope() {
-    List<Scope> scopes = callFrame.getVariableScopes();
-    return scopes.size() == 1 && scopes.get(0).isGlobal();
-  }
-
-  @Override
-  protected XDebuggerEvaluator createEvaluator() {
-    return viewSupport.createFrameEvaluator(this);
-  }
-
-  @Override
   public Object getEqualityObject() {
     return callFrame.getEqualityObject();
-  }
-
-  @Override
-  protected boolean isInLibraryContent() {
-    return inLibraryContent;
-  }
-
-  @Override
-  protected void customizeInvalidFramePresentation(ColoredTextContainer component) {
-    assert sourceInfo == null;
-
-    String scriptName = script == null ? "unknown" : script.getUrl().trimParameters().toDecodedForm();
-    int line = callFrame.getLine();
-    component.append(line != -1 ? scriptName + ':' + line : scriptName, SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 
   @Override
@@ -127,5 +104,50 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
   @Override
   public Scope getScope() {
     return null;
+  }
+
+  @Override
+  public final XDebuggerEvaluator getEvaluator() {
+    if (evaluator == null) {
+      evaluator = viewSupport.createFrameEvaluator(this);
+    }
+    return evaluator;
+  }
+
+  @Override
+  @Nullable
+  public SourceInfo getSourcePosition() {
+    return sourceInfo;
+  }
+
+  @Override
+  public final void customizePresentation(@NotNull ColoredTextContainer component) {
+    if (sourceInfo == null) {
+      String scriptName = script == null ? "unknown" : script.getUrl().trimParameters().toDecodedForm();
+      int line = callFrame.getLine();
+      component.append(line != -1 ? scriptName + ':' + line : scriptName, SimpleTextAttributes.ERROR_ATTRIBUTES);
+      return;
+    }
+
+    String fileName = sourceInfo.getFile().getName();
+    int line = sourceInfo.getLine() + 1;
+
+    boolean isInLibraryContent = inLibraryContent;
+    SimpleTextAttributes textAttributes = isInLibraryContent ? SimpleTextAttributes.GRAYED_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+
+    String functionName = sourceInfo.getFunctionName();
+    if (functionName == null || (functionName.isEmpty() && callFrame.hasOnlyGlobalScope())) {
+      component.append(fileName + ":" + line, textAttributes);
+    }
+    else {
+      if (functionName.isEmpty()) {
+        component.append("anonymous", isInLibraryContent ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+      }
+      else {
+        component.append(functionName, textAttributes);
+      }
+      component.append("(), " + fileName + ":" + line, textAttributes);
+    }
+    component.setIcon(AllIcons.Debugger.StackFrame);
   }
 }

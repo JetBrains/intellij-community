@@ -36,6 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.generate.exception.GenerateCodeException;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.view.TemplatesPanel;
@@ -159,6 +160,9 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
       public boolean value(EncapsulatableClassMember member) {
         try {
           return generateMemberPrototypes(aClass, member).length > 0;
+        }
+        catch (GenerateCodeException e) {
+          return true;
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

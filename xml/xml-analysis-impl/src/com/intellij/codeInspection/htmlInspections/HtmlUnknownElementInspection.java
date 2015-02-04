@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.StringTokenizer;
 
 public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
-  public boolean myCustomValuesEnabled = true;
   public JDOMExternalizableStringList myValues;
+  public boolean myCustomValuesEnabled = true;
 
   public HtmlUnknownElementInspection(@NotNull String defaultValues) {
     myValues = reparseProperties(defaultValues);

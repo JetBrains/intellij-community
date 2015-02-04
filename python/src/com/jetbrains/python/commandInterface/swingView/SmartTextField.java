@@ -70,6 +70,13 @@ public class SmartTextField extends JTextField {
     return (getText().length() + 1) * getColumnWidth();
   }
 
+  /**
+   * @return place (in chars) where caret.
+   */
+  int getTextCursorPosition() {
+    return (getCaretPosition() + 1) * getColumnWidth();
+  }
+
   void setWaterMarkPlaceHolderText(@NotNull final String watermark) {
     myPlaceHolder = new MyStatusText(this);
     myPlaceHolder.setText(watermark);
@@ -88,7 +95,7 @@ public class SmartTextField extends JTextField {
   /**
    * Display underline
    *
-   * @param color color to underline
+   * @param color    color to underline
    * @param lastOnly last letter only (whole line otherwise)
    */
   void underlineText(@NotNull final Color color, final boolean lastOnly) {
@@ -104,6 +111,7 @@ public class SmartTextField extends JTextField {
 
   /**
    * Sets appropriate width in chars
+   *
    * @param widthInChars num of chars
    */
   void setPreferredWidthInChars(final int widthInChars) {
@@ -112,6 +120,7 @@ public class SmartTextField extends JTextField {
 
   /**
    * Sets appropriate width in pixels
+   *
    * @param width width in px
    */
   void setPreferredWidthInPx(final int width) {

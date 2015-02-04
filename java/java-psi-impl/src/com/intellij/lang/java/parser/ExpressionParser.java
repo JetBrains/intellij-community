@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -561,7 +561,7 @@ public class ExpressionParser {
       if (typeInfo != null) {
         boolean optionalClassKeyword = typeInfo.isPrimitive || typeInfo.isArray;
         if (optionalClassKeyword || !typeInfo.hasErrors && typeInfo.isParameterized) {
-          final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, mark, optionalClassKeyword);
+          final PsiBuilder.Marker result = parseClassAccessOrMethodReference(builder, mark, optionalClassKeyword);
           if (result != null) {
             return result;
           }
@@ -780,25 +780,23 @@ public class ExpressionParser {
   }
 
   @Nullable
-  private PsiBuilder.Marker parseClassAccessOrMethodReference(final PsiBuilder builder) {
-    final PsiBuilder.Marker expr = builder.mark();
+  private PsiBuilder.Marker parseClassAccessOrMethodReference(PsiBuilder builder) {
+    PsiBuilder.Marker expr = builder.mark();
 
-    final boolean primitive = ElementType.PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType());
+    boolean primitive = ElementType.PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType());
     if (myParser.getReferenceParser().parseType(builder, 0) == null) {
       expr.drop();
       return null;
     }
 
-    final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, expr, primitive);
+    PsiBuilder.Marker result = parseClassAccessOrMethodReference(builder, expr, primitive);
     if (result == null) expr.rollbackTo();
     return result;
   }
 
   @Nullable
-  private PsiBuilder.Marker continueClassAccessOrMethodReference(final PsiBuilder builder,
-                                                                 final PsiBuilder.Marker expr,
-                                                                 final boolean optionalClassKeyword) {
-    final IElementType tokenType = builder.getTokenType();
+  private PsiBuilder.Marker parseClassAccessOrMethodReference(PsiBuilder builder, PsiBuilder.Marker expr, boolean optionalClassKeyword) {
+    IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT) {
       return parseClassObjectAccess(builder, expr, optionalClassKeyword);
     }

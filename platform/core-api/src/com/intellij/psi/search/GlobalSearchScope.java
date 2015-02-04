@@ -159,7 +159,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return scope;
-    return new UnionScope(this, scope, null);
+
+    return new UnionScope(this, scope);
   }
 
   @NotNull
@@ -188,17 +189,17 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean isSearchInLibraries() {
-      return !myBaseScope.isSearchInLibraries();
+      return true; // not (in library A) is perfectly fine to find classes in another library B.
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
-      return !myBaseScope.isSearchInModuleContent(aModule, testSources);
+      return true; // not (some files in module A) is perfectly fine to find classes in another part of module A.
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return !myBaseScope.isSearchInModuleContent(aModule);
+      return true; // not (some files in module A) is perfectly fine to find classes in another part of module A.
     }
 
     @Override
@@ -403,22 +404,24 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
-    private final String myDisplayName;
+    private final int myNestingLevel;
 
-    private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
+    private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
       super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
       myScope1 = scope1;
       myScope2 = scope2;
-      myDisplayName = displayName;
+      myNestingLevel = 1 +
+                     Math.max(scope1 instanceof UnionScope ? ((UnionScope)scope1).myNestingLevel : 0,
+                              scope2 instanceof UnionScope ? ((UnionScope)scope2).myNestingLevel : 0);
+      if (myNestingLevel > 1000) {
+        throw new IllegalStateException("Too many scopes combined: " + myNestingLevel);
+      }
     }
 
     @NotNull
     @Override
     public String getDisplayName() {
-      if (myDisplayName == null) {
-        return PsiBundle.message("psi.search.scope.union", myScope1.getDisplayName(), myScope2.getDisplayName());
-      }
-      return myDisplayName;
+      return PsiBundle.message("psi.search.scope.union", myScope1.getDisplayName(), myScope2.getDisplayName());
     }
 
     @Override

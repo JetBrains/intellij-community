@@ -308,7 +308,7 @@ public class EditorActionUtil {
    *
    * @param isWithSelection if true - sets selection from old caret position to the new one, if false - clears selection
    *
-   * @see com.intellij.openapi.editor.actions.EditorActionUtil#moveCaretToLineStartIgnoringSoftWraps(com.intellij.openapi.editor.Editor)
+   * @see EditorActionUtil#moveCaretToLineStartIgnoringSoftWraps(Editor)
    */
   public static void moveCaretToLineStart(@NotNull Editor editor, boolean isWithSelection) {
     Document document = editor.getDocument();
@@ -793,16 +793,31 @@ public class EditorActionUtil {
       public void invokePopup(final EditorMouseEvent event) {
         if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
           ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
-          MouseEvent e = event.getMouseEvent();
-          final Component c = e.getComponent();
-          if (c != null && c.isShowing()) {
-            popupMenu.getComponent().show(c, e.getX(), e.getY());
-          }
-          e.consume();
+          showEditorPopup(event, group);
         }
       }
     };
+  }
+
+  public static EditorPopupHandler createEditorPopupHandler(@NotNull final ActionGroup group) {
+    return new EditorPopupHandler() {
+      @Override
+      public void invokePopup(final EditorMouseEvent event) {
+        showEditorPopup(event, group);
+      }
+    };
+  }
+
+  private static void showEditorPopup(final EditorMouseEvent event, @NotNull final ActionGroup group) {
+    if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
+      MouseEvent e = event.getMouseEvent();
+      final Component c = e.getComponent();
+      if (c != null && c.isShowing()) {
+        popupMenu.getComponent().show(c, e.getX(), e.getY());
+      }
+      e.consume();
+    }
   }
 
   public static boolean isHumpBound(@NotNull CharSequence editorText, int offset, boolean start) {
@@ -821,8 +836,8 @@ public class EditorActionUtil {
   /**
    * This method moves caret to the nearest preceding visual line start, which is not a soft line wrap
    *
-   * @see com.intellij.openapi.editor.ex.util.EditorUtil#calcCaretLineRange(com.intellij.openapi.editor.Editor)
-   * @see com.intellij.openapi.editor.actions.EditorActionUtil#moveCaretToLineStart(com.intellij.openapi.editor.Editor, boolean)
+   * @see EditorUtil#calcCaretLineRange(Editor)
+   * @see EditorActionUtil#moveCaretToLineStart(Editor, boolean)
    */
   public static void moveCaretToLineStartIgnoringSoftWraps(@NotNull Editor editor) {
     editor.getCaretModel().moveToLogicalPosition(EditorUtil.calcCaretLineRange(editor).first);

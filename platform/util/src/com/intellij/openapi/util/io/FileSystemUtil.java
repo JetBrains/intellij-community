@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -298,8 +299,7 @@ public class FileSystemUtil {
       }
       catch (InvocationTargetException e) {
         final Throwable cause = e.getCause();
-        if (cause != null && ("java.nio.file.NoSuchFileException".equals(cause.getClass().getName()) ||
-                              "java.nio.file.InvalidPathException".equals(cause.getClass().getName()))) {
+        if (cause instanceof IOException || cause != null && "java.nio.file.InvalidPathException".equals(cause.getClass().getName())) {
           LOG.debug(cause);
           return null;
         }
@@ -322,11 +322,10 @@ public class FileSystemUtil {
         Object sourcePath = myGetPath.invoke(myDefaultFileSystem, source, ArrayUtil.EMPTY_STRING_ARRAY);
         Object targetPath = myGetPath.invoke(myDefaultFileSystem, target, ArrayUtil.EMPTY_STRING_ARRAY);
         Collection sourcePermissions = getPermissions(sourcePath);
-        if (sourcePermissions != null) {
-          Collection permissionsToSet;
+        Collection targetPermissions = getPermissions(targetPath);
+        if (sourcePermissions != null && targetPermissions != null) {
           if (onlyPermissionsToExecute) {
-            Collection targetPermissions = getPermissions(targetPath);
-            permissionsToSet = new HashSet();
+            Collection<Object> permissionsToSet = ContainerUtil.newHashSet();
             for (Object permission : targetPermissions) {
               if (!permission.toString().endsWith("_EXECUTE")) {
                 permissionsToSet.add(permission);
@@ -337,11 +336,11 @@ public class FileSystemUtil {
                 permissionsToSet.add(permission);
               }
             }
+            mySetAttribute.invoke(null, targetPath, "posix:permissions", permissionsToSet, myLinkOptions);
           }
           else {
-            permissionsToSet = sourcePermissions;
+            mySetAttribute.invoke(null, targetPath, "posix:permissions", sourcePermissions, myLinkOptions);
           }
-          mySetAttribute.invoke(null, targetPath, "posix:permissions", permissionsToSet, myLinkOptions);
           return true;
         }
       }
@@ -353,7 +352,7 @@ public class FileSystemUtil {
       Map attributes = (Map)myReadAttributes.invoke(null, sourcePath, "posix:permissions", myLinkOptions);
       if (attributes == null) return null;
       Object permissions = attributes.get("permissions");
-      return permissions instanceof Collection<?> ? (Collection)permissions : null;
+      return permissions instanceof Collection ? (Collection)permissions : null;
     }
   }
 

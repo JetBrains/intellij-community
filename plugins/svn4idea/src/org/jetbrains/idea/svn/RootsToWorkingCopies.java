@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
-import com.intellij.openapi.vcs.CalledInBackground;
+import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;

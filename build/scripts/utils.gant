@@ -284,6 +284,7 @@ binding.setVariable("platformApiModules", [
   "platform-api",
   "structure-view-api",
   "usageView",
+  "diff-api",
   "vcs-api",
   "vcs-api-core",
   "vcs-log-api",
@@ -295,6 +296,7 @@ binding.setVariable("platformApiModules", [
   "xml-openapi",
   "xml-psi-api",
   "xml-structure-view-api",
+  "built-in-server-api"
 ])
 
 
@@ -312,6 +314,7 @@ binding.setVariable("platformImplementationModules", [
   "projectModel-impl",
   "platform-impl",
   "structure-view-impl",
+  "diff-impl",
   "vcs-impl",
   "vcs-log-graph",
   "vcs-log-impl",
@@ -329,7 +332,8 @@ binding.setVariable("platformImplementationModules", [
   "json",
   "protocol-reader-runtime",
   "script-debugger-backend",
-  "script-debugger-ui"
+  "script-debugger-ui",
+  "built-in-server"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
@@ -367,7 +371,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   Map properties = readIdeaProperties(args)
 
-  def coreKeys = ["idea.platform.prefix", "idea.paths.selector"]
+  def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
 
   String coreProperties = submapToXml(properties, coreKeys);
 
@@ -383,7 +387,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   if (isEap() && !args.mac_no_yjp) {
     ideaVmOptions += " ${yjpOptions(args.system_selector)}"
   }
-  new File("$path/bin/idea.vmoptions").text = ideaVmOptions
+  new File("$path/bin/${executable}.vmoptions").text = ideaVmOptions
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -686,6 +690,7 @@ private Map readIdeaProperties(Map args) {
                            "JVMVersion": "1.6*",
                            "com.apple.mrj.application.live-resize": "false",
                            "idea.paths.selector": args.system_selector,
+                           "idea.executable": args.executable,
                            "java.endorsed.dirs": "",
                            "idea.smooth.progress": "false",
                            "apple.laf.useScreenMenuBar": "true",
@@ -853,7 +858,8 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   if (pathsSelector != null) {
     def paths = getProperty("paths")
     def launcherPropertiesTemp = "${paths.sandbox}/launcher.properties"
-    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector])
+    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector,
+                                                                  "IDE-NAME": p("component.names.product").toUpperCase()])
     launcherProperties = launcherPropertiesTemp
   }
 

@@ -47,6 +47,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -636,7 +637,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     prepareMethodBody(emptyMethod, false);
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
-      .findClass(manager.getDefaultNullable(), GlobalSearchScope.allScope(myProject));
+      .findClass(manager.getDefaultNullable(), myElements[0].getResolveScope());
     if (nullableAnnotationClass != null) {
       if (myNotNullConditionalCheck || myNullConditionalCheck) {
         return Nullness.NULLABLE;
@@ -670,6 +671,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, new Function<String, String>() {
         @Override
         public String fun(String propertyName) {
+          if (!PsiNameHelper.getInstance(myProject).isIdentifier(propertyName)) {
+            LOG.info(propertyName + "; " + myExpression);
+            return null;
+          }
           return GenerateMembersUtil.suggestGetterName(propertyName, myReturnType, myProject);
         }
       }));

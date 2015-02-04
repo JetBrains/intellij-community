@@ -67,6 +67,18 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testLambdaIsNotCongruentWithFunctionalTypeWithTypeParams() throws Exception {
+    doTest();
+  }
+
+  public void testDetectPolyExpressionInReturnsOfExplicitlyTypedLambdaWhenPrimitiveCouldWin() throws Exception {
+    doTest();
+  }
+
+  public void testDetectNotEqualParametersInFunctionalTypesForExactMethodReferences() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

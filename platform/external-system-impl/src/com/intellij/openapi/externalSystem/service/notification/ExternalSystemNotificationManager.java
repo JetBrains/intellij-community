@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -263,7 +264,7 @@ public class ExternalSystemNotificationManager {
 
     final Navigatable navigatable = notificationData.getNavigatable() != null
                                     ? notificationData.getNavigatable()
-                                    : virtualFile != null ? new OpenFileDescriptor(myProject, virtualFile, line, column) : null;
+                                    : virtualFile != null ? new OpenFileDescriptor(myProject, virtualFile, line, column) : NonNavigatable.INSTANCE;
 
     final ErrorTreeElementKind kind =
       ErrorTreeElementKind.convertMessageFromCompilerErrorType(notificationData.getNotificationCategory().getMessageCategory());

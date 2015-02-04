@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.properties;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -28,7 +29,7 @@ public class PropertyValue {
 
   @NotNull private final String myValue;
 
-  @Nullable
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static PropertyValue create(@Nullable SVNPropertyValue value) {
     return create(SVNPropertyValue.getPropertyAsString(value));
   }
@@ -37,17 +38,35 @@ public class PropertyValue {
     myValue = propertyValue;
   }
 
-  @Nullable
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static PropertyValue create(@Nullable String propertyValue) {
     return propertyValue == null ? null : new PropertyValue(propertyValue);
   }
 
-  @Nullable
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static String toString(@Nullable PropertyValue value) {
     return value == null ? null : value.myValue;
   }
 
+  @Override
   public String toString() {
     return myValue;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PropertyValue value = (PropertyValue)o;
+
+    if (!myValue.equals(value.myValue)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myValue.hashCode();
   }
 }

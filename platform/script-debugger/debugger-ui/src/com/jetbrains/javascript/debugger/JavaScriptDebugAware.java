@@ -44,15 +44,22 @@ public abstract class JavaScriptDebugAware {
   }
 
   @Nullable
-  protected abstract ExpressionInfo getEvaluationInfo(@NotNull PsiElement elementAtOffset, @NotNull Document document, @NotNull ExpressionInfoFactory expressionInfoFactory);
+  protected ExpressionInfo getEvaluationInfo(@NotNull PsiElement elementAtOffset, @NotNull Document document, @NotNull ExpressionInfoFactory expressionInfoFactory) {
+    return null;
+  }
 
   public static boolean isBreakpointAware(@NotNull FileType fileType) {
+    return getBreakpointAware(fileType) != null;
+  }
+
+  @Nullable
+  public static JavaScriptDebugAware getBreakpointAware(@NotNull FileType fileType) {
     for (JavaScriptDebugAware debugAware : EP_NAME.getExtensions()) {
       if (debugAware.getBreakpointTypeClass() == null && fileType.equals(debugAware.getFileType())) {
-        return true;
+        return debugAware;
       }
     }
-    return false;
+    return null;
   }
 
   @Nullable

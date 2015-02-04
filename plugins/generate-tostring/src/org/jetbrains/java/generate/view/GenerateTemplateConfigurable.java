@@ -98,7 +98,10 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       }
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(component, BorderLayout.CENTER);
-      panel.add(new MultiLineLabel("Available implicit variables:\n" + StringUtil.join(availableImplicits, ", ")), BorderLayout.SOUTH);
+      MultiLineLabel label =
+        new MultiLineLabel("<html>Available implicit variables:\n" + StringUtil.join(availableImplicits, ", ") + "</html>");
+      label.setPreferredSize(new Dimension(250, 30));
+      panel.add(label, BorderLayout.SOUTH);
       return panel;
     }
 

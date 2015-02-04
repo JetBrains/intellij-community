@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -48,14 +49,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 
 /**
@@ -157,6 +157,11 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     setCellRenderer(new XDebuggerTreeRenderer());
     new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
       @Override
+      protected boolean doCacheLastNode() {
+        return false;
+      }
+
+      @Override
       protected void handleTagClick(@Nullable Object tag, @NotNull MouseEvent event) {
         if (tag instanceof XDebuggerTreeNodeHyperlink) {
           ((XDebuggerTreeNodeHyperlink)tag).onClick(event);
@@ -201,6 +206,37 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     registerShortcuts();
 
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
+  }
+
+  @Override
+  public void setUI(TreeUI ui) {
+    super.setUI(ui instanceof LinkTreeUI ? ui : new LinkTreeUI());
+  }
+
+  static class LinkTreeUI extends WideSelectionTreeUI {
+    private final ComponentListener myListener = new ComponentAdapter() {
+      @Override
+      public void componentMoved(ComponentEvent e) {
+        tree.repaint(); // needed to repaint links in cell renderer on horizontal scrolling
+      }
+    };
+
+    @Override
+    protected void installListeners() {
+      super.installListeners();
+      tree.addComponentListener(myListener);
+    }
+
+    @Override
+    protected void uninstallListeners() {
+      tree.removeComponentListener(myListener);
+      super.uninstallListeners();
+    }
+
+    @Override
+    public int getRowX(int row, int depth) {
+      return super.getRowX(row, depth);
+    }
   }
 
   public void updateEditor() {

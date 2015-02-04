@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.commandInterface.commandsWithArgs;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.optParse.ParsedCommandLine;
+import com.jetbrains.python.optParse.WordWithPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,28 +31,35 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-class InCommandStrategy extends Strategy {
+final class InCommandStrategy extends Strategy {
   @NotNull
   private final List<String> myArguments = new ArrayList<String>();
   @NotNull
   private final Command myCommand;
+  @NotNull
+  private final ParsedCommandLine myCommandLine;
 
   /**
    * @param command   command enrtered by user
    * @param presenter presenter
    */
-  InCommandStrategy(@NotNull final Command command, @NotNull final CommandInterfacePresenterCommandBased presenter) {
+  InCommandStrategy(@NotNull final Command command,
+                    @NotNull final ParsedCommandLine commandLine,
+                    @NotNull final CommandInterfacePresenterCommandBased<?> presenter) {
     super(presenter);
-    final List<String> parts = Arrays.asList(presenter.getTextAsParts());
-    assert !parts.isEmpty() && parts.get(0).equals(command.getName()) : "At least first argument should be command";
-    myArguments.addAll(parts.subList(1, parts.size()));
+    myArguments.addAll(WordWithPosition.fetchText(commandLine.getArguments()));
     myCommand = command;
+    myCommandLine = commandLine;
   }
 
   @NotNull
   @Override
   public String getSubText() {
-    return "Tab will display list of arguments in next commit";
+    final String help = myCommand.getHelp();
+    if (help != null) {
+      return help;
+    }
+    return "Place to display help";
   }
 
   @NotNull
@@ -64,9 +74,29 @@ class InCommandStrategy extends Strategy {
     return new SuggestionInfo(false, false, strings);
   }
 
+  @NotNull
+  @Override
+  List<WordWithPosition> getBalloonsToShow() {
+    // Display argument balloons right from command end to last argument end
+    final String argumentHelp = myCommand.getArgumentHelp();
+    if (StringUtil.isEmpty(argumentHelp)) {
+      return Collections.emptyList();
+    }
+    final List<WordWithPosition> arguments = myCommandLine.getArguments();
+    if (arguments.isEmpty()) {
+      // If no arguments provided, then display popup right after command
+      return Collections.singletonList(new WordWithPosition(argumentHelp, myCommandLine.getCommand().getTo() + 1, Integer.MAX_VALUE));
+    }
+    final List<WordWithPosition> result = new ArrayList<WordWithPosition>(arguments.size());
+    for (final WordWithPosition argument : arguments) {
+      result.add(argument.copyWithDifferentText(argumentHelp));
+    }
+    return result;
+  }
+
   @Override
   boolean isUnknownTextExists() {
-    if (myPresenter.getTextAsParts().length == 1) {
+    if (myCommandLine.getAsWords().isEmpty()) {
       return false; // Command only
     }
     final String lastPart = myPresenter.getLastPart();

@@ -17,6 +17,7 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.LineSeparator;
 import junit.framework.TestCase;
 
 import java.nio.CharBuffer;
@@ -230,7 +231,7 @@ public class StringUtilTest extends TestCase {
   }
 
   public void testShortened() {
-    String[] names = {"AVeryVeeryLongClassName.java", "com.test.SomeJAVAClassName.java", "strangelowercaseclassname.java", "PrefixPostfix.java", "SomeJAVAClassName.java"};
+    String[] names = {"AVeryVeeryLongClassName.java", "com.test.SomeJAVAClassName.java", "strangelowercaseclassname.java", "PrefixPostfix.java", "SomeJAVAClassName.java", "qwertyuiopasdghjklzxcvbnm1234567890"};
     for (String name : names) {
       for (int i = name.length() + 1; i > 15; i--) {
         String shortened = StringUtil.getShortened(name, i);
@@ -309,5 +310,23 @@ public class StringUtilTest extends TestCase {
     assertFalse(StringUtil.contains("1", "12"));
     assertTrue(StringUtil.contains("12", "1"));
     assertTrue(StringUtil.contains("12", "2"));
+  }
+
+  public void testDetectSeparators() {
+    assertEquals(null, StringUtil.detectSeparators(""));
+    assertEquals(null, StringUtil.detectSeparators("asd"));
+    assertEquals(null, StringUtil.detectSeparators("asd\t"));
+
+    assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\n"));
+    assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\nads\r"));
+    assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\nads\n"));
+
+    assertEquals(LineSeparator.CR, StringUtil.detectSeparators("asd\r"));
+    assertEquals(LineSeparator.CR, StringUtil.detectSeparators("asd\rads\r"));
+    assertEquals(LineSeparator.CR, StringUtil.detectSeparators("asd\rads\n"));
+
+    assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\n"));
+    assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\nads\r"));
+    assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\nads\n"));
   }
 }
