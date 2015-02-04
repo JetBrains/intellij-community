@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.unsorted;
 
+import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
@@ -25,7 +26,6 @@ import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -56,6 +56,11 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
         final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
         if (!(propertiesFile instanceof PropertiesFileImpl)) {
           return;
+        }
+        for (AlphaUnsortedPropertiesFileInspectionSuppressor filter : AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME.getExtensions()) {
+          if (filter.suppressInspectionFor(propertiesFile)) {
+            return;
+          }
         }
         final String resourceBundleBaseName = propertiesFile.getResourceBundle().getBaseName();
         if (!isResourceBundleAlphaSortedExceptOneFile(propertiesFile.getResourceBundle(), propertiesFile)) {
