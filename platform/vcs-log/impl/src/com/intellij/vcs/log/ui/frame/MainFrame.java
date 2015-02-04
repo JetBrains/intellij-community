@@ -8,7 +8,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -16,6 +15,7 @@ import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
@@ -28,7 +28,6 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
-import com.intellij.vcs.log.ui.VcsLogPopupComponent;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
@@ -40,6 +39,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -250,32 +251,24 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   @NotNull
-  private VcsLogClassicFilterUi.FilterActionComponent createIntelliSortChooser() {
-    return new VcsLogClassicFilterUi.FilterActionComponent(new Computable<JComponent>() {
+  private AnAction createIntelliSortChooser() {
+    return new DumbAwareAction("IntelliSort", "IntelliSort", VcsLogIcons.Branch) {
       @Override
-      public JComponent compute() {
-        VcsLogPopupComponent bekSortPanel = new VcsLogPopupComponent("IntelliSort") {
-          @Override
-          public String getCurrentText() {
-            return myUI.getBekType().getPresentation();
-          }
-
-          @Override
-          public void installChangeListener(@NotNull Runnable onChange) {
-            // todo
-          }
-
-          @Override
-          protected ActionGroup createActionGroup() {
-            return new DefaultActionGroup(new BekAction(PermanentGraph.SortType.Normal), new BekAction(PermanentGraph.SortType.Bek),
-                                          new BekAction(PermanentGraph.SortType.LinearBek));
-          }
-        };
-
-        bekSortPanel.initUi();
-        return bekSortPanel;
+      public void actionPerformed(AnActionEvent e) {
+        ActionGroup settingsGroup =
+          new DefaultActionGroup(new BekAction(PermanentGraph.SortType.Normal), new BekAction(PermanentGraph.SortType.Bek),
+                                 new BekAction(PermanentGraph.SortType.LinearBek));
+        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, settingsGroup);
+        int x = 0;
+        int y = 0;
+        InputEvent inputEvent = e.getInputEvent();
+        if (inputEvent instanceof MouseEvent) {
+          x = ((MouseEvent)inputEvent).getX();
+          y = ((MouseEvent)inputEvent).getY();
+        }
+        popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
       }
-    });
+    };
   }
 
   public JComponent getMainComponent() {

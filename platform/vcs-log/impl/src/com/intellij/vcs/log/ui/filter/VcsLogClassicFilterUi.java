@@ -257,7 +257,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  public static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
+  private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
 
     @NotNull private final Computable<JComponent> myComponentCreator;
 

@@ -24,6 +24,7 @@ import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitCommitCompareInfo;
 import icons.Git4ideaIcons;
+import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class GitCompareBranchesDialog extends FrameDialogWrapper {
     myLogPanel = new GitCompareBranchesLogPanel(myProject, branchName, currentBranchName, compareInfo, initialRepo);
 
     myTabbedPane = new TabbedPaneImpl(SwingConstants.TOP);
-    myTabbedPane.addTab("Log", Git4ideaIcons.Branch, myLogPanel);
+    myTabbedPane.addTab("Log", VcsLogIcons.Branch, myLogPanel);
     myTabbedPane.addTab("Diff", AllIcons.Actions.Diff, diffPanel);
     myTabbedPane.setKeyboardNavigation(TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS);
   }
