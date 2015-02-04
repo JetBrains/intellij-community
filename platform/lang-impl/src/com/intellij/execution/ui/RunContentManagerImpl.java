@@ -327,7 +327,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
               IconAnimator animator = myIconAnimators.get(toolWindowId);
               if (animator != null) {
-                animator.setActive(alive);
+                animator.setActive(/*alive*/false);
               }
               content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
             }
