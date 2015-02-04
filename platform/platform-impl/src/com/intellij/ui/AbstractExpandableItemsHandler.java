@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       UIUtil.drawImage(g, myImage, insets.left, insets.top, null);
     }
   };
+
+  public static final String DISABLE_EXPANDABLE_HANDLER = "DisableExpandableHandler";
 
   private boolean myEnabled = Registry.is("ide.expansion.hints.enabled");
   private final MovablePopup myPopup;
@@ -365,6 +367,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     Component renderer = rendererAndBounds.first;
     if (!(renderer instanceof JComponent)) return null;
+
+    if (((JComponent)renderer).getClientProperty(DISABLE_EXPANDABLE_HANDLER) != null) return null;
 
     myKeyItemBounds = rendererAndBounds.second;
 
