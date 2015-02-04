@@ -53,7 +53,7 @@ oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar
 proxy-vole_20131209.jar
-pty4j-0.4.jar
+pty4j-0.4.9.jar
 purejavacomm.jar
 resolver.jar
 rhino-js-1_7R4.jar
