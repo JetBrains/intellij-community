@@ -32,6 +32,7 @@ public class MovablePopup implements Disposable {
   private Container myView;
   private boolean myAlwaysOnTop;
   private boolean myHeavyWeight;
+  private boolean myWindowFocusable;
   private boolean myWindowShadow;
 
   /**
@@ -68,6 +69,17 @@ public class MovablePopup implements Disposable {
   public void setHeavyWeight(boolean value) {
     if (myHeavyWeight != value) {
       myHeavyWeight = value;
+      disposeAndUpdate(true);
+    }
+  }
+
+  /**
+   * Sets whether this popup should grab a focus.
+   * This property is used by heavy weight popups only.
+   */
+  public void setWindowFocusable(boolean value) {
+    if (myWindowFocusable != value) {
+      myWindowFocusable = value;
       disposeAndUpdate(true);
     }
   }
@@ -137,6 +149,7 @@ public class MovablePopup implements Disposable {
               myAlwaysOnTop = false;
             }
           }
+          view.setFocusableWindowState(myWindowFocusable);
           if (!myWindowShadow) {
             view.getRootPane().putClientProperty("Window.shadow", Boolean.FALSE);
           }
