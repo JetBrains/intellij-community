@@ -46,6 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FoldingModelSupport {
+  public static final String PLACEHOLDER = "     ";
+
   public static class OnesideFoldingModel extends FoldingModelBase {
     public OnesideFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
       super(new EditorEx[]{editor}, disposable);
@@ -328,7 +330,7 @@ public class FoldingModelSupport {
       final int startOffset = document.getLineStartOffset(start);
       final int endOffset = document.getLineEndOffset(end - 1);
 
-      FoldRegion value = editor.getFoldingModel().addFoldRegion(startOffset, endOffset, "     ");
+      FoldRegion value = editor.getFoldingModel().addFoldRegion(startOffset, endOffset, PLACEHOLDER);
       if (value != null) value.setExpanded(expanded);
       return value;
     }
