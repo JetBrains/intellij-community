@@ -236,6 +236,10 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
                               @NotNull List<? extends LineFragment> fragments) {
       assert before != null || after != null;
 
+      // TODO: show differences in line separators ?
+      if (before != null) before = StringUtil.convertLineSeparators(before);
+      if (after != null) after = StringUtil.convertLineSeparators(after);
+
       myName = name;
       myBefore = before;
       myAfter = after;
