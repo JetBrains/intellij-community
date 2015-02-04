@@ -17,6 +17,7 @@ package com.intellij.codeInspection.unsorted;
 
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
@@ -68,7 +69,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
           return;
         }
         if (!isAlphaSorted(propertiesFile)) {
-          holder.registerProblem(file, "Property file is unsorted", ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
+          holder.registerProblem(file, "Properties file is unsorted", ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
         }
       }
     };
@@ -171,5 +172,15 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
     final PropertiesList fakePropertiesList = PsiTreeUtil.findChildOfType(fakeFile.getContainingFile(), PropertiesList.class);
     LOG.assertTrue(fakePropertiesList != null);
     propertiesList.replace(fakePropertiesList);
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return "Alphabetically Unsorted Properties File or Resource Bundle";
+  }
+
+  @NotNull
+  public String getShortName() {
+    return "AlphaUnsortedPropertiesFile";
   }
 }

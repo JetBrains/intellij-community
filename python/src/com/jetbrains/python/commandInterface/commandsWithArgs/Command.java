@@ -18,8 +18,6 @@ package com.jetbrains.python.commandInterface.commandsWithArgs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * Command with arguments
  *
@@ -35,12 +33,6 @@ public interface Command {
   String getName();
 
   /**
-   * @return command arguments
-   */
-  @NotNull
-  List<Argument> getArguments();
-
-  /**
    * @return Command readable help text
    */
   @Nullable
@@ -48,8 +40,8 @@ public interface Command {
 
 
   /**
-   * @return Argument help string to display on arguments
+   * @return Information about command positional, unnamed {@link com.jetbrains.python.commandInterface.commandsWithArgs.Argument arguments} (not options!)
    */
-  @Nullable
-  String getArgumentHelp();
+  @NotNull
+  ArgumentsInfo getArgumentsInfo();
 }

@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
@@ -257,6 +256,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   protected XDebuggerTreeNodeHyperlink getLink() {
     if (myFullValueEvaluator != null) {
       return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText()) {
+        @Override
+        public boolean alwaysOnScreen() {
+          return true;
+        }
+
         @Override
         public void onClick(MouseEvent event) {
           if (myFullValueEvaluator.isShowValuePopup()) {

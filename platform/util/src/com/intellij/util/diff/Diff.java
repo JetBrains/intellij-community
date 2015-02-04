@@ -179,7 +179,7 @@ public class Diff {
 
      If DELETED is 0 then LINE0 is the number of the line before
      which the insertion was done; vice versa for INSERTED and LINE1.  */
-    protected Change(int line0, int line1, int deleted, int inserted, Change old) {
+    public Change(int line0, int line1, int deleted, int inserted, @Nullable Change old) {
       this.line0 = line0;
       this.line1 = line1;
       this.inserted = inserted;

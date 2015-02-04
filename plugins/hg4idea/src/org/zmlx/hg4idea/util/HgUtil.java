@@ -222,8 +222,8 @@ public abstract class HgUtil {
   /**
    * Checks if the given directory is an hg root.
    */
-  public static boolean isHgRoot(VirtualFile dir) {
-    return dir.findChild(DOT_HG) != null;
+  public static boolean isHgRoot(@Nullable VirtualFile dir) {
+    return dir != null && dir.findChild(DOT_HG) != null;
   }
 
   /**

@@ -225,7 +225,7 @@ public class FilePatchInProgress implements Strippable {
       return new DiffRequestPresentableProxy() {
         @NotNull
         @Override
-        protected DiffRequestPresentable init() throws VcsException {
+        public DiffRequestPresentable init() throws VcsException {
           if (myPatchInProgress.isConflictingChange()) {
             final Getter<ApplyPatchForBaseRevisionTexts> revisionTextsGetter = new Getter<ApplyPatchForBaseRevisionTexts>() {
               @Override

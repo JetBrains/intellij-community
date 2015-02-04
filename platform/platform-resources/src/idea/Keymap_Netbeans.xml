@@ -184,6 +184,9 @@
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="control O" />
     </action>
+    <action id="GotoChangedFile">
+      <keyboard-shortcut first-keystroke="control O" />
+    </action>
     <action id="GotoFile">
       <keyboard-shortcut first-keystroke="shift alt O" />
     </action>

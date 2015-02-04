@@ -15,13 +15,10 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TempFiles;
-
-import java.io.IOException;
 
 public class GlobalSearchScopeTest extends PlatformTestCase {
   public void testUniteDirectorySearchScopeDoesNotSOE() throws Exception {
@@ -59,11 +56,6 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
     assertSame(s.uniteWith(s), s);
   }
 
-  @Override
-  protected Module createMainModule() throws IOException {
-    return super.createMainModule();
-  }
-
   public void testNotScope() throws Exception {
     VirtualFile moduleRoot = new TempFiles(myFilesToDelete).createTempVDir();
     ModuleRootModificationUtil.addContentRoot(getModule(), moduleRoot.getPath());
@@ -75,17 +67,13 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
 
     GlobalSearchScope notProjectScope = GlobalSearchScope.notScope(projectScope);
     assertTrue(notProjectScope.isSearchInLibraries());
-    assertFalse(notProjectScope.isSearchInModuleContent(getModule()));
     assertFalse(notProjectScope.contains(moduleRoot));
 
     GlobalSearchScope allScope = GlobalSearchScope.allScope(getProject());
     assertTrue(allScope.isSearchInLibraries());
-    assertTrue(allScope.isSearchInModuleContent(getModule()));
     assertTrue(allScope.contains(moduleRoot));
 
     GlobalSearchScope notAllScope = GlobalSearchScope.notScope(allScope);
-    assertFalse(notAllScope.isSearchInLibraries());
-    assertFalse(notAllScope.isSearchInModuleContent(getModule()));
     assertFalse(notAllScope.contains(moduleRoot));
   }
 }

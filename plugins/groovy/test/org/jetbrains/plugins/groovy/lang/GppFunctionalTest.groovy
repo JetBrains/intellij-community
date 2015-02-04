@@ -296,16 +296,6 @@ class Foo {
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
-  public void testResolveToStdLibWithArrayQualifier() throws Exception {
-    configureGppScript """
-Integer[] a = []
-a.fol<caret>dLeft(2, { a, b -> a+b })
-"""
-    PsiMethod method = resolveReference().navigationElement as PsiMethod
-    assertEquals "foldLeft", method.name
-    assertEquals "groovypp.util.Iterations", method.containingClass.qualifiedName
-  }
-
   private PsiElement resolveReference() {
     return findReference().resolve()
   }
@@ -319,28 +309,6 @@ abstract class Super implements Runnable {
 Super s = { <caret>method(2) } as Super
 """
     assert resolveReference() instanceof GrMethod
-  }
-
-  public void testMethodTypeParameterInference() throws Exception {
-    configureScript """
-@Typed package aaa
-
-java.util.concurrent.atomic.AtomicReference<Integer> r = [2]
-r.apply { it.intV<caret>i }
-"""
-    myFixture.completeBasic()
-    assertSameElements myFixture.getLookupElementStrings(), "intValue"
-  }
-
-  public void testMethodTypeParameterInference2() throws Exception {
-    configureScript """
-@Typed package aaa
-
-java.util.concurrent.atomic.AtomicReference<Integer> r = [2]
-r.apply { it.intV<caret>i } {}
-"""
-    myFixture.completeBasic()
-    assertSameElements myFixture.getLookupElementStrings(), "intValue"
   }
 
   public void testGotoSuperMethodFromMapLiterals() throws Exception {

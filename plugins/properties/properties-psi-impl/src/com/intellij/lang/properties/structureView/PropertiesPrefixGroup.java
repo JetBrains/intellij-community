@@ -100,20 +100,25 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
         continue;
       }
       final String key = ((IProperty) value).getUnescapedKey();
-      if (key == null || key.equals(myPrefix)) {
+      if (key == null) {
         continue;
       }
-      List<String> keyWords = StringUtil.split(key, mySeparator);
-      boolean startsWith = prefixWords.size() < keyWords.size();
-      if (startsWith) {
-        for (int i = 0; i < prefixWords.size(); i++) {
-          String prefixWord = prefixWords.get(i);
-          String keyWord = keyWords.get(i);
-          if (!Comparing.strEqual(keyWord, prefixWord)) {
-            startsWith = false;
-            break;
+      boolean startsWith;
+      if (!key.equals(myPrefix)) {
+        List<String> keyWords = StringUtil.split(key, mySeparator);
+        startsWith = prefixWords.size() < keyWords.size();
+        if (startsWith) {
+          for (int i = 0; i < prefixWords.size(); i++) {
+            String prefixWord = prefixWords.get(i);
+            String keyWord = keyWords.get(i);
+            if (!Comparing.strEqual(keyWord, prefixWord)) {
+              startsWith = false;
+              break;
+            }
           }
         }
+      } else {
+        startsWith = true;
       }
       if (startsWith) {
         result.add(treeElement);

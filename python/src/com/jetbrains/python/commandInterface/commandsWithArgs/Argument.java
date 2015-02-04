@@ -16,38 +16,63 @@
 package com.jetbrains.python.commandInterface.commandsWithArgs;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+// TODO: Support regex validation as well
 
 /**
- * Command argument
+ * Command <strong>positional, not named</strong> argument (not option!).
+ * This class represents command argument, not its value.
+ *
  *
  * @author Ilya.Kazakevich
  */
-public class Argument {
-  private final boolean myNamed;
+public final class Argument {
+  /**
+   * Argument help user-readable text
+   */
   @NotNull
-  private final String myName;
+  private final String myHelpText;
+  /**
+   * List of values argument may have. Null if any value is possible.
+   */
+  @Nullable
+  private final List<String> myAvailableValues;
+
 
   /**
-   * @param named is named argument or not
-   * @param name  name of argument
+   * @param helpText Argument help user-readable text
    */
-  public Argument(final boolean named, @NotNull final String name) {
-    myNamed = named;
-    myName = name;
+  public Argument(@NotNull final String helpText) {
+    this(helpText, null);
   }
 
   /**
-   * @return is named argument or not
+   * @param helpText        Argument help user-readable text
+   * @param availableValues List of values argument may have. Null if any value is possible.
    */
-  public boolean isNamed() {
-    return myNamed;
+  public Argument(@NotNull final String helpText, @Nullable final List<String> availableValues) {
+    myHelpText = helpText;
+    myAvailableValues = (availableValues == null ? null : new ArrayList<String>(availableValues));
   }
 
   /**
-   * @return name of argument
+   * @return Argument help user-readable text
    */
   @NotNull
-  public String getName() {
-    return myName;
+  public String getHelpText() {
+    return myHelpText;
+  }
+
+  /**
+   * @return List of values argument may have. Null if any value is possible.
+   */
+  @Nullable
+  public List<String> getAvailableValues() {
+    return (myAvailableValues == null ? null : Collections.unmodifiableList(myAvailableValues));
   }
 }

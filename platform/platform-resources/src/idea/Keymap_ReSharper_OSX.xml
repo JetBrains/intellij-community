@@ -53,6 +53,9 @@
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="control T"/>
     </action>
+    <action id="GotoChangedFile">
+      <keyboard-shortcut first-keystroke="control T"/>
+    </action>
     <action id="GotoDeclaration">
       <keyboard-shortcut first-keystroke="F12"/>
       <mouse-shortcut keystroke="control button1"/>

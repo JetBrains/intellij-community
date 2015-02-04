@@ -105,10 +105,17 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
           try {
             myCompilerTester.tearDown();
             myCompilerTester = null;
-            GroovyCompilerTestCase.super.tearDown();
           }
           catch (Exception e) {
             throw new RuntimeException(e);
+          }
+          finally {
+            try {
+              GroovyCompilerTestCase.super.tearDown();
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
+            }
           }
         }
       });

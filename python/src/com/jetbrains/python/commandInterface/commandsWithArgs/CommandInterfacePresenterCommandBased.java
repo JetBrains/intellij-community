@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.commandInterface.commandsWithArgs;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.commandInterface.CommandInterfacePresenterAdapter;
 import com.jetbrains.python.commandInterface.CommandInterfaceView;
+import com.jetbrains.python.commandInterface.CommandInterfaceView.SpecialErrorPlace;
 import com.jetbrains.python.optParse.MalformedCommandLineException;
 import com.jetbrains.python.optParse.ParsedCommandLine;
+import com.jetbrains.python.optParse.WordWithPosition;
 import com.jetbrains.python.suggestionList.SuggestionsBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,10 +45,6 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
    * currenly used strategy (see interface for more info)
    */
   private Strategy myStrategy;
-  /**
-   * When user asks for completion, last word should be removed if it is tied to suggestion
-   */
-  private boolean myLastSuggestionTiedToWord;
 
 
   /**
@@ -71,26 +70,17 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
 
   @Override
   public void launch() {
-    myView.setPreferredWidthInChars(getMaximumCommandWithArgsLength());
+    /*myView.setPreferredWidthInChars(getMaximumCommandWithArgsLength());*/
     super.launch();
     myStrategy = new NoCommandStrategy(this);
   }
 
   @Override
   public void textChanged(final boolean inForcedTextMode) {
-    myLastSuggestionTiedToWord = false;
     configureStrategy();
     myView.setSubText(myStrategy.getSubText());
-    switch (myStrategy.getShowErrorInfo()) {
-      case NO:
-        break;
-      case FULL:
-        myView.showError(false);
-        break;
-      case RELATIVE:
-        myView.showError(true);
-        break;
-    }
+    final Pair<SpecialErrorPlace, List<WordWithPosition>> errorInfo = myStrategy.getErrorInfo();
+    myView.showErrors(errorInfo.getSecond(), errorInfo.first);
     myView.setBalloons(myStrategy.getBalloonsToShow());
 
     final SuggestionInfo suggestionInfo = myStrategy.getSuggestionInfo();
@@ -99,7 +89,6 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
     final String lastPart = getLastPart();
     if ((lastPart != null) && myStrategy.isUnknownTextExists()) {
       //Filter to starts from
-      myLastSuggestionTiedToWord = true;
       final Iterator<String> iterator = suggestions.iterator();
       while (iterator.hasNext()) {
         final String textToCheck = iterator.next();
@@ -127,7 +116,10 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
    */
   @NotNull
   private SuggestionsBuilder getBuilderWithHistory() {
-    final SuggestionsBuilder suggestionsBuilder = new SuggestionsBuilder();
+    return new SuggestionsBuilder();
+
+    // TODO: Uncomment when history would be fixed
+    /*final SuggestionsBuilder suggestionsBuilder = new SuggestionsBuilder();
     final List<CommandExecutionInfo> history = getHistory();
     final Collection<String> historyCommands = new LinkedHashSet<String>();
     for (final CommandExecutionInfo info : history) {
@@ -142,7 +134,7 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
       suggestionsBuilder.changeGroup(true);
     }
 
-    return suggestionsBuilder;
+    return suggestionsBuilder;*/
   }
 
   /**
@@ -183,7 +175,7 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
       if (suggestionInfo.getSuggestions().contains(valueFromSuggestionList)) {
         final ParsedCommandLine commandLine = getParsedCommandLine();
         final List<String> words = commandLine != null ? commandLine.getAsWords() : new ArrayList<String>();
-        if (!words.isEmpty() && myLastSuggestionTiedToWord) {
+        if (!words.isEmpty() && myView.isCaretOnWord()) {
           words.remove(words.size() - 1);
         }
         words.add(valueFromSuggestionList);
@@ -195,8 +187,6 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
 
   @Override
   public void suggestionRequested() {
-    myLastSuggestionTiedToWord = false;
-
     final SuggestionInfo suggestionInfo = myStrategy.getSuggestionInfo();
     final List<String> suggestions = suggestionInfo.getSuggestions();
     if (!suggestions.isEmpty()) {
@@ -254,20 +244,4 @@ public class CommandInterfacePresenterCommandBased<C extends Command> extends Co
     return myView;
   }
 
-  /**
-   * @return maximum length command window may need
-   */
-  private int getMaximumCommandWithArgsLength() {
-    int maxLength = 0;
-    for (final Command command : myCommands.values()) {
-      int commandLength = command.getName().length() + 1;
-      for (final Argument argument : command.getArguments()) {
-        commandLength += argument.getName().length() + 1;
-      }
-      if (commandLength > maxLength) {
-        maxLength = commandLength;
-      }
-    }
-    return maxLength;
-  }
 }

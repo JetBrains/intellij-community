@@ -33,7 +33,7 @@ def do_enable_gui(guiname):
             traceback.print_exc()
     elif guiname not in ['none', '', None]:
         # Only print a warning if the guiname was going to do something
-        sys.stderr.write("PyDev console: Python version does not support GUI event loop integration for '%s'\n" % guiname)
+        sys.stderr.write("Debug console: Python version does not support GUI event loop integration for '%s'\n" % guiname)
     # Return value does not matter, so return back what was sent
     return guiname
 
