@@ -16,6 +16,7 @@
 
 package com.intellij.execution.testframework.actions;
 
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestTreeView;
@@ -129,6 +130,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     private class MyTestDiffRequestProcessor extends TestDiffRequestProcessor {
       public MyTestDiffRequestProcessor(@Nullable Project project, @NotNull List<DiffHyperlink> requests, int index) {
         super(project, requests, index);
+        putContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY, "#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");
       }
 
       @Override
