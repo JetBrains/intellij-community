@@ -177,8 +177,8 @@ public class RunIdeConsoleAction extends DumbAwareAction {
         public void error(Object o) {
           printInContent(descriptor, o, ConsoleViewContentType.ERROR_OUTPUT);
         }
-        public void put(Object key, Object value) {
-          bindings.put(key, value);
+        public Object put(Object key, Object value) {
+          return value == null ? bindings.remove(key) : bindings.put(key, value);
         }
         public Object get(Object key) {
           return bindings.get(key);
@@ -225,11 +225,12 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    JComponent consoleComponent = new JPanel(new BorderLayout());
-    consoleComponent.add(consoleView.getComponent(), BorderLayout.CENTER);
-    consoleComponent.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(),
-                         BorderLayout.WEST);
-    final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, null, consoleComponent, file.getName()) {
+    JComponent panel = new JPanel(new BorderLayout());
+    panel.add(consoleView.getComponent(), BorderLayout.CENTER);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
+    toolbar.setTargetComponent(consoleView.getComponent());
+    panel.add(toolbar.getComponent(), BorderLayout.WEST);
+    final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, null, panel, file.getName()) {
       @Override
       public boolean isContentReuseProhibited() {
         return true;
@@ -250,10 +251,10 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     //    rerunRunnable.run();
     //  }
     //});
-    toolbarActions.add(new CloseAction(executor, descriptor, project));
     for (AnAction action : consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
+    toolbarActions.add(new CloseAction(executor, descriptor, project));
     psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
     return descriptor;
