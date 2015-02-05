@@ -351,25 +351,6 @@
 
     <lang.lineWrapStrategy language="TEXT" implementationClass="com.intellij.openapi.editor.TextLineWrapPositionStrategy"/>
 
-    <!-- built-in server -->
-    <applicationService serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
-    <xdebugger.configurableProvider implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$BuiltInServerDebuggerConfigurableProvider"/>
-    <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider" order="last"/>
-
-    <projectService serviceImplementation="org.jetbrains.builtInWebServer.WebServerPathToFileManager"/>
-    <customPortServerManager implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$MyCustomPortServerManager"/>
-
-    <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="org.jetbrains.ide.XmlRpcServerImpl"/>
-
-    <xmlRpcHandler name="fileOpener" implementation="org.jetbrains.ide.OpenFileXmlRpcHandler"/>
-
-    <httpRequestHandler implementation="org.jetbrains.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
-    <httpRequestHandler implementation="org.jetbrains.ide.ProjectSetRequestHandler"/>
-    <httpRequestHandler implementation="org.jetbrains.ide.DiffHttpService"/>
-    <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
-    <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer"/>
-
-
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
@@ -391,10 +372,5 @@
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser" order="before OpenFilesActivity"/>
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
-  </extensions>
-  <extensions defaultExtensionNs="org.jetbrains">
-    <webServerPathHandler implementation="org.jetbrains.builtInWebServer.DefaultWebServerPathHandler" order="last"/>
-    <webServerFileHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer$StaticFileHandler" order="last"/>
-    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.DefaultWebServerRootsProvider"/>
   </extensions>
 </idea-plugin>
