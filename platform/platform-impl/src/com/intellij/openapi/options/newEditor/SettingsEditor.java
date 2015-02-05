@@ -248,21 +248,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
     }
     myFilter.update(filter, false, true);
-    myTreeView.select(configurable).doWhenProcessed(new Runnable() {
-      @Override
-      public void run() {
-        if (!myDisposed) {
-          new Alarm().addRequest(new Runnable() {
-            @Override
-            public void run() {
-              if (!myDisposed) {
-                mySpotlightPainter.updateNow();
-              }
-            }
-          }, 300);
-        }
-      }
-    });
+    myTreeView.select(configurable);
     Disposer.register(this, myTreeView);
   }
 
@@ -329,6 +315,16 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       myEditor.getApplyAction().setEnabled(!myFilter.myContext.getModified().isEmpty());
       myEditor.getResetAction().setEnabled(myFilter.myContext.isModified(configurable) || exception != null);
       myEditor.setError(exception);
+    }
+    if (configurable != null) {
+      new Alarm().addRequest(new Runnable() {
+        @Override
+        public void run() {
+          if (!myDisposed && mySpotlightPainter != null) {
+            mySpotlightPainter.updateNow();
+          }
+        }
+      }, 300);
     }
   }
 
