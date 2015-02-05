@@ -173,11 +173,11 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       class IDE {
         public final Application application = ApplicationManager.getApplication();
         public final Project project = project_;
-        public void print(String s) {
-          printInContent(descriptor, s + "\n", ConsoleViewContentType.NORMAL_OUTPUT);
+        public void print(Object o) {
+          printInContent(descriptor, o, ConsoleViewContentType.NORMAL_OUTPUT);
         }
-        public void error(String s) {
-          printInContent(descriptor, s + "\n", ConsoleViewContentType.ERROR_OUTPUT);
+        public void error(Object o) {
+          printInContent(descriptor, o, ConsoleViewContentType.ERROR_OUTPUT);
         }
       }
 
@@ -197,10 +197,10 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     consoleView.scrollToEnd();
   }
 
-  private static void printInContent(RunContentDescriptor descriptor, String s, ConsoleViewContentType contentType) {
+  private static void printInContent(RunContentDescriptor descriptor, Object o, ConsoleViewContentType contentType) {
     selectContent(descriptor);
     ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
-    consoleView.print(s, contentType);
+    consoleView.print(o + "\n", contentType);
     consoleView.scrollToEnd();
   }
 
