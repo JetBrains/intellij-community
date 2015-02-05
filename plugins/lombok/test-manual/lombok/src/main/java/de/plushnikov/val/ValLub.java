@@ -5,6 +5,7 @@ class ValLub {
 		java.util.Map<String, Number> m = java.util.Collections.emptyMap();
 
 		lombok.val foo = (System.currentTimeMillis() > 0) ? m : java.util.Collections.<String, Number>emptyMap();
+		System.out.println(foo);
 	}
 
 	public void sillyLubWithUnboxingThatProducesErrorThatVarIsPrimitive() {
@@ -12,6 +13,7 @@ class ValLub {
 		Double d = 20.0;
 
 		lombok.val thisShouldBePrimitiveDouble = (System.currentTimeMillis() > 0) ? i : d;
+		System.out.println(thisShouldBePrimitiveDouble);
 	}
 
 	public void hardLub() {

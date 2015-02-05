@@ -16,6 +16,6 @@ public class ValueBuilder {
         ValueBuilder builder = new ValueBuilder("1", 2, 3.0);
         System.out.println(builder);
         System.out.println("Constructors: ");
-        Arrays.stream(ValueBuilder.class.getDeclaredConstructors()).forEach(System.out::println);
+//        Arrays.stream(ValueBuilder.class.getDeclaredConstructors()).forEach(System.out::println);
     }
 }

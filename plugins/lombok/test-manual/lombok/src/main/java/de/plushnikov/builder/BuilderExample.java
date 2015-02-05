@@ -1,6 +1,6 @@
 package de.plushnikov.builder;
 
-import lombok.experimental.Builder;
+import lombok.Builder;
 
 @Builder
 public class BuilderExample {
@@ -12,5 +12,4 @@ public class BuilderExample {
         BuilderExample.builder().name("fsdf").age(23).name("123123").build();
         System.out.println(example);
     }
-
 }
