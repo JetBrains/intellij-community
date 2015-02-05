@@ -73,7 +73,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       myLink.append(fragment, attributes, tag);
     }
     else {
-      append(fragment, attributes, tag);
+      super.append(fragment, attributes, tag);
     }
   }
 
