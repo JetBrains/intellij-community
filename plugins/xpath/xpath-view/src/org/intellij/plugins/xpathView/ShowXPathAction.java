@@ -51,7 +51,8 @@ public class ShowXPathAction extends XPathAction {
         super.update(event);
 
         final Presentation presentation = event.getPresentation();
-        if (ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && presentation.getText().startsWith("Show ")) {
+        String presentationText = presentation.getText();
+        if (presentationText != null && ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && presentationText.startsWith("Show ")) {
             final String text = presentation.getText().substring("Show ".length());
             presentation.setText(Character.toUpperCase(text.charAt(0)) + text.substring(1));
         }
