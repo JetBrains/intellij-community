@@ -168,6 +168,9 @@ public abstract class SourcePosition implements Navigatable{
       Document document = null;
       try {
         document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        if (document == null) { // may be decompiled psi - try to get document for the original file
+          document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file.getOriginalFile());
+        }
       }
       catch (Throwable e) {
         LOG.error(e);
