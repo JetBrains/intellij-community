@@ -462,19 +462,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     scope.invalidate();
 
     InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
-    GlobalInspectionContextForTests globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrapper);
+    GlobalInspectionContextImpl globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrapper);
 
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, new File(getTestDataPath(), testDir).getPath());
   }
 
   @NotNull
-  public static GlobalInspectionContextForTests createGlobalContextForTool(@NotNull AnalysisScope scope,
+  public static GlobalInspectionContextImpl createGlobalContextForTool(@NotNull AnalysisScope scope,
                                                                        @NotNull final Project project,
                                                                        @NotNull InspectionManagerEx inspectionManager,
                                                                        @NotNull final InspectionToolWrapper ... toolWrappers) {
     final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", project, toolWrappers);
-    GlobalInspectionContextForTests context = new GlobalInspectionContextForTests(project, inspectionManager.getContentManager()) {
+    GlobalInspectionContextImpl context = new GlobalInspectionContextImpl(project, inspectionManager.getContentManager()) {
       @Override
       protected List<Tools> getUsedTools() {
         try {
@@ -488,10 +488,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           InspectionProfileImpl.INIT_INSPECTIONS = false;
         }
       }
+
+      @Override
+      protected void notifyInspectionsFinished() {
+        super.notifyInspectionsFinished();
+        putUserData(FINISHED, true);
+      }
     };
+    context.putUserData(FINISHED, false);
     context.setCurrentScope(scope);
 
     return context;
+  }
+  private static final Key<Boolean> FINISHED = Key.create("Inspections finished");
+  public static boolean isInspectionsFinished(@NotNull GlobalInspectionContext context) {
+    return context.getUserData(FINISHED) == Boolean.TRUE;
+  }
+  public static boolean isTestContext(@NotNull GlobalInspectionContext context) {
+    return context.getUserData(FINISHED) != null;
   }
 
   @Override
