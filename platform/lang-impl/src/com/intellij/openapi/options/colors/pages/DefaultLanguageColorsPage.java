@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("interface", DefaultLanguageHighlighterColors.INTERFACE_NAME);
     TAG_HIGHLIGHTING_MAP.put("doc_markup", DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP);
     TAG_HIGHLIGHTING_MAP.put("doc_tag", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG);
+    TAG_HIGHLIGHTING_MAP.put("doc_tag_value", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE);
     TAG_HIGHLIGHTING_MAP.put("valid_esc_seq", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
     TAG_HIGHLIGHTING_MAP.put("invalid_esc_seq", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
     TAG_HIGHLIGHTING_MAP.put("predefined", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
@@ -128,6 +129,8 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       OptionsBundle.message("options.language.defaults.doc.markup"), DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.doc.tag"), DefaultLanguageHighlighterColors.DOC_COMMENT_TAG),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.doc.tag.value"), DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.label"), DefaultLanguageHighlighterColors.LABEL),
     new AttributesDescriptor(
@@ -203,6 +206,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "<doc_comment>/** \n" +
       " * Doc comment\n" +
       " * <doc_tag>@tag</doc_tag> <doc_markup><code>Markup</code></doc_markup>\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>param_name</doc_tag_value> documentation\n" +
       " */</doc_comment>\n" +
       "<label>:Label</label>\n" +
       "<predefined>predefined_symbol()</predefined>\n" +
