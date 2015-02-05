@@ -42,6 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -145,7 +146,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
     InspectionToolWrapper[] toolWrappers = runDeadCodeFirst ? new InspectionToolWrapper []{getUnusedDeclarationWrapper(), toolWrapper} : new InspectionToolWrapper []{toolWrapper};
     toolWrappers = ArrayUtil.mergeArrays(toolWrappers, additional);
-    final GlobalInspectionContextImpl globalContext =
+    final GlobalInspectionContextForTests globalContext =
       CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrappers);
 
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
