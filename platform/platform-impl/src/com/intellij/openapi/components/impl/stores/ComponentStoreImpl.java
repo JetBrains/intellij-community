@@ -132,6 +132,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       session.save();
     }
     catch (ReadOnlyModificationException e) {
+      LOG.warn(e);
       readonlyFiles.add(Pair.create(session, e.getFile()));
     }
   }
