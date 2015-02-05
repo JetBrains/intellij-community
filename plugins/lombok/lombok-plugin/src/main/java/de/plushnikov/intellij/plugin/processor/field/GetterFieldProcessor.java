@@ -119,10 +119,10 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
 
   @NotNull
   public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull String methodModifier) {
-    final String methodName = getGetterName(psiField);
-
     PsiClass psiClass = psiField.getContainingClass();
     assert psiClass != null;
+
+    final String methodName = getGetterName(psiField, psiClass);
 
     UserMapKeys.addReadUsageFor(psiField);
 

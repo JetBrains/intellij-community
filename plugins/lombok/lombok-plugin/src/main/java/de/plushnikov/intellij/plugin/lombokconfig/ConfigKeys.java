@@ -17,8 +17,15 @@ public enum ConfigKeys {
   TOSTRING_DO_NOT_USE_GETTERS("lombok.toString.doNotUseGetters", "false"),
   TOSTRING_INCLUDE_FIELD_NAMES("lombok.toString.includeFieldNames", "true"),
 
-  NONNULL_EXCEPTIONTYPE("lombok.nonNull.exceptionType", "NullPointerException"),
-  ACCESSORS_PREFIX("lombok.accessors.prefix", "");
+  ACCESSORS_PREFIX("lombok.accessors.prefix", ""),
+  ACCESSORS_CHAIN("lombok.accessors.chain", "false"),
+  ACCESSORS_FLUENT("lombok.accessors.fluent", "false"),
+  GETTER_NO_IS_PREFIX("lombok.getter.noIsPrefix", "false"),
+
+  SINGULAR_USE_GUAVA("lombok.singular.useGuava", "false"),
+  SINGULAR_AUTO("lombok.singular.auto", "true"),
+
+  NONNULL_EXCEPTIONTYPE("lombok.nonNull.exceptionType", "NullPointerException");
 
   private final String configKey;
   private final String configDefaultValue;
@@ -37,10 +44,6 @@ public enum ConfigKeys {
   }
 
   //TODO ADD ALL KEYS
-  final Collection<String> booleanOptions = new HashSet<String>(Arrays.asList(
-      "config.stopBubbling", "lombok.accessors.chain", "lombok.accessors.fluent",
-      "lombok.getter.noIsPrefix"));
-
   final Collection<String> flagUsageOptions = new HashSet<String>(Arrays.asList(
       "lombok.accessors.flagUsage", "lombok.allArgsConstructor.flagUsage", "lombok.anyConstructor.flagUsage",
       "lombok.builder.flagUsage", "lombok.cleanup.flagUsage", "lombok.data.flagUsage", "lombok.delegate.flagUsage",

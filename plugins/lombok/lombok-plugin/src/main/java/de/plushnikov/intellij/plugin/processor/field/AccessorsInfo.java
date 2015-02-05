@@ -4,6 +4,8 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
+import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
@@ -35,10 +37,11 @@ public class AccessorsInfo {
 
   public static AccessorsInfo build(@NotNull PsiField psiField) {
     final PsiAnnotation accessorsFieldAnnotation = AnnotationUtil.findAnnotation(psiField, ACCESSORS_ANNOTATION_NAME);
+    final PsiClass containingClass = psiField.getContainingClass();
     if (null != accessorsFieldAnnotation) {
-      return buildFromAnnotation(accessorsFieldAnnotation);
+      return buildFromAnnotation(accessorsFieldAnnotation, containingClass);
     } else {
-      return build(psiField.getContainingClass());
+      return build(containingClass);
     }
   }
 
@@ -47,21 +50,19 @@ public class AccessorsInfo {
     while (null != containingClass) {
       final PsiAnnotation accessorsClassAnnotation = AnnotationUtil.findAnnotation(containingClass, ACCESSORS_ANNOTATION_NAME);
       if (null != accessorsClassAnnotation) {
-        return buildFromAnnotation(accessorsClassAnnotation);
+        return buildFromAnnotation(accessorsClassAnnotation, containingClass);
       }
       containingClass = containingClass.getContainingClass();
     }
     return new AccessorsInfo();
   }
 
-  private static AccessorsInfo buildFromAnnotation(PsiAnnotation accessorsAnnotation) {
-    Boolean fluentValue = PsiAnnotationUtil.getAnnotationValue(accessorsAnnotation, "fluent", Boolean.class);
-    Boolean chainValue = PsiAnnotationUtil.getAnnotationValue(accessorsAnnotation, "chain", Boolean.class);
+  private static AccessorsInfo buildFromAnnotation(PsiAnnotation accessorsAnnotation, PsiClass psiClass) {
+    final boolean isFluent = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "fluent", ConfigKeys.ACCESSORS_FLUENT);
+    final boolean isChained = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "chain", ConfigKeys.ACCESSORS_CHAIN);
+
     Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredAnnotationValue(accessorsAnnotation, "chain", Boolean.class);
     Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, "prefix", String.class);
-
-    boolean isFluent = null == fluentValue ? false : fluentValue;
-    boolean isChained = null == chainValue ? false : chainValue;
 
     boolean isChainDeclaredOrImplicit = isChained || (isFluent && null == chainDeclaredValue);
     return new AccessorsInfo(isFluent, isChainDeclaredOrImplicit, prefixes.toArray(new String[prefixes.size()]));

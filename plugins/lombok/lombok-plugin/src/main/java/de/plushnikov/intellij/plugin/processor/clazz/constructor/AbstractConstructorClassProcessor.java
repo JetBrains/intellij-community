@@ -14,7 +14,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -160,7 +159,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodModifier;
 
-    final boolean suppressConstructorProperties = readSuppressConstructorPropertiesFlag(psiClass, psiAnnotation);
+    final boolean suppressConstructorProperties = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "suppressConstructorProperties", ConfigKeys.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES);
 
     final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, suppressConstructorProperties, params, psiAnnotation);
     if (staticConstructorRequired) {
@@ -168,17 +167,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       return Arrays.asList(constructor, staticConstructor);
     }
     return Collections.singletonList(constructor);
-  }
-
-  private boolean readSuppressConstructorPropertiesFlag(PsiClass psiClass, PsiAnnotation psiAnnotation) {
-    final boolean suppressConstructorProperties;
-    final Boolean suppressConstructorPropertiesAnnotationValue = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "suppressConstructorProperties", Boolean.class);
-    if (null == suppressConstructorPropertiesAnnotationValue) {
-      suppressConstructorProperties = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES, psiClass);
-    } else {
-      suppressConstructorProperties = suppressConstructorPropertiesAnnotationValue.booleanValue();
-    }
-    return suppressConstructorProperties;
   }
 
   private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier, boolean suppressConstructorProperties, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {

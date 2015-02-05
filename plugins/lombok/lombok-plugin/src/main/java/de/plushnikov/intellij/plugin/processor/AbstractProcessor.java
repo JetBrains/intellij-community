@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -92,23 +94,39 @@ public abstract class AbstractProcessor implements Processor {
   @NotNull
   public abstract Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass);
 
-  protected String getGetterName(final @NotNull PsiField psiField) {
+  protected String getGetterName(final @NotNull PsiField psiField, final @NotNull PsiClass psiClass) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
 
     final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiField.getName());
     if (accessorsInfo.isFluent()) {
       return LombokUtils.decapitalize(fieldNameWithoutPrefix);
     }
-    return LombokUtils.toGetterName(fieldNameWithoutPrefix, PsiType.BOOLEAN.equals(psiField.getType()));
+
+    final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+    final boolean useBooleanPrefix = isBoolean && !ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
+
+    return LombokUtils.toGetterName(fieldNameWithoutPrefix, useBooleanPrefix);
   }
 
   protected void filterToleratedElements(@NotNull Collection<? extends PsiModifierListOwner> definedConstructors) {
     final Iterator<? extends PsiModifierListOwner> methodIterator = definedConstructors.iterator();
     while (methodIterator.hasNext()) {
       PsiModifierListOwner definedConstructor = methodIterator.next();
-      if(PsiAnnotationUtil.isAnnotatedWith(definedConstructor, Tolerate.class)) {
+      if (PsiAnnotationUtil.isAnnotatedWith(definedConstructor, Tolerate.class)) {
         methodIterator.remove();
       }
     }
+  }
+
+  public static boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
+                                                       @NotNull String annotationParameter, @NotNull ConfigKeys configKeys) {
+    final boolean result;
+    final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, annotationParameter, Boolean.class);
+    if (null == declaredAnnotationValue) {
+      result = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(configKeys, psiClass);
+    } else {
+      result = declaredAnnotationValue;
+    }
+    return result;
   }
 }
