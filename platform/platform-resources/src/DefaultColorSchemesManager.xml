@@ -1667,6 +1667,11 @@
           <option name="ERROR_STRIPE_COLOR" value="43698d" />
         </value>
       </option>
+      <option name="DEFAULT_DOC_COMMENT_TAG_VALUE">
+        <value>
+          <option name="FOREGROUND" value="8a653b" />
+        </value>
+      </option>
       <option name="DOC_COMMENT_TAG_VALUE">
         <value>
           <option name="FOREGROUND" value="8a653b" />
