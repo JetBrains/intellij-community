@@ -311,7 +311,7 @@ public class PathManager {
 
   public static String getUserPropertiesPath() {
     if (PATHS_SELECTOR != null) {
-      return platformPath(PATHS_SELECTOR, "Library/Preferences", ".");
+      return platformPath(PATHS_SELECTOR, "Library/Preferences", "");
     }
     else {
       return getUserHome();
@@ -320,7 +320,7 @@ public class PathManager {
 
   public static void loadProperties() {
     String prop_file = System.getProperty(PROPERTIES_FILE);
-    String ide_prop = getUserPropertiesPath() + "/idea.properties";
+    String ide_prop = getUserPropertiesPath() + "idea.properties";
     String ide_prop_bin = getHomePath() + "/bin/idea.properties";
     String ide_prop_home = getHomePath() + "/community/bin/idea.properties";
 
@@ -331,7 +331,7 @@ public class PathManager {
 
   String[] propFiles = new String[]{
       System.getProperty(PROPERTIES_FILE),
-      getUserPropertiesPath() + "/idea.properties",
+      getUserPropertiesPath() + "idea.properties",
       getHomePath() + "/bin/idea.properties",
       getHomePath() + "/community/bin/idea.properties"};
 
