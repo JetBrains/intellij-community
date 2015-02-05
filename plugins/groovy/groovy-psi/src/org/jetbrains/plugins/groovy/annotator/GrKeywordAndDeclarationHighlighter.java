@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -51,11 +51,11 @@ import java.util.List;
  * @author Max Medvedev
  */
 public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPass implements DumbAware {
-  private final GroovyFile myFile;
+  private final GroovyFileBase myFile;
 
   private List<HighlightInfo> toHighlight;
 
-  protected GrKeywordAndDeclarationHighlighter(GroovyFile file, Document document) {
+  public GrKeywordAndDeclarationHighlighter(GroovyFileBase file, Document document) {
     super(file.getProject(), document);
     myFile = file;
   }
@@ -103,7 +103,9 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
         return false; //It is allowed to name packages 'as', 'in' or 'def'
       }
     }
-    else if (token == GroovyTokenTypes.kDEF && element.getParent() instanceof GrAnnotationNameValuePair) return false;
+    else if (token == GroovyTokenTypes.kDEF && element.getParent() instanceof GrAnnotationNameValuePair) {
+      return false;
+    }
     else if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getReferenceNameElement()) {
       if (token == GroovyTokenTypes.kSUPER && ((GrReferenceExpression)parent).getQualifier() == null) return true;
       if (token == GroovyTokenTypes.kTHIS && ((GrReferenceExpression)parent).getQualifier() == null) return true;
@@ -117,7 +119,9 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
   @Override
   public void doApplyInformationToEditor() {
     if (toHighlight == null || myDocument == null) return;
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId());
+    UpdateHighlightersUtil.setHighlightersToEditor(
+      myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId()
+    );
   }
 
   @Nullable

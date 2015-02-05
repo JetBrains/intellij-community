@@ -411,6 +411,94 @@ public class SwingHelper {
     component.setPreferredSize(preferredSize);
   }
 
+  public static class HtmlViewerBuilder {
+    private boolean myCarryTextOver;
+    private String myDisabledHtml;
+    private Font myFont;
+    private Color myBackground;
+    private Color myForeground;
+
+    public JEditorPane create() {
+      final JEditorPane textPane = new JEditorPane() {
+        private boolean myEnabled = true;
+        private String myEnabledHtml;
+
+        @Override
+        public Dimension getPreferredSize() {
+          // This trick makes text component to carry text over to the next line
+          // if the text line width exceeds parent's width
+          Dimension dimension = super.getPreferredSize();
+          if (myCarryTextOver) {
+            dimension.width = 0;
+          }
+          return dimension;
+        }
+
+        @Override
+        public void setText(String t) {
+          if (myDisabledHtml != null) {
+            if (myEnabled) {
+              myEnabledHtml = t;
+            }
+          }
+          super.setText(t);
+        }
+
+        @Override
+        public void setEnabled(boolean enabled) {
+          if (myDisabledHtml != null) {
+            myEnabled = enabled;
+            if (myEnabled) {
+              setText(myEnabledHtml);
+            } else {
+              setText(myDisabledHtml);
+            }
+            super.setEnabled(true);
+          } else {
+            super.setEnabled(enabled);
+          }
+        }
+      };
+      textPane.setFont(myFont != null ? myFont : UIUtil.getLabelFont());
+      textPane.setContentType(UIUtil.HTML_MIME);
+      textPane.setEditable(false);
+      if (myBackground != null) {
+        textPane.setBackground(myBackground);
+      }
+      else {
+        textPane.setOpaque(false);
+      }
+      textPane.setForeground(myForeground != null ? myForeground : UIUtil.getLabelForeground());
+      textPane.setFocusable(false);
+      return textPane;
+    }
+
+    public HtmlViewerBuilder setCarryTextOver(boolean carryTextOver) {
+      myCarryTextOver = carryTextOver;
+      return this;
+    }
+
+    public HtmlViewerBuilder setDisabledHtml(String disabledHtml) {
+      myDisabledHtml = disabledHtml;
+      return this;
+    }
+
+    public HtmlViewerBuilder setFont(Font font) {
+      myFont = font;
+      return this;
+    }
+
+    public HtmlViewerBuilder setBackground(Color background) {
+      myBackground = background;
+      return this;
+    }
+
+    public HtmlViewerBuilder setForeground(Color foreground) {
+      myForeground = foreground;
+      return this;
+    }
+  }
+
   @NotNull
   public static JEditorPane createHtmlViewer(boolean carryTextOver,
                                              @Nullable Font font,

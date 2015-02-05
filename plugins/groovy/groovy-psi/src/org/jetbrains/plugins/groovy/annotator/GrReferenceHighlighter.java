@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    if (myInfos == null) return;
+    if (myInfos == null || myDocument == null) return;
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), myInfos, getColorsScheme(), getId());
   }
 }

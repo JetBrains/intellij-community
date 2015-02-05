@@ -253,9 +253,6 @@ public class PositionManagerImpl implements PositionManager {
                 requiredDepth.set(getNestingDepth(psiClass));
                 baseClassNameRef.set(parentClassName);
               }
-              else {
-                LOG.error("The name of a parent " + topLevelClass + " of a local (anonymous) class " + psiClass + " is null");
-              }
             }
             else {
               LOG.error("Local or anonymous class has no non-local parent");
