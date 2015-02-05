@@ -345,7 +345,9 @@ public class PathManager {
               Map<String, String> properties = FileUtil.loadProperties(fis);
 
               String home = properties.get("idea.home");
+              String idea_home = System.getProperty(PROPERTY_HOME_PATH);
               System.out.println("idea.home: " + home);
+              System.out.println("idea.home.path: " + idea_home);
               if (home != null && ourHomePath == null) {
                 ourHomePath = getAbsolutePath(substituteVars(home));
               }
