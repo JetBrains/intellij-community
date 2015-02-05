@@ -32,6 +32,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -247,7 +248,21 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
     }
     myFilter.update(filter, false, true);
-    myTreeView.select(configurable);
+    myTreeView.select(configurable).doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        if (!myDisposed) {
+          new Alarm().addRequest(new Runnable() {
+            @Override
+            public void run() {
+              if (!myDisposed) {
+                mySpotlightPainter.updateNow();
+              }
+            }
+          }, 300);
+        }
+      }
+    });
     Disposer.register(this, myTreeView);
   }
 
