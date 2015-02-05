@@ -160,7 +160,6 @@ expected:
       HighlightDisplayKey.register(shortName);
     }
 
-    assert CodeInsightTestFixtureImpl.isTestContext(globalContext) : "You must create context via com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.createGlobalContextForTool";
     globalContext.doInspections(scope);
     do {
       UIUtil.dispatchAllInvocationEvents();
