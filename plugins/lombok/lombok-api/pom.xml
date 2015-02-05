@@ -12,17 +12,13 @@
   <artifactId>lombok-api</artifactId>
 
   <properties>
-    <lombok-annotations.includes>lombok/extern/**,lombok/experimental/**,
+    <lombok-annotations.includes>lombok/extern/**,lombok/experimental/**,lombok/Builder.java,
       lombok/AccessLevel.java,lombok/*ArgsConstructor.java,lombok/Cleanup.java,lombok/Data.java,lombok/Delegate.java,
       lombok/Getter.java,lombok/Setter.java,lombok/Equals*.java,lombok/NonNull.java,lombok/Synchronized.java,
       lombok/ToString.java,lombok/SneakyThrows.java,lombok/Value.java,lombok/val.java
     </lombok-annotations.includes>
     <lombok-pg-annotations.includes>
-      lombok/AutoGenMethodStub.java,lombok/Builder.java,lombok/EnumId.java,lombok/FluentSetter.java,lombok/ListenerSupport.java,lombok/Singleton.java,
-      lombok/DoPrivileged.java,lombok/WriteLock.java,lombok/ReadLock.java,lombok/Await.java,lombok/Signal.java,lombok/Position.java,
-      lombok/AwaitBeforeAndSignalAfter.java.java,lombok/BoundPropertySupport.java,lombok/BoundSetter.java,lombok/LazyGetter.java,
-      lombok/Sanitize.java,lombok/Validate.java,lombok/VisibleForTesting.java,lombok/ExtensionMethod.java,lombok/Action.java,
-      lombok/Actions.java,lombok/TypeArguments.java,lombok/Rethrow.java,lombok/Rethrows.java
+      lombok/EnumId.java,lombok/FluentSetter.java,lombok/Singleton.java,lombok/LazyGetter.java
     </lombok-pg-annotations.includes>
     <hrisey-annotations.includes>
       hrisey/Parcelable.java
@@ -43,6 +39,7 @@
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
+            <id>lombok</id>
             <goals>
               <goal>unpack</goal>
             </goals>
@@ -58,6 +55,18 @@
                   <overWrite>true</overWrite>
                   <outputDirectory>${project.build.directory}/generated-sources/lombok</outputDirectory>
                 </artifactItem>
+              </artifactItems>
+              <includes>${lombok-annotations.includes}</includes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>lombok_pg</id>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <artifactItems>
                 <artifactItem>
                   <groupId>com.github.peichhorn</groupId>
                   <artifactId>lombok-pg</artifactId>
@@ -68,7 +77,7 @@
                   <outputDirectory>${project.build.directory}/generated-sources/lombok-pg</outputDirectory>
                 </artifactItem>
               </artifactItems>
-              <includes>${lombok-annotations.includes},${lombok-pg-annotations.includes}</includes>
+              <includes>${lombok-pg-annotations.includes}</includes>
             </configuration>
           </execution>
           <execution>

@@ -68,8 +68,12 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor"/>
+
 		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderClassProcessor"/>
 		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderProcessor"/>
+		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderExperimentalClassProcessor"/>
+		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderExperimentalProcessor"/>
+
 		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
 		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueExperimentalProcessor"/>
 
@@ -81,8 +85,11 @@
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.DelegateExperimentalMethodProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor"/>
+
+		<processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor"/>
+		<processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalClassMethodProcessor"/>
+		<processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalMethodProcessor"/>
 
     <!-- lombok-pg-->
     <processor implementation="de.plushnikov.intellij.plugin.processor_pg.clazz.FluentSetterProcessor"/>
