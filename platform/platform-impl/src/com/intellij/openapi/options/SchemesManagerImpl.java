@@ -561,20 +561,19 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         file = DirectoryBasedStorage.getFile(fileName, myDir, this);
       }
 
-      final VirtualFile finalFile = file;
-      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-        @Override
-        public Object compute() throws IOException {
-          OutputStream out = finalFile.getOutputStream(this);
-          try {
-            byteOut.writeTo(out);
-          }
-          finally {
-            out.close();
-          }
-          return null;
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+      try {
+        OutputStream out = file.getOutputStream(this);
+        try {
+          byteOut.writeTo(out);
         }
-      });
+        finally {
+          out.close();
+        }
+      }
+      finally {
+        token.finish();
+      }
     }
     else if (renamed) {
       myFilesToDelete.add(currentFileNameWithoutExtension);
