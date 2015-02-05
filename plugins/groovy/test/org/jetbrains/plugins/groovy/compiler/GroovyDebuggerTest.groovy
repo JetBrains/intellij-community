@@ -421,7 +421,7 @@ public static void main(String[] args) {
 
     int i = 0
     def suspendManager = debugProcess.suspendManager
-    while (i++ < 1000 && !suspendManager.pausedContext && !debugProcess.processHandler.processTerminated) {
+    while (i++ < ourTimeout/10 && !suspendManager.pausedContext && !debugProcess.processHandler.processTerminated) {
       Thread.sleep(10)
     }
 

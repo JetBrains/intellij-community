@@ -5,7 +5,6 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 
 import java.util.concurrent.ExecutionException;
@@ -25,7 +23,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
   @NonNls
   public static final String PROPERTY_RPC_PORT = "rpc.port";
-  private static final int FIRST_PORT_NUMBER = 63342;
   private static final int PORTS_COUNT = 20;
 
   private volatile int detectedPortNumber = -1;
@@ -33,7 +30,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
   @Nullable
   private BuiltInServer server;
-  private boolean enabledInUnitTestMode = true;
 
   @Override
   public int getPort() {
@@ -57,7 +53,13 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   }
 
   private static int getDefaultPort() {
-    return System.getProperty(PROPERTY_RPC_PORT) == null ? FIRST_PORT_NUMBER : Integer.parseInt(System.getProperty(PROPERTY_RPC_PORT));
+    if (System.getProperty(PROPERTY_RPC_PORT) == null) {
+      // Default port will be occupied by main idea instance - define the custom default to avoid searching of free port
+      return ApplicationManager.getApplication().isUnitTestMode() ? 64463 : 63342;
+    }
+    else {
+      return Integer.parseInt(System.getProperty(PROPERTY_RPC_PORT));
+    }
   }
 
   @Override
@@ -66,16 +68,11 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   }
 
   private Future<?> startServerInPooledThread() {
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() && !enabledInUnitTestMode) {
-      return null;
-    }
-
     if (!started.compareAndSet(false, true)) {
       return null;
     }
 
-    return application.executeOnPooledThread(new Runnable() {
+    return ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         int defaultPort = getDefaultPort();
@@ -130,14 +127,5 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   @Nullable
   public Disposable getServerDisposable() {
     return server;
-  }
-
-  /**
-   * Pass true to start the WebServerManager even in the {@link Application#isUnitTestMode() unit test mode}.
-   */
-  @SuppressWarnings("unused")
-  @TestOnly
-  public void setEnabledInUnitTestMode(boolean enabled) {
-    enabledInUnitTestMode = enabled;
   }
 }

@@ -633,17 +633,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @Nullable
   public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
-    if (position.getFile().getVirtualFile() == null) {
+    VirtualFile file = position.getFile().getVirtualFile();
+    if (file == null) {
+      file = position.getFile().getOriginalFile().getVirtualFile();
+    }
+    if (file == null) {
       return null;
     }
-    return new JavaXSourcePosition(position);
+    return new JavaXSourcePosition(position, file);
   }
 
   private static class JavaXSourcePosition implements XSourcePosition {
     private final SourcePosition mySourcePosition;
+    @NotNull private final VirtualFile myFile;
 
-    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition) {
+    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition, @NotNull VirtualFile file) {
       mySourcePosition = sourcePosition;
+      myFile = file;
     }
 
     @Override
@@ -659,7 +665,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public VirtualFile getFile() {
-      return mySourcePosition.getFile().getVirtualFile();
+      return myFile;
     }
 
     @NotNull

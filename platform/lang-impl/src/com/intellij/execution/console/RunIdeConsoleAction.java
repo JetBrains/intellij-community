@@ -26,6 +26,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -35,13 +37,15 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +68,7 @@ import java.util.Map;
 public class RunIdeConsoleAction extends DumbAwareAction {
 
   private static final String DEFAULT_FILE_NAME = "ide-scripting";
-  private static final Key<WeakReference<ConsoleView>> CONSOLE_VIEW_KEY = Key.create("CONSOLE_VIEW_KEY");
+  private static final Key<WeakReference<RunContentDescriptor>> DESCRIPTOR_KEY = Key.create("DESCRIPTOR_KEY");
   private static final Key<ConsoleHistoryController> HISTORY_CONTROLLER_KEY = Key.create("HISTORY_CONTROLLER_KEY");
 
   static class Engines {
@@ -144,7 +148,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     return null;
   }
 
-  private static void executeQuery(@NotNull Project project,
+  private static void executeQuery(@NotNull final Project project_,
                                    @NotNull VirtualFile file,
                                    @NotNull Editor editor,
                                    @NotNull ScriptEngine engine) {
@@ -155,44 +159,66 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       int line = document.getLineNumber(selectedRange.getStartOffset());
       selectedRange = TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
     }
+    VirtualFile profileChild = file.getParent().findChild(".profile." + file.getExtension());
+    String profile = null;
+    try {
+      profile = profileChild == null ? "" : VfsUtilCore.loadText(profileChild);
+    }
+    catch (IOException ignored) {
+    }
     String command = document.getText(selectedRange);
-    final ConsoleView consoleView = getConsoleView(project, file, engine);
+    final RunContentDescriptor descriptor = getConsoleView(project_, file, engine);
+    ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
     try {
       class IDE {
-        public void print(String s) {
-          consoleView.print(s + "\n", ConsoleViewContentType.NORMAL_OUTPUT);
+        public final Application application = ApplicationManager.getApplication();
+        public final Project project = project_;
+        public void print(Object o) {
+          printInContent(descriptor, o, ConsoleViewContentType.NORMAL_OUTPUT);
         }
-        public void error(String s) {
-          consoleView.print(s + "\n", ConsoleViewContentType.ERROR_OUTPUT);
+        public void error(Object o) {
+          printInContent(descriptor, o, ConsoleViewContentType.ERROR_OUTPUT);
         }
       }
 
-      // todo
       //myHistoryController.getModel().addToHistory(command);
       consoleView.print("> " + command, ConsoleViewContentType.USER_INPUT);
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
       engine.getBindings(ScriptContext.ENGINE_SCOPE).put("IDE", new IDE());
-      Object o = engine.eval(command);
+      Object o = engine.eval(profile == null ? command : profile + "\n" + command);
       consoleView.print("=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
-      consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Exception e) {
-      consoleView.print(e.getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
-      //consoleView.print(ExceptionUtil.getThrowableText(e), ConsoleViewContentType.ERROR_OUTPUT);
+      consoleView.print(ExceptionUtil.getRootCause(e).getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.ERROR_OUTPUT);
     }
-    ((ConsoleViewImpl)consoleView).scrollToEnd();
+    selectContent(descriptor);
+    consoleView.scrollToEnd();
+  }
+
+  private static void printInContent(RunContentDescriptor descriptor, Object o, ConsoleViewContentType contentType) {
+    selectContent(descriptor);
+    ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
+    consoleView.print(o + "\n", contentType);
+    consoleView.scrollToEnd();
+  }
+
+  private static void selectContent(RunContentDescriptor descriptor) {
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    ConsoleViewImpl consoleView = ObjectUtils.assertNotNull((ConsoleViewImpl)descriptor.getExecutionConsole());
+    ExecutionManager.getInstance(consoleView.getProject()).getContentManager().toFrontRunContent(executor, descriptor);
   }
 
   @NotNull
-  private static ConsoleView getConsoleView(@NotNull Project project, @NotNull VirtualFile file, @NotNull ScriptEngine engine) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    WeakReference<ConsoleView> ref = psiFile == null ? null : psiFile.getCopyableUserData(CONSOLE_VIEW_KEY);
-    ConsoleView existing = ref == null ? null : ref.get();
-    if (existing != null && !Disposer.isDisposed(existing)) return existing;
+  private static RunContentDescriptor getConsoleView(@NotNull Project project, @NotNull VirtualFile file, @NotNull ScriptEngine engine) {
+    PsiFile psiFile = ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(file));
+
+    WeakReference<RunContentDescriptor> ref = psiFile.getCopyableUserData(DESCRIPTOR_KEY);
+    RunContentDescriptor existing = ref == null ? null : ref.get();
+    if (existing != null && existing.getExecutionConsole() != null) return existing;
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-    if (psiFile != null) psiFile.putCopyableUserData(CONSOLE_VIEW_KEY, new WeakReference<ConsoleView>(consoleView));
+
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
     JComponent consoleComponent = new JPanel(new BorderLayout());
     consoleComponent.add(consoleView.getComponent(), BorderLayout.CENTER);
@@ -205,7 +231,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       }
     };
 
-    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     //toolbarActions.add(new DumbAwareAction("Rerun", null, AllIcons.Actions.Rerun) {
     //  @Override
     //  public void update(@NotNull AnActionEvent e) {
@@ -223,8 +249,9 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     for (AnAction action : consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
+    psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
-    return consoleView;
+    return descriptor;
   }
 
 

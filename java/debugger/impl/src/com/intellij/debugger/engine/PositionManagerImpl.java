@@ -363,7 +363,7 @@ public class PositionManagerImpl implements PositionManager {
             continue;
           }
           int locationLine = lnumber - 1;
-          PsiFile psiFile = position.getFile();
+          PsiFile psiFile = position.getFile().getOriginalFile();
           if (psiFile instanceof PsiCompiledFile) {
             locationLine = bytecodeToSourceLine(psiFile, locationLine);
             if (locationLine < 0) continue;

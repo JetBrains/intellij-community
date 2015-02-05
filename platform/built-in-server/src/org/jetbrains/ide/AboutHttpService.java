@@ -23,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PlatformUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 
 /**
  * @api {get} /about The application info
@@ -76,7 +74,7 @@ class AboutHttpService extends RestService {
     BuildNumber build = ApplicationInfo.getInstance().getBuild();
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     BufferExposingByteArrayOutputStream byteOut = new BufferExposingByteArrayOutputStream();
-    JsonWriter writer = new JsonWriter(new OutputStreamWriter(byteOut, CharsetToolkit.UTF8_CHARSET));
+    JsonWriter writer = createJsonWriter(byteOut);
     writer.beginObject();
 
     String appName = ApplicationInfoEx.getInstanceEx().getFullApplicationName();

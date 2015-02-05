@@ -28,10 +28,7 @@ import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -538,7 +535,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     myFilesToDelete.remove(fileNameWithoutExtension);
 
     // stream provider always use LF separator
-    BufferExposingByteArrayOutputStream byteOut = StorageUtil.writeToBytes(element, "\n");
+    final BufferExposingByteArrayOutputStream byteOut = StorageUtil.writeToBytes(element, "\n");
 
     // if another new scheme uses old name of this scheme, so, we must not delete it (as part of rename operation)
     boolean renamed = currentFileNameWithoutExtension != null && fileNameWithoutExtension != currentFileNameWithoutExtension && nameGenerator.value(currentFileNameWithoutExtension);
@@ -564,12 +561,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         file = DirectoryBasedStorage.getFile(fileName, myDir, this);
       }
 
-      OutputStream out = file.getOutputStream(this);
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
       try {
-        byteOut.writeTo(out);
+        OutputStream out = file.getOutputStream(this);
+        try {
+          byteOut.writeTo(out);
+        }
+        finally {
+          out.close();
+        }
       }
       finally {
-        out.close();
+        token.finish();
       }
     }
     else if (renamed) {

@@ -1,5 +1,6 @@
 package com.intellij.remoteServer.util;
 
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -159,6 +160,12 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
       @Override
       public boolean isDebugMode() {
         return false;
+      }
+
+      @NotNull
+      @Override
+      public ExecutionEnvironment getExecutionEnvironment() {
+        throw new UnsupportedOperationException();
       }
     }, null);
   }

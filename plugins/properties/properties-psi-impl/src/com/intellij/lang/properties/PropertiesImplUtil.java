@@ -22,6 +22,7 @@ import com.intellij.lang.properties.xml.XmlPropertiesIndex;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
@@ -71,7 +72,8 @@ public class PropertiesImplUtil extends PropertiesUtil {
         return containingFile.getContainingDirectory();
       }});
     if (directory == null) return EmptyResourceBundle.getInstance();
-    return getResourceBundle(baseName, directory);
+    final ResourceBundle bundle = getResourceBundle(baseName, directory);
+    return bundle == null ? new ResourceBundleImpl(representative) : bundle;
   }
 
   @Nullable
@@ -88,8 +90,16 @@ public class PropertiesImplUtil extends PropertiesUtil {
       if (baseName.equals(bundleBaseNameManager.getBaseName(psiFile))) {
         final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
         if (propertiesFile != null) {
-          if (defaultPropertiesFile == null || defaultPropertiesFile.getName().compareTo(propertiesFile.getName()) > 0) {
+          if (defaultPropertiesFile == null) {
             defaultPropertiesFile = propertiesFile;
+          } else {
+            final int nameDiff = FileUtil.getNameWithoutExtension(defaultPropertiesFile.getName()).compareTo(FileUtil.getNameWithoutExtension(propertiesFile.getName()));
+            if (nameDiff > 0) {
+              defaultPropertiesFile = propertiesFile;
+            } else if (nameDiff == 0) {
+              //means 2 default properties files
+              return null;
+            }
           }
         }
       }

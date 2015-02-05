@@ -16,6 +16,7 @@
 package org.jetbrains.ide;
 
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import com.google.gson.stream.MalformedJsonException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,11 +37,16 @@ import org.jetbrains.io.Responses;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.List;
 
 /**
  * Document your service using <a href="http://apidocjs.com">apiDoc</a>. To extract big example from source code, consider to use *.coffee file near your source file.
  * (or Python/Ruby, but coffee recommended because it's plugin is lightweight). See {@link AboutHttpService} for example.
+ *
+ * Don't create JsonReader/JsonWriter directly, use only provided {@link #createJsonReader}, {@link #createJsonWriter} methods (to ensure that you handle in/out according to REST API guidelines).
+ *
+ * @see <a href="http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api">Best Practices for Designing a Pragmatic RESTful API</a>.
  */
 public abstract class RestService extends HttpRequestHandler {
   protected static final Logger LOG = Logger.getInstance(RestService.class);
@@ -126,6 +132,13 @@ public abstract class RestService extends HttpRequestHandler {
     JsonReader reader = new JsonReader(new InputStreamReader(new ByteBufInputStream(request.content()), CharsetToolkit.UTF8_CHARSET));
     reader.setLenient(true);
     return reader;
+  }
+
+  @NotNull
+  protected static JsonWriter createJsonWriter(@NotNull BufferExposingByteArrayOutputStream out) {
+    JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET));
+    writer.setIndent("  ");
+    return writer;
   }
 
   @Nullable

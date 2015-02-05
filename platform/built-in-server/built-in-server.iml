@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="module" module-name="xml-openapi" />
-    <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="gson" level="project" />
