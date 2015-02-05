@@ -50,6 +50,7 @@ import java.util.List;
  */
 public abstract class RestService extends HttpRequestHandler {
   protected static final Logger LOG = Logger.getInstance(RestService.class);
+  private static final String PREFIX = "api";
 
   @Override
   public final boolean isSupported(@NotNull FullHttpRequest request) {
@@ -63,13 +64,12 @@ public abstract class RestService extends HttpRequestHandler {
       return true;
     }
 
-    String prefix = "rest";
     String serviceName = getServiceName();
-    int minLength = 1 + prefix.length() + 1 + serviceName.length();
+    int minLength = 1 + PREFIX.length() + 1 + serviceName.length();
     if (uri.length() >= minLength &&
         uri.charAt(0) == '/' &&
-        uri.regionMatches(true, 1, prefix, 0, prefix.length()) &&
-        uri.regionMatches(true, 2 + prefix.length(), serviceName, 0, serviceName.length())) {
+        uri.regionMatches(true, 1, PREFIX, 0, PREFIX.length()) &&
+        uri.regionMatches(true, 2 + PREFIX.length(), serviceName, 0, serviceName.length())) {
       if (uri.length() == minLength) {
         return true;
       }
@@ -82,7 +82,7 @@ public abstract class RestService extends HttpRequestHandler {
   }
 
   /**
-   * Service url must be "/rest/$serviceName", but to preserve backward compatibility, prefixless path could be also supported
+   * Service url must be "/api/$serviceName", but to preserve backward compatibility, prefixless path could be also supported
    */
   protected boolean isPrefixlessAllowed() {
     return false;
