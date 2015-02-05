@@ -568,6 +568,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.
     Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, stateSpec, operation);
+    // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
+    for (Storage storage : result) {
+      if (storage.file().equals(StoragePathMacros.PROJECT_FILE)) {
+        return result;
+      }
+    }
+
     Storage[] withProjectFileStorage = new Storage[result.length + 1];
     System.arraycopy(result, 0, withProjectFileStorage, 0, result.length);
     withProjectFileStorage[result.length] = DEFAULT_STORAGE_ANNOTATION;
