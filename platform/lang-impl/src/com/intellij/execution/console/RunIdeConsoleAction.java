@@ -51,10 +51,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
+import javax.script.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
@@ -171,6 +168,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
     try {
       class IDE {
+        private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
         public final Application application = ApplicationManager.getApplication();
         public final Project project = project_;
         public void print(Object o) {
@@ -179,12 +177,19 @@ public class RunIdeConsoleAction extends DumbAwareAction {
         public void error(Object o) {
           printInContent(descriptor, o, ConsoleViewContentType.ERROR_OUTPUT);
         }
+        public void put(Object key, Object value) {
+          bindings.put(key, value);
+        }
+        public Object get(Object key) {
+          return bindings.get(key);
+        }
       }
 
       //myHistoryController.getModel().addToHistory(command);
       consoleView.print("> " + command, ConsoleViewContentType.USER_INPUT);
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
-      engine.getBindings(ScriptContext.ENGINE_SCOPE).put("IDE", new IDE());
+      Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+      if (bindings.get("IDE") == null) bindings.put("IDE", new IDE());
       Object o = engine.eval(profile == null ? command : profile + "\n" + command);
       consoleView.print("=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
