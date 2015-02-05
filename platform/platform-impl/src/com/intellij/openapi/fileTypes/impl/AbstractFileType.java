@@ -214,7 +214,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     writeTable(element, getSyntaxTable());
   }
 
-  private static void writeTable(Element element, SyntaxTable table) {
+  private static void writeTable(@NotNull Element element, @NotNull SyntaxTable table) {
     Element highlightingElement = new Element(ELEMENT_HIGHLIGHTING);
 
     Element optionsElement = new Element(ELEMENT_OPTIONS);

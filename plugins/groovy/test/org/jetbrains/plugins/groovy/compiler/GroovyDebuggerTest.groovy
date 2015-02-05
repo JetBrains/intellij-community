@@ -51,6 +51,7 @@ import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.NotNull
@@ -420,7 +421,7 @@ public static void main(String[] args) {
 
     int i = 0
     def suspendManager = debugProcess.suspendManager
-    while (i++ < 1000 && !suspendManager.pausedContext && !debugProcess.processHandler.processTerminated) {
+    while (i++ < ourTimeout/10 && !suspendManager.pausedContext && !debugProcess.processHandler.processTerminated) {
       Thread.sleep(10)
     }
 
@@ -477,7 +478,13 @@ public static void main(String[] args) {
     }
     assert semaphore.waitFor(ourTimeout):  "too long evaluation: $item.label $item.evaluateException"
 
-    String result = managed { DebuggerUtils.getValueAsString(ctx, item.value) }
+    String result = managed {
+      def e = item.evaluateException
+      if (e) {
+        return ExceptionUtil.getThrowableText(e)
+      }
+      return DebuggerUtils.getValueAsString(ctx, item.value)
+    }
     assert result == expected
   }
 
@@ -485,4 +492,5 @@ public static void main(String[] args) {
     final SuspendContextImpl suspendContext = debugProcess.suspendManager.pausedContext
     new EvaluationContextImpl(suspendContext, suspendContext.frameProxy, suspendContext.frameProxy.thisObject())
   }
+
 }

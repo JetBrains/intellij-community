@@ -375,6 +375,21 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   }
 
   @NotNull
+  public Change[] getChanges() {
+    final Set<Change> changes = new LinkedHashSet<Change>();
+
+    TreeUtil.traverse((ChangesBrowserNode)getModel().getRoot(), new TreeUtil.Traverse() {
+      @Override
+      public boolean accept(Object node) {
+        changes.addAll(((ChangesBrowserNode)node).getAllChangesUnder());
+        return true;
+      }
+    });
+
+    return changes.toArray(new Change[changes.size()]);
+  }
+
+  @NotNull
   public Change[] getSelectedChanges() {
     Set<Change> changes = new LinkedHashSet<Change>();
 

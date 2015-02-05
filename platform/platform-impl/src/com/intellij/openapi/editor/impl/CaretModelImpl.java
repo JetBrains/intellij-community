@@ -198,7 +198,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public TextAttributes getTextAttributes() {
     if (myTextAttributes == null) {
       myTextAttributes = new TextAttributes();
-      myTextAttributes.setBackgroundColor(myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR));
+      if (myEditor.getSettings().isCaretRowShown()) {
+        myTextAttributes.setBackgroundColor(myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR));
+      }
     }
 
     return myTextAttributes;

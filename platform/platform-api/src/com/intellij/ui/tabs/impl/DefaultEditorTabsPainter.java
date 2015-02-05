@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.tabs.impl;
 
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 
@@ -77,7 +76,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
   }
 
   protected Color getDefaultTabColor() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+    return Color.WHITE;
   }
 
   protected Color getInactiveMaskColor() {

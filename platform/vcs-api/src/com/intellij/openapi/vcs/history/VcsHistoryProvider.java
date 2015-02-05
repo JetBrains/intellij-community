@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.vcs.CalledInBackground;
+import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsProviderMarker;

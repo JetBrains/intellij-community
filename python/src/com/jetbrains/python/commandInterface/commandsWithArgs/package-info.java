@@ -15,9 +15,28 @@
  */
 
 /**
+ * <h1>Optparse-based commandline interface presenter</h1>
+ * <p>
  * Command-line like interface presenter that uses conception of command and its arguments.
  * See {@link com.jetbrains.python.commandInterface.commandsWithArgs.CommandInterfacePresenterCommandBased}
- * and its arguments: {@link com.jetbrains.python.commandInterface.commandsWithArgs.Argument}
+ * and its arguments: {@link com.jetbrains.python.commandInterface.commandsWithArgs.Argument}.
+ *
+ * It supports <a href="https://docs.python.org/2/library/optparse.html">optparse</a> terminology, so
+ * read it first and use {@link com.jetbrains.python.optParse} package
+ * </p>
+ * <h2>Arguments and validation</h2>
+ * <p>
+ *   Optparse arguments are <strong>positional and unnamed</strong>.
+ *   Each {@link com.jetbrains.python.commandInterface.commandsWithArgs.Command command} provides
+ *   {@link com.jetbrains.python.commandInterface.commandsWithArgs.ArgumentsInfo arguments info}.
+ *   It can be used to obtain information about argument (like list of possible values) and it also used to validate argument values,
+ *   provided by user. In most cases we have no idea about arguments: due to optparse limitations only help test is available.
+ *   But sometimes we do know (like when args are documented).
+ *   Different strategies exist, so be sure to check {@link com.jetbrains.python.commandInterface.commandsWithArgs.ArgumentsInfo} children
+ * </p>
+ *
+ *
+ * @see com.jetbrains.python.optParse
  * @author Ilya.Kazakevich
  */
 package com.jetbrains.python.commandInterface.commandsWithArgs;

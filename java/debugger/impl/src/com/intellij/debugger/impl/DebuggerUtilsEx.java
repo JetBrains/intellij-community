@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -667,5 +667,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     public Navigatable createNavigatable(@NotNull Project project) {
       return XSourcePositionImpl.createOpenFileDescriptor(project, this);
     }
+  }
+
+  /**
+   * Decompiler aware version
+   */
+  @Nullable
+  public static PsiElement findElementAt(@Nullable PsiFile file, int offset) {
+    if (file instanceof PsiCompiledFile) {
+      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
+    }
+    if (file == null) return null;
+    return file.findElementAt(offset);
   }
 }

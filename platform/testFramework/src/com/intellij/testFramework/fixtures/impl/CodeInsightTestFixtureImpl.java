@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -488,10 +488,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           InspectionProfileImpl.INIT_INSPECTIONS = false;
         }
       }
+
+      @Override
+      protected void notifyInspectionsFinished() {
+        super.notifyInspectionsFinished();
+        putUserData(FINISHED, true);
+      }
     };
     context.setCurrentScope(scope);
 
     return context;
+  }
+  private static final Key<Boolean> FINISHED = Key.create("Inspections finished");
+  public static boolean isInspectionsFinished(@NotNull GlobalInspectionContext context) {
+    return context.getUserData(FINISHED) == Boolean.TRUE;
   }
 
   @Override

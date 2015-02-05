@@ -18,12 +18,17 @@ package com.jetbrains.python.commandInterface.swingView;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Range;
 import com.intellij.util.ui.StatusText;
+import com.jetbrains.python.commandInterface.CommandInterfaceView;
+import com.jetbrains.python.commandInterface.CommandInterfaceView.SpecialErrorPlace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Text field that has width to be changed and accepts error underline
@@ -37,12 +42,16 @@ public class SmartTextField extends JTextField {
    */
   private StatusText myPlaceHolder;
   /**
-   * error (underline) info in format "lastOnly => Color" where "lastOnly" is to underline last letter only (not the whole line)
-   * Null if nothing should be displayed.
+   * Error (underline) info to display. Check {@link UnderlineInfo} class for more info
+   */
+  @NotNull
+  private final Collection<UnderlineInfo> myUnderlineInfo = new ArrayList<UnderlineInfo>();
+  private int myPreferredWidth;
+  /**
+   * (color, special_place) tuple to underline special place, or null if no underline required
    */
   @Nullable
-  private Pair<Boolean, Color> myUnderlineInfo;
-  private int myPreferredWidth;
+  private Pair<Color, SpecialErrorPlace> mySpecialUnderlinePlace;
 
   public SmartTextField() {
     setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.CONSOLE_PLAIN));
@@ -54,13 +63,31 @@ public class SmartTextField extends JTextField {
     if (myPlaceHolder != null) {
       myPlaceHolder.paint(this, g);
     }
-    if (myUnderlineInfo != null) {
-      final int lineStart = (myUnderlineInfo.first ? getTextEndPosition() : getColumnWidth());
-      final int lineEnd = getTextEndPosition() + (myUnderlineInfo.first ? getColumnWidth() : 0);
-      g.setColor(myUnderlineInfo.second);
-      final int verticalPosition = getHeight() - 5;
-      g.drawLine(lineStart, verticalPosition, lineEnd, verticalPosition);
+    synchronized (myUnderlineInfo) {
+      for (final UnderlineInfo underlineInfo : myUnderlineInfo) {
+        g.setColor(underlineInfo.myColor);
+        underline(g, underlineInfo.getFrom(), underlineInfo.getTo());
+      }
+      if (mySpecialUnderlinePlace != null) {
+        final SpecialErrorPlace place = mySpecialUnderlinePlace.second;
+        g.setColor(mySpecialUnderlinePlace.first);
+        final int endPosition = getTextEndPosition();
+        final int from = (place == SpecialErrorPlace.WHOLE_TEXT ? 0 : endPosition - getColumnWidth());
+        underline(g, from, endPosition);
+      }
     }
+  }
+
+  /**
+   * Underlines certain place
+   *
+   * @param g    canvas
+   * @param from from where (int px)
+   * @param to   to where (int px)
+   */
+  private void underline(@NotNull final Graphics g, final int from, final int to) {
+    final int verticalPosition = getHeight() - 5;
+    g.drawLine(from + getColumnWidth(), verticalPosition, to + getColumnWidth(), verticalPosition);
   }
 
   /**
@@ -68,6 +95,13 @@ public class SmartTextField extends JTextField {
    */
   int getTextEndPosition() {
     return (getText().length() + 1) * getColumnWidth();
+  }
+
+  /**
+   * @return place (in px) where caret.
+   */
+  int getTextCursorPosition() {
+    return (getCaretPosition() + 1) * getColumnWidth();
   }
 
   void setWaterMarkPlaceHolderText(@NotNull final String watermark) {
@@ -89,21 +123,29 @@ public class SmartTextField extends JTextField {
    * Display underline
    *
    * @param color color to underline
-   * @param lastOnly last letter only (whole line otherwise)
+   * @param from  from (in chars)
+   * @param to    (in chars)
    */
-  void underlineText(@NotNull final Color color, final boolean lastOnly) {
-    myUnderlineInfo = new Pair<Boolean, Color>(lastOnly, color);
+  final void underlineText(@NotNull final Color color, final int from, final int to) {
+    final int columnWidth = getColumnWidth();
+    synchronized (myUnderlineInfo) {
+      myUnderlineInfo.add(new UnderlineInfo(from * columnWidth, to * columnWidth, color));
+    }
   }
 
   /**
    * Removes underline
    */
   void hideUnderline() {
-    myUnderlineInfo = null;
+    synchronized (myUnderlineInfo) {
+      myUnderlineInfo.clear();
+      mySpecialUnderlinePlace = null;
+    }
   }
 
   /**
    * Sets appropriate width in chars
+   *
    * @param widthInChars num of chars
    */
   void setPreferredWidthInChars(final int widthInChars) {
@@ -112,10 +154,24 @@ public class SmartTextField extends JTextField {
 
   /**
    * Sets appropriate width in pixels
+   *
    * @param width width in px
    */
   void setPreferredWidthInPx(final int width) {
     myPreferredWidth = width;
+  }
+
+  /**
+   * Display underline in special place
+   *
+   * @param color                 color to underline
+   * @param specialUnderlinePlace special place to underline
+   */
+  void underlineText(@NotNull final SpecialErrorPlace specialUnderlinePlace,
+                     @NotNull final Color color) {
+    synchronized (myUnderlineInfo) {
+      mySpecialUnderlinePlace = Pair.create(color, specialUnderlinePlace);
+    }
   }
 
   /**
@@ -129,6 +185,29 @@ public class SmartTextField extends JTextField {
     @Override
     protected boolean isStatusVisible() {
       return SmartTextField.this.getText().isEmpty();
+    }
+  }
+
+  /**
+   * Information about underline
+   *
+   * @author Ilya.Kazakevich
+   */
+  private static final class UnderlineInfo extends Range<Integer> {
+    /**
+     * Color to use to underline
+     */
+    @NotNull
+    private final Color myColor;
+
+    /**
+     * @param from  underline from where (in px)
+     * @param to    underline to where (in px)
+     * @param color color to use to underline
+     */
+    UnderlineInfo(final int from, final int to, @NotNull final Color color) {
+      super(from, to);
+      myColor = color;
     }
   }
 }

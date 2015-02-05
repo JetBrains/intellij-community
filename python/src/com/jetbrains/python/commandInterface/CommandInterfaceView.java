@@ -15,9 +15,13 @@
  */
 package com.jetbrains.python.commandInterface;
 
+import com.jetbrains.python.optParse.WordWithPosition;
 import com.jetbrains.python.suggestionList.SuggestionsBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * View for command-line interface to be paired with view.
@@ -41,11 +45,12 @@ public interface CommandInterfaceView {
   void displaySuggestions(@NotNull SuggestionsBuilder suggestions, boolean absolute, @Nullable String toSelect);
 
   /**
-   * Displays error (like red line)
+   * Emphasize errors (like red line and special message).
    *
-   * @param lastOnly underline only last letter
+   * @param errors            list of errors (coordinates and error message. Message may be empty not to display any text)
+   * @param specialErrorPlace if you want to underline special place, you may provide it here
    */
-  void showError(boolean lastOnly);
+  void showErrors(@NotNull final List<WordWithPosition> errors, @Nullable SpecialErrorPlace specialErrorPlace);
 
   /**
    * Change text to the one provided
@@ -71,7 +76,6 @@ public interface CommandInterfaceView {
    *
    * @param message text to display
    */
-  void displayInfoBaloon(@NotNull String message);
 
   /**
    * @return text, entered by user
@@ -85,4 +89,35 @@ public interface CommandInterfaceView {
    * @param widthInChars number of chars
    */
   void setPreferredWidthInChars(int widthInChars);
+
+  /**
+   * Displays help balloon when cursor meets certain place.
+   * Each balloon is described as start-end position (in chars) where it should be enabled
+   * and test to display.
+   * <strong>Caution: Each call removes previuos balloons!</strong>
+   *
+   * @param balloons list of balloons to display (i.e. you want to text 'foo' be displayed when user sets cursor on position
+   *                 from 1 to 3, so you add 'foo',1,4 here)
+   */
+  void setBalloons(@NotNull final Collection<WordWithPosition> balloons);
+
+  /**
+   * @return true if current caret position is on the word (no on whitespace)
+   */
+  boolean isCaretOnWord();
+
+
+  /**
+   * Special place that may be underlined
+   */
+  enum SpecialErrorPlace {
+    /**
+     * Whole text (from start to end)
+     */
+    WHOLE_TEXT,
+    /**
+     * Only after last character
+     */
+    AFTER_LAST_CHAR
+  }
 }

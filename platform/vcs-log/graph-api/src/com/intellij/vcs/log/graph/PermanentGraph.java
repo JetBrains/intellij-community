@@ -44,9 +44,19 @@ public interface PermanentGraph<CommitId> {
   @NotNull
   Set<CommitId> getContainingBranches(@NotNull CommitId commit);
 
-  enum SortType{
-    Normal,
-    Bek,
-    LinearBek
+  enum SortType {
+    Normal("Off"),
+    Bek("Standard"),
+    LinearBek("Linear");
+
+    private final String myPresentation;
+
+    SortType(String presentation) {
+      myPresentation = presentation;
+    }
+
+    public String getPresentation() {
+      return myPresentation;
+    }
   }
 }

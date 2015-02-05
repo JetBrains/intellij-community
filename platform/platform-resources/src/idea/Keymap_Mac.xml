@@ -388,6 +388,9 @@
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="meta O"/>
     </action>
+    <action id="GotoChangedFile">
+      <keyboard-shortcut first-keystroke="meta O"/>
+    </action>
     <action id="GotoSymbol">
       <keyboard-shortcut first-keystroke="meta alt O"/>
     </action>
@@ -453,12 +456,6 @@
       <keyboard-shortcut first-keystroke="meta UP"/>
       <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
-
-    <action id="DatabaseView.PropertiesAction">
-      <keyboard-shortcut first-keystroke="meta I"/>
-    </action>
-    <action id="Console.TableResult.Reload" />
-
 
     <action id="EditorScrollUp"/> <!-- Disables meta up -->
     <action id="EditorScrollDown"/>  <!-- Disables meta down -->

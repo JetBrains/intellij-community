@@ -15,8 +15,23 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * @author Dmitry Avdeev
@@ -28,5 +43,89 @@ public class UrlClassLoaderTest extends TestCase {
     assertNotNull(UrlClassLoaderTest.class.getClassLoader().getResourceAsStream(name));
     assertNull(UrlClassLoader.build().get().getResourceAsStream(name));
     assertNotNull(UrlClassLoader.build().allowBootstrapResources().get().getResourceAsStream(name));
+  }
+
+  public void testConcurrentResourceLoading() throws IOException, ClassNotFoundException, ExecutionException, InterruptedException {
+    final List<String> resourceNames = ContainerUtil.newArrayList();
+    List<URL> urls = ContainerUtil.newArrayList();
+
+    for (File file : new File(PathManager.getHomePathFor(UrlClassLoader.class) + "/lib").listFiles()) {
+      if (file.getName().endsWith(".jar")) {
+        urls.add(file.toURI().toURL());
+
+        ZipFile zipFile = new ZipFile(file);
+        try {
+          Enumeration<? extends ZipEntry> entries = zipFile.entries();
+          while (entries.hasMoreElements()) {
+            resourceNames.add(entries.nextElement().getName());
+          }
+        }
+        finally {
+          zipFile.close();
+        }
+
+      }
+    }
+
+    int attemptCount = 1000; // 10000
+    int threadCount = 3;
+    final int resourceCount = 20;
+
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(threadCount);
+    final Random random = new Random();
+    UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();
+    for (int attempt = 0; attempt < attemptCount; attempt++) {
+      final UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(null).
+        useCache(pool, new UrlClassLoader.CachingCondition() {
+          @Override
+          public boolean shouldCacheData(@NotNull URL url) {
+            return true; // fails also without cache pool (but with cache enabled), but takes much longer
+          }
+        }).get();
+      //if (attempt % 10 == 0) System.out.println("Attempt " + attempt);
+
+      final List<String> namesToLoad = ContainerUtil.newArrayList();
+      for (int j = 0; j < resourceCount; j++) {
+        namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));
+      }
+
+      List<Future> futures = ContainerUtil.newArrayList();
+      for (int i = 0; i < threadCount; i++) {
+        futures.add(executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            for (String name : namesToLoad) {
+              try {
+                assertNotNull(findResource(name));
+              }
+              catch (Throwable e) {
+                System.out.println("Failed loading " + name);
+                throw new RuntimeException(e);
+              }
+            }
+          }
+
+          private final Random findResourceOrFindResourcesChooser = new Random();
+          private URL findResource(String name) {
+            if (findResourceOrFindResourcesChooser.nextInt(10) < 5) {
+              try {
+                Enumeration<URL> resources = loader.getResources(name);
+                assertTrue(resources.hasMoreElements());
+                return resources.nextElement();
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            }
+            return loader.findResource(name);
+          }
+        }));
+      }
+
+      for (Future future : futures) {
+        future.get();
+      }
+    }
+
   }
 }

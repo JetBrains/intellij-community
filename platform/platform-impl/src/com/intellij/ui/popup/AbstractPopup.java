@@ -81,6 +81,8 @@ public class AbstractPopup implements JBPopup {
   private boolean        myForcedHeavyweight;
   private boolean        myLocateWithinScreen;
   private boolean myResizable = false;
+  private WindowResizeListener myResizeListener;
+  private WindowMoveListener myMoveListener;
   private JPanel myHeaderPanel;
   private CaptionPanel myCaption = null;
   private JComponent myComponent;
@@ -830,22 +832,31 @@ public class AbstractPopup implements JBPopup {
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
       root.setGlassPane(glass);
 
-      final ResizeComponentListener resizeListener = new ResizeComponentListener(this, glass);
+      int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
+      WindowResizeListener resizeListener = new WindowResizeListener(
+        myContent,
+        myMovable ? new Insets(i, i, i, i) : new Insets(0, 0, i, i),
+        isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
+        @Override
+        protected void setCursor(Component content, Cursor cursor) {
+          glass.setCursor(cursor, this);
+        }
+      };
       glass.addMousePreprocessor(resizeListener, this);
       glass.addMouseMotionPreprocessor(resizeListener, this);
+      myResizeListener = resizeListener;
     }
 
     if (myCaption != null && myMovable) {
-      final MoveComponentListener moveListener = new MoveComponentListener(myCaption) {
+      final WindowMoveListener moveListener = new WindowMoveListener(myCaption) {
         @Override
         public void mousePressed(final MouseEvent e) {
-          super.mousePressed(e);
           if (e.isConsumed()) return;
-
-          if (UIUtil.isCloseClick(e)) {
-            if (myCaption.isWithinPanel(e)) {
-              cancel();
-            }
+          if (UIUtil.isCloseClick(e) && myCaption.isWithinPanel(e)) {
+            cancel();
+          }
+          else {
+            super.mousePressed(e);
           }
         }
       };
@@ -859,6 +870,7 @@ public class AbstractPopup implements JBPopup {
           ListenerUtil.removeMouseMotionListener(saved, moveListener);
         }
       });
+      myMoveListener = moveListener;
     }
 
     for (JBPopupListener listener : myListeners) {
@@ -1224,6 +1236,8 @@ public class AbstractPopup implements JBPopup {
   }
 
   public void setLocation(RelativePoint p) {
+    if (isBusy()) return;
+
     setLocation(p, myPopup);
   }
 
@@ -1238,7 +1252,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void pack(boolean width, boolean height) {
-    if (!isVisible() || !width && !height) return;
+    if (!isVisible() || !width && !height || isBusy()) return;
 
     Dimension size = getSize();
     Dimension prefSize = myContent.computePreferredSize();
@@ -1260,6 +1274,8 @@ public class AbstractPopup implements JBPopup {
   }
 
   public void pack() {
+    if (isBusy()) return;
+
     final Window window = getContentWindow(myContent);
     if (window != null) {
       window.pack();
@@ -1468,7 +1484,7 @@ public class AbstractPopup implements JBPopup {
     if (myPopup == null) {
       myForcedLocation = screenPoint;
     }
-    else {
+    else if (!isBusy()) {
       moveTo(myContent, screenPoint, myLocateByContent ? myHeaderPanel.getPreferredSize() : null);
     }
   }
@@ -1513,6 +1529,8 @@ public class AbstractPopup implements JBPopup {
   }
 
   private void setSize(Dimension size, boolean adjustByContent) {
+    if (isBusy()) return;
+
     Dimension toSet = size;
     if (myPopup == null) {
       myForcedSize = toSet;
@@ -1544,7 +1562,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void moveToFitScreen() {
-    if (myPopup == null) return;
+    if (myPopup == null || isBusy()) return;
 
     final Window popupWindow = getContentWindow(myContent);
     if (popupWindow == null) return;
@@ -1567,13 +1585,6 @@ public class AbstractPopup implements JBPopup {
     content.setPreferredSize(size);
     popupWindow.pack();
     return popupWindow;
-  }
-
-  public static void setDefaultCursor(JComponent content) {
-    final Window wnd = getContentWindow(content);
-    if (wnd != null) {
-      wnd.setCursor(Cursor.getDefaultCursor());
-    }
   }
 
   public void setCaption(String title) {
@@ -1831,5 +1842,9 @@ public class AbstractPopup implements JBPopup {
 
   public static boolean isCloseRequest(KeyEvent e) {
     return e != null && e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
+  }
+
+  private boolean isBusy() {
+    return myResizeListener != null && myResizeListener.isBusy() || myMoveListener != null && myMoveListener.isBusy();
   }
 }

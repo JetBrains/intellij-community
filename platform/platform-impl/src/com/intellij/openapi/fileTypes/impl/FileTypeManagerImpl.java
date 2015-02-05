@@ -21,11 +21,8 @@ import com.intellij.ide.highlighter.custom.impl.ReadFileType;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -63,16 +60,21 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author Yura Cangea
- */
-public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent, Disposable {
+@State(
+  name = "FileTypeManager",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/filetypes.xml"),
+  additionalExportFile = FileTypeManagerImpl.FILE_SPEC
+)
+public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   private static final int VERSION = 12;
@@ -96,8 +98,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final Map<FileNameMatcher, Pair<FileType, Boolean>> myRemovedMappings = new THashMap<FileNameMatcher, Pair<FileType, Boolean>>();
 
   @NonNls private static final String ELEMENT_FILETYPE = "filetype";
-  @NonNls private static final String ELEMENT_FILETYPES = "filetypes";
-  @NonNls private static final String ELEMENT_IGNOREFILES = "ignoreFiles";
+  @NonNls private static final String ELEMENT_FILE_TYPES = "filetypes";
+  @NonNls private static final String ELEMENT_IGNORE_FILES = "ignoreFiles";
   @NonNls private static final String ATTRIBUTE_LIST = "list";
 
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
@@ -124,7 +126,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
   private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
   @NonNls
-  private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/filetypes";
+  static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/filetypes";
 
   // these flags are stored in 'packedFlags' as chunks of four bits
   private static final int AUTO_DETECTED_AS_TEXT_MASK = 1;
@@ -277,7 +279,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return RE_DETECT_ASYNC && ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  private static void log(String message) {
+  private static void log(@SuppressWarnings("UnusedParameters") String message) {
     //System.out.println(message);
   }
 
@@ -360,7 +362,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private boolean shouldBeSavedToFile(final FileType fileType) {
-    if (!(fileType instanceof JDOMExternalizable) || !shouldSave(fileType)) return false;
+    //noinspection deprecation
+    if (!(fileType instanceof JDOMExternalizable) || !shouldSave(fileType)) {
+      return false;
+    }
     return !myDefaultTypes.contains(fileType) || isDefaultModified(fileType);
   }
 
@@ -371,17 +376,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return stdFileType != null ? stdFileType.fileType : PlainTextFileType.INSTANCE;
   }
 
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{getOrCreateFileTypesDir(), PathManager.getOptionsFile(this)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return FileTypesBundle.message("filetype.settings.component");
-  }
   // -------------------------------------------------------------------------
   // ApplicationComponent interface implementation
   // -------------------------------------------------------------------------
@@ -692,6 +686,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @Override
   public void registerFileType(@NotNull FileType fileType) {
+    //noinspection deprecation
     registerFileType(fileType, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
@@ -860,31 +855,22 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return true; //TODO?
   }
 
-  // -------------------------------------------------------------------------
-  // Implementation of NamedExternalizable interface
-  // -------------------------------------------------------------------------
-
   @Override
-  public String getExternalFileName() {
-    return "filetypes";
-  }
-
-  @Override
-  public void readExternal(Element parentNode) throws InvalidDataException {
+  public void loadState(Element parentNode) {
     int savedVersion = getVersion(parentNode);
 
     String previousIgnores = getIgnoredFilesList();
-    
+
     for (final Object o : parentNode.getChildren()) {
       final Element e = (Element)o;
-      if (ELEMENT_FILETYPES.equals(e.getName())) {
+      if (ELEMENT_FILE_TYPES.equals(e.getName())) {
         List children = e.getChildren(ELEMENT_FILETYPE);
         for (final Object aChildren : children) {
           Element element = (Element)aChildren;
           loadFileType(element, true, null, false, null);
         }
       }
-      else if (ELEMENT_IGNOREFILES.equals(e.getName())) {
+      else if (ELEMENT_IGNORE_FILES.equals(e.getName())) {
         myIgnoredPatterns.setIgnoreMasks(e.getAttributeValue(ATTRIBUTE_LIST));
       }
       else if (AbstractFileType.ELEMENT_EXTENSIONMAP.equals(e.getName())) {
@@ -930,7 +916,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (savedVersion < 11) {
       addIgnore("*.rbc");
     }
-    
+
     if (savedVersion == 11 && PlatformUtils.isCLion()) {
       // TODO During EAP CLion missed FileTypesManager.xml and users got empty excludes list
       // TODO this code is only necessary until CLion 1.0 is released, then can be safely deleted
@@ -1027,11 +1013,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
+  @Nullable
   @Override
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  public Element getState() {
+    Element parentNode = new Element("state");
     parentNode.setAttribute(ATTRIBUTE_VERSION, String.valueOf(VERSION));
 
-    Element element = new Element(ELEMENT_IGNOREFILES);
+    Element element = new Element(ELEMENT_IGNORE_FILES);
     parentNode.addContent(element);
     element.setAttribute(ATTRIBUTE_LIST, getIgnoredFilesList());
     Element map = new Element(AbstractFileType.ELEMENT_EXTENSIONMAP);
@@ -1059,6 +1047,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (value != 0) {
       JDOMExternalizer.write(parentNode, "fileTypeChangedCounter", value);
     }
+    return parentNode;
   }
 
   private void writeExtensionsMap(final Element map, final FileType type, boolean specifyTypeName) {
@@ -1200,8 +1189,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
       }
 
+      //noinspection deprecation
       if (type instanceof JDOMExternalizable) {
         try {
+          //noinspection deprecation
           ((JDOMExternalizable)type).readExternal(typeElement);
         }
         catch (InvalidDataException e) {
@@ -1293,18 +1284,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     if (fileTypeDescr != null) ft.setDescription(fileTypeDescr);
     if (fileTypeName != null) ft.setName(fileTypeName);
-  }
-
-  private static File getOrCreateFileTypesDir() {
-    String directoryPath = PathManager.getConfigPath() + File.separator + ELEMENT_FILETYPES;
-    File directory = new File(directoryPath);
-    if (!directory.exists()) {
-      if (!directory.mkdir()) {
-        LOG.error("Could not create directory: " + directory.getAbsolutePath());
-        return null;
-      }
-    }
-    return directory;
   }
 
   private static boolean shouldSave(FileType fileType) {

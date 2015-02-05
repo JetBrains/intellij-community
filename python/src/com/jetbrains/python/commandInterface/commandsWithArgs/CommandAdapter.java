@@ -18,38 +18,28 @@ package com.jetbrains.python.commandInterface.commandsWithArgs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
 /**
  * Simple command implementation
+ *
  * @author Ilya.Kazakevich
  */
 public class CommandAdapter implements Command {
   @NotNull
   private final String myName;
-  @NotNull
-  private final List<Argument> myArguments = new ArrayList<Argument>();
   @Nullable
   private final String myHelp;
+  @NotNull
+  private final ArgumentsInfo myArgumentsInfo;
 
   /**
-   * @param help      help text
-   * @param name      command name
-   * @param arguments command arguments
+   * @param help          help text
+   * @param name          command name
+   * @param argumentsInfo arguments info
    */
-  public CommandAdapter(@NotNull final String name, @Nullable final String help, @NotNull final Argument... arguments) {
-    this(name, help, Arrays.asList(arguments));
-  }
-
-  /**
-   * @param help      help text
-   * @param name      command name
-   * @param arguments command arguments
-   */
-  public CommandAdapter(@NotNull final String name, @Nullable final String help, @NotNull final Collection<Argument> arguments) {
+  public CommandAdapter(@NotNull final String name, @Nullable final String help, @NotNull ArgumentsInfo argumentsInfo) {
     myName = name;
-    myArguments.addAll(arguments);
     myHelp = help;
+    myArgumentsInfo = argumentsInfo;
   }
 
   /**
@@ -61,18 +51,17 @@ public class CommandAdapter implements Command {
     return myName;
   }
 
-  /**
-   * @return command arguments
-   */
-  @Override
-  @NotNull
-  public final List<Argument> getArguments() {
-    return Collections.unmodifiableList(myArguments);
-  }
 
   @Override
   @Nullable
   public final String getHelp() {
     return myHelp;
+  }
+
+
+  @NotNull
+  @Override
+  public final ArgumentsInfo getArgumentsInfo() {
+    return myArgumentsInfo;
   }
 }

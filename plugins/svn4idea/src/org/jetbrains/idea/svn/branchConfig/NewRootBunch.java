@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CalledInBackground;
+import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

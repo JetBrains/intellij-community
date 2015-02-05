@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="diff-api" />
   </component>
   <component name="copyright">
     <Base>
@@ -27,4 +28,3 @@
     </Base>
   </component>
 </module>
-

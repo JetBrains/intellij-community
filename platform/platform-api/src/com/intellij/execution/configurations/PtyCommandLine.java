@@ -17,6 +17,7 @@ package com.intellij.execution.configurations;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NotNull;
@@ -37,22 +38,30 @@ import java.util.Map;
  */
 public class PtyCommandLine extends GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.PtyCommandLine");
+  public static final String RUN_PROCESSES_WITH_PTY = "run.processes.with.pty";
+  private boolean myUseCygwinLaunch;
 
   public PtyCommandLine() { }
+
+  public static boolean isEnabled() {
+    return Registry.is(RUN_PROCESSES_WITH_PTY);
+  }
 
   @NotNull
   @Override
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
-    if (SystemInfo.isUnix) {
-      try {
-        return startProcessWithPty(commands, true);
-      }
-      catch (Throwable e) {
-        LOG.error("Couldn't run process with PTY", e);
-      }
+    try {
+      return startProcessWithPty(commands, true);
+    }
+    catch (Throwable e) {
+      LOG.error("Couldn't run process with PTY", e);
     }
 
     return super.startProcess(commands);
+  }
+
+  public void setUseCygwinLaunch(boolean useCygwinLaunch) {
+    myUseCygwinLaunch = useCygwinLaunch;
   }
 
   @NotNull
@@ -65,6 +74,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     }
 
     File workDirectory = getWorkDirectory();
-    return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, workDirectory != null ? workDirectory.getPath() : null, console);
+    return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, workDirectory != null ? workDirectory.getPath() : null, console,
+                           myUseCygwinLaunch && SystemInfo.isWindows);
   }
 }

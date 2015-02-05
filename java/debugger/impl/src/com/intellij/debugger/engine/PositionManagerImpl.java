@@ -362,7 +362,12 @@ public class PositionManagerImpl implements PositionManager {
             // do not take into account synthetic stuff
             continue;
           }
-          final int locationLine = lnumber - 1;
+          int locationLine = lnumber - 1;
+          PsiFile psiFile = position.getFile();
+          if (psiFile instanceof PsiCompiledFile) {
+            locationLine = bytecodeToSourceLine(psiFile, locationLine);
+            if (locationLine < 0) continue;
+          }
           rangeBegin = Math.min(rangeBegin,  locationLine);
           rangeEnd = Math.max(rangeEnd,  locationLine);
         }
@@ -522,16 +527,24 @@ public class PositionManagerImpl implements PositionManager {
 
   @Nullable
   private static SourcePosition calcLineMappedSourcePosition(PsiFile psiFile, int originalLine) {
+    int line = bytecodeToSourceLine(psiFile, originalLine);
+    if (line > -1) {
+      return SourcePosition.createFromLine(psiFile, line - 1);
+    }
+    return null;
+  }
+
+  private static int bytecodeToSourceLine(PsiFile psiFile, int originalLine) {
     VirtualFile file = psiFile.getVirtualFile();
     if (file != null) {
       LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
       if (mapping != null) {
         int line = mapping.bytecodeToSource(originalLine + 1);
         if (line > -1) {
-          return SourcePosition.createFromLine(psiFile, line - 1);
+          return line;
         }
       }
     }
-    return null;
+    return -1;
   }
 }

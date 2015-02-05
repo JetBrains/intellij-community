@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -58,7 +58,7 @@ class ContentTabLabel extends BaseLabel {
       setBorder(null);
     } else {
       setHorizontalAlignment(SwingConstants.CENTER);
-      setBorder(new EmptyBorder(0, 8, 0, 8));
+      setBorder(JBUI.Borders.empty(0, 8));
     }
 
     updateTextAndIcon(myContent, isSelected());
@@ -96,7 +96,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   protected Graphics _getGraphics(Graphics2D g) {
     if (isSelected() && contentManager().getContentCount() > 1) {
-      return new EngravedTextGraphics(g, 1, 1, myUi.myWindow.isActive() ? new Color(0, 0, 0, 120) : new Color(0, 0, 0, 130));
+      return new EngravedTextGraphics(g, 1, 1, Gray._0.withAlpha(myUi.myWindow.isActive() ? 120 : 130));
     }
     
     return super._getGraphics(g);

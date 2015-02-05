@@ -15,34 +15,41 @@
  */
 package com.jetbrains.python.commandInterface.swingView;
 
+import com.google.common.base.Preconditions;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.Balloon.Position;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.jetbrains.python.commandInterface.CommandInterfacePresenter;
 import com.jetbrains.python.commandInterface.CommandInterfaceView;
+import com.jetbrains.python.optParse.WordWithPosition;
 import com.jetbrains.python.suggestionList.SuggestionList;
 import com.jetbrains.python.suggestionList.SuggestionsBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Command-interface view implementation based on Swing
  *
  * @author Ilya.Kazakevich
  */
-public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements CommandInterfaceView, DocumentListener {
+public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements CommandInterfaceView, DocumentListener, CaretListener {
+  private static final JBColor ERROR_COLOR = JBColor.RED;
   /**
    * Pop-up we displayed in
    */
@@ -77,6 +84,11 @@ public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements Com
    * Flag that indicates we are in "test forced" mode: current text set by presenter, not by user
    */
   private boolean myInForcedTextMode;
+  // TODO: Doc
+  @NotNull
+  private final List<WordWithPosition> myBalloons = new ArrayList<WordWithPosition>();
+  @NotNull
+  private final List<WordWithPosition> myErrorBalloons = new ArrayList<WordWithPosition>();
 
   /**
    * @param presenter       our presenter
@@ -118,7 +130,7 @@ public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements Com
   @Override
   public void show() {
     myMainTextField.getDocument().addDocumentListener(this);
-
+    myMainTextField.addCaretListener(this);
     myMainPopUp.addListener(this);
     if (myPlaceHolderText != null) {
       myMainTextField.setWaterMarkPlaceHolderText(myPlaceHolderText);
@@ -157,8 +169,17 @@ public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements Com
   }
 
   @Override
-  public void showError(final boolean lastOnly) {
-    myMainTextField.underlineText(Color.RED, lastOnly);
+  public final void showErrors(@NotNull final List<WordWithPosition> errors, @Nullable final SpecialErrorPlace specialErrorPlace) {
+    for (final WordWithPosition error : errors) {
+      myMainTextField.underlineText(ERROR_COLOR, error.getFrom(), error.getTo());
+    }
+    if (specialErrorPlace != null) {
+      myMainTextField.underlineText(specialErrorPlace, ERROR_COLOR);
+    }
+    synchronized (myErrorBalloons) {
+      myErrorBalloons.clear();
+      myErrorBalloons.addAll(errors);
+    }
   }
 
 
@@ -195,9 +216,56 @@ public class CommandInterfaceViewSwingImpl extends JBPopupAdapter implements Com
   }
 
   @Override
-  public void displayInfoBaloon(@NotNull final String message) {
-    final RelativePoint point = new RelativePoint(myMainTextField, new Point(myMainTextField.getTextEndPosition(), 0));
-    JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(message)).createBalloon().show(point, Position.above);
+  public final void caretUpdate(final CaretEvent e) {
+
+    // TODO: Stupid copy/paste, fix by method extract
+
+    // When caret moved, we need to check if balloon has to be displayed
+    synchronized (myErrorBalloons) {
+      showBaloons(myErrorBalloons, Position.below, MessageType.ERROR);
+    }
+    synchronized (myBalloons) {
+      showBaloons(myBalloons, Position.above, MessageType.INFO);
+    }
+  }
+
+  // TODO: Doc
+  private void showBaloons(@NotNull final List<WordWithPosition> balloons,
+                           @NotNull final Position popUpPosition,
+                           @NotNull final MessageType messageType) {
+    Preconditions.checkArgument(popUpPosition == Position.above || popUpPosition == Position.below, "Only above or below is supported");
+    for (final WordWithPosition balloon : balloons) {
+      if (balloon.getText().isEmpty()) {
+        continue; // Can't be displayed if empty
+      }
+      final int caretPosition = myMainTextField.getCaretPosition();
+      if (caretPosition >= balloon.getFrom() && caretPosition <= balloon.getTo()) {
+        final int top = (popUpPosition == Position.above ? 0 : myMainTextField.getHeight() * 2); // Display below a little bit lower
+        final RelativePoint point = new RelativePoint(myMainTextField, new Point(myMainTextField.getTextCursorPosition(), top));
+        final Balloon balloonToShow =
+          JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(balloon.getText())).setFillColor(messageType.getPopupBackground())
+            .createBalloon();
+        balloonToShow.setAnimationEnabled(false);
+        balloonToShow.show(point, popUpPosition);
+      }
+    }
+  }
+
+  @Override
+  public final boolean isCaretOnWord() {
+    final int caretPosition = myMainTextField.getCaretPosition();
+    if (caretPosition == 0) {
+      return false; // At the beginning of the line
+    }
+    return !Character.isWhitespace(myMainTextField.getText().toCharArray()[caretPosition - 1]);
+  }
+
+  @Override
+  public void setBalloons(@NotNull final Collection<WordWithPosition> balloons) {
+    synchronized (myBalloons) {
+      myBalloons.clear();
+      myBalloons.addAll(balloons);
+    }
   }
 
   @Override

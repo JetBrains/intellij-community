@@ -20,6 +20,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * @deprecated use {@link org.jetbrains.annotations.CalledInAny }
+ */
+@Deprecated
 @Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.METHOD})
 public @interface CalledInAny {

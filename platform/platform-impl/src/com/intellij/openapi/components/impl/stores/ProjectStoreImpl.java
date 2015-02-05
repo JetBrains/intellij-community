@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance(ProjectStoreImpl.class);
+
+  private static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
 
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
@@ -555,5 +558,75 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Override
   protected MessageBus getMessageBus() {
     return myProject.getMessageBus();
+  }
+
+  @NotNull
+  @Override
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+                                                   @NotNull State stateSpec,
+                                                   @NotNull StateStorageOperation operation) {
+    // if we create project from default, component state written not to own storage file, but to project file,
+    // we don't have time to fix it properly, so, ancient hack restored.
+    Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, stateSpec, operation);
+    // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
+    for (Storage storage : result) {
+      if (storage.file().equals(StoragePathMacros.PROJECT_FILE)) {
+        return result;
+      }
+    }
+
+    Storage[] withProjectFileStorage = new Storage[result.length + 1];
+    System.arraycopy(result, 0, withProjectFileStorage, 0, result.length);
+    withProjectFileStorage[result.length] = DEFAULT_STORAGE_ANNOTATION;
+    return withProjectFileStorage;
+  }
+
+  @SuppressWarnings("ClassExplicitlyAnnotation")
+  private static class MyStorage implements Storage {
+    @Override
+    public String id() {
+      return "___Default___";
+    }
+
+    @Override
+    public boolean isDefault() {
+      return true;
+    }
+
+    @Override
+    public String file() {
+      return StoragePathMacros.PROJECT_FILE;
+    }
+
+    @Override
+    public StorageScheme scheme() {
+      return StorageScheme.DEFAULT;
+    }
+
+    @Override
+    public boolean deprecated() {
+      return true;
+    }
+
+    @Override
+    public RoamingType roamingType() {
+      return RoamingType.PER_USER;
+    }
+
+    @Override
+    public Class<? extends StateStorage> storageClass() {
+      return StateStorage.class;
+    }
+
+    @Override
+    public Class<StateSplitterEx> stateSplitter() {
+      return StateSplitterEx.class;
+    }
+
+    @NotNull
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
+    }
   }
 }
