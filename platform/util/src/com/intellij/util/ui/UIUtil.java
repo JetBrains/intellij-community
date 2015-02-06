@@ -1794,9 +1794,9 @@ public class UIUtil {
 
       // Wrong values prevent IDE from start
       // So we have to be careful
-      if (registryLcdContrastValue < 140) {
+      if (registryLcdContrastValue < 100) {
         LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
-        registryLcdContrastValue = 140;
+        registryLcdContrastValue = 100;
       } else if (registryLcdContrastValue > 250) {
         LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
         registryLcdContrastValue = 250;
