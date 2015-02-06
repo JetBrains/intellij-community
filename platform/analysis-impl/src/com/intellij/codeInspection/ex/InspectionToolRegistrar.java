@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author max
@@ -41,10 +42,11 @@ public class InspectionToolRegistrar {
 
   private final List<Factory<InspectionToolWrapper>> myInspectionToolFactories = new ArrayList<Factory<InspectionToolWrapper>>();
 
-  private final AtomicBoolean myInspectionComponentsLoaded = new AtomicBoolean(false);
+  private boolean myInspectionComponentsLoaded = false;
 
-  public void ensureInitialized() {
-    if (!myInspectionComponentsLoaded.getAndSet(true)) {
+  private synchronized void ensureInitialized() {
+    if (!myInspectionComponentsLoaded) {
+      myInspectionComponentsLoaded = true;
       Set<InspectionToolProvider> providers = new THashSet<InspectionToolProvider>();
       ContainerUtil.addAll(providers, ApplicationManager.getApplication().getComponents(InspectionToolProvider.class));
       ContainerUtil.addAll(providers, Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME));
@@ -89,7 +91,7 @@ public class InspectionToolRegistrar {
     throw new RuntimeException("unknown inspection class: " + profileEntry + "; "+profileEntry.getClass());
   }
 
-  public void registerTools(@NotNull InspectionToolProvider[] providers) {
+  private void registerTools(@NotNull InspectionToolProvider[] providers) {
     for (InspectionToolProvider provider : providers) {
       Class[] classes = provider.getInspectionClasses();
       for (Class aClass : classes) {
@@ -117,7 +119,7 @@ public class InspectionToolRegistrar {
    * make sure that it is not too late
    */
   @NotNull
-  public Factory<InspectionToolWrapper> registerInspectionToolFactory(@NotNull Factory<InspectionToolWrapper> factory, boolean store) {
+  private Factory<InspectionToolWrapper> registerInspectionToolFactory(@NotNull Factory<InspectionToolWrapper> factory, boolean store) {
     if (store) {
       myInspectionToolFactories.add(factory);
     }

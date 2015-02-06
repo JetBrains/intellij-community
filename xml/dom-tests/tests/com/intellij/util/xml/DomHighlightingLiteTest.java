@@ -50,8 +50,6 @@ public class DomHighlightingLiteTest extends DomTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final InspectionToolRegistrar registrar = new InspectionToolRegistrar();
-    registrar.registerTools(new InspectionToolProvider[0]);
     myInspectionProfile = new MockInspectionProfile();
     myAnnotationsManager = new DomElementAnnotationsManagerImpl(getProject()) {
 

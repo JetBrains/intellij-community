@@ -62,7 +62,7 @@ public class ApplicationUtil {
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
   public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable,
-                                           @NotNull final ProgressIndicator indicator, ExecutorService executorService) throws Exception {
+                                           @NotNull final ProgressIndicator indicator, @NotNull ExecutorService executorService) throws Exception {
     final Ref<T> result = Ref.create();
     final Ref<Throwable> error = Ref.create();
 
