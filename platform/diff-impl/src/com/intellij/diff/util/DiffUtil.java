@@ -157,7 +157,7 @@ public class DiffUtil {
 
     if (enableFolding) {
       editor.getSettings().setFoldingOutlineShown(true);
-      editor.getSettings().setCodeFoldingEnabled(false);
+      editor.getSettings().setAutoCodeFoldingEnabled(false);
     }
     else {
       editor.getSettings().setFoldingOutlineShown(false);
