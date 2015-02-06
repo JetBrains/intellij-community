@@ -240,7 +240,7 @@
 
     <group id="Debugger.FramePanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
       <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
@@ -252,15 +252,15 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <group id="Debugger.EvaluationDialogPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
       <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
@@ -273,15 +273,15 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <group id="Debugger.InspectPanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
       <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
@@ -294,9 +294,9 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
@@ -323,7 +323,7 @@
       <!--<reference ref="Debugger.RemoveAllWatches"/>-->
       <separator/>
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
       <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
@@ -336,9 +336,9 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
