@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,6 +27,8 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 class IntelliSortChooserAction extends DumbAwareAction {
   @Override
@@ -40,17 +43,24 @@ class IntelliSortChooserAction extends DumbAwareAction {
         }
       }));
 
-    JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, settingsGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
-                              ToolWindowContentUi.POPUP_PLACE).showUnderneathOf(e.getInputEvent().getComponent());
 
+    ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(null, settingsGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
+                              ToolWindowContentUi.POPUP_PLACE);
+    Component component = e.getInputEvent().getComponent();
+    if (component instanceof ActionButtonComponent) {
+      popup.showUnderneathOf(component);
+    }
+    else {
+      popup.showInCenterOf(component);
+    }
   }
 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabled(logUI != null);
+    e.getPresentation().setEnabledAndVisible(logUI != null);
     if (logUI != null) {
       String description = "IntelliSort: " + logUI.getBekType().getName();
       e.getPresentation().setDescription(description);
