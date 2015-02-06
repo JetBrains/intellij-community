@@ -97,45 +97,40 @@ class OpenFileHttpService extends RestService {
     final boolean keepAlive = HttpHeaders.isKeepAlive(request);
     final Channel channel = context.channel();
 
-    String file;
-    int line;
-    int column;
-
+    OpenFileRequest apiRequest;
     if (request.method() == HttpMethod.POST) {
-      OpenFileRequest jsonRequest = new Gson().fromJson(createJsonReader(request), OpenFileRequest.class);
-      file = jsonRequest.file;
-      line = jsonRequest.line;
-      column = jsonRequest.column;
+      apiRequest = new Gson().fromJson(createJsonReader(request), OpenFileRequest.class);
     }
     else {
-      file = StringUtil.nullize(getStringParameter("file", urlDecoder), true);
-      line = getIntParameter("line", urlDecoder);
-      column = getIntParameter("column", urlDecoder);
+      apiRequest = new OpenFileRequest();
+      apiRequest.file = StringUtil.nullize(getStringParameter("file", urlDecoder), true);
+      apiRequest.line = getIntParameter("line", urlDecoder);
+      apiRequest.column = getIntParameter("column", urlDecoder);
+      apiRequest.focused = getBooleanParameter("focused", urlDecoder, true);
     }
-
 
     int prefixLength = 1 + PREFIX.length() + 1 + getServiceName().length() + 1;
     String path = urlDecoder.path();
     if (path.length() > prefixLength) {
       Matcher matcher = LINE_AND_COLUMN.matcher(path).region(prefixLength, path.length());
       LOG.assertTrue(matcher.matches());
-      if (file == null) {
-        file = matcher.group(1).trim();
+      if (apiRequest.file == null) {
+        apiRequest.file = matcher.group(1).trim();
       }
-      if (line == -1) {
-        line = StringUtilRt.parseInt(matcher.group(2), 1);
+      if (apiRequest.line == -1) {
+        apiRequest.line = StringUtilRt.parseInt(matcher.group(2), 1);
       }
-      if (column == -1) {
-        column = StringUtilRt.parseInt(matcher.group(3), 1);
+      if (apiRequest.column == -1) {
+        apiRequest.column = StringUtilRt.parseInt(matcher.group(3), 1);
       }
     }
 
-    if (file == null) {
+    if (apiRequest.file == null) {
       sendStatus(HttpResponseStatus.BAD_REQUEST, keepAlive, channel);
       return null;
     }
 
-    openFile(file, line, column, getBooleanParameter("focused", urlDecoder))
+    openFile(apiRequest)
       .done(new Consumer<Void>() {
         @Override
         public void consume(Void aVoid) {
@@ -158,7 +153,7 @@ class OpenFileHttpService extends RestService {
     return null;
   }
 
-  private static void navigate(@Nullable Project project, @NotNull VirtualFile file, int line, int column, boolean focused) {
+  private static void navigate(@Nullable Project project, @NotNull VirtualFile file, @NotNull OpenFileRequest request) {
     if (project == null) {
       project = getLastFocusedOrOpenedProject();
       if (project == null) {
@@ -166,40 +161,40 @@ class OpenFileHttpService extends RestService {
       }
     }
 
-    new OpenFileDescriptor(project, file, line, column).navigate(true);
-    if (focused) {
+    new OpenFileDescriptor(project, file, request.line, request.column).navigate(true);
+    if (request.focused) {
       com.intellij.ide.impl.ProjectUtil.focusProjectWindow(project, true);
     }
   }
 
   @NotNull
-  Promise<Void> openFile(@NotNull String path, int line, final int column, final boolean focused) {
-    path = FileUtil.expandUserHome(path);
+  Promise<Void> openFile(@NotNull OpenFileRequest request) {
+    String path = FileUtil.expandUserHome(request.file);
     final File file = new File(FileUtil.toSystemDependentName(path));
     if (file.isAbsolute()) {
-      return openAbsolutePath(file, line, column, focused);
+      return openAbsolutePath(file, request);
     }
 
     // we don't want to call refresh for each attempt on findFileByRelativePath call, so, we do what ourSaveAndSyncHandlerImpl does on frame activation
     RefreshQueue queue = RefreshQueue.getInstance();
     queue.cancelSession(refreshSessionId);
-    OpenFileTask request = new OpenFileTask(FileUtil.toCanonicalPath(FileUtil.toSystemIndependentName(path), '/'), line, column);
-    requests.offer(request);
+    OpenFileTask task = new OpenFileTask(FileUtil.toCanonicalPath(FileUtil.toSystemIndependentName(path), '/'), request);
+    requests.offer(task);
     RefreshSession session = queue.createSession(true, true, new Runnable() {
       @Override
       public void run() {
-        OpenFileTask request;
-        while ((request = requests.poll()) != null) {
+        OpenFileTask task;
+        while ((task = requests.poll()) != null) {
           try {
-            if (openRelativePath(request.path, request.line, request.column, focused)) {
-              request.promise.setResult(null);
+            if (openRelativePath(task.path, task.request)) {
+              task.promise.setResult(null);
             }
             else {
-              request.promise.setError(NOT_FOUND);
+              task.promise.setError(NOT_FOUND);
             }
           }
           catch (Throwable e) {
-            request.promise.setError(e);
+            task.promise.setError(e);
           }
         }
       }
@@ -208,11 +203,11 @@ class OpenFileHttpService extends RestService {
     session.addAllFiles(ManagingFS.getInstance().getLocalRoots());
     refreshSessionId = session.getId();
     session.launch();
-    return request.promise;
+    return task.promise;
   }
 
   // path must be normalized
-  private static boolean openRelativePath(@NotNull final String path, final int line, final int column, final boolean focused) {
+  private static boolean openRelativePath(@NotNull final String path, @NotNull final OpenFileRequest request) {
     VirtualFile virtualFile = null;
     Project project = null;
 
@@ -256,14 +251,14 @@ class OpenFileHttpService extends RestService {
     AppUIUtil.invokeLaterIfProjectAlive(project, new Runnable() {
       @Override
       public void run() {
-        navigate(finalProject, finalVirtualFile, line, column, focused);
+        navigate(finalProject, finalVirtualFile, request);
       }
     });
     return true;
   }
 
   @NotNull
-  private static Promise<Void> openAbsolutePath(@NotNull final File file, final int line, final int column, final boolean focused) {
+  private static Promise<Void> openAbsolutePath(@NotNull final File file, @NotNull final OpenFileRequest request) {
     if (!file.exists()) {
       return Promise.reject(NOT_FOUND);
     }
@@ -286,7 +281,7 @@ class OpenFileHttpService extends RestService {
             promise.setError(NOT_FOUND);
           }
           else {
-            navigate(ProjectUtil.guessProjectForContentFile(virtualFile), virtualFile, line, column, focused);
+            navigate(ProjectUtil.guessProjectForContentFile(virtualFile), virtualFile, request);
             promise.setResult(null);
           }
         }
@@ -300,23 +295,21 @@ class OpenFileHttpService extends RestService {
 
   private static final class OpenFileTask {
     final String path;
-    final int line;
-    final int column;
+    final OpenFileRequest request;
 
     final AsyncPromise<Void> promise = new AsyncPromise<Void>();
 
-    OpenFileTask(@NotNull String path, int line, int column) {
+    OpenFileTask(@NotNull String path, @NotNull OpenFileRequest request) {
       this.path = path;
-      this.line = line;
-      this.column = column;
+      this.request = request;
     }
   }
 
-  private static class OpenFileRequest {
+  static final class OpenFileRequest {
     public String file;
     public int line;
     public int column;
 
-    public boolean focused;
+    public boolean focused = true;
   }
 }

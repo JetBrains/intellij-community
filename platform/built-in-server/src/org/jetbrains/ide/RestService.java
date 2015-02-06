@@ -186,9 +186,13 @@ public abstract class RestService extends HttpRequestHandler {
   }
 
   protected static boolean getBooleanParameter(@NotNull String name, @NotNull QueryStringDecoder urlDecoder) {
+    return getBooleanParameter(name, urlDecoder, false);
+  }
+
+  protected static boolean getBooleanParameter(@NotNull String name, @NotNull QueryStringDecoder urlDecoder, boolean defaultValue) {
     List<String> values = urlDecoder.parameters().get(name);
     if (ContainerUtil.isEmpty(values)) {
-      return false;
+      return defaultValue;
     }
 
     String value = values.get(values.size() - 1);
