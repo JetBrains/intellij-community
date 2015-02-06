@@ -104,15 +104,20 @@ public class CacheUpdateRunner extends DumbModeTask {
       // need set here to handle queue.pushbacks after checkCancelled() in order
       // not to count the same file several times
       final Set<VirtualFile> processed = new THashSet<VirtualFile>();
+      private boolean fileNameWasShownAfterRestart;
 
       @Override
       public void consume(VirtualFile virtualFile) {
         indicator.checkCanceled();
         synchronized (processed) {
-          processed.add(virtualFile);
+          boolean added = processed.add(virtualFile);
           indicator.setFraction(processed.size() / total);
-          if (ApplicationManager.getApplication().isInternal()) {
+          if (!added) {
             indicator.setText2(virtualFile.getPresentableUrl());
+            fileNameWasShownAfterRestart = true;
+          } else if (fileNameWasShownAfterRestart) {
+            indicator.setText2("");
+            fileNameWasShownAfterRestart = false;
           }
         }
       }
