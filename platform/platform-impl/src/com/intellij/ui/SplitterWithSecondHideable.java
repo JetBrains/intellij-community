@@ -79,7 +79,8 @@ public abstract class SplitterWithSecondHideable {
           @Override
           public void run() {
             mySplitter.fixFirst(proportion);
-            mySplitter.revalidate();
+            mySplitter.invalidate();
+            mySplitter.validate();
             mySplitter.repaint();
           }
         });
