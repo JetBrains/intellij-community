@@ -26,7 +26,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +46,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
@@ -66,7 +70,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -83,6 +90,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>>();
+
+  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(0, 4, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("Groovy DSL File Index Executor"));
 
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
 
@@ -366,7 +375,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       if (ApplicationManager.getApplication().isDispatchThread()) {
         return action.call();
       }
-      return ApplicationUtil.runWithCheckCanceled(action, new EmptyProgressIndicator());
+      return ApplicationUtil.runWithCheckCanceled(action, new EmptyProgressIndicator(), ourPool);
     }
     catch (Exception e) {
       ExceptionUtil.rethrowUnchecked(e);
@@ -414,7 +423,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
           }
           if (fileIndex.isInLibrarySource(vfile)) {
             continue;
-          } 
+          }
           if (!fileIndex.isInLibraryClasses(vfile)) {
             if (!fileIndex.isInSourceContent(vfile) || !isActivated(vfile)) {
               continue;
@@ -513,7 +522,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       final boolean isNewRequest = !filesInProcessing.containsKey(fileUrl);
       filesInProcessing.putValue(fileUrl, queue);
       if (isNewRequest) {
-        ApplicationManager.getApplication().executeOnPooledThread(parseScript);
+        ourPool.execute(parseScript);
       }
     }
   }
