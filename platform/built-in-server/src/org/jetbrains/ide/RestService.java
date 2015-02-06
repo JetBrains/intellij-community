@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -29,6 +31,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +53,7 @@ import java.util.List;
  */
 public abstract class RestService extends HttpRequestHandler {
   protected static final Logger LOG = Logger.getInstance(RestService.class);
-  private static final String PREFIX = "api";
+  public static final String PREFIX = "api";
 
   @Override
   public final boolean isSupported(@NotNull FullHttpRequest request) {
@@ -142,7 +145,7 @@ public abstract class RestService extends HttpRequestHandler {
   }
 
   @Nullable
-  protected static Project guessProject() {
+  protected static Project getLastFocusedOrOpenedProject() {
     IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     Project project = lastFocusedFrame == null ? null : lastFocusedFrame.getProject();
     if (project == null) {
@@ -153,13 +156,33 @@ public abstract class RestService extends HttpRequestHandler {
   }
 
   protected static void sendOk(@NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
-    Responses.send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK), context.channel(), request);
+    sendStatus(HttpResponseStatus.OK, HttpHeaders.isKeepAlive(request), context.channel());
+  }
+
+  protected static void sendStatus(@NotNull HttpResponseStatus status, boolean keepAlive, @NotNull Channel channel) {
+    DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
+    HttpHeaders.setContentLength(response, 0);
+    Responses.addCommonHeaders(response);
+    Responses.addNoCache(response);
+    if (keepAlive) {
+      HttpHeaders.setKeepAlive(response, true);
+    }
+    Responses.send(response, channel, !keepAlive);
   }
 
   protected static void send(@NotNull BufferExposingByteArrayOutputStream byteOut, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
     HttpResponse response = Responses.response("application/json", Unpooled.wrappedBuffer(byteOut.getInternalBuffer(), 0, byteOut.size()));
     Responses.addNoCache(response);
     Responses.send(response, context.channel(), request);
+  }
+
+  @Nullable
+  protected static String getStringParameter(@NotNull String name, @NotNull QueryStringDecoder urlDecoder) {
+    return ContainerUtil.getLastItem(urlDecoder.parameters().get(name));
+  }
+
+  protected static int getIntParameter(@NotNull String name, @NotNull QueryStringDecoder urlDecoder) {
+    return StringUtilRt.parseInt(StringUtil.nullize(ContainerUtil.getLastItem(urlDecoder.parameters().get(name)), true), -1);
   }
 
   protected static boolean getBooleanParameter(@NotNull String name, @NotNull QueryStringDecoder urlDecoder) {
