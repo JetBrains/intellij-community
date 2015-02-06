@@ -61,6 +61,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -391,7 +392,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private static JComponent withBorderOnTop(final JComponent component) {
     final JPanel panel = new JPanel();
     panel.add(component);
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(UIUtil.isUnderDarcula() ? 10 : 13, 0, 0, 0));
     return panel;
   }
 
