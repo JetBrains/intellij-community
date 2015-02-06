@@ -15,7 +15,6 @@ public class RedundantSuppressTest extends InspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    InspectionToolRegistrar.getInstance().ensureInitialized();
     myInspectionToolWrappers = new InspectionToolWrapper[]{
       new LocalInspectionToolWrapper(new I18nInspection()),
       new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),

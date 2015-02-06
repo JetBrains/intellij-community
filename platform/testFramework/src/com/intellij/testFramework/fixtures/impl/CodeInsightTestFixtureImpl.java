@@ -470,9 +470,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   public static GlobalInspectionContextForTests createGlobalContextForTool(@NotNull AnalysisScope scope,
-                                                                       @NotNull final Project project,
-                                                                       @NotNull InspectionManagerEx inspectionManager,
-                                                                       @NotNull final InspectionToolWrapper ... toolWrappers) {
+                                                                           @NotNull final Project project,
+                                                                           @NotNull InspectionManagerEx inspectionManager,
+                                                                           @NotNull final InspectionToolWrapper... toolWrappers) {
     final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", project, toolWrappers);
     GlobalInspectionContextForTests context = new GlobalInspectionContextForTests(project, inspectionManager.getContentManager()) {
       @Override

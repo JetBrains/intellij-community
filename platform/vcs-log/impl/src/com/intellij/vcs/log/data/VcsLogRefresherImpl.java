@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.GraphCommitImpl;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -83,7 +87,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            ProgressManagerImpl.runProcessWithProgressAsynchronously(new MyRefreshTask(myDataPack));
+            ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(new MyRefreshTask(myDataPack));
           }
         });
       }

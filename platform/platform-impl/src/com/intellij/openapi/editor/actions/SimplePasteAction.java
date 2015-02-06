@@ -17,12 +17,8 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -30,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SimplePasteAction extends EditorAction {
   public SimplePasteAction() {
-    super(new Handler());
+    super(new BasePasteHandler());
   }
 
   @Override
@@ -39,13 +35,6 @@ public class SimplePasteAction extends EditorAction {
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       Presentation presentation = e.getPresentation();
       presentation.setVisible(presentation.isEnabled());
-    }
-  }
-
-  private static class Handler extends BasePasteHandler {
-    @Override
-    public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      return !editor.isViewer();
     }
   }
 }

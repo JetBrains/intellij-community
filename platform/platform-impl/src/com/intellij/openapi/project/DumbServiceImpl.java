@@ -328,6 +328,11 @@ public class DumbServiceImpl extends DumbService implements Disposable {
       public void run() {
         runWhenSmart(runnable);
       }
+
+      @Override
+      public String toString() {
+        return runnable.toString();
+      }
     }, myProject.getDisposed());
   }
 

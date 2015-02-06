@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,19 +122,19 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   /**
-   * Returns read and write usages of psi element inside single file
+   * Returns read and write usages of psi element inside a single element
    *
    * @param target target psi element
-   * @param psiFile psi file for element
+   * @param psiElement psi element to search in
    * @return a pair where first element is read usages and second is write usages
    */
-  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiFile psiFile, boolean withDeclarations) {
+  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
     Collection<TextRange> readRanges = new ArrayList<TextRange>();
     Collection<TextRange> writeRanges = new ArrayList<TextRange>();
     final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(target);
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
     final FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true);
-    final LocalSearchScope scope = new LocalSearchScope(psiFile);
+    final LocalSearchScope scope = new LocalSearchScope(psiElement);
     Collection<PsiReference> refs = findUsagesHandler != null
                               ? findUsagesHandler.findReferencesToHighlight(target, scope)
                               : ReferencesSearch.search(target, scope).findAll();
@@ -149,7 +149,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
 
     if (withDeclarations) {
-      final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(psiFile, target);
+      final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(psiElement.getContainingFile(), target);
       if (declRange != null) {
         if (detector != null && detector.isDeclarationWriteAccess(target)) {
           writeRanges.add(declRange);

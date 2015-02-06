@@ -62,7 +62,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   }
 
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
-  private static final int myBaseVersion = 14;
+  private static final int myBaseVersion = 15;
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override

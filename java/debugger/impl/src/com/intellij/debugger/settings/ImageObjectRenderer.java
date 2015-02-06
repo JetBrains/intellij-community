@@ -25,14 +25,19 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.rt.debugger.ImageSerializer;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,9 +65,30 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     return new CustomPopupFullValueEvaluator(" (Show image)", evaluationContext) {
       @Override
       protected JComponent createComponent() {
-        return new JBScrollPane(new JBLabel(getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes")));
+        return createIconViewer(getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes"));
       }
     };
+  }
+
+  static JComponent createIconViewer(Icon icon) {
+    return new JBScrollPane(new JBLabel(icon){
+      private BufferedImage myBackgroundImage = UIUtil.createImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+      {
+        Graphics2D g = myBackgroundImage.createGraphics();
+        g.setColor(new JBColor(Gray._255, Gray._135));
+        g.fillRect(0, 0, 17, 17);
+        g.setColor(new JBColor(Gray._191, Gray._83));
+        g.fillRect(0, 0, 8, 8);
+        g.fillRect(8, 8, 8, 8);
+      }
+      @Override
+      public void paint(Graphics g) {
+        ((Graphics2D)g).setPaint(new TexturePaint(myBackgroundImage, new Rectangle(0, 0, 16, 16)));
+        g.fillRect(0, 0, getWidth()+1, getHeight() + 1);
+        super.paint(g);
+      }
+    });
+
   }
 
   @Nullable
