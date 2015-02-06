@@ -42,7 +42,7 @@ public class ShowOldDiffAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    if (ApplicationManager.getApplication().isInternal()) {
+    if (!ApplicationManager.getApplication().isInternal()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
