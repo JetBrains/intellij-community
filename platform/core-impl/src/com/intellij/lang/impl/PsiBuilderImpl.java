@@ -763,14 +763,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @Override
   public void advanceLexer() {
+    ProgressIndicatorProvider.checkCanceled();
+
     if (eof()) return;
 
     if (!myTokenTypeChecked) {
-      LOG.assertTrue(eof(), "Probably a bug: eating token without its type checking");
+      LOG.error("Probably a bug: eating token without its type checking");
     }
+
     myTokenTypeChecked = false;
     myCurrentLexeme++;
-    ProgressIndicatorProvider.checkCanceled();
     clearCachedTokenType();
   }
 
