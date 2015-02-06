@@ -28,7 +28,6 @@ import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,20 +36,15 @@ import java.util.*;
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearBekGraph myCompiledGraph;
 
-  public LinearBekController(@NotNull BekBaseLinearGraphController controller,
-                             @NotNull PermanentGraphInfo permanentGraphInfo,
-                             @NotNull final TimestampGetter timestampGetter) {
+  public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
     final BekIntMap bekIntMap = controller.getBekIntMap();
     myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(),
-                                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), bekIntMap),
-                                   new BekTimestampGetter(timestampGetter, bekIntMap));
+                                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), bekIntMap));
   }
 
-  static LinearBekGraph compileGraph(@NotNull LinearGraph graph,
-                                     @NotNull GraphLayout graphLayout,
-                                     @NotNull TimestampGetter timestampGetter) {
-    return new LinearBekGraphBuilder(graph, graphLayout, timestampGetter).build();
+  static LinearBekGraph compileGraph(@NotNull LinearGraph graph, @NotNull GraphLayout graphLayout) {
+    return new LinearBekGraphBuilder(graph, graphLayout).build();
   }
 
   @NotNull
@@ -123,27 +117,6 @@ public class LinearBekController extends CascadeLinearGraphController {
       }
       return bekIndexes;
     }
-  }
-
-  private static class BekTimestampGetter implements TimestampGetter {
-    private final TimestampGetter myTimestampGetter;
-    private final BekIntMap myBekIntMap;
-
-    public BekTimestampGetter(TimestampGetter timestampGetter, BekIntMap bekIntMap) {
-      myTimestampGetter = timestampGetter;
-      myBekIntMap = bekIntMap;
-    }
-
-    @Override
-    public int size() {
-      return myTimestampGetter.size();
-    }
-
-    @Override
-    public long getTimestamp(int index) {
-      return myTimestampGetter.getTimestamp(myBekIntMap.getUsualIndex(index));
-    }
-
   }
 
   private static GraphChanges<Integer> calculateChanges(GraphEdge expanded, Collection<GraphEdge> addedEdges, LinearGraph delegateGraph) {

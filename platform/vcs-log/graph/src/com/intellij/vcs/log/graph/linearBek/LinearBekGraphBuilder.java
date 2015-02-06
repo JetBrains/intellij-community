@@ -24,24 +24,20 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 class LinearBekGraphBuilder {
-  private static final int MAX_BLOCK_SIZE = 45;
-  private static final long MAX_DELTA_TIME = 60 * 60 * 24 * 15 * 1000l;
+  private static final int MAX_BLOCK_SIZE = 200;
   @NotNull private final WorkingGraph myWorkingGraph;
   @NotNull private final GraphLayout myGraphLayout;
   @NotNull private final List<Integer> myHeads;
-  @NotNull private final TimestampGetter myTimestampGetter;
 
-  public LinearBekGraphBuilder(@NotNull LinearGraph graph, @NotNull GraphLayout graphLayout, @NotNull TimestampGetter timestampGetter) {
+  public LinearBekGraphBuilder(@NotNull LinearGraph graph, @NotNull GraphLayout graphLayout) {
     myWorkingGraph = new WorkingGraph(graph);
     myGraphLayout = graphLayout;
     myHeads = graphLayout.getHeadNodeIndex();
-    myTimestampGetter = timestampGetter;
   }
 
   public LinearBekGraph build() {

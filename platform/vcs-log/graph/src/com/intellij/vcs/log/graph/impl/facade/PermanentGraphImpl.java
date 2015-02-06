@@ -103,8 +103,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       baseController = new BaseLinearGraphController(this);
     }
     else if (sortType == SortType.LinearBek) {
-      baseController =
-        new LinearBekController(new BekBaseLinearGraphController(this, myBekIntMap), this, myPermanentCommitsInfo.getTimestampGetter());
+      baseController = new LinearBekController(new BekBaseLinearGraphController(this, myBekIntMap), this);
     }
     else {
       baseController = new BekBaseLinearGraphController(this, myBekIntMap);

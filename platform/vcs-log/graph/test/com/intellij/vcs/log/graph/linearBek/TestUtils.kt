@@ -38,7 +38,7 @@ public fun runLinearBek(graphBuilder: TestGraphBuilder.() -> Unit): LinearBekGra
   val beforeLinearBek = log.graph.graph(graphBuilder)
   val beforeLinearBekLayout = GraphLayoutBuilder.build(beforeLinearBek, {(nodeIndex1, nodeIndex2) -> nodeIndex1 - nodeIndex2 })
 
-  val afterLinearBek = LinearBekController.compileGraph(beforeLinearBek, beforeLinearBekLayout, DummyTimestampGetter(beforeLinearBek.nodesCount()))
+  val afterLinearBek = LinearBekController.compileGraph(beforeLinearBek, beforeLinearBekLayout)
   return afterLinearBek
 }
 
