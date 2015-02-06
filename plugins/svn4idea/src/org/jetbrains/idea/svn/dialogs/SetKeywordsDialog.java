@@ -17,11 +17,18 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,43 +39,37 @@ import java.util.Map;
  */
 public class SetKeywordsDialog extends DialogWrapper {
 
-  private final String myPropValue;
+  private static final List<String> KNOWN_KEYWORDS =
+    ContainerUtil.newArrayList("Id", "HeadURL", "LastChangedDate", "LastChangedRevision", "LastChangedBy");
 
-  private JCheckBox myLastChangedDateCheckbox;
-  private JCheckBox myLastChangedRevisionCheckbox;
-  private JCheckBox myLastChangedByCheckbox;
-  private JCheckBox myURLCheckbox;
-  private JCheckBox myIDCheckbox;
+  @Nullable private final PropertyValue myKeywordsValue;
+  @NotNull private final List<JCheckBox> myKeywordOptions;
 
-  protected SetKeywordsDialog(Project project, String propValue) {
+  protected SetKeywordsDialog(Project project, @Nullable PropertyValue keywordsValue) {
     super(project, false);
-    myPropValue = propValue;
+    myKeywordOptions = ContainerUtil.newArrayList();
+    myKeywordsValue = keywordsValue;
+
     setTitle("SVN Keywords");
     setResizable(false);
     init();
   }
 
+  @Nullable
   public String getKeywords() {
-    StringBuffer result = new StringBuffer();
-    if (myLastChangedDateCheckbox.isSelected()) {
-      result.append("LastChangedDate ");
-    }
-    if (myLastChangedByCheckbox.isSelected()) {
-      result.append("LastChangedBy ");
-    }
-    if (myLastChangedRevisionCheckbox.isSelected()) {
-      result.append("LastChangedRevision ");
-    }
-    if (myURLCheckbox.isSelected()) {
-      result.append("HeadURL ");
-    }
-    if (myIDCheckbox.isSelected()) {
-      result.append("Id");
-    }
-    if (result.length() > 0) {
-      return result.toString().trim();
-    }
-    return null;
+    List<JCheckBox> selectedKeywords = ContainerUtil.filter(myKeywordOptions, new Condition<JCheckBox>() {
+      @Override
+      public boolean value(@NotNull JCheckBox keywordOption) {
+        return keywordOption.isSelected();
+      }
+    });
+
+    return StringUtil.nullize(StringUtil.join(selectedKeywords, new Function<JCheckBox, String>() {
+      @Override
+      public String fun(@NotNull JCheckBox keywordOption) {
+        return keywordOption.getText();
+      }
+    }, " "));
   }
 
   @Nullable
@@ -77,30 +78,30 @@ public class SetKeywordsDialog extends DialogWrapper {
     panel.add(new JLabel("Select keywords to set: "), BorderLayout.NORTH);
     JPanel buttonsPanel = new JPanel(new GridLayout(5, 1));
 
-    myIDCheckbox = new JCheckBox("Id");
-    myURLCheckbox = new JCheckBox("HeadURL");
-    myLastChangedDateCheckbox = new JCheckBox("LastChangedDate");
-    myLastChangedRevisionCheckbox = new JCheckBox("LastChangedRevision");
-    myLastChangedByCheckbox = new JCheckBox("LastChangedBy");
+    for (String keyword : KNOWN_KEYWORDS) {
+      JCheckBox keywordOption = new JCheckBox(keyword);
 
-    buttonsPanel.add(myIDCheckbox);
-    buttonsPanel.add(myURLCheckbox);
-    buttonsPanel.add(myLastChangedByCheckbox);
-    buttonsPanel.add(myLastChangedDateCheckbox);
-    buttonsPanel.add(myLastChangedRevisionCheckbox);
+      myKeywordOptions.add(keywordOption);
+      buttonsPanel.add(keywordOption);
+    }
 
     panel.add(buttonsPanel, BorderLayout.CENTER);
-    initValues();
 
     return panel;
   }
 
-  private void initValues() {
-    Map keywords = SVNTranslator.computeKeywords(myPropValue, "u", "a", "d", "r", null);
-    myLastChangedDateCheckbox.setSelected(keywords.containsKey("LastChangedDate"));
-    myLastChangedByCheckbox.setSelected(keywords.containsKey("LastChangedBy"));
-    myLastChangedRevisionCheckbox.setSelected(keywords.containsKey("LastChangedRevision"));
-    myURLCheckbox.setSelected(keywords.containsKey("HeadURL"));
-    myIDCheckbox.setSelected(keywords.containsKey("Id"));
+  @Override
+  protected void init() {
+    super.init();
+
+    updateKeywordOptions();
+  }
+
+  private void updateKeywordOptions() {
+    Map<String, byte[]> keywords = SVNTranslator.computeKeywords(PropertyValue.toString(myKeywordsValue), "u", "a", "d", "r", null);
+
+    for (JCheckBox keywordOption : myKeywordOptions) {
+      keywordOption.setSelected(keywords.containsKey(keywordOption.getText()));
+    }
   }
 }
