@@ -42,16 +42,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getCursor;
-
 class CollapsedActionManager {
 
   @Nullable
   public static LinearGraphAnswer performAction(@NotNull CollapsedLinearGraphController graphController,
                                                 @NotNull LinearGraphAction action) {
     ActionContext context = new ActionContext(graphController.getCollapsedGraph(), graphController.getPermanentGraphInfo(), action);
-
-    if (isForDelegateGraph(context)) return null;
 
     for (ActionCase actionCase : FILTER_ACTION_CASES) {
       if (actionCase.supportedActionTypes().contains(context.getActionType())) {
@@ -60,20 +56,6 @@ class CollapsedActionManager {
       }
     }
     return null;
-  }
-
-  private static boolean isForDelegateGraph(@NotNull ActionContext context) {
-    GraphElement affectedGraphElement = context.getAffectedGraphElement();
-    if (affectedGraphElement == null) return false;
-
-    GraphEdge dottedEdge = getDottedEdge(context.getAffectedGraphElement(), context.getCompiledGraph());
-    if (dottedEdge != null) {
-      int upNodeIndex = context.convertToDelegateNodeIndex(assertInt(dottedEdge.getUpNodeIndex()));
-      int downNodeIndex = context.convertToDelegateNodeIndex(assertInt(dottedEdge.getDownNodeIndex()));
-
-      if (!context.myCollapsedGraph.hasCollapsedEdge(upNodeIndex, downNodeIndex)) return true;
-    }
-    return false;
   }
 
   public static void expandNodes(@NotNull final CollapsedGraph collapsedGraph, Set<Integer> nodesToShow) {
@@ -198,20 +180,6 @@ class CollapsedActionManager {
     }
   }
 
-  private final static ActionCase CLEAR_HOVER = new ActionCase() {
-    @Nullable
-    @Override
-    public LinearGraphAnswer performAction(@NotNull ActionContext context) {
-      return new LinearGraphAnswer(null, getCursor(false), null, Collections.<Integer>emptySet());
-    }
-
-    @NotNull
-    @Override
-    public Set<GraphAction.Type> supportedActionTypes() {
-      return ContainerUtil.set(GraphAction.Type.MOUSE_OVER);
-    }
-  };
-
   private final static GraphChanges<Integer> SOME_CHANGES = new GraphChanges<Integer>() { //todo drop this
     @NotNull
     @Override
@@ -230,6 +198,8 @@ class CollapsedActionManager {
     @Nullable
     @Override
     public LinearGraphAnswer performAction(@NotNull final ActionContext context) {
+      if (isForDelegateGraph(context)) return null;
+
       GraphElement affectedGraphElement = context.getAffectedGraphElement();
       if (affectedGraphElement == null) return null;
 
@@ -337,6 +307,8 @@ class CollapsedActionManager {
     @Nullable
     @Override
     public LinearGraphAnswer performAction(@NotNull ActionContext context) {
+      if (isForDelegateGraph(context)) return null;
+
       GraphEdge dottedEdge = getDottedEdge(context.getAffectedGraphElement(), context.getCompiledGraph());
 
       if (dottedEdge != null) {
@@ -370,7 +342,21 @@ class CollapsedActionManager {
   };
 
   private final static List<ActionCase> FILTER_ACTION_CASES =
-    ContainerUtil.list(COLLAPSE_ALL, EXPAND_ALL, LINEAR_EXPAND_CASE, LINEAR_COLLAPSE_CASE, CLEAR_HOVER);
+    ContainerUtil.list(COLLAPSE_ALL, EXPAND_ALL, LINEAR_EXPAND_CASE, LINEAR_COLLAPSE_CASE);
+
+  private static boolean isForDelegateGraph(@NotNull ActionContext context) {
+    GraphElement affectedGraphElement = context.getAffectedGraphElement();
+    if (affectedGraphElement == null) return false;
+
+    GraphEdge dottedEdge = getDottedEdge(context.getAffectedGraphElement(), context.getCompiledGraph());
+    if (dottedEdge != null) {
+      int upNodeIndex = context.convertToDelegateNodeIndex(assertInt(dottedEdge.getUpNodeIndex()));
+      int downNodeIndex = context.convertToDelegateNodeIndex(assertInt(dottedEdge.getDownNodeIndex()));
+
+      if (!context.myCollapsedGraph.isMyCollapsedEdge(upNodeIndex, downNodeIndex)) return true;
+    }
+    return false;
+  }
 
   private CollapsedActionManager() {
   }

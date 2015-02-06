@@ -85,7 +85,7 @@ public class LinearBekController extends CascadeLinearGraphController {
         }
       }
     }
-    return LinearGraphUtils.createCursorAnswer(/*handCursor =*/ false);
+    return null;
   }
 
   @NotNull

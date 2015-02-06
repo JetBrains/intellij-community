@@ -18,7 +18,6 @@ package com.intellij.vcs.log.graph.collapsing;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
@@ -112,7 +111,7 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
     if (graphElement instanceof GraphEdge) {
       Integer upIndex = ((GraphEdge)graphElement).getUpNodeIndex();
       Integer downIndex = ((GraphEdge)graphElement).getDownNodeIndex();
-      if (upIndex != null && downIndex != null && myCollapsedGraph.hasCollapsedEdge(upIndex, downIndex)) return null;
+      if (upIndex != null && downIndex != null && myCollapsedGraph.isMyCollapsedEdge(upIndex, downIndex)) return null;
 
       Integer convertedUpIndex = upIndex == null ? null : myCollapsedGraph.convertToDelegateNodeIndex(upIndex);
       Integer convertedDownIndex = downIndex == null ? null : myCollapsedGraph.convertToDelegateNodeIndex(downIndex);
