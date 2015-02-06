@@ -1506,13 +1506,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Nullable
   @Contract(pure=true)
-  public static <T, L extends List<T>> T getLastItem(@NotNull L list, @Nullable T def) {
-    return list.isEmpty() ? def : list.get(list.size() - 1);
+  public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
+    return isEmpty(list) ? def : list.get(list.size() - 1);
   }
 
   @Nullable
   @Contract(pure=true)
-  public static <T, L extends List<T>> T getLastItem(@NotNull L list) {
+  public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
     return getLastItem(list, null);
   }
 
