@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph.linearBek;
 
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
@@ -25,11 +26,13 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 class LinearBekGraphBuilder {
   private static final int MAX_BLOCK_SIZE = 200;
+  public static final int MAGIC_SET_SIZE = 30;
   @NotNull private final WorkingGraph myWorkingGraph;
   @NotNull private final GraphLayout myGraphLayout;
   @NotNull private final List<Integer> myHeads;
@@ -77,6 +80,7 @@ class LinearBekGraphBuilder {
 
     Set<Integer> definitelyNotTails = ContainerUtil.newHashSet();
     Set<Integer> tails = ContainerUtil.newHashSet();
+    @Nullable Set<Integer> magicSet = null;
     boolean mergeWithOldCommit = false;
 
     while (!queue.isEmpty()) {
@@ -107,21 +111,54 @@ class LinearBekGraphBuilder {
       }
       else if (next > firstChild) {
         int li = myGraphLayout.getLayoutIndex(next);
-        if (li > y) {
-          return false;
-        }
-        if (li < x && !(li >= headLi && li < nextHeadLi)) {
-          return false;
+        if (x > y && !mergeWithOldCommit) {
+          if (next > firstChild + MAGIC_SET_SIZE) return false;
+          if (magicSet == null) {
+            magicSet = calculateMagicSet(firstChild);
+          }
+
+          if (magicSet.contains(next)) {
+            if (!definitelyNotTails.contains(upNodeIndex)) {
+              tails.add(upNodeIndex);
+              myWorkingGraph.removeEdge(upNodeIndex, next);
+            }
+          }
+          else {
+            return false;
+          }
         }
         else {
-          if (!definitelyNotTails.contains(upNodeIndex)) {
-            tails.add(upNodeIndex);
-            if (li != y && (li >= x)) {
-              myWorkingGraph.removeEdge(upNodeIndex, next); // questionable -- we remove edges to the very old commits only for tails
-              // done in sake of expanding dotted edges
-              // also, should check (I guess?) that the edge is not too long
-              // another thing is that if li < x next can still be reachable from the firstChild
-              // but we do not know that unless we walk down from the firstChild and check that
+          if ((li > x && li < y) || (li == x)) {
+            if (!definitelyNotTails.contains(upNodeIndex)) {
+              tails.add(upNodeIndex);
+              myWorkingGraph.removeEdge(upNodeIndex, next);
+            }
+          }
+          else {
+            if (li >= y) {
+              return false;
+            }
+            else {
+              if (next > firstChild + MAGIC_SET_SIZE) {
+                if (!definitelyNotTails.contains(upNodeIndex)) {
+                  tails.add(upNodeIndex);
+                }
+              }
+              else {
+                if (magicSet == null) {
+                  magicSet = calculateMagicSet(firstChild);
+                }
+
+                if (magicSet.contains(next)) {
+                  if (!definitelyNotTails.contains(upNodeIndex)) {
+                    tails.add(upNodeIndex);
+                    myWorkingGraph.removeEdge(upNodeIndex, next);
+                  }
+                }
+                else {
+                  return false;
+                }
+              }
             }
           }
         }
@@ -147,6 +184,34 @@ class LinearBekGraphBuilder {
     myWorkingGraph.removeEdge(parent, firstChild);
 
     return true;
+  }
+
+  @NotNull
+  private Set<Integer> calculateMagicSet(int firstChild) {
+
+    Set<Integer> magicSet;
+    magicSet = ContainerUtil.newHashSet(MAGIC_SET_SIZE);
+
+    PriorityQueue<Integer> magicQueue = new PriorityQueue<Integer>(MAGIC_SET_SIZE);
+    magicQueue
+      .addAll(ContainerUtil.map(myWorkingGraph.getAdjacentEdges(firstChild, EdgeFilter.NORMAL_DOWN), new Function<GraphEdge, Integer>() {
+        @Override
+        public Integer fun(GraphEdge graphEdge) {
+          return graphEdge.getDownNodeIndex();
+        }
+      }));
+    while (!magicQueue.isEmpty()) {
+      Integer i = magicQueue.poll();
+      if (i > firstChild + MAGIC_SET_SIZE) break;
+      magicSet.add(i);
+      magicQueue.addAll(ContainerUtil.map(myWorkingGraph.getAdjacentEdges(i, EdgeFilter.NORMAL_DOWN), new Function<GraphEdge, Integer>() {
+        @Override
+        public Integer fun(GraphEdge graphEdge) {
+          return graphEdge.getDownNodeIndex();
+        }
+      }));
+    }
+    return magicSet;
   }
 
   private static class GraphEdgeComparator implements Comparator<GraphEdge> {
