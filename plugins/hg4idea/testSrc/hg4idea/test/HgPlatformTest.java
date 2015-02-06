@@ -102,10 +102,14 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   protected void tearDown() throws Exception {
     try {
       myProjectFixture.tearDown();
-      clearFields(this);
     }
     finally {
-      super.tearDown();
+      try {
+        clearFields(this);
+      }
+      finally {
+        super.tearDown();
+      }
     }
   }
 
