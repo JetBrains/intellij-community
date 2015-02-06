@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,11 @@
  */
 package org.jetbrains.ide;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
-import java.io.File;
-
-/**
- * @author mike
- */
-public class OpenFileXmlRpcHandler {
+class OpenFileXmlRpcHandler {
   private static final Logger LOG = Logger.getInstance(OpenFileXmlRpcHandler.class);
 
   // XML-RPC interface method - keep the signature intact
@@ -55,75 +36,7 @@ public class OpenFileXmlRpcHandler {
     return doOpen(path, line, column);
   }
 
-  private static boolean doOpen(final String path, final int line, final int column) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Pair<VirtualFile, Project> data = new File(path).isAbsolute() ? findByAbsolutePath(path) : findByRelativePath(path);
-        if (data == null) return;
-
-        FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(data.second, data.first);
-        if (providers.length == 0) return;
-
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(data.second, data.first, line, column);
-        FileEditorManager.getInstance(data.second).openTextEditor(descriptor, true);
-      }
-    });
-    return true;
-  }
-
-  @Nullable
-  private static Pair<VirtualFile, Project> findByAbsolutePath(String path) {
-    File file = new File(FileUtil.toSystemDependentName(path));
-    if (file.exists()) {
-      VirtualFile vFile = findVirtualFile(file);
-      if (vFile != null) {
-        Project project = ProjectLocator.getInstance().guessProjectForFile(vFile);
-        if (project != null) {
-          return Pair.create(vFile, project);
-        }
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private static Pair<VirtualFile, Project> findByRelativePath(String path) {
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    String localPath = FileUtil.toSystemDependentName(path);
-
-    for (Project project : projects) {
-      File file = new File(project.getBasePath(), localPath);
-      if (file.exists()) {
-        VirtualFile vFile = findVirtualFile(file);
-        return vFile != null ? Pair.create(vFile, project) : null;
-      }
-    }
-
-    for (Project project : projects) {
-      for (VcsRoot vcsRoot : ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()) {
-        VirtualFile root = vcsRoot.getPath();
-        if (root != null) {
-          File file = new File(FileUtil.toSystemDependentName(root.getPath()), localPath);
-          if (file.exists()) {
-            VirtualFile vFile = findVirtualFile(file);
-            return vFile != null ? Pair.create(vFile, project) : null;
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private static VirtualFile findVirtualFile(final File file) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      }
-    });
+  private static boolean doOpen(@NotNull String path, int line, int column) {
+    return HttpRequestHandler.EP_NAME.findExtension(OpenFileHttpService.class).openFile(path, line, column, false).getState() != Promise.State.REJECTED;
   }
 }

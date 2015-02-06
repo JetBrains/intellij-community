@@ -109,7 +109,7 @@ public final class Responses {
     send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset)), channel, request);
   }
 
-  private static void send(@NotNull HttpResponse response, @NotNull Channel channel, boolean close) {
+  public static void send(@NotNull HttpResponse response, @NotNull Channel channel, boolean close) {
     if (!channel.isActive()) {
       return;
     }
