@@ -70,9 +70,10 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
                                                         return scheme.writeExternal();
                                                       }
 
+                                                      @NotNull
                                                       @Override
-                                                      public boolean shouldBeSaved(@NotNull final KeymapImpl scheme) {
-                                                        return scheme.canModify();
+                                                      public State getState(@NotNull KeymapImpl scheme) {
+                                                        return scheme.canModify() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
                                                       }
                                                     },
                                                     RoamingType.PER_USER);

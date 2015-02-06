@@ -43,7 +43,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     if (toReplace == -1) {
       mySchemes.add(scheme);
     }
-    else if (replaceExisting || !isExternalizable(scheme)) {
+    else if (replaceExisting || !(scheme instanceof ExternalizableScheme)) {
       mySchemes.set(toReplace, scheme);
     }
     else {
@@ -171,9 +171,5 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
 
   @Override
   public void exportScheme(@NotNull final E scheme, final String name, final String description) {
-  }
-
-  protected boolean isExternalizable(final T scheme) {
-    return scheme instanceof ExternalizableScheme;
   }
 }
