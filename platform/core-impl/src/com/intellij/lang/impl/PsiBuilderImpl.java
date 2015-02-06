@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
@@ -65,6 +64,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>
     CUSTOM_COMPARATOR = Key.create("CUSTOM_COMPARATOR");
 
+  private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
+
   private final Project myProject;
   private PsiFile myFile;
 
@@ -89,8 +90,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private final ASTNode myOriginalTree;
   private final MyTreeStructure myParentLightTree;
-
-  private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
 
   private Map<Key, Object> myUserData = null;
   private IElementType myCachedTokenType;
