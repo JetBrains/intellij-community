@@ -139,7 +139,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for")).withParents(PsiJavaCodeReferenceElement.class,
                                                                                     PsiExpressionStatement.class, PsiForStatement.class);
   private static final PsiJavaElementPattern.Capture<PsiElement> CLASS_REFERENCE =
-    psiElement().withParent(psiReferenceExpression().referencing(psiClass()));
+    psiElement().withParent(psiReferenceExpression().referencing(psiClass().andNot(psiElement(PsiTypeParameter.class))));
 
   private static final ElementPattern<PsiElement> EXPR_KEYWORDS = and(
     psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
