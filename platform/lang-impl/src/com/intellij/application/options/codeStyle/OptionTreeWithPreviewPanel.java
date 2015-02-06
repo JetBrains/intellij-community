@@ -71,6 +71,8 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
     myOptionsTree = createOptionsTree();
     myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
+    myOptionsTree.setBackground(UIUtil.getPanelBackground());
+    myOptionsTree.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
     JScrollPane scrollPane = new JBScrollPane(myOptionsTree) {
       @Override
       public Dimension getMinimumSize() {
