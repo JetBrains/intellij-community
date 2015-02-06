@@ -58,6 +58,12 @@ public class ExternalDiffSettingsPanel {
         updateEnabledEffect();
       }
     });
+    myMergeEnabled.getModel().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateEnabledEffect();
+      }
+    });
   }
 
   @NotNull
