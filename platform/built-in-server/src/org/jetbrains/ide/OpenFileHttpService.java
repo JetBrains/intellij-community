@@ -15,7 +15,6 @@
  */
 package org.jetbrains.ide;
 
-import com.google.gson.Gson;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -99,7 +98,7 @@ class OpenFileHttpService extends RestService {
 
     OpenFileRequest apiRequest;
     if (request.method() == HttpMethod.POST) {
-      apiRequest = new Gson().fromJson(createJsonReader(request), OpenFileRequest.class);
+      apiRequest = gson.getValue().fromJson(createJsonReader(request), OpenFileRequest.class);
     }
     else {
       apiRequest = new OpenFileRequest();

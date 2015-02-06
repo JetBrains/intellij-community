@@ -15,12 +15,15 @@
  */
 package org.jetbrains.ide;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.google.gson.stream.MalformedJsonException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -54,6 +57,14 @@ import java.util.List;
 public abstract class RestService extends HttpRequestHandler {
   protected static final Logger LOG = Logger.getInstance(RestService.class);
   public static final String PREFIX = "api";
+
+  protected final NotNullLazyValue<Gson> gson = new NotNullLazyValue<Gson>() {
+    @NotNull
+    @Override
+    protected Gson compute() {
+      return new GsonBuilder().setPrettyPrinting().create();
+    }
+  };
 
   @Override
   public final boolean isSupported(@NotNull FullHttpRequest request) {
