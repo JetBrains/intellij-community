@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +82,9 @@ public class DebuggerContextUtil {
 
           //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
           if (editor != null && position != null && file.getVirtualFile().equals(position.getFile())) {
-            final Couple<Collection<TextRange>> usages = IdentifierHighlighterPass.getHighlightUsages(psi, file, false);
+            PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
+            final Couple<Collection<TextRange>> usages =
+              IdentifierHighlighterPass.getHighlightUsages(psi, method != null ? method : file, false);
             final List<TextRange> ranges = new ArrayList<TextRange>();
             ranges.addAll(usages.first);
             ranges.addAll(usages.second);
