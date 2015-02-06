@@ -20,16 +20,17 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,6 +42,14 @@ public class SetKeywordsDialog extends DialogWrapper {
 
   private static final List<String> KNOWN_KEYWORDS =
     ContainerUtil.newArrayList("Id", "HeadURL", "LastChangedDate", "LastChangedRevision", "LastChangedBy");
+
+  private static final Map<String, String> KNOWN_KEYWORD_ALIASES = ContainerUtil.<String, String>immutableMapBuilder()
+    .put("URL", "HeadURL")
+    .put("Date", "LastChangedDate")
+    .put("Revision", "LastChangedRevision")
+    .put("Rev", "LastChangedRevision")
+    .put("Author", "LastChangedBy")
+    .build();
 
   @Nullable private final PropertyValue myKeywordsValue;
   @NotNull private final List<JCheckBox> myKeywordOptions;
@@ -98,10 +107,27 @@ public class SetKeywordsDialog extends DialogWrapper {
   }
 
   private void updateKeywordOptions() {
-    Map<String, byte[]> keywords = SVNTranslator.computeKeywords(PropertyValue.toString(myKeywordsValue), "u", "a", "d", "r", null);
+    Set<String> keywords = parseKeywords(myKeywordsValue);
 
     for (JCheckBox keywordOption : myKeywordOptions) {
-      keywordOption.setSelected(keywords.containsKey(keywordOption.getText()));
+      keywordOption.setSelected(keywords.contains(keywordOption.getText()));
     }
+  }
+
+  /**
+   * TODO: Subversion 1.8 also allow defining custom keywords (in "svn:keywords" property value). But currently it is unnecessary for this
+   * TODO: dialog.
+   */
+  @NotNull
+  private static Set<String> parseKeywords(@Nullable PropertyValue keywordsValue) {
+    Set<String> result = ContainerUtil.newHashSet();
+
+    if (keywordsValue != null) {
+      for (String keyword : StringUtil.split(PropertyValue.toString(keywordsValue), " ")) {
+        result.add(ObjectUtils.notNull(KNOWN_KEYWORD_ALIASES.get(keyword), keyword));
+      }
+    }
+
+    return result;
   }
 }
