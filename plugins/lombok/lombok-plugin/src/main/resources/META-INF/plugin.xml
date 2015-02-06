@@ -48,6 +48,8 @@
     <lang.commenter language="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCommentor"/>
 
 		<fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
+
+		<custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
