@@ -52,7 +52,6 @@ import static hg4idea.test.HgExecutor.hg;
 public abstract class HgPlatformTest extends UsefulTestCase {
 
   protected Project myProject;
-  protected VirtualFile myProjectRoot;
   protected VirtualFile myRepository;
   protected VirtualFile myChildRepo;
   protected HgVcs myVcs;
@@ -80,17 +79,17 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     }
     try {
       myProject = myProjectFixture.getProject();
-      myProjectRoot = myProject.getBaseDir();
+      VirtualFile projectRoot = myProject.getBaseDir();
 
-      cd(myProjectRoot);
+      cd(projectRoot);
       hg("version");
 
-      createRepository(myProjectRoot);
+      createRepository(projectRoot);
       myVcs = HgVcs.getInstance(myProject);
       assertNotNull(myVcs);
       myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
       myVcs.checkVersion();
-      myRepository = myProjectRoot;
+      myRepository = projectRoot;
       setUpHgrc(myRepository);
     }
     catch (Exception e) {
@@ -136,7 +135,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     hgRepository.updateConfig();
   }
 
-  protected void createRepository(VirtualFile root) {
+  private static void createRepository(VirtualFile root) {
     initRepo(root.getPath());
   }
 
