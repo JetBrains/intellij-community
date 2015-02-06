@@ -21,6 +21,23 @@ backend2gui['WX'] = 'wx'
 backend2gui['CocoaAgg'] = 'osx'
 
 
+def do_enable_gui(guiname):
+    from pydev_versioncheck import versionok_for_gui
+    if versionok_for_gui():
+        try:
+            from pydev_ipython.inputhook import enable_gui
+            enable_gui(guiname)
+        except:
+            sys.stderr.write("Failed to enable GUI event loop integration for '%s'\n" % guiname)
+            import traceback
+            traceback.print_exc()
+    elif guiname not in ['none', '', None]:
+        # Only print a warning if the guiname was going to do something
+        sys.stderr.write("Debug console: Python version does not support GUI event loop integration for '%s'\n" % guiname)
+    # Return value does not matter, so return back what was sent
+    return guiname
+
+
 def find_gui_and_backend():
     """Return the gui and mpl backend."""
     matplotlib = sys.modules['matplotlib']
@@ -44,13 +61,16 @@ def is_interactive_backend(backend):
         return matplotlib.is_interactive()
 
 
-def patch_use(interpreter):
+def patch_use(interpreter=None):
     """ Patch matplotlib function 'use' """
     matplotlib = sys.modules['matplotlib']
     def patched_use(*args, **kwargs):
         matplotlib.real_use(*args, **kwargs)
         gui, backend = find_gui_and_backend()
-        interpreter.enableGui(gui)
+        if interpreter:
+            interpreter.enableGui(gui)
+        else:
+            do_enable_gui(gui)
 
     setattr(matplotlib, "real_use", getattr(matplotlib, "use"))
     setattr(matplotlib, "use", patched_use)
@@ -66,14 +86,17 @@ def patch_is_interactive():
     setattr(matplotlib, "is_interactive", patched_is_interactive)
 
 
-def activate_matplotlib(interpreter):
+def activate_matplotlib(interpreter=None):
     """Set interactive to True for interactive backends."""
     def activate_matplotlib_inner():
         matplotlib = sys.modules['matplotlib']
         gui, backend = find_gui_and_backend()
         is_interactive = is_interactive_backend(backend)
         if is_interactive:
-            interpreter.enableGui(gui)
+            if interpreter:
+                interpreter.enableGui(gui)
+            else:
+                do_enable_gui(gui)
             if not matplotlib.is_interactive():
                 sys.stdout.write("Backend %s is interactive backend. Turning interactive mode on.\n" % backend)
             matplotlib.interactive(True)

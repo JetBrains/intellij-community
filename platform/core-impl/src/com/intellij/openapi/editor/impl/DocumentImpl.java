@@ -1022,7 +1022,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public final void setInBulkUpdate(boolean value) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myAssertThreading) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
     if (myDoingBulkUpdate == value) {
       // do not fire listeners or otherwise updateStarted() will be called more times than updateFinished()
       return;
@@ -1084,7 +1086,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   void requestTabTracking() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myAssertThreading) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
     if (myTabTrackingRequestors++ == 0) {
       myMightContainTabs = false;
       updateMightContainTabs(myText);
@@ -1092,7 +1096,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   void giveUpTabTracking() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myAssertThreading) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
     if (--myTabTrackingRequestors == 0) {
       myMightContainTabs = true;
     }

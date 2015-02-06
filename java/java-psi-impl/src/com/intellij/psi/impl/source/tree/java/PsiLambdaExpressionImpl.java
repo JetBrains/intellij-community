@@ -177,9 +177,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     }
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
 
-    leftType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(leftType, this);
-
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
     if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
       if (candidateProperties != null) {
@@ -194,6 +191,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       }
     }
 
+    leftType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(leftType, this);
     if (!isPotentiallyCompatible(leftType)) {
       return false;
     }
@@ -202,8 +200,11 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       return true;
     }
 
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod == null) return false;
+
+    if (interfaceMethod.hasTypeParameters()) return false;
 
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
 
@@ -239,11 +240,8 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     return true;
   }
 
-  //A lambda expression (§15.27) is potentially compatible with a functional interface type (§9.8) if all of the following are true:
-  //   The arity of the target type's function type is the same as the arity of the lambda expression.
-  //   If the target type's function type has a void return, then the lambda body is either a statement expression (§14.8) or a void-compatible block (§15.27.2).
-  //   If the target type's function type has a (non-void) return type, then the lambda body is either an expression or a value-compatible block (§15.27.2).
-  private boolean isPotentiallyCompatible(PsiType left) {
+  @Override
+  public boolean isPotentiallyCompatible(PsiType left) {
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(left);
     if (interfaceMethod == null) return false;
 

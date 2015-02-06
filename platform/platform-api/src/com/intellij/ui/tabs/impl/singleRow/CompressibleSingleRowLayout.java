@@ -20,6 +20,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.util.ui.GraphicsUtil;
 
 import java.awt.*;
 import java.util.Iterator;
@@ -39,7 +40,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
       if (firstLabel != null && lastLabel != null) {
         data.tabRectangle.x = firstLabel.getBounds().x;
         data.tabRectangle.y = firstLabel.getBounds().y;
-        data.tabRectangle.width = data.requiredLength;//(int)lastLabel.getBounds().getMaxX() - data.tabRectangle.x;
+        data.tabRectangle.width = data.requiredLength;
         data.tabRectangle.height = (int)lastLabel.getBounds().getMaxY() - data.tabRectangle.y;
       }
     }
@@ -56,17 +57,24 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
 
   @Override
   protected void layoutLabelsAndGhosts(SingleRowPassInfo data) {
+    if (myTabs.getPresentation().getTabsPosition() != JBTabsPosition.top
+        && myTabs.getPresentation().getTabsPosition() != JBTabsPosition.bottom) {
+      super.layoutLabelsAndGhosts(data);
+      return;
+    }
+
+    int tabWidth = 0;
     boolean layoutStopped = false;
     int lengthEstimation = 0;
-    boolean needCompression = false;
-    if (myTabs.getPresentation().getTabsPosition() == JBTabsPosition.top
-        || myTabs.getPresentation().getTabsPosition() == JBTabsPosition.bottom) {
-      for (TabInfo eachInfo : data.toLayout) {
-        final TabLabel label = myTabs.myInfo2Label.get(eachInfo);
-        lengthEstimation += getStrategy().getLengthIncrement(label.getPreferredSize());
+    for (TabInfo eachInfo : data.toLayout) {
+      final TabLabel label = myTabs.myInfo2Label.get(eachInfo);
+      if (tabWidth == 0) {
+        tabWidth = GraphicsUtil.stringWidth("m", label.getLabelComponent().getFont()) * 20;
       }
-      needCompression = lengthEstimation > data.toFitLength;
+      lengthEstimation += tabWidth;
     }
+    double compressionFactor = (double)lengthEstimation / data.toFitLength;
+
     int spentLength = 0;
     for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
       TabInfo eachInfo = iterator.next();
@@ -79,16 +87,15 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
       }
 
       label.setActionPanelVisible(true);
-      final Dimension eachSize = label.getPreferredSize();
 
       int length;
-      if (needCompression) {
-        length = iterator.hasNext() ? (int)(getStrategy().getLengthIncrement(label.getPreferredSize()) * (float)data.toFitLength / lengthEstimation)
+      if (compressionFactor > 1) {
+        length = iterator.hasNext() ? (int)(tabWidth * (float)data.toFitLength / lengthEstimation)
                                     : data.toFitLength - spentLength - data.toLayout.size() / 2;
         spentLength += length;
       }
       else {
-        length = getStrategy().getLengthIncrement(eachSize);
+        length = tabWidth;
       }
       boolean continueLayout = applyTabLayout(data, label, length, 0);
 
@@ -103,5 +110,12 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     for (TabInfo eachInfo : data.toDrop) {
       JBTabsImpl.resetLayout(myTabs.myInfo2Label.get(eachInfo));
     }
+  }
+
+  @Override
+  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length, int deltaToFit) {
+    boolean result = super.applyTabLayout(data, label, length, deltaToFit);
+    label.setAlignmentToCenter(false);
+    return result;
   }
 }

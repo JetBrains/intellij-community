@@ -162,6 +162,9 @@ public class SuggestionList {
    */
   @Nullable
   public String getValue() {
+    if (myListPopUp == null || !myListPopUp.isVisible()) {
+      return null; // Nothing is selected if list is invisible
+    }
     final Object value = myList.getSelectedValue();
     return ((value == null) ? "" : getElement(value).mySuggestion.getText());
   }
@@ -169,7 +172,7 @@ public class SuggestionList {
   /**
    * Element that represents suggestion
    */
-  private static class SuggestionListElement {
+  private static final class SuggestionListElement {
     /**
      * is part of odd group
      */

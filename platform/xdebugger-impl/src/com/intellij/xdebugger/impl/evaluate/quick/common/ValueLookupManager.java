@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,13 +102,16 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
   }
 
   private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, @NotNull final ValueHintType type) {
+    final Rectangle area = editor.getScrollingModel().getVisibleArea();
     myAlarm.cancelAllRequests();
     if (type == ValueHintType.MOUSE_OVER_HINT) {
       if (Registry.is("debugger.valueTooltipAutoShow")) {
         myAlarm.addRequest(new Runnable() {
           @Override
           public void run() {
-            showHint(handler, editor, point, type);
+            if (area.equals(editor.getScrollingModel().getVisibleArea())) {
+              showHint(handler, editor, point, type);
+            }
           }
         }, handler.getValueLookupDelay(myProject));
       }

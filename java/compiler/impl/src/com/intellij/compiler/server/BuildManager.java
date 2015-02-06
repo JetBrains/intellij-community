@@ -104,6 +104,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
+import javax.swing.*;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.awt.*;
@@ -600,7 +601,8 @@ public class BuildManager implements ApplicationComponent{
     final Map<String, String> userData, final DefaultMessageHandler messageHandler) {
 
     final String projectPath = getProjectPath(project);
-    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, messageHandler instanceof AutoMakeMessageHandler);
+    final boolean isAutomake = messageHandler instanceof AutoMakeMessageHandler;
+    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, isAutomake);
     try {
       ensureListening();
     }
@@ -646,6 +648,7 @@ public class BuildManager implements ApplicationComponent{
           CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder().setGlobalOptionsPath(PathManager.getOptionsPath()).build();
         CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
         final SequentialTaskExecutor projectTaskQueue;
+        final boolean needRescan;
         synchronized (myProjectDataMap) {
           final ProjectData data = getProjectData(projectPath);
           if (isRebuild) {
@@ -659,7 +662,8 @@ public class BuildManager implements ApplicationComponent{
                      "; DELETED: " +
                      new HashSet<String>(convertToStringPaths(data.myDeleted)));
           }
-          currentFSChanges = data.getAndResetRescanFlag() ? null : data.createNextEvent();
+          needRescan = data.getAndResetRescanFlag();
+          currentFSChanges = needRescan ? null : data.createNextEvent();
           projectTaskQueue = data.taskQueue;
         }
 
@@ -703,6 +707,22 @@ public class BuildManager implements ApplicationComponent{
                   errorsOnLaunch = STDERR_OUTPUT.get(processHandler);
                 }
                 else {
+                  if (isAutomake && needRescan) {
+                    // if project state was cleared because of roots changed or this is the first compilation after project opening,
+                    // ensure project model is saved on disk, so that automake sees the latest model state.
+                    // For ordinary make all project, app settings and unsaved docs are always saved before build starts.
+                    try {
+                      SwingUtilities.invokeAndWait(new Runnable() {
+                        public void run() {
+                          project.save();
+                        }
+                      });
+                    }
+                    catch(Throwable e) {
+                      LOG.info(e);
+                    }
+                  }
+                  
                   processHandler = launchBuildProcess(project, myListenPort, sessionId, false);
                   errorsOnLaunch = new StringBuffer();
                   processHandler.addProcessListener(new StdOutputCollector((StringBuffer)errorsOnLaunch));

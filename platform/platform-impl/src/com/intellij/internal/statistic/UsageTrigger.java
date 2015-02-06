@@ -19,13 +19,11 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -75,7 +73,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
     private static final GroupDescriptor GROUP = GroupDescriptor.create("features counts", GroupDescriptor.HIGHER_PRIORITY);
 
     @NotNull
-    public Set<UsageDescriptor> getUsages(@Nullable final Project project) {
+    public Set<UsageDescriptor> getUsages() {
       State state = getInstance().getState();
       assert state != null;
       return ContainerUtil.map2Set(state.myValues.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {

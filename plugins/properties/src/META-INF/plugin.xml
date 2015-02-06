@@ -9,6 +9,7 @@
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider" interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"/>
+    <extensionPoint name="alphaUnsortedInspectionSuppressor" interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -76,6 +77,10 @@
                      key="trail.spaces.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TrailingSpacesInPropertyInspection"/>
+    <localInspection language="Properties" shortName="AlphaUnsortedPropertiesFile" bundle="messages.PropertiesBundle"
+                     key="alpha.unsorted.properties.file.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="false" level="INFO"
+                     implementationClass="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspection"/>
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer"/>

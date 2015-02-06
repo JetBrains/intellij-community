@@ -51,6 +51,7 @@ public class SettingsImpl implements EditorSettings {
   private int                     myLineCursorWidth               = Registry.intValue("editor.caret.width", 2);
   private boolean                 myLineMarkerAreaShown           = true;
   private boolean                 myAllowSingleLogicalLineFolding = false;
+  private boolean                 myCodeFoldingEnabled            = true;
 
   // These comes from CodeStyleSettings
   private Integer myTabSize         = null;
@@ -68,6 +69,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsFoldingOutlineShown                 = null;
   private Boolean myIsSmartHome                           = null;
   private Boolean myIsBlockCursor                         = null;
+  private Boolean myCaretRowShown                         = null;
   private Boolean myIsWhitespacesShown                    = null;
   private Boolean myIsLeadingWhitespacesShown             = null;
   private Boolean myIsInnerWhitespacesShown               = null;
@@ -279,6 +281,17 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
+  public boolean isCodeFoldingEnabled() {
+    return myCodeFoldingEnabled;
+  }
+
+  @Override
+  public void setCodeFoldingEnabled(boolean val) {
+    myCodeFoldingEnabled = val;
+    fireEditorRefresh();
+  }
+
+  @Override
   public boolean isUseTabCharacter(Project project) {
     PsiFile file = getPsiFile(project);
     return myUseTabCharacter != null
@@ -402,6 +415,21 @@ public class SettingsImpl implements EditorSettings {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myIsBlockCursor)) return;
     myIsBlockCursor = newValue;
+    fireEditorRefresh();
+  }
+
+  @Override
+  public boolean isCaretRowShown() {
+    return myCaretRowShown != null
+           ? myCaretRowShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isCaretRowShown();
+  }
+
+  @Override
+  public void setCaretRowShown(boolean val) {
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myCaretRowShown)) return;
+    myCaretRowShown = newValue;
     fireEditorRefresh();
   }
 

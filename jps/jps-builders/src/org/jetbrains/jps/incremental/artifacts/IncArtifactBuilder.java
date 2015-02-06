@@ -58,7 +58,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
   @Override
   public void build(@NotNull ArtifactBuildTarget target,
                     @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
-                    @NotNull BuildOutputConsumer outputConsumer, @NotNull CompileContext context) throws ProjectBuildException {
+                    @NotNull BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException {
     JpsArtifact artifact = target.getArtifact();
     String outputFilePath = artifact.getOutputFilePath();
     if (StringUtil.isEmpty(outputFilePath)) {
@@ -92,20 +92,11 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       for (String sourcePath : deletedFiles) {
         final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
         if (outputPaths != null) {
-          for (String outputPath : outputPaths) {
-            filesToDelete.putValue(outputPath, sourcePath);
-            final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
-            if (sources != null) {
-              for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-                addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
-              }
-            }
-          }
+          collectSourcesCorrespondingToOutputs(outputPaths, sourcePath, deletedFiles, outSrcMapping, filesToProcess, filesToDelete);
         }
       }
 
       final Set<String> changedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       holder.processDirtyFiles(new FileProcessor<ArtifactRootDescriptor, ArtifactBuildTarget>() {
         @Override
         public boolean apply(ArtifactBuildTarget target, File file, ArtifactRootDescriptor root) throws IOException {
@@ -115,15 +106,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
           final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
           if (outputPaths != null) {
             changedOutputPaths.addAll(outputPaths);
-            for (String outputPath : outputPaths) {
-              filesToDelete.putValue(outputPath, sourcePath);
-              final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
-              if (sources != null) {
-                for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-                  addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
-                }
-              }
-            }
+            collectSourcesCorrespondingToOutputs(outputPaths, sourcePath, deletedFiles, outSrcMapping, filesToProcess, filesToDelete);
           }
           return true;
         }
@@ -178,6 +161,23 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
+    }
+  }
+
+  private static void collectSourcesCorrespondingToOutputs(Collection<String> outputPaths,
+                                                           String sourcePath,
+                                                           Collection<String> deletedFiles,
+                                                           ArtifactOutputToSourceMapping outSrcMapping,
+                                                           TIntObjectHashMap<Set<String>> filesToProcess,
+                                                           MultiMap<String, String> filesToDelete) throws IOException {
+    for (String outputPath : outputPaths) {
+      filesToDelete.putValue(outputPath, sourcePath);
+      final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
+      if (sources != null) {
+        for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
+          addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
+        }
+      }
     }
   }
 

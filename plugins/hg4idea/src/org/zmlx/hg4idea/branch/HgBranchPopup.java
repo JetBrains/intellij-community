@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.branch;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.RootAction;
@@ -105,7 +106,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   protected DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    for (HgRepository repository : myRepositoryManager.getRepositories()) {
+    for (HgRepository repository : DvcsUtil.sortRepositories(myRepositoryManager.getRepositories())) {
       popupGroup.add(new RootAction<HgRepository>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
                                                   new HgBranchPopupActions(repository.getProject(), repository).createActions(null),
                                                   HgUtil.getDisplayableBranchOrBookmarkText(repository)));

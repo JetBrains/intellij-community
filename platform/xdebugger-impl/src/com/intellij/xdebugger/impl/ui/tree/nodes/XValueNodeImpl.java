@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
@@ -191,7 +190,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   @Override
   public void setFullValueEvaluator(@NotNull final XFullValueEvaluator fullValueEvaluator) {
-    AppUIUtil.invokeOnEdt(new Runnable() {
+    invokeNodeUpdate(new Runnable() {
       @Override
       public void run() {
         myFullValueEvaluator = fullValueEvaluator;
@@ -257,6 +256,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   protected XDebuggerTreeNodeHyperlink getLink() {
     if (myFullValueEvaluator != null) {
       return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText()) {
+        @Override
+        public boolean alwaysOnScreen() {
+          return true;
+        }
+
         @Override
         public void onClick(MouseEvent event) {
           if (myFullValueEvaluator.isShowValuePopup()) {

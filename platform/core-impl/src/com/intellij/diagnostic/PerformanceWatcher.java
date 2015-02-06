@@ -175,7 +175,7 @@ public class PerformanceWatcher implements ApplicationComponent {
             //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
             myCurHangLogDir = new File(mySessionLogDir, myDateFormat.format(new Date()));
           }
-          dumpThreads(false);
+          dumpThreads("", false);
         }
       }
       else {
@@ -197,7 +197,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   private String getLogDirForHang() {
-    StringBuilder name = new StringBuilder(myCurHangLogDir.getName());
+    StringBuilder name = new StringBuilder("freeze-" + myCurHangLogDir.getName());
     name.append("-").append(myUnresponsiveDuration);
     if (myStacktraceCommonPart != null && !myStacktraceCommonPart.isEmpty()) {
       final StackTraceElement element = myStacktraceCommonPart.get(0);
@@ -206,13 +206,13 @@ public class PerformanceWatcher implements ApplicationComponent {
     return name.toString();
   }
 
-  public void dumpThreads(boolean millis) {
+  public void dumpThreads(String pathPrefix, boolean millis) {
     if (shallNotWatch()) return;
 
     final String suffix = millis ? "-" + String.valueOf(System.currentTimeMillis()) : "";
     myCurHangLogDir.mkdirs();
 
-    File f = new File(myCurHangLogDir, "threadDump-" + myDateFormat.format(new Date()) + suffix + ".txt");
+    File f = new File(myCurHangLogDir, pathPrefix + "threadDump-" + myDateFormat.format(new Date()) + suffix + ".txt");
     FileOutputStream fos;
     try {
       fos = new FileOutputStream(f);

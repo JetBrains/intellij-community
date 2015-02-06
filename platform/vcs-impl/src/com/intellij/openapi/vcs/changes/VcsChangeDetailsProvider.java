@@ -19,8 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.CalledInAwt;
-import com.intellij.openapi.vcs.CalledInBackground;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInBackground;
 
 import javax.swing.*;
 

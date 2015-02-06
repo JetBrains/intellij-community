@@ -58,6 +58,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -569,7 +570,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
     }
     catch (IOException e) {
-      throw new ExecutionException(processError(e), e);
+      throw new ExecutionException(processIOException(e, DebuggerBundle.getAddressDisplayName(myConnection)), e);
     }
     catch (IllegalConnectorArgumentsException e) {
       throw new ExecutionException(processError(e), e);
@@ -828,29 +829,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     else if (e instanceof VMDisconnectedException) {
       message = DebuggerBundle.message("error.vm.disconnected");
     }
-    else if (e instanceof UnknownHostException) {
-      message = DebuggerBundle.message("error.unknown.host") + ":\n" + e.getLocalizedMessage();
-    }
     else if (e instanceof IOException) {
-      IOException e1 = (IOException)e;
-      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-      try {
-        buf.append(DebuggerBundle.message("error.cannot.open.debugger.port")).append(" : ");
-        buf.append(e1.getClass().getName()).append(" ");
-        final String localizedMessage = e1.getLocalizedMessage();
-        if (localizedMessage != null && !localizedMessage.isEmpty()) {
-          buf.append('"');
-          buf.append(localizedMessage);
-          buf.append('"');
-        }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(e1);
-        }
-        message = buf.toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(buf);
-      }
+      message = processIOException((IOException)e, null);
     }
     else if (e instanceof ExecutionException) {
       message = e.getLocalizedMessage();
@@ -860,6 +840,38 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (LOG.isDebugEnabled()) {
         LOG.debug(e);
       }
+    }
+    return message;
+  }
+
+  @NotNull
+  public static String processIOException(@NotNull IOException e, @Nullable String address) {
+    if (e instanceof UnknownHostException) {
+      return DebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
+    }
+
+    String message;
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
+      if (address != null) {
+        buf.append(" (").append(address).append(")");
+      }
+      buf.append(": ");
+      buf.append(e.getClass().getName()).append(" ");
+      final String localizedMessage = e.getLocalizedMessage();
+      if (!StringUtil.isEmpty(localizedMessage)) {
+        buf.append('"');
+        buf.append(localizedMessage);
+        buf.append('"');
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      }
+      message = buf.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
     }
     return message;
   }

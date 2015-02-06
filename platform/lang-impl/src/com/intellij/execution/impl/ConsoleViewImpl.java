@@ -180,13 +180,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final ConsoleViewContentType contentType;
     int startOffset;
     int endOffset;
-    private final TextAttributes attributes;
 
-    TokenInfo(final ConsoleViewContentType contentType, final int startOffset, final int endOffset) {
+    TokenInfo(ConsoleViewContentType contentType, int startOffset, int endOffset) {
       this.contentType = contentType;
       this.startOffset = startOffset;
       this.endOffset = endOffset;
-      attributes = contentType.getAttributes();
     }
 
     public int getLength() {
@@ -307,7 +305,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     myFilters.setForceUseAllFilters(true);
     myHeavyUpdateTicket = 0;
-    myHeavyAlarm = myFilters.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this) : null;
+    myHeavyAlarm = myFilters.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this) : null;
 
 
     ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
@@ -757,7 +755,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private boolean isTheAmountOfTextTooBig(final int textLength) {
-    return textLength > myBuffer.getCyclicBufferSize() / consoleTooMuchTextBufferRatio;
+    return myBuffer.isUseCyclicBuffer() && textLength > myBuffer.getCyclicBufferSize() / consoleTooMuchTextBufferRatio;
   }
 
   private void clearHyperlinkAndFoldings() {
@@ -1192,17 +1190,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
         @Override
         public TextAttributes getTextAttributes() {
-          return getTokenInfo() == null ? null : getTokenInfo().attributes;
+          return atEnd() ? null : getTokenInfo().contentType.getAttributes();
         }
 
         @Override
         public int getStart() {
-          return getTokenInfo() == null ? 0 : getTokenInfo().startOffset;
+          return atEnd() ? 0 : getTokenInfo().startOffset;
         }
 
         @Override
         public int getEnd() {
-          return getTokenInfo() == null ? 0 : getTokenInfo().endOffset;
+          return atEnd() ? 0 : getTokenInfo().endOffset;
         }
 
         @Override

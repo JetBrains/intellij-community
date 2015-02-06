@@ -74,7 +74,7 @@ public class GenerationNode extends UserDataHolderBase {
 
   private GenerationNode myParent;
   private boolean myContainsSurroundedTextMarker = false;
-  
+
   private static final Pattern ATTRIBUTE_VARIABLE_PATTERN = Pattern.compile("\\$[A-z_0-9]+\\$");
   private static final Pattern HREF_PATTERN = Pattern.compile("^(?:(?:https?|ftp|file)://|www\\.|ftp\\.)(?:\\([-A-Z0-9+&@#/%=~_|$?!:,.]*\\)|[-A-Z0-9+&@#/%=~_|$?!:,.])*(?:\\([-A-Z0-9+&@#/%=~_|$?!:,.]*\\)|[A-Z0-9+&@#/%=~_|$])",
                                                               Pattern.CASE_INSENSITIVE);
@@ -152,12 +152,12 @@ public class GenerationNode extends UserDataHolderBase {
     if (generationNode != this) {
       return generationNode.generate(callback, generator, Collections.<ZenCodingFilter>emptyList(), insertSurroundedText, segmentsLimit);
     }
-    
+
     boolean shouldNotReformatTemplate = false;
     boolean oneLineTemplateExpanding = false;
     for (ZenCodingFilter filter : filters) {
       generationNode = filter.filterNode(generationNode);
-      if(filter instanceof SingleLineEmmetFilter) {
+      if (filter instanceof SingleLineEmmetFilter) {
         shouldNotReformatTemplate = true;
         oneLineTemplateExpanding = true;
       }
@@ -168,7 +168,7 @@ public class GenerationNode extends UserDataHolderBase {
     if (callback.isInInjectedFragment()) {
       Editor editor = callback.getEditor();
       Document document = editor.getDocument();
-      if(document instanceof DocumentWindowImpl && ((DocumentWindowImpl)document).isOneLine()) {
+      if (document instanceof DocumentWindowImpl && ((DocumentWindowImpl)document).isOneLine()) {
         /* 
          * If document is one-line that in the moment of inserting text,
          * new line chars will be filtered (see DocumentWindowImpl#insertString).
@@ -249,7 +249,7 @@ public class GenerationNode extends UserDataHolderBase {
         end = e;
       }
     }
-    if(shouldNotReformatTemplate) {
+    if (shouldNotReformatTemplate) {
       builder.setIsToReformat(false);
     }
     return builder.buildTemplate();
@@ -285,7 +285,7 @@ public class GenerationNode extends UserDataHolderBase {
     XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, xmlFile.getText(), false, true);
     final XmlTag tag = dummyFile.getRootTag();
     if (tag != null) {
-      
+
       // autodetect href
       if (EmmetOptions.getInstance().isHrefAutoDetectEnabled() && StringUtil.isNotEmpty(mySurroundedText)) {
         final boolean isEmptyLinkTag = "a".equalsIgnoreCase(tag.getName()) && isEmptyValue(tag.getAttributeValue("href"));
@@ -322,7 +322,23 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private static String prepareVariableName(@NotNull String attributeName) {
-    return StringUtil.replaceChar(StringUtil.replaceChar(attributeName, '-', '_'), '+', '_');
+    char[] toReplace = {'-', '+', ':'};
+    StringBuilder builder = new StringBuilder(attributeName.length());
+    for (int i = 0; i < attributeName.length(); i++) {
+      char c = attributeName.charAt(i);
+      boolean replaced = false;
+      for (char aToReplace : toReplace) {
+        if (c == aToReplace) {
+          builder.append('_');
+          replaced = true;
+          break;
+        }
+      }
+      if (!replaced) {
+        builder.append(c);
+      }
+    }
+    return builder.toString();
   }
 
   @NotNull
@@ -397,7 +413,8 @@ public class GenerationNode extends UserDataHolderBase {
       String varName = template.getVariableNameAt(i);
       if (!segments.contains(varName)) {
         template.removeVariable(i);
-      } else {
+      }
+      else {
         segments.remove(varName);
       }
     }
@@ -433,7 +450,7 @@ public class GenerationNode extends UserDataHolderBase {
     final String defaultAttributeValue = attributes.get(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
     if (defaultAttributeValue != null) {
       attributes.remove(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
-      
+
       // exclude user defined attributes
       final List<XmlAttribute> xmlAttributes = ContainerUtil.filter(tag.getAttributes(), new Condition<XmlAttribute>() {
         @Override
@@ -464,7 +481,7 @@ public class GenerationNode extends UserDataHolderBase {
         }
       }
     }
-    
+
     // boolean attributes
     for (XmlAttribute xmlAttribute : tag.getAttributes()) {
       final String attributeName = xmlAttribute.getName();
@@ -503,18 +520,18 @@ public class GenerationNode extends UserDataHolderBase {
                                         : ZenCodingUtil.getValue(attributeValue, myNumberInIteration, myTotalIterations, mySurroundedText));
       }
     }
-    
+
     // remove all implicit and default attributes
     for (XmlAttribute xmlAttribute : tag.getAttributes()) {
       final String xmlAttributeLocalName = xmlAttribute.getLocalName();
       if (isImpliedAttribute(xmlAttributeLocalName) || isDefaultAttribute(xmlAttributeLocalName)) {
-        xmlAttribute.delete();            
+        xmlAttribute.delete();
       }
     }
   }
 
-  private static boolean isBooleanAttribute(@Nullable String attributeValue, 
-                                            @NotNull XmlAttribute xmlAttribute, 
+  private static boolean isBooleanAttribute(@Nullable String attributeValue,
+                                            @NotNull XmlAttribute xmlAttribute,
                                             @NotNull CustomTemplateCallback callback) {
     if (XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE.equals(attributeValue)) {
       return true;

@@ -24,6 +24,7 @@
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
+    <vcsRepositoryCreator implementation="org.zmlx.hg4idea.repo.HgRepositoryCreator"/>
     <pushSupport implementation="org.zmlx.hg4idea.push.HgPushSupport"/>
     <cherryPicker implementation="org.zmlx.hg4idea.cherrypick.HgCherryPicker"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -35,6 +36,7 @@
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
     <applicationService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
                         serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.repo.HgRepositoryManager"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
                     serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
     <projectService serviceInterface="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"
@@ -47,9 +49,6 @@
     <component>
       <interface-class>org.zmlx.hg4idea.HgRepositoryWatcher</interface-class>
       <implementation-class>org.zmlx.hg4idea.HgRepositoryWatcher</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.zmlx.hg4idea.repo.HgRepositoryManager</implementation-class>
     </component>
   </project-components>
 
@@ -72,9 +71,7 @@
       <separator/>
 
       <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction"/>
-      <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction">
-        <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
-      </action>
+      <reference ref="Vcs.Push"/>
       <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
       <action id="hg4idea.merge.files" class="org.zmlx.hg4idea.action.HgMerge" icon="AllIcons.Vcs.MergeSourcesTree"/>

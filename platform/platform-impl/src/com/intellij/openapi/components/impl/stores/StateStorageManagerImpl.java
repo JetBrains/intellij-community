@@ -176,7 +176,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
       return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
-    else if (!storageSpec.stateSplitter().equals(StateSplitter.class)) {
+    else if (!storageSpec.stateSplitter().equals(StateSplitter.class) && !storageSpec.stateSplitter().equals(StateSplitterEx.class)) {
       StateSplitter splitter = ReflectionUtil.newInstance(storageSpec.stateSplitter());
       return new DirectoryBasedStorage(myPathMacroSubstitutor, expandMacros(storageSpec.file()), splitter, this, createStorageTopicListener());
     }

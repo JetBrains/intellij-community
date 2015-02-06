@@ -20,7 +20,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -166,11 +165,11 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     settings.setVirtualSpace(false);
     settings.setWheelFontChangeEnabled(false);
     settings.setAdditionalPageAtBottom(false);
+    settings.setCaretRowShown(false);
     previewEditor.setCaretEnabled(false);
     previewEditor.setBorder(IdeBorderFactory.createEmptyBorder());
 
     EditorColorsScheme colorsScheme = previewEditor.getColorsScheme();
-    colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
 
     JBPanel panel = new JBPanel(new BorderLayout()) {
       @NotNull

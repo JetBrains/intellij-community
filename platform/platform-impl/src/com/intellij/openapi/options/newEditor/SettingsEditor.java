@@ -32,6 +32,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -314,6 +315,16 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       myEditor.getApplyAction().setEnabled(!myFilter.myContext.getModified().isEmpty());
       myEditor.getResetAction().setEnabled(myFilter.myContext.isModified(configurable) || exception != null);
       myEditor.setError(exception);
+    }
+    if (configurable != null) {
+      new Alarm().addRequest(new Runnable() {
+        @Override
+        public void run() {
+          if (!myDisposed && mySpotlightPainter != null) {
+            mySpotlightPainter.updateNow();
+          }
+        }
+      }, 300);
     }
   }
 

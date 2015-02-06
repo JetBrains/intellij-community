@@ -174,6 +174,12 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
         toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
       }
     });
+    westPanel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        toolWindow.fireActivated();
+      }
+    });
 
     addMouseListener(new MouseAdapter() {
       public void mouseReleased(final MouseEvent e) {

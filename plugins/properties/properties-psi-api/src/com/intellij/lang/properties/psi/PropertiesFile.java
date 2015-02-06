@@ -89,7 +89,17 @@ public interface PropertiesFile {
    */
   @NotNull PsiElement addPropertyAfter(@NotNull Property property, @Nullable Property anchor) throws IncorrectOperationException;
 
+  /**
+   * delegates call to {@link PropertiesFile#addPropertyLast()} method
+   */
+  @Deprecated
   IProperty addProperty(String key, String value);
+
+  IProperty addPropertyFirst(String key, String value);
+
+  IProperty addPropertyLast(String key, String value);
+
+  IProperty addPropertyAfter(String key, String value, Property anchor);
 
   /**
    * @return Property key to the property value map.

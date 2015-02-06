@@ -18,6 +18,7 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
@@ -40,6 +41,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
+  public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
 
   private static final Logger LOG = Logger.getInstance(VcsLogUiImpl.class);
 
@@ -143,24 +145,30 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myMainFrame.getGraphTable().repaint();
   }
 
-  public void showAll() {
-    runUnderModalProgress("Expanding linear branches...", new Runnable() {
+  private void performLongAction(@NotNull final GraphAction graphAction, @NotNull final String title) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(false);
+        final GraphAnswer<Integer> answer = myVisiblePack.getVisibleGraph().getActionController().performAction(graphAction);
+        final Runnable updater = answer.getGraphUpdater();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            assert updater != null : "Action:" + title + "\nController: " + myVisiblePack.getVisibleGraph().getActionController() + "\nAnswer:" + answer;
+            updater.run();
+            handleAnswer(answer, true);
+          }
+        });
       }
-    });
-    handleAnswer(null, true);
+    }, title, false, null, getMainFrame().getMainComponent());
+  }
+
+  public void showAll() {
+    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND), "Expanding linear branches...");
   }
 
   public void hideAll() {
-    runUnderModalProgress("Collapsing linear branches...", new Runnable() {
-      @Override
-      public void run() {
-        myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(true);
-      }
-    });
-    handleAnswer(null, true);
+    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE), "Collapsing linear branches...");
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
@@ -168,13 +176,16 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myUiProperties.setLongEdgesVisibility(visibility);
   }
 
-  public void setBek(boolean bek) {
-    myUiProperties.setBek(bek);
-    myFilterer.onSortTypeChange(bek ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
+  @Override
+  public void setBekType(@NotNull PermanentGraph.SortType bekType) {
+    myUiProperties.setBek(bekType.ordinal());
+    myFilterer.onSortTypeChange(bekType);
   }
 
-  public boolean isBek() {
-    return myUiProperties.isBek();
+  @Override
+  @NotNull
+  public PermanentGraph.SortType getBekType() {
+    return PermanentGraph.SortType.values()[myUiProperties.getBekSortType()];
   }
 
   public void setShowRootNames(boolean isShowRootNames) {
@@ -184,6 +195,11 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public boolean isShowRootNames() {
     return myUiProperties.isShowRootNames();
+  }
+
+  @Override
+  public boolean areGraphActionsEnabled() {
+    return myMainFrame.areGraphActionsEnabled();
   }
 
   @NotNull
@@ -348,14 +364,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myProject;
   }
 
-  public void runUnderModalProgress(@NotNull final String task, @NotNull final Runnable runnable) {
-    getTable().executeWithoutRepaint(new Runnable() {
-      public void run() {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, task, false, null, getMainFrame().getMainComponent());
-      }
-    });
-  }
-
   @Override
   public void setBranchesPanelVisible(boolean visible) {
     myMainFrame.setBranchesPanelVisible(visible);
@@ -430,5 +438,4 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void dispose() {
     getTable().removeAllHighlighters();
   }
-
 }

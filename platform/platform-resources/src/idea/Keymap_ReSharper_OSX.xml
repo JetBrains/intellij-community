@@ -14,10 +14,6 @@
       <keyboard-shortcut first-keystroke="control alt SLASH"/>
     </action>
     <action id="Console.History.Browse"/>
-    <action id="Console.TableResult.AddRow">
-      <keyboard-shortcut first-keystroke="meta alt ENTER"/>
-    </action>
-    <action id="Console.TableResult.Reload"/>
     <action id="ExportTestResults">
       <keyboard-shortcut first-keystroke="control alt U"/>
     </action>
@@ -55,6 +51,9 @@
       <keyboard-shortcut first-keystroke="meta alt ENTER"/>
     </action>
     <action id="GotoClass">
+      <keyboard-shortcut first-keystroke="control T"/>
+    </action>
+    <action id="GotoChangedFile">
       <keyboard-shortcut first-keystroke="control T"/>
     </action>
     <action id="GotoDeclaration">

@@ -453,6 +453,7 @@
     <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" displayName="Python Integrated Tools"
                          nonDefaultProject="true"/>
+    <search.optionContributor implementation="com.jetbrains.python.configuration.PySearchableOptionContributor"/>
     <moduleService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                    serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.DocStringReferenceContributor"/>

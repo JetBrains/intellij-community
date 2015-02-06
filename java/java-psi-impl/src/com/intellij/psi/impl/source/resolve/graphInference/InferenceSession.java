@@ -1130,11 +1130,11 @@ public class InferenceSession {
       final PsiType pType = signature.getParameterTypes()[0];
 
       PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
-      // 15.28.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
+      // 15.13.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
       // the type to search is the result of capture conversion (5.1.10) applied to T; 
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
-      if (PsiUtil.isRawSubstitutor(containingClass, qualifierResolveResult.getSubstitutor())) {
-        final PsiClassType.ClassResolveResult pResult = PsiUtil.resolveGenericsClassInType(pType);
+      if (PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
+        final PsiClassType.ClassResolveResult pResult = PsiUtil.resolveGenericsClassInType(PsiUtil.captureToplevelWildcards(pType, myContext));
         final PsiClass pClass = pResult.getElement();
         final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil
           .getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;
@@ -1267,7 +1267,7 @@ public class InferenceSession {
 
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
 
-      if (LambdaUtil.isFunctionalType(sReturnType) && LambdaUtil.isFunctionalType(tReturnType) && 
+      if (LambdaUtil.isFunctionalType(sReturnType) && LambdaUtil.isFunctionalType(tReturnType) &&
           !TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(sReturnType), TypeConversionUtil.erasure(tReturnType)) &&
           !TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(tReturnType), TypeConversionUtil.erasure(sReturnType))) {
 
@@ -1293,6 +1293,9 @@ public class InferenceSession {
                 }
               }
             }
+            else if (sPrimitive) {
+              return false;
+            }
           }
           return true;
         }
@@ -1308,11 +1311,17 @@ public class InferenceSession {
     if (arg instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)arg).isExact()) {
       final PsiParameter[] sParameters = sInterfaceMethod.getParameterList().getParameters();
       final PsiParameter[] tParameters = tInterfaceMethod.getParameterList().getParameters();
-      if (session != null) {
-        LOG.assertTrue(sParameters.length == tParameters.length);
-        for (int i = 0; i < tParameters.length; i++) {
-          session.addConstraint(new TypeEqualityConstraint(tSubstitutor.substitute(tParameters[i].getType()),
-                                                           sSubstitutor.substitute(sParameters[i].getType())));
+      LOG.assertTrue(sParameters.length == tParameters.length);
+      for (int i = 0; i < tParameters.length; i++) {
+        final PsiType tSubstituted = tSubstitutor.substitute(tParameters[i].getType());
+        final PsiType sSubstituted = sSubstitutor.substitute(sParameters[i].getType());
+        if (session != null) {
+          session.addConstraint(new TypeEqualityConstraint(tSubstituted, sSubstituted));
+        }
+        else {
+          if (!Comparing.equal(tSubstituted, sSubstituted)) {
+            return false;
+          }
         }
       }
       final PsiType sReturnType = sSubstitutor.substitute(sInterfaceMethod.getReturnType());
@@ -1412,8 +1421,7 @@ public class InferenceSession {
   }
 
   public PsiType substituteWithInferenceVariables(PsiType type) {
-    final PsiType substituted = myInferenceSubstitution.substitute(type);
-    return isProperType(substituted) ? type : substituted;
+    return myInferenceSubstitution.substitute(type);
   }
 
   public InferenceSession findNestedCallSession(PsiExpression arg) {

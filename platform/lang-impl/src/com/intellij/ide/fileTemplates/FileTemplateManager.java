@@ -52,8 +52,10 @@ public abstract class FileTemplateManager{
   public static final String PROJECT_NAME_VARIABLE = "PROJECT_NAME";
 
   public static FileTemplateManager getInstance(@NotNull Project project){
-    return ServiceManager.getService(project, FileTemplateManager.class);
+    return ServiceManager.getService(project, FileTemplateManager.class).checkInitialized();
   }
+
+  protected FileTemplateManager checkInitialized() { return this; }
 
   /** Use {@link #getInstance(Project)} instead */
   @Deprecated

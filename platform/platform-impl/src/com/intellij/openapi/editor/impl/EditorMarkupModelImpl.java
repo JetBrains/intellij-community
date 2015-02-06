@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -513,7 +513,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             g2d.setTransform(old);
           }
           else {
-            int x = getThinGap() + myMinMarkHeight;
+            int x = getThinGap() + myMinMarkHeight - JBUI.scale(1);
             final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
             myErrorStripeRenderer.paint(this, g, b);
           }

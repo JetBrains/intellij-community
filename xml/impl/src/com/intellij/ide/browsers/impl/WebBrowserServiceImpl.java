@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-204 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,6 @@ package com.intellij.ide.browsers.impl;
 import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
-import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,10 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class WebBrowserServiceImpl extends WebBrowserService {
-  public static boolean isHtmlOrXmlFile(@NotNull Language language) {
-    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE || language == XMLLanguage.INSTANCE;
-  }
-
   @NotNull
   @Override
   public Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {

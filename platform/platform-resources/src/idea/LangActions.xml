@@ -475,8 +475,6 @@
       <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
-      <reference ref="CompareDirs"/>
-      <reference ref="CompareJars"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
       <separator/>
@@ -852,7 +850,7 @@
 
     <group>
       <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction"
-              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="CompareDirs"/>
+              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="CompareTwoFiles"/>
       <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>

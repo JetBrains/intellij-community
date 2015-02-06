@@ -110,25 +110,41 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     return ResourceBundleManager.getInstance(getProject()).getLocale(getVirtualFile());
   }
 
-  @NotNull
   @Override
   public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
     return null;
   }
 
-  @NotNull
   @Override
   public PsiElement addPropertyAfter(@NotNull Property property, @Nullable Property anchor) throws IncorrectOperationException {
     return null;
   }
 
   @Override
+  public IProperty addPropertyFirst(String key, String value) {
+    return null;
+  }
+
+  @Override
+  public IProperty addPropertyLast(String key, String value) {
+    return null;
+  }
+
+  @Override
+  public IProperty addPropertyAfter(String key, String value, Property anchor) {
+    return null;
+  }
+
+  @NotNull
+  @Override
   public IProperty addProperty(String key, String value) {
     XmlTag rootTag = myFile.getRootTag();
     XmlTag entry = rootTag.createChildTag("entry", "", value, false);
     entry.setAttribute("key", key);
     rootTag.addSubTag(entry, false);
-    return new XmlProperty(entry, this);
+    final XmlProperty property = new XmlProperty(entry, this);
+    myPropertiesMap.getValue().putValue(key, property);
+    return property;
   }
 
 

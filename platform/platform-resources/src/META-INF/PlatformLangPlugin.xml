@@ -102,4 +102,5 @@
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="built-in-server.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

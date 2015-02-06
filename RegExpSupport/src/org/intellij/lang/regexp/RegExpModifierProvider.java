@@ -15,7 +15,7 @@
  */
 package org.intellij.lang.regexp;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.intellij.lang.annotations.MagicConstant;
@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  * @author Anna Bulenkova
  */
 public interface RegExpModifierProvider {
-  ExtensionPointName<RegExpModifierProvider> EP = new ExtensionPointName<RegExpModifierProvider>("com.intellij.regExpModifierProvider");
+  LanguageExtension<RegExpModifierProvider> EP = new LanguageExtension<RegExpModifierProvider>("com.intellij.regExpModifierProvider");
 
   @MagicConstant(flagsFromClass = Pattern.class)
   int getFlags(PsiElement elementInHost, PsiFile regexp);

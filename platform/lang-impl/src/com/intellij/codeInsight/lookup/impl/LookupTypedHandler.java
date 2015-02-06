@@ -207,6 +207,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
 
   @Nullable
   private static CharFilter.Result getFiltersDecision(char charTyped, LookupImpl lookup) {
+    lookup.checkValid();
     LookupElement item = lookup.getCurrentItem();
     int prefixLength = item == null ? lookup.getAdditionalPrefix().length(): lookup.itemPattern(item).length();
 
@@ -214,6 +215,9 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       final CharFilter.Result result = extension.acceptChar(charTyped, prefixLength, lookup);
       if (result != null) {
         return result;
+      }
+      if (lookup.isLookupDisposed()) {
+        throw new AssertionError("Lookup disposed after " + extension);
       }
     }
     return null;

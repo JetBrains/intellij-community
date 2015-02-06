@@ -143,7 +143,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       public void actionPerformed(@NotNull AnActionEvent e) {
         stopEditing();
         StringBuilder sb = new StringBuilder();
-        List<EnvironmentVariable> variables = getEnvironmentVariables();
+        List<EnvironmentVariable> variables = getSelection();
         for (EnvironmentVariable environmentVariable : variables) {
           if (environmentVariable.getIsPredefined() || isEmpty(environmentVariable)) continue;
           if (sb.length() > 0) sb.append('\n');
@@ -152,10 +152,16 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         }
         CopyPasteManager.getInstance().setContents(new StringSelection(sb.toString()));
       }
+
+      @Override
+      public boolean isEnabled() {
+        return super.isEnabled() && !getSelection().isEmpty();
+      }
     };
     AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.Menu_paste) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        removeSelected();
         stopEditing();
         String content = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
         if (content == null || !content.contains("=")) return;
@@ -172,13 +178,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
             StringUtil.unescapeStringCharacters(line.substring(pos + 1)),
             false));
         }
-        List<EnvironmentVariable> variables =
-          new ArrayList<EnvironmentVariable>(ContainerUtil.filter(getEnvironmentVariables(), new Condition<EnvironmentVariable>() {
-            @Override
-            public boolean value(EnvironmentVariable variable) {
-              return variable.getIsPredefined();
-            }
-          }));
+        List<EnvironmentVariable> variables = new ArrayList<EnvironmentVariable>(getEnvironmentVariables());
         variables.addAll(parsed);
         setValues(variables);
       }

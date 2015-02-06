@@ -33,7 +33,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
+import org.jetbrains.idea.svn.history.SimplePropertyRevision;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
@@ -377,7 +379,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     ContentRevision contentRevision = isBeforeRevision ? change.getBeforeRevision() : change.getAfterRevision();
     SVNRevision revision = isBeforeRevision ? SVNRevision.BASE : SVNRevision.WORKING;
 
-    return new SimpleContentRevision(getProperties(file, revision), path, getRevisionNumber(contentRevision));
+    return new SimplePropertyRevision(getProperties(file, revision), path, getRevisionNumber(contentRevision));
   }
 
   @Nullable
@@ -386,7 +388,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @NotNull
-  private String getProperties(@NotNull File file, @NotNull SVNRevision revision) throws SVNException {
+  private List<PropertyData> getProperties(@NotNull File file, @NotNull SVNRevision revision) throws SVNException {
     return AbstractShowPropertiesDiffAction.getPropertyList(myVcs, file, revision);
   }
 

@@ -29,9 +29,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class StatementMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.StatementMover");
@@ -112,12 +114,32 @@ class StatementMover extends LineMover {
     }
     PsiElement sibling =
       StatementUpDownMover.firstNonWhiteElement(down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling(), down);
-    final PsiClass aClass = PsiTreeUtil.findChildOfType(sibling, PsiClass.class, false);
-    if (aClass != null) {
+    final PsiClass aClass = findChildOfType(sibling, PsiClass.class, PsiStatement.class);
+    if (aClass != null && PsiTreeUtil.getParentOfType(aClass, PsiStatement.class) == sibling) {
       destLine =
         editor.getDocument().getLineNumber(down ? sibling.getTextRange().getEndOffset() + 1 : sibling.getTextRange().getStartOffset());
     }
     return destLine;
+  }
+
+  @Nullable
+  private static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element,
+                                                          @NotNull final Class<T> aClass,
+                                                          @Nullable final Class<? extends PsiElement> stopAt) {
+    final PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
+      @Override
+      public boolean execute(@NotNull PsiElement each) {
+        if (each == element) return true; // strict
+        if (aClass.isInstance(each)) {
+          return setFound(each);
+        }
+        return stopAt == null || !stopAt.isInstance(each);
+      }
+    };
+
+    PsiTreeUtil.processElements(element, processor);
+    //noinspection unchecked
+    return (T)processor.getFoundElement();
   }
 
   private boolean calcInsertOffset(@NotNull PsiFile file, @NotNull Editor editor, @NotNull LineRange range, @NotNull final MoveInfo info, final boolean down) {

@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.*;
 
-import java.util.List;
-
 public final class CallFrameView extends XStackFrame implements VariableContext {
   private final SourceInfo sourceInfo;
   private final DebuggerViewSupport viewSupport;
@@ -138,8 +136,7 @@ public final class CallFrameView extends XStackFrame implements VariableContext 
     SimpleTextAttributes textAttributes = isInLibraryContent ? SimpleTextAttributes.GRAYED_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
 
     String functionName = sourceInfo.getFunctionName();
-    List<Scope> scopes = callFrame.getVariableScopes();
-    if (functionName == null || (functionName.isEmpty() && scopes.size() == 1 && scopes.get(0).isGlobal())) {
+    if (functionName == null || (functionName.isEmpty() && callFrame.hasOnlyGlobalScope())) {
       component.append(fileName + ":" + line, textAttributes);
     }
     else {

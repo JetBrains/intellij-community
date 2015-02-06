@@ -19,7 +19,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.CalledInBackground;
+import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.ThreeState;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;

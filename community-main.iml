@@ -14,6 +14,8 @@
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="debugger-openapi" />
+    <orderEntry type="module" module-name="diff-api" />
+    <orderEntry type="module" module-name="diff-impl" />
     <orderEntry type="module" module-name="dom-impl" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="execution-impl" />

@@ -979,8 +979,9 @@ public class EditorWindow {
     }
 
     final Icon modifiedIcon;
-    if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) {
-      modifiedIcon = composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
+    if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK || Registry.is("editor.use.compressible.tabs")) {
+      modifiedIcon =
+        UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
       count++;
     }
     else {

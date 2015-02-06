@@ -255,7 +255,7 @@ public class PythonSdkType extends SdkType {
 
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
-    final boolean is_windows = SystemInfo.isWindows;
+    final boolean isWindows = SystemInfo.isWindows;
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
@@ -270,16 +270,16 @@ public class PythonSdkType extends SdkType {
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         // TODO: add a better, customizable filtering
         if (!file.isDirectory()) {
-          if (is_windows) {
+          if (isWindows) {
             String path = file.getPath();
-            boolean looks_executable = false;
+            boolean looksExecutable = false;
             for (String ext : WINDOWS_EXECUTABLE_SUFFIXES) {
               if (path.endsWith(ext)) {
-                looks_executable = true;
+                looksExecutable = true;
                 break;
               }
             }
-            return looks_executable && super.isFileVisible(file, showHiddenFiles);
+            return looksExecutable && super.isFileVisible(file, showHiddenFiles);
           }
         }
         return super.isFileVisible(file, showHiddenFiles);
