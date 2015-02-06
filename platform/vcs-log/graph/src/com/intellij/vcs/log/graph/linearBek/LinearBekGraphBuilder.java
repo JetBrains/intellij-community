@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 class LinearBekGraphBuilder {
-  private static final int MAX_BLOCK_SIZE = 20;
-  private static final long MAX_DELTA_TIME = 60 * 60 * 24 * 3 * 1000l;
+  private static final int MAX_BLOCK_SIZE = 45;
+  private static final long MAX_DELTA_TIME = 60 * 60 * 24 * 15 * 1000l;
   @NotNull private final WorkingGraph myWorkingGraph;
   @NotNull private final GraphLayout myGraphLayout;
   @NotNull private final List<Integer> myHeads;
@@ -70,10 +70,11 @@ class LinearBekGraphBuilder {
     return myWorkingGraph.createLinearBekGraph();
   }
 
-  private boolean collapse(int firstChild, int secondChild, int parent, int headIndex, int nextHeadIndex) {
+  private boolean collapse(int firstChild, int secondChild, int parent, int headLi, int nextHeadLi) {
     int x = myGraphLayout.getLayoutIndex(firstChild);
     int y = myGraphLayout.getLayoutIndex(secondChild);
     int k = 1;
+    int blockSize = 1;
 
     PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE, new GraphEdgeComparator());
     queue.addAll(myWorkingGraph.getAdjacentEdges(secondChild, EdgeFilter.NORMAL_DOWN));
@@ -98,11 +99,13 @@ class LinearBekGraphBuilder {
       else if (next == secondChild + k) {
         // all is fine, continuing
         k++;
+        blockSize++;
         queue.addAll(myWorkingGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
         definitelyNotTails.add(upNodeIndex);
       }
       else if (next > secondChild + k && next < firstChild) {
         k = next - secondChild + 1;
+        blockSize++;
         queue.addAll(myWorkingGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
         definitelyNotTails.add(upNodeIndex);
       }
@@ -111,7 +114,7 @@ class LinearBekGraphBuilder {
         if (li > y) {
           return false;
         }
-        if (li < x && !(li >= headIndex && li < nextHeadIndex)) {
+        if (li < x && !(li >= headLi && li < nextHeadLi)) {
           return false;
         }
         else {
@@ -128,12 +131,7 @@ class LinearBekGraphBuilder {
         }
       }
 
-      if (k >= MAX_BLOCK_SIZE) {
-        return false;
-      }
-      if (Math.abs(myTimestampGetter.getTimestamp(secondChild) - myTimestampGetter.getTimestamp(secondChild + k - 1)) > MAX_DELTA_TIME) {
-        // there is a big question what we should really check here
-        // maybe we should also ensure that we do not remove edges to very old commits too
+      if (blockSize >= MAX_BLOCK_SIZE) {
         return false;
       }
     }
