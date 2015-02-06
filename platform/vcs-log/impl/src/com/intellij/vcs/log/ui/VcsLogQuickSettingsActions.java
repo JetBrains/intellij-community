@@ -20,15 +20,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 
 public class VcsLogQuickSettingsActions extends DumbAwareAction {
 
@@ -38,16 +36,9 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
     VcsLogUi logUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogSettings settings = ServiceManager.getService(project, VcsLogSettings.class);
 
-    ActionGroup settingsGroup = new MySettingsActionGroup(settings, logUi);
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, settingsGroup);
-    int x = 0;
-    int y = 0;
-    InputEvent inputEvent = e.getInputEvent();
-    if (inputEvent instanceof MouseEvent) {
-      x = ((MouseEvent)inputEvent).getX();
-      y = ((MouseEvent)inputEvent).getY();
-    }
-    popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
+    JBPopupFactory.getInstance().createActionGroupPopup(null, new MySettingsActionGroup(settings, logUi), e.getDataContext(),
+                                                        JBPopupFactory.ActionSelectionAid.MNEMONICS, true, ToolWindowContentUi.POPUP_PLACE)
+      .showUnderneathOf(e.getInputEvent().getComponent());
   }
 
   @Override

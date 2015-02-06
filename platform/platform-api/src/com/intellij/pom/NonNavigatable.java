@@ -16,7 +16,8 @@
 package com.intellij.pom;
 
 /**
- * @author nik
+ * Implementation of {@link Navigatable} interface which actually doesn't allow navigation. Its {@link #INSTANCE} can be passed to methods which
+ * expect non-null instance of {@link Navigatable} if you cannot provide a real implementation.
  */
 public final class NonNavigatable implements Navigatable {
   public static final Navigatable INSTANCE = new NonNavigatable();

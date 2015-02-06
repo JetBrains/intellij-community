@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
 
 /**
  * @author yole
@@ -35,9 +36,9 @@ public class IdeaFrameTitleBuilder extends PlatformFrameTitleBuilder {
     if (SystemInfo.isMac) return fileTitle;
 
     VirtualFile parent = file.getParent();
-    if (parent == null || !fileTitle.endsWith(file.getName())) return fileTitle;
+    if (parent == null || !fileTitle.endsWith(file.getPresentableName())) return fileTitle;
 
-    String url = FileUtil.getLocationRelativeToUserHome(parent.getPresentableUrl() + "/" + PathUtil.getFileName(fileTitle));
+    String url = FileUtil.getLocationRelativeToUserHome(parent.getPresentableUrl() + File.separator + file.getName());
     return ProjectUtilCore.displayUrlRelativeToProject(file, url, project, !SystemInfo.isMac, false);
   }
 }

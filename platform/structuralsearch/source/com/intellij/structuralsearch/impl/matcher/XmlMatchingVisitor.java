@@ -33,9 +33,10 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final XmlAttribute another = (XmlAttribute)myMatchingVisitor.getElement();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(attribute.getName());
 
-    myMatchingVisitor.setResult(matches(attribute.getName(), another.getName()) || isTypedVar);
-    if (myMatchingVisitor.getResult()) {
-      myMatchingVisitor.setResult(myMatchingVisitor.match(attribute.getValueElement(), another.getValueElement()));
+    myMatchingVisitor.setResult(isTypedVar || matches(attribute.getName(), another.getName()));
+    final XmlAttributeValue valueElement = attribute.getValueElement();
+    if (myMatchingVisitor.getResult() && valueElement != null) {
+      myMatchingVisitor.setResult(myMatchingVisitor.match(valueElement, another.getValueElement()));
     }
 
     if (myMatchingVisitor.getResult() && isTypedVar) {

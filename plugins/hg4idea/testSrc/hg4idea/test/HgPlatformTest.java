@@ -70,22 +70,27 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
-    myProjectFixture.setUp();
+    try {
+      myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
+      myProjectFixture.setUp();
 
-    myProject = myProjectFixture.getProject();
-    myProjectRoot = myProject.getBaseDir();
+      myProject = myProjectFixture.getProject();
+      myProjectRoot = myProject.getBaseDir();
 
-    cd(myProjectRoot);
-    hg("version");
+      cd(myProjectRoot);
+      hg("version");
 
-    createRepository(myProjectRoot);
-    myVcs = HgVcs.getInstance(myProject);
-    assertNotNull(myVcs);
-    myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
-    myVcs.checkVersion();
-    myRepository = myProjectRoot;
-    setUpHgrc(myRepository);
+      createRepository(myProjectRoot);
+      myVcs = HgVcs.getInstance(myProject);
+      assertNotNull(myVcs);
+      myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
+      myVcs.checkVersion();
+      myRepository = myProjectRoot;
+      setUpHgrc(myRepository);
+    }
+    catch (Exception e) {
+      tearDown();
+    }
   }
 
   @Override

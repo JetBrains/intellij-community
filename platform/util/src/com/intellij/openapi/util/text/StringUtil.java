@@ -1526,32 +1526,41 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long size) {
-    return formatValue(size, false,
-                       new String[]{"", "K", "M", "G", "T", "P"},
-                       new long[]{1000L, 1000L, 1000L, 1000L, 1000L});
+    return formatValue(size, null,
+                       new String[]{"B", "K", "M", "G", "T", "P", "E"},
+                       new long[]{1000, 1000, 1000, 1000, 1000, 1000});
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration) {
-    return formatValue(duration, true,
-                       new String[]{"ms", "sec", "min", "h", "d"},
-                       new long[]{1000L, 60, 60, 24});
+    return formatValue(duration, " ",
+                       new String[]{"ms", "s", "m", "h", "d", "w", "mo", "yr", "c", "ml", "ep"},
+                       new long[]{1000, 60, 60, 24, 7, 4, 12, 100, 10, 10000});
   }
 
   @NotNull
-  private static String formatValue(long value, boolean decimalsOnly, String[] units, long[] multipliers) {
+  private static String formatValue(long value, String partSeparator, String[] units, long[] multipliers) {
+    StringBuilder sb = new StringBuilder();
     long count = value;
     long remainder = 0;
-    String suffix = units[0];
-    for (int i = 0; i < units.length; i++) {
-      suffix = units[i];
+    int i = 0;
+    for (; i < units.length; i++) {
       long multiplier = i < multipliers.length ? multipliers[i] : -1;
       if (multiplier == -1 || count < multiplier) break;
-      remainder = (count % multiplier) * 100 / multiplier;
+      remainder = count % multiplier;
       count /= multiplier;
+      if (partSeparator != null && (remainder != 0 || sb.length() > 0)) {
+        sb.insert(0, units[i]).insert(0, remainder).insert(0, partSeparator);
+      }
     }
-    return count + (remainder == 0 || decimalsOnly && remainder <= 9 ? "" : (remainder <= 9 ? ".0" : ".") + remainder) + suffix;
+    if (partSeparator != null || remainder == 0) {
+      sb.insert(0, units[i]).insert(0, count);
+    }
+    else if (remainder > 0) {
+      sb.append(String.format("%.2f", count + (double)remainder / multipliers[i - 1])).append(units[i]);
+    }
+    return sb.toString();
   }
 
   /**

@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
@@ -26,7 +25,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
-import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -39,8 +37,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -242,33 +238,12 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
     if (BekSorter.isBekEnabled()) {
-      mainGroup.add(createIntelliSortChooser());
+      mainGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.VCS_LOG_INTELLI_SORT_ACTION));
     }
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
     toolbar.setTargetComponent(this);
     return toolbar.getComponent();
-  }
-
-  @NotNull
-  private AnAction createIntelliSortChooser() {
-    return new DumbAwareAction("IntelliSort", "IntelliSort", VcsLogIcons.Branch) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        ActionGroup settingsGroup =
-          new DefaultActionGroup(new BekAction(PermanentGraph.SortType.Normal), new BekAction(PermanentGraph.SortType.Bek),
-                                 new BekAction(PermanentGraph.SortType.LinearBek));
-        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, settingsGroup);
-        int x = 0;
-        int y = 0;
-        InputEvent inputEvent = e.getInputEvent();
-        if (inputEvent instanceof MouseEvent) {
-          x = ((MouseEvent)inputEvent).getX();
-          y = ((MouseEvent)inputEvent).getY();
-        }
-        popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
-      }
-    };
   }
 
   public JComponent getMainComponent() {
@@ -350,33 +325,6 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
           myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
           myChangesLoadingPane.startLoading();
         }
-      }
-    }
-  }
-
-  private class BekAction extends ToggleAction implements DumbAware {
-    private final PermanentGraph.SortType mySortType;
-
-    public BekAction(PermanentGraph.SortType sortType) {
-      super(sortType.getPresentation(), "Set IntelliSort Type To " + sortType.getPresentation(), null);
-      mySortType = sortType;
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(areGraphActionsEnabled());
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myUI.getBekType().equals(mySortType);
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      if (state) {
-        myUI.setBek(mySortType);
       }
     }
   }
