@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,41 +200,42 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     final ProgressIndicatorBase myIndicator = new ProgressIndicatorBase();
     taskCanceled = taskSucceeded = false;
     exception = null;
-    Future<?> future = ProgressManagerImpl.runProcessWithProgressAsynchronously(new Task.Backgroundable(getProject(), "xxx") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          assertFalse(ApplicationManager.getApplication().isDispatchThread());
-          assertSame(indicator, myIndicator);
-          while (System.currentTimeMillis() < end) {
-            ProgressManager.checkCanceled();
+    Future<?> future = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
+      new Task.Backgroundable(getProject(), "xxx") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            assertFalse(ApplicationManager.getApplication().isDispatchThread());
+            assertSame(indicator, myIndicator);
+            while (System.currentTimeMillis() < end) {
+              ProgressManager.checkCanceled();
+            }
+          }
+          catch (ProcessCanceledException e) {
+            exception = e;
+            checkCanceledCalled = true;
+            throw e;
+          }
+          catch (RuntimeException e) {
+            exception = e;
+            throw e;
+          }
+          catch (Error e) {
+            exception = e;
+            throw e;
           }
         }
-        catch (ProcessCanceledException e) {
-          exception = e;
-          checkCanceledCalled = true;
-          throw e;
-        }
-        catch (RuntimeException e) {
-          exception = e;
-          throw e;
-        }
-        catch (Error e) {
-          exception = e;
-          throw e;
-        }
-      }
 
-      @Override
-      public void onCancel() {
-        taskCanceled = true;
-      }
+        @Override
+        public void onCancel() {
+          taskCanceled = true;
+        }
 
-      @Override
-      public void onSuccess() {
-        taskSucceeded = true;
-      }
-    }, myIndicator, null);
+        @Override
+        public void onSuccess() {
+          taskSucceeded = true;
+        }
+      }, myIndicator, null);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
 
