@@ -73,7 +73,12 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     try {
       myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
       myProjectFixture.setUp();
-
+    }
+    catch (Exception e) {
+      super.tearDown();
+      throw e;
+    }
+    try {
       myProject = myProjectFixture.getProject();
       myProjectRoot = myProject.getBaseDir();
 
@@ -90,6 +95,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     }
     catch (Exception e) {
       tearDown();
+      throw e;
     }
   }
 
@@ -120,7 +126,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     File hgrc = new File(new File(repositoryRoot.getPath(), ".hg"), "hgrc");
     FileUtil.appendToFile(hgrc, text);
     assertTrue(hgrc.exists());
-    repositoryRoot.refresh(false,true);
+    repositoryRoot.refresh(false, true);
   }
 
 
