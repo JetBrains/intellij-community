@@ -47,7 +47,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     super.setUp();
-    InspectionToolRegistrar.getInstance().ensureInitialized();
+    InspectionToolRegistrar.getInstance().createTools();
   }
 
   @Override
