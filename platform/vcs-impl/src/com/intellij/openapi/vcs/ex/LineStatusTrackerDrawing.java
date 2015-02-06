@@ -306,9 +306,13 @@ public class LineStatusTrackerDrawing {
     editor.getCaretModel().moveToOffset(lastOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
+    showHint(range, editor, tracker);
+  }
+
+  public static void showHint(final Range range, final Editor editor, final LineStatusTracker tracker) {
     editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
       public void run() {
-        Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(lastOffset));
+        Point p = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
         final JComponent editorComponent = editor.getContentComponent();
         final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
         p = SwingUtilities.convertPoint(editorComponent, 0, p.y, layeredPane);

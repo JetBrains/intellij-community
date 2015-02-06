@@ -36,6 +36,7 @@
 
       <add-to-group group-id="GoToMenu" anchor="last"/>
     </group>
+    <action id="VcsShowCurrentChangeMarker" class="com.intellij.openapi.vcs.actions.ShowCurrentChangeMarkerAction"/>
 
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" popup="true">
@@ -89,7 +90,7 @@
       <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction"
               icon="AllIcons.Actions.Diff"/>
     </group>
-    
+
     <group id="AlienCommitChangesDialog.AdditionalActions"/>
 
     <group id="ChangesViewPopupMenu">
@@ -182,7 +183,7 @@
       <action id="CommittedChanges.Clear" class="com.intellij.openapi.vcs.changes.committed.ClearCommittedAction"
               icon="AllIcons.Vcs.Remove"/>
     </group>
-    
+
     <group id="RepositoryChangesBrowserToolbar">
     </group>
 
