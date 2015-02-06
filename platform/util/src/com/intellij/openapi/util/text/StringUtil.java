@@ -1558,7 +1558,7 @@ public class StringUtil extends StringUtilRt {
       sb.insert(0, units[i]).insert(0, count);
     }
     else if (remainder > 0) {
-      sb.append(String.format("%.2f", count + (double)remainder / multipliers[i - 1])).append(units[i]);
+      sb.append(String.format(Locale.US, "%.2f", count + (double)remainder / multipliers[i - 1])).append(units[i]);
     }
     return sb.toString();
   }
