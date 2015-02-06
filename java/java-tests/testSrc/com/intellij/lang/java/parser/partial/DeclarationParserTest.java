@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testAnnoNested() { doParserTest("{ @interface Inner { String bar () default \"<unspecified>\"; } }", true, false); }
   public void testAnnoInner() { doParserTest("{ @interface Inner { double bar () default 0.0; } }"); }
   public void testAnnoOtherMembers() { doParserTest("{ int field;\n void m() {}\n class C {}\n interface I {} }", true, false); }
+  public void testAnnoLoop() { doParserTest("{ @@@ int i; }"); }
 
   public void testFieldSimple() { doParserTest("{ int field = 0; }"); }
   public void testFieldMulti() { doParserTest("{ int field1 = 0, field2; }"); }
