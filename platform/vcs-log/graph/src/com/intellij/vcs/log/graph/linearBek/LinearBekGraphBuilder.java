@@ -22,6 +22,7 @@ import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
 import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import gnu.trove.TIntHashSet;
@@ -33,25 +34,13 @@ import java.util.*;
 
 class LinearBekGraphBuilder {
   private static final int MAX_BLOCK_SIZE = 200;
-  public static final int MAGIC_SET_SIZE = 30;
+  public static final int MAGIC_SET_SIZE = PrintElementGeneratorImpl.LONG_EDGE_SIZE;
   @NotNull private final GraphLayout myGraphLayout;
   private final LinearBekGraph myLinearBekGraph;
-  private Map<Integer, Integer> myNextHeadLayoutIndexes;
 
   public LinearBekGraphBuilder(@NotNull LinearBekGraph bekGraph, @NotNull GraphLayout graphLayout) {
     myLinearBekGraph = bekGraph;
     myGraphLayout = graphLayout;
-
-    List<Integer> heads = graphLayout.getHeadNodeIndex();
-    myNextHeadLayoutIndexes = ContainerUtilRt.newHashMap(heads.size());
-    for (int i = 0; i < heads.size(); i++) {
-      if (i == heads.size() - 1) {
-        myNextHeadLayoutIndexes.put(heads.get(i), Integer.MAX_VALUE);
-      }
-      else {
-        myNextHeadLayoutIndexes.put(heads.get(i), myGraphLayout.getLayoutIndex(heads.get(i + 1)));
-      }
-    }
   }
 
   public void collapseAll() {
@@ -82,10 +71,6 @@ class LinearBekGraphBuilder {
 
   @Nullable
   private MergeFragment getFragment(int firstChild, int secondChild, int parent) {
-    int head = myGraphLayout.getOneOfHeadNodeIndex(parent);
-    int headLi = myGraphLayout.getLayoutIndex(head);
-    int nextHeadLi = myNextHeadLayoutIndexes.get(head);
-
     MergeFragment fragment = new MergeFragment(parent, firstChild, secondChild);
 
     int x = myGraphLayout.getLayoutIndex(firstChild);
@@ -127,9 +112,13 @@ class LinearBekGraphBuilder {
         fragment.addBody(upNodeIndex);
       }
       else if (next > firstChild) {
+
         int li = myGraphLayout.getLayoutIndex(next);
         if (x > y && !fragment.isMergeWithOldCommit()) {
-          if (next > firstChild + MAGIC_SET_SIZE) return null;
+
+          if (next > firstChild + MAGIC_SET_SIZE) {
+            return null;
+          }
           if (magicSet == null) {
             magicSet = calculateMagicSet(firstChild);
           }
@@ -140,6 +129,7 @@ class LinearBekGraphBuilder {
           else {
             return null;
           }
+
         }
         else {
           if ((li > x && li < y) || (li == x)) {
@@ -168,6 +158,7 @@ class LinearBekGraphBuilder {
             }
           }
         }
+
       }
 
       if (blockSize >= MAX_BLOCK_SIZE) {
@@ -306,7 +297,7 @@ class LinearBekGraphBuilder {
       }
       else {
         GraphEdge edge = LinearGraphUtils.getEdge(graph.myGraph, up, down);
-        assert edge != null: "No edge between " + up + " and " + down;
+        assert edge != null : "No edge between " + up + " and " + down;
         graph.myHiddenEdges.createEdge(edge);
       }
     }
@@ -314,7 +305,7 @@ class LinearBekGraphBuilder {
     private static void replaceEdge(LinearBekGraph graph, int up, int down) {
       if (!graph.myDottedEdges.hasEdge(up, down)) {
         GraphEdge edge = LinearGraphUtils.getEdge(graph.myGraph, up, down);
-        assert edge != null: "No edge between " + up + " and " + down;
+        assert edge != null : "No edge between " + up + " and " + down;
         graph.myHiddenEdges.createEdge(edge);
         graph.myDottedEdges.createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
       }

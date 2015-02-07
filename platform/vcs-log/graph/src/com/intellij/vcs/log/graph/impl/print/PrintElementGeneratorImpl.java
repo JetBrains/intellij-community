@@ -37,7 +37,7 @@ import java.util.*;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
 
 public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
-  private static final int LONG_EDGE_SIZE = 30;
+  public static final int LONG_EDGE_SIZE = 30;
   private static final int LONG_EDGE_PART_SIZE = 1;
 
   private static final int VERY_LONG_EDGE_SIZE = 1000;
