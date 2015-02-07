@@ -89,13 +89,16 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     }
 
     if (myMatchingVisitor.getResult() && isTypedVar) {
-      MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler( tag.getName() );
-      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(another, myMatchingVisitor.getMatchContext()));
+      final PsiElement[] children = another.getChildren();
+      if (children.length > 1) {
+        MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler( tag.getName() );
+        myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(children[1], myMatchingVisitor.getMatchContext()));
+      }
     }
   }
 
   private static PsiElement[] expandXmlTexts(PsiElement[] children) {
-    List<PsiElement> result = new ArrayList<PsiElement>(children.length);
+    final List<PsiElement> result = new ArrayList<PsiElement>(children.length);
     for(PsiElement c:children) {
       if (c instanceof XmlText) {
         for(PsiElement p:c.getChildren()) {
@@ -114,7 +117,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
 
   @Override public void visitXmlToken(XmlToken token) {
     if (token.getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
-      String text = token.getText();
+      final String text = token.getText();
       final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text);
 
       if (isTypedVar) {

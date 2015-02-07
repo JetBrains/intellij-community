@@ -51,7 +51,7 @@ public class SettingsImpl implements EditorSettings {
   private int                     myLineCursorWidth               = Registry.intValue("editor.caret.width", 2);
   private boolean                 myLineMarkerAreaShown           = true;
   private boolean                 myAllowSingleLogicalLineFolding = false;
-  private boolean                 myCodeFoldingEnabled            = true;
+  private boolean myAutoCodeFoldingEnabled = true;
 
   // These comes from CodeStyleSettings
   private Integer myTabSize         = null;
@@ -281,14 +281,13 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
-  public boolean isCodeFoldingEnabled() {
-    return myCodeFoldingEnabled;
+  public boolean isAutoCodeFoldingEnabled() {
+    return myAutoCodeFoldingEnabled;
   }
 
   @Override
-  public void setCodeFoldingEnabled(boolean val) {
-    myCodeFoldingEnabled = val;
-    fireEditorRefresh();
+  public void setAutoCodeFoldingEnabled(boolean val) {
+    myAutoCodeFoldingEnabled = val;
   }
 
   @Override

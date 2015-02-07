@@ -28,7 +28,10 @@ import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -37,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
@@ -302,7 +306,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
       mySchemes.remove(existing);
 
-      if (isExternalizable(existing)) {
+      if (existing instanceof ExternalizableScheme) {
         //noinspection unchecked
         myProcessor.onSchemeDeleted((E)existing);
       }
@@ -453,11 +457,30 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   public void save() {
     boolean hasSchemes = false;
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
+    List<E> schemesToSave = new SmartList<E>();
     for (T scheme : mySchemes) {
-      //noinspection CastConflictsWithInstanceof,unchecked
-      if (scheme instanceof ExternalizableScheme && myProcessor.shouldBeSaved((E)scheme)) {
+      if (scheme instanceof ExternalizableScheme) {
+        //noinspection CastConflictsWithInstanceof,unchecked
+        E eScheme = (E)scheme;
+        BaseSchemeProcessor.State state;
+        if (myProcessor instanceof BaseSchemeProcessor) {
+          state = ((BaseSchemeProcessor<E>)myProcessor).getState(eScheme);
+        }
+        else {
+          //noinspection deprecation
+          state = myProcessor.shouldBeSaved(eScheme) ? BaseSchemeProcessor.State.POSSIBLY_CHANGED : BaseSchemeProcessor.State.NON_PERSISTENT;
+        }
+
+        if (state == BaseSchemeProcessor.State.NON_PERSISTENT) {
+          continue;
+        }
+
         hasSchemes = true;
-        ExternalizableScheme eScheme = (ExternalizableScheme)scheme;
+
+        if (state != BaseSchemeProcessor.State.UNCHANGED) {
+          schemesToSave.add(eScheme);
+        }
+
         String fileName = eScheme.getExternalInfo().getCurrentFileName();
         if (fileName != null && !isRenamed(eScheme)) {
           nameGenerator.addExistingName(fileName);
@@ -479,30 +502,22 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       return;
     }
 
-    for (final T scheme : mySchemes) {
-      if (!isExternalizable(scheme)) {
-        continue;
+    for (final E scheme : schemesToSave) {
+      try {
+        saveScheme(scheme, nameGenerator);
       }
-
-      @SuppressWarnings("unchecked")
-      E eScheme = (E)scheme;
-      if (myProcessor.shouldBeSaved(eScheme)) {
-        try {
-          saveScheme(eScheme, nameGenerator);
+      catch (final Exception e) {
+        Application app = ApplicationManager.getApplication();
+        if (app.isUnitTestMode() || app.isCommandLine()) {
+          LOG.error("Cannot write scheme " + scheme.getName() + " in '" + myFileSpec + "': " + e.getLocalizedMessage(), e);
         }
-        catch (final Exception e) {
-          Application app = ApplicationManager.getApplication();
-          if (app.isUnitTestMode() || app.isCommandLine()) {
-            LOG.error("Cannot write scheme " + scheme.getName() + " in '" + myFileSpec + "': " + e.getLocalizedMessage(), e);
-          }
-          else {
-            app.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showErrorDialog("Cannot save scheme '" + scheme.getName() + ": " + e.getMessage(), "Save Settings");
-              }
-            });
-          }
+        else {
+          app.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog("Cannot save scheme '" + scheme.getName() + ": " + e.getMessage(), "Save Settings");
+            }
+          });
         }
       }
     }

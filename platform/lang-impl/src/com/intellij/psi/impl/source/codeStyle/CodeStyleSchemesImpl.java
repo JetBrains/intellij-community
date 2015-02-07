@@ -55,9 +55,10 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
         return scheme.saveToDocument();
       }
 
+      @NotNull
       @Override
-      public boolean shouldBeSaved(@NotNull final CodeStyleSchemeImpl scheme) {
-        return !scheme.isDefault();
+      public State getState(@NotNull CodeStyleSchemeImpl scheme) {
+        return scheme.isDefault() ? State.NON_PERSISTENT : State.POSSIBLY_CHANGED;
       }
 
       @Override

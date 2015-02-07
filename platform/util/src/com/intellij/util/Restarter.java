@@ -155,8 +155,8 @@ public class Restarter {
 
   public static File createTempExecutable(File executable) throws IOException {
     File executableDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
-    File copy = new File(executableDir.getPath() + "/" + executable.getName());
     if (!FileUtilRt.createDirectory(executableDir)) throw new IOException("Cannot create dir: " + executableDir);
+    File copy = new File(executableDir.getPath() + "/" + executable.getName());
     if (!FileUtilRt.ensureCanCreateFile(copy) || (copy.exists() && !copy.delete())) {
        String ext = FileUtilRt.getExtension(executable.getName());
        copy = FileUtilRt.createTempFile(executableDir, FileUtilRt.getNameWithoutExtension(copy.getName()),

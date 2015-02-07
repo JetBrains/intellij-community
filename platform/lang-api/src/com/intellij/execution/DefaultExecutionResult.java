@@ -17,10 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,34 +87,5 @@ public class DefaultExecutionResult implements ExecutionResult {
   @Override
   public ProcessHandler getProcessHandler() {
     return myProcessHandler;
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.execution.actions.StopProcessAction}.
-   * Will be removed in IDEA 14
-   */
-  public static class StopAction extends AnAction implements DumbAware {
-    private final ProcessHandler myProcessHandler;
-
-    public StopAction(final ProcessHandler processHandler) {
-      super(ExecutionBundle.message("run.configuration.stop.action.name"), null, AllIcons.Actions.Suspend);
-      getTemplatePresentation().setEnabled(false);
-      myProcessHandler = processHandler;
-    }
-
-    @Override
-    public void actionPerformed(final AnActionEvent e) {
-      if (myProcessHandler.detachIsDefault()) {
-        myProcessHandler.detachProcess();
-      }
-      else {
-        myProcessHandler.destroyProcess();
-      }
-    }
-
-    @Override
-    public void update(final AnActionEvent event) {
-      event.getPresentation().setEnabled(!myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated());
-    }
   }
 }

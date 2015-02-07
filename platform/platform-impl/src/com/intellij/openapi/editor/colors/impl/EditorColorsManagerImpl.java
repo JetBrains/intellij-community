@@ -387,9 +387,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
       return root;
     }
 
+    @NotNull
     @Override
-    public boolean shouldBeSaved(@NotNull final EditorColorsSchemeImpl scheme) {
-      return !(scheme instanceof ReadOnlyColorsScheme);
+    public State getState(@NotNull EditorColorsSchemeImpl scheme) {
+      return scheme instanceof ReadOnlyColorsScheme ? State.NON_PERSISTENT : State.POSSIBLY_CHANGED;
     }
 
     @Override
