@@ -18,21 +18,25 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleDiffChange {
+  @NotNull private final SimpleDiffViewer myViewer;
+
   @NotNull private final LineFragment myFragment;
   @Nullable private final List<DiffFragment> myInnerFragments;
 
@@ -40,17 +44,20 @@ public class SimpleDiffChange {
   @Nullable private final EditorEx myEditor2;
 
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
-  @NotNull private final List<RangeHighlighter> myActionHighlighters = new ArrayList<RangeHighlighter>();
+  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
   private boolean myIsValid = true;
   private int[] myLineStartShifts = new int[2];
   private int[] myLineEndShifts = new int[2];
 
   // TODO: adjust color from inner fragments - configurable
-  public SimpleDiffChange(@NotNull LineFragment fragment,
+  public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
+                          @NotNull LineFragment fragment,
                           @Nullable EditorEx editor1,
                           @Nullable EditorEx editor2,
                           boolean inlineHighlight) {
+    myViewer = viewer;
+
     myFragment = fragment;
     myInnerFragments = inlineHighlight ? fragment.getInnerFragments() : null;
 
@@ -78,10 +85,10 @@ public class SimpleDiffChange {
     }
     myHighlighters.clear();
 
-    for (RangeHighlighter highlighter : myActionHighlighters) {
-      highlighter.dispose();
+    for (MyGutterOperation operation : myOperations) {
+      operation.destroy();
     }
-    myActionHighlighters.clear();
+    myOperations.clear();
   }
 
   private void doInstallHighlighterSimple() {
@@ -103,14 +110,8 @@ public class SimpleDiffChange {
 
   private void doInstallActionHighlighters() {
     if (myEditor1 != null && myEditor2 != null) {
-      if (DiffUtil.isEditable(myEditor1)) {
-        MyReplaceOperation operation = new MyReplaceOperation(Side.LEFT);
-        myActionHighlighters.add(DiffOperation.createHighlighter(myEditor2, operation, myFragment.getStartOffset2()));
-      }
-      if (DiffUtil.isEditable(myEditor2)) {
-        MyReplaceOperation operation = new MyReplaceOperation(Side.RIGHT);
-        myActionHighlighters.add(DiffOperation.createHighlighter(myEditor1, operation, myFragment.getStartOffset1()));
-      }
+      myOperations.add(createOperation(Side.LEFT));
+      myOperations.add(createOperation(Side.RIGHT));
     }
   }
 
@@ -152,6 +153,12 @@ public class SimpleDiffChange {
     myHighlighters.add(highlighter);
   }
 
+  public void update() {
+    for (MyGutterOperation operation : myOperations) {
+      operation.update();
+    }
+  }
+
   //
   // Getters
   //
@@ -189,10 +196,11 @@ public class SimpleDiffChange {
       return false;
     }
 
-    for (RangeHighlighter highlighter : myActionHighlighters) {
-      highlighter.dispose();
+    for (MyGutterOperation operation : myOperations) {
+      operation.destroy();
     }
-    myActionHighlighters.clear();
+    myOperations.clear();
+
     myIsValid = false;
     return true;
   }
@@ -248,30 +256,137 @@ public class SimpleDiffChange {
   // Helpers
   //
 
-  private class MyReplaceOperation extends DiffOperation {
-    @NotNull private final Side mySide;
+  @NotNull
+  private MyGutterOperation createOperation(@NotNull Side side) {
+    assert myEditor1 != null && myEditor2 != null;
+    int offset = side.getStartOffset(myFragment);
+    EditorEx editor = side.selectN(myEditor1, myEditor2);
+    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
+                                                                               HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                               null,
+                                                                               HighlighterTargetArea.LINES_IN_RANGE);
+    return new MyGutterOperation(side, highlighter);
+  }
 
-    public MyReplaceOperation(@NotNull Side side) {
-      super("Replace", DiffIcons.getReplaceIcon(Side.RIGHT));
+  private class MyGutterOperation {
+    @NotNull private final Side mySide;
+    @NotNull private final RangeHighlighter myHighlighter;
+
+    private boolean myCtrlPressed;
+    private boolean myShiftPressed;
+
+    private MyGutterOperation(@NotNull Side side, @NotNull RangeHighlighter highlighter) {
       mySide = side;
+      myHighlighter = highlighter;
+
+      myHighlighter.setGutterIconRenderer(createRenderer());
     }
 
-    @Override
-    public void perform(@NotNull AnActionEvent e) {
-      final Project project = e.getProject();
+    public void destroy() {
+      myHighlighter.dispose();
+    }
+
+    public void update() {
+      if (myCtrlPressed == myViewer.getModifierProvider().isCtrlPressed() &&
+          myShiftPressed == myViewer.getModifierProvider().isShiftPressed()) {
+        return;
+      }
+      myHighlighter.setGutterIconRenderer(createRenderer());
+    }
+
+    @Nullable
+    public GutterIconRenderer createRenderer() {
       assert myEditor1 != null && myEditor2 != null;
 
-      final Document document1 = myEditor1.getDocument();
-      final Document document2 = myEditor2.getDocument();
+      myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
+      myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
 
-      if (!myIsValid) return;
+      boolean isEditable = DiffUtil.isEditable(mySide.selectN(myEditor1, myEditor2));
+      boolean isOtherEditable = DiffUtil.isEditable(mySide.other().selectN(myEditor1, myEditor2));
 
-      DiffUtil.executeWriteCommand(mySide.selectN(document1, document2), project, "Replace change", new Runnable() {
-        @Override
-        public void run() {
-          replaceChange(mySide.other());
-        }
-      });
+      if (myCtrlPressed && myShiftPressed) return null;
+      if ((myShiftPressed || !isOtherEditable) && isEditable) {
+        return createRevertRenderer(mySide);
+      }
+      if (myCtrlPressed) {
+        return createAppendRenderer(mySide);
+      }
+      return createApplyRenderer(mySide);
     }
+  }
+
+  @Nullable
+  private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
+    return createIconRenderer(side, DiffIcons.getReplaceIcon(Side.RIGHT), new Runnable() {
+      @Override
+      public void run() {
+        replaceChange(side);
+      }
+    });
+  }
+
+  @Nullable
+  private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
+    return createIconRenderer(side, DiffIcons.getAppendIcon(Side.RIGHT), new Runnable() {
+      @Override
+      public void run() {
+        appendChange(side);
+      }
+    });
+  }
+
+  @Nullable
+  private GutterIconRenderer createRevertRenderer(@NotNull final Side side) {
+    return createIconRenderer(side.other(), DiffIcons.getRevertIcon(Side.RIGHT), new Runnable() {
+      @Override
+      public void run() {
+        replaceChange(side.other());
+      }
+    });
+  }
+
+  @Nullable
+  private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide, @NotNull final Icon icon, @NotNull final Runnable perform) {
+    assert myEditor1 != null && myEditor2 != null;
+    if (!DiffUtil.isEditable(sourceSide.other().selectN(myEditor1, myEditor2))) return null;
+    return new GutterIconRenderer() {
+      @NotNull
+      @Override
+      public Icon getIcon() {
+        return icon;
+      }
+
+      @Nullable
+      @Override
+      public AnAction getClickAction() {
+        return new DumbAwareAction() {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            final Project project = e.getProject();
+            final Document document1 = myEditor1.getDocument();
+            final Document document2 = myEditor2.getDocument();
+
+            if (!myIsValid) return;
+
+            DiffUtil.executeWriteCommand(sourceSide.other().selectN(document1, document2), project, "Replace change", new Runnable() {
+              @Override
+              public void run() {
+                perform.run();
+              }
+            });
+          }
+        };
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return obj == this;
+      }
+
+      @Override
+      public int hashCode() {
+        return System.identityHashCode(this);
+      }
+    };
   }
 }
