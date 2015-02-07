@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 
 /**
@@ -26,7 +24,8 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
  */
 public class EnableNotEqual extends DirDiffAction {
   protected EnableNotEqual(DirDiffTableModel model) {
-    super(model, "Show difference", AllIcons.Vcs.Not_equal);
+    super(model);
+    EmptyAction.setupAction(this, "DirDiffMenu.EnableNotEqual", null);
   }
 
   @Override
@@ -36,10 +35,5 @@ public class EnableNotEqual extends DirDiffAction {
 
   public void updateState(boolean state) {
     getModel().setShowDifferent(state);
-  }
-
-  @Override
-  public ShortcutSet getShortcut() {
-    return CustomShortcutSet.fromString("alt MINUS");
   }
 }
