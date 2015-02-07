@@ -360,13 +360,7 @@ public class DiffUtil {
   @NotNull
   private static JComponent createTitlePanel(@NotNull String title) {
     if (title.isEmpty()) title = " "; // do not collapse
-    JTextField field = new JTextField(title);
-    field.setEditable(false);
-    field.setBorder(null);
-    field.setFont(UIUtil.getLabelFont());
-    field.setBackground(UIUtil.TRANSPARENT_COLOR);
-    field.setOpaque(false);
-    return field;
+    return new JLabel(title); // TODO: allow to copy text
   }
 
   @NotNull
