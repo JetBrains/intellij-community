@@ -240,6 +240,7 @@ public class SimpleDiffChange {
     assert myEditor1 != null && myEditor2 != null;
 
     if (!myIsValid) return;
+    if (getStartLine(sourceSide) == getEndLine(sourceSide)) return;
 
     final Document document1 = myEditor1.getDocument();
     final Document document2 = myEditor2.getDocument();

@@ -591,6 +591,7 @@ public class DiffUtil {
                                        @NotNull Document document2,
                                        int oLine1,
                                        int oLine2) {
+    if (line1 == line2 && oLine1 == oLine2) return;
     if (line1 == line2) {
       insertLines(document1, line1, document2, oLine1, oLine2);
     }
