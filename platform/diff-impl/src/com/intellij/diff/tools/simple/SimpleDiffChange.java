@@ -233,8 +233,6 @@ public class SimpleDiffChange {
 
     if (!myIsValid) return;
 
-    destroyHighlighter();
-
     final Document document1 = myEditor1.getDocument();
     final Document document2 = myEditor2.getDocument();
 
