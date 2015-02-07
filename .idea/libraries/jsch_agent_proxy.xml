@@ -10,12 +10,17 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-core/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-pageant/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-sshagent/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-usocket-nc/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-usocket-jna/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-connector-factory/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/examples/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-connector-factory/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-core/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-jsch/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-pageant/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-sshagent/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-sshj/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-svnkit-trilead-ssh2/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-usocket-jna/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-usocket-junixsocket/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-usocket-nc/src/main/java" />
     </SOURCES>
   </library>
 </component>
