@@ -36,25 +36,16 @@ import java.util.*;
 
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearBekGraph myCompiledGraph;
-  private final BekIntMap myBekIntMap;
-  private final BekGraphLayout myBekGraphLayout;
+  private final LinearBekGraphBuilder myLinearBekGraphBuilder;
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
-    myBekIntMap = controller.getBekIntMap();
-    myBekGraphLayout = new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), myBekIntMap);
-    myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(), myBekGraphLayout);
-  }
+    myCompiledGraph = new LinearBekGraph(getDelegateLinearGraphController().getCompiledGraph());
+    myLinearBekGraphBuilder = new LinearBekGraphBuilder(myCompiledGraph, new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap()));
 
-  static LinearBekGraph compileGraph(@NotNull LinearGraph graph, @NotNull GraphLayout graphLayout) {
     long start = System.currentTimeMillis();
-
-    LinearBekGraph linearBekGraph = new LinearBekGraph(graph);
-    new LinearBekGraphBuilder(linearBekGraph, graphLayout).collapseAll();
-
+    myLinearBekGraphBuilder.collapseAll();
     System.err.println((System.currentTimeMillis() - start) / 1000.0 + " sec");
-
-    return linearBekGraph;
   }
 
   @NotNull
@@ -77,7 +68,7 @@ public class LinearBekController extends CascadeLinearGraphController {
           }
         }
         else if (graphElement instanceof GraphNode) {
-          if (new LinearBekGraphBuilder(myCompiledGraph, myBekGraphLayout).collapseFragment(((GraphNode)graphElement).getNodeIndex())) {
+          if (myLinearBekGraphBuilder.collapseFragment(((GraphNode)graphElement).getNodeIndex())) {
             return new LinearGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null);
           }
         }
@@ -92,8 +83,7 @@ public class LinearBekController extends CascadeLinearGraphController {
           }
         }
         else if (graphElement instanceof GraphNode) {
-          LinearBekGraphBuilder.MergeFragment fragment =
-            new LinearBekGraphBuilder(myCompiledGraph, myBekGraphLayout).getFragment(((GraphNode)graphElement).getNodeIndex());
+          LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.getFragment(((GraphNode)graphElement).getNodeIndex());
           if (fragment != null) {
             return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, fragment.getAllNodes());
           }
