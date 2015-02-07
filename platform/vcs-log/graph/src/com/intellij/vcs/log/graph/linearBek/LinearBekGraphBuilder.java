@@ -101,10 +101,12 @@ class LinearBekGraphBuilder {
     while (!queue.isEmpty()) {
       GraphEdge nextEdge = queue.poll();
       Integer next = nextEdge.getDownNodeIndex();
-      if (next == null) continue; // allow very long edges down
-
       Integer upNodeIndex = nextEdge.getUpNodeIndex();
       assert upNodeIndex != null; // can not happen
+      if (next == null) {
+        fragment.addTail(upNodeIndex);
+        continue; // allow very long edges down
+      }
 
       if (next == firstChild) {
         // found first child
